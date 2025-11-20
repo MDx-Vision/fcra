@@ -5170,7 +5170,10 @@ This is the **complete integrated Super Prompt v2.5** combining:
                 ]
             )
 
-            analysis_result = message.content[0].text
+            analysis_result = ""
+            for block in message.content:
+                if block.type == 'text':
+                    analysis_result += block.text
 
             print(f"✅ Analysis complete! Length: {len(analysis_result):,} characters")
 
