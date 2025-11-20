@@ -5248,37 +5248,71 @@ This is the **complete integrated Super Prompt v2.5** combining:
             """
 
         # Build the analysis request
-        # Add mode-specific instructions
+        # Build the user message with EXPLICIT mode instruction AT THE TOP
         if analysis_mode == 'auto':
-            mode_instruction = """
-            ANALYSIS MODE: AUTOMATIC
-            - SKIP the verification checkpoint in Part 4.5
-            - Proceed directly from Part 4 to Part 5 (Client-Facing Report)
-            - Generate Executive Summary + Full Analysis + Dispute Letters in one pass
-            - Do not stop for human review
-            """
+            user_message = f"""
+        🚨 CRITICAL INSTRUCTION - READ FIRST 🚨
+
+        YOU ARE IN AUTOMATIC MODE.
+
+        This means:
+        1. Complete ALL parts of the analysis (Parts 0-4)
+        2. When you reach Part 4.5, READ the checkpoint instructions but DO NOT STOP
+        3. IMMEDIATELY proceed to Part 5 and generate the complete 40-50 page client report
+        4. Generate ALL dispute letters in Parts 6-7
+        5. DO NOT wait for human approval
+        6. Output the complete analysis in ONE response
+
+        DO NOT output "awaiting human review" or stop at Part 4.5. 
+        Generate the COMPLETE analysis including the full client-facing report.
+
+        ---
+
+        CLIENT INFORMATION:
+        - Name: {client_name}
+        - CMM Contact ID: {cmm_id}
+        - Credit Provider: {provider}
+
+        CREDIT REPORT HTML:
+        {credit_report_html}
+
+        Please analyze this credit report for FCRA violations using the framework provided.
+        Generate the COMPLETE analysis including the full 40-50 page client report.
+        """
         else:
-            mode_instruction = """
-            ANALYSIS MODE: MANUAL REVIEW
-            - STOP at Part 4.5 verification checkpoint
-            - Wait for human approval before generating client-facing documents
-            - Do NOT proceed to Part 5 until checkpoint is approved
-            """
-        user_message = f"""
-            {mode_instruction}
-    CLIENT INFORMATION:
-    - Name: {client_name}
-    - CMM Contact ID: {cmm_id}
-    - Credit Provider: {provider}
+            user_message = f"""
+        🚨 CRITICAL INSTRUCTION - READ FIRST 🚨
 
-    CREDIT REPORT HTML:
-    {credit_report_html}
+        YOU ARE IN MANUAL REVIEW MODE.
 
-    Please analyze this credit report for FCRA violations using the framework provided.
-    """
+        This means:
+        1. Complete Parts 0-4 of the analysis
+        2. When you reach Part 4.5, STOP at the verification checkpoint
+        3. Generate the verification summary table
+        4. Output "AWAITING HUMAN REVIEW" and DO NOT proceed to Part 5
+        5. DO NOT generate the client-facing report or dispute letters yet
+        6. Wait for human to review and approve before continuing
+
+        STOP at Part 4.5 checkpoint. Do not proceed past the verification summary.
+
+        ---
+
+        CLIENT INFORMATION:
+        - Name: {client_name}
+        - CMM Contact ID: {cmm_id}
+        - Credit Provider: {provider}
+
+        CREDIT REPORT HTML:
+        {credit_report_html}
+
+        Please analyze this credit report for FCRA violations using the framework provided.
+        STOP at Part 4.5 verification checkpoint and await human approval.
+        """
 
         # Call Claude API
         print(f"\n🤖 Sending to Claude API for analysis...")
+        print(f"   Analysis mode: {analysis_mode}")
+        print(f"   User message defined: {'user_message' in locals()}")
         print(f"   Prompt size: {len(super_prompt):,} characters")
         print(f"   Report size: {len(credit_report_html):,} characters")
 
