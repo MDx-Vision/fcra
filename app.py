@@ -5315,16 +5315,22 @@ This is the **complete integrated Super Prompt v2.5** combining:
         print(f"   User message defined: {'user_message' in locals()}")
         print(f"   Prompt size: {len(super_prompt):,} characters")
         print(f"   Report size: {len(credit_report_html):,} characters")
-
+        
+        import time
+        start_time = time.time()
+        
         message = client.messages.create(model="claude-sonnet-4-20250514",
                                          max_tokens=50000,
                                          temperature=0,
-                                         timeout=600.0,
+                                         timeout=900.0,
                                          system=super_prompt,
                                          messages=[{
                                              "role": "user",
                                              "content": user_message
                                          }])
+        
+        elapsed_time = time.time() - start_time
+        print(f"⏱️  API call completed in {elapsed_time:.1f} seconds")
 
         analysis_result = ""
         for block in message.content:
