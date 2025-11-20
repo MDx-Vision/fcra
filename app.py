@@ -3,6 +3,7 @@ import os
 # API Configuration
 ANTHROPIC_API_KEY = os.environ['FCRA Automation Secure']
 from anthropic import Anthropic
+
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -13,6 +14,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 # Store received credit reports
 credit_reports = []
+
 
 @app.route('/')
 def home():
@@ -174,35 +176,45 @@ def home():
     </script>
 </body>
 </html>'''
+
+
 def clean_credit_report_html(html):
-        """Strip unnecessary HTML to reduce size"""
-        from bs4 import BeautifulSoup
-        import re
+    """Strip unnecessary HTML to reduce size"""
+    from bs4 import BeautifulSoup
+    import re
 
-        print(f"📊 Original size: {len(html):,} characters")
+    print(f"📊 Original size: {len(html):,} characters")
 
-        # Remove inline styles
-        html = re.sub(r'style="[^"]*"', '', html)
-        # Remove script tags
-        html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
-        # Remove comments
-        html = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
-        # Remove base64 images
-        html = re.sub(r'data:image/[^;]+;base64,[^"\']+', '', html)
+    # Remove inline styles
+    html = re.sub(r'style="[^"]*"', '', html)
+    # Remove script tags
+    html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+    # Remove comments
+    html = re.sub(r'<!--.*?-->', '', html, flags=re.DOTALL)
+    # Remove base64 images
+    html = re.sub(r'data:image/[^;]+;base64,[^"\']+', '', html)
 
-        # Extract just the text content
-        soup = BeautifulSoup(html, 'html.parser')
-        text = soup.get_text(separator='\n', strip=True)
+    # Extract just the text content
+    soup = BeautifulSoup(html, 'html.parser')
+    text = soup.get_text(separator='\n', strip=True)
 
-        print(f"✂️ Cleaned size: {len(text):,} characters")
-        print(f"💰 Saved: {len(html) - len(text):,} characters ({100 - (len(text)/len(html)*100):.1f}% reduction)")
+    print(f"✂️ Cleaned size: {len(text):,} characters")
+    print(
+        f"💰 Saved: {len(html) - len(text):,} characters ({100 - (len(text)/len(html)*100):.1f}% reduction)"
+    )
 
-        return text
-def analyze_with_claude(client_name, cmm_id, provider, credit_report_html, analysis_mode='manual'):
-        """Send credit report to Claude for FCRA analysis"""
-        try:
-            # Load SUPER_PROMPT from project files
-            super_prompt = """
+    return text
+
+
+def analyze_with_claude(client_name,
+                        cmm_id,
+                        provider,
+                        credit_report_html,
+                        analysis_mode='manual'):
+    """Send credit report to Claude for FCRA analysis"""
+    try:
+        # Load SUPER_PROMPT from project files
+        super_prompt = """
             # SUPER PROMPT v2.6 - COMPLETE WITH VERIFICATION & ENHANCED CLIENT TEMPLATE
 ## Ready to Copy/Paste Into Claude
 
@@ -1401,8 +1413,28 @@ knowledge + quantified exposure = significantly higher defendant risk
 
 ===========================================================================
 ===============================================================================
-PART 4.5:  VERIFICATION CHECKPOINT  (CRITICAL - DO NOT SKIP)
+PART 4.5: 🛑 VERIFICATION CHECKPOINT 🛑 (MANUAL MODE ONLY)
 ===============================================================================
+
+**⚠️ CHECK ANALYSIS MODE FIRST ⚠️**
+
+**IF analysis_mode == "Automatic":**
+- SKIP this entire checkpoint
+- Proceed IMMEDIATELY to Part 5 (Client-Facing Report)
+- Generate the complete 40-50 page report
+- DO NOT STOP HERE
+
+**IF analysis_mode == "Manual Review":**
+- STOP at this checkpoint
+- Generate verification summary below
+- WAIT for human approval
+- DO NOT proceed to Part 5 until approved
+
+===============================================================================
+
+[Then the rest of Part 4.5 checkpoint content]
+
+**IF analysis_mode == "Manual Review":**
 
 ** STOP HERE - DO NOT PROCEED TO CLIENT-FACING REPORT UNTIL HUMAN VERIFIES **
 
@@ -1414,7 +1446,7 @@ are legitimate and properly documented.
 
 ===============================================================================
 
-##  VERIFICATION SUMMARY - PLEASE REVIEW CAREFULLY
+## VERIFICATION SUMMARY - PLEASE REVIEW CAREFULLY
 
 ===============================================================================
 
@@ -1422,6 +1454,16 @@ are legitimate and properly documented.
 **CASE FILE:** [Number]
 **ANALYSIS DATE:** [Date]
 **ANALYST:** AI-Generated Analysis Pending Human Review
+
+[ALL THE REST OF THE CHECKPOINT CONTENT - thousands of lines]
+
+[END OF MANUAL REVIEW CONDITIONAL]
+
+**IF analysis_mode == "Automatic":**
+
+Verification checkpoint bypassed - proceeding directly to client-facing report generation.
+
+**END OF PART 4.5 - PROCEEDING TO PART 5**
 
 ===============================================================================
 
@@ -1731,8 +1773,30 @@ _________________________________________________________________________
 
 ===============================================================================
 ===============================================================================
-PART 5: ENHANCED CLIENT-FACING REPORT (40-50 PAGES)
+⚠️⚠️⚠️ CRITICAL: NO LENGTH LIMITS - OUTPUT THE COMPLETE TEMPLATE ⚠️⚠️⚠️
 ===============================================================================
+
+**IMPORTANT: There are NO output length constraints for this section.**
+
+You MUST output the COMPLETE 40-50 page client report template below.
+
+**DO NOT:**
+❌ Say "given length constraints, I'll summarize"  
+❌ Say "the complete report would be generated here"
+❌ Say "due to length limits, I'll provide key sections"
+❌ Abbreviate or summarize ANY part of the template
+
+**YOU MUST:**
+✅ Output EVERY SINGLE WORD of the template below
+✅ Fill in ALL [BRACKETS] with client data
+✅ Generate ALL 10 SECTIONS in full
+✅ Output the complete 40-50 pages
+
+**This is NOT too long. This is the CORRECT length. Output it ALL.**
+===============================================================================
+PART 5: MANDATORY 40-50 PAGEs ENHANCED CLIENT REPORT - DO NOT SKIP
+===============================================================================
+
 **CRITICAL: RLPP INTEGRATION REQUIRED**
 
 Before generating the client-facing report, you MUST:
@@ -1764,6 +1828,65 @@ on legal matters, empowering, motivational, confident about case strength, urgen
 but not pushy, educational throughout
 
 **LENGTH:** 40-50 pages total, immediately deliverable to client
+
+===============================================================================
+
+⚠️⚠️⚠️ CRITICAL INSTRUCTION - READ CAREFULLY BEFORE PROCEEDING ⚠️⚠️⚠️
+
+YOU MUST GENERATE THE COMPLETE CLIENT-FACING REPORT BELOW.
+
+THIS IS NOT OPTIONAL. THIS IS NOT A SUGGESTION. THIS IS NOT AN EXAMPLE.
+
+**WHAT YOU MUST DO:**
+
+1. **FIND** the markers "START OF CLIENT REPORT" and "END OF CLIENT REPORT" below
+2. **COPY** every single word between those markers
+3. **FILL IN** all [BRACKETS] with the client's specific data
+4. **OUTPUT** the complete 40-50 page report exactly as written
+
+**WHAT YOU MUST NOT DO:**
+
+❌ DO NOT summarize this template
+❌ DO NOT skip sections
+❌ DO NOT abbreviate content
+❌ DO NOT create your own version
+❌ DO NOT think "this is too long"
+
+**THIS TEMPLATE IS THE PRIMARY DELIVERABLE TO THE CLIENT.**
+
+It is a proven sales and education document that:
+- Educates clients about their FCRA rights
+- Demonstrates service value vs traditional credit repair
+- Builds confidence in case strength
+- Creates urgency to enroll
+- Positions service as federal litigation
+
+**BEFORE YOU START GENERATING PART 5:**
+
+1. ✅ Go back and complete Part 4.25 RLPP analysis first
+2. ✅ Identify all RLPP bundling opportunities
+3. ✅ Calculate RLPP-enhanced damages
+4. ✅ Then return here and generate the COMPLETE template below
+
+**THEN GENERATE ALL 10 SECTIONS:**
+
+Section 1: Welcome Letter
+Section 2: Credit Score Basics  
+Section 3: Legal Foundation (FCRA)
+Section 4: Your Legal Case Analysis
+Section 5: Arbitration Leverage Strategy
+Section 6: Your Path Forward (Timeline)
+Section 6.5: RLPP-Enhanced Dispute Strategy ← MUST INCLUDE RLPP RESULTS
+Section 7: FAQs (all 15 questions)
+Section 8: Let's Get Started (enrollment)
+Section 9: Contact Information
+Section 10: Final Thoughts
+
+**LENGTH:** 40-50 pages - YES, THIS IS CORRECT AND NECESSARY
+
+**TONE:** Professional but accessible (8th-10th grade), authoritative, empowering
+
+⚠️⚠️⚠️ FAILURE TO GENERATE THE COMPLETE TEMPLATE IS A CRITICAL ERROR ⚠️⚠️⚠️
 
 ===============================================================================
 
@@ -5124,24 +5247,24 @@ This is the **complete integrated Super Prompt v2.5** combining:
 
             """
 
-            # Build the analysis request
-            # Add mode-specific instructions
-            if analysis_mode == 'auto':
-                mode_instruction = """
+        # Build the analysis request
+        # Add mode-specific instructions
+        if analysis_mode == 'auto':
+            mode_instruction = """
             ANALYSIS MODE: AUTOMATIC
             - SKIP the verification checkpoint in Part 4.5
             - Proceed directly from Part 4 to Part 5 (Client-Facing Report)
             - Generate Executive Summary + Full Analysis + Dispute Letters in one pass
             - Do not stop for human review
             """
-            else:
-                mode_instruction = """
+        else:
+            mode_instruction = """
             ANALYSIS MODE: MANUAL REVIEW
             - STOP at Part 4.5 verification checkpoint
             - Wait for human approval before generating client-facing documents
             - Do NOT proceed to Part 5 until checkpoint is approved
             """
-            user_message = f"""
+        user_message = f"""
             {mode_instruction}
     CLIENT INFORMATION:
     - Name: {client_name}
@@ -5154,41 +5277,41 @@ This is the **complete integrated Super Prompt v2.5** combining:
     Please analyze this credit report for FCRA violations using the framework provided.
     """
 
-            # Call Claude API
-            print(f"\n🤖 Sending to Claude API for analysis...")
-            print(f"   Prompt size: {len(super_prompt):,} characters")
-            print(f"   Report size: {len(credit_report_html):,} characters")
+        # Call Claude API
+        print(f"\n🤖 Sending to Claude API for analysis...")
+        print(f"   Prompt size: {len(super_prompt):,} characters")
+        print(f"   Report size: {len(credit_report_html):,} characters")
 
-            message = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=50000,
-                temperature=0,
-                timeout=600.0,
-                system=super_prompt,
-                messages=[
-                    {"role": "user", "content": user_message}
-                ]
-            )
+        message = client.messages.create(model="claude-sonnet-4-20250514",
+                                         max_tokens=50000,
+                                         temperature=0,
+                                         timeout=600.0,
+                                         system=super_prompt,
+                                         messages=[{
+                                             "role": "user",
+                                             "content": user_message
+                                         }])
 
-            analysis_result = ""
-            for block in message.content:
-                if block.type == 'text':
-                    analysis_result += block.text
+        analysis_result = ""
+        for block in message.content:
+            if block.type == 'text':
+                analysis_result += block.text
 
-            print(f"✅ Analysis complete! Length: {len(analysis_result):,} characters")
+        print(
+            f"✅ Analysis complete! Length: {len(analysis_result):,} characters"
+        )
 
-            return {
-                'success': True,
-                'analysis': analysis_result,
-                'client': client_name
-            }
+        return {
+            'success': True,
+            'analysis': analysis_result,
+            'client': client_name
+        }
 
-        except Exception as e:
-            print(f"❌ Claude API Error: {str(e)}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+    except Exception as e:
+        print(f"❌ Claude API Error: {str(e)}")
+        return {'success': False, 'error': str(e)}
+
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     """Receives credit report data from HTML form"""
@@ -5222,7 +5345,9 @@ def webhook():
             'processed': False
         }
         # Analyze with Claude API
-        analysis = analyze_with_claude(client_name, cmm_contact_id, credit_provider, credit_report_html, analysis_mode)
+        analysis = analyze_with_claude(client_name, cmm_contact_id,
+                                       credit_provider, credit_report_html,
+                                       analysis_mode)
 
         if analysis['success']:
             report['analysis'] = analysis['analysis']
@@ -5235,15 +5360,15 @@ def webhook():
         credit_reports.append(report)
 
         # Log to console
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("✅ CREDIT REPORT RECEIVED")
-        print("="*60)
+        print("=" * 60)
         print(f"Client: {client_name}")
         print(f"CMM ID: {cmm_contact_id}")
         print(f"Provider: {credit_provider}")
         print(f"Report Size: {len(credit_report_html):,} characters")
         print(f"Time: {report['timestamp']}")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
         # Return success
         return jsonify({
@@ -5258,10 +5383,8 @@ def webhook():
 
     except Exception as e:
         print(f"\n❌ ERROR: {str(e)}\n")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/history')
 def history():
@@ -5284,6 +5407,7 @@ def history():
         'reports': summary
     }), 200
 
+
 @app.route('/test')
 def test():
     """Test endpoint to verify server is working"""
@@ -5294,14 +5418,14 @@ def test():
         'ready_for': 'Phase 2 - Claude API Integration'
     }), 200
 
+
 @app.route('/clear', methods=['POST'])
 def clear_history():
     """Clear all stored reports (for testing)"""
     credit_reports.clear()
-    return jsonify({
-        'success': True,
-        'message': 'All reports cleared'
-    }), 200
+    return jsonify({'success': True, 'message': 'All reports cleared'}), 200
+
+
 @app.route('/view/<int:report_id>')
 def view_analysis(report_id):
     """View the Claude analysis for a specific report"""
@@ -5323,6 +5447,8 @@ def view_analysis(report_id):
         </html>
         """
     return "Report not found", 404
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print("\n" + "🚀" * 30)
