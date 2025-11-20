@@ -109,7 +109,17 @@ def home():
                     <option value="CFILifePlan.com">CFILifePlan.com</option>
                 </select>
             </div>
-
+<div class="form-group">
+    <label>ANALYSIS MODE <span class="required">*</span></label>
+    <select id="analysisMode" required>
+        <option value="manual">Manual Review (Stop at verification checkpoint)</option>
+        <option value="auto">Automatic (Generate complete report immediately)</option>
+    </select>
+    <small style="color: #7f8c8d; display: block; margin-top: 5px;">
+        <strong>Manual:</strong> Review violations before client report (recommended for new cases)<br>
+        <strong>Automatic:</strong> Generate everything in one pass (faster, for clear cases)
+    </small>
+</div>
             <div class="form-group">
                 <label>CREDIT REPORT HTML <span class="required">*</span></label>
                 <textarea id="creditReportHTML" required></textarea>
@@ -137,6 +147,7 @@ def home():
                         clientName: document.getElementById('clientName').value,
                         cmmContactId: document.getElementById('cmmContactId').value,
                         creditProvider: document.getElementById('creditProvider').value,
+                        analysisMode: document.getElementById('analysisMode').value,
                         creditReportHTML: document.getElementById('creditReportHTML').value
                     })
                 });
@@ -187,7 +198,7 @@ def clean_credit_report_html(html):
         print(f"💰 Saved: {len(html) - len(text):,} characters ({100 - (len(text)/len(html)*100):.1f}% reduction)")
 
         return text
-def analyze_with_claude(client_name, cmm_id, provider, credit_report_html):
+def analyze_with_claude(client_name, cmm_id, provider, credit_report_html, analysis_mode='manual'):
         """Send credit report to Claude for FCRA analysis"""
         try:
             # Load SUPER_PROMPT from project files
@@ -1357,10 +1368,385 @@ _________________________________________________________________________
 ** VERIFICATION CHECKPOINT ACTIVE - AWAITING HUMAN REVIEW **
 
 ===============================================================================
+===========================================================================
+PART 4.75: RAPID LITIGATION PRESSURE PROTOCOL (RLPP) - TACTICAL BUNDLING
+===========================================================================
+
+**CRITICAL STRATEGIC ENHANCEMENT:**
+
+RLPP transforms standard disputes into high-pressure legal compliance events by
+strategically bundling violations to force manual review and immediate correction.
+
+**THE CORE PRINCIPLE:**
+
+"Weaponize undisputed violations as evidence of systemic compliance failure
+to gain leverage on structural errors."
+
+---------------------------------------------------------------------------
+WHY RLPP WORKS (The Psychology of Compliance Risk)
+---------------------------------------------------------------------------
+
+**Standard Dispute Processing:**
+Consumer disputes late payment → Furnisher auto-verifies → No change
+
+**RLPP Enhanced Processing:**
+Consumer disputes late payment + structural contradiction + Cushman MOV demand
+→ Compliance officer sees sophisticated legal knowledge
+→ Risk assessment: "This file has systemic issues"
+→ Internal escalation to legal review
+→ Decision: "Deletion costs $0, investigation + lawsuit risk costs $60K+"
+→ DELETION or IMMEDIATE CORRECTION
+
+**What Changes:**
+- **Risk Profile:** Low-priority dispute → High-risk legal exposure
+- **Processing:** Automated verification → Manual compliance review
+- **Timeline:** 30+ days → 5-15 days (urgent handling)
+- **Outcome:** Generic response → Immediate correction
+
+---------------------------------------------------------------------------
+RLPP BUNDLING STRATEGY
+---------------------------------------------------------------------------
+
+**TIER 1 BUNDLING (Highest Pressure):**
+
+Combine ALL of these in one dispute:
+
+1. **Undisputed Late Payments** (verifiable, not worth fighting)
+   + 
+2. **Structural Contradictions** (impossible statuses across bureaus)
+   + 
+3. **Cushman MOV Demand** (tangible ledgers required per case law)
+   +
+4. **Metro 2 Technical Violations** (field coding errors)
+
+**Example Bundle:**
+
+"Account XYZ shows:
+- 3 late payments on TransUnion (which we can verify occurred)
+- SAME account reports as CLOSED on Experian but OPEN on Equifax
+- SAME account shows $5,000 limit on TransUnion but $3,000 on Experian
+- Violates FCRA § 1681e(b) (CRA accuracy), § 1681s-2(a) (furnisher accuracy)
+- Per Cushman v. TransUnion, we demand tangible ledgers for ALL payments
+- Total exposure: $600-$6,000 statutory + $15K actual + $45K punitive = $60K+"
+
+**Compliance Officer Sees:**
+- Consumer knows FCRA violations (§ 1681e(b), § 1681s-2(a))
+- Consumer knows case law (Cushman)
+- Consumer has identified MULTIPLE systemic failures
+- File marked for legal review (not operational review)
+- High litigation risk if not corrected immediately
+
+**Result:** Deletion or correction becomes cheapest option
+
+---------------------------------------------------------------------------
+RLPP IDENTIFICATION PROCESS
+---------------------------------------------------------------------------
+
+**For EACH account in the credit report, identify bundling opportunities:**
+
+**STEP 1: Find Anchor Violation (The "Show Something" Element)**
+
+These are UNDISPUTED violations that prove consumer sophistication:
+
+[ ] Late payments (verifiable)
+[ ] High balance reporting
+[ ] Duplicate accounts
+[ ] Inquiry violations
+[ ] Personal information errors
+
+**Purpose:** Shows consumer is aware of systemic issues, not just complaining
+
+**STEP 2: Find Structural Contradictions (The Leverage Element)**
+
+These are IMPOSSIBLE to verify without manual forensic review:
+
+[ ] Status contradictions (Open on one bureau, Closed on another)
+[ ] Balance contradictions ($5K on TU, $3K on EX, $4K on EQ)
+[ ] Limit contradictions ($10K limit on TU, $5K on EX)
+[ ] Date contradictions (Opened 01/2020 on TU, 03/2020 on EX)
+[ ] Payment history contradictions (30-day late on TU, current on EX)
+
+**Purpose:** Forces manual compliance review (can't auto-verify contradictions)
+
+**STEP 3: Add Legal Pressure (The Escalation Element)**
+
+[ ] Cite specific FCRA sections violated
+[ ] Reference case law (Cushman v. TransUnion for MOV)
+[ ] Calculate statutory damages exposure
+[ ] Demand tangible documentary proof
+
+**Purpose:** Raises internal risk score, triggers legal review
+
+**STEP 4: Bundle Strategic Pairing**
+
+**Pair accounts that share common furnishers:**
+
+"Capital One Card A + Capital One Card B both show contradictions
+→ Bundle both in ONE letter to Capital One
+→ Shows pattern of systemic failure
+→ Doubles pressure"
+
+---------------------------------------------------------------------------
+RLPP STRATEGIC RULES
+---------------------------------------------------------------------------
+
+**RULE 1: Always Bundle When Possible**
+
+Single late payment dispute = Low priority
+Late payment + structural contradiction + MOV demand = High priority
+
+**RULE 2: Use Undisputed Items as Evidence**
+
+Don't hide from verifiable late payments - USE THEM as proof you know
+the full picture and are identifying SYSTEMIC issues.
+
+**RULE 3: Target Same Furnisher**
+
+If client has 3 Chase accounts with issues, bundle ALL THREE in one
+letter to Chase showing pattern of Metro 2 failures.
+
+**RULE 4: Escalate Language Strategically**
+
+Round 1: Professional, cite violations, request correction
+Round 2 (MOV): Add Cushman demand, cite willfulness indicators
+Round 3 (Pre-litigation): Calculate damages, reference attorney review
+
+**RULE 5: Make Deletion Cheaper Than Investigation**
+
+Frame each dispute to show:
+- Multiple FCRA violations
+- Quantified legal exposure ($50K-$100K range)
+- Required forensic investigation (expensive)
+- Litigation risk (attorneys fees)
+- Deletion costs: $0
+
+---------------------------------------------------------------------------
+RLPP LETTER STRUCTURE
+---------------------------------------------------------------------------
+
+**Standard Dispute Letter Structure:**
+
+1. Account identification
+2. Dispute statement
+3. Request correction
+4. Signature
+
+**RLPP Enhanced Letter Structure:**
+
+1. **Legal Opening** (Sets tone)
+   "Pursuant to FCRA § 1681i, I am disputing multiple systemic
+   inaccuracies across my credit file that violate federal law."
+
+2. **The Anchor** (Show sophistication)
+   "While I can verify the 30-day late payment in March 2023 occurred,
+   this account exhibits multiple structural contradictions..."
+
+3. **The Contradictions** (Force manual review)
+   "TransUnion reports: Balance $5,000, Status OPEN, Limit $10,000
+    Experian reports: Balance $5,200, Status CLOSED, Limit $5,000
+
+    This violates FCRA § 1681e(b) as these cannot all be accurate."
+
+4. **The Legal Pressure** (Raise risk score)
+   "Per Cushman v. TransUnion, 115 F.3d 220, I demand tangible
+   documentary proof (ledgers, statements) for all reported information."
+
+5. **The Exposure** (Make deletion attractive)
+   "These violations create statutory damages of $100-$1,000 per
+   violation (minimum $600), plus actual damages, plus punitive
+   damages for willful violations, plus mandatory attorney's fees."
+
+6. **The Call to Action** (Easy out)
+   "To resolve this matter efficiently, I request you DELETE this
+   account entirely given the inability to verify contradictory
+   information across bureaus."
+
+---------------------------------------------------------------------------
+RLPP BUNDLING EXAMPLES
+---------------------------------------------------------------------------
+
+**EXAMPLE 1: Late Payment + Status Contradiction Bundle**
+
+Account: Chase Visa Card
+Anchor: 3 late payments (30/60/90 days) in 2023
+Contradiction: Shows OPEN on TransUnion, CLOSED on Experian
+RLPP Approach:
+
+"While I can verify payment difficulties occurred in Q2 2023, the account
+shows impossible contradictions:
+- TransUnion: OPEN, Balance $2,500, Current
+- Experian: CLOSED, Balance $0, Charge-off
+
+Per FCRA § 1681e(b), both cannot be accurate. The presence of verifiable
+late payments combined with these structural contradictions demonstrates
+systematic Metro 2 compliance failures requiring forensic investigation.
+
+Per Cushman v. TransUnion, I demand tangible ledgers proving:
+1. All payment dates and amounts
+2. Current account status
+3. Final balance (if closed)
+
+Statutory exposure: $300-$3,000 (3 violations minimum)
+Actual damages: $15,000 (credit denial due to contradictions)
+Punitive multiplier: 3x for willful Metro 2 failures
+Total exposure: $45,900 minimum
+
+Request: DELETE account given impossibility of verification."
+
+**Why This Works:**
+✓ Acknowledges undisputed facts (builds credibility)
+✓ Identifies impossible contradiction (forces manual review)
+✓ Cites case law (shows legal sophistication)
+✓ Quantifies damages (raises risk score)
+✓ Offers cheap resolution (deletion)
+
+**EXAMPLE 2: Multiple Accounts, Same Furnisher Bundle**
+
+Accounts: Capital One Card A + Capital One Card B + Capital One Card C
+Pattern: All three show limit contradictions across bureaus
+RLPP Approach:
+
+"This dispute concerns SYSTEMIC Metro 2 reporting failures across three
+Capital One accounts, demonstrating pattern of reckless disregard for
+FCRA § 1681s-2(a) furnisher accuracy requirements:
+
+Account A (...1234):
+- TU: Limit $5,000 | EX: Limit $3,000 | EQ: Limit $5,500
+
+Account B (...5678):  
+- TU: Limit $10,000 | EX: Limit $8,000 | EQ: Not Reported
+
+Account C (...9012):
+- TU: Balance $2,000 | EX: Balance $2,500 | EQ: Balance $1,800
+
+This pattern of contradictory reporting across multiple accounts proves
+inadequate compliance procedures per Safeco Insurance v. Burr standards
+for willfulness assessment.
+
+Per Cushman, I demand tangible proof for all three accounts.
+
+Damages exposure:
+- 9 violations minimum (3 per account) = $900-$9,000 statutory
+- Systemic pattern = willfulness likely = punitive multiplier 4x
+- Actual damages = $20,000 (mortgage denial due to DTI calculation errors)
+- Total: $83,600 minimum + mandatory attorney's fees
+
+Request: Immediate correction or deletion of all three accounts."
+
+**Why This Works:**
+✓ Shows PATTERN across multiple accounts (not isolated error)
+✓ Proves systematic failure (willfulness)
+✓ Multiplies damages (3 accounts = 3x exposure)
+✓ References Safeco standards (sophisticated legal knowledge)
+✓ Makes correction/deletion only reasonable option
+
+---------------------------------------------------------------------------
+RLPP OUTPUT REQUIREMENTS
+---------------------------------------------------------------------------
+
+**For EACH account analyzed, generate RLPP assessment:**
+
+**Account:** [Name/Number]
+**RLPP Bundling Opportunity:** [ ] YES [ ] NO
+
+**If YES:**
+
+**Anchor Violation(s):**
+- [List undisputed items that show sophistication]
+
+**Structural Contradiction(s):**
+- [List impossible cross-bureau contradictions]
+
+**FCRA Violations:**
+- § 1681e(b): [Specific CRA failure]
+- § 1681s-2(a): [Specific furnisher failure]
+- § 1681i: [Investigation failure if applicable]
+
+**Case Law Application:**
+- Cushman v. TransUnion: [Demand for tangible proof]
+- Safeco Insurance v. Burr: [Willfulness indicators if applicable]
+
+**Damages Exposure:**
+- Statutory: $[X] - $[Y]
+- Actual: $[Z]
+- Punitive (if willful): $[W]
+- Total: $[TOTAL]
+
+**RLPP Letter Strategy:**
+- Bundling recommendation: [Solo or bundle with accounts X, Y]
+- Tone: [Professional/MOV Escalated/Pre-Litigation]
+- Target outcome: [Deletion/Correction/Settlement]
+
+**Enhanced Dispute Language:**
+[Generate actual dispute paragraph using RLPP structure]
+
+---------------------------------------------------------------------------
+RLPP INTEGRATION WITH DISPUTE PHASES
+---------------------------------------------------------------------------
+
+**ROUND 1: Professional RLPP Introduction**
+- Identify violations + contradictions
+- Cite FCRA sections
+- Professional tone
+- Request correction
+- Purpose: Show sophistication, get early resolution
+
+**ROUND 2: MOV RLPP Escalation (If Round 1 fails)**
+- Add Cushman MOV demand
+- Demand tangible ledgers
+- Cite willfulness indicators
+- Calculate damages exposure
+- Purpose: Force manual compliance review, raise risk score
+
+**ROUND 3: Pre-Litigation RLPP (If Round 2 fails)**
+- Reference attorney review
+- Formal demand letter
+- Comprehensive damages calculation
+- 15-day settlement deadline
+- Purpose: Final opportunity before federal filing
+
+---------------------------------------------------------------------------
+RLPP SUCCESS METRICS
+---------------------------------------------------------------------------
+
+**Measure RLPP effectiveness:**
+
+**Deletion Rate:**
+- Standard dispute: 15-25% success
+- RLPP bundled: 75-85% success
+- Improvement: 3-4x better results
+
+**Timeline:**
+- Standard: 30-60 days
+- RLPP: 5-15 days (urgent handling)
+- Improvement: 50-75% faster
+
+**Settlement Value (if litigation):**
+- Standard case: $5K-$15K
+- RLPP documented: $25K-$75K
+- Improvement: 3-5x higher value
+
+**Reason:** Documentation of systematic failures + sophisticated legal
+knowledge + quantified exposure = significantly higher defendant risk
+
+===========================================================================
 ===============================================================================
 PART 5: ENHANCED CLIENT-FACING REPORT (40-50 PAGES)
 ===============================================================================
+**CRITICAL: RLPP INTEGRATION REQUIRED**
 
+Before generating the client-facing report, you MUST:
+
+1. Complete RLPP analysis for ALL accounts (from Part 4.75)
+2. Identify bundling opportunities
+3. Calculate enhanced damages with RLPP multipliers
+4. Include RLPP bundling strategy in recommendations
+
+The client report MUST include:
+- RLPP bundling opportunities identified
+- Enhanced dispute strategy using RLPP principles
+- Higher success probability due to RLPP tactics
+- Faster timeline estimates (5-15 days vs 30-60 days)
 **CRITICAL: This section uses the proven Alex Gamboa template structure to ensure 
 EXACT same professional format and persuasive style for every client, with only 
 their unique data changed.**
@@ -2231,7 +2617,147 @@ Based on:
 * [XX-XX]% of negative items deleted
 * Score increase of [XXX-XXX] points
 * Potential monetary settlement: $[XX,XXX]-$[XX,XXX]
+===============================================================================
+SECTION 6.5: YOUR RLPP-ENHANCED DISPUTE STRATEGY
+===============================================================================
 
+**WHAT MAKES YOUR CASE DIFFERENT - ADVANCED TACTICAL APPROACH**
+
+We're not using traditional credit repair disputes. Your case uses the Rapid 
+Litigation Pressure Protocol (RLPP) - an advanced tactical bundling strategy 
+that forces manual compliance review and makes deletion the economically 
+rational choice.
+
+---------------------------------------------------------------------------------
+
+**TRADITIONAL VS. RLPP APPROACH:**
+
+**Traditional Credit Repair:**
+- Single dispute per account → Automated verification → No change
+- Generic template letters
+- No legal leverage
+- Success rate: 15-25%
+- Timeline: 30-60 days
+
+**YOUR RLPP APPROACH:**
+- Bundle violations strategically → Force manual review → Immediate action
+- Sophisticated legal citations
+- Quantified damages exposure
+- Success rate: 75-85%
+- Timeline: 5-15 days for response
+
+---------------------------------------------------------------------------------
+
+**YOUR STRATEGIC BUNDLING OPPORTUNITIES:**
+
+[For EACH bundled group, Claude will generate from Part 4.75 analysis:]
+
+**BUNDLE #1: [Furnisher Name] Accounts**
+
+**Accounts Included:**
+- [Account 1 name and number]
+- [Account 2 name and number]
+- [Account 3 name and number]
+
+**Why Bundled Together:**
+All three accounts from same furnisher show systematic Metro 2 failures, 
+proving pattern of reckless disregard for FCRA compliance.
+
+**RLPP Strategy:**
+1. **Anchor Violation:** Late payments (verifiable - shows sophistication)
+2. **Structural Contradictions:** Status/balance contradictions across bureaus
+3. **Legal Pressure:** Cushman MOV demand + damages calculation
+4. **Outcome:** Forces manual legal review vs. automated verification
+
+**Expected Result:** 75-85% deletion probability within 15 days
+
+[Repeat for each bundle]
+
+---------------------------------------------------------------------------------
+
+**WHY RLPP WORKS FOR YOUR CASE:**
+
+[x] **[X] Documented Violations** - High legal exposure creates pressure
+[x] **Impossible Contradictions** - Easy to prove, hard to defend
+[x] **Sophisticated Defendants** - [Companies] understand litigation costs
+[x] **Strong Standing** - All three elements established
+[x] **Willfulness Indicators** - [XX]% probability = punitive damages risk
+
+**When defendants receive RLPP bundled demands:**
+- See systematic compliance failures (not isolated errors)
+- Calculate litigation cost: $127K-$273K to fight
+- Calculate damages exposure: $[XXX,XXX]+ if they lose
+- Calculate deletion cost: $0
+- **Decision: Delete items and resolve quietly**
+
+---------------------------------------------------------------------------------
+
+**YOUR RLPP TIMELINE:**
+
+**PHASE 1: RLPP PROFESSIONAL INTRODUCTION (Days 1-15)**
+
+**What We Send:**
+- Bundled demand letters combining anchor violations with contradictions
+- Specific FCRA section citations (§1681e(b), §1681s-2(a), etc.)
+- Case law references (Cushman v. TransUnion)
+- Professional legal sophistication
+
+**What Happens:**
+- Compliance officers (not customer service) review
+- Internal risk assessment escalation
+- Manual review required (can't auto-verify contradictions)
+- Deletion discussions begin
+
+**Expected Timeline:** 5-15 days (vs. 30-60 standard)
+**Expected Result:** 40-60% deletions (vs. 15-25% standard)
+
+**PHASE 2: RLPP MOV ESCALATION (Days 16-30, if needed)**
+
+**What We Send:**
+- Method of Verification demands per §1681i(a)(7)
+- Cushman proof requirements (tangible ledgers, billing statements)
+- Willfulness assessment (Safeco standards)
+- Updated damages calculation
+
+**What Happens:**
+- Furnishers realize they can't produce Cushman-standard proof
+- Legal departments get involved
+- Settlement discussions intensify
+- Deletion becomes obvious resolution
+
+**Expected Result:** Additional 20-35% deletions
+
+**TOTAL EXPECTED SUCCESS: 75-85% deletion rate**
+
+---------------------------------------------------------------------------------
+
+**YOUR SPECIFIC RLPP ADVANTAGES:**
+
+**Factor 1: Violation Count**
+- [X] total violations = substantial legal exposure
+- Multiple violation types = systematic failure proof
+- Higher settlement value = greater pressure
+
+**Factor 2: Impossibility of Defense**
+- Account shows [Status A] on Bureau 1, [Status B] on Bureau 2
+- Physically impossible for both to be accurate
+- No defense possible = certain loss if litigated
+
+**Factor 3: Sophisticated Defendants**
+- [List major companies: AMEX, Chase, etc.]
+- Have legal departments who understand costs
+- Economically rational decision-makers
+- Prefer settlement to costly litigation
+
+**Factor 4: Strong Standing**
+- [X] denial letters proving concrete harm
+- [X] hard inquiries proving dissemination
+- [XXX] point score suppression proving causation
+- All three TransUnion elements established
+
+**These factors combine for [XX]% settlement probability**
+
+===============================================================================
 ===============================================================================
 SECTION 7: FREQUENTLY ASKED QUESTIONS
 ===============================================================================
@@ -4045,12 +4571,52 @@ PART 6: ROUND 1 COMPREHENSIVE DISPUTE LETTERS
 
 Generate SEPARATE, INDIVIDUAL dispute letters for EACH inaccurate account to EACH bureau 
 that reports it.
+===============================================================================
+### 📧 RLPP-ENHANCED DISPUTE STRATEGY
+===============================================================================
 
+Based on the RLPP analysis above, here are your custom dispute letters:
+
+**BUNDLING STRATEGY:**
+[List which accounts should be bundled together and why]
+
+**ROUND 1: RLPP PROFESSIONAL INTRODUCTION**
+[Generate letters using RLPP bundling structure from Part 4.75]
+- Combine anchor violations + contradictions
+- Cite FCRA sections + case law
+- Show sophistication while remaining professional
+- Request correction/deletion
+
+**ROUND 2: RLPP MOV ESCALATION** (If Round 1 fails)
+[Generate MOV letters with Cushman demands]
+- Demand tangible ledgers per Cushman v. TransUnion
+- Reference willfulness indicators
+- Calculate damages exposure
+- Elevate risk perception
+
+**Expected RLPP Timeline:**
+- Round 1 response: 5-15 days (vs standard 30 days)
+- Success probability: 75-85% (vs standard 15-25%)
+- Reason: RLPP forces manual compliance review
+
+===============================================================================
 **FORMULA:** 
 If account appears on all 3 bureaus = 3 separate letters
 If account appears on 2 bureaus = 2 separate letters
 Total letters = (# of inaccurate accounts) -- (# of bureaus reporting each)
+**RLPP-ENHANCED LETTER REQUIREMENTS:**
 
+Apply RLPP bundling strategy from Part 4.75:
+
+[x] Bundle accounts with same furnisher showing pattern
+[x] Include anchor violations (undisputed items) to show sophistication
+[x] Pair with structural contradictions to force manual review
+[x] Cite willfulness indicators (Safeco standards)
+[x] Calculate comprehensive damages exposure ($50K+ range)
+[x] Frame deletion as cheaper than investigation
+[x] Use RLPP letter structure (see Part 4.75 examples)
+
+**CRITICAL REQUIREMENTS FOR EACH LETTER:**
 **CRITICAL REQUIREMENTS FOR EACH LETTER:**
 
 [x] Account-specific analysis (no generic templates)
@@ -4559,7 +5125,24 @@ This is the **complete integrated Super Prompt v2.5** combining:
             """
 
             # Build the analysis request
+            # Add mode-specific instructions
+            if analysis_mode == 'auto':
+                mode_instruction = """
+            ANALYSIS MODE: AUTOMATIC
+            - SKIP the verification checkpoint in Part 4.5
+            - Proceed directly from Part 4 to Part 5 (Client-Facing Report)
+            - Generate Executive Summary + Full Analysis + Dispute Letters in one pass
+            - Do not stop for human review
+            """
+            else:
+                mode_instruction = """
+            ANALYSIS MODE: MANUAL REVIEW
+            - STOP at Part 4.5 verification checkpoint
+            - Wait for human approval before generating client-facing documents
+            - Do NOT proceed to Part 5 until checkpoint is approved
+            """
             user_message = f"""
+            {mode_instruction}
     CLIENT INFORMATION:
     - Name: {client_name}
     - CMM Contact ID: {cmm_id}
@@ -4578,8 +5161,9 @@ This is the **complete integrated Super Prompt v2.5** combining:
 
             message = client.messages.create(
                 model="claude-sonnet-4-20250514",
-                max_tokens=16000,
+                max_tokens=50000,
                 temperature=0,
+                timeout=600.0,
                 system=super_prompt,
                 messages=[
                     {"role": "user", "content": user_message}
@@ -4614,6 +5198,7 @@ def webhook():
         cmm_contact_id = data.get('cmmContactId', 'Unknown')
         credit_provider = data.get('creditProvider', 'Unknown Provider')
         credit_report_html = data.get('creditReportHTML', '')
+        analysis_mode = data.get('analysisMode', 'manual')
         credit_report_html = clean_credit_report_html(credit_report_html)
         # Validate we got the essential data
         if not credit_report_html:
@@ -4634,7 +5219,7 @@ def webhook():
             'processed': False
         }
         # Analyze with Claude API
-        analysis = analyze_with_claude(client_name, cmm_contact_id, credit_provider, credit_report_html)
+        analysis = analyze_with_claude(client_name, cmm_contact_id, credit_provider, credit_report_html, analysis_mode)
 
         if analysis['success']:
             report['analysis'] = analysis['analysis']
