@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCRA Automation - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            min-height: 200px;
+            font-family: monospace;
+            resize: vertical;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .success {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .error {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .clients-list {
+            margin-top: 30px;
+        }
+        
+        .client-card {
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .client-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .client-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .client-card p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .download-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .download-btn {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .download-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 FCRA Automation - Admin Dashboard</h1>
+            <p>AI-Powered FCRA Analysis & Dispute Letter Generation with RLPP Strategy</p>
+        </div>
+        
+        <div class="main-content">
+            <h2 style="margin-bottom: 25px; color: #333;">Generate Analysis & Dispute Letters</h2>
+            
+            <form id="analysisForm">
+                <div class="form-group">
+                    <label for="clientName">Client Name *</label>
+                    <input type="text" id="clientName" name="clientName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clientEmail">Client Email</label>
+                    <input type="email" id="clientEmail" name="clientEmail">
+                </div>
+                
+                <div class="form-group">
+                    <label for="creditProvider">Credit Provider</label>
+                    <select id="creditProvider" name="creditProvider">
+                        <option value="IdentityIQ.com">IdentityIQ.com</option>
+                        <option value="MyScoreIQ.com">MyScoreIQ.com</option>
+                        <option value="SmartCredit.com">SmartCredit.com</option>
+                        <option value="MyFreeScoreNow.com">MyFreeScoreNow.com</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="creditReportHTML">Credit Report HTML *</label>
+                    <textarea id="creditReportHTML" name="creditReportHTML" required placeholder="Paste the full HTML from the credit report here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="disputeRound">Dispute Round *</label>
+                    <select id="disputeRound" name="disputeRound">
+                        <option value="1">Round 1 - Initial Dispute</option>
+                        <option value="2">Round 2 - Escalation</option>
+                        <option value="3">Round 3 - Advanced Escalation</option>
+                        <option value="4">Round 4 - Final Notice</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="analysisMode">Analysis Mode *</label>
+                    <select id="analysisMode" name="analysisMode">
+                        <option value="auto">Automatic (AI Selects Items)</option>
+                        <option value="manual">Manual (Review Required)</option>
+                    </select>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">🔍 Generate Analysis & Letters</button>
+                    <button type="button" class="btn-secondary" onclick="window.location.href='/admin/clients'">📋 View All Clients</button>
+                </div>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="color: #667eea; font-size: 16px; font-weight: 600;">Analyzing credit report with Claude AI...</p>
+                <p style="color: #999; font-size: 14px; margin-top: 10px;">This may take 30-60 seconds</p>
+            </div>
+            
+            <div class="results" id="results">
+                <h3 style="margin-bottom: 15px;">Results</h3>
+                <div id="resultContent"></div>
+                <div id="downloadButtons" class="download-buttons"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = {
+                clientName: formData.get('clientName'),
+                clientEmail: formData.get('clientEmail'),
+                creditProvider: formData.get('creditProvider'),
+                creditReportHTML: formData.get('creditReportHTML'),
+                disputeRound: parseInt(formData.get('disputeRound')),
+                analysisMode: formData.get('analysisMode')
+            };
+            
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('results').classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('results').classList.add('show');
+                
+                if (result.success) {
+                    document.getElementById('resultContent').innerHTML = `
+                        <p class="success">✅ Analysis completed successfully!</p>
+                        <p style="margin-top: 10px;"><strong>Client:</strong> ${result.client_name}</p>
+                        <p><strong>Round:</strong> ${result.round}</p>
+                        <p><strong>Cost:</strong> $${result.cost.toFixed(2)}</p>
+                        <p><strong>Analysis ID:</strong> ${result.analysis_id}</p>
+                    `;
+                    
+                    let downloadHTML = '<h4 style="margin-bottom: 10px;">Download Letters:</h4>';
+                    result.letters.forEach(letter => {
+                        downloadHTML += `
+                            <a href="/api/download/${letter.letter_id}" class="download-btn" target="_blank">
+                                📄 ${letter.bureau} - Round ${letter.round}
+                            </a>
+                        `;
+                    });
+                    
+                    document.getElementById('downloadButtons').innerHTML = downloadHTML;
+                } else {
+                    document.getElementById('resultContent').innerHTML = `
+                        <p class="error">❌ Error: ${result.error}</p>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('results').classList.add('show');
+                document.getElementById('resultContent').innerHTML = `
+                    <p class="error">❌ Error: ${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

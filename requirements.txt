@@ -3,3 +3,8 @@ Flask-CORS==4.0.0
 Werkzeug==3.0.1
 anthropic==0.74.1
 beautifulsoup4==4.12.3
+psycopg2-binary
+python-docx
+reportlab
+requests
+sqlalchemy

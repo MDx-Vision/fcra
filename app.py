@@ -5,15 +5,28 @@ ANTHROPIC_API_KEY = os.environ['FCRA Automation Secure']
 from anthropic import Anthropic
 
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter
+from pdf_generator import LetterPDFGenerator
+import json
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 # Store received credit reports
 credit_reports = []
+
+# Initialize PDF generator
+pdf_gen = LetterPDFGenerator()
+
+# Initialize database
+try:
+    init_db()
+    print("✅ Database initialized successfully")
+except Exception as e:
+    print(f"⚠️  Database initialization error: {e}")
 
 
 @app.route('/')
@@ -6220,6 +6233,226 @@ def view_analysis(report_id):
         </html>
         """
     return "Report not found", 404
+
+
+@app.route('/admin')
+def admin_dashboard():
+    """Admin dashboard for generating analyses and letters"""
+    return render_template('admin.html')
+
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze_and_generate_letters():
+    """Process credit report, run AI analysis, generate PDF letters"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        
+        client_name = data.get('clientName')
+        client_email = data.get('clientEmail', '')
+        credit_provider = data.get('creditProvider', 'Unknown')
+        credit_report_html = data.get('creditReportHTML', '')
+        dispute_round = data.get('disputeRound', 1)
+        analysis_mode = data.get('analysisMode', 'auto')
+        
+        if not client_name or not credit_report_html:
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        # Use existing analyze_with_claude function
+        result = analyze_with_claude(
+            client_name=client_name,
+            cmm_id=data.get('cmmContactId', ''),
+            provider=credit_provider,
+            credit_report_html=credit_report_html,
+            analysis_mode=analysis_mode,
+            dispute_round=dispute_round
+        )
+        
+        if not result.get('success'):
+            return jsonify({'success': False, 'error': result.get('error', 'Analysis failed')}), 500
+        
+        # Create or get client
+        client = db.query(Client).filter_by(name=client_name).first()
+        if not client:
+            client = Client(name=client_name, email=client_email)
+            db.add(client)
+            db.commit()
+            db.refresh(client)
+        
+        # Save credit report
+        credit_report_record = CreditReport(
+            client_id=client.id,
+            client_name=client_name,
+            credit_provider=credit_provider,
+            report_html=credit_report_html,
+            report_date=datetime.now()
+        )
+        db.add(credit_report_record)
+        db.commit()
+        db.refresh(credit_report_record)
+        
+        # Save analysis
+        analysis_record = Analysis(
+            credit_report_id=credit_report_record.id,
+            client_id=client.id,
+            client_name=client_name,
+            dispute_round=dispute_round,
+            analysis_mode=analysis_mode,
+            full_analysis=result.get('analysis', ''),
+            cost=result.get('cost', 0),
+            tokens_used=result.get('total_tokens', 0),
+            cache_read=result.get('cache_read', False)
+        )
+        db.add(analysis_record)
+        db.commit()
+        db.refresh(analysis_record)
+        
+        # Extract and generate PDF letters
+        analysis_text = result.get('analysis', '')
+        letters_generated = []
+        
+        # Parse individual letters using START/END markers
+        import re
+        
+        # Find all individual letters
+        letter_pattern = r"==.*?START OF DISPUTE LETTER: ([A-Za-z]+) - (.+?)==(.*?)==.*?END OF DISPUTE LETTER:"
+        all_letters = re.findall(letter_pattern, analysis_text, re.DOTALL | re.IGNORECASE)
+        
+        # Group letters by bureau
+        bureau_letters = {'Equifax': [], 'Experian': [], 'TransUnion': []}
+        for match in all_letters:
+            bureau_name = match[0].strip().title()
+            account_name = match[1].strip()
+            letter_content = match[2].strip()
+            
+            if bureau_name in bureau_letters:
+                bureau_letters[bureau_name].append({
+                    'account': account_name,
+                    'content': letter_content
+                })
+        
+        # Generate one PDF per bureau combining all letters for that bureau
+        for bureau, letters in bureau_letters.items():
+            if not letters:
+                continue
+            
+            # Combine all letters for this bureau
+            combined_content = f"\n\n{'='*80}\n\n".join([
+                f"ACCOUNT: {letter['account']}\n\n{letter['content']}" 
+                for letter in letters
+            ])
+            
+            # Generate PDF
+            filename = f"{client_name.replace(' ', '_')}_{bureau}_Round{dispute_round}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            output_path = os.path.join('static', 'generated_letters', filename)
+            
+            try:
+                pdf_gen.generate_dispute_letter_pdf(
+                    letter_content=combined_content,
+                    client_name=client_name,
+                    bureau=bureau,
+                    round_number=dispute_round,
+                    output_path=output_path
+                )
+                
+                # Save letter record
+                letter_record = DisputeLetter(
+                    analysis_id=analysis_record.id,
+                    client_id=client.id,
+                    client_name=client_name,
+                    bureau=bureau,
+                    round_number=dispute_round,
+                    letter_content=combined_content,
+                    file_path=output_path
+                )
+                db.add(letter_record)
+                db.commit()
+                db.refresh(letter_record)
+                
+                letters_generated.append({
+                    'letter_id': letter_record.id,
+                    'bureau': bureau,
+                    'round': dispute_round,
+                    'filepath': output_path,
+                    'letter_count': len(letters)
+                })
+                
+                print(f"✅ Generated PDF for {bureau} with {len(letters)} letter(s)")
+            except Exception as e:
+                print(f"❌ Error generating PDF for {bureau}: {e}")
+        
+        return jsonify({
+            'success': True,
+            'client_name': client_name,
+            'round': dispute_round,
+            'cost': result.get('cost', 0),
+            'analysis_id': analysis_record.id,
+            'letters': letters_generated
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in analyze_and_generate_letters: {e}")
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/download/<int:letter_id>')
+def download_letter(letter_id):
+    """Download a generated PDF letter"""
+    db = get_db()
+    try:
+        letter = db.query(DisputeLetter).filter_by(id=letter_id).first()
+        
+        if not letter:
+            return jsonify({'error': 'Letter not found'}), 404
+        
+        file_path_str = str(letter.file_path)
+        if not os.path.exists(file_path_str):
+            return jsonify({'error': 'PDF file not found'}), 404
+        
+        return send_file(
+            file_path_str,
+            as_attachment=True,
+            download_name=f"{letter.client_name}_{letter.bureau}_Round{letter.round_number}.pdf"
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/admin/clients')
+def view_all_clients():
+    """View all clients and their analyses"""
+    db = get_db()
+    try:
+        clients = db.query(Client).order_by(Client.created_at.desc()).all()
+        
+        clients_data = []
+        for client in clients:
+            analyses = db.query(Analysis).filter_by(client_id=client.id).order_by(Analysis.created_at.desc()).all()
+            letters = db.query(DisputeLetter).filter_by(client_id=client.id).all()
+            
+            clients_data.append({
+                'id': client.id,
+                'name': client.name,
+                'email': client.email,
+                'created_at': client.created_at.strftime('%Y-%m-%d %H:%M'),
+                'total_analyses': len(analyses),
+                'total_letters': len(letters),
+                'latest_round': analyses[0].dispute_round if analyses else 0
+            })
+        
+        return jsonify({
+            'success': True,
+            'clients': clients_data
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
 
 
 if __name__ == '__main__':
