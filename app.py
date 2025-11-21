@@ -111,6 +111,47 @@ def home():
                     <option value="CFILifePlan.com">CFILifePlan.com</option>
                 </select>
             </div>
+
+            <div class="form-group">
+                <label>DISPUTE ROUND <span class="required">*</span></label>
+                <select id="disputeRound" required>
+                    <option value="1">Round 1 - Initial Dispute (New Client)</option>
+                    <option value="2">Round 2 - MOV Request / Follow-up</option>
+                    <option value="3">Round 3 - Pre-Litigation Warning</option>
+                    <option value="4">Round 4 - Final Demand / Intent to Sue</option>
+                </select>
+                <small style="color: #7f8c8d; display: block; margin-top: 5px;">
+                    <strong>Round 1:</strong> New client - full analysis + initial strong RLPP letters<br>
+                    <strong>Round 2+:</strong> Existing client - escalated letters based on bureau responses
+                </small>
+            </div>
+
+            <div id="existingClientFields" style="display: none;">
+                <div class="form-group">
+                    <label>PREVIOUS DISPUTE LETTER(S)</label>
+                    <textarea id="previousLetters" placeholder="Paste the dispute letters you previously sent to the bureaus..."></textarea>
+                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">
+                        Copy/paste the actual letters you sent in previous rounds
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>BUREAU RESPONSE(S)</label>
+                    <textarea id="bureauResponses" placeholder="Paste bureau responses here, or type 'NO RESPONSE' if they ignored you..."></textarea>
+                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">
+                        Include all responses from Experian, TransUnion, and Equifax
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label>DISPUTE TIMELINE</label>
+                    <input type="text" id="disputeTimeline" placeholder="e.g., Sent 10/15/25, Response 11/1/25">
+                    <small style="color: #7f8c8d; display: block; margin-top: 5px;">
+                        Dates sent and received for violation tracking
+                    </small>
+                </div>
+            </div>
+
 <div class="form-group">
     <label>ANALYSIS MODE <span class="required">*</span></label>
     <select id="analysisMode" required>
@@ -133,6 +174,18 @@ def home():
     </div>
 
     <script>
+        // Show/hide existing client fields based on dispute round
+        document.getElementById('disputeRound').addEventListener('change', function() {
+            const round = parseInt(this.value);
+            const existingFields = document.getElementById('existingClientFields');
+            
+            if (round > 1) {
+                existingFields.style.display = 'block';
+            } else {
+                existingFields.style.display = 'none';
+            }
+        });
+
         document.getElementById('form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = e.target.querySelector('button');
@@ -142,16 +195,27 @@ def home():
             btn.textContent = '⏳ Sending...';
 
             try {
+                const disputeRound = parseInt(document.getElementById('disputeRound').value);
+                const payload = {
+                    clientName: document.getElementById('clientName').value,
+                    cmmContactId: document.getElementById('cmmContactId').value,
+                    creditProvider: document.getElementById('creditProvider').value,
+                    disputeRound: disputeRound,
+                    analysisMode: document.getElementById('analysisMode').value,
+                    creditReportHTML: document.getElementById('creditReportHTML').value
+                };
+
+                // Add existing client data for Round 2+
+                if (disputeRound > 1) {
+                    payload.previousLetters = document.getElementById('previousLetters').value;
+                    payload.bureauResponses = document.getElementById('bureauResponses').value;
+                    payload.disputeTimeline = document.getElementById('disputeTimeline').value;
+                }
+
                 const response = await fetch('/webhook', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        clientName: document.getElementById('clientName').value,
-                        cmmContactId: document.getElementById('cmmContactId').value,
-                        creditProvider: document.getElementById('creditProvider').value,
-                        analysisMode: document.getElementById('analysisMode').value,
-                        creditReportHTML: document.getElementById('creditReportHTML').value
-                    })
+                    body: JSON.stringify(payload)
                 });
 
                 const result = await response.json();
@@ -161,6 +225,7 @@ def home():
                     status.innerHTML = '✅ Success! Report received for ' + result.client;
                     status.style.display = 'block';
                     document.getElementById('form').reset();
+                    document.getElementById('existingClientFields').style.display = 'none';
                 } else {
                     throw new Error(result.error);
                 }
@@ -210,8 +275,12 @@ def analyze_with_claude(client_name,
                         cmm_id,
                         provider,
                         credit_report_html,
-                        analysis_mode='manual'):
-    """Send credit report to Claude for FCRA analysis"""
+                        analysis_mode='manual',
+                        dispute_round=1,
+                        previous_letters='',
+                        bureau_responses='',
+                        dispute_timeline=''):
+    """Send credit report to Claude for FCRA analysis with dispute round context"""
     try:
         # Load SUPER_PROMPT from project files
         super_prompt = """
@@ -5589,6 +5658,45 @@ This is the **complete integrated Super Prompt v2.5** combining:
 
             """
 
+        # Build dispute round context
+        round_names = {
+            1: "Round 1 - Initial Dispute (RLPP Strong Language)",
+            2: "Round 2 - MOV Request / Follow-up",
+            3: "Round 3 - Pre-Litigation Warning", 
+            4: "Round 4 - Final Demand / Intent to Sue"
+        }
+        
+        dispute_context = ""
+        if dispute_round > 1 and (previous_letters or bureau_responses):
+            dispute_context = f"""
+
+        ════════════════════════════════════════════════════════════════
+        🔥 PREVIOUS DISPUTE CONTEXT - USE THIS TO BUILD STRONGER LETTERS
+        ════════════════════════════════════════════════════════════════
+
+        TIMELINE: {dispute_timeline if dispute_timeline else 'Not provided'}
+
+        PREVIOUS LETTERS SENT:
+        {previous_letters if previous_letters else 'Not provided'}
+
+        BUREAU RESPONSES RECEIVED:
+        {bureau_responses if bureau_responses else 'NO RESPONSE - This is a §611(a)(7) violation!'}
+
+        CRITICAL INSTRUCTIONS FOR ROUND {dispute_round} LETTERS:
+        1. QUOTE their exact responses to show contradictions
+        2. CITE NEW VIOLATIONS from their handling of the dispute:
+           - Failed to investigate properly (§611)
+           - Failed to provide MOV (§611(a)(7))
+           - Reinserted without notice (§611(a)(5))
+           - Ignored dispute (30-day violation)
+        3. REFERENCE specific dates from timeline above
+        4. PROVE pattern of willful disregard
+        5. ESCALATE language appropriately for Round {dispute_round}
+        6. All language remains STRONG (RLPP protocol) - escalation is in specificity & consequences
+        
+        ════════════════════════════════════════════════════════════════
+        """
+
         # Build the analysis request
         # Build the user message with EXPLICIT mode instruction AT THE TOP
         if analysis_mode == 'auto':
@@ -5601,7 +5709,7 @@ This is the **complete integrated Super Prompt v2.5** combining:
         1. Complete ALL parts of the analysis (Parts 0-4)
         2. When you reach Part 4.5, READ the checkpoint instructions but DO NOT STOP
         3. IMMEDIATELY proceed to Part 5 and generate the complete 40-50 page client report
-        4. Generate ALL dispute letters in Parts 6-7
+        4. Generate dispute letters for {round_names.get(dispute_round, 'Round ' + str(dispute_round))}
         5. DO NOT wait for human approval
         6. Output the complete analysis in ONE response
 
@@ -5614,12 +5722,14 @@ This is the **complete integrated Super Prompt v2.5** combining:
         - Name: {client_name}
         - CMM Contact ID: {cmm_id}
         - Credit Provider: {provider}
+        - Dispute Round: {round_names.get(dispute_round, 'Round ' + str(dispute_round))}
+        {dispute_context}
 
         CREDIT REPORT HTML:
         {credit_report_html}
 
         Please analyze this credit report for FCRA violations using the framework provided.
-        Generate the COMPLETE analysis including the full 40-50 page client report.
+        Generate {round_names.get(dispute_round, 'Round ' + str(dispute_round))} letters with strong RLPP language.
         """
         else:
             user_message = f"""
@@ -5643,12 +5753,15 @@ This is the **complete integrated Super Prompt v2.5** combining:
         - Name: {client_name}
         - CMM Contact ID: {cmm_id}
         - Credit Provider: {provider}
+        - Dispute Round: {round_names.get(dispute_round, 'Round ' + str(dispute_round))}
+        {dispute_context}
 
         CREDIT REPORT HTML:
         {credit_report_html}
 
         Please analyze this credit report for FCRA violations using the framework provided.
         STOP at Part 4.5 verification checkpoint and await human approval.
+        When generating letters, use {round_names.get(dispute_round, 'Round ' + str(dispute_round))} escalation level.
         """
 
         # Call Claude API
@@ -5707,6 +5820,10 @@ def webhook():
         credit_provider = data.get('creditProvider', 'Unknown Provider')
         credit_report_html = data.get('creditReportHTML', '')
         analysis_mode = data.get('analysisMode', 'manual')
+        dispute_round = int(data.get('disputeRound', 1))
+        previous_letters = data.get('previousLetters', '')
+        bureau_responses = data.get('bureauResponses', '')
+        dispute_timeline = data.get('disputeTimeline', '')
         credit_report_html = clean_credit_report_html(credit_report_html)
         # Validate we got the essential data
         if not credit_report_html:
@@ -5727,9 +5844,17 @@ def webhook():
             'processed': False
         }
         # Analyze with Claude API
-        analysis = analyze_with_claude(client_name, cmm_contact_id,
-                                       credit_provider, credit_report_html,
-                                       analysis_mode)
+        analysis = analyze_with_claude(
+            client_name=client_name,
+            cmm_id=cmm_contact_id,
+            provider=credit_provider,
+            credit_report_html=credit_report_html,
+            analysis_mode=analysis_mode,
+            dispute_round=dispute_round,
+            previous_letters=previous_letters,
+            bureau_responses=bureau_responses,
+            dispute_timeline=dispute_timeline
+        )
 
         if analysis['success']:
             report['analysis'] = analysis['analysis']
