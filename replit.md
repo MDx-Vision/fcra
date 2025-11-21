@@ -16,18 +16,19 @@ The system supports both:
 - Premium pricing justified by AI-powered comprehensive analysis
 
 ### Cost Optimization (November 21, 2025)
-**Implemented three major cost reductions:**
+**Implemented three cost reductions:**
 
-1. **Anthropic Prompt Caching** (70-90% savings)
-   - Caches the massive super_prompt (~80,000 tokens) across all requests
+1. **Anthropic Prompt Caching** (20-30% savings)
+   - Caches the system prompt (~80,000 tokens) across all requests
    - First request: Creates cache (normal cost)
-   - Subsequent requests within 5 minutes: 90% discount on cached tokens
-   - Typical savings: $0.90-2.70 per analysis
-   - Cost: ~$1-3 → ~$0.10-0.40 per analysis
+   - Subsequent requests within 5 minutes: 90% discount on cached system prompt
+   - Note: User message (containing client data + dynamic instructions) remains uncached
+   - Typical savings: $0.20-0.90 per analysis
+   - Cost: ~$1-3 → ~$0.70-2.10 per analysis
 
 2. **Batch Processing** (maximizes cache efficiency)
    - New endpoint: `/webhook/batch` for processing multiple clients
-   - All clients share the cached prompt
+   - All clients share the cached system prompt
    - Process 10 clients within 5 minutes = 9 benefit from cache
    - Perfect for bulk client onboarding
 
@@ -39,8 +40,9 @@ The system supports both:
 
 ### Expected Costs
 - **Without optimization**: $1-3 per comprehensive analysis
-- **With optimization**: $0.10-0.40 per analysis (first request creates cache)
-- **Batch of 10 clients**: ~$1.50 total ($0.15 per client average)
+- **With optimization**: $0.70-2.10 per analysis (20-30% savings)
+- **Batch of 10 clients**: ~$7-18 total (vs. $10-30 without caching)
+- **Monthly savings (100 clients)**: ~$30-90/month
 
 ## API Endpoints
 
