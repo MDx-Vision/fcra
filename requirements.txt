@@ -1,4 +1,5 @@
 Flask==3.0.0
+Flask-CORS==4.0.0
 Werkzeug==3.0.1
-Flask
-Werkzeug
+anthropic==0.74.1
+beautifulsoup4==4.12.3

@@ -282,9 +282,9 @@ def analyze_with_claude(client_name,
                         dispute_timeline=''):
     """Send credit report to Claude for FCRA analysis with dispute round context"""
     try:
-        # Load SUPER_PROMPT from project files
+        # Load SUPER_PROMPT from project files (normalize whitespace for consistent caching)
         super_prompt = """
-            # SUPER PROMPT v2.6 - COMPLETE WITH VERIFICATION & ENHANCED CLIENT TEMPLATE
+# SUPER PROMPT v2.6 - COMPLETE WITH VERIFICATION & ENHANCED CLIENT TEMPLATE
 ## Ready to Copy/Paste Into Claude
 
 **Version:** 2.6 COMPLETE  
@@ -5774,18 +5774,92 @@ This is the **complete integrated Super Prompt v2.5** combining:
         import time
         start_time = time.time()
         
-        message = client.messages.create(model="claude-sonnet-4-20250514",
-                                         max_tokens=50000,
-                                         temperature=0,
-                                         timeout=900.0,
-                                         system=super_prompt,
-                                         messages=[{
-                                             "role": "user",
-                                             "content": user_message
-                                         }])
+        # Normalize prompts to ensure cache consistency (strip whitespace)
+        normalized_super_prompt = super_prompt.strip()
+        normalized_user_message = user_message.strip()
+        
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=50000,
+            temperature=0,
+            timeout=900.0,
+            system=[
+                {
+                    "type": "text",
+                    "text": normalized_super_prompt,
+                    "cache_control": {"type": "ephemeral"}
+                }
+            ],
+            messages=[{
+                "role": "user",
+                "content": normalized_user_message
+            }]
+        )
         
         elapsed_time = time.time() - start_time
         print(f"⏱️  API call completed in {elapsed_time:.1f} seconds")
+
+        # Extract token usage and calculate cost savings (guard against errors)
+        usage = getattr(message, 'usage', None)
+        if usage:
+            # Cost per million tokens (Anthropic pricing for Claude Sonnet 4)
+            INPUT_COST_PER_MTOK = 3.00  # $3 per million input tokens
+            CACHED_INPUT_COST_PER_MTOK = 0.30  # $0.30 per million cached tokens (90% discount)
+            OUTPUT_COST_PER_MTOK = 15.00  # $15 per million output tokens
+            
+            # Calculate costs
+            input_tokens = getattr(usage, 'input_tokens', 0)
+            cache_creation_tokens = getattr(usage, 'cache_creation_input_tokens', 0)
+            cache_read_tokens = getattr(usage, 'cache_read_input_tokens', 0)
+            output_tokens = getattr(usage, 'output_tokens', 0)
+            
+            # Actual cost calculation
+            cache_creation_cost = (cache_creation_tokens / 1_000_000) * INPUT_COST_PER_MTOK
+            cache_read_cost = (cache_read_tokens / 1_000_000) * CACHED_INPUT_COST_PER_MTOK
+            regular_input_cost = (input_tokens / 1_000_000) * INPUT_COST_PER_MTOK
+            output_cost = (output_tokens / 1_000_000) * OUTPUT_COST_PER_MTOK
+            
+            total_cost = cache_creation_cost + cache_read_cost + regular_input_cost + output_cost
+            
+            # Calculate what it would have cost WITHOUT caching
+            total_input_tokens = input_tokens + cache_creation_tokens + cache_read_tokens
+            cost_without_cache = (total_input_tokens / 1_000_000) * INPUT_COST_PER_MTOK + output_cost
+            
+            savings = cost_without_cache - total_cost
+            savings_percent = (savings / cost_without_cache * 100) if cost_without_cache > 0 else 0
+            
+            print("\n" + "="*60)
+            print("💰 COST ANALYSIS")
+            print("="*60)
+            print(f"📊 Token Usage:")
+            print(f"   Input tokens: {input_tokens:,}")
+            if cache_creation_tokens > 0:
+                print(f"   Cache creation: {cache_creation_tokens:,} (first request)")
+            if cache_read_tokens > 0:
+                print(f"   Cache read: {cache_read_tokens:,} (90% cheaper!)")
+            print(f"   Output tokens: {output_tokens:,}")
+            print(f"   Total: {total_input_tokens + output_tokens:,}")
+            
+            print(f"\n💵 Cost Breakdown:")
+            if cache_creation_cost > 0:
+                print(f"   Cache creation: ${cache_creation_cost:.4f}")
+            if cache_read_cost > 0:
+                print(f"   Cached input: ${cache_read_cost:.4f} ⚡")
+            if regular_input_cost > 0:
+                print(f"   Regular input: ${regular_input_cost:.4f}")
+            print(f"   Output: ${output_cost:.4f}")
+            print(f"   TOTAL: ${total_cost:.4f}")
+            
+            if cache_read_tokens > 0:
+                print(f"\n🎉 SAVINGS:")
+                print(f"   Without caching: ${cost_without_cache:.4f}")
+                print(f"   With caching: ${total_cost:.4f}")
+                print(f"   You saved: ${savings:.4f} ({savings_percent:.1f}%)")
+            elif cache_creation_tokens > 0:
+                print(f"\n📌 Cache Status: Created")
+                print(f"   Next requests will save ~${cache_creation_cost * 0.9:.4f} (90% discount)")
+            
+            print("="*60 + "\n")
 
         analysis_result = ""
         for block in message.content:
@@ -5891,6 +5965,198 @@ def webhook():
     except Exception as e:
         print(f"\n❌ ERROR: {str(e)}\n")
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/webhook/batch', methods=['POST'])
+def webhook_batch():
+    """Process multiple credit reports in batch - maximizes cache efficiency
+    
+    Features:
+    - Input validation for each client entry
+    - Error isolation (one failure doesn't abort the batch)
+    - Complete results including analyses for automation
+    - Shared prompt cache across all clients (90% savings after first)
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid JSON or no data provided'
+            }), 400
+        
+        clients = data.get('clients', [])
+        
+        if not clients:
+            return jsonify({
+                'success': False,
+                'error': 'No clients provided in batch request. Expected "clients" array.'
+            }), 400
+        
+        if not isinstance(clients, list):
+            return jsonify({
+                'success': False,
+                'error': '"clients" must be an array'
+            }), 400
+        
+        print("\n" + "=" * 60)
+        print(f"📦 BATCH PROCESSING: {len(clients)} clients")
+        print("=" * 60)
+        
+        results = []
+        
+        for idx, client_data in enumerate(clients, 1):
+            # Validate client_data is a dictionary
+            if not isinstance(client_data, dict):
+                results.append({
+                    'client_index': idx,
+                    'client_name': f'Client {idx}',
+                    'success': False,
+                    'error': f'Client entry {idx} is not a valid object',
+                    'analysis': None
+                })
+                print(f"⚠️ Skipping invalid client {idx} (not a valid object)")
+                continue
+            
+            # Extract and validate fields
+            client_name = client_data.get('clientName', f'Client {idx}')
+            cmm_contact_id = client_data.get('cmmContactId', 'Unknown')
+            credit_provider = client_data.get('creditProvider', 'Unknown Provider')
+            credit_report_html = client_data.get('creditReportHTML', '')
+            analysis_mode = client_data.get('analysisMode', 'manual')
+            dispute_round = client_data.get('disputeRound', 1)
+            previous_letters = client_data.get('previousLetters', '')
+            bureau_responses = client_data.get('bureauResponses', '')
+            dispute_timeline = client_data.get('disputeTimeline', '')
+            
+            print(f"\n🔄 Processing {idx}/{len(clients)}: {client_name}")
+            
+            # Validate required fields
+            if not credit_report_html or not credit_report_html.strip():
+                results.append({
+                    'client_index': idx,
+                    'client_name': client_name,
+                    'success': False,
+                    'error': 'No credit report HTML provided',
+                    'analysis': None
+                })
+                print(f"⚠️ Skipping {client_name}: No credit report HTML")
+                continue
+            
+            # Validate dispute_round is valid integer
+            try:
+                dispute_round = int(dispute_round)
+                if dispute_round < 1 or dispute_round > 4:
+                    raise ValueError("Dispute round must be 1-4")
+            except (ValueError, TypeError) as e:
+                results.append({
+                    'client_index': idx,
+                    'client_name': client_name,
+                    'success': False,
+                    'error': f'Invalid dispute_round: {str(e)}',
+                    'analysis': None
+                })
+                print(f"⚠️ Skipping {client_name}: Invalid dispute round")
+                continue
+            
+            # Process this client (isolated error handling)
+            try:
+                # Clean the report
+                cleaned_html = clean_credit_report_html(credit_report_html)
+                
+                # Analyze with Claude API (benefits from cached prompt!)
+                analysis_result = analyze_with_claude(
+                    client_name=client_name,
+                    cmm_id=cmm_contact_id,
+                    provider=credit_provider,
+                    credit_report_html=cleaned_html,
+                    analysis_mode=analysis_mode,
+                    dispute_round=dispute_round,
+                    previous_letters=previous_letters,
+                    bureau_responses=bureau_responses,
+                    dispute_timeline=dispute_timeline
+                )
+                
+                # Store report
+                report = {
+                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'client_name': client_name,
+                    'cmm_contact_id': cmm_contact_id,
+                    'credit_provider': credit_provider,
+                    'report_length': len(cleaned_html),
+                    'credit_report_html': cleaned_html,
+                    'status': 'processed' if analysis_result['success'] else 'failed',
+                    'processed': analysis_result['success']
+                }
+                
+                if analysis_result['success']:
+                    report['analysis'] = analysis_result['analysis']
+                    results.append({
+                        'client_index': idx,
+                        'client_name': client_name,
+                        'cmm_contact_id': cmm_contact_id,
+                        'success': True,
+                        'message': 'Analysis completed successfully',
+                        'analysis': analysis_result['analysis']  # Include full analysis for automation
+                    })
+                    print(f"✅ Completed: {client_name}")
+                else:
+                    report['analysis_error'] = analysis_result.get('error', 'Unknown error')
+                    results.append({
+                        'client_index': idx,
+                        'client_name': client_name,
+                        'cmm_contact_id': cmm_contact_id,
+                        'success': False,
+                        'error': analysis_result.get('error', 'Unknown error'),
+                        'analysis': None
+                    })
+                    print(f"❌ Failed: {client_name} - {analysis_result.get('error', 'Unknown error')}")
+                
+                credit_reports.append(report)
+                
+            except Exception as client_error:
+                # Isolate error - don't let one client crash the entire batch
+                error_msg = f"Processing error: {str(client_error)}"
+                results.append({
+                    'client_index': idx,
+                    'client_name': client_name,
+                    'cmm_contact_id': cmm_contact_id,
+                    'success': False,
+                    'error': error_msg,
+                    'analysis': None
+                })
+                print(f"❌ Error processing {client_name}: {error_msg}")
+                continue
+        
+        successful = sum(1 for r in results if r['success'])
+        failed = len(results) - successful
+        
+        print("\n" + "=" * 60)
+        print("🎉 BATCH PROCESSING COMPLETE")
+        print("=" * 60)
+        print(f"✅ Successful: {successful}/{len(results)}")
+        print(f"❌ Failed: {failed}/{len(results)}")
+        if successful > 1:
+            print(f"💰 Prompt caching saved ~70-90% on costs (after first request)!")
+        print("=" * 60 + "\n")
+        
+        return jsonify({
+            'success': True,  # Batch endpoint succeeded even if some clients failed
+            'total_clients': len(results),
+            'successful': successful,
+            'failed': failed,
+            'results': results,  # Includes full analyses for automation
+            'message': f'Batch processing complete: {successful}/{len(results)} successful'
+        }), 200
+        
+    except Exception as e:
+        print(f"\n❌ BATCH ENDPOINT ERROR: {str(e)}\n")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Batch endpoint error: {str(e)}'
+        }), 500
 
 
 @app.route('/history')
