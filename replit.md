@@ -1,7 +1,14 @@
 # FCRA Automation Server - Consumer Protection Litigation Platform
 
 ## Overview
-A Python Flask-based FCRA automation server that receives credit report data via webhook, analyzes it using Claude AI (Anthropic) for comprehensive FCRA violations, and generates escalating dispute letters across multiple rounds (1-4) using the RLPP (Rapid Legal Protection Protocol) strategy.
+A Python Flask-based FCRA automation server that replaces Credit Money Machine (CMM). The system analyzes credit reports using Claude AI (Anthropic) for comprehensive FCRA violations and generates escalating dispute letters across multiple rounds (1-4) using the RLPP (Rapid Legal Protection Protocol) strategy.
+
+**Platform Features:**
+- **Admin Dashboard**: Web interface for processing credit reports and generating letters
+- **AI Analysis**: Claude 4 Sonnet analyzes credit reports for FCRA violations
+- **PDF Generation**: Custom-styled PDFs with blue text (#1a1a8e) to force manual bureau review
+- **Database**: PostgreSQL tracks all clients, analyses, and generated letters
+- **Client Management**: Track dispute rounds, letter status, and history
 
 The system supports both:
 - **New client workflows**: Full analysis + Round 1 letters
@@ -46,7 +53,82 @@ The system supports both:
 
 ## API Endpoints
 
-### 1. `/` (GET)
+### Admin Interface
+
+#### 1. `/admin` (GET) - NEW
+**Admin Dashboard** for processing clients
+- Paste credit report HTML
+- Select client information
+- Choose dispute round (1-4)
+- Choose analysis mode (auto/manual)
+- Generate AI analysis and PDF letters
+- Download generated PDFs immediately
+
+#### 2. `/api/analyze` (POST) - NEW
+**Process credit report and generate PDFs**
+- Runs AI analysis using Claude
+- Extracts individual bureau letters from analysis
+- Generates 3 PDFs (one per bureau: Equifax, Experian, TransUnion)
+- Saves everything to database
+- Returns download links
+
+**Request:**
+```json
+{
+  "clientName": "John Doe",
+  "clientEmail": "john@example.com",
+  "cmmContactId": "CMM12345",  // Optional
+  "creditProvider": "IdentityIQ.com",
+  "creditReportHTML": "<html>...</html>",
+  "disputeRound": 1,
+  "analysisMode": "auto"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "client_name": "John Doe",
+  "round": 1,
+  "cost": 1.25,
+  "analysis_id": 123,
+  "letters": [
+    {"letter_id": 1, "bureau": "Equifax", "round": 1, "letter_count": 3},
+    {"letter_id": 2, "bureau": "Experian", "round": 1, "letter_count": 3},
+    {"letter_id": 3, "bureau": "TransUnion", "round": 1, "letter_count": 3}
+  ]
+}
+```
+
+#### 3. `/api/download/<letter_id>` (GET) - NEW
+**Download generated PDF letters**
+- Returns PDF file for download
+- Custom blue text (#1a1a8e) to force manual bureau review
+- Combines all letters for that bureau into one PDF
+
+#### 4. `/admin/clients` (GET) - NEW
+**View all clients and their status**
+```json
+{
+  "success": true,
+  "clients": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "created_at": "2025-11-21 15:30",
+      "total_analyses": 2,
+      "total_letters": 6,
+      "latest_round": 2
+    }
+  ]
+}
+```
+
+### Legacy Webhook Endpoints
+
+#### 5. `/` (GET)
 Home page with web form for credit report submission
 - Client information fields
 - Dispute round selector (Round 1-4)
@@ -54,7 +136,7 @@ Home page with web form for credit report submission
 - Analysis mode selector (Manual/Automatic)
 - Credit report HTML input
 
-### 2. `/webhook` (POST)
+#### 6. `/webhook` (POST)
 Single client analysis endpoint
 
 **Request Body:**
@@ -82,7 +164,7 @@ Single client analysis endpoint
 }
 ```
 
-### 3. `/webhook/batch` (POST) - NEW
+#### 7. `/webhook/batch` (POST)
 Batch client processing endpoint (maximizes cache efficiency)
 
 **Request Body:**
@@ -119,10 +201,10 @@ Batch client processing endpoint (maximizes cache efficiency)
 }
 ```
 
-### 4. `/history` (GET)
+#### 8. `/history` (GET)
 View all processed reports summary
 
-### 5. `/view/<report_id>` (GET)
+#### 9. `/view/<report_id>` (GET)
 View individual analysis results
 
 ### 6. `/clear` (POST)
