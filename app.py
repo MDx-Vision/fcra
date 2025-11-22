@@ -1537,9 +1537,12 @@ def analyze_and_generate_letters():
         # Parse individual letters using START/END markers
         import re
         
+        # Get combined analysis from section results
+        combined_analysis_text = section_analysis.get('combined_analysis', '')
+        
         # Find all individual letters
         letter_pattern = r"==.*?START OF DISPUTE LETTER: ([A-Za-z]+) - (.+?)==(.*?)==.*?END OF DISPUTE LETTER:"
-        all_letters = re.findall(letter_pattern, analysis_text, re.DOTALL | re.IGNORECASE)
+        all_letters = re.findall(letter_pattern, combined_analysis_text, re.DOTALL | re.IGNORECASE)
         
         # Group letters by bureau
         bureau_letters = {'Equifax': [], 'Experian': [], 'TransUnion': []}
