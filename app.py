@@ -1,4 +1,5 @@
 import os
+import re
 
 # API Configuration
 ANTHROPIC_API_KEY = os.environ['FCRA Automation Secure']
@@ -1754,40 +1755,60 @@ def download_round_letter(analysis_id, round_num):
 
 @app.route('/api/approve/<int:analysis_id>', methods=['POST'])
 def approve_analysis_stage_1(analysis_id):
-    """Approve Stage 1 analysis and trigger Stage 2 (client documents generation)"""
+    """
+    Approve Stage 1 analysis and trigger Stage 2 (client documents generation).
+
+    Behavior:
+    - stage is NULL/0  → treat as Stage 1 (backwards compatible)
+    - stage == 1      → run Stage 2, generate docs
+    - stage == 2      → already approved, return existing letters (idempotent)
+    - anything else   → return error
+    """
     db = get_db()
     try:
-        # Get Stage 1 analysis
         analysis = db.query(Analysis).filter_by(id=analysis_id).first()
         if not analysis:
-            return jsonify({'error': 'Analysis not found'}), 404
-        
-        # If already in Stage 2, check if letters exist
+            return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+
+        # Backwards compatibility: if stage is None or 0, treat it as Stage 1
+        if analysis.stage is None or analysis.stage == 0:
+            analysis.stage = 1
+            db.commit()
+
+        # If Stage 2 already completed, return existing letters instead of error
         if analysis.stage == 2:
             letters = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
-            if letters:
-                # Already approved and letters generated, return success
-                letters_data = [{
-                    'letter_id': l.id,
-                    'bureau': l.bureau,
-                    'round': l.round_number,
-                    'filepath': l.file_path,
-                } for l in letters]
-                return jsonify({
-                    'success': True,
-                    'analysis_id': analysis_id,
-                    'stage': 2,
-                    'message': 'Client documents already generated',
-                    'letters': letters_data
-                }), 200
-        
+            letters_payload = [{
+                'letter_id': l.id,
+                'bureau': l.bureau,
+                'round': l.round_number,
+                'filepath': str(l.file_path)
+            } for l in letters]
+
+            return jsonify({
+                'success': True,
+                'analysis_id': analysis_id,
+                'stage': 2,
+                'message': 'Client documents already generated',
+                'cost': analysis.cost or 0,
+                'tokens': analysis.tokens_used or 0,
+                'letters': letters_payload
+            }), 200
+
+        # Any other unexpected stage value
+        if analysis.stage != 1:
+            return jsonify({
+                'success': False,
+                'error': f'Analysis is not in Stage 1 (current stage: {analysis.stage})'
+            }), 400
+
         print(f"\n🚀 STAGE 2: Generating client documents for analysis {analysis_id}...")
-        
+
         # Get credit report for context
         credit_report = db.query(CreditReport).filter_by(id=analysis.credit_report_id).first()
         if not credit_report:
-            return jsonify({'error': 'Credit report not found'}), 404
-        
+            return jsonify({'success': False, 'error': 'Credit report not found'}), 404
+
         # Run Stage 2 with Stage 1 results
         result = analyze_with_claude(
             client_name=analysis.client_name,
@@ -1799,10 +1820,13 @@ def approve_analysis_stage_1(analysis_id):
             stage=2,  # STAGE 2: Generate client documents
             stage_1_results=analysis.stage_1_analysis  # Pass Stage 1 results
         )
-        
+
         if not result.get('success'):
-            return jsonify({'success': False, 'error': result.get('error', 'Stage 2 generation failed')}), 500
-        
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Stage 2 generation failed')
+            }), 500
+
         # Update analysis record with Stage 2 results
         analysis.stage = 2
         analysis.full_analysis = result.get('analysis', '')
@@ -1810,45 +1834,44 @@ def approve_analysis_stage_1(analysis_id):
         analysis.cost = (analysis.cost or 0) + result.get('cost', 0)
         analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
         db.commit()
-        
+
         # Generate and save dispute letters from Stage 2 output
         print(f"📝 Generating dispute letters from Stage 2 output...")
-        
+
         stage_2_text = result.get('analysis', '')
         bureau_letters = {}
-        
-        # Extract letters from response (format: [BUREAU_NAME: Account Name]\nLetter content...)
+
+        # Extract letters from response (format: [Bureau: Account]\nLetter content...)
         letter_pattern = r'\[([^:]+):\s*([^\]]+)\]\s*\n(.*?)(?=\[|$)'
         matches = re.findall(letter_pattern, stage_2_text, re.DOTALL)
-        
-        for match in matches:
-            bureau_name = match[0].strip().title()
-            account_name = match[1].strip()
-            letter_content = match[2].strip()
-            
-            if bureau_name in bureau_letters:
-                bureau_letters[bureau_name].append({
-                    'account': account_name,
-                    'content': letter_content
-                })
-        
-        # Generate one PDF per bureau combining all letters for that bureau
+
+        for bureau_name, account_name, letter_content in matches:
+            bureau_name = bureau_name.strip().title()
+            account_name = account_name.strip()
+            letter_content = letter_content.strip()
+
+            if not bureau_name:
+                continue
+
+            bureau_letters.setdefault(bureau_name, []).append({
+                'account': account_name,
+                'content': letter_content
+            })
+
         letters_generated = []
+
         for bureau, letters in bureau_letters.items():
             if not letters:
                 continue
-            
-            # Combine all letters for this bureau
-            combined_content = f"\n\n{'='*80}\n\n".join([
-                f"ACCOUNT: {letter['account']}\n\n{letter['content']}" 
-                for letter in letters
-            ])
-            
-            # Generate PDF
+
+            combined_content = f"\n\n{'='*80}\n\n".join(
+                [f"ACCOUNT: {l['account']}\n\n{l['content']}" for l in letters]
+            )
+
             filename = f"{analysis.client_name.replace(' ', '_')}_{bureau}_Round{analysis.dispute_round}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
             output_path = os.path.join('static', 'generated_letters', filename)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            
+
             try:
                 pdf_gen.generate_dispute_letter_pdf(
                     letter_content=combined_content,
@@ -1857,8 +1880,7 @@ def approve_analysis_stage_1(analysis_id):
                     round_number=analysis.dispute_round,
                     output_path=output_path
                 )
-                
-                # Save letter record
+
                 letter_record = DisputeLetter(
                     analysis_id=analysis_id,
                     client_id=analysis.client_id,
@@ -1871,7 +1893,7 @@ def approve_analysis_stage_1(analysis_id):
                 db.add(letter_record)
                 db.commit()
                 db.refresh(letter_record)
-                
+
                 letters_generated.append({
                     'letter_id': letter_record.id,
                     'bureau': bureau,
@@ -1879,13 +1901,13 @@ def approve_analysis_stage_1(analysis_id):
                     'filepath': output_path,
                     'letter_count': len(letters)
                 })
-                
+
                 print(f"✅ Generated PDF for {bureau} with {len(letters)} letter(s)")
             except Exception as e:
                 print(f"❌ Error generating PDF for {bureau}: {e}")
-        
+
         print(f"✅ Stage 2 complete! Analysis {analysis_id} ready for delivery")
-        
+
         return jsonify({
             'success': True,
             'analysis_id': analysis_id,
@@ -1895,7 +1917,7 @@ def approve_analysis_stage_1(analysis_id):
             'tokens': result.get('tokens_used', 0),
             'letters': letters_generated
         }), 200
-        
+
     except Exception as e:
         print(f"❌ Error in approve_analysis_stage_1: {e}")
         db.rollback()
