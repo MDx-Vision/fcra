@@ -1474,7 +1474,11 @@ def analyze_and_generate_letters():
     """Process credit report, run AI analysis, generate PDF letters"""
     db = get_db()
     try:
+        print(f"\n📋 /api/analyze endpoint called")
         data = request.get_json()
+        if not data:
+            print(f"❌ No JSON data received")
+            return jsonify({'success': False, 'error': 'No JSON data in request'}), 400
         
         client_name = data.get('clientName')
         client_email = data.get('clientEmail', '')
@@ -1483,28 +1487,51 @@ def analyze_and_generate_letters():
         dispute_round = data.get('disputeRound', 1)
         analysis_mode = data.get('analysisMode', 'auto')
         
+        print(f"📝 Client: {client_name}, Provider: {credit_provider}, Round: {dispute_round}")
+        
         if not client_name or not credit_report_html:
-            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+            error_msg = 'Missing required fields'
+            print(f"❌ {error_msg}")
+            return jsonify({'success': False, 'error': error_msg}), 400
         
         # 🧹 Clean and analyze with section-based Stage 1
-        print(f"🧹 Cleaning credit report in /api/analyze endpoint...")
-        credit_report_text = clean_credit_report_html(credit_report_html)
+        try:
+            print(f"🧹 Cleaning credit report in /api/analyze endpoint...")
+            credit_report_text = clean_credit_report_html(credit_report_html)
+            print(f"✅ Credit report cleaned successfully ({len(credit_report_text)} chars)")
+        except Exception as e:
+            error_msg = f"Error cleaning credit report: {str(e)}"
+            print(f"❌ {error_msg}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': error_msg}), 400
         
         # 🚀 Run Stage 1 on each section, merge results
-        section_analysis = run_stage1_for_all_sections(
-            client_name=client_name,
-            cmm_id=data.get('cmmContactId', ''),
-            provider=credit_provider,
-            credit_report_text=credit_report_text,
-            analysis_mode='manual',
-            dispute_round=dispute_round,
-            previous_letters='',
-            bureau_responses='',
-            dispute_timeline=''
-        )
+        try:
+            print(f"🚀 Starting Stage 1 analysis with sections...")
+            section_analysis = run_stage1_for_all_sections(
+                client_name=client_name,
+                cmm_id=data.get('cmmContactId', ''),
+                provider=credit_provider,
+                credit_report_text=credit_report_text,
+                analysis_mode='manual',
+                dispute_round=dispute_round,
+                previous_letters='',
+                bureau_responses='',
+                dispute_timeline=''
+            )
+            print(f"✅ Stage 1 analysis complete")
+        except Exception as e:
+            error_msg = f"Error in Stage 1 analysis: {str(e)}"
+            print(f"❌ {error_msg}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': error_msg}), 500
         
         if not section_analysis.get('success'):
-            return jsonify({'success': False, 'error': section_analysis.get('error', 'Analysis failed')}), 500
+            error_msg = section_analysis.get('error', 'Analysis failed')
+            print(f"❌ Analysis returned success=False: {error_msg}")
+            return jsonify({'success': False, 'error': error_msg}), 500
         
         merged_litigation_data = section_analysis.get('litigation_data', {})
         
