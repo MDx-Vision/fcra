@@ -40,11 +40,44 @@ class LetterPDFGenerator:
     def __init__(self):
         self.custom_color = HexColor('#1a1a8e')
         
+    def sanitize_text_for_pdf(self, text):
+        """Remove or replace Unicode characters that Helvetica doesn't support"""
+        # Replace smart quotes and other problematic Unicode chars
+        replacements = {
+            '•': '-',      # bullet
+            '"': '"',      # smart double quote
+            '"': '"',      # smart double quote
+            ''': "'",      # smart single quote
+            ''': "'",      # smart single quote
+            '—': '-',      # em dash
+            '–': '-',      # en dash
+            '…': '...',    # ellipsis
+            '™': '(TM)',   # trademark
+            '®': '(R)',    # registered
+            '©': '(C)',    # copyright
+            '€': 'EUR',    # euro
+            '£': 'GBP',    # pound
+            '¥': 'JPY',    # yen
+            '°': 'deg',    # degree
+            '×': 'x',      # multiplication
+            '÷': '/',      # division
+        }
+        for char, replacement in replacements.items():
+            text = text.replace(char, replacement)
+        # Remove any remaining non-ASCII chars
+        text = text.encode('ascii', 'ignore').decode('ascii')
+        return text
+    
     def generate_dispute_letter_pdf(self, letter_content, client_name, bureau, round_number, output_path):
         """
         Generate PDF with custom styling to force manual review
         Uses custom color and formatting to bypass e-Oscar automation
         """
+        # Sanitize content for Helvetica font compatibility
+        letter_content = self.sanitize_text_for_pdf(letter_content)
+        client_name = self.sanitize_text_for_pdf(client_name)
+        bureau = self.sanitize_text_for_pdf(bureau)
+        
         doc = SimpleDocTemplate(
             output_path,
             pagesize=letter,
