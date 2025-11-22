@@ -302,6 +302,14 @@ def analyze_with_claude(client_name,
     Stage 2: Client documents/letters generation (uses Stage 1 results)
     """
     try:
+        # Define round_names globally for both stages
+        round_names = {
+            1: "Round 1 - Initial Dispute (RLPP Strong Language)",
+            2: "Round 2 - MOV Request / Follow-up",
+            3: "Round 3 - Pre-Litigation Warning", 
+            4: "Round 4 - Final Demand / Intent to Sue"
+        }
+        
         if stage == 1:
             # STAGE 1: Small prompt for violations/standing/damages analysis ONLY (~80-100k tokens)
             prompt = """Act as an expert consumer protection attorney. Analyze this credit report for FCRA violations.
@@ -645,13 +653,21 @@ Make it professional and litigation-ready.
         if stage == 1:
             extract_litigation_data(analysis_result)
         
+        # Calculate totals safely
+        total_tokens = 0
+        total_cost_final = 0
+        if usage:
+            total_tokens = total_input_tokens + output_tokens
+            total_cost_final = total_cost
+        
         return {
             'success': True,
             'analysis': analysis_result,
             'client': client_name,
             'stage': stage,
-            'tokens_used': total_input_tokens + output_tokens if usage else 0,
-            'cost': total_cost if usage else 0
+            'tokens_used': total_tokens,
+            'cost': total_cost_final,
+            'cache_read': cache_read_tokens > 0 if usage else False
         }
 
     except Exception as e:
@@ -1393,6 +1409,68 @@ def download_letter(letter_id):
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/approve/<int:analysis_id>', methods=['POST'])
+def approve_analysis_stage_1(analysis_id):
+    """Approve Stage 1 analysis and trigger Stage 2 (client documents generation)"""
+    db = get_db()
+    try:
+        # Get Stage 1 analysis
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        if analysis.stage != 1:
+            return jsonify({'error': 'Analysis is not in Stage 1'}), 400
+        
+        print(f"\n🚀 STAGE 2: Generating client documents for analysis {analysis_id}...")
+        
+        # Get credit report for context
+        credit_report = db.query(CreditReport).filter_by(id=analysis.credit_report_id).first()
+        if not credit_report:
+            return jsonify({'error': 'Credit report not found'}), 404
+        
+        # Run Stage 2 with Stage 1 results
+        result = analyze_with_claude(
+            client_name=analysis.client_name,
+            cmm_id='',
+            provider=credit_report.credit_provider,
+            credit_report_html=credit_report.report_html,
+            analysis_mode='auto',
+            dispute_round=analysis.dispute_round,
+            stage=2,  # STAGE 2: Generate client documents
+            stage_1_results=analysis.stage_1_analysis  # Pass Stage 1 results
+        )
+        
+        if not result.get('success'):
+            return jsonify({'success': False, 'error': result.get('error', 'Stage 2 generation failed')}), 500
+        
+        # Update analysis record with Stage 2 results
+        analysis.stage = 2
+        analysis.full_analysis = result.get('analysis', '')
+        analysis.approved_at = datetime.now()
+        analysis.cost = (analysis.cost or 0) + result.get('cost', 0)
+        analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
+        db.commit()
+        
+        print(f"✅ Stage 2 complete! Analysis {analysis_id} ready for delivery")
+        
+        return jsonify({
+            'success': True,
+            'analysis_id': analysis_id,
+            'stage': 2,
+            'message': 'Client documents generated successfully',
+            'cost': result.get('cost', 0),
+            'tokens': result.get('tokens_used', 0)
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error in approve_analysis_stage_1: {e}")
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
 
