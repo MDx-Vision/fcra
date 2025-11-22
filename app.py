@@ -285,126 +285,147 @@ def clean_credit_report_html(html):
     return text
 
 
-# Section markers for splitting credit reports
+# Section markers for splitting credit reports (enhanced patterns)
 SECTION_MARKERS = {
-    "tradelines": ["ACCOUNTS", "TRADELINES", "REVOLVING ACCOUNTS", "INSTALLMENT ACCOUNTS"],
+    "tradelines": ["ACCOUNTS", "TRADELINES", "REVOLVING ACCOUNTS", "INSTALLMENT ACCOUNTS", "OPEN ACCOUNTS", "CLOSED ACCOUNTS"],
     "collections": ["COLLECTION", "COLLECTIONS"],
-    "public_records": ["PUBLIC RECORD", "PUBLIC RECORDS"],
-    "inquiries": ["INQUIRIES", "CREDIT INQUIRIES"],
+    "public_records": ["PUBLIC RECORD", "PUBLIC RECORDS", "BANKRUPTCIES", "JUDGMENTS", "TAX LIENS"],
+    "inquiries": ["INQUIRIES", "CREDIT INQUIRIES", "REGULAR INQUIRIES", "HARD INQUIRIES"],
 }
 
 
-def split_report_into_sections(text):
-    """Split cleaned report text into logical sections for analysis"""
-    sections = {k: "" for k in SECTION_MARKERS.keys()}
+def split_report_into_sections(text: str) -> dict:
+    """Split cleaned report text into logical sections based on common headings"""
+    sections = {k: [] for k in SECTION_MARKERS.keys()}
     current_key = None
+
+    if not text:
+        return {}
 
     lines = text.splitlines()
     for line in lines:
         upper = line.strip().upper()
 
-        # Check if this line is a section marker
+        # Check if this line looks like a section heading
+        new_key = None
         for key, markers in SECTION_MARKERS.items():
             if any(m in upper for m in markers):
-                current_key = key
+                new_key = key
                 break
-        else:
-            # Not a new heading, append to current section if any
-            if current_key:
-                sections[current_key] += line + "\n"
 
-    # Drop empty sections and trim whitespace
-    sections = {k: v.strip() for k, v in sections.items() if v.strip()}
-    
-    print(f"\n📋 Report split into {len(sections)} sections:")
-    for sec_name, sec_text in sections.items():
-        print(f"   • {sec_name}: {len(sec_text):,} chars (~{len(sec_text)/4.0:,.0f} tokens)")
-    
-    return sections
+        if new_key:
+            current_key = new_key
+            sections[current_key].append(line)
+        elif current_key:
+            sections[current_key].append(line)
+
+    # Join and drop empty sections
+    finalized = {}
+    for key, lines_list in sections.items():
+        joined = "\n".join(lines_list).strip()
+        if joined:
+            finalized[key] = joined
+
+    print("📚 split_report_into_sections:", {k: len(v) for k, v in finalized.items()})
+    return finalized
 
 
-def merge_litigation_data(section_results):
-    """Merge litigation data from multiple sections into single object"""
-    combined_violations = []
-    combined_standing = {
+def merge_standing(standings: list) -> dict:
+    """Merge multiple standing blocks (OR booleans, SUM counts, concatenate strings)"""
+    if not standings:
+        return {"has_concrete_harm": False, "concrete_harm_type": "", "harm_details": "", "has_dissemination": False, "dissemination_details": "", "has_causation": False, "causation_details": "", "denial_letters_count": 0, "adverse_action_notices_count": 0}
+
+    merged = {
         "has_concrete_harm": False,
-        "concrete_harm_type": "",
-        "concrete_harm_details": "",
+        "concrete_harm_type": [],
+        "harm_details": [],
         "has_dissemination": False,
-        "dissemination_details": "",
+        "dissemination_details": [],
         "has_causation": False,
-        "causation_details": "",
+        "causation_details": [],
         "denial_letters_count": 0,
         "adverse_action_notices_count": 0,
     }
-    combined_actual_damages = {
-        "credit_denials_amount": 0,
-        "higher_interest_amount": 0,
-        "credit_monitoring_amount": 0,
-        "time_stress_amount": 0,
-        "other_actual_amount": 0,
-        "notes": "Merged from multiple report sections"
-    }
 
-    for section_name, litigation_data in section_results.items():
-        if not litigation_data:
+    for s in standings:
+        if not s:
             continue
-
-        # Merge violations (tag with section source)
-        for v in litigation_data.get("violations", []):
-            v["section"] = section_name
-        combined_violations.extend(litigation_data.get("violations", []))
-
-        # Merge standing (OR for booleans, SUM for counts, concatenate for strings)
-        standing = litigation_data.get("standing", {})
-        if standing.get("has_concrete_harm"):
-            combined_standing["has_concrete_harm"] = True
-        if standing.get("concrete_harm_type"):
-            combined_standing["concrete_harm_type"] += f" ({section_name})" if combined_standing["concrete_harm_type"] else standing["concrete_harm_type"]
-        if standing.get("concrete_harm_details"):
-            combined_standing["concrete_harm_details"] += "\n" + standing["concrete_harm_details"] if combined_standing["concrete_harm_details"] else standing["concrete_harm_details"]
-        
-        if standing.get("has_dissemination"):
-            combined_standing["has_dissemination"] = True
-        if standing.get("dissemination_details"):
-            combined_standing["dissemination_details"] += "\n" + standing["dissemination_details"] if combined_standing["dissemination_details"] else standing["dissemination_details"]
-        
-        if standing.get("has_causation"):
-            combined_standing["has_causation"] = True
-        if standing.get("causation_details"):
-            combined_standing["causation_details"] += "\n" + standing["causation_details"] if combined_standing["causation_details"] else standing["causation_details"]
-
-        combined_standing["denial_letters_count"] += standing.get("denial_letters_count", 0)
-        combined_standing["adverse_action_notices_count"] += standing.get("adverse_action_notices_count", 0)
-
-        # Merge actual damages (SUM all amounts)
-        damages = litigation_data.get("actual_damages", {})
-        combined_actual_damages["credit_denials_amount"] += damages.get("credit_denials_amount", 0)
-        combined_actual_damages["higher_interest_amount"] += damages.get("higher_interest_amount", 0)
-        combined_actual_damages["credit_monitoring_amount"] += damages.get("credit_monitoring_amount", 0)
-        combined_actual_damages["time_stress_amount"] += damages.get("time_stress_amount", 0)
-        combined_actual_damages["other_actual_amount"] += damages.get("other_actual_amount", 0)
+        merged["has_concrete_harm"] = merged["has_concrete_harm"] or s.get("has_concrete_harm", False)
+        merged["has_dissemination"] = merged["has_dissemination"] or s.get("has_dissemination", False)
+        merged["has_causation"] = merged["has_causation"] or s.get("has_causation", False)
+        if s.get("concrete_harm_type"): merged["concrete_harm_type"].append(str(s.get("concrete_harm_type")))
+        if s.get("harm_details"): merged["harm_details"].append(str(s.get("harm_details")))
+        if s.get("dissemination_details"): merged["dissemination_details"].append(str(s.get("dissemination_details")))
+        if s.get("causation_details"): merged["causation_details"].append(str(s.get("causation_details")))
+        merged["denial_letters_count"] += int(s.get("denial_letters_count", 0) or 0)
+        merged["adverse_action_notices_count"] += int(s.get("adverse_action_notices_count", 0) or 0)
 
     return {
-        "violations": combined_violations,
-        "standing": combined_standing,
-        "actual_damages": combined_actual_damages,
+        "has_concrete_harm": merged["has_concrete_harm"],
+        "concrete_harm_type": " | ".join(merged["concrete_harm_type"]),
+        "harm_details": "\n\n".join(merged["harm_details"]),
+        "has_dissemination": merged["has_dissemination"],
+        "dissemination_details": "\n\n".join(merged["dissemination_details"]),
+        "has_causation": merged["has_causation"],
+        "causation_details": "\n\n".join(merged["causation_details"]),
+        "denial_letters_count": merged["denial_letters_count"],
+        "adverse_action_notices_count": merged["adverse_action_notices_count"],
     }
 
 
-def run_stage1_for_all_sections(client_name, cmm_id, provider, sections, analysis_mode, dispute_round, previous_letters, bureau_responses, dispute_timeline):
-    """Run Stage 1 analysis on each section, merge results"""
+def merge_actual_damages(damages_list: list) -> dict:
+    """Merge multiple actual_damages blocks by summing numeric fields"""
+    merged = {"credit_denials_amount": 0, "higher_interest_amount": 0, "credit_monitoring_amount": 0, "time_stress_amount": 0, "other_actual_amount": 0, "notes": ""}
+    notes = []
+    for d in damages_list:
+        if not d:
+            continue
+        merged["credit_denials_amount"] += float(d.get("credit_denials_amount", 0) or 0)
+        merged["higher_interest_amount"] += float(d.get("higher_interest_amount", 0) or 0)
+        merged["credit_monitoring_amount"] += float(d.get("credit_monitoring_amount", 0) or 0)
+        merged["time_stress_amount"] += float(d.get("time_stress_amount", 0) or 0)
+        merged["other_actual_amount"] += float(d.get("other_actual_amount", 0) or 0)
+        if d.get("notes"): notes.append(str(d["notes"]))
+    merged["notes"] = "\n\n".join(notes)
+    return merged
+
+
+def merge_litigation_data(section_results: list) -> dict:
+    """Merge litigation_data from multiple sections into one"""
+    all_violations = []
+    standings = []
+    damages_blocks = []
+    for r in section_results:
+        if not r:
+            continue
+        all_violations.extend(r.get("violations", []) or [])
+        standings.append(r.get("standing", {}) or {})
+        damages_blocks.append(r.get("actual_damages", {}) or {})
+    merged = {
+        "violations": all_violations,
+        "standing": merge_standing(standings),
+        "actual_damages": merge_actual_damages(damages_blocks),
+    }
+    print(f"🧩 merge_litigation_data: {len(all_violations)} total violations merged")
+    return merged
+
+
+def run_stage1_for_all_sections(client_name, cmm_id, provider, credit_report_text, analysis_mode="manual", dispute_round=1, previous_letters="", bureau_responses="", dispute_timeline=""):
+    """Split report into sections and run Stage 1 analysis per section, merge results"""
     import time
     
-    section_results = {}
-    total_cost = 0
+    sections = split_report_into_sections(credit_report_text)
+    if not sections:
+        return {'success': False, 'error': 'Could not detect any recognizable sections in report'}
+
+    all_section_results = []
+    combined_analysis_parts = []
     total_tokens = 0
-    
-    print(f"\n🚀 Running Stage 1 analysis on {len(sections)} sections (with 1-second delay between calls)...")
-    
+    total_cost = 0.0
+    any_cache_read = False
+
     for section_name, section_text in sections.items():
-        print(f"\n📄 Analyzing {section_name}...")
-        
+        print(f"\n🔍 Stage 1 analysis for section: {section_name} ({len(section_text):,} chars)")
         result = analyze_with_claude(
             client_name=client_name,
             cmm_id=cmm_id,
@@ -417,36 +438,27 @@ def run_stage1_for_all_sections(client_name, cmm_id, provider, sections, analysi
             dispute_timeline=dispute_timeline,
             stage=1
         )
-        
-        if not result.get("success"):
-            print(f"   ⚠️ {section_name} analysis failed: {result.get('error', 'Unknown error')}")
+
+        if not result.get('success'):
+            print(f"❌ Section {section_name} failed: {result.get('error')}")
+            all_section_results.append({'section_name': section_name, 'analysis': '', 'raw_litigation_data': None, 'error': result.get('error')})
             continue
-        
-        # Extract litigation data from this section
-        litigation_data = extract_litigation_data(result.get("analysis", ""))
-        section_results[section_name] = litigation_data
-        
-        total_cost += result.get("cost", 0)
-        total_tokens += result.get("tokens_used", 0)
-        
-        print(f"   ✅ {section_name}: {len(litigation_data.get('violations', []))} violations found")
-        
-        # Delay between API calls to respect rate limits (1 second)
-        time.sleep(1)
-    
-    # Merge all section results
-    merged = merge_litigation_data(section_results)
-    merged["total_sections_analyzed"] = len(section_results)
-    merged["total_cost"] = total_cost
-    merged["total_tokens"] = total_tokens
-    
-    print(f"\n✅ Section analysis complete:")
-    print(f"   Sections analyzed: {len(section_results)}")
-    print(f"   Total violations: {len(merged['violations'])}")
-    print(f"   Total cost: ${total_cost:.4f}")
-    print(f"   Total tokens: {total_tokens:,}")
-    
-    return merged
+
+        analysis_text = result.get('analysis', '') or ''
+        litigation_data = extract_litigation_data(analysis_text)
+        combined_analysis_parts.append(f"\n\n{'='*80}\nSECTION: {section_name.upper()}\n{'='*80}\n\n{analysis_text}")
+        all_section_results.append({'section_name': section_name, 'analysis': analysis_text, 'raw_litigation_data': litigation_data})
+        total_tokens += int(result.get('tokens_used', 0) or 0)
+        total_cost += float(result.get('cost', 0.0) or 0.0)
+        any_cache_read = any_cache_read or bool(result.get('cache_read', False))
+        time.sleep(1)  # Rate limit protection
+
+    parsed_litigation_blocks = [r['raw_litigation_data'] for r in all_section_results if r.get('raw_litigation_data')]
+    if not parsed_litigation_blocks:
+        return {'success': False, 'error': 'No valid litigation_data extracted from any section', 'combined_analysis': "\n\n".join(combined_analysis_parts), 'per_section': all_section_results, 'tokens_used': total_tokens, 'cost': total_cost, 'cache_read': any_cache_read}
+
+    merged_litigation = merge_litigation_data(parsed_litigation_blocks)
+    return {'success': True, 'combined_analysis': "\n\n".join(combined_analysis_parts), 'litigation_data': merged_litigation, 'per_section': all_section_results, 'tokens_used': total_tokens, 'cost': total_cost, 'cache_read': any_cache_read}
 
 
 def truncate_for_token_limit(text, max_tokens_for_report=140_000):
@@ -1098,12 +1110,12 @@ def webhook():
             'status': 'received',
             'processed': False
         }
-        # Analyze with Claude API
-        analysis = analyze_with_claude(
+        # Analyze with Claude API (section-based Stage 1)
+        analysis = run_stage1_for_all_sections(
             client_name=client_name,
             cmm_id=cmm_contact_id,
             provider=credit_provider,
-            credit_report_html=credit_report_html,
+            credit_report_text=credit_report_html,
             analysis_mode=analysis_mode,
             dispute_round=dispute_round,
             previous_letters=previous_letters,
@@ -1111,13 +1123,15 @@ def webhook():
             dispute_timeline=dispute_timeline
         )
 
-        if analysis['success']:
-            report['analysis'] = analysis['analysis']
+        if analysis.get('success'):
+            report['analysis'] = analysis.get('combined_analysis', '')
             report['processed'] = True
-            print(f"✅ FCRA Analysis completed for {client_name}")
+            report['tokens_used'] = analysis.get('tokens_used', 0)
+            report['cost'] = analysis.get('cost', 0)
+            print(f"✅ FCRA Section-based Analysis completed for {client_name}")
         else:
-            report['analysis_error'] = analysis['error']
-            print(f"⚠️ Analysis failed: {analysis['error']}")
+            report['analysis_error'] = analysis.get('error', 'Unknown error')
+            print(f"⚠️ Section-based analysis failed: {analysis.get('error')}")
         # Store it
         credit_reports.append(report)
 
@@ -1426,24 +1440,16 @@ def analyze_and_generate_letters():
         if not client_name or not credit_report_html:
             return jsonify({'success': False, 'error': 'Missing required fields'}), 400
         
-        # 🧹 Clean and split into sections for analysis
+        # 🧹 Clean and analyze with section-based Stage 1
         print(f"🧹 Cleaning credit report in /api/analyze endpoint...")
         credit_report_text = clean_credit_report_html(credit_report_html)
         
-        # 📋 Split into sections for better analysis (avoid 200k token limit)
-        sections = split_report_into_sections(credit_report_text)
-        
-        if not sections:
-            # Fallback: if no sections detected, treat whole report as one section
-            print("⚠️ No standard sections found, analyzing entire report as one section")
-            sections = {"full_report": credit_report_text}
-        
         # 🚀 Run Stage 1 on each section, merge results
-        merged_litigation_data = run_stage1_for_all_sections(
+        section_analysis = run_stage1_for_all_sections(
             client_name=client_name,
             cmm_id=data.get('cmmContactId', ''),
             provider=credit_provider,
-            sections=sections,
+            credit_report_text=credit_report_text,
             analysis_mode='manual',
             dispute_round=dispute_round,
             previous_letters='',
@@ -1451,8 +1457,10 @@ def analyze_and_generate_letters():
             dispute_timeline=''
         )
         
-        if not merged_litigation_data or merged_litigation_data.get('total_sections_analyzed', 0) == 0:
-            return jsonify({'success': False, 'error': 'No sections could be analyzed'}), 500
+        if not section_analysis.get('success'):
+            return jsonify({'success': False, 'error': section_analysis.get('error', 'Analysis failed')}), 500
+        
+        merged_litigation_data = section_analysis.get('litigation_data', {})
         
         # Create or get client
         client = db.query(Client).filter_by(name=client_name).first()
