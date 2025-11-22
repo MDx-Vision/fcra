@@ -1,0 +1,181 @@
+Got it, so for now you just want the *idea / pattern* for splitting big reports into sections and running multiple Stage 1 calls (instead of truncating everything into one giant prompt).
+
+Here’s a clean way to do it.
+
+---
+
+## 1. Concept: “Section-based” Stage 1
+
+Instead of:
+
+> 1 big cleaned report → 1 huge Stage 1 call → risk of 200k token limit
+
+Do this:
+
+1. Clean the report HTML (like you already do).
+2. Split the cleaned text into logical sections:
+
+   * Personal info / header
+   * Tradelines
+   * Collections
+   * Public records
+   * Inquiries
+3. Run **Stage 1** once per section:
+
+   * `Section 1: Tradelines`
+   * `Section 2: Collections`
+   * `Section 3: Public records`
+   * `Section 4: Inquiries`
+4. Extract `<LITIGATION_DATA>` from each response.
+5. Merge all those `violations`, `standing`, and `actual_damages` into a single combined object.
+6. Feed that combined object into your DB + damages + case scoring.
+
+This way you never send a 200k-token monster. You’re sending 3–6 calls of ~30–70k tokens each, well below the limit.
+
+---
+
+## 2. How to split the report text into sections
+
+You can start simple: split based on common section headings in 3-bureau reports.
+
+Something like:
+
+* `"ACCOUNTS"` / `"TRADELINES"` / `"REVOLVING ACCOUNTS"`
+* `"COLLECTIONS"`
+* `"PUBLIC RECORDS"`
+* `"INQUIRIES"` / `"CREDIT INQUIRIES"`
+* `"PERSONAL INFORMATION"` (usually not needed for violations)
+
+Pseudo-code:
+
+```python
+SECTION_MARKERS = {
+    "tradelines": ["ACCOUNTS", "TRADELINES", "REVOLVING ACCOUNTS", "INSTALLMENT ACCOUNTS"],
+    "collections": ["COLLECTION", "COLLECTIONS"],
+    "public_records": ["PUBLIC RECORD", "PUBLIC RECORDS"],
+    "inquiries": ["INQUIRIES", "CREDIT INQUIRIES"],
+}
+
+def split_report_into_sections(text):
+    sections = {k: "" for k in SECTION_MARKERS.keys()}
+    current_key = None
+
+    lines = text.splitlines()
+    for line in lines:
+        upper = line.strip().upper()
+
+        # Switch current section if we hit a marker
+        for key, markers in SECTION_MARKERS.items():
+            if any(m in upper for m in markers):
+                current_key = key
+                break
+        else:
+            # Not a new heading, append to current section if any
+            if current_key:
+                sections[current_key] += line + "\n"
+
+    # Drop empty sections
+    sections = {k: v.strip() for k, v in sections.items() if v.strip()}
+    return sections
+```
+
+This gives you something like:
+
+```python
+sections = split_report_into_sections(cleaned_report_text)
+# sections might be: {"tradelines": "...", "collections": "...", "inquiries": "..."}
+```
+
+You can keep your truncation helper as a fail-safe per section, but most sections will be well under the limit anyway.
+
+---
+
+## 3. Running Stage 1 per section
+
+Instead of calling `analyze_with_claude` once, loop over sections:
+
+```python
+combined_violations = []
+combined_standing_blocks = []
+combined_actual_damages = []
+
+for section_name, section_text in sections.items():
+    result = analyze_with_claude(
+        client_name=client_name,
+        cmm_id=cmm_contact_id,
+        provider=credit_provider,
+        credit_report_html=section_text,
+        analysis_mode=analysis_mode,
+        dispute_round=dispute_round,
+        previous_letters=previous_letters,
+        bureau_responses=bureau_responses,
+        dispute_timeline=dispute_timeline,
+        stage=1
+    )
+
+    if not result["success"]:
+        # log and continue or stop, up to you
+        continue
+
+    litigation_data = extract_litigation_data(result["analysis"])
+    if not litigation_data:
+        continue
+
+    # Tag each violation with the section for clarity
+    for v in litigation_data.get("violations", []):
+        v["section"] = section_name
+    combined_violations.extend(litigation_data.get("violations", []))
+
+    combined_standing_blocks.append(litigation_data.get("standing", {}))
+    combined_actual_damages.append(litigation_data.get("actual_damages", {}))
+```
+
+Then you create a **merged** litigation object:
+
+```python
+merged_litigation_data = {
+    "violations": combined_violations,
+    "standing": merge_standing(combined_standing_blocks),
+    "actual_damages": merge_actual_damages(combined_actual_damages),
+}
+```
+
+Where `merge_standing` might do something like:
+
+* `has_concrete_harm` = OR of all sections
+* `denial_letters_count` = sum
+* etc.
+
+And `merge_actual_damages` might:
+
+* Sum all dollar amounts across sections (or take max per type, depending on how you define it).
+
+That merged object is what you then pass into:
+
+* `auto_populate_litigation_database(...)`
+* your damages calculations
+* your case score
+
+So the rest of your pipeline doesn’t need to know that the analysis came from multiple calls.
+
+---
+
+## 4. “Sections of PDFs” piece
+
+If the original report is a **PDF**, not HTML:
+
+* Step 1: extract text (per page or per section) → treat each chunk as a “section” like above.
+* Step 2: you can also optionally **save each text section back out as a PDF** for your own record-keeping:
+
+  * e.g. `Report_Tradelines.pdf`, `Report_Collections.pdf`, etc.
+* But from the AI’s point of view, it only ever sees the **text** of each section in separate Stage 1 calls.
+
+---
+
+If/when you’re ready, I can take this design and write you concrete helper functions:
+
+* `split_report_into_sections(text)`
+* `run_stage1_for_all_sections(...)`
+* `merge_litigation_data(section_results)`
+
+and show exactly where to wire them into your existing `/webhook` and `/api/analyze` flows.
