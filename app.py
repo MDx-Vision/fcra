@@ -458,15 +458,8 @@ Generate the complete client package (40-50 pages total). Make it professional, 
         
         super_prompt = prompt
         
-        # Add context for Stage 1
-        if stage == 1:
-            super_prompt += f"""
-
-CREDIT REPORT TO ANALYZE:
-{credit_report_html}
-"""
-        else:
-            # Stage 2: Add full prompt for document generation
+        # Stage 2 needs additional context in system prompt
+        if stage != 1:
             super_prompt += """
 
 You have Stage 1 analysis results. Now generate the client-facing documents:
