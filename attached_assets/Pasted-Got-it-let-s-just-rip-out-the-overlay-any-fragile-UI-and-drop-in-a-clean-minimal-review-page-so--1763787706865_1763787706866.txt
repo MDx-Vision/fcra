@@ -1,3 +1,10 @@
+Got it, let’s just rip out the overlay + any fragile UI and drop in a clean, minimal review page so everything is clickable again.
+
+### Step 1: Replace `litigation_review.html` completely
+
+In your `templates/litigation_review.html`, **delete everything** and replace it with this:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -211,7 +218,7 @@
   async function loadPage() {
     try {
       setStatus('Loading analysis…');
-      const res = await fetch(`/api/analysis/${ANALYSIS_ID}/data`);
+      const res = await fetch(`/api/analysis/${ANALYSIS_ID}/complete`);
       if (!res.ok) {
         throw new Error('Failed to load analysis');
       }
@@ -244,7 +251,7 @@
           score.case_strength ? `Case strength: ${score.case_strength}` : '';
         document.getElementById('settlementProb').textContent =
           typeof score.settlement_probability === 'number'
-            ? `Settlement probability: ${Math.round(score.settlement_probability * 100)}%`
+            ? `Settlement probability: ${score.settlement_probability}%`
             : '';
       } else {
         document.getElementById('scoreStat').textContent = '–';
@@ -272,12 +279,12 @@
       // Damages
       if (damages) {
         const totalExposure = damages.total_exposure || 0;
-        const statutory = damages.statutory_damages_total || 0;
-        const actual = damages.actual_damages_total || 0;
+        const statutory = damages.statutory_total || 0;
+        const actual = damages.actual_total || 0;
         document.getElementById('damagesSummary').textContent =
           `Total exposure: $${totalExposure.toLocaleString()} (Actual $${actual.toLocaleString()}, Statutory $${statutory.toLocaleString()})`;
         document.getElementById('damagesDetails').textContent =
-          `Settlement target: $${(damages.settlement_target || 0).toLocaleString()}`;
+          `Settlement target: $${(damages.settlement_target || 0).toLocaleString()} • Minimum: $${(damages.minimum_acceptable || 0).toLocaleString()}`;
       } else {
         document.getElementById('damagesSummary').textContent = 'No damages calculated yet.';
         document.getElementById('damagesDetails').textContent = '';
@@ -351,3 +358,32 @@
 </script>
 </body>
 </html>
+```
+
+This version:
+
+* Removes the overlay completely.
+* Uses only your existing APIs:
+
+  * `/api/analysis/<analysis_id>/complete`
+  * `/api/approve/<analysis_id>`
+  * `/api/download/analysis/<analysis_id>/full_report`
+* Adds simple buttons that won’t block clicks.
+
+### Step 2: Restart the Flask app
+
+On Replit:
+
+1. Stop the current run (square/stop button).
+2. Start it again so the new template is picked up.
+3. Go back to:
+   `https://<your-repl-url>/analysis/<id>/review`
+   (whatever URL you were using) and refresh.
+
+You should now be able to click:
+
+* **Refresh** to load data
+* **Accept Case & Generate Letters** to call `/api/approve/<id>`
+* **Download Full Report PDF** to trigger the report endpoint
+
+If you still get that popup `Error: Analysis is not in Stage 1`, that just means the specific analysis you’re viewing is already at Stage 2. In that case, the page will still be clickable, you just don’t need to “accept” that one again.
