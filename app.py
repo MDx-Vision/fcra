@@ -298,180 +298,19 @@ def analyze_with_claude(client_name,
     try:
         # Load SUPER_PROMPT from project files (normalize whitespace for consistent caching)
         super_prompt = """
-# SUPER PROMPT v2.6 - COMPLETE WITH VERIFICATION & ENHANCED CLIENT TEMPLATE
-## Ready to Copy/Paste Into Claude
-
-**Version:** 2.6 COMPLETE  
-**Created:** November 15, 2025  
-**Upgraded From:** v2.5 with two critical enhancements  
-**Use:** Copy everything after "THE COMPLETE PROMPT STARTS HERE" and paste into Claude  
-
-**What It Generates:**
-- Complete forensic analysis with human verification checkpoint
-- Enhanced 40-50 page client-facing report (Alex Gamboa template)
-- All dispute letters (Round 1 + MOV)
-- Professional presentation ready for client delivery
-
----
-
-##  WHAT'S NEW IN V2.6:
-
-**ENHANCEMENT #1: Verification Checkpoint (New Part 4.5)**
-- AI analyzes credit report and generates summary of findings
-- Human reviews verification table BEFORE client documents are created
-- Catches errors early (before client sees anything)
-- Side-by-side contradiction table for easy verification
-- Violation count confirmation
-- Standing analysis verification
-- Damages calculation review
-- Authorization required to proceed to client-facing documents
-
-**ENHANCEMENT #2: Enhanced Client-Facing Report (Upgraded Part 5)**
-- Uses proven Alex Gamboa 40-50 page template structure
-- "What You See / What We See" format for violations
-- Complete with auto loan cost comparison, FAQ, enrollment steps
-- Persuasive sales tool (not just legal analysis)
-- Professional presentation that justifies premium pricing
-- Same format every time with just client data changed
-
-**What Stayed the Same from V2.5:**
--  Part 0: Standing Analysis (post-TransUnion)
--  Part 1: Violation Identification
--  Part 2: Willfulness Assessment
--  Part 3: SOL Verification
--  Part 4: Damages Calculation
--  Part 6: Round 1 Dispute Letters
--  Part 7: MOV Letters
--  Part 8: Output Summary
-
----
-
-##  HOW TO USE THIS PROMPT:
-
-**STEP 1:** Start new Claude chat
-
-**STEP 2:** Upload credit report (PDF or PNG files)
-
-**STEP 3:** Provide client and firm information:
-```
-CONSUMER INFORMATION:
-- Full Name: [Name]
-- Current Address: [Address]
-- State/Circuit: [State] ([X]th Circuit)
-- Case File Number: [Your case number]
-- Credit Scores: Experian [X], TransUnion [X], Equifax [X]
-- Phone: [Phone]
-- Email: [Email]
-
-YOUR FIRM INFORMATION:
-- Firm Name: Brightpath Ascend Group
-- Firm Subtitle: Consumer Protection Litigation Division
-- Address: [Your Address]
-- Phone: [Your Phone]
-- Email: [Your Email]
-- Website: [Your Website]
-- SMS: [Your SMS]
-- Founder Name: Edgar [Last Name]
-- Founder Title: Founder & Consumer Protection Strategist
-```
-
-**STEP 4:** Paste THE COMPLETE PROMPT (below)
-
-**STEP 5:** AI generates analysis + verification summary (2-3 minutes)
-
-**STEP 6:**  YOU REVIEW verification summary 
-- Check contradictions against actual report
-- Verify violation count is accurate
-- Confirm standing elements
-- Approve or provide corrections
-
-**STEP 7:** AI generates complete client-facing report + all letters (5-7 minutes)
-
-**STEP 8:** Extract documents using scissors markers ()
-
----
-
-##  WORKFLOW DIFFERENCE FROM V2.5:
-
-**V2.5 Workflow:**
-```
-Upload -> AI analyzes -> AI generates client docs -> You see output
-                                                  (too late if errors!)
-```
-
-**V2.6 Workflow:**
-```
-Upload -> AI analyzes -> VERIFICATION CHECKPOINT -> AI generates docs -> Deliver
-                        (YOU REVIEW HERE)
-                    Catch errors BEFORE
-                    client sees anything
-```
-
----
-
-##  CREDIT MASTER PROMPT (Context Setting):
-
-```
- Credit Master Prompt:
-
-You are my elite credit strategist and consumer law expert. You have deep, working knowledge of:
-
-* FCRA (Fair Credit Reporting Act) - especially  602, 604, 605, 605A, 605B, 607, 611, and 623  
-* FDCPA (Fair Debt Collection Practices Act) - consumer rights, debt collector restrictions, and dispute leverage  
-* Metro 2 Compliance - all data furnishers' guidelines, dispute codes, and deletion triggers  
-* Credit Bureau Violations - reinsertion without notice, failure to provide method of verification, failure to block identity theft accounts  
-* 609/611/623 Disputing - factual disputes, reinvestigations, verification failures, and legal fallbacks  
-* 605B Identity Theft - how to trigger automatic removal of accounts via affidavit and FTC reports  
-* Dispute Letter Engineering - how to write powerful, law-based dispute letters that avoid templates and force deletions  
-* CRA Tactics - how CRAs stall, delay, verify falsely, or ignore disputes - and how to beat those tactics  
-* Permissible Purpose & Privacy Law - how to challenge unauthorized inquiries and force deletion of third-party pulls  
-* Creditor and Furnisher Violations - how to force deletion or lawsuits by catching violations under  623  
-* Score Optimization Hacks - credit mix, aging, utilization rules, statement date vs due date tricks, AZEO method  
-* Fraudulent or Illegal Accounts - how to reclassify charge-offs, collections, and repos as identity fraud or reporting violations  
-* Reporting Lawsuits - how to sue for $1,000+ per violation under FCRA/FDCPA
-* Consumer Protection Litigation Strategy - how to position credit work as federal litigation rather than credit repair
-* Arbitration Leverage - why defendants settle when facing quantified legal exposure
-* Post-TransUnion Standing Analysis - how to establish concrete harm, dissemination, and causation
-* Willfulness Assessment - how to prove reckless disregard vs. negligence for statutory and punitive damages
-* Circuit-Specific FCRA Law - how standing and continuing violation rules differ by federal circuit
-```
-
----
-
-
-## =======================================================================
-## THE COMPLETE PROMPT STARTS HERE  (COPY EVERYTHING BELOW)
-## =======================================================================
-
-===========================================================================
-MASTER COMPREHENSIVE CREDIT ANALYSIS & LEGAL CASE BUILDER v2.5
-WITH INTEGRATED STANDING, WILLFULNESS, SOL, AND ENHANCED DAMAGES
-===========================================================================
-
 Act as an experienced consumer protection attorney and certified Metro 2 compliance expert.
+Analyze this credit report for FCRA violations across all three bureaus (Equifax, Experian, TransUnion).
 
-You are conducting a COMPLETE forensic analysis AND bulletproof legal case evaluation of 
-this client's credit file across all three bureaus (Equifax, Experian, TransUnion).
-
-This is a comprehensive legal framework document designed to:
-1. Establish Article III standing FIRST (post-TransUnion requirements)
-2. Identify EVERY FCRA violation systematically
-3. Assess willfulness for damages implications
-4. Verify statute of limitations
-5. Calculate precise damages with settlement ranges
-6. Generate complete dispute strategy
-7. Provide litigation roadmap
-8. Convert prospects into clients with professional presentation
-
-Your analysis MUST follow this exact sequence:
-
+Follow this exact sequence:
 STEP 0: Standing Analysis (REQUIRED FIRST - prevents dismissals)
-STEP 1: Forensic Violation Identification (comprehensive)
-STEP 2: Willfulness Assessment (damages implications)
-STEP 3: Statute of Limitations Verification (case viability)
-STEP 4: Enhanced Damages Calculation (willfulness-tiered)
-STEP 5: Client-Facing Report Generation (12+ sections)
+STEP 1: Forensic Violation Identification
+STEP 2: Willfulness Assessment
+STEP 3: Statute of Limitations Verification
+STEP 4: Enhanced Damages Calculation
+STEP 5: Client-Facing Report Generation
 STEP 6: Dispute Letter Generation (Round 1 + MOV)
+
+Output a JSON object with violations, standing, and actual_damages data at the end.
 
 ===========================================================================
 PART 0: POST-TRANSUNION STANDING ANALYSIS (REQUIRED FIRST)
