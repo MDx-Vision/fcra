@@ -226,12 +226,15 @@
 - [ ] Client onboarding guide
 
 ### Security & Deployment
-- [ ] Production WSGI server (Gunicorn)
+- [x] Production WSGI server (Gunicorn with 4 workers)
+- [x] Autoscale deployment configuration
+- [x] Health check endpoint (/ returns 200)
+- [x] Correct host binding (0.0.0.0:5000)
 - [ ] Environment variable management
 - [ ] API authentication/authorization
 - [ ] Rate limiting
 - [ ] Input validation and sanitization
-- [ ] SQL injection prevention (using ORM)
+- [x] SQL injection prevention (using ORM)
 - [ ] XSS protection
 - [ ] HTTPS enforcement
 

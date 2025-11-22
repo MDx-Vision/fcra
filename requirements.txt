@@ -8,3 +8,4 @@ python-docx
 reportlab
 requests
 sqlalchemy
+gunicorn==21.2.0
