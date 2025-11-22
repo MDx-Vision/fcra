@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCRA Admin</title>
+    <style>
+        body { font-family: Arial; background: #f0f0f0; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; }
+        input, textarea, select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px 0; }
+        button:hover { background: #764ba2; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>FCRA Analysis</h1>
+    <form id="form">
+        <label>Client Name *</label>
+        <input type="text" id="name" placeholder="John Doe" required>
+        
+        <label>Email</label>
+        <input type="email" id="email" placeholder="john@example.com">
+        
+        <label>Credit Provider</label>
+        <select id="provider">
+            <option>IdentityIQ.com</option>
+            <option>MyScoreIQ.com</option>
+            <option>SmartCredit.com</option>
+        </select>
+        
+        <label>Credit Report HTML *</label>
+        <textarea id="report" placeholder="Paste HTML here" required style="min-height: 200px;"></textarea>
+        
+        <label>Dispute Round</label>
+        <select id="round">
+            <option value="1">Round 1</option>
+            <option value="2">Round 2</option>
+            <option value="3">Round 3</option>
+            <option value="4">Round 4</option>
+        </select>
+        
+        <button type="button" onclick="submitForm()">🚀 Analyze</button>
+    </form>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+function submitForm() {
+    const status = document.getElementById('status');
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const provider = document.getElementById('provider').value;
+    const report = document.getElementById('report').value;
+    const round = parseInt(document.getElementById('round').value);
+    
+    if (!name || !report) {
+        status.innerHTML = '<p class="error">❌ Client name and report are required</p>';
+        return;
+    }
+    
+    status.innerHTML = '<p style="color: blue;">⏳ Sending to server...</p>';
+    
+    fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            clientName: name,
+            clientEmail: email,
+            creditProvider: provider,
+            creditReportHTML: report,
+            disputeRound: round,
+            analysisMode: 'manual'
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            status.innerHTML = '<p class="success">✅ Analysis created! ID: ' + data.analysis_id + '<br><a href="/analysis/' + data.analysis_id + '/review">View Results</a></p>';
+        } else {
+            status.innerHTML = '<p class="error">❌ ' + (data.error || 'Unknown error') + '</p>';
+        }
+    })
+    .catch(err => {
+        status.innerHTML = '<p class="error">❌ ' + err.message + '</p>';
+    });
+}
+</script>
+</body>
+</html>
