@@ -1795,6 +1795,79 @@ def approve_analysis_stage_1(analysis_id):
         analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
         db.commit()
         
+        # Generate and save dispute letters from Stage 2 output
+        print(f"📝 Generating dispute letters from Stage 2 output...")
+        
+        stage_2_text = result.get('analysis', '')
+        bureau_letters = {}
+        
+        # Extract letters from response (format: [BUREAU_NAME: Account Name]\nLetter content...)
+        letter_pattern = r'\[([^:]+):\s*([^\]]+)\]\s*\n(.*?)(?=\[|$)'
+        matches = re.findall(letter_pattern, stage_2_text, re.DOTALL)
+        
+        for match in matches:
+            bureau_name = match[0].strip().title()
+            account_name = match[1].strip()
+            letter_content = match[2].strip()
+            
+            if bureau_name in bureau_letters:
+                bureau_letters[bureau_name].append({
+                    'account': account_name,
+                    'content': letter_content
+                })
+        
+        # Generate one PDF per bureau combining all letters for that bureau
+        letters_generated = []
+        for bureau, letters in bureau_letters.items():
+            if not letters:
+                continue
+            
+            # Combine all letters for this bureau
+            combined_content = f"\n\n{'='*80}\n\n".join([
+                f"ACCOUNT: {letter['account']}\n\n{letter['content']}" 
+                for letter in letters
+            ])
+            
+            # Generate PDF
+            filename = f"{analysis.client_name.replace(' ', '_')}_{bureau}_Round{analysis.dispute_round}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            output_path = os.path.join('static', 'generated_letters', filename)
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            
+            try:
+                pdf_gen.generate_dispute_letter_pdf(
+                    letter_content=combined_content,
+                    client_name=analysis.client_name,
+                    bureau=bureau,
+                    round_number=analysis.dispute_round,
+                    output_path=output_path
+                )
+                
+                # Save letter record
+                letter_record = DisputeLetter(
+                    analysis_id=analysis_id,
+                    client_id=analysis.client_id,
+                    client_name=analysis.client_name,
+                    bureau=bureau,
+                    round_number=analysis.dispute_round,
+                    letter_content=combined_content,
+                    file_path=output_path
+                )
+                db.add(letter_record)
+                db.commit()
+                db.refresh(letter_record)
+                
+                letters_generated.append({
+                    'letter_id': letter_record.id,
+                    'bureau': bureau,
+                    'round': analysis.dispute_round,
+                    'filepath': output_path,
+                    'letter_count': len(letters)
+                })
+                
+                print(f"✅ Generated PDF for {bureau} with {len(letters)} letter(s)")
+            except Exception as e:
+                print(f"❌ Error generating PDF for {bureau}: {e}")
+        
         print(f"✅ Stage 2 complete! Analysis {analysis_id} ready for delivery")
         
         return jsonify({
@@ -1803,7 +1876,8 @@ def approve_analysis_stage_1(analysis_id):
             'stage': 2,
             'message': 'Client documents generated successfully',
             'cost': result.get('cost', 0),
-            'tokens': result.get('tokens_used', 0)
+            'tokens': result.get('tokens_used', 0),
+            'letters': letters_generated
         }), 200
         
     except Exception as e:
