@@ -419,42 +419,106 @@ TASK: Generate client-facing documents using Stage 1 results:
 
 Make it professional and litigation-ready.
 """
+        
+        # Call Claude API
+        print(f"\n🤖 Sending to Claude API for analysis...")
+        print(f"   Stage: {stage}")
+        print(f"   Analysis mode: {analysis_mode if stage == 1 else 'auto (Stage 2)'}")
+        print(f"   Prompt size: {len(super_prompt):,} characters")
+        print(f"   Report size: {len(credit_report_html):,} characters" if stage == 1 else "")
+        
+        import time
+        start_time = time.time()
+        
+        # Normalize prompts to ensure cache consistency (strip whitespace)
+        normalized_super_prompt = super_prompt.strip()
+        normalized_user_message = user_message.strip()
+        
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=50000,
+            temperature=0,
+            timeout=900.0,
+            system=[
+                {
+                    "type": "text",
+                    "text": normalized_super_prompt,
+                    "cache_control": {"type": "ephemeral"}
+                }
+            ],
+            messages=[{
+                "role": "user",
+                "content": normalized_user_message
+            }]
+        )
+        
+        elapsed_time = time.time() - start_time
+        print(f"⏱️  API call completed in {elapsed_time:.1f} seconds")
 
-**Out-of-Pocket:**
-[ ] Credit monitoring: $___________
-[ ] Certified mail/postage: $___________
-[ ] Medical (distress-related): $___________
-[ ] Other: $___________
+        # Extract token usage and calculate cost savings (guard against errors)
+        usage = getattr(message, 'usage', None)
+        if usage:
+            # Cost per million tokens (Anthropic pricing for Claude Sonnet 4)
+            INPUT_COST_PER_MTOK = 3.00  # $3 per million input tokens
+            CACHED_INPUT_COST_PER_MTOK = 0.30  # $0.30 per million cached tokens (90% discount)
+            OUTPUT_COST_PER_MTOK = 15.00  # $15 per million output tokens
+            
+            # Calculate costs
+            input_tokens = getattr(usage, 'input_tokens', 0)
+            cache_creation_tokens = getattr(usage, 'cache_creation_input_tokens', 0)
+            cache_read_tokens = getattr(usage, 'cache_read_input_tokens', 0)
+            output_tokens = getattr(usage, 'output_tokens', 0)
+            
+            # Actual cost calculation
+            cache_creation_cost = (cache_creation_tokens / 1_000_000) * INPUT_COST_PER_MTOK
+            cache_read_cost = (cache_read_tokens / 1_000_000) * CACHED_INPUT_COST_PER_MTOK
+            regular_input_cost = (input_tokens / 1_000_000) * INPUT_COST_PER_MTOK
+            output_cost = (output_tokens / 1_000_000) * OUTPUT_COST_PER_MTOK
+            
+            total_input_tokens = input_tokens + cache_creation_tokens + cache_read_tokens
+            total_cost = cache_creation_cost + cache_read_cost + regular_input_cost + output_cost
+            cost_without_cache = ((input_tokens + cache_creation_tokens + cache_read_tokens) / 1_000_000) * INPUT_COST_PER_MTOK + output_cost
+            
+            savings = cost_without_cache - total_cost
+            savings_percent = (savings / cost_without_cache * 100) if cost_without_cache > 0 else 0
+            
+            print("\n" + "="*60)
+            print("💰 COST ANALYSIS")
+            print("="*60)
+            print(f"📊 Token Usage:")
+            print(f"   Input tokens: {input_tokens:,}")
+            if cache_creation_tokens > 0:
+                print(f"   Cache creation: {cache_creation_tokens:,} (first request)")
+            if cache_read_tokens > 0:
+                print(f"   Cache read: {cache_read_tokens:,} (90% cheaper!)")
+            print(f"   Output tokens: {output_tokens:,}")
+            print(f"   Total: {total_input_tokens + output_tokens:,}")
+            
+            print(f"\n💵 Cost Breakdown:")
+            if cache_creation_cost > 0:
+                print(f"   Cache creation: ${cache_creation_cost:.4f}")
+            if cache_read_cost > 0:
+                print(f"   Cached input: ${cache_read_cost:.4f} ⚡")
+            if regular_input_cost > 0:
+                print(f"   Regular input: ${regular_input_cost:.4f}")
+            print(f"   Output: ${output_cost:.4f}")
+            print(f"   TOTAL: ${total_cost:.4f}")
+            
+            if cache_read_tokens > 0:
+                print(f"\n🎉 SAVINGS:")
+                print(f"   Without caching: ${cost_without_cache:.4f}")
+                print(f"   With caching: ${total_cost:.4f}")
+                print(f"   You saved: ${savings:.4f} ({savings_percent:.1f}%)")
+            elif cache_creation_tokens > 0:
+                print(f"\n📌 Cache Status: Created")
+                print(f"   Next requests will save ~${cache_creation_cost * 0.9:.4f} (90% discount)")
+            
+            print("="*60 + "\n")
 
-**Time and Effort:**
-Hours spent: _____ -- $_____ /hr = $___________
-
-**TOTAL ECONOMIC DAMAGES: $___________**
-
-**B2: EMOTIONAL DISTRESS DAMAGES**
-
-**Severity:**
-[ ] SEVERE ($50K-$100K+): Medical treatment, diagnosis, 6+ months, major disruption
-[ ] MODERATE ($15K-$50K): Therapy/counseling, substantial impact, 3-6 months
-[ ] MILD ($5K-$15K): No treatment, embarrassment/frustration, < 3 months
-[ ] MINIMAL ($1K-$5K): Minor inconvenience, brief duration
-
-**THIS CASE EMOTIONAL DISTRESS: $___________**
-
----------------------------------------------------------------------------
-
-**TOTAL ACTUAL DAMAGES:**
-Economic: $___________
-Emotional: $___________
-**TOTAL: $___________**
-
----------------------------------------------------------------------------
-C. PUNITIVE DAMAGES (Willful Violations Only)
----------------------------------------------------------------------------
-
-**IF WILLFULNESS PROBABILITY >= 50%:**
-
-**COMPENSATORY DAMAGES (Statutory + Actual):**
+        analysis_result = ""
+        for block in message.content:
+            if block.type == 'text':
+                analysis_result += block.text
 Statutory: $___________
 Actual: $___________
 **TOTAL COMPENSATORY: $___________**
