@@ -34,6 +34,9 @@ app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 # Store received credit reports
 credit_reports = []
 
+# Track which analyses have been marked as delivered (in-memory flag)
+delivered_cases = set()
+
 # Initialize PDF generators
 pdf_gen = LetterPDFGenerator()
 section_pdf_gen = SectionPDFGenerator()

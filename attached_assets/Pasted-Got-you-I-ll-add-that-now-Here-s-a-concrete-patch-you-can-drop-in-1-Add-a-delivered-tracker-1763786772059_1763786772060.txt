@@ -1,0 +1,557 @@
+Got you, I’ll “add that” now. Here’s a concrete patch you can drop in.
+
+1. Add a “delivered” tracker + zip endpoint in app.py
+At the top of app.py, near your other globals:
+# Store received credit reports
+credit_reports = []
+
+# Track which analyses have been marked as delivered (in-memory flag)
+delivered_cases = set()
+Then, near your other /api/analysis/... routes, add the two new endpoints:
+@app.route('/api/analysis/<int:analysis_id>/delivered', methods=['GET', 'POST'])
+def delivered_status(analysis_id):
+    """
+    GET  -> return whether case is marked as delivered
+    POST -> set/unset delivered flag (front-end toggle)
+    This uses an in-memory set so it won't survive server restarts,
+    but it avoids touching your DB schema.
+    """
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+
+        global delivered_cases
+
+        if request.method == 'GET':
+            return jsonify({
+                'success': True,
+                'delivered': analysis_id in delivered_cases
+            }), 200
+
+        # POST
+        data = request.get_json() or {}
+        delivered = bool(data.get('delivered', False))
+
+        if delivered:
+            delivered_cases.add(analysis_id)
+        else:
+            delivered_cases.discard(analysis_id)
+
+        return jsonify({
+            'success': True,
+            'delivered': analysis_id in delivered_cases
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+@app.route('/api/analysis/<int:analysis_id>/download_all')
+def download_all_letters(analysis_id):
+    """
+    Create a ZIP with all generated PDFs for this analysis
+    and return it as a download.
+    """
+    db = get_db()
+    try:
+        letters = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
+        if not letters:
+            return jsonify({'success': False, 'error': 'No letters found for this analysis'}), 404
+
+        import io
+        import zipfile
+
+        # Create ZIP in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for l in letters:
+                path = str(l.file_path)
+                if not os.path.exists(path):
+                    continue
+                # Put each PDF into the zip with a clean filename
+                arcname = f"{l.client_name}_{l.bureau}_Round{l.round_number}_{l.id}.pdf"
+                zf.write(path, arcname=arcname)
+
+        zip_buffer.seek(0)
+        filename = f"FCRA_Letters_Analysis_{analysis_id}.zip"
+
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+These give you:
+GET /api/analysis/<id>/delivered
+
+
+POST /api/analysis/<id>/delivered with JSON { "delivered": true/false }
+
+
+GET /api/analysis/<id>/download_all which returns a ZIP with all PDFs for that analysis.
+
+
+
+2. New litigation_review.html with spinner, “Download All”, delivered toggle, grouped letters
+Replace the existing templates/litigation_review.html with something like this (or merge into yours if you already customized it):
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FCRA Litigation Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fb;
+      padding: 24px;
+      color: #2c3e50;
+    }
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+    .sub {
+      font-size: 13px;
+      color: #7f8c8d;
+      margin-bottom: 20px;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      flex: 1;
+      min-width: 260px;
+    }
+    .card h2 {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .badge.stage {
+      background: #eaf2ff;
+      color: #2c60ff;
+    }
+    .badge.delivered {
+      background: #e6f4ea;
+      color: #1e7e34;
+    }
+    .badge.not-delivered {
+      background: #fdecea;
+      color: #c0392b;
+    }
+    .meta {
+      font-size: 13px;
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button, .btn-link {
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+    }
+    button.secondary, .btn-link {
+      background: #ecf0f1;
+      color: #2c3e50;
+      text-decoration: none;
+    }
+    button:disabled {
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    .toggle-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .toggle-wrap input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .bureau-group {
+      margin-bottom: 18px;
+    }
+    .bureau-group h3 {
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+    .letter-list {
+      list-style: none;
+      padding-left: 0;
+      font-size: 13px;
+    }
+    .letter-list li {
+      padding: 6px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ecf0f1;
+    }
+    .letter-meta {
+      max-width: 70%;
+    }
+    .letter-meta span {
+      display: block;
+    }
+    .letter-meta span.label {
+      font-weight: 600;
+    }
+    .status-pill {
+      font-size: 11px;
+      background: #f0f3f5;
+      border-radius: 999px;
+      padding: 2px 8px;
+    }
+
+    .status-bar {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #7f8c8d;
+    }
+    .status-bar span.em {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    /* Loading overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+    .overlay.visible {
+      display: flex;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 4px solid #ccd1d9;
+      border-top-color: #667eea;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .overlay-text {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #2c3e50;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .row {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <h1>Litigation Analysis Review</h1>
+  <p class="sub">Check violations, confirm case strength, and then generate client deliverables.</p>
+
+  <div class="row">
+    <div class="card" id="case-summary">
+      <h2>
+        Case Summary
+        <span id="stage-badge" class="badge stage">Stage ?</span>
+        <span id="delivered-badge" class="badge not-delivered">Not Delivered</span>
+      </h2>
+      <div class="meta" id="summary-meta">
+        Loading…
+      </div>
+      <div class="btn-row">
+        <button id="approve-btn" class="primary">
+          <span>⚖️ Accept Case & Generate Docs</span>
+        </button>
+        <button id="download-all-btn" class="secondary">
+          ⬇️ Download All PDFs
+        </button>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="delivered-toggle" />
+        <span>Mark case as delivered</span>
+      </label>
+      <div class="status-bar" id="status-bar">Ready.</div>
+    </div>
+
+    <div class="card" id="score-card">
+      <h2>Case Score</h2>
+      <div class="meta" id="score-meta">
+        Loading…
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Generated Letters (grouped by bureau)</h2>
+    <div id="letters-container">
+      Loading…
+    </div>
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="overlay" id="overlay">
+  <div style="text-align:center;">
+    <div class="spinner"></div>
+    <div class="overlay-text" id="overlay-text">Working on it…</div>
+  </div>
+</div>
+
+<script>
+  // analysis_id is injected from Flask in the route: render_template('litigation_review.html', analysis_id=analysis_id)
+  const ANALYSIS_ID = {{ analysis_id|int }};
+
+  const overlay      = document.getElementById('overlay');
+  const overlayText  = document.getElementById('overlay-text');
+  const approveBtn   = document.getElementById('approve-btn');
+  const summaryMeta  = document.getElementById('summary-meta');
+  const stageBadge   = document.getElementById('stage-badge');
+  const statusBar    = document.getElementById('status-bar');
+  const lettersWrap  = document.getElementById('letters-container');
+  const scoreMeta    = document.getElementById('score-meta');
+  const deliveredToggle = document.getElementById('delivered-toggle');
+  const deliveredBadge  = document.getElementById('delivered-badge');
+  const downloadAllBtn  = document.getElementById('download-all-btn');
+
+  function showOverlay(msg) {
+    overlayText.textContent = msg || 'Working on it…';
+    overlay.classList.add('visible');
+  }
+  function hideOverlay() {
+    overlay.classList.remove('visible');
+  }
+  function setStatus(msg) {
+    statusBar.innerHTML = msg;
+  }
+
+  async function fetchJSON(url, opts = {}) {
+    const res = await fetch(url, opts);
+    if (!res.ok) {
+      let msg = res.statusText;
+      try {
+        const j = await res.json();
+        msg = j.error || j.message || msg;
+      } catch (e) {}
+      throw new Error(msg);
+    }
+    return res.json();
+  }
+
+  function renderAnalysis(data) {
+    const a = data.analysis;
+    const score = data.case_score;
+    const letters = data.letters || [];
+
+    summaryMeta.innerHTML = `
+      <span class="em">Client:</span> ${a.client_name}<br/>
+      <span class="em">Analysis ID:</span> ${a.id}<br/>
+      <span class="em">Round:</span> ${a.dispute_round}<br/>
+      <span class="em">Created:</span> ${a.created_at}<br/>
+      <span class="em">Tokens Used:</span> ${a.tokens_used || 'n/a'} ·
+      <span class="em">Cost:</span> $${(a.cost || 0).toFixed(2)}
+    `;
+
+    const stageLabel = a.stage === 1 ? 'Stage 1 · Review & Violations'
+                      : a.stage === 2 ? 'Stage 2 · Docs Generated'
+                      : `Stage ${a.stage}`;
+    stageBadge.textContent = stageLabel;
+
+    if (score) {
+      scoreMeta.innerHTML = `
+        <span class="em">Total Score:</span> ${score.total_score}/10 (${score.case_strength})<br/>
+        Standing: ${score.standing_score}/10 · Violations: ${score.violation_quality_score}/10<br/>
+        Willfulness: ${score.willfulness_score}/10 · Docs: ${score.documentation_score}/10<br/>
+        Settlement probability: ${Math.round(score.settlement_probability * 100)}%<br/>
+        Recommendation: ${score.recommendation}
+      `;
+    } else {
+      scoreMeta.textContent = 'No score recorded yet.';
+    }
+
+    // Group letters by bureau
+    const grouped = {};
+    letters.forEach(l => {
+      const key = l.bureau || 'Unknown';
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(l);
+    });
+
+    if (!letters.length) {
+      lettersWrap.textContent = 'No letters generated yet.';
+      return;
+    }
+
+    const groupsHtml = Object.keys(grouped).sort().map(bureau => {
+      const list = grouped[bureau];
+      const items = list.map(l => `
+        <li>
+          <div class="letter-meta">
+            <span class="label">${bureau} · Round ${l.round}</span>
+            <span>Letter ID: ${l.id}</span>
+            <span class="status-pill">${l.file_path}</span>
+          </div>
+          <a class="btn-link" href="/api/download/${l.id}">
+            ⬇️ Download
+          </a>
+        </li>
+      `).join('');
+      return `
+        <div class="bureau-group">
+          <h3>${bureau} (${list.length} letter${list.length > 1 ? 's' : ''})</h3>
+          <ul class="letter-list">
+            ${items}
+          </ul>
+        </div>
+      `;
+    }).join('');
+
+    lettersWrap.innerHTML = groupsHtml;
+  }
+
+  async function loadPage() {
+    try {
+      setStatus('Loading case data…');
+      const [analysisData, deliveredData] = await Promise.all([
+        fetchJSON(`/api/analysis/${ANALYSIS_ID}/complete`),
+        fetchJSON(`/api/analysis/${ANALYSIS_ID}/delivered`)
+      ]);
+
+      if (!analysisData.success) {
+        throw new Error(analysisData.error || 'Unable to load analysis');
+      }
+      renderAnalysis(analysisData);
+
+      const isDelivered = deliveredData.success && deliveredData.delivered;
+      deliveredToggle.checked = isDelivered;
+      updateDeliveredBadge(isDelivered);
+
+      setStatus('Ready.');
+    } catch (err) {
+      console.error(err);
+      setStatus(`<span class="em" style="color:#c0392b;">Error:</span> ${err.message}`);
+      lettersWrap.textContent = 'Error loading data.';
+      scoreMeta.textContent = 'Error loading score.';
+    }
+  }
+
+  function updateDeliveredBadge(isDelivered) {
+    deliveredBadge.textContent = isDelivered ? 'Delivered' : 'Not Delivered';
+    deliveredBadge.classList.toggle('delivered', isDelivered);
+    deliveredBadge.classList.toggle('not-delivered', !isDelivered);
+  }
+
+  approveBtn.addEventListener('click', async () => {
+    try {
+      approveBtn.disabled = true;
+      downloadAllBtn.disabled = true;
+      showOverlay('Generating client documents…');
+      setStatus('Running Stage 2 with Claude · this can take a bit.');
+
+      const res = await fetchJSON(`/api/approve/${ANALYSIS_ID}`, {
+        method: 'POST'
+      });
+
+      setStatus('Stage 2 complete. Reloading case data…');
+      await loadPage();
+
+      setStatus('Client documents generated successfully.');
+    } catch (err) {
+      console.error(err);
+      alert(`Error: ${err.message}`);
+      setStatus(`<span class="em" style="color:#c0392b;">Error:</span> ${err.message}`);
+    } finally {
+      hideOverlay();
+      approveBtn.disabled = false;
+      downloadAllBtn.disabled = false;
+    }
+  });
+
+  deliveredToggle.addEventListener('change', async (e) => {
+    const delivered = e.target.checked;
+    try {
+      setStatus('Updating delivery status…');
+      const res = await fetchJSON(`/api/analysis/${ANALYSIS_ID}/delivered`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ delivered })
+      });
+      updateDeliveredBadge(res.delivered);
+      setStatus(res.delivered ? 'Case marked as delivered.' : 'Case marked as not delivered.');
+    } catch (err) {
+      console.error(err);
+      setStatus(`<span class="em" style="color:#c0392b;">Error:</span> ${err.message}`);
+      // Revert toggle if it failed
+      deliveredToggle.checked = !delivered;
+    }
+  });
+
+  downloadAllBtn.addEventListener('click', () => {
+    setStatus('Preparing ZIP of all PDFs…');
+    // No need to fetch via XHR – just kick off the download.
+    window.location.href = `/api/analysis/${ANALYSIS_ID}/download_all`;
+  });
+
+  // Initial load
+  loadPage();
+</script>
+</body>
+</html>
+
+
