@@ -1762,8 +1762,24 @@ def approve_analysis_stage_1(analysis_id):
         if not analysis:
             return jsonify({'error': 'Analysis not found'}), 404
         
-        if analysis.stage != 1:
-            return jsonify({'error': 'Analysis is not in Stage 1'}), 400
+        # If already in Stage 2, check if letters exist
+        if analysis.stage == 2:
+            letters = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
+            if letters:
+                # Already approved and letters generated, return success
+                letters_data = [{
+                    'letter_id': l.id,
+                    'bureau': l.bureau,
+                    'round': l.round_number,
+                    'filepath': l.file_path,
+                } for l in letters]
+                return jsonify({
+                    'success': True,
+                    'analysis_id': analysis_id,
+                    'stage': 2,
+                    'message': 'Client documents already generated',
+                    'letters': letters_data
+                }), 200
         
         print(f"\n🚀 STAGE 2: Generating client documents for analysis {analysis_id}...")
         
