@@ -1,3 +1,20 @@
+Got it, let’s treat this like the buttons are dead and just replace the entire review page script with something bullet-proof.
+
+Below is a **drop-in replacement** for `templates/litigation_review.html`.
+Paste this over the existing file, save, and reload `/analysis/1/review` in a new tab.
+
+This version:
+
+* Never blocks the UI
+* Wires the click handlers in a very simple, explicit way
+* Logs every click and every API response result to the red log box
+* Only disables buttons while a request is in flight
+
+---
+
+### ✅ New `litigation_review.html`
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -210,3 +227,36 @@
 </script>
 </body>
 </html>
+```
+
+---
+
+### What this should fix
+
+1. **Click handlers are guaranteed**
+   If you click any button, you’ll see a new line in the red log box like:
+
+   * `Refresh button clicked.`
+   * `Accept Case button clicked.`
+   * `Download button clicked.`
+
+2. **You’ll see exactly what each API call does**
+   For example, after clicking “Accept Case & Generate Letters” you’ll see:
+
+   * `POST /api/approve/1`
+   * `Response status: 200` or `400/500`
+   * `Response body: { ... }`
+
+3. **Buttons only disable while a request is running**, so the UI never feels “frozen”.
+
+---
+
+Once you paste this file and reload:
+
+* Try **Refresh Data** first and check the log box.
+* Then click **Accept Case & Generate Letters** and tell me:
+
+  * What status code you see, and
+  * What JSON shows in `Response body:` in the red log area.
+
+From there we can fix whatever the backend returns, but this will guarantee the buttons are actually clickable again.
