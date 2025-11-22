@@ -2571,6 +2571,28 @@ def get_complete_analysis(analysis_id):
         db.close()
 
 
+# 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
+@app.errorhandler(500)
+def handle_500_error(error):
+    """Handle any unhandled server errors and return JSON"""
+    print(f"🚨 UNHANDLED 500 ERROR: {error}")
+    import traceback
+    traceback.print_exc()
+    return jsonify({
+        'success': False,
+        'error': 'Internal server error (check server logs for details)'
+    }), 500
+
+
+@app.errorhandler(404)
+def handle_404_error(error):
+    """Handle 404 errors and return JSON"""
+    return jsonify({
+        'success': False,
+        'error': 'Endpoint not found'
+    }), 404
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     print("\n" + "🚀" * 30)

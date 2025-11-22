@@ -1,0 +1,198 @@
+That error message:
+
+> ❌ Error: Unexpected token 'I', "Internal S"... is not valid JSON
+
+means **your frontend is trying to `response.json()` a response that is actually HTML**, starting with `"Internal Server Error"`.
+
+So:
+
+* The browser calls `/webhook`
+* Flask hits some unhandled exception and returns the default **500 Internal Server Error HTML page**
+* Your JS still does `await response.json()`, which tries to parse `"Internal Server Error"` as JSON and blows up with that exact message
+
+So the *real* problem is a Python exception inside your Flask app. The JSON error is just a symptom.
+
+---
+
+## Step 1: Confirm where the error is
+
+In your HTML form JS you have:
+
+```js
+const response = await fetch('/webhook', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+});
+
+const result = await response.json();
+```
+
+If `response` is a 500 with HTML, `response.json()` will throw.
+
+To see what the server is actually sending back, temporarily change this block to:
+
+```js
+const response = await fetch('/webhook', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+});
+
+const text = await response.text();
+let result;
+
+try {
+    result = JSON.parse(text);
+} catch (e) {
+    console.error('Raw server response:', text);
+    throw new Error(`Server returned non-JSON. Status ${response.status}`);
+}
+```
+
+Now your status div will show something like `Server returned non-JSON. Status 500`, and the console will show the real HTML error page.
+
+---
+
+## Step 2: Make Flask always return JSON on 500s
+
+Right now, when something escapes your `try/except`, Flask (in debug) spits an HTML stacktrace. Wrap 500 errors so the frontend always gets JSON:
+
+```python
+from flask import jsonify
+
+@app.errorhandler(500)
+def handle_500(e):
+    # You can log e to console, but don’t expose details to the client
+    print("Unhandled 500 error:", repr(e))
+    return jsonify({
+        'success': False,
+        'error': 'Internal server error (check server logs for details)'
+    }), 500
+```
+
+Drop that somewhere near the bottom of your file before the `if __name__ == '__main__':` block.
+
+This way even if something blows up *outside* your route-level try/except, the frontend won’t choke on HTML.
+
+---
+
+## Step 3: Find the actual Python exception
+
+The key now is: **look at the Replit console logs when you submit the form.** You should see a traceback starting with something like:
+
+* `ModuleNotFoundError: No module named 'bs4'`
+  → install `beautifulsoup4` in your Replit environment
+
+* or `NameError` / `AttributeError` / something in `run_stage1_for_all_sections` or `analyze_with_claude`
+
+Based on your code, the most *likely* culprits:
+
+1. **Missing `bs4`**
+
+   `clean_credit_report_html` does:
+
+   ```python
+   from bs4 import BeautifulSoup
+   ```
+
+   If BeautifulSoup is not installed, the first call to that function will raise `ModuleNotFoundError`. That *is* inside `/webhook`’s try/except, so should be JSON, but if something goes wrong before `try`, you’ll still get HTML.
+
+   Fix (in Replit shell):
+
+   ```bash
+   pip install beautifulsoup4
+   ```
+
+2. **Missing or misconfigured Anthropic client**
+
+   If `anthropic` is not installed, or the model name is wrong, `client.messages.create` can error. You already have a try/except around the API call in `analyze_with_claude`, so that should return `{'success': False, 'error': ...}` and not crash Flask. But double-check the console logs to be sure.
+
+3. **PDF / other library errors** (for `/api/analyze`, `/api/approve`)
+
+   Endpoints like `/api/analyze` use `fpdf`, `pdf_generator`, etc. If those imports fail, the server might start but certain routes will 500.
+
+---
+
+## Step 4: Simple defensive JS on the form
+
+To make the front end more robust and also show you the real error text, you can wrap the whole submit handler like this:
+
+```html
+<script>
+document.getElementById('form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    const status = document.getElementById('status');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Sending...';
+
+    try {
+        const disputeRound = parseInt(document.getElementById('disputeRound').value);
+        const payload = {
+            clientName: document.getElementById('clientName').value,
+            cmmContactId: document.getElementById('cmmContactId').value,
+            creditProvider: document.getElementById('creditProvider').value,
+            disputeRound: disputeRound,
+            analysisMode: document.getElementById('analysisMode').value,
+            creditReportHTML: document.getElementById('creditReportHTML').value
+        };
+
+        if (disputeRound > 1) {
+            payload.previousLetters = document.getElementById('previousLetters').value;
+            payload.bureauResponses = document.getElementById('bureauResponses').value;
+            payload.disputeTimeline = document.getElementById('disputeTimeline').value;
+        }
+
+        const response = await fetch('/webhook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const text = await response.text();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseErr) {
+            console.error('Non-JSON server response:', text);
+            throw new Error(`Server returned ${response.status} ${response.statusText}`);
+        }
+
+        if (result.success) {
+            status.className = 'status success';
+            status.innerHTML = '✅ Success! Report received for ' + result.client;
+            status.style.display = 'block';
+            document.getElementById('form').reset();
+            document.getElementById('existingClientFields').style.display = 'none';
+        } else {
+            throw new Error(result.error || 'Unknown server error');
+        }
+    } catch (error) {
+        status.className = 'status error';
+        status.innerHTML = '❌ Error: ' + error.message;
+        status.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 ANALYZE';
+    }
+});
+</script>
+```
+
+That gives you:
+
+* Clean UX instead of the JSON parse error
+* Logs that show exactly what Flask sent back whenever it isn’t JSON
+
+---
+
+## TL;DR
+
+1. The `"Unexpected token 'I', "Internal S"... is not valid JSON"` is your frontend trying to parse **an HTML 500 page**.
+2. Add a global `@app.errorhandler(500)` to make all server errors JSON.
+3. Harden the JS around `response.json()` as shown so you see the real error.
+4. Check the Replit console for the Python traceback right after you submit the form; that’s the root cause we need to fix (likely missing `bs4` or another dependency).
+
+If you paste the traceback from the Replit console (the part that starts at `Traceback (most recent call last):`), I can point at the exact line in this file that’s blowing up and tell you what to change.
