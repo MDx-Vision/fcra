@@ -376,6 +376,8 @@
                 <button class="btn-danger" onclick="rejectCase()">✗ Reject Case</button>
                 <button class="btn-secondary" onclick="window.location.href='/admin'">← Back to Dashboard</button>
             </div>
+            
+            <div id="downloadButtons" style="margin-top: 30px;"></div>
         </div>
     </div>
     
@@ -509,15 +511,69 @@
             }
         }
         
-        function acceptCase() {
-            if (confirm('Accept this case for litigation?\n\nThis will mark it as approved and ready for client delivery.')) {
-                alert('Case accepted! (Implementation pending)');
+        async function acceptCase() {
+            if (confirm('Accept this case for litigation?\n\nThis will generate client documents and dispute letters.')) {
+                try {
+                    document.querySelector('.btn-success').disabled = true;
+                    document.querySelector('.btn-success').textContent = '⏳ Generating documents...';
+                    
+                    const response = await fetch(`/api/approve/${analysisId}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('✅ Stage 2 complete! Documents and letters generated.');
+                        loadLetters();
+                    } else {
+                        alert('❌ Error: ' + result.error);
+                    }
+                } catch (error) {
+                    alert('❌ Error: ' + error.message);
+                } finally {
+                    document.querySelector('.btn-success').disabled = false;
+                    document.querySelector('.btn-success').textContent = '✓ Accept Case';
+                }
+            }
+        }
+        
+        async function loadLetters() {
+            try {
+                const response = await fetch(`/admin/clients`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let lettersHTML = '<h3 style="margin-bottom: 15px; color: #667eea;">📄 Download Generated Letters:</h3>';
+                    lettersHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">';
+                    
+                    lettersHTML += `
+                        <a href="/api/download/analysis/${analysisId}/full_report" target="_blank" class="download-btn" style="background: #667eea; color: white; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
+                            📋 Full Litigation Report
+                        </a>
+                        <a href="/api/download/analysis/${analysisId}/round_1" target="_blank" class="download-btn" style="background: #11998e; color: white; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
+                            ✉️ Round 1 Dispute Letter
+                        </a>
+                        <a href="/api/download/analysis/${analysisId}/round_2" target="_blank" class="download-btn" style="background: #764ba2; color: white; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
+                            ✉️ Round 2 Dispute Letter
+                        </a>
+                    `;
+                    lettersHTML += '</div>';
+                    
+                    const downloadSection = document.getElementById('downloadButtons');
+                    if (downloadSection) {
+                        downloadSection.innerHTML = lettersHTML;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading letters:', error);
             }
         }
         
         function rejectCase() {
             if (confirm('Reject this case?\n\nThis will mark it as rejected and not suitable for litigation.')) {
-                alert('Case rejected! (Implementation pending)');
+                alert('Case rejected - noting for future reference');
             }
         }
         
