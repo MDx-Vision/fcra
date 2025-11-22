@@ -1611,7 +1611,8 @@ def analyze_and_generate_letters():
             'success': True,
             'client_name': client_name,
             'round': dispute_round,
-            'cost': result.get('cost', 0),
+            'cost': section_analysis.get('cost', 0),
+            'tokens_used': section_analysis.get('tokens_used', 0),
             'analysis_id': analysis_record.id,
             'letters': letters_generated
         }), 200
