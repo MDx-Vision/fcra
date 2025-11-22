@@ -1650,6 +1650,108 @@ def download_letter(letter_id):
         db.close()
 
 
+@app.route('/api/download/analysis/<int:analysis_id>/full_report')
+def download_full_report(analysis_id):
+    """Download full litigation report PDF"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        # Get first letter from this analysis as template (all have same info)
+        letter = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).first()
+        if not letter:
+            return jsonify({'error': 'No letters generated yet. Click Accept Case first.'}), 404
+        
+        # Create comprehensive report combining violations, standing, damages
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        
+        report_content = f"""
+FCRA LITIGATION ANALYSIS REPORT
+Client: {analysis.client_name}
+Analysis ID: {analysis.id}
+Date: {analysis.created_at.strftime('%Y-%m-%d %H:%M:%S')}
+
+CASE STRENGTH SCORE: {case_score.total_score if case_score else 'N/A'}/10
+
+VIOLATIONS IDENTIFIED: {len(violations)}
+"""
+        for v in violations:
+            report_content += f"\n• {v.fcra_section} - {v.violation_type} ({v.bureau})"
+            report_content += f"\n  {v.description}"
+            report_content += f"\n  Willful: {'Yes' if v.is_willful else 'No'}"
+            report_content += f"\n  Statutory Damages: ${v.statutory_damages_min}-${v.statutory_damages_max}\n"
+        
+        report_content += f"\nSTANDING ANALYSIS:\n"
+        if standing:
+            report_content += f"• Concrete Harm: {'Yes' if standing.has_concrete_harm else 'No'}\n"
+            report_content += f"• Dissemination: {'Yes' if standing.has_dissemination else 'No'}\n"
+            report_content += f"• Causation: {'Yes' if standing.has_causation else 'No'}\n"
+        
+        report_content += f"\nDAMAGES CALCULATION:\n"
+        if damages:
+            report_content += f"• Actual Damages: ${damages.actual_damages_total}\n"
+            report_content += f"• Statutory Damages: ${damages.statutory_damages_total}\n"
+            report_content += f"• Punitive Damages: ${damages.punitive_damages_amount}\n"
+            report_content += f"• Total Exposure: ${damages.total_exposure}\n"
+            report_content += f"• Settlement Target (65%): ${damages.settlement_target}\n"
+        
+        # Generate PDF
+        from fpdf import FPDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Helvetica", size=11)
+        pdf.multi_cell(0, 5, report_content)
+        
+        filename = f"{analysis.client_name.replace(' ', '_')}_Full_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        output_path = os.path.join('static', 'generated_letters', filename)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        pdf.output(output_path)
+        
+        return send_file(
+            output_path,
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/download/analysis/<int:analysis_id>/round_<int:round_num>')
+def download_round_letter(analysis_id, round_num):
+    """Download dispute letter for specific round"""
+    db = get_db()
+    try:
+        # Get first letter from this analysis/round
+        letter = db.query(DisputeLetter).filter_by(
+            analysis_id=analysis_id,
+            round_number=round_num
+        ).first()
+        
+        if not letter:
+            return jsonify({'error': f'No letter found for Round {round_num}. Click Accept Case first.'}), 404
+        
+        file_path_str = str(letter.file_path)
+        if not os.path.exists(file_path_str):
+            return jsonify({'error': 'PDF file not found'}), 404
+        
+        return send_file(
+            file_path_str,
+            as_attachment=True,
+            download_name=f"{letter.client_name}_Round{round_num}_Dispute_Letter.pdf"
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route('/api/approve/<int:analysis_id>', methods=['POST'])
 def approve_analysis_stage_1(analysis_id):
     """Approve Stage 1 analysis and trigger Stage 2 (client documents generation)"""
