@@ -6000,22 +6000,31 @@ This structured data will be automatically extracted and stored for case managem
 def extract_litigation_data(analysis_text):
     """
     Extract structured litigation data from Claude's analysis
-    Looks for <LITIGATION_DATA> JSON block and parses it
+    Looks for <LITIGATION_DATA> JSON block OR bare JSON at end of text
     """
     import json
     import re
     
     try:
-        # Find the litigation data block
+        # First try: Find the litigation data block with markers
         pattern = r'<LITIGATION_DATA>\s*(\{[\s\S]*?\})\s*</LITIGATION_DATA>'
         match = re.search(pattern, analysis_text)
         
-        if not match:
-            print("⚠️  No <LITIGATION_DATA> block found in analysis")
-            return None
-        
-        json_str = match.group(1)
-        print(f"✅ Found <LITIGATION_DATA> block ({len(json_str)} characters)")
+        if match:
+            json_str = match.group(1)
+            print(f"✅ Found <LITIGATION_DATA> block ({len(json_str)} characters)")
+        else:
+            # Fallback: Look for bare JSON object at end of text
+            print("⚠️  No <LITIGATION_DATA> markers found, searching for bare JSON...")
+            
+            # Find the last { and extract to the end
+            last_brace = analysis_text.rfind('{')
+            if last_brace == -1:
+                print("⚠️  No JSON found in analysis")
+                return None
+            
+            json_str = analysis_text[last_brace:]
+            print(f"✅ Found bare JSON at end ({len(json_str)} characters)")
         
         # Parse the JSON
         litigation_data = json.loads(json_str)
