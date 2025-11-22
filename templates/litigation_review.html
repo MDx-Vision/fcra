@@ -389,6 +389,7 @@
                 
                 if (data.success) {
                     displayAnalysis(data);
+                    loadAndDisplayScore(data);
                 } else {
                     alert('Error loading analysis: ' + data.error);
                 }
