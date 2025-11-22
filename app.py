@@ -15,7 +15,20 @@ from litigation_tools import calculate_damages, calculate_case_score, assess_wil
 import json
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# Allow Replit frontend + WordPress frontend + any admin UIs
+CORS(app, resources={
+    r"/*": {
+        "origins": ["*"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": False
+    }
+})
+
+# Allow large credit report uploads (up to 20MB)
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
 # Store received credit reports
 credit_reports = []
 

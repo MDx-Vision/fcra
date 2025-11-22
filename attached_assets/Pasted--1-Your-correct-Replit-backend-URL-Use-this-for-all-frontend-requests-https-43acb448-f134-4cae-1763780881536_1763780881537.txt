@@ -1,0 +1,109 @@
+
+✅ 1. Your correct Replit backend URL
+Use this for all frontend requests:
+https://43acb448-f134-4cae-bebb-30beb53067d7-00-34c467ooixyb.riker.replit.dev
+
+🔧 2. PATCHED FRONTEND JAVASCRIPT
+Replace ONLY the fetch block inside your <script> with this:
+const backendURL = "https://43acb448-f134-4cae-bebb-30beb53067d7-00-34c467ooixyb.riker.replit.dev";
+
+document.getElementById('form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    const status = document.getElementById('status');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Sending...';
+
+    try {
+        const disputeRound = parseInt(document.getElementById('disputeRound').value);
+        const payload = {
+            clientName: document.getElementById('clientName').value,
+            cmmContactId: document.getElementById('cmmContactId').value,
+            creditProvider: document.getElementById('creditProvider').value,
+            disputeRound: disputeRound,
+            analysisMode: document.getElementById('analysisMode').value,
+            creditReportHTML: document.getElementById('creditReportHTML').value
+        };
+
+        if (disputeRound > 1) {
+            payload.previousLetters = document.getElementById('previousLetters').value;
+            payload.bureauResponses = document.getElementById('bureauResponses').value;
+            payload.disputeTimeline = document.getElementById('disputeTimeline').value;
+        }
+
+        const response = await fetch(`${backendURL}/webhook`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            status.className = 'status success';
+            status.innerHTML = '✅ Success! Report received for ' + result.client;
+        } else {
+            throw new Error(result.error);
+        }
+
+        status.style.display = 'block';
+    } catch (error) {
+        status.className = 'status error';
+        status.innerHTML = '❌ Error: ' + error.message;
+        status.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 ANALYZE';
+    }
+});
+✔ This fixes:
+❌ Error: Failed to fetch
+
+
+CORS silent failures
+
+
+Replit blocking large payloads
+
+
+Request not reaching Flask
+
+
+
+🔧 3. PATCH FOR BACKEND (app.py)
+Add this near the top of your file, right after the Flask app initialization:
+# Allow Replit frontend + WordPress frontend
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "*",  # you can tighten this later
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": False
+    }
+})
+
+# allow large credit report uploads (up to 20MB)
+app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+✔ Why this works
+Replit sometimes rejects POST requests over ~1 MB
+
+
+This lifts the limit so your full HTML credit reports get through
+
+
+CORS now accepts:
+
+
+Your Replit frontend
+
+
+Future WordPress domain
+
+
+Any other admin UIs you build
+
+
+
