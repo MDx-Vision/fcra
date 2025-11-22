@@ -380,16 +380,15 @@
     </div>
     
     <script>
-        const analysisId = window.location.pathname.split('/').pop();
+        const analysisId = {{ analysis_id }};
         
         async function loadAnalysisData() {
             try {
-                const response = await fetch(`/api/analysis/${analysisId}/complete`);
+                const response = await fetch(`/api/analysis/${analysisId}/data`);
                 const data = await response.json();
                 
                 if (data.success) {
                     displayAnalysis(data);
-                    await loadAndDisplayScore();
                 } else {
                     alert('Error loading analysis: ' + data.error);
                 }
@@ -458,22 +457,17 @@
                     <tr>
                         <td><strong>Actual Damages</strong></td>
                         <td>Credit denials, higher interest, etc.</td>
-                        <td style="text-align: right;">$${data.damages.actual_total.toFixed(2)}</td>
+                        <td style="text-align: right;">$${data.damages.actual_damages_total.toFixed(2)}</td>
                     </tr>
                     <tr>
                         <td><strong>Statutory Damages</strong></td>
-                        <td>FCRA violations</td>
-                        <td style="text-align: right;">$${data.damages.statutory_total.toFixed(2)}</td>
+                        <td>${data.damages.section_605b_count + data.damages.section_607b_count + data.damages.section_611_count + data.damages.section_623_count} violations</td>
+                        <td style="text-align: right;">$${data.damages.statutory_damages_total.toFixed(2)}</td>
                     </tr>
                     <tr>
                         <td><strong>Punitive Damages</strong></td>
-                        <td>Willful violations multiplier</td>
-                        <td style="text-align: right;">$${data.damages.punitive_total.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Attorney Fees</strong></td>
-                        <td>Estimated legal costs</td>
-                        <td style="text-align: right;">$${data.damages.attorney_fees.toFixed(2)}</td>
+                        <td>Willful multiplier: ${data.damages.willfulness_multiplier}x</td>
+                        <td style="text-align: right;">$${data.damages.punitive_damages_amount.toFixed(2)}</td>
                     </tr>
                     <tr class="total-row">
                         <td><strong>Total Exposure</strong></td>
@@ -485,41 +479,32 @@
                         <td>Recommended offer</td>
                         <td style="text-align: right;">$${data.damages.settlement_target.toFixed(2)}</td>
                     </tr>
-                    <tr>
-                        <td><strong>Minimum Acceptable (45%)</strong></td>
-                        <td>Fallback position</td>
-                        <td style="text-align: right;">$${data.damages.minimum_acceptable.toFixed(2)}</td>
-                    </tr>
                 `;
                 document.getElementById('damagesTable').querySelector('tbody').innerHTML = damagesHTML;
             }
         }
         
-        async function loadAndDisplayScore() {
-            try {
-                const response = await fetch(`/api/analysis/${analysisId}/score`);
-                const data = await response.json();
-                
-                if (data.success && data.score) {
-                    document.getElementById('totalScore').textContent = `${data.score.total}/10`;
-                    document.getElementById('caseStrength').textContent = data.score.case_strength;
-                    document.getElementById('standingScore').textContent = `${data.score.standing}/3`;
-                    document.getElementById('violationScore').textContent = `${data.score.violation_quality}/4`;
-                    document.getElementById('willfulnessScore').textContent = `${data.score.willfulness}/2`;
-                    document.getElementById('settlementProb').textContent = `${(data.score.settlement_probability * 100).toFixed(0)}%`;
+        function loadAndDisplayScore(data) {
+            if (data.case_score) {
+                const score = data.case_score;
+                if (document.getElementById('totalScore')) {
+                    document.getElementById('totalScore').textContent = `${score.total_score}/10`;
+                    if (document.getElementById('caseStrength')) document.getElementById('caseStrength').textContent = score.case_strength;
+                    if (document.getElementById('standingScore')) document.getElementById('standingScore').textContent = `${score.standing_score}/3`;
+                    if (document.getElementById('violationScore')) document.getElementById('violationScore').textContent = `${score.violation_quality_score}/4`;
+                    if (document.getElementById('willfulnessScore')) document.getElementById('willfulnessScore').textContent = `${score.willfulness_score}/2`;
+                    if (document.getElementById('settlementProb')) document.getElementById('settlementProb').textContent = `${(score.settlement_probability * 100).toFixed(0)}%`;
                     
-                    document.getElementById('recommendationTitle').textContent = data.score.recommendation;
-                    document.getElementById('recommendationText').textContent = data.score.notes.join('\n');
+                    if (document.getElementById('recommendationTitle')) document.getElementById('recommendationTitle').textContent = score.recommendation;
+                    if (document.getElementById('recommendationText')) document.getElementById('recommendationText').textContent = score.recommendation;
                     
                     const recCard = document.getElementById('recommendation');
-                    if (data.score.total < 4) {
+                    if (recCard && score.total_score < 4) {
                         recCard.classList.add('weak');
-                    } else {
+                    } else if (recCard) {
                         recCard.classList.remove('weak');
                     }
                 }
-            } catch (error) {
-                console.error('Error loading score:', error);
             }
         }
         
