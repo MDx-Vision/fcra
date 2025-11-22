@@ -302,6 +302,11 @@ def analyze_with_claude(client_name,
     Stage 2: Client documents/letters generation (uses Stage 1 results)
     """
     try:
+        # CRITICAL: Clean HTML for Stage 1 to stay under 200k token limit
+        if stage == 1:
+            print(f"\n🧹 Cleaning credit report HTML to fit token limits...")
+            credit_report_html = clean_credit_report_html(credit_report_html)
+        
         # Define round_names globally for both stages
         round_names = {
             1: "Round 1 - Initial Dispute (RLPP Strong Language)",
@@ -734,7 +739,7 @@ def auto_populate_litigation_database(analysis_id, client_id, litigation_data, d
                     violation_type=v_data.get('violation_type', ''),
                     description=v_data.get('description', ''),
                     is_willful=v_data.get('is_willful', False),
-                    willfulness_indicators=v_data.get('willfulness_indicators', ''),
+                    willfulness_notes=v_data.get('willfulness_indicators', ''),
                     statutory_damages_min=100,
                     statutory_damages_max=1000
                 )
