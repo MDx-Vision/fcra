@@ -42,10 +42,13 @@ class Analysis(Base):
     client_name = Column(String(255), nullable=False)
     dispute_round = Column(Integer, nullable=False)
     analysis_mode = Column(String(20))
-    full_analysis = Column(Text)
+    stage = Column(Integer, default=1)  # 1=violations/standing/damages, 2=documents/letters
+    stage_1_analysis = Column(Text)  # Stage 1 results (violations + standing + damages)
+    full_analysis = Column(Text)  # Stage 2 results (full report + letters)
     cost = Column(Float)
     tokens_used = Column(Integer)
     cache_read = Column(Boolean, default=False)
+    approved_at = Column(DateTime, nullable=True)  # When user approves stage 1
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class DisputeLetter(Base):

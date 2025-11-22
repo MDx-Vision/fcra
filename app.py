@@ -293,24 +293,43 @@ def analyze_with_claude(client_name,
                         dispute_round=1,
                         previous_letters='',
                         bureau_responses='',
-                        dispute_timeline=''):
-    """Send credit report to Claude for FCRA analysis with dispute round context"""
+                        dispute_timeline='',
+                        stage=1,
+                        stage_1_results=''):
+    """Send credit report to Claude for FCRA analysis - TWO STAGE WORKFLOW
+    
+    Stage 1: Violations/Standing/Damages analysis only (small prompt, fits token limit)
+    Stage 2: Client documents/letters generation (uses Stage 1 results)
+    """
     try:
-        # Load SUPER_PROMPT from project files (normalize whitespace for consistent caching)
-        super_prompt = """
-Act as an experienced consumer protection attorney and certified Metro 2 compliance expert.
-Analyze this credit report for FCRA violations across all three bureaus (Equifax, Experian, TransUnion).
+        if stage == 1:
+            # STAGE 1: Just analysis (violations, standing, damages) - SMALL PROMPT
+            prompt = """
+Act as a consumer protection attorney. Analyze this credit report for FCRA violations.
 
-Follow this exact sequence:
-STEP 0: Standing Analysis (REQUIRED FIRST - prevents dismissals)
-STEP 1: Forensic Violation Identification
-STEP 2: Willfulness Assessment
-STEP 3: Statute of Limitations Verification
-STEP 4: Enhanced Damages Calculation
-STEP 5: Client-Facing Report Generation
-STEP 6: Dispute Letter Generation (Round 1 + MOV)
+ANALYSIS ONLY - Generate parts 0-4:
+- PART 0: Standing Analysis (post-TransUnion)
+- PART 1: Violation Identification
+- PART 2: Willfulness Assessment
+- PART 3: SOL Verification
+- PART 4: Damages Calculation
 
-Output a JSON object with violations, standing, and actual_damages data at the end.
+CRITICAL: Output ONLY JSON at the end with violations, standing, and actual_damages.
+NO client reports, NO letters, NO long-form text. Just the JSON data."""
+        else:
+            # STAGE 2: Client documents (uses Stage 1 results) - FULL PROMPT
+            prompt = f"""
+Act as a consumer protection attorney. Generate client-facing documents.
+
+PREVIOUS STAGE 1 RESULTS:
+{stage_1_results}
+
+Now generate:
+- PART 5: Client-Facing Report (40-50 pages)
+- PART 6: Dispute Letters (Round {dispute_round})
+- PART 7: MOV Letters (if applicable)"""
+        
+        super_prompt = prompt
 
 ===========================================================================
 PART 0: POST-TRANSUNION STANDING ANALYSIS (REQUIRED FIRST)
