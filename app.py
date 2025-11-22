@@ -657,11 +657,31 @@ Make it professional and litigation-ready.
     except Exception as e:
         print(f"❌ Claude API Error: {str(e)}")
         return {'success': False, 'error': str(e)}
-            
+
+
+def extract_litigation_data(analysis_text):
+    """Extract structured litigation data from Claude's analysis"""
+    import json
+    import re
+    
+    try:
+        # Try to find <LITIGATION_DATA> JSON block
+        pattern = r'<LITIGATION_DATA>\s*(\{[\s\S]*?\})\s*</LITIGATION_DATA>'
+        match = re.search(pattern, analysis_text)
+        
+        if match:
+            json_str = match.group(1)
+            print(f"✅ Found <LITIGATION_DATA> block ({len(json_str)} characters)")
+        else:
+            # Fallback: look for bare JSON at end
+            last_brace = analysis_text.rfind('{')
+            if last_brace == -1:
+                print("⚠️  No JSON found in analysis")
+                return None
             json_str = analysis_text[last_brace:]
             print(f"✅ Found bare JSON at end ({len(json_str)} characters)")
         
-        # Parse the JSON
+        # Parse JSON
         litigation_data = json.loads(json_str)
         
         # Validate structure
@@ -672,15 +692,11 @@ Make it professional and litigation-ready.
         if 'actual_damages' not in litigation_data:
             litigation_data['actual_damages'] = {}
         
-        print(f"   📊 Extracted: {len(litigation_data.get('violations', []))} violations")
-        print(f"   📊 Standing: {litigation_data.get('standing', {}).get('has_concrete_harm', False)}")
-        print(f"   📊 Actual damages: ${litigation_data.get('actual_damages', {}).get('higher_interest_amount', 0):,}")
-        
+        print(f"   ✅ Extracted {len(litigation_data.get('violations', []))} violations")
         return litigation_data
         
     except json.JSONDecodeError as e:
-        print(f"❌ JSON parsing error: {str(e)}")
-        print(f"   Failed to parse litigation data block")
+        print(f"❌ JSON parse error: {str(e)}")
         return None
     except Exception as e:
         print(f"❌ Error extracting litigation data: {str(e)}")
@@ -1201,14 +1217,15 @@ def analyze_and_generate_letters():
         if not client_name or not credit_report_html:
             return jsonify({'success': False, 'error': 'Missing required fields'}), 400
         
-        # Use existing analyze_with_claude function
+        # Use analyze_with_claude function - STAGE 1 only (violations/standing/damages analysis)
         result = analyze_with_claude(
             client_name=client_name,
             cmm_id=data.get('cmmContactId', ''),
             provider=credit_provider,
             credit_report_html=credit_report_html,
-            analysis_mode=analysis_mode,
-            dispute_round=dispute_round
+            analysis_mode='manual',  # Always manual for initial review
+            dispute_round=dispute_round,
+            stage=1  # STAGE 1: Just violations/standing/damages analysis
         )
         
         if not result.get('success'):
@@ -1234,16 +1251,17 @@ def analyze_and_generate_letters():
         db.commit()
         db.refresh(credit_report_record)
         
-        # Save analysis
+        # Save analysis with Stage 1 results
         analysis_record = Analysis(
             credit_report_id=credit_report_record.id,
             client_id=client.id,
             client_name=client_name,
             dispute_round=dispute_round,
-            analysis_mode=analysis_mode,
-            full_analysis=result.get('analysis', ''),
+            analysis_mode='manual',
+            stage=1,  # This is Stage 1 analysis
+            stage_1_analysis=result.get('analysis', ''),  # Store Stage 1 results
             cost=result.get('cost', 0),
-            tokens_used=result.get('total_tokens', 0),
+            tokens_used=result.get('tokens_used', 0),
             cache_read=result.get('cache_read', False)
         )
         db.add(analysis_record)
