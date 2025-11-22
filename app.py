@@ -4,10 +4,25 @@ import io
 import zipfile
 
 # API Configuration
-ANTHROPIC_API_KEY = os.environ['FCRA Automation Secure']
+ANTHROPIC_API_KEY = os.environ.get('FCRA Automation Secure', '')
+if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHROPIC_API_KEY) < 20:
+    print(f"⚠️  WARNING: Invalid or missing Anthropic API key!")
+    print(f"   Expected: Secret 'FCRA Automation Secure' with valid sk-ant-... key")
+    print(f"   Got: {'<empty>' if not ANTHROPIC_API_KEY else f'<too short: {len(ANTHROPIC_API_KEY)} chars>'}")
+    ANTHROPIC_API_KEY = 'sk-ant-invalid-placeholder-key'
+
 from anthropic import Anthropic
 
-client = Anthropic(api_key=ANTHROPIC_API_KEY)
+try:
+    client = Anthropic(api_key=ANTHROPIC_API_KEY)
+    if 'invalid' in ANTHROPIC_API_KEY.lower():
+        print("⚠️  Using placeholder API key - Stage 1 & Stage 2 will fail!")
+    else:
+        print("✅ Anthropic API client initialized")
+except Exception as e:
+    print(f"❌ Failed to initialize Anthropic client: {e}")
+    # Still create a dummy client to prevent crashes
+    client = None
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
