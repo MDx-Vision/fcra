@@ -9,3 +9,6 @@ reportlab
 requests
 sqlalchemy
 gunicorn==21.2.0
+fpdf
+fpdf2
+pyjwt
