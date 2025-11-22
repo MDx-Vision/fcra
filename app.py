@@ -285,6 +285,31 @@ def clean_credit_report_html(html):
     return text
 
 
+def truncate_for_token_limit(text, max_tokens_for_report=140_000):
+    """
+    Hard cap the report size so the full prompt stays under Anthropic's 200k token limit.
+    Rough approximation: ~4 characters per token for English text.
+    """
+    if not text:
+        return text
+
+    approx_tokens = len(text) / 4.0
+    if approx_tokens <= max_tokens_for_report:
+        return text
+
+    ratio = max_tokens_for_report / approx_tokens
+    new_len = int(len(text) * ratio)
+    truncated = text[:new_len]
+
+    print(
+        f"⚠️ truncate_for_token_limit: report truncated for token limit: "
+        f"{len(text):,} chars (~{approx_tokens:,.0f} tokens) -> "
+        f"{len(truncated):,} chars (~{len(truncated)/4.0:,.0f} tokens)"
+    )
+
+    return truncated
+
+
 def analyze_with_claude(client_name,
                         cmm_id,
                         provider,
@@ -302,10 +327,12 @@ def analyze_with_claude(client_name,
     Stage 2: Client documents/letters generation (uses Stage 1 results)
     """
     try:
-        # CRITICAL: Clean HTML for Stage 1 to stay under 200k token limit
+        # CRITICAL: Clean & truncate HTML for Stage 1 to stay under 200k token limit
         if stage == 1:
             print(f"\n🧹 Cleaning credit report HTML to fit token limits...")
             credit_report_html = clean_credit_report_html(credit_report_html)
+            print(f"🔒 Truncating to token limit...")
+            credit_report_html = truncate_for_token_limit(credit_report_html, max_tokens_for_report=140_000)
         
         # Define round_names globally for both stages
         round_names = {
@@ -558,6 +585,10 @@ Make it professional and litigation-ready.
         # Normalize prompts to ensure cache consistency (strip whitespace)
         normalized_super_prompt = super_prompt.strip()
         normalized_user_message = user_message.strip()
+        
+        # Token logging for visibility
+        approx_prompt_tokens = (len(normalized_super_prompt) + len(normalized_user_message)) / 4.0
+        print(f"📏 Approx prompt tokens before API call: ~{approx_prompt_tokens:,.0f}")
         
         message = client.messages.create(
             model="claude-sonnet-4-20250514",
@@ -1230,6 +1261,10 @@ def analyze_and_generate_letters():
         
         if not client_name or not credit_report_html:
             return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        # 🧹 PATCH #3: Always clean before analysis to reduce size and junk
+        print(f"🧹 Cleaning credit report in /api/analyze endpoint...")
+        credit_report_html = clean_credit_report_html(credit_report_html)
         
         # Use analyze_with_claude function - STAGE 1 only (violations/standing/damages analysis)
         result = analyze_with_claude(
