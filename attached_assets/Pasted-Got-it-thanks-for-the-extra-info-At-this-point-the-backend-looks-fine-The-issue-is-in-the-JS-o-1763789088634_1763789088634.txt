@@ -1,94 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Litigation Review</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 0 0 40px;
-    }
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    #logBox {
-      background: #ffecec;
-      border: 1px solid #f5c2c7;
-      color: #721c24;
-      padding: 10px;
-      border-radius: 4px;
-      font-family: Menlo, Monaco, monospace;
-      font-size: 12px;
-      height: 130px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-    }
-    .toolbar {
-      margin-top: 10px;
-      margin-bottom: 20px;
-    }
-    .toolbar button {
-      margin-right: 10px;
-      padding: 8px 16px;
-      font-size: 14px;
-      cursor: pointer;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      background: #e9ecef;
-    }
-    .toolbar button.primary {
-      background: #0d6efd;
-      border-color: #0d6efd;
-      color: white;
-    }
-    .toolbar button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    #dataBox {
-      background: #ffffff;
-      border-radius: 6px;
-      padding: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    pre {
-      margin: 0;
-      font-size: 12px;
-      font-family: Menlo, Monaco, monospace;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-  </style>
-</head>
-<body>
-<div class="page">
-  <h1>Litigation Review - ID: <span id="analysisIdLabel">?</span></h1>
+Got it, thanks for the extra info.
 
-  <div id="logBox"></div>
+At this point the backend looks fine. The issue is in the **JS on the litigation review page**:
 
-  <div class="toolbar">
-    <button id="refreshBtn">Refresh Data</button>
-    <button id="acceptBtn" class="primary">Accept Case &amp; Generate Letters</button>
-    <button id="downloadBtn">Download Report</button>
-  </div>
+* The buttons are either not wired correctly, or
+* The click handler is using placeholder text instead of the real response (`[200 or 400 or 500]`, `{...}`).
 
-  <div id="dataBox">
-    <h2>Analysis Data</h2>
-    <pre id="dataPre">{}</pre>
-  </div>
-</div>
+Let’s fix that by replacing the `<script>` block in `templates/litigation_review.html` with one that:
 
+* Enables the buttons once the page loads
+* Wires the click handlers
+* Logs the **real** status and JSON body from `/api/approve/<id>`
+* Shows alerts based on success / failure
+
+### 1. Replace the script block in `litigation_review.html`
+
+Find the `<script>` tag at the bottom of `litigation_review.html` and replace **everything inside it** with this:
+
+```html
 <script>
   // Simple logger to the red box
   function appendLog(msg) {
-    const log = document.getElementById('logBox');
+    const log = document.getElementById('log');
     const now = new Date().toLocaleTimeString();
     log.textContent += `${now} > ${msg}\n`;
     log.scrollTop = log.scrollHeight;
@@ -117,7 +49,7 @@
       const data = await res.json();
       appendLog('Data loaded.');
 
-      const pre = document.getElementById('dataPre');
+      const pre = document.getElementById('analysisData');
       pre.textContent = JSON.stringify(data, null, 2);
     } catch (err) {
       appendLog(`Error loading analysis: ${err.message}`);
@@ -200,5 +132,34 @@
     loadAnalysis();
   });
 </script>
-</body>
-</html>
+```
+
+### 2. Hard-refresh the page
+
+After you save the template:
+
+1. Stop and restart the Flask app if needed.
+2. In the browser, do a **hard refresh** on `/analysis/1/review`
+
+   * On Mac: `Cmd+Shift+R`
+   * On Windows: `Ctrl+Shift+R`
+
+### 3. Try again and read the log box
+
+Now when you click **“Accept Case & Generate Letters”** you should see something like:
+
+```
+12:10:23 AM > Accept Case button clicked.
+12:10:23 AM > POST /api/approve/1
+12:10:25 AM > Response status: 200
+12:10:25 AM > Response body: { "success": true, ... }
+```
+
+or, if there is a backend issue:
+
+```
+Response status: 400
+Response body: { "success": false, "error": "Analysis is not in Stage 1" }
+```
+
+If you still get a 400/500 after this patch, send me the **exact** status code and the JSON in `Response body:` and we’ll fix the backend next.
