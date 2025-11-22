@@ -1715,7 +1715,93 @@ def approve_analysis_stage_1(analysis_id):
 @app.route('/analysis/<int:analysis_id>/review')
 def review_litigation_analysis(analysis_id):
     """Litigation analysis review page"""
-    return render_template('litigation_review.html')
+    return render_template('litigation_review.html', analysis_id=analysis_id)
+
+
+@app.route('/api/analysis/<int:analysis_id>/data', methods=['GET'])
+def get_analysis_data(analysis_id):
+    """Get full analysis data for review page"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        
+        return jsonify({
+            'success': True,
+            'analysis': {
+                'id': analysis.id,
+                'client_name': analysis.client_name,
+                'dispute_round': analysis.dispute_round,
+                'stage': analysis.stage,
+                'cost': analysis.cost,
+                'tokens_used': analysis.tokens_used,
+                'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            },
+            'violations': [{
+                'id': v.id,
+                'fcra_section': v.fcra_section,
+                'violation_type': v.violation_type,
+                'description': v.description,
+                'bureau': v.bureau,
+                'account_name': v.account_name,
+                'is_willful': v.is_willful,
+                'statutory_damages_min': v.statutory_damages_min,
+                'statutory_damages_max': v.statutory_damages_max,
+                'willfulness_notes': v.willfulness_notes
+            } for v in violations],
+            'standing': {
+                'has_concrete_harm': standing.has_concrete_harm if standing else False,
+                'concrete_harm_type': standing.concrete_harm_type if standing else '',
+                'concrete_harm_details': standing.concrete_harm_details if standing else '',
+                'has_dissemination': standing.has_dissemination if standing else False,
+                'dissemination_details': standing.dissemination_details if standing else '',
+                'has_causation': standing.has_causation if standing else False,
+                'causation_details': standing.causation_details if standing else '',
+                'denial_letters_count': standing.denial_letters_count if standing else 0,
+                'adverse_action_notices_count': standing.adverse_action_notices_count if standing else 0
+            } if standing else None,
+            'damages': {
+                'credit_denials_amount': damages.credit_denials_amount if damages else 0,
+                'higher_interest_amount': damages.higher_interest_amount if damages else 0,
+                'credit_monitoring_amount': damages.credit_monitoring_amount if damages else 0,
+                'time_stress_amount': damages.time_stress_amount if damages else 0,
+                'other_actual_amount': damages.other_actual_amount if damages else 0,
+                'actual_damages_total': damages.actual_damages_total if damages else 0,
+                'section_605b_count': damages.section_605b_count if damages else 0,
+                'section_605b_amount': damages.section_605b_amount if damages else 0,
+                'section_607b_count': damages.section_607b_count if damages else 0,
+                'section_607b_amount': damages.section_607b_amount if damages else 0,
+                'section_611_count': damages.section_611_count if damages else 0,
+                'section_611_amount': damages.section_611_amount if damages else 0,
+                'section_623_count': damages.section_623_count if damages else 0,
+                'section_623_amount': damages.section_623_amount if damages else 0,
+                'statutory_damages_total': damages.statutory_damages_total if damages else 0,
+                'punitive_damages_amount': damages.punitive_damages_amount if damages else 0,
+                'willfulness_multiplier': damages.willfulness_multiplier if damages else 0,
+                'settlement_target': damages.settlement_target if damages else 0,
+                'total_exposure': damages.total_exposure if damages else 0
+            } if damages else None,
+            'case_score': {
+                'total_score': case_score.total_score if case_score else 0,
+                'standing_score': case_score.standing_score if case_score else 0,
+                'violation_quality_score': case_score.violation_quality_score if case_score else 0,
+                'willfulness_score': case_score.willfulness_score if case_score else 0,
+                'documentation_score': case_score.documentation_score if case_score else 0,
+                'settlement_probability': case_score.settlement_probability if case_score else 0,
+                'case_strength': case_score.case_strength if case_score else '',
+                'recommendation': case_score.recommendation if case_score else ''
+            } if case_score else None
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
 
 
 @app.route('/admin/clients')
