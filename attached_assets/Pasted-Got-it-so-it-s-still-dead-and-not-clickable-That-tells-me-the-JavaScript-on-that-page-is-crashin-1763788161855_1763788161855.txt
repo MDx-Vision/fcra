@@ -1,3 +1,36 @@
+Got it, so it’s *still* dead and not clickable. That tells me the JavaScript on that page is crashing before any of the event listeners get a chance to run.
+
+To get you unstuck quickly, I’m going to give you a **clean, drop-in template** for `litigation_review.html` that avoids the fragile `const ANALYSIS_ID = {{ analysis_id }}` pattern entirely. This removes the most likely source of the “nothing responds” behavior.
+
+---
+
+## 1. Make sure the route passes `analysis_id`
+
+In `app.py` you already have:
+
+```python
+@app.route('/analysis/<int:analysis_id>/review')
+def review_litigation_analysis(analysis_id):
+    """Litigation analysis review page"""
+    return render_template('litigation_review.html', analysis_id=analysis_id)
+```
+
+Leave that as-is.
+
+---
+
+## 2. Replace `templates/litigation_review.html` with this
+
+Create or overwrite `templates/litigation_review.html` with the code below.
+
+This version:
+
+* Stores the `analysis_id` in a `data-analysis-id` attribute on a wrapper div
+* Reads it in JS from the DOM (so no risky raw `{{ }}` inside JS)
+* Has defensive checks so JS won’t blow up if something is missing
+* Wires up all three buttons: Refresh, Accept Case, Download Full Report
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -317,3 +350,24 @@
 </script>
 </body>
 </html>
+```
+
+---
+
+## 3. Restart and check
+
+1. Stop and restart your Flask app in Replit.
+2. Hit a URL like:
+   `https://<your-repl-url>/analysis/1/review`
+   (swap `1` for a real `analysis_id` that exists in your DB).
+3. Open the browser console:
+
+   * You should see: `Analysis ID from DOM: 1 -> 1`
+   * There should be no red syntax error at the top.
+4. Click:
+
+   * **Refresh analysis** → should call `GET /api/analysis/<id>/data`
+   * **Accept case & generate letters** → should call `POST /api/approve/<id>`
+   * **Download full report PDF** → should open the PDF URL in a new tab
+
+If after this **the form on `/`** (the main credit report upload page) is what’s not responding instead, the next thing to look at is the browser console on that page and the `<script>` at the bottom of the HTML in your `home()` function. But this template patch should remove the most common “JS dies, nothing clickable” issue you were running into on the review page.
