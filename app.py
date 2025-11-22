@@ -5670,6 +5670,111 @@ This is the **complete integrated Super Prompt v2.5** combining:
 **Generation Time:** 7-12 minutes per case  
 **Output:** 45-55 page report + all letters
 
+---
+
+##  🤖 AUTOMATED DATA EXTRACTION (FOR LITIGATION DATABASE)
+
+**CRITICAL:** After completing your analysis, you MUST output a JSON data block for automated processing.
+
+**INSTRUCTIONS:**
+1. Complete your full analysis as normal (all parts 0-8)
+2. At the very END of your response, add this JSON block
+3. Extract data from your own analysis to populate the fields
+4. Use this EXACT format (proper JSON syntax required):
+
+```json
+<LITIGATION_DATA>
+{
+  "violations": [
+    {
+      "account_name": "Capital One Credit Card",
+      "bureau": "Equifax",
+      "fcra_section": "§611(a)(1)(A)",
+      "violation_type": "Failed Reasonable Investigation",
+      "description": "Bureau verified account without contacting furnisher despite contradictory information in dispute",
+      "is_willful": true,
+      "willfulness_indicators": "Repeated pattern across multiple disputes, identical response times suggesting automation"
+    }
+  ],
+  "standing": {
+    "has_concrete_harm": true,
+    "concrete_harm_type": "Credit Denial",
+    "harm_details": "Denied auto loan on 10/15/2024 due to inaccurate reporting, forced to accept 18% APR instead of 6% qualified rate",
+    "has_dissemination": true,
+    "dissemination_details": "Inaccurate information furnished to all three bureaus and viewed by 12 creditors in past 12 months",
+    "has_causation": true,
+    "causation_details": "Denial letter specifically cites disputed accounts as reason for rejection",
+    "denial_letters_count": 2,
+    "adverse_action_notices_count": 3
+  },
+  "actual_damages": {
+    "credit_denials_amount": 0,
+    "higher_interest_amount": 8500,
+    "credit_monitoring_amount": 240,
+    "time_stress_amount": 500,
+    "other_actual_amount": 0,
+    "notes": "Higher interest calculated as 3-year cost difference: (18% - 6%) × $25,000 loan = $8,500"
+  }
+}
+</LITIGATION_DATA>
+```
+
+**FIELD GUIDELINES:**
+
+**Violations Array** - Extract EVERY violation you identified in your analysis:
+- account_name: Exact name of account with violation
+- bureau: Which bureau(s) violated (Equifax/Experian/TransUnion)
+- fcra_section: Exact FCRA section (§605B, §607(b), §611, §623, etc.)
+- violation_type: Short description (10-15 words)
+- description: Full explanation with specific facts (30-50 words)
+- is_willful: true if you found willfulness indicators, false otherwise
+- willfulness_indicators: Evidence of reckless disregard (if willful)
+
+**Standing Object** - Extract from your Part 0 analysis:
+- has_concrete_harm: true if client has actual damages (denial, higher interest, emotional distress)
+- concrete_harm_type: "Credit Denial" / "Higher Interest Rate" / "Employment Denial" / "Emotional Distress"
+- harm_details: Specific facts with dates and amounts
+- has_dissemination: true if inaccurate info was published to third parties
+- dissemination_details: Who saw the inaccurate information
+- has_causation: true if you can link the inaccuracy to the harm
+- causation_details: Proof that the inaccuracy caused the harm
+- denial_letters_count: Number of denial/adverse action letters mentioned
+- adverse_action_notices_count: Count from credit report
+
+**Actual Damages** - Extract from your Part 4 damages calculation:
+- credit_denials_amount: Economic loss from denials (lost opportunities)
+- higher_interest_amount: Calculate EXACT cost difference over loan term
+- credit_monitoring_amount: Cost of monitoring services
+- time_stress_amount: Reasonable compensation for time spent (hours × rate)
+- other_actual_amount: Any other quantifiable damages
+- notes: Show your math for major amounts
+
+**CRITICAL RULES:**
+1. Output this JSON AFTER your complete analysis (at the very end)
+2. Use proper JSON syntax (quotes, commas, brackets)
+3. Base ALL data on YOUR OWN ANALYSIS (don't make up violations)
+4. If no violations found, use empty array: "violations": []
+5. If no standing, set all standing booleans to false
+6. Dollar amounts must be numbers (no $ signs, no commas)
+7. Include willfulness_indicators ONLY if is_willful = true
+
+**EXAMPLE OF COMPLETE OUTPUT:**
+```
+[Your full 40-50 page analysis here...]
+[All dispute letters here...]
+[MOV letters here...]
+
+<LITIGATION_DATA>
+{
+  "violations": [...],
+  "standing": {...},
+  "actual_damages": {...}
+}
+</LITIGATION_DATA>
+```
+
+This structured data will be automatically extracted and stored for case management and litigation tracking.
+
             """
 
         # Build dispute round context
@@ -5893,6 +5998,202 @@ This is the **complete integrated Super Prompt v2.5** combining:
     except Exception as e:
         print(f"❌ Claude API Error: {str(e)}")
         return {'success': False, 'error': str(e)}
+
+
+def extract_litigation_data(analysis_text):
+    """
+    Extract structured litigation data from Claude's analysis
+    Looks for <LITIGATION_DATA> JSON block and parses it
+    """
+    import json
+    import re
+    
+    try:
+        # Find the litigation data block
+        pattern = r'<LITIGATION_DATA>\s*(\{[\s\S]*?\})\s*</LITIGATION_DATA>'
+        match = re.search(pattern, analysis_text)
+        
+        if not match:
+            print("⚠️  No <LITIGATION_DATA> block found in analysis")
+            return None
+        
+        json_str = match.group(1)
+        print(f"✅ Found <LITIGATION_DATA> block ({len(json_str)} characters)")
+        
+        # Parse the JSON
+        litigation_data = json.loads(json_str)
+        
+        # Validate structure
+        if 'violations' not in litigation_data:
+            litigation_data['violations'] = []
+        if 'standing' not in litigation_data:
+            litigation_data['standing'] = {}
+        if 'actual_damages' not in litigation_data:
+            litigation_data['actual_damages'] = {}
+        
+        print(f"   📊 Extracted: {len(litigation_data.get('violations', []))} violations")
+        print(f"   📊 Standing: {litigation_data.get('standing', {}).get('has_concrete_harm', False)}")
+        print(f"   📊 Actual damages: ${litigation_data.get('actual_damages', {}).get('higher_interest_amount', 0):,}")
+        
+        return litigation_data
+        
+    except json.JSONDecodeError as e:
+        print(f"❌ JSON parsing error: {str(e)}")
+        print(f"   Failed to parse litigation data block")
+        return None
+    except Exception as e:
+        print(f"❌ Error extracting litigation data: {str(e)}")
+        return None
+
+
+def auto_populate_litigation_database(analysis_id, client_id, litigation_data, db):
+    """
+    Automatically populate Violations, Standing, and Damages tables from extracted data
+    """
+    from litigation_tools import calculate_damages, calculate_case_score
+    
+    try:
+        print(f"\n🤖 AUTO-POPULATING LITIGATION DATABASE...")
+        
+        # 1. POPULATE VIOLATIONS
+        violations_added = 0
+        if litigation_data.get('violations'):
+            for v_data in litigation_data['violations']:
+                violation = Violation(
+                    analysis_id=analysis_id,
+                    client_id=client_id,
+                    account_name=v_data.get('account_name', 'Unknown'),
+                    bureau=v_data.get('bureau', 'Unknown'),
+                    fcra_section=v_data.get('fcra_section', ''),
+                    violation_type=v_data.get('violation_type', ''),
+                    description=v_data.get('description', ''),
+                    is_willful=v_data.get('is_willful', False),
+                    willfulness_indicators=v_data.get('willfulness_indicators', ''),
+                    statutory_damages_min=100,
+                    statutory_damages_max=1000
+                )
+                db.add(violation)
+                violations_added += 1
+            
+            print(f"   ✅ Added {violations_added} violations")
+        
+        # 2. POPULATE STANDING
+        if litigation_data.get('standing'):
+            s_data = litigation_data['standing']
+            standing = Standing(
+                analysis_id=analysis_id,
+                client_id=client_id,
+                has_concrete_harm=s_data.get('has_concrete_harm', False),
+                concrete_harm_type=s_data.get('concrete_harm_type', ''),
+                harm_details=s_data.get('harm_details', ''),
+                has_dissemination=s_data.get('has_dissemination', False),
+                dissemination_details=s_data.get('dissemination_details', ''),
+                has_causation=s_data.get('has_causation', False),
+                causation_details=s_data.get('causation_details', ''),
+                denial_letters_count=s_data.get('denial_letters_count', 0),
+                adverse_action_notices_count=s_data.get('adverse_action_notices_count', 0),
+                standing_verified=True
+            )
+            db.add(standing)
+            print(f"   ✅ Added standing data (concrete harm: {s_data.get('has_concrete_harm', False)})")
+        
+        # Commit violations and standing before calculating damages
+        db.commit()
+        
+        # 3. CALCULATE AND POPULATE DAMAGES
+        violations_for_calc = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        violations_data = [{
+            'fcra_section': v.fcra_section,
+            'is_willful': v.is_willful,
+            'violation_type': v.violation_type
+        } for v in violations_for_calc]
+        
+        actual_damages_input = litigation_data.get('actual_damages', {})
+        damages_calc = calculate_damages(violations_data, actual_damages_input)
+        
+        damages = Damages(
+            analysis_id=analysis_id,
+            client_id=client_id,
+            credit_denials_amount=damages_calc['actual']['credit_denials'],
+            higher_interest_amount=damages_calc['actual']['higher_interest'],
+            credit_monitoring_amount=damages_calc['actual']['credit_monitoring'],
+            time_stress_amount=damages_calc['actual']['time_stress'],
+            other_actual_amount=damages_calc['actual']['other'],
+            actual_damages_total=damages_calc['actual']['total'],
+            section_605b_count=damages_calc['statutory']['605b']['count'],
+            section_605b_amount=damages_calc['statutory']['605b']['amount'],
+            section_607b_count=damages_calc['statutory']['607b']['count'],
+            section_607b_amount=damages_calc['statutory']['607b']['amount'],
+            section_611_count=damages_calc['statutory']['611']['count'],
+            section_611_amount=damages_calc['statutory']['611']['amount'],
+            section_623_count=damages_calc['statutory']['623']['count'],
+            section_623_amount=damages_calc['statutory']['623']['amount'],
+            statutory_damages_total=damages_calc['statutory']['total'],
+            willfulness_multiplier=damages_calc['punitive']['multiplier'],
+            punitive_damages_amount=damages_calc['punitive']['amount'],
+            estimated_hours=damages_calc['attorney_fees']['estimated_hours'],
+            hourly_rate=damages_calc['attorney_fees']['hourly_rate'],
+            attorney_fees_projection=damages_calc['attorney_fees']['total'],
+            total_exposure=damages_calc['settlement']['total_exposure'],
+            settlement_target=damages_calc['settlement']['target'],
+            minimum_acceptable=damages_calc['settlement']['minimum'],
+            notes=actual_damages_input.get('notes', '')
+        )
+        db.add(damages)
+        print(f"   ✅ Calculated damages (total exposure: ${damages_calc['settlement']['total_exposure']:,.2f})")
+        
+        # Commit damages before calculating score
+        db.commit()
+        
+        # 4. CALCULATE AND POPULATE CASE SCORE
+        standing_obj = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        standing_data = {
+            'has_concrete_harm': standing_obj.has_concrete_harm if standing_obj else False,
+            'has_dissemination': standing_obj.has_dissemination if standing_obj else False,
+            'has_causation': standing_obj.has_causation if standing_obj else False,
+            'denial_letters_count': standing_obj.denial_letters_count if standing_obj else 0
+        }
+        
+        documentation_complete = len(violations_data) > 0 and standing_obj is not None
+        
+        score_data = calculate_case_score(
+            standing_data,
+            violations_data,
+            damages_calc,
+            documentation_complete
+        )
+        
+        case_score = CaseScore(
+            analysis_id=analysis_id,
+            client_id=client_id,
+            total_score=score_data['total'],
+            standing_score=score_data['standing'],
+            violation_quality_score=score_data['violation_quality'],
+            willfulness_score=score_data['willfulness'],
+            documentation_score=score_data['documentation'],
+            settlement_probability=score_data['settlement_probability'],
+            case_strength=score_data['case_strength'],
+            recommendation=score_data['recommendation'],
+            recommendation_notes='\n'.join(score_data['notes'])
+        )
+        db.add(case_score)
+        print(f"   ✅ Calculated case score ({score_data['total']}/10 - {score_data['case_strength']})")
+        
+        # Final commit
+        db.commit()
+        
+        print(f"✅ AUTO-POPULATION COMPLETE!")
+        print(f"   Violations: {violations_added}")
+        print(f"   Standing: Added")
+        print(f"   Damages: ${damages_calc['settlement']['total_exposure']:,.2f}")
+        print(f"   Case Score: {score_data['total']}/10")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error auto-populating database: {str(e)}")
+        db.rollback()
+        return False
 
 
 @app.route('/webhook', methods=['POST'])
@@ -6308,8 +6609,21 @@ def analyze_and_generate_letters():
         db.commit()
         db.refresh(analysis_record)
         
-        # Extract and generate PDF letters
+        # 🤖 AUTO-POPULATE LITIGATION DATABASE from Claude's response
         analysis_text = result.get('analysis', '')
+        litigation_data = extract_litigation_data(analysis_text)
+        if litigation_data:
+            print(f"\n🎯 Litigation data found! Auto-populating database...")
+            auto_populate_litigation_database(
+                analysis_id=analysis_record.id,
+                client_id=client.id,
+                litigation_data=litigation_data,
+                db=db
+            )
+        else:
+            print(f"\n⚠️  No litigation data found in analysis (Claude may not have included <LITIGATION_DATA> block)")
+        
+        # Extract and generate PDF letters
         letters_generated = []
         
         # Parse individual letters using START/END markers
