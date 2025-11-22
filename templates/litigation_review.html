@@ -377,6 +377,10 @@
                 <button class="btn-secondary" onclick="window.location.href='/admin'">← Back to Dashboard</button>
             </div>
             
+            <div id="status-box" style="margin-top: 20px; font-weight: 600; padding: 15px; border-radius: 8px; display: none;"></div>
+            
+            <ul id="letters-list" style="margin-top: 20px; list-style: none; padding: 0;"></ul>
+            
             <div id="downloadButtons" style="margin-top: 30px;"></div>
         </div>
     </div>
@@ -511,27 +515,79 @@
             }
         }
         
+        function renderLetters(letters) {
+            const list = document.getElementById('letters-list');
+            list.innerHTML = "";
+
+            if (!letters || letters.length === 0) {
+                list.innerHTML = "<li style='color: #999;'>No letters found.</li>";
+                return;
+            }
+
+            letters.forEach(letter => {
+                const item = document.createElement('li');
+                item.style.cssText = 'padding: 12px; margin-bottom: 10px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #667eea;';
+                item.innerHTML = `
+                    <strong style="color: #333;">${letter.bureau}</strong> – Round ${letter.round}
+                    <br>
+                    <a href="${letter.filepath}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">📥 Download PDF</a>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        async function approveAnalysis(id) {
+            const status = document.getElementById('status-box');
+            status.style.display = 'block';
+            status.innerHTML = "Processing...";
+            
+            try {
+                const response = await fetch(`/api/approve/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                // REAL ERROR — show in status
+                if (!result.success) {
+                    throw new Error(result.error || "Unknown server error");
+                }
+
+                // CASE: Stage already completed
+                if (result.stage === 2) {
+                    status.innerHTML = "✅ Client documents already generated";
+                    status.style.background = '#d4edda';
+                    status.style.color = '#155724';
+                    renderLetters(result.letters);
+                    loadLetters();
+                    return;
+                }
+
+                // CASE: Stage 2 executed successfully
+                status.innerHTML = "✅ Documents generated successfully";
+                status.style.background = '#d4edda';
+                status.style.color = '#155724';
+                renderLetters(result.letters);
+                loadLetters();
+
+            } catch (err) {
+                status.innerHTML = `❌ Error: ${err.message}`;
+                status.style.background = '#f8d7da';
+                status.style.color = '#721c24';
+            }
+        }
+
         async function acceptCase() {
             if (confirm('Accept this case for litigation?\n\nThis will generate client documents and dispute letters.')) {
                 try {
                     document.querySelector('.btn-success').disabled = true;
                     document.querySelector('.btn-success').textContent = '⏳ Generating documents...';
                     
-                    const response = await fetch(`/api/approve/${analysisId}`, {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'}
-                    });
+                    await approveAnalysis(analysisId);
                     
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        alert('✅ Stage 2 complete! Documents and letters generated.');
-                        loadLetters();
-                    } else {
-                        alert('❌ Error: ' + result.error);
-                    }
                 } catch (error) {
-                    alert('❌ Error: ' + error.message);
+                    console.error('Error:', error);
                 } finally {
                     document.querySelector('.btn-success').disabled = false;
                     document.querySelector('.btn-success').textContent = '✓ Accept Case';
