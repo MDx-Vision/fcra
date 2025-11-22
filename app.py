@@ -338,170 +338,31 @@ Now generate:
 CREDIT REPORT TO ANALYZE:
 {credit_report_html}
 """
+        else:
+            # Stage 2: Add full prompt for document generation
+            super_prompt += """
 
-**Category 5 Score: _____ / 5**
+You have Stage 1 analysis results. Now generate the client-facing documents:
 
----------------------------------------------------------------------------
-WILLFULNESS SCORE CALCULATION
----------------------------------------------------------------------------
+PART 5: CLIENT-FACING REPORT (40-50 pages)
+- Executive Summary
+- Detailed violation analysis
+- Standing assessment
+- Damages calculation
+- Legal strategy & case strength
 
-**TOTAL WILLFULNESS EVIDENCE SCORE:**
+PART 6: DISPUTE LETTERS
+- Round """ + str(dispute_round) + """ letter with RLPP language
+- Statutory citations
+- Violation documentation
+- Proof of willfulness
 
-Category 1 (Knowledge): _____ / 4
-Category 2 (Pattern): _____ / 5
-Category 3 (Ignoring Complaints): _____ / 6
-Category 4 (Inadequate Procedures): _____ / 5
-Category 5 (Post-Violation): _____ / 5
+PART 7: MOV REQUEST (if applicable)
+- Method of Verification request
+- Bureau-specific requirements
+- Deadline enforcement
 
-**TOTAL: _____ / 25 points**
-
----------------------------------------------------------------------------
-OBJECTIVE UNREASONABLENESS TEST
----------------------------------------------------------------------------
-
-**Is defendant's conduct objectively unreasonable?**
-
-Check all that apply:
-[ ] FCRA requirement is clear and unambiguous (defendant has no excuse)
-[ ] Court precedent clearly established (defendant contradicts case law)
-[ ] CFPB/FTC guidance provided clear direction (defendant ignored it)
-[ ] Industry standard practice differs (defendant is outlier)
-[ ] Defendant received legal advice but didn't follow it
-
-**OBJECTIVE UNREASONABLENESS:**
-- CLEARLY unreasonable: Violated clear deadline or unambiguous requirement
-- PROBABLY unreasonable: Weak interpretation; case law against defendant
-- ARGUABLY reasonable: Genuinely ambiguous provision; plausible interpretation
-
----------------------------------------------------------------------------
-FINAL WILLFULNESS DETERMINATION
----------------------------------------------------------------------------
-
-**WILLFULNESS PROBABILITY:**
-
-20-25 points + Objectively Unreasonable = VERY STRONG (90-95% confidence)
-15-19 points + Objectively Unreasonable = STRONG (75-85% confidence)
-10-14 points + Objectively Unreasonable = MODERATE (50-70% confidence)
-5-9 points OR Arguably Reasonable = WEAK (30-45% confidence)
-0-4 points + Arguably Reasonable = NO WILLFULNESS (< 25% confidence)
-
-**THIS CASE WILLFULNESS PROBABILITY: _____% **
-
-**PLEADING STRATEGY:**
-- If >= 75%: Plead willful violation ( 1681n) confidently
-- If 50-74%: Plead willful AND negligent in alternative
-- If < 50%: Plead negligent ( 1681o) primarily
-
-===========================================================================
-PART 3: STATUTE OF LIMITATIONS VERIFICATION
-===========================================================================
-
-**STATUTORY BASIS:** 15 U.S.C.  1681p
-
-**DUAL REQUIREMENTS:** Action must be brought not later than EARLIER of:
-1. 2 years from date of DISCOVERY by plaintiff, OR
-2. 5 years from date violation OCCURRED
-
-**For EACH violation, complete this analysis:**
-
----------------------------------------------------------------------------
-VIOLATION #[X]: [Account/Issue]
----------------------------------------------------------------------------
-
-**When did violation OCCUR?**
-Date: ___________________________
-
-Guidelines:
--  1681e(b) accuracy: When inaccuracy first entered CRA file
--  1681i reinvestigation: 30 days after dispute received (or sham investigation date)
--  1681i(a)(5)(B) reinsertion: When item re-inserted without notice
--  1681g disclosure: When CRA failed to provide after request
--  1681m adverse action: Date of adverse action
-
-**5-YEAR ABSOLUTE LIMIT CHECK:**
-Time since violation: _____ years, _____ months
-- Within 5 years: [ ] YES - Continue
-- Beyond 5 years: [ ] NO - TIME-BARRED; exclude from case
-
-**When did client DISCOVER violation?**
-Discovery date: ___________________________
-
-Common discovery dates:
-- Date obtained credit report showing inaccuracy
-- Date received adverse action notice
-- Date received CRA investigation results
-- Date of denial (should have investigated then)
-
-**2-YEAR DISCOVERY RULE CHECK:**
-Time since discovery: _____ years, _____ months
-Filing deadline: ___________________________ (2 years from discovery)
-- Within 2 years: [ ] YES - Continue
-- Beyond 2 years: [ ] NO - Check tolling
-
-**TOLLING DOCTRINES (if appears expired):**
-
-Fraudulent Concealment:
-[ ] CRA claimed "verified" when it never investigated (false statement)
-[ ] CRA destroyed evidence
-[ ] Defendant affirmatively misrepresented facts
-- Tolling applies: [ ] Possibly - argue in complaint
-
-Continuing Violation (Circuit-Specific):
-Client's circuit: ___________________________
-- 9th Circuit (minority view): Each furnishing = new violation
-- Majority circuits: Original inaccuracy = single violation
-- Recent furnishing dates if applicable: ___________________________
-
-**SOL STATUS FOR THIS VIOLATION:**
-[ ] TIMELY - Include in case
-[ ] TIME-BARRED - Exclude from case
-[ ] UNCERTAIN - Tolling arguable; consult with client on risk
-
----------------------------------------------------------------------------
-OVERALL SOL ASSESSMENT
----------------------------------------------------------------------------
-
-**VIOLATIONS SUMMARY:**
-Total violations identified: _____
-Violations within SOL: _____
-Violations time-barred: _____
-
-**EARLIEST FILING DEADLINE:** ___________________________
-
-**s  CALENDAR THIS DEADLINE IMMEDIATELY**
-
-**CASE VIABILITY:**
-- All violations timely: [ ] Proceed confidently
-- Some violations time-barred: [ ] Proceed with timely violations only
-- Major violations time-barred: [ ] Evaluate remaining case value
-- All violations time-barred: [ ] DECLINE CASE
-
-===========================================================================
-PART 4: ENHANCED DAMAGES CALCULATION (Willfulness-Tiered)
-===========================================================================
-
-**Use willfulness determination from Part 2 to determine available damages.**
-
----------------------------------------------------------------------------
-A. STATUTORY DAMAGES (Willful Violations Only)
----------------------------------------------------------------------------
-
-**IF WILLFULNESS PROBABILITY >= 50%:**
-
-Number of violations (within SOL + likely willful): _____
-
-**Per-violation range:** $100 - $1,000
-
-**Award Level Based on Reprehensibility:**
-- Egregious conduct (willfulness score 20-25): $1,000 per violation
-- Significant conduct (willfulness score 15-19): $500 per violation
-- Moderate conduct (willfulness score 10-14): $100-250 per violation
-
-**STATUTORY DAMAGES CALCULATION:**
-
-Conservative (low end): _____ -- $100 = $___________
-Moderate (middle): _____ -- $500 = $___________
-Aggressive (high end): _____ -- $1,000 = $___________
+Output the complete client-facing documents."""
 
 **RECOMMENDED FOR THIS CASE: $___________**
 
