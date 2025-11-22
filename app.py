@@ -792,23 +792,28 @@ Make it professional and litigation-ready.
         approx_prompt_tokens = (len(normalized_super_prompt) + len(normalized_user_message)) / 4.0
         print(f"📏 Approx prompt tokens before API call: ~{approx_prompt_tokens:,.0f}")
         
-        message = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=50000,
-            temperature=0,
-            timeout=900.0,
-            system=[
-                {
-                    "type": "text",
-                    "text": normalized_super_prompt,
-                    "cache_control": {"type": "ephemeral"}
-                }
-            ],
-            messages=[{
-                "role": "user",
-                "content": normalized_user_message
-            }]
-        )
+        try:
+            message = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=50000,
+                temperature=0,
+                timeout=900.0,
+                system=[
+                    {
+                        "type": "text",
+                        "text": normalized_super_prompt,
+                        "cache_control": {"type": "ephemeral"}
+                    }
+                ],
+                messages=[{
+                    "role": "user",
+                    "content": normalized_user_message
+                }]
+            )
+        except Exception as api_err:
+            error_msg = f"Claude API Error: {str(api_err)}"
+            print(f"❌ {error_msg}")
+            return {'success': False, 'error': error_msg}
         
         elapsed_time = time.time() - start_time
         print(f"⏱️  API call completed in {elapsed_time:.1f} seconds")
