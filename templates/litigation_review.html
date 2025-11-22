@@ -1,639 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Litigation Analysis Review</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .header h1 {
-            color: #667eea;
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header .meta {
-            color: #666;
-            font-size: 14px;
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .header .meta span {
-            background: #f0f0f0;
-            padding: 5px 15px;
-            border-radius: 20px;
-        }
-        
-        .score-card {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .score-card h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        
-        .score-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        
-        .score-item {
-            background: rgba(255,255,255,0.2);
-            padding: 20px;
-            border-radius: 10px;
-        }
-        
-        .score-item h3 {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 10px;
-        }
-        
-        .score-item .value {
-            font-size: 32px;
-            font-weight: bold;
-        }
-        
-        .score-item .label {
-            font-size: 12px;
-            opacity: 0.8;
-            margin-top: 5px;
-        }
-        
-        .content-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        
-        .card h2 {
-            color: #667eea;
-            font-size: 20px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 10px;
-        }
-        
-        .violation-item {
-            background: #f8f9fa;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-        }
-        
-        .violation-item h4 {
-            color: #333;
-            margin-bottom: 8px;
-        }
-        
-        .violation-item .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            background: #667eea;
-            color: white;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-right: 8px;
-        }
-        
-        .violation-item .willful {
-            background: #dc3545;
-        }
-        
-        .violation-item p {
-            color: #666;
-            font-size: 14px;
-            margin-top: 8px;
-            line-height: 1.5;
-        }
-        
-        .standing-checklist {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .standing-checklist li {
-            padding: 12px;
-            margin-bottom: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            display: flex;
-            align-items: center;
-        }
-        
-        .standing-checklist li::before {
-            content: '✓';
-            display: inline-block;
-            width: 25px;
-            height: 25px;
-            background: #28a745;
-            color: white;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 25px;
-            margin-right: 15px;
-            font-weight: bold;
-        }
-        
-        .standing-checklist li.not-verified::before {
-            content: '✗';
-            background: #dc3545;
-        }
-        
-        .damages-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        
-        .damages-table th,
-        .damages-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e1e8ed;
-        }
-        
-        .damages-table th {
-            background: #f8f9fa;
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .damages-table td {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .damages-table .total-row {
-            background: #f0f0f0;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .damages-table .highlight {
-            background: #fff3cd;
-            color: #856404;
-            font-weight: 600;
-        }
-        
-        .recommendation {
-            background: #d4edda;
-            border: 2px solid #28a745;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
-        .recommendation h3 {
-            color: #155724;
-            margin-bottom: 10px;
-        }
-        
-        .recommendation p {
-            color: #155724;
-            line-height: 1.6;
-        }
-        
-        .recommendation.weak {
-            background: #f8d7da;
-            border-color: #dc3545;
-        }
-        
-        .recommendation.weak h3,
-        .recommendation.weak p {
-            color: #721c24;
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-        }
-        
-        button {
-            flex: 1;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c82333;
-        }
-        
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>FCRA Litigation Review</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f5f7fb;
+      padding: 24px;
+      color: #2c3e50;
+    }
+    .shell { max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 26px; margin-bottom: 8px; }
+    .sub { font-size: 13px; color: #7f8c8d; margin-bottom: 20px; }
+    .row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+      flex: 1;
+      min-width: 260px;
+    }
+    .card h2 { font-size: 16px; margin-bottom: 6px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .badge.stage { background: #eaf2ff; color: #2c60ff; }
+    .badge.delivered { background: #e6f4ea; color: #1e7e34; }
+    .badge.not-delivered { background: #fdecea; color: #c0392b; }
+    .meta { font-size: 13px; line-height: 1.5; margin-top: 4px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    button, .btn-link {
+      border: none; outline: none; cursor: pointer;
+      padding: 8px 14px; border-radius: 999px;
+      font-size: 13px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+    }
+    button.secondary, .btn-link {
+      background: #ecf0f1;
+      color: #2c3e50;
+      text-decoration: none;
+    }
+    button:disabled { opacity: 0.7; cursor: default; }
+    .toggle-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .toggle-wrap input[type="checkbox"] {
+      width: 16px; height: 16px; cursor: pointer;
+    }
+    .bureau-group { margin-bottom: 18px; }
+    .bureau-group h3 { font-size: 14px; margin-bottom: 6px; }
+    .letter-list { list-style: none; padding-left: 0; font-size: 13px; }
+    .letter-list li {
+      padding: 6px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ecf0f1;
+    }
+    .letter-meta { max-width: 70%; }
+    .letter-meta span { display: block; }
+    .letter-meta span.label { font-weight: 600; }
+    .status-pill { font-size: 11px; background: #f0f3f5; border-radius: 999px; padding: 2px 8px; }
+    .status-bar { margin-top: 10px; font-size: 13px; color: #7f8c8d; }
+    .status-bar span.em { font-weight: 600; color: #2c3e50; }
+    .overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.7); display: none; align-items: center; justify-content: center; z-index: 999; }
+    .overlay.visible { display: flex; }
+    .spinner {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 4px solid #ccd1d9; border-top-color: #667eea;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .overlay-text { margin-top: 8px; font-size: 13px; color: #2c3e50; text-align: center; }
+    @media (max-width: 768px) { .row { flex-direction: column; } }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>⚖️ Litigation Analysis Review</h1>
-            <div class="meta" id="analysisMetadata">
-                <span id="clientName">Loading...</span>
-                <span id="disputeRound">Loading...</span>
-                <span id="createdDate">Loading...</span>
-            </div>
-        </div>
-        
-        <div class="score-card" id="scoreCard">
-            <h2>📊 Case Strength Score</h2>
-            <div class="score-grid">
-                <div class="score-item">
-                    <h3>Total Score</h3>
-                    <div class="value" id="totalScore">-/10</div>
-                    <div class="label" id="caseStrength">Calculating...</div>
-                </div>
-                <div class="score-item">
-                    <h3>Standing</h3>
-                    <div class="value" id="standingScore">-/3</div>
-                    <div class="label">Concrete Harm</div>
-                </div>
-                <div class="score-item">
-                    <h3>Violations</h3>
-                    <div class="value" id="violationScore">-/4</div>
-                    <div class="label">Quality Rating</div>
-                </div>
-                <div class="score-item">
-                    <h3>Willfulness</h3>
-                    <div class="value" id="willfulnessScore">-/2</div>
-                    <div class="label">Indicators</div>
-                </div>
-                <div class="score-item">
-                    <h3>Settlement Probability</h3>
-                    <div class="value" id="settlementProb">-%</div>
-                    <div class="label">Likelihood</div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="content-grid">
-            <div class="card">
-                <h2>⚠️ FCRA Violations</h2>
-                <div id="violationsList">
-                    <p style="color: #999;">Loading violations...</p>
-                </div>
-            </div>
-            
-            <div class="card">
-                <h2>✅ Standing Verification</h2>
-                <ul class="standing-checklist" id="standingChecklist">
-                    <li class="not-verified">Loading...</li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2>💰 Damages Calculation</h2>
-            <table class="damages-table" id="damagesTable">
-                <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th>Count/Details</th>
-                        <th style="text-align: right;">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="3" style="text-align: center; color: #999;">Loading...</td></tr>
-                </tbody>
-            </table>
-            
-            <div class="recommendation" id="recommendation">
-                <h3 id="recommendationTitle">Loading recommendation...</h3>
-                <p id="recommendationText"></p>
-            </div>
-            
-            <div class="button-group">
-                <button class="btn-success" onclick="acceptCase()">✓ Accept Case</button>
-                <button class="btn-danger" onclick="rejectCase()">✗ Reject Case</button>
-                <button class="btn-secondary" onclick="window.location.href='/admin'">← Back to Dashboard</button>
-            </div>
-            
-            <div id="status-box" style="margin-top: 20px; font-weight: 600; padding: 15px; border-radius: 8px; display: none;"></div>
-            
-            <ul id="letters-list" style="margin-top: 20px; list-style: none; padding: 0;"></ul>
-            
-            <div id="downloadButtons" style="margin-top: 30px;"></div>
-        </div>
+<div class="shell">
+  <h1>Litigation Analysis Review</h1>
+  <p class="sub">Check violations, confirm case strength, and then generate client deliverables.</p>
+
+  <div class="row">
+    <div class="card" id="case-summary">
+      <h2>
+        Case Summary
+        <span id="stage-badge" class="badge stage">Stage ?</span>
+        <span id="delivered-badge" class="badge not-delivered">Not Delivered</span>
+      </h2>
+      <div class="meta" id="summary-meta">Loading…</div>
+      <div class="btn-row">
+        <button id="approve-btn" class="primary">⚖️ Accept Case & Generate Docs</button>
+        <button id="download-all-btn" class="secondary">⬇️ Download All PDFs</button>
+      </div>
+      <label class="toggle-wrap">
+        <input type="checkbox" id="delivered-toggle" />
+        <span>Mark case as delivered</span>
+      </label>
+      <div class="status-bar" id="status-bar">Ready.</div>
     </div>
-    
-    <script>
-        const analysisId = {{ analysis_id }};
-        
-        async function loadAnalysisData() {
-            try {
-                const response = await fetch(`/api/analysis/${analysisId}/data`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    displayAnalysis(data);
-                    loadAndDisplayScore(data);
-                } else {
-                    alert('Error loading analysis: ' + data.error);
-                }
-            } catch (error) {
-                alert('Error loading analysis: ' + error.message);
-            }
-        }
-        
-        function displayAnalysis(data) {
-            document.getElementById('clientName').textContent = `👤 ${data.analysis.client_name}`;
-            document.getElementById('disputeRound').textContent = `📋 Round ${data.analysis.dispute_round}`;
-            document.getElementById('createdDate').textContent = `📅 ${data.analysis.created_at}`;
-            
-            if (data.violations && data.violations.length > 0) {
-                let violationsHTML = '';
-                data.violations.forEach(v => {
-                    violationsHTML += `
-                        <div class="violation-item">
-                            <h4>${v.account_name || 'Account'} - ${v.bureau}</h4>
-                            <span class="badge">${v.fcra_section}</span>
-                            ${v.is_willful ? '<span class="badge willful">WILLFUL</span>' : ''}
-                            <p><strong>${v.violation_type}</strong></p>
-                            <p>${v.description}</p>
-                            <p style="margin-top: 8px; font-weight: 600;">Statutory Damages: $${v.statutory_damages_min} - $${v.statutory_damages_max}</p>
-                        </div>
-                    `;
-                });
-                document.getElementById('violationsList').innerHTML = violationsHTML;
-            } else {
-                document.getElementById('violationsList').innerHTML = '<p style="color: #999;">No violations identified yet.</p>';
-            }
-            
-            if (data.standing) {
-                let standingHTML = '';
-                if (data.standing.has_concrete_harm) {
-                    standingHTML += `<li>Concrete Harm Documented (${data.standing.concrete_harm_type || 'General'})</li>`;
-                } else {
-                    standingHTML += '<li class="not-verified">Concrete Harm NOT Documented</li>';
-                }
-                
-                if (data.standing.has_dissemination) {
-                    standingHTML += '<li>Dissemination Confirmed</li>';
-                } else {
-                    standingHTML += '<li class="not-verified">Dissemination NOT Confirmed</li>';
-                }
-                
-                if (data.standing.has_causation) {
-                    standingHTML += '<li>Causation Established</li>';
-                } else {
-                    standingHTML += '<li class="not-verified">Causation NOT Established</li>';
-                }
-                
-                if (data.standing.denial_letters_count > 0) {
-                    standingHTML += `<li>${data.standing.denial_letters_count} Denial Letter(s) on File</li>`;
-                } else {
-                    standingHTML += '<li class="not-verified">No Denial Letters on File</li>';
-                }
-                
-                document.getElementById('standingChecklist').innerHTML = standingHTML;
-            } else {
-                document.getElementById('standingChecklist').innerHTML = '<li class="not-verified">Standing not yet verified</li>';
-            }
-            
-            if (data.damages) {
-                let damagesHTML = `
-                    <tr>
-                        <td><strong>Actual Damages</strong></td>
-                        <td>Credit denials, higher interest, etc.</td>
-                        <td style="text-align: right;">$${data.damages.actual_damages_total.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Statutory Damages</strong></td>
-                        <td>${data.damages.section_605b_count + data.damages.section_607b_count + data.damages.section_611_count + data.damages.section_623_count} violations</td>
-                        <td style="text-align: right;">$${data.damages.statutory_damages_total.toFixed(2)}</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Punitive Damages</strong></td>
-                        <td>Willful multiplier: ${data.damages.willfulness_multiplier}x</td>
-                        <td style="text-align: right;">$${data.damages.punitive_damages_amount.toFixed(2)}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td><strong>Total Exposure</strong></td>
-                        <td></td>
-                        <td style="text-align: right;">$${data.damages.total_exposure.toFixed(2)}</td>
-                    </tr>
-                    <tr class="highlight">
-                        <td><strong>Settlement Target (65%)</strong></td>
-                        <td>Recommended offer</td>
-                        <td style="text-align: right;">$${data.damages.settlement_target.toFixed(2)}</td>
-                    </tr>
-                `;
-                document.getElementById('damagesTable').querySelector('tbody').innerHTML = damagesHTML;
-            }
-        }
-        
-        function loadAndDisplayScore(data) {
-            if (data.case_score) {
-                const score = data.case_score;
-                if (document.getElementById('totalScore')) {
-                    document.getElementById('totalScore').textContent = `${score.total_score}/10`;
-                    if (document.getElementById('caseStrength')) document.getElementById('caseStrength').textContent = score.case_strength;
-                    if (document.getElementById('standingScore')) document.getElementById('standingScore').textContent = `${score.standing_score}/3`;
-                    if (document.getElementById('violationScore')) document.getElementById('violationScore').textContent = `${score.violation_quality_score}/4`;
-                    if (document.getElementById('willfulnessScore')) document.getElementById('willfulnessScore').textContent = `${score.willfulness_score}/2`;
-                    if (document.getElementById('settlementProb')) document.getElementById('settlementProb').textContent = `${(score.settlement_probability * 100).toFixed(0)}%`;
-                    
-                    if (document.getElementById('recommendationTitle')) document.getElementById('recommendationTitle').textContent = score.recommendation;
-                    if (document.getElementById('recommendationText')) document.getElementById('recommendationText').textContent = score.recommendation;
-                    
-                    const recCard = document.getElementById('recommendation');
-                    if (recCard && score.total_score < 4) {
-                        recCard.classList.add('weak');
-                    } else if (recCard) {
-                        recCard.classList.remove('weak');
-                    }
-                }
-            }
-        }
-        
-        function renderLetters(letters) {
-            const list = document.getElementById('letters-list');
-            list.innerHTML = "";
 
-            if (!letters || letters.length === 0) {
-                list.innerHTML = "<li style='color: #999;'>No letters found.</li>";
-                return;
-            }
+    <div class="card" id="score-card">
+      <h2>Case Score</h2>
+      <div class="meta" id="score-meta">Loading…</div>
+    </div>
+  </div>
 
-            letters.forEach(letter => {
-                const item = document.createElement('li');
-                item.style.cssText = 'padding: 12px; margin-bottom: 10px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #667eea;';
-                item.innerHTML = `
-                    <strong style="color: #333;">${letter.bureau}</strong> – Round ${letter.round}
-                    <br>
-                    <a href="${letter.filepath}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">📥 Download PDF</a>
-                `;
-                list.appendChild(item);
-            });
-        }
+  <div class="card">
+    <h2>Generated Letters (grouped by bureau)</h2>
+    <div id="letters-container">Loading…</div>
+  </div>
+</div>
 
-        async function approveAnalysis(id) {
-            const status = document.getElementById('status-box');
-            status.style.display = 'block';
-            status.innerHTML = "Processing...";
-            
-            try {
-                const response = await fetch(`/api/approve/${id}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
+<div class="overlay" id="overlay">
+  <div style="text-align:center;">
+    <div class="spinner"></div>
+    <div class="overlay-text" id="overlay-text">Working on it…</div>
+  </div>
+</div>
 
-                const result = await response.json();
+<script>
+  const ANALYSIS_ID = {{ analysis_id|int }};
+  const overlay = document.getElementById('overlay');
+  const overlayText = document.getElementById('overlay-text');
+  const approveBtn = document.getElementById('approve-btn');
+  const summaryMeta = document.getElementById('summary-meta');
+  const stageBadge = document.getElementById('stage-badge');
+  const statusBar = document.getElementById('status-bar');
+  const lettersWrap = document.getElementById('letters-container');
+  const scoreMeta = document.getElementById('score-meta');
+  const deliveredToggle = document.getElementById('delivered-toggle');
+  const deliveredBadge = document.getElementById('delivered-badge');
+  const downloadAllBtn = document.getElementById('download-all-btn');
 
-                // REAL ERROR — show in status
-                if (!result.success) {
-                    throw new Error(result.error || "Unknown server error");
-                }
+  function showOverlay(msg) {
+    overlayText.textContent = msg || 'Working on it…';
+    overlay.classList.add('visible');
+  }
+  function hideOverlay() {
+    overlay.classList.remove('visible');
+  }
+  function setStatus(msg) {
+    statusBar.innerHTML = msg;
+  }
 
-                // CASE: Stage already completed
-                if (result.stage === 2) {
-                    status.innerHTML = "✅ Client documents already generated";
-                    status.style.background = '#d4edda';
-                    status.style.color = '#155724';
-                    renderLetters(result.letters);
-                    loadLetters();
-                    return;
-                }
+  async function fetchJSON(url, opts = {}) {
+    const res = await fetch(url, opts);
+    if (!res.ok) {
+      let msg = res.statusText;
+      try {
+        const j = await res.json();
+        msg = j.error || j.message || msg;
+      } catch (e) {}
+      throw new Error(msg);
+    }
+    return res.json();
+  }
 
-                // CASE: Stage 2 executed successfully
-                status.innerHTML = "✅ Documents generated successfully";
-                status.style.background = '#d4edda';
-                status.style.color = '#155724';
-                renderLetters(result.letters);
-                loadLetters();
+  async function loadAnalysisData() {
+    try {
+      const data = await fetchJSON(`/api/analysis/${ANALYSIS_ID}/data`);
+      const a = data.analysis;
+      const score = data.case_score;
+      const letters = data.letters || [];
 
-            } catch (err) {
-                status.innerHTML = `❌ Error: ${err.message}`;
-                status.style.background = '#f8d7da';
-                status.style.color = '#721c24';
-            }
-        }
+      summaryMeta.innerHTML = `
+        <span class="em">Client:</span> ${a.client_name}<br/>
+        <span class="em">Analysis ID:</span> ${a.id}<br/>
+        <span class="em">Round:</span> ${a.dispute_round}<br/>
+        <span class="em">Created:</span> ${a.created_at}<br/>
+        <span class="em">Cost:</span> $${(a.cost || 0).toFixed(2)}
+      `;
 
-        async function acceptCase() {
-            if (confirm('Accept this case for litigation?\n\nThis will generate client documents and dispute letters.')) {
-                try {
-                    document.querySelector('.btn-success').disabled = true;
-                    document.querySelector('.btn-success').textContent = '⏳ Generating documents...';
-                    
-                    await approveAnalysis(analysisId);
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                } finally {
-                    document.querySelector('.btn-success').disabled = false;
-                    document.querySelector('.btn-success').textContent = '✓ Accept Case';
-                }
-            }
-        }
-        
-        async function loadLetters() {
-            try {
-                const response = await fetch(`/admin/clients`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    let lettersHTML = '<h3 style="margin-bottom: 15px; color: #667eea;">📄 Download Generated Letters:</h3>';
-                    lettersHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">';
-                    
-                    lettersHTML += `
-                        <a href="/api/download/analysis/${analysisId}/full_report" target="_blank" class="download-btn" style="background: #667eea; color: white; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
-                            📋 Full Litigation Report
-                        </a>
-                        <a href="/api/download/analysis/${analysisId}/round_1" target="_blank" class="download-btn" style="background: #11998e; color: white; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
-                            ✉️ Round 1 Dispute Letter
-                        </a>
-                        <a href="/api/download/analysis/${analysisId}/round_2" target="_blank" class="download-btn" style="background: #764ba2; color: white; padding: 15px; border-radius: 8px; text-decoration: none; text-align: center; font-weight: 600;">
-                            ✉️ Round 2 Dispute Letter
-                        </a>
-                    `;
-                    lettersHTML += '</div>';
-                    
-                    const downloadSection = document.getElementById('downloadButtons');
-                    if (downloadSection) {
-                        downloadSection.innerHTML = lettersHTML;
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading letters:', error);
-            }
-        }
-        
-        function rejectCase() {
-            if (confirm('Reject this case?\n\nThis will mark it as rejected and not suitable for litigation.')) {
-                alert('Case rejected - noting for future reference');
-            }
-        }
-        
-        loadAnalysisData();
-    </script>
+      const stageLabel = a.stage === 1 ? 'Stage 1 · Review & Violations'
+                        : a.stage === 2 ? 'Stage 2 · Docs Generated'
+                        : `Stage ${a.stage}`;
+      stageBadge.textContent = stageLabel;
+
+      if (score) {
+        scoreMeta.innerHTML = `
+          <span class="em">Total Score:</span> ${score.total_score}/10 (${score.case_strength})<br/>
+          Standing: ${score.standing_score}/10 · Violations: ${score.violation_quality_score}/10<br/>
+          Settlement probability: ${Math.round(score.settlement_probability * 100)}%
+        `;
+      } else {
+        scoreMeta.textContent = 'No score recorded yet.';
+      }
+
+      renderLetters(letters);
+      checkDeliveredStatus();
+    } catch (error) {
+      console.error('Error loading analysis:', error);
+      summaryMeta.textContent = '❌ Error: ' + error.message;
+    }
+  }
+
+  function renderLetters(letters) {
+    if (!letters || letters.length === 0) {
+      lettersWrap.textContent = 'No letters generated yet.';
+      return;
+    }
+
+    const grouped = {};
+    letters.forEach(l => {
+      const key = l.bureau || 'Unknown';
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(l);
+    });
+
+    const html = Object.keys(grouped).sort().map(bureau => {
+      const list = grouped[bureau];
+      const items = list.map(l => `
+        <li>
+          <div class="letter-meta">
+            <span class="label">${bureau} · Round ${l.round}</span>
+            <span>Letter ID: ${l.id}</span>
+          </div>
+          <a class="btn-link" href="/api/download/${l.id}">⬇️ Download</a>
+        </li>
+      `).join('');
+      return `
+        <div class="bureau-group">
+          <h3>${bureau}</h3>
+          <ul class="letter-list">${items}</ul>
+        </div>
+      `;
+    }).join('');
+
+    lettersWrap.innerHTML = html;
+  }
+
+  async function checkDeliveredStatus() {
+    try {
+      const res = await fetchJSON(`/api/analysis/${ANALYSIS_ID}/delivered`);
+      const delivered = res.delivered;
+      deliveredToggle.checked = delivered;
+      deliveredBadge.textContent = delivered ? 'Delivered ✓' : 'Not Delivered';
+      deliveredBadge.className = delivered ? 'badge delivered' : 'badge not-delivered';
+    } catch (e) {
+      console.error('Error checking delivery status:', e);
+    }
+  }
+
+  deliveredToggle.addEventListener('change', async function() {
+    try {
+      await fetchJSON(`/api/analysis/${ANALYSIS_ID}/delivered`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ delivered: this.checked })
+      });
+      checkDeliveredStatus();
+    } catch (e) {
+      console.error('Error toggling delivery status:', e);
+    }
+  });
+
+  approveBtn.addEventListener('click', async function() {
+    if (!confirm('Accept this case for litigation?')) return;
+    showOverlay('Generating documents…');
+    try {
+      const res = await fetchJSON(`/api/approve/${ANALYSIS_ID}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      setStatus('✅ Documents generated successfully');
+      renderLetters(res.letters);
+    } catch (error) {
+      setStatus('❌ Error: ' + error.message);
+    } finally {
+      hideOverlay();
+    }
+  });
+
+  downloadAllBtn.addEventListener('click', async function() {
+    window.location.href = `/api/analysis/${ANALYSIS_ID}/download_all`;
+  });
+
+  loadAnalysisData();
+</script>
 </body>
 </html>

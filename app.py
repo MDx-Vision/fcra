@@ -1929,6 +1929,84 @@ def approve_analysis_stage_1(analysis_id):
         db.close()
 
 
+@app.route('/api/analysis/<int:analysis_id>/delivered', methods=['GET', 'POST'])
+def delivered_status(analysis_id):
+    """
+    GET  -> return whether case is marked as delivered
+    POST -> set/unset delivered flag (front-end toggle)
+    """
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+
+        global delivered_cases
+
+        if request.method == 'GET':
+            return jsonify({
+                'success': True,
+                'delivered': analysis_id in delivered_cases
+            }), 200
+
+        # POST
+        data = request.get_json() or {}
+        delivered = bool(data.get('delivered', False))
+
+        if delivered:
+            delivered_cases.add(analysis_id)
+        else:
+            delivered_cases.discard(analysis_id)
+
+        return jsonify({
+            'success': True,
+            'delivered': analysis_id in delivered_cases
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analysis/<int:analysis_id>/download_all')
+def download_all_letters(analysis_id):
+    """Create a ZIP with all generated PDFs for this analysis"""
+    db = get_db()
+    try:
+        letters = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
+        if not letters:
+            return jsonify({'success': False, 'error': 'No letters found for this analysis'}), 404
+
+        import io
+        import zipfile
+
+        # Create ZIP in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for l in letters:
+                path = str(l.file_path)
+                if not os.path.exists(path):
+                    continue
+                # Put each PDF into the zip with a clean filename
+                arcname = f"{l.client_name}_{l.bureau}_Round{l.round_number}_{l.id}.pdf"
+                zf.write(path, arcname=arcname)
+
+        zip_buffer.seek(0)
+        filename = f"FCRA_Letters_Analysis_{analysis_id}.zip"
+
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route('/analysis/<int:analysis_id>/review')
 def review_litigation_analysis(analysis_id):
     """Litigation analysis review page"""
