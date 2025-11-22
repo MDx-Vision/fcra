@@ -5678,11 +5678,10 @@ This is the **complete integrated Super Prompt v2.5** combining:
 
 **INSTRUCTIONS:**
 1. Complete your full analysis as normal (all parts 0-8)
-2. At the very END of your response, add this JSON block
+2. At the very END of your response, add a JSON data block
 3. Extract data from your own analysis to populate the fields
-4. Use this EXACT format (proper JSON syntax required):
+4. Output EXACTLY this format (replace example data with actual findings):
 
-```json
 <LITIGATION_DATA>
 {
   "violations": [
@@ -5717,7 +5716,6 @@ This is the **complete integrated Super Prompt v2.5** combining:
   }
 }
 </LITIGATION_DATA>
-```
 
 **FIELD GUIDELINES:**
 
@@ -5759,7 +5757,7 @@ This is the **complete integrated Super Prompt v2.5** combining:
 7. Include willfulness_indicators ONLY if is_willful = true
 
 **EXAMPLE OF COMPLETE OUTPUT:**
-```
+
 [Your full 40-50 page analysis here...]
 [All dispute letters here...]
 [MOV letters here...]
@@ -5771,7 +5769,6 @@ This is the **complete integrated Super Prompt v2.5** combining:
   "actual_damages": {...}
 }
 </LITIGATION_DATA>
-```
 
 This structured data will be automatically extracted and stored for case management and litigation tracking.
 
