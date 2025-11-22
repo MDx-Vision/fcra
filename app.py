@@ -751,7 +751,7 @@ def auto_populate_litigation_database(analysis_id, client_id, litigation_data, d
                 client_id=client_id,
                 has_concrete_harm=s_data.get('has_concrete_harm', False),
                 concrete_harm_type=s_data.get('concrete_harm_type', ''),
-                harm_details=s_data.get('harm_details', ''),
+                concrete_harm_details=s_data.get('harm_details', ''),
                 has_dissemination=s_data.get('has_dissemination', False),
                 dissemination_details=s_data.get('dissemination_details', ''),
                 has_causation=s_data.get('has_causation', False),
