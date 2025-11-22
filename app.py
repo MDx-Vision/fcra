@@ -10,8 +10,9 @@ from flask_cors import CORS
 import os
 from datetime import datetime
 from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore
-from pdf_generator import LetterPDFGenerator
+from pdf_generator import LetterPDFGenerator, SectionPDFGenerator
 from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
+from jwt_utils import require_jwt, create_token
 import json
 
 app = Flask(__name__)
@@ -32,8 +33,14 @@ app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 # Store received credit reports
 credit_reports = []
 
-# Initialize PDF generator
+# Initialize PDF generators
 pdf_gen = LetterPDFGenerator()
+section_pdf_gen = SectionPDFGenerator()
+
+# Create required directories
+os.makedirs("static/section_pdfs", exist_ok=True)
+os.makedirs("static/generated_letters", exist_ok=True)
+os.makedirs("static/logs", exist_ok=True)
 
 # Initialize database
 try:

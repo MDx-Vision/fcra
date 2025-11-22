@@ -9,6 +9,32 @@ from reportlab.pdfbase.ttfonts import TTFont
 from datetime import datetime
 import os
 import re
+from fpdf import FPDF
+
+class SectionPDFGenerator:
+    """Generate clean PDFs for each credit report section"""
+    def __init__(self):
+        pass
+
+    def create_pdf(self, title, content, output_path):
+        """Create a PDF for a single section"""
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+
+        pdf.set_font("Arial", "B", 16)
+        pdf.cell(0, 10, title, ln=True)
+
+        pdf.ln(5)
+        pdf.set_font("Arial", "", 12)
+
+        for line in content.split("\n"):
+            pdf.multi_cell(0, 8, line)
+
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        pdf.output(output_path)
+        return output_path
+
 
 class LetterPDFGenerator:
     def __init__(self):
