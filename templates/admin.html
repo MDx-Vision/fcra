@@ -339,7 +339,13 @@
                         <p><strong>Analysis ID:</strong> ${result.analysis_id}</p>
                     `;
                     
-                    let downloadHTML = '<h4 style="margin-bottom: 10px;">Download Letters:</h4>';
+                    let downloadHTML = '';
+                    downloadHTML += `
+                        <a href="/analysis/${result.analysis_id}/review" class="download-btn" style="background: #667eea; margin-bottom: 10px; display: inline-block; width: 100%;">
+                            ⚖️ View Complete Litigation Analysis (Violations, Damages, Scoring)
+                        </a>
+                    `;
+                    downloadHTML += '<h4 style="margin: 20px 0 10px 0;">Download Letters:</h4>';
                     result.letters.forEach(letter => {
                         downloadHTML += `
                             <a href="/api/download/${letter.letter_id}" class="download-btn" target="_blank">

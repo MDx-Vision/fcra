@@ -6424,6 +6424,12 @@ def download_letter(letter_id):
         db.close()
 
 
+@app.route('/analysis/<int:analysis_id>/review')
+def review_litigation_analysis(analysis_id):
+    """Litigation analysis review page"""
+    return render_template('litigation_review.html')
+
+
 @app.route('/admin/clients')
 def view_all_clients():
     """View all clients and their analyses"""
