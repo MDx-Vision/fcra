@@ -6,7 +6,7 @@
     <title>FCRA Admin Dashboard</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
+        body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -20,20 +20,29 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 20px;
         }
-        h1 { color: #667eea; margin-bottom: 10px; }
-        p { color: #666; margin-bottom: 20px; }
-        label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
-        input, select, textarea { 
-            width: 100%; padding: 12px; margin-bottom: 15px; 
-            border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
+        h1 { color: #667eea; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; margin-top: 15px; }
+        label:first-of-type { margin-top: 0; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
             font-family: inherit;
         }
-        textarea { min-height: 180px; resize: vertical; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
-        .button-group { display: flex; gap: 10px; }
+        textarea { min-height: 200px; resize: vertical; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; background: #f8f9ff; }
+        .button-group { display: flex; gap: 10px; margin-top: 25px; }
         button {
-            flex: 1; padding: 12px 20px; border: none; border-radius: 6px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
             transition: all 0.3s;
         }
         .btn-primary {
@@ -41,35 +50,48 @@
             color: white;
         }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
-        .btn-secondary { background: #f0f0f0; color: #333; }
-        .btn-secondary:hover { background: #e0e0e0; }
-        #status { margin-top: 15px; padding: 15px; border-radius: 6px; display: none; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            font-size: 14px;
+        }
         #status.show { display: block; }
         .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .loading { text-align: center; }
-        .spinner { 
-            border: 3px solid #f3f3f3; border-top: 3px solid #667eea;
-            border-radius: 50%; width: 30px; height: 30px;
-            animation: spin 1s linear infinite; margin: 0 auto 10px;
+        .loading { background: #e7f3ff; color: #004085; border: 1px solid #b8daff; }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        a { color: #667eea; text-decoration: none; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="card">
         <h1>🚀 FCRA Automation Admin</h1>
-        <p>Upload credit report for AI-powered FCRA analysis and dispute letter generation</p>
+        <p class="subtitle">Upload credit report for AI-powered FCRA analysis and dispute letter generation</p>
         
-        <form id="form">
-            <label>Client Name *</label>
+        <form id="analysisForm">
+            <label for="name">Client Name *</label>
             <input type="text" id="name" placeholder="John Doe" required>
             
-            <label>Client Email</label>
+            <label for="email">Client Email</label>
             <input type="email" id="email" placeholder="john@example.com">
             
-            <label>Credit Provider</label>
+            <label for="provider">Credit Provider</label>
             <select id="provider">
                 <option>IdentityIQ.com</option>
                 <option>MyScoreIQ.com</option>
@@ -77,10 +99,10 @@
                 <option>MyFreeScoreNow.com</option>
             </select>
             
-            <label>Credit Report HTML *</label>
+            <label for="report">Credit Report HTML *</label>
             <textarea id="report" placeholder="Paste full HTML from credit report..." required></textarea>
             
-            <label>Dispute Round</label>
+            <label for="round">Dispute Round</label>
             <select id="round">
                 <option value="1">Round 1 - Initial Dispute</option>
                 <option value="2">Round 2 - Escalation</option>
@@ -88,7 +110,7 @@
                 <option value="4">Round 4 - Final</option>
             </select>
             
-            <label>Analysis Mode</label>
+            <label for="mode">Analysis Mode</label>
             <select id="mode">
                 <option value="manual">Manual Review (Recommended)</option>
                 <option value="auto">Automatic (Full Report)</option>
@@ -96,7 +118,6 @@
             
             <div class="button-group">
                 <button type="submit" class="btn-primary">🔍 Generate Analysis</button>
-                <button type="button" class="btn-secondary" onclick="location.href='/admin/clients'">📋 View Clients</button>
             </div>
         </form>
         
@@ -105,59 +126,73 @@
 </div>
 
 <script>
-document.getElementById('form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+(function() {
+    const form = document.getElementById('analysisForm');
+    const statusEl = document.getElementById('status');
     
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const provider = document.getElementById('provider').value;
-    const report = document.getElementById('report').value;
-    const round = parseInt(document.getElementById('round').value);
-    const mode = document.getElementById('mode').value;
-    
-    if (!name || !report) {
-        showStatus('❌ Client name and report are required', 'error');
+    if (!form) {
+        console.error('Form not found');
         return;
     }
     
-    showStatus('⏳ Analyzing credit report...', 'loading');
+    console.log('Admin form initialized');
     
-    try {
-        const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                clientName: name,
-                clientEmail: email,
-                creditProvider: provider,
-                creditReportHTML: report,
-                disputeRound: round,
-                analysisMode: mode
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            showStatus(
-                '✅ Success! Analysis ID: ' + data.analysis_id + 
-                '<br><a href="/analysis/' + data.analysis_id + '/review" style="color: inherit; text-decoration: underline;">View Litigation Analysis →</a>',
-                'success'
-            );
-            document.getElementById('form').reset();
-        } else {
-            showStatus('❌ ' + (data.error || 'Analysis failed'), 'error');
-        }
-    } catch (err) {
-        showStatus('❌ ' + err.message, 'error');
+    function showStatus(msg, type) {
+        statusEl.textContent = msg;
+        statusEl.className = 'show ' + type;
     }
-});
-
-function showStatus(msg, type) {
-    const status = document.getElementById('status');
-    status.innerHTML = msg;
-    status.className = 'show ' + type;
-}
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const provider = document.getElementById('provider').value;
+        const report = document.getElementById('report').value.trim();
+        const round = parseInt(document.getElementById('round').value);
+        const mode = document.getElementById('mode').value;
+        
+        if (!name || !report) {
+            showStatus('❌ Client name and report are required', 'error');
+            return;
+        }
+        
+        showStatus('⏳ Analyzing credit report...', 'loading');
+        
+        try {
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clientName: name,
+                    clientEmail: email,
+                    creditProvider: provider,
+                    creditReportHTML: report,
+                    disputeRound: round,
+                    analysisMode: mode
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const analysisId = data.analysis_id;
+                showStatus(
+                    '✅ Success! Analysis ID: ' + analysisId + 
+                    ' • <a href="/analysis/' + analysisId + '/review" style="color: inherit; font-weight: 600;">View Results →</a>',
+                    'success'
+                );
+                form.reset();
+                document.getElementById('name').focus();
+            } else {
+                showStatus('❌ ' + (data.error || 'Analysis failed'), 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showStatus('❌ Error: ' + err.message, 'error');
+        }
+    });
+})();
 </script>
 </body>
 </html>
