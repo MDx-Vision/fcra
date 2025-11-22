@@ -1,0 +1,96 @@
+Got you, let’s get it back to usable.
+
+Given what we just added, the most likely culprit for “can’t click on anything” is the new full-screen overlay sitting on top of the page and never being hidden (or being rendered with the `visible` class by accident), so it’s blocking all clicks.
+
+Here’s a quick, safe patch to make the app responsive again, even if the overlay misbehaves.
+
+---
+
+## 1. Make the overlay non-blocking by default
+
+In **`templates/litigation_review.html`**, find the `.overlay` CSS and replace that block with this:
+
+```css
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  display: none;            /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  pointer-events: none;     /* <-- key: do NOT block clicks when hidden */
+}
+
+.overlay.visible {
+  display: flex;
+  pointer-events: auto;     /* <-- only block clicks when we explicitly show it */
+}
+```
+
+That alone stops a “stuck overlay” from blocking the whole UI.
+
+Also quickly confirm your HTML has:
+
+```html
+<div class="overlay" id="overlay">
+  ...
+</div>
+```
+
+and **does NOT** have `class="overlay visible"` anywhere.
+If you see `visible` in that class list, remove it.
+
+---
+
+## 2. Add a defensive hide on page load
+
+Still in `litigation_review.html` at the bottom of your `<script>` block, just before `// Initial load`, add:
+
+```js
+// Make sure overlay is hidden on initial load, even if CSS or previous state was weird
+hideOverlay();
+```
+
+So you end with:
+
+```js
+  downloadAllBtn.addEventListener('click', () => {
+    setStatus('Preparing ZIP of all PDFs…');
+    window.location.href = `/api/analysis/${ANALYSIS_ID}/download_all`;
+  });
+
+  // Make sure overlay starts hidden
+  hideOverlay();
+
+  // Initial load
+  loadPage();
+</script>
+```
+
+This guarantees we don’t accidentally start in a “blocked” state.
+
+---
+
+## 3. If the whole app still won’t load at all
+
+If you’re seeing a generic “Application error” or blank page:
+
+1. Open the Replit **Console** and look for a Python traceback.
+2. If you see `NameError: name 're' is not defined` coming from `approve_analysis_stage_1`, add this **near the top** of `app.py` with your other imports:
+
+   ```python
+   import re
+   import io
+   import zipfile
+   ```
+
+   (You already import `io`/`zipfile` inside the download endpoint, but having them at the top is fine.)
+
+Those are the only pieces from the last patch that could break things globally.
+
+---
+
+Try those two front-end changes first, refresh the `/analysis/<id>/review` page, and you should be able to click around again.
+
+If it’s still frozen, tell me exactly what you see (white page, error banner, etc.), and I’ll target the next fix.

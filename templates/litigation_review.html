@@ -81,8 +81,20 @@
     .status-pill { font-size: 11px; background: #f0f3f5; border-radius: 999px; padding: 2px 8px; }
     .status-bar { margin-top: 10px; font-size: 13px; color: #7f8c8d; }
     .status-bar span.em { font-weight: 600; color: #2c3e50; }
-    .overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.7); display: none; align-items: center; justify-content: center; z-index: 999; }
-    .overlay.visible { display: flex; }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .overlay.visible {
+      display: flex;
+      pointer-events: auto;
+    }
     .spinner {
       width: 40px; height: 40px; border-radius: 50%;
       border: 4px solid #ccd1d9; border-top-color: #667eea;
@@ -289,6 +301,9 @@
   downloadAllBtn.addEventListener('click', async function() {
     window.location.href = `/api/analysis/${ANALYSIS_ID}/download_all`;
   });
+
+  // Make sure overlay starts hidden, even if CSS was weird
+  hideOverlay();
 
   loadAnalysisData();
 </script>

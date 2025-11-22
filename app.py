@@ -1,5 +1,7 @@
 import os
 import re
+import io
+import zipfile
 
 # API Configuration
 ANTHROPIC_API_KEY = os.environ['FCRA Automation Secure']
