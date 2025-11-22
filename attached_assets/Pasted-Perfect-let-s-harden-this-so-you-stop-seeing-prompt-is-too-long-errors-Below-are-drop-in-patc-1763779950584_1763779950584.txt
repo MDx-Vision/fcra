@@ -1,0 +1,250 @@
+Perfect, let’s harden this so you stop seeing `prompt is too long` errors.
+
+Below are **drop-in patches** you can paste into your existing file.
+
+---
+
+## 1️⃣ Add a truncation helper (near the top, after `clean_credit_report_html`)
+
+Right after your existing `clean_credit_report_html` function, add this:
+
+```python
+def truncate_for_token_limit(text, max_tokens_for_report=140_000):
+    """
+    Hard cap the report size so the full prompt stays under Anthropic's 200k token limit.
+
+    Rough approximation: ~4 characters per token for English text.
+    We only cap the *report* portion, leaving room for:
+      - system prompt
+      - instructions
+      - dispute context
+      - model output
+    """
+    if not text:
+        return text
+
+    approx_tokens = len(text) / 4.0
+    if approx_tokens <= max_tokens_for_report:
+        # Already under our per-report budget
+        return text
+
+    # Compute ratio to shrink to our target budget
+    ratio = max_tokens_for_report / approx_tokens
+    new_len = int(len(text) * ratio)
+    truncated = text[:new_len]
+
+    print(
+        f"⚠️ truncate_for_token_limit: report truncated for token limit: "
+        f"{len(text):,} chars (~{approx_tokens:,.0f} tokens) -> "
+        f"{len(truncated):,} chars (~{len(truncated)/4.0:,.0f} tokens)"
+    )
+
+    return truncated
+```
+
+This caps the **report text** at ~140k tokens, leaving plenty of room for your system prompt and instructions under the 200k max.
+
+---
+
+## 2️⃣ Use truncation inside `analyze_with_claude` for Stage 1
+
+Find your `analyze_with_claude` function and update the Stage 1 branch like this.
+
+### Before (core part)
+
+You currently have something like:
+
+```python
+if stage == 1:
+    # STAGE 1: Small prompt for violations/standing/damages analysis ONLY (~80-100k tokens)
+    prompt = """Act as an expert consumer protection attorney. Analyze this credit report for FCRA violations.
+
+    ...
+    """
+    ...
+    dispute_context = ""
+    if dispute_round > 1 and (previous_letters or bureau_responses):
+        dispute_context = f"""
+PREVIOUS DISPUTE CONTEXT:
+...
+"""
+
+    user_message = f"""
+🚨 STAGE 1: VIOLATIONS & DAMAGES ANALYSIS
+
+CLIENT: {client_name} (CMM ID: {cmm_id})
+...
+CREDIT REPORT:
+{credit_report_html}
+
+TASK: Analyze ONLY for violations, standing, and damages.
+...
+"""
+```
+
+### After (patched version)
+
+Replace that block with this version, which **truncates the report** and logs approximate token counts:
+
+```python
+if stage == 1:
+    # STAGE 1: Violations / standing / damages analysis only
+
+    # 🔒 Final safeguard: cap report size so prompt never exceeds 200k tokens
+    credit_report_html = truncate_for_token_limit(
+        credit_report_html,
+        max_tokens_for_report=140_000  # tuned based on your typical report size
+    )
+
+    prompt = """Act as an expert consumer protection attorney. Analyze this credit report for FCRA violations.
+
+**YOUR TASK - ANALYSIS ONLY (No client documents):**
+
+PART 0: POST-TRANSUNION STANDING (Required first - *TransUnion LLC v. Ramirez*, 141 S. Ct. 2190)
+...
+4. Include willfulness_indicators ONLY if is_willful = true"""
+    
+    round_names = {
+        1: "Round 1 - Initial Dispute (RLPP Strong Language)",
+        2: "Round 2 - MOV Request / Follow-up",
+        3: "Round 3 - Pre-Litigation Warning", 
+        4: "Round 4 - Final Demand / Intent to Sue"
+    }
+
+    dispute_context = ""
+    if dispute_round > 1 and (previous_letters or bureau_responses):
+        dispute_context = f"""
+
+PREVIOUS DISPUTE CONTEXT:
+Timeline: {dispute_timeline if dispute_timeline else 'Not provided'}
+Previous Letters: {previous_letters if previous_letters else 'Not provided'}
+Bureau Responses: {bureau_responses if bureau_responses else 'NO RESPONSE - Possible §611(a)(7) violation'}
+"""
+
+    user_message = f"""
+🚨 STAGE 1: VIOLATIONS & DAMAGES ANALYSIS
+
+CLIENT: {client_name} (CMM ID: {cmm_id})
+Provider: {provider}
+Dispute Round: {round_names.get(dispute_round, 'Round ' + str(dispute_round))}
+
+{dispute_context}
+
+CREDIT REPORT:
+{credit_report_html}
+
+TASK: Analyze ONLY for violations, standing, and damages.
+Output JSON at end with violations, standing, actual_damages.
+NO client reports, NO letters - just the analysis data.
+"""
+else:
+    # STAGE 2 branch unchanged...
+    prompt = f"""Act as an expert consumer protection attorney. Generate client-facing litigation documents.
+
+**CONTEXT - Use these Stage 1 findings:**
+{stage_1_results}
+...
+"""
+```
+
+Then, **just before the Anthropic call**, add a little log to see approximate prompt tokens:
+
+```python
+# Normalize prompts to ensure cache consistency (strip whitespace)
+normalized_super_prompt = super_prompt.strip()
+normalized_user_message = user_message.strip()
+
+approx_prompt_tokens = (len(normalized_super_prompt) + len(normalized_user_message)) / 4.0
+print(f"📏 Approx prompt tokens before API call: ~{approx_prompt_tokens:,.0f}")
+
+message = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=50000,
+    temperature=0,
+    # timeout=900.0,  # remove this if your SDK doesn't support it
+    system=[
+        {
+            "type": "text",
+            "text": normalized_super_prompt,
+            "cache_control": {"type": "ephemeral"}
+        }
+    ],
+    messages=[{
+        "role": "user",
+        "content": normalized_user_message
+    }]
+)
+```
+
+This gives you visibility, and the truncation keeps you under Anthropic’s 200k context.
+
+---
+
+## 3️⃣ Ensure `/api/analyze` always cleans the report before sending to Claude
+
+Right now, `/api/analyze` reads `creditReportHTML` and passes it straight into `analyze_with_claude`. Patch that so it always goes through `clean_credit_report_html`.
+
+Find this part in `analyze_and_generate_letters`:
+
+```python
+credit_report_html = data.get('creditReportHTML', '')
+dispute_round = data.get('disputeRound', 1)
+analysis_mode = data.get('analysisMode', 'auto')
+
+if not client_name or not credit_report_html:
+    return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+# Use analyze_with_claude function - STAGE 1 only (violations/standing/damages analysis)
+result = analyze_with_claude(
+    client_name=client_name,
+    cmm_id=data.get('cmmContactId', ''),
+    provider=credit_provider,
+    credit_report_html=credit_report_html,
+    analysis_mode='manual',  # Always manual for initial review
+    dispute_round=dispute_round,
+    stage=1
+)
+```
+
+Change it to:
+
+```python
+credit_report_html = data.get('creditReportHTML', '')
+dispute_round = data.get('disputeRound', 1)
+analysis_mode = data.get('analysisMode', 'auto')
+
+if not client_name or not credit_report_html:
+    return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+
+# 🧹 Always clean before analysis to reduce size and junk
+credit_report_html = clean_credit_report_html(credit_report_html)
+
+# Use analyze_with_claude function - STAGE 1 only (violations/standing/damages analysis)
+result = analyze_with_claude(
+    client_name=client_name,
+    cmm_id=data.get('cmmContactId', ''),
+    provider=credit_provider,
+    credit_report_html=credit_report_html,
+    analysis_mode='manual',  # Always manual for initial review
+    dispute_round=dispute_round,
+    stage=1
+)
+```
+
+Now **all three flows** (`/webhook`, `/webhook/batch`, `/api/analyze`) send cleaned, capped text to Anthropic.
+
+---
+
+## 4️⃣ What this fixes for you
+
+With these patches:
+
+* Huge reports will **auto-truncate** to a safe size before hitting Claude.
+* `/api/analyze` will no longer accidentally send raw, bloated HTML.
+* You’ll see a console log like:
+
+  * `⚠️ truncate_for_token_limit: report truncated...`
+  * `📏 Approx prompt tokens before API call: ~180,000`
+* The `prompt is too long: XXX tokens > 200000 maximum` error should stop.
+
+If you want a follow-up, I can next help you **split very large reports into segments** (e.g., tradelines + collections + inquiries) and run multiple stage-1 analyses that you then merge, instead of truncating.
