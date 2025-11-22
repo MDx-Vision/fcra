@@ -363,38 +363,62 @@ PART 7: MOV REQUEST (if applicable)
 - Deadline enforcement
 
 Output the complete client-facing documents."""
+        
+        # For Stage 1, build dispute context and user message
+        if stage == 1:
+            round_names = {
+                1: "Round 1 - Initial Dispute (RLPP Strong Language)",
+                2: "Round 2 - MOV Request / Follow-up",
+                3: "Round 3 - Pre-Litigation Warning", 
+                4: "Round 4 - Final Demand / Intent to Sue"
+            }
+            
+            dispute_context = ""
+            if dispute_round > 1 and (previous_letters or bureau_responses):
+                dispute_context = f"""
 
-**RECOMMENDED FOR THIS CASE: $___________**
+PREVIOUS DISPUTE CONTEXT:
+Timeline: {dispute_timeline if dispute_timeline else 'Not provided'}
+Previous Letters: {previous_letters if previous_letters else 'Not provided'}
+Bureau Responses: {bureau_responses if bureau_responses else 'NO RESPONSE - Possible §611(a)(7) violation'}
+"""
+            
+            user_message = f"""
+🚨 STAGE 1: VIOLATIONS & DAMAGES ANALYSIS
 
-**IF WILLFULNESS PROBABILITY < 50%:**
-Statutory damages: $0 (negligent violations only)
+CLIENT: {client_name} (CMM ID: {cmm_id})
+Provider: {provider}
+Dispute Round: {round_names.get(dispute_round, 'Round ' + str(dispute_round))}
 
----------------------------------------------------------------------------
-B. ACTUAL DAMAGES (Available for All Violations)
----------------------------------------------------------------------------
+{dispute_context}
 
-**B1: ECONOMIC LOSSES**
+CREDIT REPORT:
+{credit_report_html}
 
-**Lost Credit Opportunity:**
-[ ] Mortgage denial: $___________
-    (Interest differential over loan term + lost equity)
-[ ] Auto loan: $___________
-[ ] Credit card APR increase: $___________
-[ ] Other: $___________
+TASK: Analyze ONLY for violations, standing, and damages.
+Output JSON at end with violations, standing, actual_damages.
+NO client reports, NO letters - just the analysis data.
+"""
+        else:
+            # Stage 2: Use previous Stage 1 results
+            user_message = f"""
+🚨 STAGE 2: CLIENT DOCUMENTS GENERATION
 
-**TOTAL CREDIT LOSS: $___________**
+Previous Stage 1 Analysis:
+{stage_1_results}
 
-**Lost Employment:**
-[ ] Salary offered but denied: $___________/year -- ___ months = $___________
-[ ] Lost benefits value: $___________
+CLIENT: {client_name} (CMM ID: {cmm_id})
+Provider: {provider}
+Dispute Round: {round_names.get(dispute_round, 'Round ' + str(dispute_round))}
 
-**TOTAL EMPLOYMENT LOSS: $___________**
+TASK: Generate client-facing documents using Stage 1 results:
+- 40-50 page detailed report
+- Dispute letters with RLPP language
+- MOV requests
+- Full litigation analysis
 
-**Higher Insurance:**
-[ ] Annual premium overpayment: $___________/year -- ___ years = $___________
-
-**Housing Costs:**
-[ ] Higher deposit or rent differential: $___________
+Make it professional and litigation-ready.
+"""
 
 **Out-of-Pocket:**
 [ ] Credit monitoring: $___________
