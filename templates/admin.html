@@ -99,8 +99,9 @@
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
-            cursor: pointer;
+            cursor: pointer !important;
             transition: all 0.3s;
+            pointer-events: auto !important;
         }
         
         .btn-primary {
@@ -145,9 +146,10 @@
         }
         
         .loading {
-            display: none;
+            display: none !important;
             text-align: center;
             padding: 40px;
+            pointer-events: none;
         }
         
         .loading.show {
@@ -279,8 +281,8 @@
                 </div>
                 
                 <div class="button-group">
-                    <button type="submit" class="btn-primary">🔍 Generate Analysis & Letters</button>
-                    <button type="button" class="btn-secondary" onclick="window.location.href='/admin/clients'">📋 View All Clients</button>
+                    <button type="submit" class="btn-primary" onclick="return true;">🔍 Generate Analysis & Letters</button>
+                    <button type="button" class="btn-secondary" onclick="window.location.href='/admin/clients'; return false;">📋 View All Clients</button>
                 </div>
             </form>
             
@@ -299,7 +301,18 @@
     </div>
     
     <script>
-        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+        // Test that JavaScript is running
+        console.log('Admin page loaded');
+        
+        // Simple test button to verify clicks work
+        window.testClick = function() {
+            alert('✅ Clicks are working! The issue is with form submission.');
+        };
+        
+        // Attach form submit handler
+        const form = document.getElementById('analysisForm');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const form = e.target;
@@ -367,7 +380,10 @@
                     <p class="error">❌ Error: ${error.message}</p>
                 `;
             }
-        });
+            });
+        } else {
+            console.error('Form not found!');
+        }
     </script>
 </body>
 </html>
