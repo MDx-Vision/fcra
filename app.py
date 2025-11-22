@@ -519,109 +519,25 @@ Make it professional and litigation-ready.
         for block in message.content:
             if block.type == 'text':
                 analysis_result += block.text
-Statutory: $___________
-Actual: $___________
-**TOTAL COMPENSATORY: $___________**
 
-**REPREHENSIBILITY FACTORS** (from willfulness assessment):
-Number of factors present (0-8): _____
+        print(f"\n✅ Analysis result length: {len(analysis_result):,} characters")
 
-**MULTIPLIER:**
-- 0-2 factors: 1:1 (punitive = compensatory)
-- 3-4 factors: 2:1
-- 5-6 factors: 3:1
-- 7-8 factors: 4:1
+        # Extract litigation data if Stage 1
+        if stage == 1:
+            extract_litigation_data(analysis_result)
+        
+        return {
+            'success': True,
+            'analysis': analysis_result,
+            'client': client_name,
+            'stage': stage,
+            'tokens_used': total_input_tokens + output_tokens if usage else 0,
+            'cost': total_cost if usage else 0
+        }
 
-**RECOMMENDED MULTIPLIER: ___:1**
-
-**PUNITIVE DAMAGES CALCULATION:**
-
-Conservative (1:1): $___________
-Moderate (2:1): $___________
-Aggressive (3:1): $___________
-Maximum (4:1): $___________
-
-**RECOMMENDED FOR THIS CASE: $___________**
-
-**IF WILLFULNESS < 50%:**
-Punitive damages: $0 (not available for negligent violations)
-
----------------------------------------------------------------------------
-D. ATTORNEY'S FEES (Mandatory for All FCRA Violations)
----------------------------------------------------------------------------
-
-**Estimated hours to settlement:** _____ -- $_____ /hr = $___________
-**Estimated hours through trial:** _____ -- $_____ /hr = $___________
-
----------------------------------------------------------------------------
-TOTAL CASE VALUATION
----------------------------------------------------------------------------
-
-**IF WILLFUL:**
-Statutory: $___________
-Actual: $___________
-Punitive: $___________
-Attorney's Fees (settlement): $___________
-**TOTAL SETTLEMENT VALUE: $___________**
-**TOTAL TRIAL VALUE: $___________** (with trial fees)
-
-**IF NEGLIGENT:**
-Actual: $___________
-Attorney's Fees (settlement): $___________
-**TOTAL SETTLEMENT VALUE: $___________**
-**TOTAL TRIAL VALUE: $___________** (with trial fees)
-
----------------------------------------------------------------------------
-SETTLEMENT RANGES
----------------------------------------------------------------------------
-
-**Risk Assessment:**
-Standing strength: _____ /10
-Willfulness probability: _____%
-SOL issues: [ ] None [ ] Minor [ ] Significant
-Overall success probability: _____%
-
-**Risk-Adjusted Value:**
-Total value -- ____% = $___________
-
-**SETTLEMENT RECOMMENDATIONS:**
-
-**Early (Pre-Litigation/Demand Letter):**
-60% -- $_________ = **$___________**
-
-**Mid (Post-Discovery):**
-75% -- $_________ = **$___________**
-
-**Late (Trial-Ready):**
-90% -- $_________ = **$___________**
-
-**RECOMMENDED DEMAND AMOUNT: $___________**
-
-===========================================================================
-===========================================================================
-PART 4.25: RAPID LITIGATION PRESSURE PROTOCOL (RLPP) - TACTICAL BUNDLING
-===========================================================================
-
-**CRITICAL STRATEGIC ENHANCEMENT:**
-
-RLPP transforms standard disputes into high-pressure legal compliance events by
-strategically bundling violations to force manual review and immediate correction.
-
-**THE CORE PRINCIPLE:**
-
-"Weaponize undisputed violations as evidence of systemic compliance failure
-to gain leverage on structural errors."
-
----------------------------------------------------------------------------
-WHY RLPP WORKS (The Psychology of Compliance Risk)
----------------------------------------------------------------------------
-
-**Standard Dispute Processing:**
-Consumer disputes late payment → Furnisher auto-verifies → No change
-
-**RLPP Enhanced Processing:**
-Consumer disputes late payment + structural contradiction + Cushman MOV demand
-→ Compliance officer sees sophisticated legal knowledge
+    except Exception as e:
+        print(f"❌ Claude API Error: {str(e)}")
+        return {'success': False, 'error': str(e)}
 → Risk assessment: "This file has systemic issues"
 → Internal escalation to legal review
 → Decision: "Deletion costs $0, investigation + lawsuit risk costs $60K+"
