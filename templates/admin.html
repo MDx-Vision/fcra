@@ -177,11 +177,15 @@
             
             if (data.success) {
                 const analysisId = data.analysis_id;
-                showStatus(
-                    '✅ Success! Analysis ID: ' + analysisId + 
-                    ' • <a href="/analysis/' + analysisId + '/review" style="color: inherit; font-weight: 600;">View Results →</a>',
-                    'success'
-                );
+                statusEl.innerHTML = '✅ Success! Analysis ID: ' + analysisId + '<br><br>';
+                const viewBtn = document.createElement('a');
+                viewBtn.href = '/analysis/' + analysisId + '/review';
+                viewBtn.textContent = '📋 View Results & Accept Case';
+                viewBtn.style.cssText = 'display: inline-block; background: #28a745; color: white; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none; margin-top: 10px;';
+                viewBtn.onmouseover = function() { this.style.background = '#218838'; };
+                viewBtn.onmouseout = function() { this.style.background = '#28a745'; };
+                statusEl.appendChild(viewBtn);
+                statusEl.className = 'show success';
                 form.reset();
                 document.getElementById('name').focus();
             } else {
