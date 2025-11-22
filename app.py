@@ -9,8 +9,9 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore
 from pdf_generator import LetterPDFGenerator
+from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
 import json
 
 app = Flask(__name__)
@@ -6448,6 +6449,397 @@ def view_all_clients():
         return jsonify({
             'success': True,
             'clients': clients_data
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analysis/<int:analysis_id>/violations', methods=['GET', 'POST'])
+def manage_violations(analysis_id):
+    """Get or add violations for an analysis"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        if request.method == 'POST':
+            data = request.json
+            violations_data = data.get('violations', [])
+            
+            for v_data in violations_data:
+                willfulness_assessment = assess_willfulness(
+                    v_data.get('description', ''),
+                    v_data.get('violation_type', '')
+                )
+                
+                violation = Violation(
+                    analysis_id=analysis_id,
+                    client_id=analysis.client_id,
+                    bureau=v_data.get('bureau'),
+                    account_name=v_data.get('account_name'),
+                    fcra_section=v_data.get('fcra_section'),
+                    violation_type=v_data.get('violation_type'),
+                    description=v_data.get('description'),
+                    statutory_damages_min=v_data.get('statutory_damages_min', 100),
+                    statutory_damages_max=v_data.get('statutory_damages_max', 1000),
+                    is_willful=willfulness_assessment['is_willful'],
+                    willfulness_notes=', '.join(willfulness_assessment['indicators'])
+                )
+                db.add(violation)
+            
+            db.commit()
+            return jsonify({'success': True, 'message': f'Added {len(violations_data)} violations'}), 200
+        
+        else:
+            violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+            return jsonify({
+                'success': True,
+                'violations': [{
+                    'id': v.id,
+                    'bureau': v.bureau,
+                    'account_name': v.account_name,
+                    'fcra_section': v.fcra_section,
+                    'violation_type': v.violation_type,
+                    'description': v.description,
+                    'statutory_damages_min': v.statutory_damages_min,
+                    'statutory_damages_max': v.statutory_damages_max,
+                    'is_willful': v.is_willful,
+                    'willfulness_notes': v.willfulness_notes
+                } for v in violations]
+            }), 200
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analysis/<int:analysis_id>/standing', methods=['GET', 'POST'])
+def manage_standing(analysis_id):
+    """Get or update standing verification for an analysis"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        if request.method == 'POST':
+            data = request.json
+            
+            standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+            if not standing:
+                standing = Standing(
+                    analysis_id=analysis_id,
+                    client_id=analysis.client_id
+                )
+                db.add(standing)
+            
+            standing.has_concrete_harm = data.get('has_concrete_harm', False)
+            standing.concrete_harm_type = data.get('concrete_harm_type')
+            standing.concrete_harm_details = data.get('concrete_harm_details')
+            standing.has_dissemination = data.get('has_dissemination', False)
+            standing.dissemination_details = data.get('dissemination_details')
+            standing.has_causation = data.get('has_causation', False)
+            standing.causation_details = data.get('causation_details')
+            standing.denial_letters_count = data.get('denial_letters_count', 0)
+            standing.adverse_action_notices_count = data.get('adverse_action_notices_count', 0)
+            standing.standing_verified = data.get('standing_verified', False)
+            standing.notes = data.get('notes')
+            
+            db.commit()
+            return jsonify({'success': True, 'message': 'Standing updated'}), 200
+        
+        else:
+            standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+            if not standing:
+                return jsonify({'success': True, 'standing': None}), 200
+            
+            return jsonify({
+                'success': True,
+                'standing': {
+                    'has_concrete_harm': standing.has_concrete_harm,
+                    'concrete_harm_type': standing.concrete_harm_type,
+                    'concrete_harm_details': standing.concrete_harm_details,
+                    'has_dissemination': standing.has_dissemination,
+                    'dissemination_details': standing.dissemination_details,
+                    'has_causation': standing.has_causation,
+                    'causation_details': standing.causation_details,
+                    'denial_letters_count': standing.denial_letters_count,
+                    'adverse_action_notices_count': standing.adverse_action_notices_count,
+                    'standing_verified': standing.standing_verified,
+                    'notes': standing.notes
+                }
+            }), 200
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analysis/<int:analysis_id>/damages', methods=['GET', 'POST'])
+def manage_damages(analysis_id):
+    """Calculate and store damages for an analysis"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        if request.method == 'POST':
+            data = request.json
+            
+            violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+            violations_data = [{
+                'fcra_section': v.fcra_section,
+                'is_willful': v.is_willful,
+                'violation_type': v.violation_type
+            } for v in violations]
+            
+            actual_damages_input = {
+                'credit_denials': data.get('credit_denials_amount', 0),
+                'higher_interest': data.get('higher_interest_amount', 0),
+                'credit_monitoring': data.get('credit_monitoring_amount', 0),
+                'time_stress': data.get('time_stress_amount', 0),
+                'other': data.get('other_actual_amount', 0)
+            }
+            
+            damages_calc = calculate_damages(violations_data, actual_damages_input)
+            
+            damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+            if not damages:
+                damages = Damages(
+                    analysis_id=analysis_id,
+                    client_id=analysis.client_id
+                )
+                db.add(damages)
+            
+            damages.credit_denials_amount = damages_calc['actual']['credit_denials']
+            damages.higher_interest_amount = damages_calc['actual']['higher_interest']
+            damages.credit_monitoring_amount = damages_calc['actual']['credit_monitoring']
+            damages.time_stress_amount = damages_calc['actual']['time_stress']
+            damages.other_actual_amount = damages_calc['actual']['other']
+            damages.actual_damages_total = damages_calc['actual']['total']
+            
+            damages.section_605b_count = damages_calc['statutory']['605b']['count']
+            damages.section_605b_amount = damages_calc['statutory']['605b']['amount']
+            damages.section_607b_count = damages_calc['statutory']['607b']['count']
+            damages.section_607b_amount = damages_calc['statutory']['607b']['amount']
+            damages.section_611_count = damages_calc['statutory']['611']['count']
+            damages.section_611_amount = damages_calc['statutory']['611']['amount']
+            damages.section_623_count = damages_calc['statutory']['623']['count']
+            damages.section_623_amount = damages_calc['statutory']['623']['amount']
+            damages.statutory_damages_total = damages_calc['statutory']['total']
+            
+            damages.willfulness_multiplier = damages_calc['punitive']['multiplier']
+            damages.punitive_damages_amount = damages_calc['punitive']['amount']
+            
+            damages.estimated_hours = damages_calc['attorney_fees']['estimated_hours']
+            damages.hourly_rate = damages_calc['attorney_fees']['hourly_rate']
+            damages.attorney_fees_projection = damages_calc['attorney_fees']['total']
+            
+            damages.total_exposure = damages_calc['settlement']['total_exposure']
+            damages.settlement_target = damages_calc['settlement']['target']
+            damages.minimum_acceptable = damages_calc['settlement']['minimum']
+            
+            damages.notes = data.get('notes')
+            
+            db.commit()
+            
+            return jsonify({
+                'success': True,
+                'damages': damages_calc
+            }), 200
+        
+        else:
+            damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+            if not damages:
+                return jsonify({'success': True, 'damages': None}), 200
+            
+            return jsonify({
+                'success': True,
+                'damages': {
+                    'actual': {
+                        'credit_denials': damages.credit_denials_amount,
+                        'higher_interest': damages.higher_interest_amount,
+                        'credit_monitoring': damages.credit_monitoring_amount,
+                        'time_stress': damages.time_stress_amount,
+                        'other': damages.other_actual_amount,
+                        'total': damages.actual_damages_total
+                    },
+                    'statutory': {
+                        '605b': {'count': damages.section_605b_count, 'amount': damages.section_605b_amount},
+                        '607b': {'count': damages.section_607b_count, 'amount': damages.section_607b_amount},
+                        '611': {'count': damages.section_611_count, 'amount': damages.section_611_amount},
+                        '623': {'count': damages.section_623_count, 'amount': damages.section_623_amount},
+                        'total': damages.statutory_damages_total
+                    },
+                    'punitive': {
+                        'multiplier': damages.willfulness_multiplier,
+                        'amount': damages.punitive_damages_amount
+                    },
+                    'attorney_fees': {
+                        'estimated_hours': damages.estimated_hours,
+                        'hourly_rate': damages.hourly_rate,
+                        'total': damages.attorney_fees_projection
+                    },
+                    'settlement': {
+                        'total_exposure': damages.total_exposure,
+                        'target': damages.settlement_target,
+                        'minimum': damages.minimum_acceptable
+                    }
+                }
+            }), 200
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analysis/<int:analysis_id>/score', methods=['GET', 'POST'])
+def get_case_score(analysis_id):
+    """Calculate and retrieve case strength score"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        
+        standing_data = {
+            'has_concrete_harm': standing.has_concrete_harm if standing else False,
+            'has_dissemination': standing.has_dissemination if standing else False,
+            'has_causation': standing.has_causation if standing else False
+        }
+        
+        violations_data = [{
+            'violation_type': v.violation_type,
+            'is_willful': v.is_willful
+        } for v in violations]
+        
+        damages_data = {}
+        if damages:
+            damages_data = {
+                'total_exposure': damages.total_exposure,
+                'statutory_total': damages.statutory_damages_total
+            }
+        
+        documentation_complete = (standing.denial_letters_count > 0 if standing else False)
+        
+        score_result = calculate_case_score(
+            standing_data,
+            violations_data,
+            damages_data,
+            documentation_complete
+        )
+        
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        if not case_score:
+            case_score = CaseScore(
+                analysis_id=analysis_id,
+                client_id=analysis.client_id
+            )
+            db.add(case_score)
+        
+        case_score.standing_score = score_result['standing']
+        case_score.violation_quality_score = score_result['violation_quality']
+        case_score.willfulness_score = score_result['willfulness']
+        case_score.documentation_score = score_result['documentation']
+        case_score.total_score = score_result['total']
+        case_score.settlement_probability = score_result['settlement_probability']
+        case_score.case_strength = score_result['case_strength']
+        case_score.recommendation = score_result['recommendation']
+        case_score.recommendation_notes = '\n'.join(score_result['notes'])
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'score': score_result
+        }), 200
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analysis/<int:analysis_id>/complete')
+def get_complete_analysis(analysis_id):
+    """Get complete litigation analysis including violations, damages, standing, and score"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        letters = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
+        
+        return jsonify({
+            'success': True,
+            'analysis': {
+                'id': analysis.id,
+                'client_name': analysis.client_name,
+                'dispute_round': analysis.dispute_round,
+                'analysis_mode': analysis.analysis_mode,
+                'cost': analysis.cost,
+                'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M')
+            },
+            'violations': [{
+                'id': v.id,
+                'bureau': v.bureau,
+                'account_name': v.account_name,
+                'fcra_section': v.fcra_section,
+                'violation_type': v.violation_type,
+                'description': v.description,
+                'is_willful': v.is_willful,
+                'statutory_damages_min': v.statutory_damages_min,
+                'statutory_damages_max': v.statutory_damages_max
+            } for v in violations],
+            'standing': {
+                'has_concrete_harm': standing.has_concrete_harm if standing else False,
+                'concrete_harm_type': standing.concrete_harm_type if standing else None,
+                'has_dissemination': standing.has_dissemination if standing else False,
+                'has_causation': standing.has_causation if standing else False,
+                'denial_letters_count': standing.denial_letters_count if standing else 0,
+                'standing_verified': standing.standing_verified if standing else False
+            } if standing else None,
+            'damages': {
+                'actual_total': damages.actual_damages_total if damages else 0,
+                'statutory_total': damages.statutory_damages_total if damages else 0,
+                'punitive_total': damages.punitive_damages_amount if damages else 0,
+                'attorney_fees': damages.attorney_fees_projection if damages else 0,
+                'total_exposure': damages.total_exposure if damages else 0,
+                'settlement_target': damages.settlement_target if damages else 0,
+                'minimum_acceptable': damages.minimum_acceptable if damages else 0
+            } if damages else None,
+            'case_score': {
+                'total_score': case_score.total_score if case_score else 0,
+                'standing_score': case_score.standing_score if case_score else 0,
+                'violation_quality_score': case_score.violation_quality_score if case_score else 0,
+                'willfulness_score': case_score.willfulness_score if case_score else 0,
+                'documentation_score': case_score.documentation_score if case_score else 0,
+                'settlement_probability': case_score.settlement_probability if case_score else 0,
+                'case_strength': case_score.case_strength if case_score else 'Unknown',
+                'recommendation': case_score.recommendation if case_score else 'Not scored'
+            } if case_score else None,
+            'letters': [{
+                'id': l.id,
+                'bureau': l.bureau,
+                'round': l.round_number,
+                'file_path': l.file_path
+            } for l in letters]
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
