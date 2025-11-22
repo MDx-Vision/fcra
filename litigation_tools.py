@@ -65,18 +65,20 @@ def calculate_damages(violations, actual_damages_input):
         if is_willful:
             willful_violations += 1
         
+        # FCRA statutory damages: $100-$1,000 per violation
+        # Using conservative estimates within legal limits
         if '605B' in section.upper() or '605(B)' in section.upper():
             damages['statutory']['605b']['count'] += 1
-            damages['statutory']['605b']['amount'] += 1500
+            damages['statutory']['605b']['amount'] += 1000  # Max allowed under FCRA
         elif '607' in section and 'B' in section.upper():
             damages['statutory']['607b']['count'] += 1
-            damages['statutory']['607b']['amount'] += 500
+            damages['statutory']['607b']['amount'] += 750  # Mid-high range
         elif '611' in section:
             damages['statutory']['611']['count'] += 1
-            damages['statutory']['611']['amount'] += 500
+            damages['statutory']['611']['amount'] += 750  # Mid-high range
         elif '623' in section:
             damages['statutory']['623']['count'] += 1
-            damages['statutory']['623']['amount'] += 500
+            damages['statutory']['623']['amount'] += 750  # Mid-high range
     
     damages['statutory']['total'] = sum([
         damages['statutory']['605b']['amount'],
