@@ -194,7 +194,8 @@
 </div>
 
 <script>
-  const ANALYSIS_ID = {{ analysis_id }};
+  const ANALYSIS_ID = Number({{ analysis_id | tojson }});
+  console.log("Analysis ID:", ANALYSIS_ID);
   const statusEl = document.getElementById('status');
   const approveBtn = document.getElementById('approveBtn');
   const refreshBtn = document.getElementById('refreshBtn');
