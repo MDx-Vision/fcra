@@ -299,7 +299,7 @@ def home():
 
 
 def clean_credit_report_html(html):
-    """Strip unnecessary HTML to reduce size"""
+    """Strip unnecessary HTML to reduce size - but keep content intact"""
     from bs4 import BeautifulSoup
     import re
 
@@ -318,9 +318,14 @@ def clean_credit_report_html(html):
     soup = BeautifulSoup(html, 'html.parser')
     text = soup.get_text(separator='\n', strip=True)
 
+    # If cleaning destroys everything (>99% reduction), return original HTML instead
+    if len(text) < len(html) * 0.01:
+        print(f"⚠️  Aggressive cleaning destroyed content! Using original HTML instead.")
+        text = html
+
     print(f"✂️ Cleaned size: {len(text):,} characters")
     print(
-        f"💰 Saved: {len(html) - len(text):,} characters ({100 - (len(text)/len(html)*100):.1f}% reduction)"
+        f"💰 Saved: {max(0, len(html) - len(text)):,} characters ({max(0, 100 - (len(text)/len(html)*100)):.1f}% reduction)"
     )
 
     return text
