@@ -1780,17 +1780,41 @@ VIOLATIONS IDENTIFIED: {len(violations)}
         sanitizer = LetterPDFGenerator()
         report_content = sanitizer.sanitize_text_for_pdf(report_content)
         
-        # Generate PDF
-        from fpdf import FPDF
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Helvetica", size=11)
-        pdf.multi_cell(0, 5, report_content)
+        # Generate PDF using ReportLab (proven to work)
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.colors import HexColor
+        from reportlab.lib.enums import TA_LEFT
         
         filename = f"{analysis.client_name.replace(' ', '_')}_Full_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         output_path = os.path.join('static', 'generated_letters', filename)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        pdf.output(output_path)
+        
+        doc = SimpleDocTemplate(output_path, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Custom style with dark blue color
+        custom_style = ParagraphStyle(
+            'Custom',
+            parent=styles['Normal'],
+            fontSize=10,
+            textColor=HexColor('#1a1a8e'),
+            spaceAfter=8,
+            fontName='Helvetica',
+            leading=12
+        )
+        
+        # Split content into lines and add to story
+        for line in report_content.split('\n'):
+            if line.strip():
+                story.append(Paragraph(line, custom_style))
+            else:
+                story.append(Spacer(1, 6))
+        
+        # Build PDF
+        doc.build(story)
         
         return send_file(
             output_path,
