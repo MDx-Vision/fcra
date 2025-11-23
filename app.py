@@ -1910,16 +1910,36 @@ def approve_analysis_stage_1(analysis_id):
         stage_2_text = result.get('analysis', '')
         bureau_letters = {}
 
-        # Extract letters from response (format: [Bureau: Account]\nLetter content...)
+        # Extract letters - Claude may format differently, so handle multiple patterns
+        # Try pattern 1: [Bureau: Account]\nLetter content...
         letter_pattern = r'\[([^:]+):\s*([^\]]+)\]\s*\n(.*?)(?=\[|$)'
         matches = re.findall(letter_pattern, stage_2_text, re.DOTALL)
+
+        # If no matches, try pattern 2: Look for bureau names directly
+        if not matches:
+            for bureau in ['Equifax', 'Experian', 'TransUnion']:
+                pattern = rf'{bureau}[:\s]+(.*?)(?=(?:Equifax|Experian|TransUnion|$))'
+                bureau_match = re.search(pattern, stage_2_text, re.DOTALL | re.IGNORECASE)
+                if bureau_match:
+                    matches.append((bureau, 'Multiple Accounts', bureau_match.group(1).strip()))
 
         for bureau_name, account_name, letter_content in matches:
             bureau_name = bureau_name.strip().title()
             account_name = account_name.strip()
             letter_content = letter_content.strip()
+            
+            # Validate bureau name - must be one of the three bureaus
+            if bureau_name not in ['Equifax', 'Experian', 'Transunion']:
+                # Try to extract bureau name from content
+                for valid_bureau in ['Equifax', 'Experian', 'TransUnion']:
+                    if valid_bureau.lower() in bureau_name.lower():
+                        bureau_name = valid_bureau
+                        break
+                else:
+                    # If still invalid, default to "Unknown" and skip
+                    continue
 
-            if not bureau_name:
+            if not bureau_name or bureau_name == 'Unknown':
                 continue
 
             bureau_letters.setdefault(bureau_name, []).append({
