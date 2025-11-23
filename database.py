@@ -20,9 +20,7 @@ engine = create_engine(
     pool_pre_ping=True,  # Test connections before use
     pool_recycle=300,    # Recycle connections every 5 min to prevent staleness
     connect_args={
-        "connect_timeout": 60,  # INCREASED: 60 sec timeout for large writes
-        "statement_timeout": 300000,  # 5 min timeout for statements
-        "sslmode": "prefer"  # More flexible SSL handling
+        "connect_timeout": 60  # INCREASED: 60 sec timeout for large writes
     }
 )
 
