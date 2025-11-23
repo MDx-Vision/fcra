@@ -651,235 +651,140 @@ After completing Parts 0-4, output this JSON at the very end:
 4. Include willfulness_indicators ONLY if is_willful = true"""
         else:
             # STAGE 2: Full prompt for client documents generation (uses Stage 1 results)
-            prompt = f"""Act as an elite consumer protection attorney specializing in FCRA litigation. Generate comprehensive, forensic-quality litigation documents matching professional litigation standards.
+            prompt = f"""You are an elite consumer protection attorney. ANALYZE the Stage 1 findings below and generate comprehensive, forensic-quality litigation documents with SPECIFIC ACCOUNT DATA.
 
-**CONTEXT - Use these Stage 1 findings:**
+**STAGE 1 ANALYSIS DATA (EXTRACT ALL VIOLATION DETAILS FROM THIS):**
 {stage_1_results}
 
-**YOUR TASK - GENERATE 80-120 PAGE COMPREHENSIVE LITIGATION PACKAGE:**
+**CRITICAL INSTRUCTIONS - MUST FOLLOW:**
+1. EXTRACT violations list from Stage 1 results above - use ACTUAL account names, bureaus, descriptions
+2. For EACH violation: Create bureau-by-bureau comparison showing SPECIFIC data (dates, balances, payment history)
+3. QUANTIFY harm using Stage 1 standing/damages data - calculate dollar amounts with formulas
+4. PROVIDE DEFINITIVE scores (not "potential") - assign actual 1-10 scores with reasoning
+5. Generate MINIMUM 8-12 violation sections - each with forensic detail (not templates)
+6. Use actual account numbers from Stage 1 (mask as XXXX####XXXXXX format)
 
 **PART 0: POST-TRANSUNION STANDING ANALYSIS** (8-12 pages)
-Analyze standing under TransUnion LLC v. Ramirez, 141 S. Ct. 2190 (2021):
 
-ELEMENT 1 - DISSEMINATION TO THIRD PARTY:
-- Identify EVERY hard inquiry with dates and creditor names
-- Document inaccurate information present during each inquiry
-- Show temporal connection between inaccuracy and third-party access
-- Scoring: Weak (1) | Moderate (2) | Strong (3)
-
-ELEMENT 2 - CONCRETE HARM (NOT SPECULATIVE):
-- QUANTIFY credit score suppression: Actual score vs estimated score without violations
-- Calculate financial impact: Interest rate differential × balances = annual excess cost
-- Document denied accounts, rejected applications with dates
-- Include emotional/time damages: Hours spent correcting errors × hourly value
-- Show cumulative ongoing harm (not one-time event)
-- Scoring: Weak (1) | Moderate (2) | Strong (3) | Exceptional (4)
-
-ELEMENT 3 - CAUSATION ("BUT FOR" TEST):
-- Mathematical relationship: How much each violation suppressed credit score
-- Temporal proximity: Did inaccuracy exist during critical credit events?
-- "But for" analysis: What would score be without this violation?
-- Scoring: Weak (1) | Moderate (2) | Strong (3)
-
-STANDING SCORE CALCULATION:
-- Base score (sum of three elements): 1-10
-- Circuit adjustment (2nd Circuit -2, 9th Circuit -1, other 0): Adjust final score
-- Interpretation: 1-3 = Weak (high dismissal risk), 4-7 = Moderate, 8-10 = Strong (low dismissal risk)
-- FINAL STANDING SCORE: X/10 with specific circuit and reasoning
+EXTRACT from Stage 1 data and calculate:
+- Dissemination: List EVERY hard inquiry from Stage 1, show inaccuracy during each inquiry → SCORE 1-3
+- Concrete Harm: Use Stage 1 harm_details to QUANTIFY: Credit score suppression (actual - estimated), interest premium calculation ($balances × %differential × years), denied applications count → SCORE 1-4
+- Causation: Link EACH violation to specific harm using Stage 1 data → SCORE 1-3
+- DEFINITIVE STANDING SCORE: Add scores, apply circuit adjustment (2nd Circuit -2, 9th -1), output as X/10 WITH SPECIFIC EVIDENCE
 
 **PART 1: COMPREHENSIVE FORENSIC VIOLATION ANALYSIS** (35-50 pages)
 
-For EACH violation discovered (minimum 8-12 violations expected):
+FOR EACH VIOLATION IN STAGE 1 DATA:
 
-VIOLATION HEADER:
-- Violation number, FCRA statute, account affected, amount in dispute
-- Defendants: Which bureaus, furnishers are responsible
+**VIOLATION #[N]: [ACCOUNT_NAME] - [VIOLATION_TYPE]**
+- Statute: [STATUTE from Stage 1]
+- Bureau affected: [BUREAU from Stage 1]
 
-THE FACTUAL PROBLEM:
-- Show the specific contradiction or inaccuracy from credit report
-- Bureau-by-bureau comparison (TransUnion shows X, Experian shows Y, Equifax shows Z)
-- Dates, balances, payment history inconsistencies
-- Quote directly from credit report with specific account numbers (partial mask OK)
+FACTUAL PROBLEM (SPECIFIC DATA ONLY):
+- TransUnion shows: [Use exact account details from Stage 1]
+- Experian shows: [Use exact account details from Stage 1]
+- Equifax shows: [Use exact account details from Stage 1]
+- CONTRADICTION: [Specific dates/balances that don't match]
 
 LEGAL ANALYSIS:
-- Which FCRA statute violated: §1681e(b), §1681s-2, §1681i, etc. with statutory text
-- Why this is a violation: Explain the legal requirement and how it was violated
-- Case law citations: Recent cases supporting this violation (3rd Circuit, 2nd Circuit preferred)
-- Willfulness indicators: Pattern, knowledge, recklessness, intent
+- Statute requires: [Cite FCRA requirement]
+- How violated: [Specific legal explanation]
+- Case law: Cushman, Sarver, Ramirez, Safeco references
 
-DAMAGES FOR THIS VIOLATION:
-- Statutory damages range: $100-$1,000 per violation × how many violations = total
-- Actual damages specific to this account: Credit denial, higher rates, time spent
-- Multiplier potential (if willful): 1x-4x range with justification
+DAMAGES THIS VIOLATION:
+- Statutory: $100-$1000 range (multiply by count if multiple bureaus)
+- Actual (if calculable from Stage 1): $[specific amount]
 
 ---
 
 **PART 2: SYSTEMATIC WILLFULNESS ASSESSMENT** (8-12 pages)
 
-Using Safeco Insurance Co. v. Burr, 551 U.S. 47 (2007) standard:
+Using Stage 1 willfulness data, score 0-16 points:
+- CATEGORY 1 (Knowledge): Major bureau = 2pts, CFPB guidance available = 2pts
+- CATEGORY 2 (Pattern): Multiple accounts with same violation = 2-3pts, High volume = 2-3pts
+- CATEGORY 3 (Awareness): Prior violations = 2pts per incident
+- CATEGORY 4 (Recklessness): Failure to investigate = 1-3pts
 
-CATEGORY 1 - DIRECT KNOWLEDGE (0-4 points):
-- Defendants have written compliance manuals/training (2 pts if major financial institution)
-- CFPB/FTC regulatory guidance published and available (2 pts if violation is common)
-- Score: ___/4
-
-CATEGORY 2 - PATTERN OF VIOLATIONS (0-5 points):
-- Same violation repeated across multiple accounts (1-2 pts)
-- High volume of violations affecting multiple consumers' data (1-2 pts)
-- Systematic procedures that structurally violate FCRA (2-3 pts)
-- Score: ___/5
-
-CATEGORY 3 - AWARENESS INDICATORS (0-4 points):
-- Prior similar violations/settlements (2 pts per prior incident)
-- Consumer complaints to CFPB/FTC (1-2 pts)
-- Score: ___/4
-
-CATEGORY 4 - RECKLESSNESS (0-3 points):
-- No verification procedures in place (2 pts)
-- Failure to investigate despite consumer dispute notations (1-3 pts)
-- Score: ___/3
-
-WILLFULNESS PROBABILITY:
-- Total score: ___/16
-- 0-4 = Negligence only (0% willfulness)
-- 5-8 = Mixed negligence/willfulness (20-40% chance)
-- 9-12 = Likely willfulness (60-80% chance)
-- 13-16 = Definite willfulness (90%+ confidence)
-- FINAL: X% PROBABILITY WITH SPECIFIC EVIDENCE
+FINAL WILLFULNESS SCORE: [0-16] = [% probability with specific evidence from Stage 1]
 
 ---
 
-**PART 3: SETTLEMENT & CASE VALUATION ANALYSIS** (10-15 pages)
+**PART 3: SETTLEMENT & CASE VALUATION** (10-15 pages)
 
-STANDING STRENGTH:
-- Standing score from Part 0: ___/10
-- Risk assessment: Probability of surviving motion to dismiss
-- Circuit-specific factors: How 2nd/3rd/9th Circuit likely to rule
+STANDING SCORE: [From Part 0]
+VIOLATION COUNT: [Count from Stage 1]
+AVERAGE VIOLATION QUALITY: [1-10 with reasoning]
 
-VIOLATION STRENGTH:
-- Average violation quality: 1-10 scale with reasoning
-- Evidence quality: Documentary contradictions vs inferred violations
-- Defensibility: How easily can defendant argue these are technical violations?
-
-DAMAGES CALCULATION:
-
-Statutory Damages:
-- Minimum scenario: ___ violations × $100 = $___
-- Maximum scenario: ___ violations × $1,000 = $___
-- Likely scenario: ___ violations × $[conservative average] = $___
-
-Actual Damages:
-- Credit score suppression: (Estimated score - Actual score) × impact factor = $___
-- Interest rate premium: Current balances × (premium rate - prime rate) × years = $___
-- Credit denial/rejection: Count rejections × average denial impact ($500-2000 per denial) = $___
-- Credit monitoring/time: Hours spent × hourly rate = $___
-- Total actual damages: $___
-
-Punitive Damages (if willful):
-- Conservative (1:1 multiplier): Statutory damages × 1 = $___
-- Moderate (2:1 multiplier): Statutory damages × 2 = $___
-- Aggressive (3-4:1 multiplier): Statutory damages × 3-4 = $___
-
-TOTAL CASE VALUATION:
-- Conservative exposure: $___
-- Likely exposure: $___
-- Worst-case exposure: $___
-- Settlement recommendation (60-70% of likely): $___
-
-LITIGATION STRATEGY:
-- Pre-litigation demand: $[X] with 30-day response
-- If no response: File complaint + MTD anticipation
-- Trial strategy: Emphasize standing strength, pattern of violations, willfulness
-- Bureau-specific strategy (TransUnion vs Experian vs Equifax handling)
+DAMAGES CALCULATION (USE STAGE 1 DATA):
+- Statutory: [# violations from Stage 1] × [average $] = $[total]
+- Actual: [Sum from Stage 1 actual_damages] = $[total]
+- Punitive (if willful): [Statutory] × [multiplier 1-4] = $[total]
+- TOTAL EXPOSURE: $[combined]
+- SETTLEMENT RECOMMENDATION (65%): $[calculate 65% of total]
 
 ---
 
-**PART 4: FORMAL FCRA DISPUTE LETTER - ROUND {dispute_round}** (6-10 pages)
+**PART 4: FORMAL DISPUTE LETTER - ROUND {dispute_round}** (6-10 pages)
+
+Use EXACT account names and violations from Stage 1:
 
 [Certified Mail - Return Receipt Requested]
 
-[Bureau Address - TransUnion, Experian, Equifax specific]
+RE: FORMAL FCRA DISPUTE AND DEMAND FOR INVESTIGATION & CORRECTION
 
-**RE: FORMAL FCRA DISPUTE AND DEMAND FOR INVESTIGATION & CORRECTION**
-**Consumer Account: [Name] | Date of Dispute: [Date]**
+Dear Bureau:
+
+I dispute inaccurate information in my credit file in violation of FCRA § 1681i(a)(1)(A).
+
+DISPUTED ITEMS (from Stage 1 data):
+1. [Account from Stage 1] - [Description from Stage 1] - Violates [Statute] because [specific reason]
+2. [Account from Stage 1] - [Description from Stage 1] - Violates [Statute] because [specific reason]
+[Continue for ALL violations]
 
 LEGAL FRAMEWORK:
-- Cite 15 U.S.C. § 1681i(a)(1)(A): Consumer right to dispute accuracy
-- State 30-day investigation requirement
-- Reference Cushman v. TransUnion for method of verification standard
-
-DISPUTED ITEMS:
-For each violation in Part 1, include:
-- Account number (masked): [XXXX]XXXXXX
-- Original creditor/furnisher: [Name]
-- Current status per your report: [Status]
-- Why it's inaccurate: [Specific contradiction]
-- Violation of § 1681e(b)/§1681i/§1681s-2: [Which statute]
-- Evidence: [Specific dates, contradictions from report]
-
-LEGAL VIOLATIONS CLAIM:
-- Multiple accurate information inaccuracies violating §1681e(b)
-- Failure to conduct reasonable investigation per §1681i(a)(1)(A)
-- Furnisher violation of §1681s-2(a) for unverifiable information
-- Refusal to delete unverifiable information per §1681i(a)(5)(A)
-
-DAMAGES CLAIM:
-- Actual damages from score suppression: $[X]
-- Statutory damages: $[X-X] minimum per violation
-- Punitive damages: $[X-X] if willful
-- Total exposure: $[X] (not demand, but your exposure)
+FCRA § 1681e(b): Must follow reasonable procedures for accuracy
+FCRA § 1681i(a)(1)(A): Must investigate disputes within 30 days
 
 DEMANDS:
-1. Delete all inaccurate information within 30 days per §1681i(a)(1)(A)
-2. Correct contradictory information to accurate status
-3. Provide Method of Verification request response per Cushman standard
-4. Send corrected credit report to all third parties who received inaccurate report
+1. Delete all inaccurate information
+2. Correct contradictions to accurate status
+3. Provide Method of Verification per Cushman standard
+4. Reinvestigate thoroughly (not automated response)
 
-DEADLINE:
-30 days from receipt of this letter per FCRA §1681i(a)(1)(A). Failure to respond or investigate constitutes violation of § 1681i(g).
+DEADLINE: 30 days per FCRA § 1681i(a)(1)(A)
 
-LEGAL NOTICE:
-Willful violation of FCRA entitles consumer to statutory damages of $100-$1,000 per violation plus actual damages, punitive damages, and attorney's fees.
-
----
-
-**PART 5: METHOD OF VERIFICATION (MOV) REQUEST** (3-5 pages)
-
-[Per Cushman v. TransUnion, 115 F.3d 220 (3d Cir. 1997)]
-
-DETAILED REQUEST FOR BUSINESS RECORDS:
-For accounts with missing Date of Last Payment, unclear status, or contradictory histories:
-
-CUSHMAN REQUIREMENT:
-Furnishers must maintain tangible documentary evidence of all reported information. Demand includes:
-1. Photocopies of original creditor's running billing statements covering [date range]
-2. Complete account ledger showing all transactions and payment history
-3. Written communication from original creditor authorizing furnisher to report charge-off/delinquency
-4. Account closure documentation or charge-off authorization letter
-5. Any Metro 2 or PRBC format documentation submitted to bureaus
-
-CONSUMER RECORDS CONTRADICTION:
-- Consumer has [payment evidence] showing different payment status
-- Demand immediate reinvestigation and correction
-
-DEADLINE: 30 days per FCRA §1681i standards
+DAMAGES CLAIM:
+- Statutory damages: $[from calculation] minimum
+- Actual damages: $[from Stage 1]
+- Punitive damages (if willful): $[from calculation]
+- TOTAL EXPOSURE: $[combined]
 
 ---
 
-**TONE & CRITICAL STYLE REQUIREMENTS:**
-- Professional, authoritative, litigation-ready
-- Cite specific statutory sections (§605B, §611, §623, etc.) with statute numbers
-- Use quantified examples and specific dates from credit report
-- RLPP Protocol: Bundle technical violations + obvious inaccuracies to force manual review
-- Sophisticated legal arguments without being verbose
-- Action-oriented: Clear demands, specific 30-day deadlines, consequences stated
-- Emphasize pattern + willfulness to increase settlement probability
+**PART 5: METHOD OF VERIFICATION REQUEST** (3-5 pages)
 
-**OUTPUT:**
-Generate the complete 80-120 page client-facing litigation package. Every section should be comprehensive, forensically detailed, and ready for:
-1. Sending to credit bureaus as formal dispute
-2. Providing to consumer's attorney
-3. Filing in federal court if needed"""
+[Cushman v. TransUnion, 115 F.3d 220 (3d Cir. 1997) - furnishers must maintain tangible proof]
+
+For accounts with disputed payment history or missing Date of Last Payment:
+
+DEMAND:
+1. Running billing statements from original creditor
+2. Complete transaction ledger
+3. Proof of charge-off authorization
+4. Metro 2 format records submitted to bureaus
+
+DEADLINE: 30 days
+
+---
+
+**OUTPUT REQUIREMENTS:**
+- 80-120 pages TOTAL
+- EVERY section must use ACTUAL data from Stage 1 above (not templates)
+- SPECIFIC account names, dates, balances, payment history from Stage 1
+- QUANTIFIED damages with formulas shown
+- DEFINITIVE scores and percentages (not "potential")
+- 8-12+ violation sections (one per violation from Stage 1)
+- Professional, litigation-ready format"""
         
         # Stage 2 needs round_names variable
         if stage != 1:
