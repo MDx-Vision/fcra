@@ -1739,12 +1739,13 @@ def download_full_report(analysis_id):
         if not letter:
             return jsonify({'error': 'No letters generated yet. Click Accept Case first.'}), 404
         
-        # Create comprehensive report combining violations, standing, damages
+        # Create comprehensive report combining violations, standing, damages + full Stage 2 analysis
         violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
         standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
         damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
         case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
         
+        # Start with header
         report_content = f"""
 FCRA LITIGATION ANALYSIS REPORT
 Client: {analysis.client_name}
@@ -1774,6 +1775,11 @@ VIOLATIONS IDENTIFIED: {len(violations)}
             report_content += f"* Punitive Damages: ${damages.punitive_damages_amount}\n"
             report_content += f"* Total Exposure: ${damages.total_exposure}\n"
             report_content += f"* Settlement Target (65%): ${damages.settlement_target}\n"
+        
+        # Add full Stage 2 comprehensive analysis if available
+        if analysis.full_analysis:
+            report_content += f"\n\n{'='*80}\nCOMPREHENSIVE LITIGATION ANALYSIS\n{'='*80}\n\n"
+            report_content += analysis.full_analysis
         
         # Sanitize before PDF generation
         from pdf_generator import LetterPDFGenerator
