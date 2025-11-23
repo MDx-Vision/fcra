@@ -651,55 +651,235 @@ After completing Parts 0-4, output this JSON at the very end:
 4. Include willfulness_indicators ONLY if is_willful = true"""
         else:
             # STAGE 2: Full prompt for client documents generation (uses Stage 1 results)
-            prompt = f"""Act as an expert consumer protection attorney. Generate client-facing litigation documents.
+            prompt = f"""Act as an elite consumer protection attorney specializing in FCRA litigation. Generate comprehensive, forensic-quality litigation documents matching professional litigation standards.
 
 **CONTEXT - Use these Stage 1 findings:**
 {stage_1_results}
 
-**YOUR TASK - GENERATE CLIENT DOCUMENTS:**
+**YOUR TASK - GENERATE 80-120 PAGE COMPREHENSIVE LITIGATION PACKAGE:**
 
-Create a comprehensive litigation package for Round {dispute_round}:
+**PART 0: POST-TRANSUNION STANDING ANALYSIS** (8-12 pages)
+Analyze standing under TransUnion LLC v. Ramirez, 141 S. Ct. 2190 (2021):
 
-PART 5: EXECUTIVE SUMMARY (2-3 pages)
-- Case overview: violations identified, standing strength, settlement probability
-- Key findings: Most damaging violations, willfulness indicators
-- Recommended strategy and timeline
+ELEMENT 1 - DISSEMINATION TO THIRD PARTY:
+- Identify EVERY hard inquiry with dates and creditor names
+- Document inaccurate information present during each inquiry
+- Show temporal connection between inaccuracy and third-party access
+- Scoring: Weak (1) | Moderate (2) | Strong (3)
 
-PART 6: DETAILED VIOLATION ANALYSIS (20-25 pages)
-- For each violation: Account history, inaccuracy, evidence, legal analysis
-- Standing assessment: Concrete harm, dissemination, causation with proof
-- Willfulness analysis: Intent indicators, pattern evidence, comparable cases
-- Case law citations: Recent decisions supporting your violations
+ELEMENT 2 - CONCRETE HARM (NOT SPECULATIVE):
+- QUANTIFY credit score suppression: Actual score vs estimated score without violations
+- Calculate financial impact: Interest rate differential × balances = annual excess cost
+- Document denied accounts, rejected applications with dates
+- Include emotional/time damages: Hours spent correcting errors × hourly value
+- Show cumulative ongoing harm (not one-time event)
+- Scoring: Weak (1) | Moderate (2) | Strong (3) | Exceptional (4)
 
-PART 7: DISPUTE LETTER - Round {dispute_round} (5-7 pages)
-- Strong RLPP language: Sophisticated legal tone, case law references
-- Cite specific violations with statutory sections (§605B, §611(a)(1)(A), etc.)
-- Include evidence from analysis: Dates, account details, contradictions
-- Demand: Correction, deletion, or verification with tangible ledgers
-- Timeline: 30-day response deadline (per FCRA §611(a)(1)(A))
+ELEMENT 3 - CAUSATION ("BUT FOR" TEST):
+- Mathematical relationship: How much each violation suppressed credit score
+- Temporal proximity: Did inaccuracy exist during critical credit events?
+- "But for" analysis: What would score be without this violation?
+- Scoring: Weak (1) | Moderate (2) | Strong (3)
 
-PART 8: MOV REQUEST (if applicable) (2-3 pages)
-- Method of Verification demand (Cushman v. TransUnion requirement)
-- Request for tangible business records, running billing statements
-- Proof of original furnisher contact
-- 30-day deadline enforcement
+STANDING SCORE CALCULATION:
+- Base score (sum of three elements): 1-10
+- Circuit adjustment (2nd Circuit -2, 9th Circuit -1, other 0): Adjust final score
+- Interpretation: 1-3 = Weak (high dismissal risk), 4-7 = Moderate, 8-10 = Strong (low dismissal risk)
+- FINAL STANDING SCORE: X/10 with specific circuit and reasoning
 
-PART 9: SETTLEMENT/CASE STRATEGY (3-5 pages)
-- Standing strength assessment (1-10 scale with justification)
-- Willfulness probability (% confidence with evidence)
-- Damages range: Conservative to aggressive
-- Settlement value: Pre-litigation demand vs trial exposure
-- Timeline to resolution
-- Bureau-specific strategy (Equifax vs Experian vs TransUnion)
+**PART 1: COMPREHENSIVE FORENSIC VIOLATION ANALYSIS** (35-50 pages)
 
-**TONE & STYLE:**
+For EACH violation discovered (minimum 8-12 violations expected):
+
+VIOLATION HEADER:
+- Violation number, FCRA statute, account affected, amount in dispute
+- Defendants: Which bureaus, furnishers are responsible
+
+THE FACTUAL PROBLEM:
+- Show the specific contradiction or inaccuracy from credit report
+- Bureau-by-bureau comparison (TransUnion shows X, Experian shows Y, Equifax shows Z)
+- Dates, balances, payment history inconsistencies
+- Quote directly from credit report with specific account numbers (partial mask OK)
+
+LEGAL ANALYSIS:
+- Which FCRA statute violated: §1681e(b), §1681s-2, §1681i, etc. with statutory text
+- Why this is a violation: Explain the legal requirement and how it was violated
+- Case law citations: Recent cases supporting this violation (3rd Circuit, 2nd Circuit preferred)
+- Willfulness indicators: Pattern, knowledge, recklessness, intent
+
+DAMAGES FOR THIS VIOLATION:
+- Statutory damages range: $100-$1,000 per violation × how many violations = total
+- Actual damages specific to this account: Credit denial, higher rates, time spent
+- Multiplier potential (if willful): 1x-4x range with justification
+
+---
+
+**PART 2: SYSTEMATIC WILLFULNESS ASSESSMENT** (8-12 pages)
+
+Using Safeco Insurance Co. v. Burr, 551 U.S. 47 (2007) standard:
+
+CATEGORY 1 - DIRECT KNOWLEDGE (0-4 points):
+- Defendants have written compliance manuals/training (2 pts if major financial institution)
+- CFPB/FTC regulatory guidance published and available (2 pts if violation is common)
+- Score: ___/4
+
+CATEGORY 2 - PATTERN OF VIOLATIONS (0-5 points):
+- Same violation repeated across multiple accounts (1-2 pts)
+- High volume of violations affecting multiple consumers' data (1-2 pts)
+- Systematic procedures that structurally violate FCRA (2-3 pts)
+- Score: ___/5
+
+CATEGORY 3 - AWARENESS INDICATORS (0-4 points):
+- Prior similar violations/settlements (2 pts per prior incident)
+- Consumer complaints to CFPB/FTC (1-2 pts)
+- Score: ___/4
+
+CATEGORY 4 - RECKLESSNESS (0-3 points):
+- No verification procedures in place (2 pts)
+- Failure to investigate despite consumer dispute notations (1-3 pts)
+- Score: ___/3
+
+WILLFULNESS PROBABILITY:
+- Total score: ___/16
+- 0-4 = Negligence only (0% willfulness)
+- 5-8 = Mixed negligence/willfulness (20-40% chance)
+- 9-12 = Likely willfulness (60-80% chance)
+- 13-16 = Definite willfulness (90%+ confidence)
+- FINAL: X% PROBABILITY WITH SPECIFIC EVIDENCE
+
+---
+
+**PART 3: SETTLEMENT & CASE VALUATION ANALYSIS** (10-15 pages)
+
+STANDING STRENGTH:
+- Standing score from Part 0: ___/10
+- Risk assessment: Probability of surviving motion to dismiss
+- Circuit-specific factors: How 2nd/3rd/9th Circuit likely to rule
+
+VIOLATION STRENGTH:
+- Average violation quality: 1-10 scale with reasoning
+- Evidence quality: Documentary contradictions vs inferred violations
+- Defensibility: How easily can defendant argue these are technical violations?
+
+DAMAGES CALCULATION:
+
+Statutory Damages:
+- Minimum scenario: ___ violations × $100 = $___
+- Maximum scenario: ___ violations × $1,000 = $___
+- Likely scenario: ___ violations × $[conservative average] = $___
+
+Actual Damages:
+- Credit score suppression: (Estimated score - Actual score) × impact factor = $___
+- Interest rate premium: Current balances × (premium rate - prime rate) × years = $___
+- Credit denial/rejection: Count rejections × average denial impact ($500-2000 per denial) = $___
+- Credit monitoring/time: Hours spent × hourly rate = $___
+- Total actual damages: $___
+
+Punitive Damages (if willful):
+- Conservative (1:1 multiplier): Statutory damages × 1 = $___
+- Moderate (2:1 multiplier): Statutory damages × 2 = $___
+- Aggressive (3-4:1 multiplier): Statutory damages × 3-4 = $___
+
+TOTAL CASE VALUATION:
+- Conservative exposure: $___
+- Likely exposure: $___
+- Worst-case exposure: $___
+- Settlement recommendation (60-70% of likely): $___
+
+LITIGATION STRATEGY:
+- Pre-litigation demand: $[X] with 30-day response
+- If no response: File complaint + MTD anticipation
+- Trial strategy: Emphasize standing strength, pattern of violations, willfulness
+- Bureau-specific strategy (TransUnion vs Experian vs Equifax handling)
+
+---
+
+**PART 4: FORMAL FCRA DISPUTE LETTER - ROUND {dispute_round}** (6-10 pages)
+
+[Certified Mail - Return Receipt Requested]
+
+[Bureau Address - TransUnion, Experian, Equifax specific]
+
+**RE: FORMAL FCRA DISPUTE AND DEMAND FOR INVESTIGATION & CORRECTION**
+**Consumer Account: [Name] | Date of Dispute: [Date]**
+
+LEGAL FRAMEWORK:
+- Cite 15 U.S.C. § 1681i(a)(1)(A): Consumer right to dispute accuracy
+- State 30-day investigation requirement
+- Reference Cushman v. TransUnion for method of verification standard
+
+DISPUTED ITEMS:
+For each violation in Part 1, include:
+- Account number (masked): [XXXX]XXXXXX
+- Original creditor/furnisher: [Name]
+- Current status per your report: [Status]
+- Why it's inaccurate: [Specific contradiction]
+- Violation of § 1681e(b)/§1681i/§1681s-2: [Which statute]
+- Evidence: [Specific dates, contradictions from report]
+
+LEGAL VIOLATIONS CLAIM:
+- Multiple accurate information inaccuracies violating §1681e(b)
+- Failure to conduct reasonable investigation per §1681i(a)(1)(A)
+- Furnisher violation of §1681s-2(a) for unverifiable information
+- Refusal to delete unverifiable information per §1681i(a)(5)(A)
+
+DAMAGES CLAIM:
+- Actual damages from score suppression: $[X]
+- Statutory damages: $[X-X] minimum per violation
+- Punitive damages: $[X-X] if willful
+- Total exposure: $[X] (not demand, but your exposure)
+
+DEMANDS:
+1. Delete all inaccurate information within 30 days per §1681i(a)(1)(A)
+2. Correct contradictory information to accurate status
+3. Provide Method of Verification request response per Cushman standard
+4. Send corrected credit report to all third parties who received inaccurate report
+
+DEADLINE:
+30 days from receipt of this letter per FCRA §1681i(a)(1)(A). Failure to respond or investigate constitutes violation of § 1681i(g).
+
+LEGAL NOTICE:
+Willful violation of FCRA entitles consumer to statutory damages of $100-$1,000 per violation plus actual damages, punitive damages, and attorney's fees.
+
+---
+
+**PART 5: METHOD OF VERIFICATION (MOV) REQUEST** (3-5 pages)
+
+[Per Cushman v. TransUnion, 115 F.3d 220 (3d Cir. 1997)]
+
+DETAILED REQUEST FOR BUSINESS RECORDS:
+For accounts with missing Date of Last Payment, unclear status, or contradictory histories:
+
+CUSHMAN REQUIREMENT:
+Furnishers must maintain tangible documentary evidence of all reported information. Demand includes:
+1. Photocopies of original creditor's running billing statements covering [date range]
+2. Complete account ledger showing all transactions and payment history
+3. Written communication from original creditor authorizing furnisher to report charge-off/delinquency
+4. Account closure documentation or charge-off authorization letter
+5. Any Metro 2 or PRBC format documentation submitted to bureaus
+
+CONSUMER RECORDS CONTRADICTION:
+- Consumer has [payment evidence] showing different payment status
+- Demand immediate reinvestigation and correction
+
+DEADLINE: 30 days per FCRA §1681i standards
+
+---
+
+**TONE & CRITICAL STYLE REQUIREMENTS:**
 - Professional, authoritative, litigation-ready
-- Sophisticated legal language without being pretentious
-- RLPP Protocol: Bundle violations to force manual compliance review
-- Action-oriented: Clear demands, specific deadlines, consequences
+- Cite specific statutory sections (§605B, §611, §623, etc.) with statute numbers
+- Use quantified examples and specific dates from credit report
+- RLPP Protocol: Bundle technical violations + obvious inaccuracies to force manual review
+- Sophisticated legal arguments without being verbose
+- Action-oriented: Clear demands, specific 30-day deadlines, consequences stated
+- Emphasize pattern + willfulness to increase settlement probability
 
 **OUTPUT:**
-Generate the complete client package (40-50 pages total). Make it professional, thorough, and ready to send to the credit bureaus or attorneys."""
+Generate the complete 80-120 page client-facing litigation package. Every section should be comprehensive, forensically detailed, and ready for:
+1. Sending to credit bureaus as formal dispute
+2. Providing to consumer's attorney
+3. Filing in federal court if needed"""
         
         # Stage 2 needs round_names variable
         if stage != 1:
