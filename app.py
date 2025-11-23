@@ -1756,24 +1756,29 @@ CASE STRENGTH SCORE: {case_score.total_score if case_score else 'N/A'}/10
 VIOLATIONS IDENTIFIED: {len(violations)}
 """
         for v in violations:
-            report_content += f"\n• {v.fcra_section} - {v.violation_type} ({v.bureau})"
+            report_content += f"\n* {v.fcra_section} - {v.violation_type} ({v.bureau})"
             report_content += f"\n  {v.description}"
             report_content += f"\n  Willful: {'Yes' if v.is_willful else 'No'}"
             report_content += f"\n  Statutory Damages: ${v.statutory_damages_min}-${v.statutory_damages_max}\n"
         
         report_content += f"\nSTANDING ANALYSIS:\n"
         if standing:
-            report_content += f"• Concrete Harm: {'Yes' if standing.has_concrete_harm else 'No'}\n"
-            report_content += f"• Dissemination: {'Yes' if standing.has_dissemination else 'No'}\n"
-            report_content += f"• Causation: {'Yes' if standing.has_causation else 'No'}\n"
+            report_content += f"* Concrete Harm: {'Yes' if standing.has_concrete_harm else 'No'}\n"
+            report_content += f"* Dissemination: {'Yes' if standing.has_dissemination else 'No'}\n"
+            report_content += f"* Causation: {'Yes' if standing.has_causation else 'No'}\n"
         
         report_content += f"\nDAMAGES CALCULATION:\n"
         if damages:
-            report_content += f"• Actual Damages: ${damages.actual_damages_total}\n"
-            report_content += f"• Statutory Damages: ${damages.statutory_damages_total}\n"
-            report_content += f"• Punitive Damages: ${damages.punitive_damages_amount}\n"
-            report_content += f"• Total Exposure: ${damages.total_exposure}\n"
-            report_content += f"• Settlement Target (65%): ${damages.settlement_target}\n"
+            report_content += f"* Actual Damages: ${damages.actual_damages_total}\n"
+            report_content += f"* Statutory Damages: ${damages.statutory_damages_total}\n"
+            report_content += f"* Punitive Damages: ${damages.punitive_damages_amount}\n"
+            report_content += f"* Total Exposure: ${damages.total_exposure}\n"
+            report_content += f"* Settlement Target (65%): ${damages.settlement_target}\n"
+        
+        # Sanitize before PDF generation
+        from pdf_generator import LetterPDFGenerator
+        sanitizer = LetterPDFGenerator()
+        report_content = sanitizer.sanitize_text_for_pdf(report_content)
         
         # Generate PDF
         from fpdf import FPDF
