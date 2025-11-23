@@ -12,6 +12,7 @@ if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHR
     ANTHROPIC_API_KEY = 'sk-ant-invalid-placeholder-key'
 
 from anthropic import Anthropic
+from prompt_loader import get_prompt_loader
 
 try:
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -650,141 +651,13 @@ After completing Parts 0-4, output this JSON at the very end:
 3. Dollar amounts must be numbers (no $ signs, no commas)
 4. Include willfulness_indicators ONLY if is_willful = true"""
         else:
-            # STAGE 2: Full prompt for client documents generation (uses Stage 1 results)
-            prompt = f"""You are an elite consumer protection attorney. ANALYZE the Stage 1 findings below and generate comprehensive, forensic-quality litigation documents with SPECIFIC ACCOUNT DATA.
-
-**STAGE 1 ANALYSIS DATA (EXTRACT ALL VIOLATION DETAILS FROM THIS):**
-{stage_1_results}
-
-**CRITICAL INSTRUCTIONS - MUST FOLLOW:**
-1. EXTRACT violations list from Stage 1 results above - use ACTUAL account names, bureaus, descriptions
-2. For EACH violation: Create bureau-by-bureau comparison showing SPECIFIC data (dates, balances, payment history)
-3. QUANTIFY harm using Stage 1 standing/damages data - calculate dollar amounts with formulas
-4. PROVIDE DEFINITIVE scores (not "potential") - assign actual 1-10 scores with reasoning
-5. Generate MINIMUM 8-12 violation sections - each with forensic detail (not templates)
-6. Use actual account numbers from Stage 1 (mask as XXXX####XXXXXX format)
-
-**PART 0: POST-TRANSUNION STANDING ANALYSIS** (8-12 pages)
-
-EXTRACT from Stage 1 data and calculate:
-- Dissemination: List EVERY hard inquiry from Stage 1, show inaccuracy during each inquiry → SCORE 1-3
-- Concrete Harm: Use Stage 1 harm_details to QUANTIFY: Credit score suppression (actual - estimated), interest premium calculation ($balances × %differential × years), denied applications count → SCORE 1-4
-- Causation: Link EACH violation to specific harm using Stage 1 data → SCORE 1-3
-- DEFINITIVE STANDING SCORE: Add scores, apply circuit adjustment (2nd Circuit -2, 9th -1), output as X/10 WITH SPECIFIC EVIDENCE
-
-**PART 1: COMPREHENSIVE FORENSIC VIOLATION ANALYSIS** (35-50 pages)
-
-FOR EACH VIOLATION IN STAGE 1 DATA:
-
-**VIOLATION #[N]: [ACCOUNT_NAME] - [VIOLATION_TYPE]**
-- Statute: [STATUTE from Stage 1]
-- Bureau affected: [BUREAU from Stage 1]
-
-FACTUAL PROBLEM (SPECIFIC DATA ONLY):
-- TransUnion shows: [Use exact account details from Stage 1]
-- Experian shows: [Use exact account details from Stage 1]
-- Equifax shows: [Use exact account details from Stage 1]
-- CONTRADICTION: [Specific dates/balances that don't match]
-
-LEGAL ANALYSIS:
-- Statute requires: [Cite FCRA requirement]
-- How violated: [Specific legal explanation]
-- Case law: Cushman, Sarver, Ramirez, Safeco references
-
-DAMAGES THIS VIOLATION:
-- Statutory: $100-$1000 range (multiply by count if multiple bureaus)
-- Actual (if calculable from Stage 1): $[specific amount]
-
----
-
-**PART 2: SYSTEMATIC WILLFULNESS ASSESSMENT** (8-12 pages)
-
-Using Stage 1 willfulness data, score 0-16 points:
-- CATEGORY 1 (Knowledge): Major bureau = 2pts, CFPB guidance available = 2pts
-- CATEGORY 2 (Pattern): Multiple accounts with same violation = 2-3pts, High volume = 2-3pts
-- CATEGORY 3 (Awareness): Prior violations = 2pts per incident
-- CATEGORY 4 (Recklessness): Failure to investigate = 1-3pts
-
-FINAL WILLFULNESS SCORE: [0-16] = [% probability with specific evidence from Stage 1]
-
----
-
-**PART 3: SETTLEMENT & CASE VALUATION** (10-15 pages)
-
-STANDING SCORE: [From Part 0]
-VIOLATION COUNT: [Count from Stage 1]
-AVERAGE VIOLATION QUALITY: [1-10 with reasoning]
-
-DAMAGES CALCULATION (USE STAGE 1 DATA):
-- Statutory: [# violations from Stage 1] × [average $] = $[total]
-- Actual: [Sum from Stage 1 actual_damages] = $[total]
-- Punitive (if willful): [Statutory] × [multiplier 1-4] = $[total]
-- TOTAL EXPOSURE: $[combined]
-- SETTLEMENT RECOMMENDATION (65%): $[calculate 65% of total]
-
----
-
-**PART 4: FORMAL DISPUTE LETTER - ROUND {dispute_round}** (6-10 pages)
-
-Use EXACT account names and violations from Stage 1:
-
-[Certified Mail - Return Receipt Requested]
-
-RE: FORMAL FCRA DISPUTE AND DEMAND FOR INVESTIGATION & CORRECTION
-
-Dear Bureau:
-
-I dispute inaccurate information in my credit file in violation of FCRA § 1681i(a)(1)(A).
-
-DISPUTED ITEMS (from Stage 1 data):
-1. [Account from Stage 1] - [Description from Stage 1] - Violates [Statute] because [specific reason]
-2. [Account from Stage 1] - [Description from Stage 1] - Violates [Statute] because [specific reason]
-[Continue for ALL violations]
-
-LEGAL FRAMEWORK:
-FCRA § 1681e(b): Must follow reasonable procedures for accuracy
-FCRA § 1681i(a)(1)(A): Must investigate disputes within 30 days
-
-DEMANDS:
-1. Delete all inaccurate information
-2. Correct contradictions to accurate status
-3. Provide Method of Verification per Cushman standard
-4. Reinvestigate thoroughly (not automated response)
-
-DEADLINE: 30 days per FCRA § 1681i(a)(1)(A)
-
-DAMAGES CLAIM:
-- Statutory damages: $[from calculation] minimum
-- Actual damages: $[from Stage 1]
-- Punitive damages (if willful): $[from calculation]
-- TOTAL EXPOSURE: $[combined]
-
----
-
-**PART 5: METHOD OF VERIFICATION REQUEST** (3-5 pages)
-
-[Cushman v. TransUnion, 115 F.3d 220 (3d Cir. 1997) - furnishers must maintain tangible proof]
-
-For accounts with disputed payment history or missing Date of Last Payment:
-
-DEMAND:
-1. Running billing statements from original creditor
-2. Complete transaction ledger
-3. Proof of charge-off authorization
-4. Metro 2 format records submitted to bureaus
-
-DEADLINE: 30 days
-
----
-
-**OUTPUT REQUIREMENTS:**
-- 80-120 pages TOTAL
-- EVERY section must use ACTUAL data from Stage 1 above (not templates)
-- SPECIFIC account names, dates, balances, payment history from Stage 1
-- QUANTIFIED damages with formulas shown
-- DEFINITIVE scores and percentages (not "potential")
-- 8-12+ violation sections (one per violation from Stage 1)
-- Professional, litigation-ready format"""
+            # STAGE 2: Use comprehensive FCRA v2.6 + RLPP prompt
+            print("\n🔨 Loading comprehensive FCRA v2.6 + RLPP prompt...")
+            loader = get_prompt_loader()
+            prompt = loader.build_comprehensive_stage2_prompt(dispute_round=dispute_round)
+            
+            if not prompt:
+                return {'success': False, 'error': 'Failed to load comprehensive prompt templates'}
         
         # Stage 2 needs round_names variable
         if stage != 1:
@@ -859,24 +732,31 @@ Output JSON at end with violations, standing, actual_damages.
 NO client reports, NO letters - just the analysis data.
 """
         else:
-            # Stage 2: Use previous Stage 1 results
+            # Stage 2: Generate comprehensive 107-page litigation package
             user_message = f"""
-🚨 STAGE 2: CLIENT DOCUMENTS GENERATION
+🚨 STAGE 2: GENERATE COMPREHENSIVE 107-PAGE LITIGATION PACKAGE
 
-Previous Stage 1 Analysis:
+**CLIENT INFORMATION:**
+- Name: {client_name}
+- CMM ID: {cmm_id}
+- Provider: {provider}
+- Dispute Round: {dispute_round}
+
+**STAGE 1 ANALYSIS RESULTS (USE THIS DATA):**
 {stage_1_results}
 
-CLIENT: {client_name} (CMM ID: {cmm_id})
-Provider: {provider}
-Dispute Round: {round_names.get(dispute_round, 'Round ' + str(dispute_round))}
+**YOUR TASK:**
+Generate complete client-facing litigation package with ALL PARTS (0-5):
+- Part 0-3: Forensic analysis (use Stage 1 data from above)
+- Part 4: Formal dispute letters (extract real violations from Stage 1)
+- Part 5: MOV requests (where applicable)
 
-TASK: Generate client-facing documents using Stage 1 results:
-- 40-50 page detailed report
-- Dispute letters with RLPP language
-- MOV requests
-- Full litigation analysis
+Use RLPP aggressive language appropriate for Round {dispute_round}.
+Include scissor markers (✂️) around each letter for easy extraction.
+Total output: 80-120 pages, litigation-ready format.
 
-Make it professional and litigation-ready.
+CRITICAL: Use ACTUAL violations and account data from Stage 1 results above.
+NO templates or placeholders. Extract real account names, bureaus, violations.
 """
         
         # Call Claude API
@@ -2030,28 +1910,30 @@ def approve_analysis_stage_1(analysis_id):
         db.commit()
 
         # Generate and save dispute letters from Stage 2 output
-        print(f"📝 Generating dispute letters from Stage 2 output...")
-
+        print(f"📝 Extracting letters from Stage 2 output...")
+        
         stage_2_text = result.get('analysis', '')
         bureau_letters = {}
-
-        # Extract letters - Claude may format differently, so handle multiple patterns
-        # Try pattern 1: [Bureau: Account]\nLetter content...
-        letter_pattern = r'\[([^:]+):\s*([^\]]+)\]\s*\n(.*?)(?=\[|$)'
-        matches = re.findall(letter_pattern, stage_2_text, re.DOTALL)
-
-        # If no matches, try pattern 2: Look for bureau names directly
-        if not matches:
-            for bureau in ['Equifax', 'Experian', 'TransUnion']:
-                pattern = rf'{bureau}[:\s]+(.*?)(?=(?:Equifax|Experian|TransUnion|$))'
-                bureau_match = re.search(pattern, stage_2_text, re.DOTALL | re.IGNORECASE)
-                if bureau_match:
-                    matches.append((bureau, 'Multiple Accounts', bureau_match.group(1).strip()))
         
-        # FALLBACK: If no patterns matched, create a generic "Comprehensive Analysis" letter
-        if not matches:
-            print(f"⚠️  No structured letters found in Stage 2 output. Creating fallback letter...")
-            matches = [('ComprehensiveAnalysis', 'All Bureaus', stage_2_text[:8000])]  # First 8k chars
+        # Pattern 1: Scissor marker format (✂️ markers from FCRA v2.6 prompt)
+        scissor_pattern = r'✂️.*?(?:DISPUTE LETTER|MOV REQUEST):\s*([A-Za-z\s]+).*?✂️\n(.*?)\n✂️.*?END OF'
+        matches = re.findall(scissor_pattern, stage_2_text, re.DOTALL | re.IGNORECASE)
+        
+        if matches:
+            print(f"   ✅ Found {len(matches)} letters using scissor markers")
+        else:
+            # Fallback: Original pattern
+            print(f"   ⚠️  No scissor markers found, trying fallback pattern...")
+            letter_pattern = r'\[([^:]+):\s*([^\]]+)\]\s*\n(.*?)(?=\[|$)'
+            fallback_matches = re.findall(letter_pattern, stage_2_text, re.DOTALL)
+            
+            if fallback_matches:
+                matches = fallback_matches
+                print(f"   ✅ Found {len(matches)} letters using fallback pattern")
+            else:
+                # Final fallback: Create comprehensive letter
+                print(f"   ⚠️  No letters found. Creating fallback comprehensive letter...")
+                matches = [('Comprehensive Analysis', 'All Bureaus', stage_2_text[:10000])]
         
         print(f"📋 Total matches found: {len(matches)}")
 
