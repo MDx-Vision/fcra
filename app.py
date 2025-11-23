@@ -1926,31 +1926,46 @@ def approve_analysis_stage_1(analysis_id):
         # FALLBACK: If no patterns matched, create a generic "Comprehensive Analysis" letter
         if not matches:
             print(f"⚠️  No structured letters found in Stage 2 output. Creating fallback letter...")
-            matches = [('Comprehensive Analysis', 'All Bureaus', stage_2_text[:8000])]  # First 8k chars
+            matches = [('ComprehensiveAnalysis', 'All Bureaus', stage_2_text[:8000])]  # First 8k chars
+        
+        print(f"📋 Total matches found: {len(matches)}")
 
         for bureau_name, account_name, letter_content in matches:
             bureau_name = bureau_name.strip().title()
-            account_name = account_name.strip()
-            letter_content = letter_content.strip()
+            account_name = account_name.strip()[:50]  # Truncate account to 50 chars
+            letter_content = letter_content.strip()[:10000]  # Cap letter at 10k chars
             
-            # Validate bureau name - must be one of the three bureaus or fallback
-            if bureau_name not in ['Equifax', 'Experian', 'Transunion', 'Comprehensive Analysis']:
+            print(f"   Processing: bureau={bureau_name}, account={account_name[:20]}...")
+            
+            # Normalize bureau name to one of: Equifax, Experian, TransUnion, Comprehensive Analysis
+            valid_bureaus = ['Equifax', 'Experian', 'TransUnion', 'Comprehensive Analysis', 'Comprehensiveanalysis']
+            
+            if bureau_name not in valid_bureaus:
                 # Try to extract bureau name from content
+                found = False
                 for valid_bureau in ['Equifax', 'Experian', 'TransUnion']:
                     if valid_bureau.lower() in bureau_name.lower():
                         bureau_name = valid_bureau
+                        found = True
                         break
-                else:
-                    # If still invalid, skip
-                    continue
-
-            if not bureau_name:
+                
+                if not found:
+                    # Default to Comprehensive Analysis for unparseable content
+                    bureau_name = 'Comprehensive Analysis'
+            
+            # Final normalization
+            if bureau_name == 'Comprehensiveanalysis':
+                bureau_name = 'Comprehensive Analysis'
+            
+            if not bureau_name or len(bureau_name) == 0:
+                print(f"   ⚠️  Skipping: empty bureau name")
                 continue
 
             bureau_letters.setdefault(bureau_name, []).append({
                 'account': account_name,
                 'content': letter_content
             })
+            print(f"   ✅ Added to {bureau_name}")
 
         letters_generated = []
 
