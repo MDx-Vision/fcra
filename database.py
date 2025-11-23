@@ -12,14 +12,18 @@ if not DATABASE_URL:
 if 'sslmode' not in DATABASE_URL:
     DATABASE_URL = DATABASE_URL + "?sslmode=require"
 
-# Create engine with connection pooling + resilience
+# Create engine with connection pooling + resilience for large text writes
 engine = create_engine(
     DATABASE_URL,
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,  # Test connections before use
-    pool_recycle=3600,   # Recycle connections after 1 hour
-    connect_args={"connect_timeout": 10}
+    pool_recycle=300,    # Recycle connections every 5 min to prevent staleness
+    connect_args={
+        "connect_timeout": 60,  # INCREASED: 60 sec timeout for large writes
+        "statement_timeout": 300000,  # 5 min timeout for statements
+        "sslmode": "prefer"  # More flexible SSL handling
+    }
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

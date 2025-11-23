@@ -2,6 +2,8 @@ import os
 import re
 import io
 import zipfile
+import time
+from sqlalchemy.exc import OperationalError
 
 # API Configuration
 ANTHROPIC_API_KEY = os.environ.get('FCRA Automation Secure', '')
@@ -1907,7 +1909,24 @@ def approve_analysis_stage_1(analysis_id):
         analysis.approved_at = datetime.now()
         analysis.cost = (analysis.cost or 0) + result.get('cost', 0)
         analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
-        db.commit()
+        
+        # Retry logic for large text field writes (90k+ characters)
+        retry_count = 0
+        max_retries = 3
+        while retry_count < max_retries:
+            try:
+                db.commit()
+                print(f"✅ Database commit successful on attempt {retry_count + 1}")
+                break
+            except OperationalError as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    print(f"❌ Database commit failed after {max_retries} retries")
+                    raise
+                wait_time = 2 ** retry_count  # Exponential backoff: 2s, 4s, 8s
+                print(f"⚠️  Database commit failed, retrying in {wait_time}s (attempt {retry_count}/{max_retries})")
+                db.rollback()
+                time.sleep(wait_time)
 
         # Generate and save dispute letters from Stage 2 output
         print(f"📝 Extracting letters from Stage 2 output...")
