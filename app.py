@@ -1922,24 +1922,29 @@ def approve_analysis_stage_1(analysis_id):
                 bureau_match = re.search(pattern, stage_2_text, re.DOTALL | re.IGNORECASE)
                 if bureau_match:
                     matches.append((bureau, 'Multiple Accounts', bureau_match.group(1).strip()))
+        
+        # FALLBACK: If no patterns matched, create a generic "Comprehensive Analysis" letter
+        if not matches:
+            print(f"⚠️  No structured letters found in Stage 2 output. Creating fallback letter...")
+            matches = [('Comprehensive Analysis', 'All Bureaus', stage_2_text[:8000])]  # First 8k chars
 
         for bureau_name, account_name, letter_content in matches:
             bureau_name = bureau_name.strip().title()
             account_name = account_name.strip()
             letter_content = letter_content.strip()
             
-            # Validate bureau name - must be one of the three bureaus
-            if bureau_name not in ['Equifax', 'Experian', 'Transunion']:
+            # Validate bureau name - must be one of the three bureaus or fallback
+            if bureau_name not in ['Equifax', 'Experian', 'Transunion', 'Comprehensive Analysis']:
                 # Try to extract bureau name from content
                 for valid_bureau in ['Equifax', 'Experian', 'TransUnion']:
                     if valid_bureau.lower() in bureau_name.lower():
                         bureau_name = valid_bureau
                         break
                 else:
-                    # If still invalid, default to "Unknown" and skip
+                    # If still invalid, skip
                     continue
 
-            if not bureau_name or bureau_name == 'Unknown':
+            if not bureau_name:
                 continue
 
             bureau_letters.setdefault(bureau_name, []).append({
