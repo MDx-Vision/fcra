@@ -959,6 +959,16 @@ def extract_litigation_data(analysis_text):
         if 'actual_damages' not in litigation_data:
             litigation_data['actual_damages'] = {}
         
+        # Ensure evidence fields are properly formatted for all violations
+        for v in litigation_data.get('violations', []):
+            if 'evidence' not in v:
+                v['evidence'] = {}
+            if not isinstance(v['evidence'], dict):
+                v['evidence'] = {}
+            v['evidence'].setdefault('transunion', 'Not specified')
+            v['evidence'].setdefault('experian', 'Not specified')
+            v['evidence'].setdefault('equifax', 'Not specified')
+        
         print(f"   ✅ Extracted {len(litigation_data.get('violations', []))} violations")
         return litigation_data
         
