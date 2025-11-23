@@ -42,14 +42,20 @@ class LetterPDFGenerator:
         
     def sanitize_text_for_pdf(self, text):
         """Remove or replace Unicode characters that Helvetica doesn't support"""
+        if not text:
+            return ""
+        
         # Replace smart quotes and other problematic Unicode chars
         replacements = {
-            '•': '-',      # bullet
+            '•': '*',      # bullet -> asterisk
+            '◦': '-',      # white bullet
+            '∙': '*',      # bullet operator
+            '○': 'o',      # white circle
             '"': '"',      # smart double quote
             '"': '"',      # smart double quote
             ''': "'",      # smart single quote
             ''': "'",      # smart single quote
-            '—': '-',      # em dash
+            '—': ' - ',    # em dash
             '–': '-',      # en dash
             '…': '...',    # ellipsis
             '™': '(TM)',   # trademark
@@ -61,11 +67,14 @@ class LetterPDFGenerator:
             '°': 'deg',    # degree
             '×': 'x',      # multiplication
             '÷': '/',      # division
+            '≠': '!=',     # not equal
+            '≤': '<=',     # less than or equal
+            '≥': '>=',     # greater than or equal
         }
         for char, replacement in replacements.items():
             text = text.replace(char, replacement)
         # Remove any remaining non-ASCII chars
-        text = text.encode('ascii', 'ignore').decode('ascii')
+        text = ''.join(c if ord(c) < 128 else '' for c in text)
         return text
     
     def generate_dispute_letter_pdf(self, letter_content, client_name, bureau, round_number, output_path):
