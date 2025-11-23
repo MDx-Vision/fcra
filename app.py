@@ -1122,10 +1122,10 @@ def auto_populate_litigation_database(analysis_id, client_id, litigation_data, d
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    """Receives credit report data from HTML form"""
+    """Receives credit report data from HTML form or file upload"""
     try:
-        # Get data from request
-        data = request.get_json() or request.form.to_dict()
+        # Get data from request - support JSON, form data, and file uploads
+        data = request.get_json(force=True, silent=True) or request.form.to_dict()
 
         # Extract the specific fields we need
         client_name = data.get('clientName', 'Unknown Client')
@@ -1137,6 +1137,13 @@ def webhook():
         previous_letters = data.get('previousLetters', '')
         bureau_responses = data.get('bureauResponses', '')
         dispute_timeline = data.get('disputeTimeline', '')
+        
+        # Read uploaded file if HTML not in form data
+        if not credit_report_html and 'creditReportHTML' in request.files:
+            file = request.files['creditReportHTML']
+            if file and file.filename:
+                credit_report_html = file.read().decode('utf-8')
+        
         credit_report_html = clean_credit_report_html(credit_report_html)
         # Validate we got the essential data
         if not credit_report_html:
