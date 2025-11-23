@@ -22,16 +22,25 @@ POST /api/analyze or /webhook
 - User reviews in admin panel
 ```
 
-### Stage 2: Client Documents Generation (90-110k tokens)
+### Stage 2: Comprehensive Forensic Litigation Package (80-120 pages, 90-110k tokens)
 ```
 POST /api/approve/<analysis_id>
 - User approves Stage 1 findings
-- Claude generates client-facing documents:
-  * 40-50 page comprehensive report
-  * Dispute letters (Rounds 1-4) with RLPP language
-  * Method of Verification requests
-  * Settlement strategy & case analysis
-- Stores in database, ready for delivery
+- Claude generates 80-120 page forensic litigation package:
+  * Part 0: Post-TransUnion Standing Analysis (8-12 pages)
+  * Part 1: Comprehensive Forensic Violation Analysis (35-50 pages)
+  * Part 2: Systematic Willfulness Assessment (8-12 pages, Safeco standard)
+  * Part 3: Settlement & Case Valuation Analysis (10-15 pages)
+  * Part 4: Formal FCRA Dispute Letters (6-10 pages per bureau)
+  * Part 5: Method of Verification Requests (3-5 pages)
+  * RLPP aggressive language escalated by dispute round (Rounds 1-4)
+  * Scissor markers (✂️) for easy letter extraction
+- Uses ACTUAL Stage 1 account data (no templates)
+- Bureau-by-bureau comparisons with specific dates/balances
+- Quantified damages with formulas ($X-$Y exposure)
+- Definitive scores and percentages (not "potential")
+- Stores full report + individual PDFs in database
+- Ready for bureaus or attorneys
 ```
 
 ## Why Section-Based Architecture (Latest Breakthrough)
