@@ -18,21 +18,24 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
-    pool_recycle=3600,
+    pool_recycle=1800,  # Recycle every 30 min instead of 1 hour
     connect_args={
-        "connect_timeout": 120,
+        "connect_timeout": 180,  # 180 seconds connection timeout
         "keepalives": 1,
-        "keepalives_idle": 30,
-        "keepalives_interval": 10,
-        "keepalives_count": 5,
+        "keepalives_idle": 10,  # Start keepalives after 10s idle
+        "keepalives_interval": 5,  # Send keepalive every 5s
+        "keepalives_count": 10,  # Need 10 failed keepalives to fail
+        "tcp_user_timeout": 180000,  # 180 seconds TCP user timeout (ms)
     }
 )
 
-# Set statement timeout on each connection (120 seconds for large UPDATEs)
+# Set aggressive timeouts on each connection
 @event.listens_for(engine, "connect")
-def set_statement_timeout(dbapi_conn, connection_record):
+def set_timeouts(dbapi_conn, connection_record):
     cursor = dbapi_conn.cursor()
-    cursor.execute("SET statement_timeout = 120000")  # 120 seconds in milliseconds
+    cursor.execute("SET statement_timeout = 180000")  # 180 seconds
+    cursor.execute("SET idle_in_transaction_session_timeout = 180000")
+    cursor.execute("SET lock_timeout = 180000")
     cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

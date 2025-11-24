@@ -1957,7 +1957,7 @@ def approve_analysis_stage_1(analysis_id):
         
         # Retry logic for large text field writes (90k+ characters)
         retry_count = 0
-        max_retries = 3
+        max_retries = 5
         while retry_count < max_retries:
             try:
                 db.commit()
@@ -1966,14 +1966,17 @@ def approve_analysis_stage_1(analysis_id):
                 db.refresh(analysis)
                 print(f"✅ Verified: full_analysis saved ({len(analysis.full_analysis or '')} chars), stage = {analysis.stage}")
                 break
-            except OperationalError as e:
+            except (OperationalError, Exception) as e:
                 retry_count += 1
+                error_str = str(e)
                 if retry_count >= max_retries:
-                    print(f"❌ Database commit failed after {max_retries} retries: {str(e)}")
+                    print(f"❌ Database commit failed after {max_retries} retries: {error_str[:100]}")
                     raise
-                wait_time = 2 ** retry_count  # Exponential backoff: 2s, 4s, 8s
-                print(f"⚠️  Database commit failed, retrying in {wait_time}s (attempt {retry_count}/{max_retries})")
+                wait_time = (2 ** retry_count)  # Exponential backoff: 2s, 4s, 8s, 16s, 32s
+                print(f"⚠️  Database commit failed (SSL/Connection issue), retrying in {wait_time}s (attempt {retry_count}/{max_retries})")
                 db.rollback()
+                # Get a fresh connection from the pool
+                db.close()
                 time.sleep(wait_time)
 
         # Generate and save dispute letters from Stage 2 output
