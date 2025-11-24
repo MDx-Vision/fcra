@@ -12,24 +12,20 @@ if not DATABASE_URL:
 if 'sslmode' not in DATABASE_URL:
     DATABASE_URL = DATABASE_URL + "?sslmode=require"
 
-# Add statement timeout to connection string (60 seconds for large writes)
-# This must be added AFTER sslmode parameter
-if 'statement_timeout' not in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL + "&statement_timeout=60000"
-
 # Create engine with connection pooling + resilience for large text writes
 engine = create_engine(
     DATABASE_URL,
-    pool_size=5,
-    max_overflow=10,
-    pool_pre_ping=True,  # Test connections before use
-    pool_recycle=300,    # Recycle connections every 5 min to prevent staleness
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20,
+    pool_recycle=3600,
     connect_args={
-        "connect_timeout": 120,  # 120 sec timeout for large writes
-        "keepalives": 1,  # Enable TCP keepalives
-        "keepalives_idle": 60,  # Start keepalives after 60 sec idle
-        "keepalives_interval": 10,  # Send keepalive every 10 sec
-        "keepalives_count": 5  # Fail after 5 failed keepalives
+        "connect_timeout": 120,
+        "options": "-c statement_timeout=120000",  # 120 seconds for large UPDATEs
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 5,
     }
 )
 
