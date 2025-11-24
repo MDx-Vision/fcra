@@ -1941,9 +1941,9 @@ def approve_analysis_stage_1(analysis_id):
         if matches:
             print(f"   ✅ Found {len(matches)} letters using scissor markers")
         else:
-            # Fallback: Original pattern
+            # Fallback: Original pattern (extract bureau and content only)
             print(f"   ⚠️  No scissor markers found, trying fallback pattern...")
-            letter_pattern = r'\[([^:]+):\s*([^\]]+)\]\s*\n(.*?)(?=\[|$)'
+            letter_pattern = r'\[([^:]+):\s*[^\]]*\]\s*\n(.*?)(?=\[|$)'
             fallback_matches = re.findall(letter_pattern, stage_2_text, re.DOTALL)
             
             if fallback_matches:
@@ -1952,16 +1952,16 @@ def approve_analysis_stage_1(analysis_id):
             else:
                 # Final fallback: Create comprehensive letter
                 print(f"   ⚠️  No letters found. Creating fallback comprehensive letter...")
-                matches = [('Comprehensive Analysis', 'All Bureaus', stage_2_text[:10000])]
+                matches = [('Comprehensive Analysis', stage_2_text[:10000])]
         
         print(f"📋 Total matches found: {len(matches)}")
 
-        for bureau_name, account_name, letter_content in matches:
+        for bureau_name, letter_content in matches:
             bureau_name = bureau_name.strip().title()
-            account_name = account_name.strip()[:50]  # Truncate account to 50 chars
+            account_name = 'Multiple Accounts'  # Default since scissor markers don't include account
             letter_content = letter_content.strip()[:10000]  # Cap letter at 10k chars
             
-            print(f"   Processing: bureau={bureau_name}, account={account_name[:20]}...")
+            print(f"   Processing: bureau={bureau_name}, account={account_name}...")
             
             # Normalize bureau name to one of: Equifax, Experian, TransUnion, Comprehensive Analysis
             valid_bureaus = ['Equifax', 'Experian', 'TransUnion', 'Comprehensive Analysis', 'Comprehensiveanalysis']
