@@ -1779,10 +1779,23 @@ VIOLATIONS IDENTIFIED: {len(violations)}
             leading=12
         )
         
-        # Split content into lines and add to story
-        for line in report_content.split('\n'):
+        # Split content into lines and add to story (with chunking for large content)
+        lines = report_content.split('\n')
+        for i, line in enumerate(lines):
             if line.strip():
-                story.append(Paragraph(line, custom_style))
+                # Chunk very long lines (>1000 chars) to avoid ReportLab errors
+                if len(line) > 1000:
+                    chunks = [line[j:j+1000] for j in range(0, len(line), 1000)]
+                    for chunk in chunks:
+                        try:
+                            story.append(Paragraph(chunk, custom_style))
+                        except Exception as e:
+                            print(f"⚠️ Skipping line {i} (too complex for PDF): {str(e)[:100]}")
+                else:
+                    try:
+                        story.append(Paragraph(line, custom_style))
+                    except Exception as e:
+                        print(f"⚠️ Skipping line {i}: {str(e)[:50]}")
             else:
                 story.append(Spacer(1, 6))
         
