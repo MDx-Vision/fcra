@@ -1946,6 +1946,10 @@ def approve_analysis_stage_1(analysis_id):
         analysis.cost = (analysis.cost or 0) + result.get('cost', 0)
         analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
         
+        # Explicitly flush before commit to prepare large text data
+        db.flush()
+        print(f"📋 Flushed analysis data ({len(analysis.full_analysis or '')} chars)")
+        
         # Retry logic for large text field writes (90k+ characters)
         retry_count = 0
         max_retries = 3
@@ -1953,11 +1957,14 @@ def approve_analysis_stage_1(analysis_id):
             try:
                 db.commit()
                 print(f"✅ Database commit successful on attempt {retry_count + 1}")
+                # Refresh to verify data was actually saved
+                db.refresh(analysis)
+                print(f"✅ Verified: full_analysis saved ({len(analysis.full_analysis or '')} chars), stage = {analysis.stage}")
                 break
             except OperationalError as e:
                 retry_count += 1
                 if retry_count >= max_retries:
-                    print(f"❌ Database commit failed after {max_retries} retries")
+                    print(f"❌ Database commit failed after {max_retries} retries: {str(e)}")
                     raise
                 wait_time = 2 ** retry_count  # Exponential backoff: 2s, 4s, 8s
                 print(f"⚠️  Database commit failed, retrying in {wait_time}s (attempt {retry_count}/{max_retries})")
