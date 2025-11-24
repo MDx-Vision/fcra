@@ -1667,6 +1667,29 @@ def analyze_and_generate_letters():
         db.close()
 
 
+@app.route('/api/debug/analysis/<int:analysis_id>')
+def debug_analysis_content(analysis_id):
+    """Debug endpoint to see what's actually in the database"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'error': 'Analysis not found'}), 404
+        
+        return jsonify({
+            'analysis_id': analysis.id,
+            'stage': analysis.stage,
+            'stage_1_analysis_length': len(analysis.stage_1_analysis or ''),
+            'full_analysis_length': len(analysis.full_analysis or ''),
+            'full_analysis_preview': (analysis.full_analysis or '')[:500],
+            'full_analysis_exists': bool(analysis.full_analysis),
+            'full_analysis_is_none': analysis.full_analysis is None,
+            'full_analysis_is_empty': analysis.full_analysis == ''
+        }), 200
+    finally:
+        db.close()
+
+
 @app.route('/api/download/<int:letter_id>')
 def download_letter(letter_id):
     """Download a generated PDF letter"""
