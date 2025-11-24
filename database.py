@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -21,13 +21,19 @@ engine = create_engine(
     pool_recycle=3600,
     connect_args={
         "connect_timeout": 120,
-        "options": "-c statement_timeout=120000",  # 120 seconds for large UPDATEs
         "keepalives": 1,
         "keepalives_idle": 30,
         "keepalives_interval": 10,
         "keepalives_count": 5,
     }
 )
+
+# Set statement timeout on each connection (120 seconds for large UPDATEs)
+@event.listens_for(engine, "connect")
+def set_statement_timeout(dbapi_conn, connection_record):
+    cursor = dbapi_conn.cursor()
+    cursor.execute("SET statement_timeout = 120000")  # 120 seconds in milliseconds
+    cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
