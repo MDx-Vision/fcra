@@ -15,13 +15,19 @@ if 'sslmode' not in DATABASE_URL:
 # Create engine with connection pooling + resilience for large text writes
 engine = create_engine(
     DATABASE_URL,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=5,
+    max_overflow=10,
     pool_pre_ping=True,  # Test connections before use
     pool_recycle=300,    # Recycle connections every 5 min to prevent staleness
     connect_args={
-        "connect_timeout": 60  # INCREASED: 60 sec timeout for large writes
-    }
+        "connect_timeout": 120,  # INCREASED: 120 sec timeout for large writes
+        "statement_timeout": 120000,  # 120 sec statement timeout (ms)
+        "tcp_keepalives_idle": 60,  # Keep TCP connection alive
+        "tcp_keepalives_interval": 10,
+        "tcp_keepalives_count": 5,
+        "application_name": "FCRA_Automation"
+    },
+    echo=False  # Set to True for debugging SQL
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
