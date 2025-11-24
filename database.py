@@ -20,14 +20,12 @@ engine = create_engine(
     pool_pre_ping=True,  # Test connections before use
     pool_recycle=300,    # Recycle connections every 5 min to prevent staleness
     connect_args={
-        "connect_timeout": 120,  # INCREASED: 120 sec timeout for large writes
-        "statement_timeout": 120000,  # 120 sec statement timeout (ms)
-        "tcp_keepalives_idle": 60,  # Keep TCP connection alive
-        "tcp_keepalives_interval": 10,
-        "tcp_keepalives_count": 5,
-        "application_name": "FCRA_Automation"
-    },
-    echo=False  # Set to True for debugging SQL
+        "connect_timeout": 120,  # 120 sec timeout for large writes
+        "keepalives": 1,  # Enable TCP keepalives
+        "keepalives_idle": 60,  # Start keepalives after 60 sec idle
+        "keepalives_interval": 10,  # Send keepalive every 10 sec
+        "keepalives_count": 5  # Fail after 5 failed keepalives
+    }
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
