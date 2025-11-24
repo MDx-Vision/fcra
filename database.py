@@ -12,6 +12,11 @@ if not DATABASE_URL:
 if 'sslmode' not in DATABASE_URL:
     DATABASE_URL = DATABASE_URL + "?sslmode=require"
 
+# Add statement timeout to connection string (60 seconds for large writes)
+# This must be added AFTER sslmode parameter
+if 'statement_timeout' not in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL + "&statement_timeout=60000"
+
 # Create engine with connection pooling + resilience for large text writes
 engine = create_engine(
     DATABASE_URL,
