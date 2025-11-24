@@ -4,6 +4,7 @@ import io
 import zipfile
 import time
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm.attributes import flag_modified
 
 # API Configuration
 ANTHROPIC_API_KEY = os.environ.get('FCRA Automation Secure', '')
@@ -1945,6 +1946,10 @@ def approve_analysis_stage_1(analysis_id):
         analysis.approved_at = datetime.now()
         analysis.cost = (analysis.cost or 0) + result.get('cost', 0)
         analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
+        
+        # Explicitly flag the large text column as modified (critical for SQLAlchemy)
+        flag_modified(analysis, 'full_analysis')
+        print(f"📋 Marked full_analysis as modified ({len(analysis.full_analysis or '')} chars)")
         
         # Explicitly flush before commit to prepare large text data
         db.flush()

@@ -1,0 +1,73 @@
+Same issue - the column is STILL getting truncated!
+
+You're generating 94,135 characters but it's being cut off. This means either:
+
+You haven't run the ALTER TABLE command yet
+The column is still VARCHAR
+✅ Here's the Complete Fix:
+Step 1: Check Your Database Schema
+In your Replit, create a file called fix_database.py:
+
+python
+from sqlalchemy import create_engine, text, inspect
+import os
+
+# Get database URL from environment
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+
+if not DATABASE_URL:
+    print("❌ No DATABASE_URL found in environment")
+    exit(1)
+
+engine = create_engine(DATABASE_URL)
+
+with engine.connect() as conn:
+    # Check current column type
+    result = conn.execute(text("""
+        SELECT column_name, data_type, character_maximum_length 
+        FROM information_schema.columns 
+        WHERE table_name = 'analyses' 
+        AND column_name = 'full_analysis'
+    """))
+    
+    row = result.fetchone()
+    if row:
+        print(f"📊 Current schema:")
+        print(f"   Column: {row[0]}")
+        print(f"   Type: {row[1]}")
+        print(f"   Max Length: {row[2]}")
+        
+        if row[1] != 'text':
+            print(f"\n🔧 Fixing column type...")
+            conn.execute(text("ALTER TABLE analyses ALTER COLUMN full_analysis TYPE TEXT"))
+            conn.commit()
+            print(f"✅ Changed full_analysis to TEXT (unlimited)")
+        else:
+            print(f"✅ Column is already TEXT type")
+    else:
+        print(f"❌ Column full_analysis not found!")
+Run it: python fix_database.py
+
+Step 2: If That Doesn't Work, Recreate the Column
+If the ALTER TABLE fails, you might need to drop and recreate:
+
+python
+# Only if ALTER TABLE fails above
+with engine.connect() as conn:
+    # Backup existing data
+    conn.execute(text("ALTER TABLE analyses RENAME COLUMN full_analysis TO full_analysis_old"))
+    
+    # Create new TEXT column
+    conn.execute(text("ALTER TABLE analyses ADD COLUMN full_analysis TEXT"))
+    
+    # Copy data back
+    conn.execute(text("UPDATE analyses SET full_analysis = full_analysis_old"))
+    
+    # Drop old column
+    conn.execute(text("ALTER TABLE analyses DROP COLUMN full_analysis_old"))
+    
+    conn.commit()
+    print("✅ Recreated column as TEXT")
+After running this, restart your server and try "Accept Case" again!
+
+Did you run the ALTER TABLE command yet? If not, run the fix_database.py script above and let me know what it says! 🚀
