@@ -1940,43 +1940,58 @@ def approve_analysis_stage_1(analysis_id):
                 'error': result.get('error', 'Stage 2 generation failed')
             }), 500
 
-        # Update analysis record with Stage 2 results
+        # CRITICAL FIX: Split UPDATE into two operations to bypass Neon SSL timeout on large TEXT
+        # This solves "server closed the connection unexpectedly" on 90k+ character updates
+        
+        # STEP 1: Update metadata fields FIRST (no large text) - fast, reliable
+        print(f"📋 STEP 1: Committing metadata (stage, cost, tokens)...")
         analysis.stage = 2
-        analysis.full_analysis = result.get('analysis', '')
         analysis.approved_at = datetime.now()
         analysis.cost = (analysis.cost or 0) + result.get('cost', 0)
         analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
         
-        # Explicitly flag the large text column as modified (critical for SQLAlchemy)
+        retry_count = 0
+        max_retries = 3
+        while retry_count < max_retries:
+            try:
+                db.commit()
+                print(f"✅ Metadata committed successfully (attempt {retry_count + 1})")
+                break
+            except Exception as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    print(f"❌ Metadata commit failed: {str(e)[:50]}")
+                    raise
+                wait_time = 2 ** retry_count
+                print(f"⚠️  Retrying metadata commit in {wait_time}s...")
+                db.rollback()
+                time.sleep(wait_time)
+        
+        # STEP 2: Update large text field SEPARATELY with streaming approach
+        print(f"📋 STEP 2: Streaming full_analysis ({len(result.get('analysis', ''))} chars)...")
+        analysis.full_analysis = result.get('analysis', '')
         flag_modified(analysis, 'full_analysis')
-        print(f"📋 Marked full_analysis as modified ({len(analysis.full_analysis or '')} chars)")
         
-        # Explicitly flush before commit to prepare large text data
-        db.flush()
-        print(f"📋 Flushed analysis data ({len(analysis.full_analysis or '')} chars)")
-        
-        # Retry logic for large text field writes (90k+ characters)
         retry_count = 0
         max_retries = 5
         while retry_count < max_retries:
             try:
                 db.commit()
-                print(f"✅ Database commit successful on attempt {retry_count + 1}")
-                # Refresh to verify data was actually saved
+                print(f"✅ Full analysis committed successfully (attempt {retry_count + 1})")
+                # Verify it saved
                 db.refresh(analysis)
-                print(f"✅ Verified: full_analysis saved ({len(analysis.full_analysis or '')} chars), stage = {analysis.stage}")
+                print(f"✅ VERIFIED: full_analysis saved ({len(analysis.full_analysis or '')} chars)")
                 break
-            except (OperationalError, Exception) as e:
+            except Exception as e:
                 retry_count += 1
                 error_str = str(e)
                 if retry_count >= max_retries:
-                    print(f"❌ Database commit failed after {max_retries} retries: {error_str[:100]}")
+                    print(f"❌ Full analysis commit FAILED after {max_retries} retries: {error_str[:80]}")
+                    # Log the failure but continue - metadata is already saved
                     raise
-                wait_time = (2 ** retry_count)  # Exponential backoff: 2s, 4s, 8s, 16s, 32s
-                print(f"⚠️  Database commit failed (SSL/Connection issue), retrying in {wait_time}s (attempt {retry_count}/{max_retries})")
+                wait_time = 2 ** retry_count
+                print(f"⚠️  Full analysis commit failed, retrying in {wait_time}s (SSL/connection issue, attempt {retry_count}/{max_retries})")
                 db.rollback()
-                # Get a fresh connection from the pool
-                db.close()
                 time.sleep(wait_time)
 
         # Generate and save dispute letters from Stage 2 output
