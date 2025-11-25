@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, Float, ForeignKey, event
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Boolean, Float, ForeignKey, event, JSON, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -46,9 +46,59 @@ class Client(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
+    first_name = Column(String(100))
+    last_name = Column(String(100))
     email = Column(String(255))
     phone = Column(String(50))
+    
+    # Address fields
+    address_street = Column(String(255))
+    address_city = Column(String(100))
+    address_state = Column(String(50))
+    address_zip = Column(String(20))
+    
+    # Identity for disputes (NOTE: Encrypt in production)
+    ssn_last_four = Column(String(4))
+    date_of_birth = Column(Date)
+    
+    # Credit monitoring credentials (NOTE: Encrypt in production)
+    credit_monitoring_service = Column(String(100))  # IdentityIQ, MyScoreIQ, etc.
+    credit_monitoring_username = Column(String(255))
+    credit_monitoring_password_encrypted = Column(Text)  # Encrypted credential
+    
+    # Dispute tracking
+    current_dispute_round = Column(Integer, default=0)  # 0=new, 1-4=active rounds
+    current_dispute_step = Column(String(100))  # For fine-grained tracking
+    dispute_status = Column(String(50), default='new')  # new, active, waiting_response, complete
+    round_started_at = Column(DateTime)
+    last_bureau_response_at = Column(DateTime)
+    
+    # Import tracking (for existing clients)
+    legacy_system_id = Column(String(100))  # ID from CMM or other system
+    legacy_case_number = Column(String(100))
+    imported_at = Column(DateTime)
+    import_notes = Column(Text)
+    
+    # Referral tracking
+    referred_by_client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    referral_code = Column(String(50), unique=True)
+    
+    # Client portal access
+    portal_token = Column(String(100), unique=True, index=True)
+    portal_password_hash = Column(String(255))  # For client login
+    
+    # Status
+    status = Column(String(50), default='signup')  # signup, active, paused, complete, cancelled
+    signup_completed = Column(Boolean, default=False)
+    agreement_signed = Column(Boolean, default=False)
+    agreement_signed_at = Column(DateTime)
+    
+    # Legacy
     cmm_contact_id = Column(String(100))
+    
+    # Notes
+    admin_notes = Column(Text)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -394,9 +444,127 @@ class AnalysisQueue(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class CRAResponse(Base):
+    """Track Credit Reporting Agency response letters"""
+    __tablename__ = 'cra_responses'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
+    
+    # Which bureau and round
+    bureau = Column(String(50))  # Experian, TransUnion, Equifax
+    dispute_round = Column(Integer, default=1)
+    
+    # Response details
+    response_type = Column(String(50))  # verified, deleted, updated, investigating, no_response, frivolous
+    response_date = Column(Date)
+    received_date = Column(Date)
+    
+    # Uploaded letter/document
+    file_path = Column(String(500))
+    file_name = Column(String(255))
+    file_size = Column(Integer)
+    
+    # Upload attribution
+    uploaded_by_admin = Column(Boolean, default=True)  # True=admin, False=client
+    uploaded_by_user_id = Column(Integer)  # Admin user ID if applicable
+    
+    # Parsed response content
+    response_text = Column(Text)  # OCR or extracted text from PDF
+    items_verified = Column(Integer, default=0)
+    items_deleted = Column(Integer, default=0)
+    items_updated = Column(Integer, default=0)
+    structured_items = Column(JSON)  # Detailed breakdown for automation
+    
+    # Follow-up tracking
+    requires_follow_up = Column(Boolean, default=False)
+    follow_up_deadline = Column(DateTime)  # Usually 30 days from response
+    follow_up_completed = Column(Boolean, default=False)
+    
+    # Analysis notes
+    admin_notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ClientReferral(Base):
+    """Track referrals between clients"""
+    __tablename__ = 'client_referrals'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    referring_client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    referred_client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    
+    # Referral info
+    referred_name = Column(String(255))
+    referred_email = Column(String(255))
+    referred_phone = Column(String(50))
+    
+    # Status
+    status = Column(String(50), default='pending')  # pending, contacted, signed_up, converted
+    
+    # Reward tracking
+    reward_type = Column(String(50))  # discount, credit, cash
+    reward_amount = Column(Float, default=0)
+    reward_paid = Column(Boolean, default=False)
+    reward_paid_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def init_db():
-    """Initialize database tables"""
+    """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
+    
+    migrate_columns = [
+        ("clients", "first_name", "VARCHAR(100)"),
+        ("clients", "last_name", "VARCHAR(100)"),
+        ("clients", "address_street", "VARCHAR(255)"),
+        ("clients", "address_city", "VARCHAR(100)"),
+        ("clients", "address_state", "VARCHAR(50)"),
+        ("clients", "address_zip", "VARCHAR(20)"),
+        ("clients", "date_of_birth", "DATE"),
+        ("clients", "ssn_last_four", "VARCHAR(4)"),
+        ("clients", "credit_monitoring_service", "VARCHAR(100)"),
+        ("clients", "credit_monitoring_username", "VARCHAR(255)"),
+        ("clients", "credit_monitoring_password_encrypted", "TEXT"),
+        ("clients", "current_dispute_round", "INTEGER DEFAULT 0"),
+        ("clients", "current_dispute_step", "VARCHAR(100)"),
+        ("clients", "dispute_status", "VARCHAR(50) DEFAULT 'new'"),
+        ("clients", "round_started_at", "TIMESTAMP"),
+        ("clients", "last_bureau_response_at", "TIMESTAMP"),
+        ("clients", "legacy_system_id", "VARCHAR(100)"),
+        ("clients", "legacy_case_number", "VARCHAR(100)"),
+        ("clients", "imported_at", "TIMESTAMP"),
+        ("clients", "import_notes", "TEXT"),
+        ("clients", "referred_by_client_id", "INTEGER"),
+        ("clients", "referral_code", "VARCHAR(50)"),
+        ("clients", "portal_token", "VARCHAR(100)"),
+        ("clients", "portal_password_hash", "VARCHAR(255)"),
+        ("clients", "status", "VARCHAR(50) DEFAULT 'signup'"),
+        ("clients", "signup_completed", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "agreement_signed", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "agreement_signed_at", "TIMESTAMP"),
+        ("clients", "cmm_contact_id", "VARCHAR(100)"),
+        ("clients", "admin_notes", "TEXT"),
+    ]
+    
+    conn = engine.connect()
+    try:
+        for table, column, column_type in migrate_columns:
+            try:
+                sql = text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {column} {column_type}")
+                conn.execute(sql)
+                conn.commit()
+            except Exception as e:
+                pass
+    except Exception as e:
+        print(f"Migration warning: {e}")
+    finally:
+        conn.close()
 
 def get_db():
     """Get database session - MUST call session.close() when done"""

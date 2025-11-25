@@ -3,52 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Case Status - Brightpath Ascend Group</title>
+    <title>Client Portal - Brightpath Ascend Group</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f7fa;
             min-height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
         }
         .header {
-            text-align: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        .logo {
             color: white;
-            padding: 40px 0;
+            font-size: 20px;
+            font-weight: 700;
         }
-        .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
+        .logo span { color: #4ade80; }
+        .portal-title {
+            color: white;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
         }
-        .header p {
-            opacity: 0.9;
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .greeting {
+            color: white;
+            font-size: 14px;
+        }
+        .greeting strong {
+            color: #4ade80;
+        }
+        .date-display {
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+        }
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            padding: 0 30px;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .nav-tab {
+            padding: 15px 25px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .nav-tab:hover {
+            color: #1a1a2e;
+            background: #f8fafc;
+        }
+        .nav-tab.active {
+            color: #4ade80;
+            border-bottom-color: #4ade80;
+            background: rgba(74, 222, 128, 0.05);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         .card {
             background: white;
-            border-radius: 16px;
-            padding: 30px;
+            border-radius: 12px;
+            padding: 25px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .card-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             color: #1a1a2e;
             margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e5e7eb;
         }
         .status-banner {
             text-align: center;
             padding: 30px;
             border-radius: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         .status-banner.pending {
             background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
@@ -56,75 +118,82 @@
         .status-banner.ready {
             background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
         }
+        .status-banner.processing {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
         .status-banner h2 {
-            font-size: 24px;
+            font-size: 22px;
             color: #1a1a2e;
             margin-bottom: 10px;
         }
         .status-banner p {
             color: #64748b;
+            font-size: 14px;
         }
-        .info-grid {
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
-        .info-box {
-            text-align: center;
-            padding: 20px;
+        .stat-box {
             background: #f8fafc;
-            border-radius: 12px;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
         }
-        .info-box .value {
-            font-size: 36px;
+        .stat-value {
+            font-size: 32px;
             font-weight: 700;
             color: #1a1a2e;
         }
-        .info-box .value.green { color: #22c55e; }
-        .info-box .label {
-            font-size: 14px;
+        .stat-value.green { color: #22c55e; }
+        .stat-value.blue { color: #3b82f6; }
+        .stat-label {
+            font-size: 13px;
             color: #64748b;
             margin-top: 5px;
         }
-        .progress-steps {
+        .progress-timeline {
             display: flex;
             justify-content: space-between;
-            margin: 30px 0;
             position: relative;
+            margin: 40px 0;
+            padding: 0 20px;
         }
-        .progress-steps::before {
+        .progress-timeline::before {
             content: '';
             position: absolute;
             top: 20px;
-            left: 10%;
-            right: 10%;
+            left: 60px;
+            right: 60px;
             height: 4px;
-            background: #e2e8f0;
-            z-index: 0;
+            background: #e5e7eb;
         }
-        .step {
+        .timeline-step {
             text-align: center;
             position: relative;
             z-index: 1;
+            flex: 1;
         }
         .step-circle {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: #e2e8f0;
+            background: #e5e7eb;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 10px;
             font-weight: 600;
             color: #64748b;
+            font-size: 14px;
         }
-        .step.complete .step-circle {
+        .timeline-step.complete .step-circle {
             background: #22c55e;
             color: white;
         }
-        .step.current .step-circle {
+        .timeline-step.current .step-circle {
             background: #3b82f6;
             color: white;
             animation: pulse 2s infinite;
@@ -137,45 +206,14 @@
             font-size: 12px;
             color: #64748b;
         }
-        .step.complete .step-label { color: #22c55e; }
-        .step.current .step-label { color: #3b82f6; font-weight: 600; }
-        .document-list {
-            margin-top: 20px;
-        }
-        .document-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-        .document-name {
-            font-weight: 500;
-            color: #1a1a2e;
-        }
-        .document-size {
-            font-size: 12px;
-            color: #94a3b8;
-        }
-        .download-btn {
-            padding: 8px 16px;
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
-            border: none;
-            border-radius: 6px;
-            color: #1a1a2e;
-            font-weight: 600;
-            font-size: 13px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .violation-summary {
+        .timeline-step.complete .step-label { color: #22c55e; }
+        .timeline-step.current .step-label { color: #3b82f6; font-weight: 600; }
+        .violations-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
         }
-        .violation-item {
+        .violation-card {
             padding: 15px;
             background: #f8fafc;
             border-radius: 8px;
@@ -190,129 +228,701 @@
             font-size: 13px;
             color: #64748b;
         }
-        .contact-info {
-            text-align: center;
-            padding: 30px;
-            background: #f8fafc;
-            border-radius: 12px;
-            margin-top: 30px;
+        .document-list {
+            margin-top: 15px;
         }
-        .contact-info h3 {
-            color: #1a1a2e;
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
             margin-bottom: 10px;
         }
-        .contact-info p {
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .document-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .document-name {
+            font-weight: 500;
+            color: #1a1a2e;
+        }
+        .document-meta {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .download-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            border: none;
+            border-radius: 6px;
+            color: #1a1a2e;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+        }
+        .upload-area {
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.05);
+        }
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .upload-text {
             color: #64748b;
+            margin-bottom: 10px;
+        }
+        .upload-hint {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .response-list {
+            margin-top: 20px;
+        }
+        .response-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3b82f6;
+        }
+        .response-item.verified { border-left-color: #f59e0b; }
+        .response-item.deleted { border-left-color: #22c55e; }
+        .response-item.investigating { border-left-color: #8b5cf6; }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .contact-card {
+            text-align: center;
+            padding: 30px 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 20px;
+        }
+        .contact-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+        .contact-value {
+            color: #3b82f6;
+            text-decoration: none;
             font-size: 14px;
         }
+        .education-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .education-card {
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .education-card:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+        .education-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .education-desc {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        .referral-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 12px;
+            padding: 30px;
+            color: white;
+            margin-bottom: 25px;
+        }
+        .referral-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .referral-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .referral-code-box {
+            background: rgba(255,255,255,0.1);
+            padding: 15px 25px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .referral-code-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .referral-code-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4ade80;
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        .referral-form {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .submit-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            border: none;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+        }
         @media (max-width: 768px) {
-            .info-grid { grid-template-columns: 1fr; }
-            .violation-summary { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .violations-grid { grid-template-columns: 1fr; }
+            .contact-grid { grid-template-columns: 1fr; }
+            .education-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .nav-tabs { overflow-x: auto; }
+            .header { flex-direction: column; gap: 15px; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Brightpath Ascend Group</h1>
-            <p>Consumer Protection Litigation Division</p>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">Brightpath <span>Ascend</span></div>
+            <span class="portal-title">Client Portal</span>
         </div>
-        
-        <div class="card">
+        <div class="header-right">
+            <div class="greeting">Hello, <strong>{{ client.name if client else 'Client' }}</strong></div>
+            <div class="date-display">As of: {{ now.strftime('%m/%d/%Y') if now else '' }}</div>
+        </div>
+    </header>
+    
+    <nav class="nav-tabs">
+        <a class="nav-tab active" data-tab="summary">Summary</a>
+        <a class="nav-tab" data-tab="status">Status</a>
+        <a class="nav-tab" data-tab="attachments">Attachments</a>
+        <a class="nav-tab" data-tab="contact">Contact Us</a>
+        <a class="nav-tab" data-tab="education">Education</a>
+        <a class="nav-tab" data-tab="referral">Refer a Friend</a>
+    </nav>
+    
+    <div class="container">
+        <!-- Summary Tab -->
+        <div class="tab-content active" id="summary">
             {% if analysis and analysis.stage == 2 %}
             <div class="status-banner ready">
                 <h2>Your Documents Are Ready!</h2>
-                <p>Your comprehensive FCRA litigation package has been prepared.</p>
+                <p>Your comprehensive FCRA litigation package has been prepared and is ready for download.</p>
+            </div>
+            {% elif analysis and analysis.stage == 1 %}
+            <div class="status-banner processing">
+                <h2>Analysis In Progress</h2>
+                <p>We've identified violations in your credit report. Our team is preparing your documents.</p>
             </div>
             {% else %}
             <div class="status-banner pending">
-                <h2>Analysis In Progress</h2>
-                <p>We're preparing your case. Check back soon!</p>
+                <h2>Welcome to Your Portal</h2>
+                <p>We're getting started on your case. Check back soon for updates!</p>
             </div>
             {% endif %}
             
-            <div class="progress-steps">
-                <div class="step {% if analysis %}complete{% endif %}">
-                    <div class="step-circle">1</div>
-                    <div class="step-label">Report Received</div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value">{{ violations|length if violations else 0 }}</div>
+                    <div class="stat-label">Violations Found</div>
                 </div>
-                <div class="step {% if analysis and analysis.stage >= 1 %}complete{% endif %}">
-                    <div class="step-circle">2</div>
-                    <div class="step-label">Violations Found</div>
+                <div class="stat-box">
+                    <div class="stat-value green">{{ score.total_score if score else '-' }}/10</div>
+                    <div class="stat-label">Case Strength</div>
                 </div>
-                <div class="step {% if analysis and analysis.stage == 2 %}complete{% elif analysis and analysis.stage == 1 %}current{% endif %}">
-                    <div class="step-circle">3</div>
-                    <div class="step-label">Review</div>
+                <div class="stat-box">
+                    <div class="stat-value blue">{{ client.current_dispute_round if client and client.current_dispute_round else 1 }}</div>
+                    <div class="stat-label">Dispute Round</div>
                 </div>
-                <div class="step {% if analysis and analysis.stage == 2 %}complete{% endif %}">
-                    <div class="step-circle">4</div>
-                    <div class="step-label">Documents Ready</div>
-                </div>
-            </div>
-        </div>
-        
-        {% if analysis %}
-        <div class="card">
-            <div class="card-title">Case Summary</div>
-            <div class="info-grid">
-                <div class="info-box">
-                    <div class="value">{{ violations|length }}</div>
-                    <div class="label">Violations Found</div>
-                </div>
-                <div class="info-box">
-                    <div class="value green">{% if score %}{{ score.total_score }}{% else %}-{% endif %}/10</div>
-                    <div class="label">Case Strength</div>
-                </div>
-                <div class="info-box">
-                    <div class="value">${{ "{:,.0f}".format(damages.total_exposure if damages else 0) }}</div>
-                    <div class="label">Potential Recovery</div>
+                <div class="stat-box">
+                    <div class="stat-value">${{ "{:,.0f}".format(damages.total_exposure if damages else 0) }}</div>
+                    <div class="stat-label">Potential Recovery</div>
                 </div>
             </div>
-        </div>
-        
-        {% if violations %}
-        <div class="card">
-            <div class="card-title">Violations Identified</div>
-            <div class="violation-summary">
-                {% for v in violations[:6] %}
-                <div class="violation-item">
-                    <div class="violation-bureau">{{ v.bureau }}</div>
-                    <div class="violation-type">{{ v.violation_type }}</div>
+            
+            {% if violations %}
+            <div class="card">
+                <div class="card-title">Violations Identified</div>
+                <div class="violations-grid">
+                    {% for v in violations[:6] %}
+                    <div class="violation-card">
+                        <div class="violation-bureau">{{ v.bureau }}</div>
+                        <div class="violation-type">{{ v.violation_type }}</div>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+                {% if violations|length > 6 %}
+                <p style="text-align: center; margin-top: 15px; color: #64748b;">
+                    + {{ violations|length - 6 }} more violations identified
+                </p>
+                {% endif %}
             </div>
-            {% if violations|length > 6 %}
-            <p style="text-align: center; margin-top: 15px; color: #64748b;">
-                + {{ violations|length - 6 }} more violations
-            </p>
             {% endif %}
         </div>
-        {% endif %}
         
-        {% if letters %}
-        <div class="card">
-            <div class="card-title">Your Documents</div>
-            <div class="document-list">
-                {% for letter in letters %}
-                <div class="document-item">
-                    <div>
-                        <div class="document-name">{{ letter.bureau }} Dispute Letter</div>
-                        <div class="document-size">Round {{ letter.round_number }}</div>
+        <!-- Status Tab -->
+        <div class="tab-content" id="status">
+            <div class="card">
+                <div class="card-title">Case Progress</div>
+                <div class="progress-timeline">
+                    <div class="timeline-step {% if analysis %}complete{% endif %}">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Report Received</div>
                     </div>
-                    <a href="/static/generated_letters/{{ letter.file_path|replace('static/generated_letters/', '') }}" class="download-btn" target="_blank">Download PDF</a>
+                    <div class="timeline-step {% if analysis and analysis.stage >= 1 %}complete{% endif %}">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Analysis Complete</div>
+                    </div>
+                    <div class="timeline-step {% if analysis and analysis.stage == 2 %}complete{% elif analysis and analysis.approved_at %}current{% endif %}">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Documents Prepared</div>
+                    </div>
+                    <div class="timeline-step {% if analysis and analysis.stage == 2 %}current{% endif %}">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Ready to Send</div>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="step-circle">5</div>
+                        <div class="step-label">Awaiting Response</div>
+                    </div>
                 </div>
-                {% endfor %}
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Round {{ client.current_dispute_round if client and client.current_dispute_round else 1 }} Status</div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb;">
+                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Bureau</th>
+                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Letter Sent</th>
+                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Response</th>
+                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bureau in ['Experian', 'TransUnion', 'Equifax'] %}
+                        <tr style="border-bottom: 1px solid #e5e7eb;">
+                            <td style="padding: 15px; font-weight: 500;">{{ bureau }}</td>
+                            <td style="padding: 15px; color: #64748b;">
+                                {% if letters %}
+                                    {% set bureau_letter = letters|selectattr('bureau', 'equalto', bureau)|first %}
+                                    {% if bureau_letter %}
+                                        {{ bureau_letter.created_at.strftime('%m/%d/%Y') if bureau_letter.created_at else '-' }}
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                {% else %}
+                                    Pending
+                                {% endif %}
+                            </td>
+                            <td style="padding: 15px; color: #64748b;">-</td>
+                            <td style="padding: 15px;">
+                                <span style="display: inline-block; padding: 4px 12px; background: #fef3c7; color: #92400e; border-radius: 20px; font-size: 12px; font-weight: 500;">
+                                    Pending
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        {% endif %}
-        {% endif %}
         
-        <div class="card">
-            <div class="contact-info">
-                <h3>Questions About Your Case?</h3>
-                <p>Contact us at support@brightpathascend.com</p>
+        <!-- Attachments Tab -->
+        <div class="tab-content" id="attachments">
+            <div class="card">
+                <div class="card-title">Your Documents</div>
+                {% if letters %}
+                <div class="document-list">
+                    {% for letter in letters %}
+                    <div class="document-item">
+                        <div class="document-info">
+                            <div class="document-icon">PDF</div>
+                            <div>
+                                <div class="document-name">{{ letter.bureau }} Dispute Letter - Round {{ letter.round_number }}</div>
+                                <div class="document-meta">Generated {{ letter.created_at.strftime('%m/%d/%Y') if letter.created_at else '' }}</div>
+                            </div>
+                        </div>
+                        {% if letter.file_path %}
+                        <a href="/static/generated_letters/{{ letter.file_path|replace('static/generated_letters/', '') }}" class="download-btn" target="_blank">Download</a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; padding: 40px; color: #64748b;">
+                    No documents available yet. Check back after your analysis is complete.
+                </p>
+                {% endif %}
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Upload Bureau Response Letters</div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">
+                    Received a response from a credit bureau? Upload it here so we can track your progress and prepare the next round of disputes.
+                </p>
+                <div class="upload-area" onclick="document.getElementById('fileUpload').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-hint">PDF, JPG, or PNG (max 10MB)</div>
+                </div>
+                <input type="file" id="fileUpload" style="display: none;" accept=".pdf,.jpg,.jpeg,.png">
+                
+                <div class="response-list" id="responseList">
+                    {% if cra_responses %}
+                        {% for response in cra_responses %}
+                        <div class="response-item {{ response.response_type }}">
+                            <div>
+                                <strong>{{ response.bureau }}</strong> - Round {{ response.dispute_round }}
+                                <div style="font-size: 12px; color: #64748b;">
+                                    {{ response.response_type|title }} - {{ response.received_date.strftime('%m/%d/%Y') if response.received_date else '' }}
+                                </div>
+                            </div>
+                            {% if response.file_path %}
+                            <a href="/{{ response.file_path }}" class="download-btn" target="_blank">View</a>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contact Us Tab -->
+        <div class="tab-content" id="contact">
+            <div class="card">
+                <div class="card-title">Get in Touch</div>
+                <div class="contact-grid">
+                    <div class="contact-card">
+                        <div class="contact-icon">📞</div>
+                        <div class="contact-title">Phone</div>
+                        <a href="tel:9179094051" class="contact-value">(917) 909-4051</a>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-icon">📧</div>
+                        <div class="contact-title">Email</div>
+                        <a href="mailto:support@brightpathascendgroup.com" class="contact-value">support@brightpathascendgroup.com</a>
+                    </div>
+                    <div class="contact-card">
+                        <div class="contact-icon">🌐</div>
+                        <div class="contact-title">Website</div>
+                        <a href="https://brightpathascendgroup.com" target="_blank" class="contact-value">brightpathascendgroup.com</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Send Us a Message</div>
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" placeholder="How can we help you?" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea placeholder="Type your message here..." required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Education Tab -->
+        <div class="tab-content" id="education">
+            <div class="card">
+                <div class="card-title">Credit Education Resources</div>
+                <div class="education-grid">
+                    <div class="education-card">
+                        <div class="education-title">
+                            📊 Understanding Credit Scores
+                        </div>
+                        <div class="education-desc">
+                            Learn how credit scores are calculated and what factors have the biggest impact on your score.
+                        </div>
+                    </div>
+                    <div class="education-card">
+                        <div class="education-title">
+                            📝 Your Rights Under FCRA
+                        </div>
+                        <div class="education-desc">
+                            Understand your legal rights under the Fair Credit Reporting Act and how we use them to protect you.
+                        </div>
+                    </div>
+                    <div class="education-card">
+                        <div class="education-title">
+                            💳 Credit Utilization Tips
+                        </div>
+                        <div class="education-desc">
+                            Discover how to optimize your credit utilization ratio for maximum score improvement.
+                        </div>
+                    </div>
+                    <div class="education-card">
+                        <div class="education-title">
+                            🏠 Building Credit History
+                        </div>
+                        <div class="education-desc">
+                            Strategies for building a strong credit history that lenders trust.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Frequently Asked Questions</div>
+                <div style="space-y: 15px;">
+                    <details style="padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px;">
+                        <summary style="font-weight: 500; cursor: pointer; color: #1a1a2e;">How long does the dispute process take?</summary>
+                        <p style="margin-top: 10px; color: #64748b; font-size: 14px;">
+                            Credit bureaus have 30 days to investigate and respond to disputes. The complete process typically takes 3-6 months depending on the number and complexity of issues on your report.
+                        </p>
+                    </details>
+                    <details style="padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px;">
+                        <summary style="font-weight: 500; cursor: pointer; color: #1a1a2e;">What happens if the bureau doesn't respond?</summary>
+                        <p style="margin-top: 10px; color: #64748b; font-size: 14px;">
+                            If a bureau fails to respond within 30 days, they must remove the disputed item from your credit report. This is a violation of FCRA that we can use in your favor.
+                        </p>
+                    </details>
+                    <details style="padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px;">
+                        <summary style="font-weight: 500; cursor: pointer; color: #1a1a2e;">Can I dispute items myself?</summary>
+                        <p style="margin-top: 10px; color: #64748b; font-size: 14px;">
+                            Yes, you have the right to dispute items directly with the credit bureaus for free. However, our expertise in FCRA law and strategic dispute techniques typically achieves better and faster results.
+                        </p>
+                    </details>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Refer a Friend Tab -->
+        <div class="tab-content" id="referral">
+            <div class="referral-section">
+                <div class="referral-header">
+                    <div>
+                        <div class="referral-title">Know Someone Who Could Use Our Services?</div>
+                        <p style="opacity: 0.7; margin-top: 5px;">Refer a friend and help them restore their credit too!</p>
+                    </div>
+                    <div class="referral-code-box">
+                        <div class="referral-code-label">Your Referral Code</div>
+                        <div class="referral-code-value">{{ client.referral_code if client and client.referral_code else 'BP' + (client.id|string if client else '0000')[:4].upper() }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="referral-form">
+                <div class="card-title">Refer a Friend</div>
+                <form id="referralForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Their Name</label>
+                            <input type="text" id="refName" placeholder="Friend's full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Their Phone</label>
+                            <input type="tel" id="refPhone" placeholder="(xxx) xxx-xxxx">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Their Email</label>
+                            <input type="email" id="refEmail" placeholder="friend@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Name</label>
+                            <input type="text" value="{{ client.name if client else '' }}" readonly>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Comments (Optional)</label>
+                        <textarea id="refComments" placeholder="Any additional information about your referral..."></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">Submit Referral</button>
+                </form>
             </div>
         </div>
     </div>
+    
+    <script>
+        const tabs = document.querySelectorAll('.nav-tab');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        document.getElementById('contactForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Message sent! We will get back to you soon.');
+            this.reset();
+        });
+        
+        document.getElementById('referralForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const data = {
+                referredName: document.getElementById('refName').value,
+                referredEmail: document.getElementById('refEmail').value,
+                referredPhone: document.getElementById('refPhone').value,
+                comments: document.getElementById('refComments').value,
+                referringClientId: {{ client.id if client else 0 }}
+            };
+            
+            try {
+                const response = await fetch('/api/referral', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    alert('Thank you for your referral! We will reach out to them soon.');
+                    this.reset();
+                } else {
+                    alert('Failed to submit referral. Please try again.');
+                }
+            } catch (error) {
+                console.error('Referral error:', error);
+                alert('Connection error. Please try again.');
+            }
+        });
+        
+        document.getElementById('fileUpload')?.addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const bureau = prompt('Which bureau is this response from? (Experian, TransUnion, or Equifax)');
+            if (!bureau) return;
+            
+            const responseType = prompt('What type of response is this? (verified, deleted, updated, investigating, no_response)');
+            if (!responseType) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('clientId', '{{ client.id if client else 0 }}');
+            formData.append('caseId', '{{ case.id if case else 0 }}');
+            formData.append('bureau', bureau);
+            formData.append('disputeRound', '{{ client.current_dispute_round if client and client.current_dispute_round else 1 }}');
+            formData.append('responseType', responseType);
+            
+            try {
+                const response = await fetch('/api/cra-response/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Response uploaded successfully!');
+                    location.reload();
+                } else {
+                    alert('Upload failed: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Connection error. Please try again.');
+            }
+        });
+    </script>
 </body>
 </html>

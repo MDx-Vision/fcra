@@ -31,10 +31,10 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, ClientReferral
 import secrets
 import uuid
-from pdf_generator import LetterPDFGenerator, SectionPDFGenerator
+from pdf_generator import LetterPDFGenerator, SectionPDFGenerator, CreditAnalysisPDFGenerator
 from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
 from jwt_utils import require_jwt, create_token
 import json
@@ -3271,25 +3271,32 @@ def client_portal(token):
     try:
         case = db.query(Case).filter_by(portal_token=token).first()
         if not case:
+            client = db.query(Client).filter_by(portal_token=token).first()
+            if client:
+                case = db.query(Case).filter_by(client_id=client.id).first()
+        
+        if not case:
             return "Invalid or expired access link", 404
         
         client = db.query(Client).filter_by(id=case.client_id).first()
         analysis = db.query(Analysis).filter_by(id=case.analysis_id).first() if case.analysis_id else None
         
         if not analysis:
-            analyses = db.query(Analysis).filter_by(client_id=case.client_id).order_by(Analysis.created_at.desc()).first()
-            analysis = analyses
+            analysis = db.query(Analysis).filter_by(client_id=case.client_id).order_by(Analysis.created_at.desc()).first()
         
         violations = []
         damages = None
         score = None
         letters = []
+        cra_responses = []
         
         if analysis:
             violations = db.query(Violation).filter_by(analysis_id=analysis.id).all()
             damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
             score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
             letters = db.query(DisputeLetter).filter_by(analysis_id=analysis.id).all()
+        
+        cra_responses = db.query(CRAResponse).filter_by(client_id=client.id).order_by(CRAResponse.created_at.desc()).all()
         
         return render_template('client_portal.html',
             case=case,
@@ -3298,10 +3305,583 @@ def client_portal(token):
             violations=violations,
             damages=damages,
             score=score,
-            letters=letters
+            letters=letters,
+            cra_responses=cra_responses,
+            now=datetime.utcnow()
         )
     except Exception as e:
         return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# CLIENT SIGNUP & ONBOARDING ROUTES
+# ============================================================
+
+@app.route('/signup')
+def client_signup():
+    """Public client signup page"""
+    return render_template('client_signup.html')
+
+
+@app.route('/api/client/signup', methods=['POST'])
+def api_client_signup():
+    """Handle new client registration"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        first_name = data.get('firstName', '').strip()
+        last_name = data.get('lastName', '').strip()
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+        
+        if not first_name or not last_name or not email:
+            return jsonify({'success': False, 'error': 'Name and email are required'}), 400
+        
+        existing = db.query(Client).filter_by(email=email).first()
+        if existing:
+            return jsonify({'success': False, 'error': 'An account with this email already exists'}), 400
+        
+        referral_code = 'BP' + secrets.token_hex(4).upper()
+        portal_token = secrets.token_urlsafe(32)
+        
+        from datetime import date
+        dob_str = data.get('dateOfBirth', '')
+        dob = None
+        if dob_str:
+            try:
+                dob = date.fromisoformat(dob_str)
+            except:
+                pass
+        
+        client = Client(
+            name=f"{first_name} {last_name}",
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            address_street=data.get('addressStreet', ''),
+            address_city=data.get('addressCity', ''),
+            address_state=data.get('addressState', ''),
+            address_zip=data.get('addressZip', ''),
+            ssn_last_four=data.get('ssnLast4', ''),
+            date_of_birth=dob,
+            credit_monitoring_service=data.get('creditService', ''),
+            credit_monitoring_username=data.get('creditUsername', ''),
+            credit_monitoring_password_encrypted=data.get('creditPassword', ''),
+            current_dispute_round=0,
+            dispute_status='new',
+            referral_code=referral_code,
+            portal_token=portal_token,
+            status='signup',
+            signup_completed=True,
+            agreement_signed=data.get('agreeTerms', False),
+            agreement_signed_at=datetime.utcnow() if data.get('agreeTerms') else None
+        )
+        
+        ref_code = data.get('referralCode', '').strip()
+        if ref_code:
+            referrer = db.query(Client).filter_by(referral_code=ref_code).first()
+            if referrer:
+                client.referred_by_client_id = referrer.id
+                referral = ClientReferral(
+                    referring_client_id=referrer.id,
+                    referred_name=client.name,
+                    referred_email=client.email,
+                    referred_phone=client.phone,
+                    status='signed_up'
+                )
+                db.add(referral)
+        
+        db.add(client)
+        db.flush()
+        
+        case_number = generate_case_number()
+        case = Case(
+            client_id=client.id,
+            case_number=case_number,
+            status='intake',
+            pricing_tier='tier1',
+            portal_token=portal_token,
+            intake_at=datetime.utcnow()
+        )
+        db.add(case)
+        db.flush()
+        
+        event = CaseEvent(
+            case_id=case.id,
+            event_type='signup',
+            description=f'Client {client.name} signed up via web portal'
+        )
+        db.add(event)
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'clientId': client.id,
+            'caseNumber': case_number,
+            'referralCode': referral_code,
+            'portalToken': portal_token,
+            'message': 'Registration complete! We will pull your credit report and begin your analysis.'
+        }), 201
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client/import', methods=['POST'])
+def api_client_import():
+    """Import existing client at their current dispute round"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip()
+        
+        if not name:
+            return jsonify({'success': False, 'error': 'Client name is required'}), 400
+        
+        from datetime import date
+        dob_str = data.get('dateOfBirth', '')
+        dob = None
+        if dob_str:
+            try:
+                dob = date.fromisoformat(dob_str)
+            except:
+                pass
+        
+        referral_code = 'BP' + secrets.token_hex(4).upper()
+        portal_token = secrets.token_urlsafe(32)
+        
+        client = Client(
+            name=name,
+            first_name=data.get('firstName', ''),
+            last_name=data.get('lastName', ''),
+            email=email,
+            phone=data.get('phone', ''),
+            address_street=data.get('addressStreet', ''),
+            address_city=data.get('addressCity', ''),
+            address_state=data.get('addressState', ''),
+            address_zip=data.get('addressZip', ''),
+            ssn_last_four=data.get('ssnLast4', ''),
+            date_of_birth=dob,
+            credit_monitoring_service=data.get('creditService', ''),
+            credit_monitoring_username=data.get('creditUsername', ''),
+            current_dispute_round=int(data.get('currentRound', 1)),
+            current_dispute_step=data.get('currentStep', ''),
+            dispute_status=data.get('disputeStatus', 'active'),
+            legacy_system_id=data.get('legacySystemId', ''),
+            legacy_case_number=data.get('legacyCaseNumber', ''),
+            imported_at=datetime.utcnow(),
+            import_notes=data.get('importNotes', ''),
+            referral_code=referral_code,
+            portal_token=portal_token,
+            status='active',
+            signup_completed=True,
+            agreement_signed=True
+        )
+        
+        db.add(client)
+        db.flush()
+        
+        case_number = generate_case_number()
+        case = Case(
+            client_id=client.id,
+            case_number=case_number,
+            status='intake',
+            pricing_tier=data.get('pricingTier', 'tier1'),
+            portal_token=portal_token,
+            intake_at=datetime.utcnow()
+        )
+        db.add(case)
+        db.flush()
+        
+        event = CaseEvent(
+            case_id=case.id,
+            event_type='import',
+            description=f'Client imported from legacy system at round {client.current_dispute_round}'
+        )
+        db.add(event)
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'clientId': client.id,
+            'caseId': case.id,
+            'caseNumber': case_number,
+            'message': f'Client imported successfully at round {client.current_dispute_round}'
+        }), 201
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cra-response/upload', methods=['POST'])
+def api_cra_response_upload():
+    """Upload CRA response letter"""
+    db = get_db()
+    try:
+        client_id = request.form.get('clientId')
+        case_id = request.form.get('caseId')
+        bureau = request.form.get('bureau')
+        dispute_round = int(request.form.get('disputeRound', 1))
+        response_type = request.form.get('responseType', 'unknown')
+        
+        if not client_id or not bureau:
+            return jsonify({'success': False, 'error': 'Client ID and bureau are required'}), 400
+        
+        file = request.files.get('file')
+        if not file:
+            return jsonify({'success': False, 'error': 'File is required'}), 400
+        
+        os.makedirs('static/cra_responses', exist_ok=True)
+        filename = f"{client_id}_{bureau}_round{dispute_round}_{secrets.token_hex(4)}.pdf"
+        file_path = f"static/cra_responses/{filename}"
+        file.save(file_path)
+        
+        from datetime import date
+        response_date_str = request.form.get('responseDate', '')
+        response_date = None
+        if response_date_str:
+            try:
+                response_date = date.fromisoformat(response_date_str)
+            except:
+                pass
+        
+        cra_response = CRAResponse(
+            client_id=int(client_id),
+            case_id=int(case_id) if case_id else None,
+            bureau=bureau,
+            dispute_round=dispute_round,
+            response_type=response_type,
+            response_date=response_date,
+            received_date=date.today(),
+            file_path=file_path,
+            file_name=file.filename,
+            file_size=os.path.getsize(file_path),
+            uploaded_by_admin=True,
+            requires_follow_up=(response_type in ['verified', 'investigating'])
+        )
+        
+        if cra_response.requires_follow_up:
+            from datetime import timedelta
+            cra_response.follow_up_deadline = datetime.utcnow() + timedelta(days=30)
+        
+        db.add(cra_response)
+        
+        client = db.query(Client).filter_by(id=int(client_id)).first()
+        if client:
+            client.last_bureau_response_at = datetime.utcnow()
+            if response_type in ['verified', 'investigating']:
+                client.dispute_status = 'waiting_response'
+            elif response_type == 'deleted':
+                pass
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'responseId': cra_response.id,
+            'message': f'{bureau} response uploaded successfully'
+        }), 201
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client/<int:client_id>/responses')
+def api_client_responses(client_id):
+    """Get all CRA responses for a client"""
+    db = get_db()
+    try:
+        responses = db.query(CRAResponse).filter_by(client_id=client_id).order_by(CRAResponse.created_at.desc()).all()
+        
+        return jsonify({
+            'success': True,
+            'responses': [{
+                'id': r.id,
+                'bureau': r.bureau,
+                'disputeRound': r.dispute_round,
+                'responseType': r.response_type,
+                'responseDate': r.response_date.isoformat() if r.response_date else None,
+                'receivedDate': r.received_date.isoformat() if r.received_date else None,
+                'fileName': r.file_name,
+                'filePath': r.file_path,
+                'itemsVerified': r.items_verified,
+                'itemsDeleted': r.items_deleted,
+                'itemsUpdated': r.items_updated,
+                'requiresFollowUp': r.requires_follow_up,
+                'followUpDeadline': r.follow_up_deadline.isoformat() if r.follow_up_deadline else None,
+                'createdAt': r.created_at.isoformat()
+            } for r in responses]
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/import')
+def dashboard_import():
+    """Admin page for importing existing clients"""
+    return render_template('client_import.html')
+
+
+@app.route('/api/credit-analysis/generate/<int:client_id>', methods=['POST'])
+def api_generate_credit_analysis(client_id):
+    """Generate a basic credit analysis PDF for a client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        data = request.json or {}
+        
+        credit_scores = {
+            'equifax': data.get('equifax_score', '-'),
+            'experian': data.get('experian_score', '-'),
+            'transunion': data.get('transunion_score', '-')
+        }
+        
+        negative_items = data.get('negative_items', [])
+        
+        report_date = datetime.now().strftime("%B %d, %Y")
+        
+        os.makedirs('generated_pdfs', exist_ok=True)
+        safe_name = client.name.replace(' ', '_').lower()
+        output_path = f"generated_pdfs/credit_analysis_{safe_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        
+        generator = CreditAnalysisPDFGenerator()
+        pdf_path = generator.generate_credit_analysis_pdf(
+            client_name=client.name,
+            report_date=report_date,
+            credit_scores=credit_scores,
+            negative_items=negative_items,
+            output_path=output_path
+        )
+        
+        return jsonify({
+            'success': True,
+            'pdf_path': pdf_path,
+            'client_name': client.name,
+            'generated_at': report_date
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-analysis/download/<path:filename>')
+def download_credit_analysis(filename):
+    """Download a generated credit analysis PDF"""
+    return send_file(
+        f"generated_pdfs/{filename}",
+        as_attachment=True,
+        mimetype='application/pdf'
+    )
+
+
+@app.route('/api/import/template')
+def api_import_template():
+    """Download CSV template for bulk import"""
+    import io
+    import csv
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'first_name', 'last_name', 'email', 'phone',
+        'address_street', 'address_city', 'address_state', 'address_zip',
+        'date_of_birth', 'ssn_last_4', 'credit_service',
+        'current_round', 'current_step', 'dispute_status',
+        'legacy_system_id', 'legacy_case_number', 'import_notes'
+    ])
+    writer.writerow([
+        'John', 'Doe', 'john@example.com', '(555) 123-4567',
+        '123 Main St', 'New York', 'NY', '10001',
+        '1985-06-15', '1234', 'IdentityIQ.com',
+        '2', 'waiting_response', 'active',
+        'CMM-12345', 'CASE-001', 'Transferred from CMM'
+    ])
+    
+    output.seek(0)
+    return send_file(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name='client_import_template.csv'
+    )
+
+
+@app.route('/api/client/import/bulk', methods=['POST'])
+def api_client_import_bulk():
+    """Bulk import clients from CSV file"""
+    import csv
+    import io
+    
+    db = get_db()
+    try:
+        file = request.files.get('file')
+        if not file:
+            return jsonify({'success': False, 'error': 'CSV file is required'}), 400
+        
+        content = file.read().decode('utf-8')
+        reader = csv.DictReader(io.StringIO(content))
+        
+        results = []
+        imported = 0
+        failed = 0
+        
+        for row in reader:
+            try:
+                name = f"{row.get('first_name', '')} {row.get('last_name', '')}".strip()
+                if not name or name == ' ':
+                    results.append({'name': 'Unknown', 'success': False, 'error': 'Name required'})
+                    failed += 1
+                    continue
+                
+                from datetime import date
+                dob_str = row.get('date_of_birth', '')
+                dob = None
+                if dob_str:
+                    try:
+                        dob = date.fromisoformat(dob_str)
+                    except:
+                        pass
+                
+                referral_code = 'BP' + secrets.token_hex(4).upper()
+                portal_token = secrets.token_urlsafe(32)
+                
+                client = Client(
+                    name=name,
+                    first_name=row.get('first_name', ''),
+                    last_name=row.get('last_name', ''),
+                    email=row.get('email', ''),
+                    phone=row.get('phone', ''),
+                    address_street=row.get('address_street', ''),
+                    address_city=row.get('address_city', ''),
+                    address_state=row.get('address_state', ''),
+                    address_zip=row.get('address_zip', ''),
+                    ssn_last_four=row.get('ssn_last_4', ''),
+                    date_of_birth=dob,
+                    credit_monitoring_service=row.get('credit_service', ''),
+                    current_dispute_round=int(row.get('current_round', 1)),
+                    current_dispute_step=row.get('current_step', ''),
+                    dispute_status=row.get('dispute_status', 'active'),
+                    legacy_system_id=row.get('legacy_system_id', ''),
+                    legacy_case_number=row.get('legacy_case_number', ''),
+                    imported_at=datetime.utcnow(),
+                    import_notes=row.get('import_notes', ''),
+                    referral_code=referral_code,
+                    portal_token=portal_token,
+                    status='active',
+                    signup_completed=True,
+                    agreement_signed=True
+                )
+                
+                db.add(client)
+                db.flush()
+                
+                case_number = generate_case_number()
+                case = Case(
+                    client_id=client.id,
+                    case_number=case_number,
+                    status='intake',
+                    pricing_tier='tier1',
+                    portal_token=portal_token,
+                    intake_at=datetime.utcnow()
+                )
+                db.add(case)
+                
+                results.append({'name': name, 'success': True, 'caseNumber': case_number})
+                imported += 1
+                
+            except Exception as row_error:
+                results.append({'name': row.get('first_name', 'Unknown'), 'success': False, 'error': str(row_error)})
+                failed += 1
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'imported': imported,
+            'failed': failed,
+            'results': results
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/referral', methods=['POST'])
+def api_submit_referral():
+    """Submit a client referral"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        referring_client_id = data.get('referringClientId')
+        referred_name = data.get('referredName', '').strip()
+        referred_email = data.get('referredEmail', '').strip()
+        referred_phone = data.get('referredPhone', '').strip()
+        comments = data.get('comments', '').strip()
+        
+        if not referred_name or not referred_email:
+            return jsonify({'success': False, 'error': 'Name and email are required'}), 400
+        
+        referral = ClientReferral(
+            referring_client_id=int(referring_client_id) if referring_client_id else None,
+            referred_name=referred_name,
+            referred_email=referred_email,
+            referred_phone=referred_phone,
+            status='pending'
+        )
+        
+        db.add(referral)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'referralId': referral.id,
+            'message': 'Referral submitted successfully! We will reach out to them soon.'
+        }), 201
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
 
