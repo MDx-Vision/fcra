@@ -569,71 +569,272 @@ def analyze_with_claude(client_name,
         }
         
         if stage == 1:
-            # STAGE 1: Small prompt for violations/standing/damages analysis ONLY (~80-100k tokens)
-            prompt = """Act as an expert consumer protection attorney. Analyze this credit report for FCRA violations.
+            # STAGE 1: COMPREHENSIVE violation detection prompt - finds ALL substantiated violations
+            prompt = """You are an elite FCRA litigation attorney. Your task is COMPREHENSIVE violation detection.
 
-**YOUR TASK - ANALYSIS ONLY (No client documents):**
+**CRITICAL: Find EVERY substantiated violation - be thorough and aggressive in searching but only report REAL violations you can prove from the data. DO NOT fabricate or invent violations.**
 
-PART 0: POST-TRANSUNION STANDING (Required first - *TransUnion LLC v. Ramirez*, 141 S. Ct. 2190)
-- Verify THREE elements for each negative item:
-  1. DISSEMINATION: Who viewed inaccurate information? (Lender, employer, landlord?)
-  2. CONCRETE HARM: Actual damage? (Loan denial, higher APR, job rejection, rental denial?)
-  3. CAUSATION: Did inaccuracy cause the harm? ("But for" test)
-- Assign standing strength: STRONG (9-10/10), MODERATE (6-8/10), WEAK (3-5/10), FATAL (0-2/10)
+===========================================================================
+MATERIALITY STANDARD - CRITICAL FOR ALL VIOLATION TYPES
+===========================================================================
 
-PART 1: FORENSIC VIOLATION IDENTIFICATION
-- Analyze EVERY negative item: charge-offs, collections, late payments, inquiries
-- For each violation identify:
-  * Account name and bureau
-  * Exact FCRA section violated (§605B, §607(b), §611, §623, etc.)
-  * Specific inaccuracy/violation
-  * Evidence supporting the violation
-  * Is it willful? (knowing/reckless disregard + objectively unreasonable)
+**A difference is a violation ONLY IF it is MATERIAL (affects credit decisions):**
+- Minor formatting differences are NOT violations (e.g., "10/2024" vs "10/01/2024")
+- Trailing zeros or equivalent representations are NOT violations (e.g., "$1,500" vs "$1500.00")
+- Date differences within the same month due to reporting cycles are NOT violations
+- Only report violations where the contradiction is SUBSTANTIVE and PROVABLE
 
-PART 2: WILLFULNESS ASSESSMENT (Safeco standard)
-- Score willfulness 0-25 based on:
-  1. Direct knowledge of FCRA requirement (0-4 pts)
-  2. Pattern of violations (0-5 pts)
-  3. Ignoring complaints (0-6 pts)
-  4. Inadequate procedures (0-5 pts)
-  5. Post-violation conduct (0-5 pts)
-- If score ≥15 AND objectively unreasonable = likely willful
-- If score <10 OR arguably reasonable = likely negligent
+**SUBSTANTIVE means:**
+- Balance difference of $100+ OR 10%+ of the balance amount
+- Date difference of 30+ days that affects FCRA timeline calculations
+- Status contradiction (e.g., "Open" vs "Closed", "Paid" vs "Charge-off")
+- Missing required data element (DOLP on derogatory, account number, etc.)
 
-PART 3: STATUTE OF LIMITATIONS VERIFICATION
-- For each violation: When did it OCCUR? Within 5-year absolute limit?
-- When did client DISCOVER violation? Within 2-year discovery rule?
-- All violations included must be timely
+===========================================================================
+PARSING THE CLEANED CREDIT REPORT - HOW TO EXTRACT DATA
+===========================================================================
 
-PART 4: DAMAGES CALCULATION
-- Statutory damages (willful only): $100-$1,000 per violation
-- Actual damages: Credit denials, higher interest, credit monitoring, time/stress, emotional distress
-- Calculate conservatively, based on documentation
+The credit report has been cleaned to plain text. Look for these patterns:
 
-**OUTPUT FORMAT (CRITICAL):**
-After completing Parts 0-4, output this JSON at the very end:
+**BUREAU SECTIONS:** Look for lines containing "TransUnion", "Experian", or "Equifax" as section headers.
+The same account will appear in each bureau's section with potentially different data.
+
+**COMMON FIELD PATTERNS (use these to extract data):**
+- Date Last Active: Look for "Date Last Active:" or "Last Activity:" followed by MM/DD/YYYY or MM/YYYY
+- Last Reported: Look for "Last Reported:" or "Reported:" followed by date
+- Balance: Look for "Balance:" or "Current Balance:" followed by dollar amount (may have $ or commas)
+- Payment Status: Look for "Payment Status:" or "Status:" followed by text like "Current", "Charge-off", "Paid"
+- Date Opened: Look for "Date Opened:" or "Opened:" followed by date
+- Date of Last Payment (DOLP): Look for "Date of Last Payment:" or "Last Payment:" followed by date or blank
+- Account Number: Look for "Account #:" or "Account Number:" followed by partial/masked number
+
+**MATCHING ACCOUNTS ACROSS BUREAUS:**
+1. Find the account name/creditor (e.g., "CAPITAL ONE", "MIDLAND CREDIT")
+2. Locate that creditor in each bureau section (TransUnion, Experian, Equifax)
+3. Extract the same fields from each bureau's version
+4. Compare values - only MATERIAL differences are violations
+
+===========================================================================
+VIOLATION TYPE CHECKLIST - CHECK EVERY SINGLE ONE WITH EXPLICIT DETECTION STEPS:
+===========================================================================
+
+**TYPE 1: BUREAU CONTRADICTIONS** (MOST VALUABLE - Check EVERY account across all 3 bureaus)
+MATERIALITY THRESHOLD: Only report if difference is SUBSTANTIVE (affects credit decisions)
+DETECTION STEPS:
+1. For EACH account, extract: Date Last Active, Last Reported, Balance, Payment Status from TU/EX/EQ
+2. Compare Date Last Active between TU vs EX vs EQ - MATERIAL difference (30+ days) = violation
+3. Compare Last Reported dates - MATERIAL difference (30+ days) = violation  
+4. Compare Balance amounts - MATERIAL difference ($100+ or 10%+) = violation
+5. Compare Payment Status text - CONTRADICTORY status = violation (not just wording differences)
+6. Check if account appears on some bureaus but NOT others = ghost account violation
+
+Each MATERIAL difference found = separate violation entry with bureau_violations array showing each bureau's data
+
+**TYPE 2: FUTURE DATE REPORTING** (PER SE UNREASONABLE - Check EVERY date field)
+DETECTION STEPS:
+1. Today's date is the analysis date - any date AFTER today is a future date
+2. Scan ALL Date Last Active fields - is any date in the future?
+3. Scan ALL Last Reported fields - is any date in the future?
+4. Scan ALL Date Opened fields - is any date in the future?
+5. Future dates are IMPOSSIBLE and constitute automatic willful violation
+
+**TYPE 3: DUPLICATE ACCOUNTS**
+DETECTION STEPS:
+1. List all account numbers in the report
+2. Check for exact duplicates (same account number twice)
+3. Check for near-duplicates (same creditor, similar amounts, same dates)
+4. Each duplicate = Metro 2 violation + §1681e(b)
+
+**TYPE 4: MISSING DATE OF LAST PAYMENT (CUSHMAN VIOLATIONS)**
+DETECTION STEPS:
+1. Find ALL accounts with negative status (charge-off, collection, delinquent)
+2. For each, check: Is "Date of Last Payment:" or "Last Payment:" present with an actual date?
+3. If DOLP is blank/missing/"Not Reported" on derogatory account = Cushman violation
+4. Per Cushman v. TransUnion, 115 F.3d 220: furnishers must maintain tangible proof
+
+**TYPE 5: DISPUTE NOTATION WITHOUT RESOLUTION**
+DETECTION STEPS:
+1. Search for "Consumer disputes" or "Item disputed" or "Disputed" notations
+2. For each disputed account, check: Is negative information still present?
+3. If disputed AND still negative = failed reinvestigation under §1681i(a)(1)(A)
+
+**TYPE 6: PAYMENT HISTORY CONTRADICTIONS**
+MATERIALITY THRESHOLD: Status and history must actually contradict (not just incomplete data)
+DETECTION STEPS:
+1. Read Payment Status field (e.g., "Past due 30 days", "Current")
+2. Read Payment History pattern (e.g., "CCCCC111CC" or grid with late markers)
+3. Does status match pattern? "Current" status + recent late markers (1,2,3) = contradiction
+4. Does pattern match status? All "C" pattern + "Past due" status = contradiction
+
+**TYPE 7: STALE/RE-AGED ACCOUNTS**
+DETECTION STEPS:
+1. Find Date Opened and Date Last Active for each account
+2. Calculate: Is Date Last Active implausibly recent for old accounts?
+3. Check: Has the 7-year reporting period from Date of First Delinquency passed?
+4. Re-aging (making old debt appear new) = violation
+
+**TYPE 8: BALANCE DISCREPANCIES**
+MATERIALITY THRESHOLD: Non-zero balance on closed/paid account is always material
+DETECTION STEPS:
+1. Check Account Status - is it "Closed" or "Paid" or "Paid/Closed"?
+2. If closed/paid, check Balance - is it $0 or blank?
+3. Closed/paid account with non-zero balance = violation
+4. Compare balance across bureaus - MATERIAL difference ($100+ or 10%+) = violation
+
+**TYPE 9: ACCOUNT STATUS CONTRADICTIONS**
+DETECTION STEPS:
+1. For each account, extract Status from TU/EX/EQ
+2. Compare: "Open" vs "Closed" across bureaus = violation
+3. Compare: "Paid" vs "Charge-off" across bureaus = violation
+4. Note: "Current" vs "Pays as Agreed" are equivalent - NOT a violation
+
+**TYPE 10: INQUIRY VIOLATIONS**
+DETECTION STEPS:
+1. List all hard inquiries with dates and creditor names
+2. Check for same creditor pulling multiple times within 14 days (shopping exception exists for auto/mortgage)
+3. Check for inquiries without apparent authorization (no new account opened)
+4. Check for inquiry date anomalies (future dates, impossible dates)
+
+**TYPE 11: MIXED FILE VIOLATIONS**
+DETECTION STEPS:
+1. Look for accounts with unfamiliar creditor names
+2. Check for accounts with addresses not matching consumer's known addresses
+3. Check for accounts with different name variations that suggest wrong person
+4. Any account not belonging to consumer = mixed file violation
+
+**TYPE 12: FURNISHER REPORTING FAILURES**
+MATERIALITY THRESHOLD: Only SUBSTANTIVE differences in furnisher data
+DETECTION STEPS:
+1. Same creditor, same account number - compare data across all 3 bureaus
+2. MATERIAL difference in what the furnisher reported to different bureaus = §1681s-2(a) violation
+3. Document exactly what was reported to each bureau
+
+===========================================================================
+STANDING ANALYSIS (TransUnion LLC v. Ramirez, 141 S. Ct. 2190)
+===========================================================================
+
+**ELEMENT 1: DISSEMINATION (Score 1-3)**
+- List EVERY hard inquiry with date and creditor name
+- Each inquiry during inaccurate reporting = dissemination evidence
+- 3+ inquiries with inaccurate info = STRONG dissemination
+
+**ELEMENT 2: CONCRETE HARM (Score 1-4)**
+- Credit scores in FAIR/POOR range (below 680) = suppression harm
+- Calculate: Estimated score WITHOUT violations vs actual score
+- Interest rate differential: Each 20 points = 0.5% rate increase
+- Annual harm = rate differential × total balances × years
+- 4 = Documented denial or >$2K harm; 3 = Score suppression <680; 2 = Minor harm; 1 = Speculative
+
+**ELEMENT 3: CAUSATION (Score 1-3)**
+- "But for" the inaccuracy, would harm have occurred?
+- Temporal proximity: Did inquiries happen during inaccurate reporting?
+- Direct link between specific violation and specific harm
+
+**STANDING SCORE = Element1 + Element2 + Element3 (max 10)**
+- Circuit adjustment: 2nd Circuit -2, 9th Circuit -1
+- 8-10 = STRONG; 5-7 = MODERATE; 1-4 = WEAK
+
+===========================================================================
+WILLFULNESS ASSESSMENT (Safeco Insurance Co. v. Burr)
+===========================================================================
+
+Score each category:
+1. Direct Knowledge (0-4): Major bureaus/banks have compliance programs
+2. Pattern (0-5): Same violation on multiple accounts or consumers
+3. Awareness (0-4): Prior complaints, settlements, consent orders
+4. Recklessness (0-3): Automated responses, no real investigation
+
+TOTAL: ___/16 (13+ = definite willful; 9-12 = likely willful; 5-8 = mixed)
+
+===========================================================================
+OUTPUT FORMAT (REQUIRED):
+===========================================================================
+
+After your analysis, output this JSON block. Use bureau_violations array to track each bureau separately:
 
 <LITIGATION_DATA>
 {
   "violations": [
     {
-      "account_name": "Account Name",
-      "bureau": "Equifax/Experian/TransUnion",
-      "fcra_section": "§611(a)(1)(A)",
-      "violation_type": "Failed Reasonable Investigation",
-      "description": "Specific facts (50 words max)",
-      "is_willful": true/false,
-      "willfulness_indicators": "Evidence if willful"
+      "account_name": "OPENSKY CBNK",
+      "violation_type": "Bureau Contradiction - Different Dates",
+      "bureau_violations": [
+        {"bureau": "TransUnion", "data_reported": "Date Last Active: 10/06/2025", "fcra_section": "§1681e(b)"},
+        {"bureau": "Experian", "data_reported": "Date Last Active: 11/30/2022", "fcra_section": "§1681e(b)"}
+      ],
+      "description": "3-year date discrepancy between bureaus",
+      "is_willful": true,
+      "willfulness_indicators": "Future date is per se unreasonable"
+    },
+    {
+      "account_name": "CAPITAL ONE",
+      "violation_type": "Future Date Reporting",
+      "bureau_violations": [
+        {"bureau": "TransUnion", "data_reported": "Date Last Active: 12/15/2025", "fcra_section": "§1681e(b)"}
+      ],
+      "description": "Future date reporting - date after today is impossible",
+      "is_willful": true,
+      "willfulness_indicators": "Future dates cannot be verified and are per se unreasonable"
+    },
+    {
+      "account_name": "MIDLAND CREDIT",
+      "violation_type": "Missing Date of Last Payment (Cushman)",
+      "bureau_violations": [
+        {"bureau": "Equifax", "data_reported": "DOLP: Not Reported, Status: Charge-off", "fcra_section": "§1681s-2(a)"}
+      ],
+      "description": "Charge-off account lacks required Date of Last Payment",
+      "is_willful": false,
+      "willfulness_indicators": "Negligent failure to maintain records per Cushman v. TransUnion"
     }
   ],
   "standing": {
-    "has_concrete_harm": true/false,
-    "concrete_harm_type": "Credit Denial / Higher Interest / Other",
-    "harm_details": "Specific facts with dates/amounts",
-    "has_dissemination": true/false,
-    "dissemination_details": "Who saw the inaccuracy",
-    "has_causation": true/false,
-    "causation_details": "Proof inaccuracy caused harm",
+    "has_concrete_harm": true,
+    "concrete_harm_type": "Credit Score Suppression / Higher Interest",
+    "harm_details": "Scores 592-617 (Fair range) suppressed 80-120 points. 5 creditor inquiries during inaccurate reporting. Estimated $2,400-3,600 annual harm from rate differential.",
+    "has_dissemination": true,
+    "dissemination_details": "ACURA OF DEN 04/05/2024, CITIBANK 01/03/2025, CONTINENTAL FINANCE 06/24/2024, MACYS 01/26/2024, TBOM 11/30/2023 - all accessed during violation period",
+    "has_causation": true,
+    "causation_details": "But for violations, scores would be 686-726 (Good range). Client would qualify for prime lending. Automotive inquiry without new account suggests denial.",
+    "denial_letters_count": 0,
+    "adverse_action_notices_count": 0
+  },
+  "actual_damages": {
+    "credit_denials_amount": 0,
+    "higher_interest_amount": 2400,
+    "credit_monitoring_amount": 0,
+    "time_stress_amount": 1000,
+    "other_actual_amount": 0,
+    "notes": "Score suppression 80-120 pts = 8-12% higher rates. $25K balances × 10% differential = $2,500/yr. 40+ hours monitoring at $25/hr = $1,000"
+  }
+}
+</LITIGATION_DATA>
+
+**CRITICAL RULES:**
+1. ACCURACY OVER QUANTITY - Find real violations but NEVER fabricate. Only report violations you can prove from the actual data.
+2. Apply MATERIALITY STANDARD - Minor differences, formatting variations, and equivalent representations are NOT violations.
+3. Use bureau_violations array to track EACH bureau's data separately for cross-bureau violations.
+4. Provide SPECIFIC dates, amounts, account names - no placeholders or guesses.
+5. Standing score should reflect actual harm (subprime scores = concrete harm).
+6. Dollar amounts as numbers only (no $ signs).
+7. Output JSON block at the very end.
+
+===========================================================================
+NO VIOLATIONS FOUND - ACCEPTABLE OUTCOME
+===========================================================================
+
+**If after thorough search you find NO substantiated violations, output an empty violations array:**
+
+<LITIGATION_DATA>
+{
+  "violations": [],
+  "standing": {
+    "has_concrete_harm": false,
+    "concrete_harm_type": "None identified",
+    "harm_details": "No substantiated FCRA violations found in credit report. All data appears consistent across bureaus.",
+    "has_dissemination": false,
+    "dissemination_details": "No inaccurate information was disseminated.",
+    "has_causation": false,
+    "causation_details": "No causal link between credit reporting and harm.",
     "denial_letters_count": 0,
     "adverse_action_notices_count": 0
   },
@@ -643,16 +844,13 @@ After completing Parts 0-4, output this JSON at the very end:
     "credit_monitoring_amount": 0,
     "time_stress_amount": 0,
     "other_actual_amount": 0,
-    "notes": "Calculation details"
+    "notes": "No violations identified - no damages calculation applicable."
   }
 }
 </LITIGATION_DATA>
 
-**CRITICAL RULES:**
-1. Output JSON ONLY at the end - no other text after </LITIGATION_DATA>
-2. Base ALL violations on your own analysis - no fabrication
-3. Dollar amounts must be numbers (no $ signs, no commas)
-4. Include willfulness_indicators ONLY if is_willful = true"""
+**An empty violations array is acceptable and preferred if no PROVABLE violations exist.**
+**Do NOT invent violations to fill the array - this destroys legal credibility.**"""
         else:
             # STAGE 2: Use comprehensive FCRA v2.6 + RLPP prompt
             print("\n🔨 Loading comprehensive FCRA v2.6 + RLPP prompt...")
@@ -962,25 +1160,52 @@ def auto_populate_litigation_database(analysis_id, client_id, litigation_data, d
     try:
         print(f"\n🤖 AUTO-POPULATING LITIGATION DATABASE...")
         
-        # 1. POPULATE VIOLATIONS
+        # 1. POPULATE VIOLATIONS (handles both old single-bureau format and new bureau_violations array)
         violations_added = 0
         if litigation_data.get('violations'):
             for v_data in litigation_data['violations']:
-                violation = Violation(
-                    analysis_id=analysis_id,
-                    client_id=client_id,
-                    account_name=v_data.get('account_name', 'Unknown'),
-                    bureau=v_data.get('bureau', 'Unknown'),
-                    fcra_section=v_data.get('fcra_section', ''),
-                    violation_type=v_data.get('violation_type', ''),
-                    description=v_data.get('description', ''),
-                    is_willful=v_data.get('is_willful', False),
-                    willfulness_notes=v_data.get('willfulness_indicators', ''),
-                    statutory_damages_min=100,
-                    statutory_damages_max=1000
-                )
-                db.add(violation)
-                violations_added += 1
+                # Check for new bureau_violations array format
+                bureau_violations = v_data.get('bureau_violations', [])
+                
+                if bureau_violations and isinstance(bureau_violations, list):
+                    # NEW FORMAT: Create separate violation record per bureau
+                    for bv in bureau_violations:
+                        bureau = bv.get('bureau', 'Unknown')
+                        fcra_section = bv.get('fcra_section', v_data.get('fcra_section', ''))
+                        data_reported = bv.get('data_reported', '')
+                        
+                        violation = Violation(
+                            analysis_id=analysis_id,
+                            client_id=client_id,
+                            account_name=v_data.get('account_name', 'Unknown'),
+                            bureau=bureau,
+                            fcra_section=fcra_section,
+                            violation_type=v_data.get('violation_type', ''),
+                            description=f"{v_data.get('description', '')} | {data_reported}",
+                            is_willful=v_data.get('is_willful', False),
+                            willfulness_notes=v_data.get('willfulness_indicators', ''),
+                            statutory_damages_min=100,
+                            statutory_damages_max=1000
+                        )
+                        db.add(violation)
+                        violations_added += 1
+                else:
+                    # OLD FORMAT: Single bureau per violation (backwards compatibility)
+                    violation = Violation(
+                        analysis_id=analysis_id,
+                        client_id=client_id,
+                        account_name=v_data.get('account_name', 'Unknown'),
+                        bureau=v_data.get('bureau', 'Unknown'),
+                        fcra_section=v_data.get('fcra_section', ''),
+                        violation_type=v_data.get('violation_type', ''),
+                        description=v_data.get('description', ''),
+                        is_willful=v_data.get('is_willful', False),
+                        willfulness_notes=v_data.get('willfulness_indicators', ''),
+                        statutory_damages_min=100,
+                        statutory_damages_max=1000
+                    )
+                    db.add(violation)
+                    violations_added += 1
             
             print(f"   ✅ Added {violations_added} violations")
         
