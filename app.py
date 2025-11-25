@@ -31,7 +31,9 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue
+import secrets
+import uuid
 from pdf_generator import LetterPDFGenerator, SectionPDFGenerator
 from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
 from jwt_utils import require_jwt, create_token
@@ -2950,6 +2952,356 @@ def get_complete_analysis(analysis_id):
         }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# DASHBOARD & PLATFORM ROUTES
+# ============================================================
+
+def generate_case_number():
+    """Generate unique case number like BA-2024-00001"""
+    year = datetime.utcnow().year
+    db = get_db()
+    try:
+        count = db.query(Case).filter(Case.case_number.like(f'BA-{year}-%')).count()
+        return f"BA-{year}-{str(count + 1).zfill(5)}"
+    finally:
+        db.close()
+
+
+def get_status_label(status):
+    """Convert status code to readable label"""
+    labels = {
+        'intake': 'Intake',
+        'stage1_pending': 'Analyzing...',
+        'stage1_complete': 'Needs Review',
+        'stage2_pending': 'Generating Docs...',
+        'stage2_complete': 'Ready',
+        'delivered': 'Delivered',
+        'settled': 'Settled'
+    }
+    return labels.get(status, status)
+
+
+@app.route('/dashboard')
+def dashboard():
+    """Main admin dashboard"""
+    db = get_db()
+    try:
+        from datetime import timedelta
+        
+        all_analyses = db.query(Analysis).all()
+        all_damages = db.query(Damages).all()
+        all_scores = db.query(CaseScore).all()
+        
+        total_exposure = sum(d.total_exposure or 0 for d in all_damages)
+        active_cases = len(all_analyses)
+        one_week_ago = datetime.utcnow() - timedelta(days=7)
+        new_this_week = db.query(Analysis).filter(Analysis.created_at >= one_week_ago).count()
+        
+        scores = [s.total_score for s in all_scores if s.total_score]
+        avg_score = sum(scores) / len(scores) if scores else 0
+        high_score_cases = len([s for s in scores if s >= 8])
+        
+        pending_review = db.query(Analysis).filter(Analysis.stage == 1, Analysis.approved_at == None).count()
+        
+        stats = {
+            'total_exposure': total_exposure,
+            'active_cases': active_cases,
+            'new_this_week': new_this_week,
+            'avg_score': avg_score,
+            'high_score_cases': high_score_cases,
+            'pending_review': pending_review
+        }
+        
+        stage1_complete_count = db.query(Analysis).filter(Analysis.stage == 1, Analysis.approved_at == None).count()
+        stage2_complete_count = db.query(Analysis).filter(Analysis.stage == 2).count()
+        stage2_value = sum(
+            (d.total_exposure or 0) 
+            for d in db.query(Damages).join(Analysis).filter(Analysis.stage == 2).all()
+        )
+        
+        pipeline = {
+            'intake': 0,
+            'stage1_pending': 0,
+            'stage1_complete': stage1_complete_count,
+            'stage2_pending': 0,
+            'stage2_complete': stage2_complete_count,
+            'stage2_value': stage2_value,
+            'delivered': 0
+        }
+        
+        recent_analyses = db.query(Analysis).order_by(Analysis.created_at.desc()).limit(20).all()
+        cases = []
+        for analysis in recent_analyses:
+            damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
+            score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
+            client = db.query(Client).filter_by(id=analysis.client_id).first()
+            
+            if analysis.stage == 1 and not analysis.approved_at:
+                status = 'stage1_complete'
+            elif analysis.stage == 2:
+                status = 'stage2_complete'
+            else:
+                status = 'intake'
+            
+            cases.append({
+                'id': analysis.id,
+                'analysis_id': analysis.id,
+                'client_name': analysis.client_name,
+                'client_email': client.email if client else None,
+                'status': status,
+                'status_label': get_status_label(status),
+                'score': score.total_score if score else None,
+                'exposure': damages.total_exposure if damages else None
+            })
+        
+        recent_activity = []
+        for analysis in db.query(Analysis).order_by(Analysis.created_at.desc()).limit(5).all():
+            if analysis.stage == 2:
+                recent_activity.append({
+                    'title': f'{analysis.client_name}',
+                    'description': 'Documents ready for delivery',
+                    'color': 'green',
+                    'time': analysis.created_at.strftime('%I:%M %p')
+                })
+            elif analysis.stage == 1:
+                recent_activity.append({
+                    'title': f'{analysis.client_name}',
+                    'description': 'Stage 1 analysis complete',
+                    'color': 'blue',
+                    'time': analysis.created_at.strftime('%I:%M %p')
+                })
+        
+        return render_template('dashboard.html',
+            stats=stats,
+            pipeline=pipeline,
+            cases=cases,
+            recent_activity=recent_activity
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Dashboard error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/intake', methods=['POST'])
+def api_intake():
+    """New client intake endpoint"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        client_name = data.get('clientName', '').strip()
+        client_email = data.get('clientEmail', '').strip()
+        client_phone = data.get('clientPhone', '').strip()
+        credit_provider = data.get('creditProvider', 'Unknown')
+        dispute_round = int(data.get('disputeRound', 1))
+        pricing_tier = data.get('pricingTier', 'tier1')
+        credit_report_html = data.get('creditReportHTML', '')
+        
+        if not client_name:
+            return jsonify({'success': False, 'error': 'Client name is required'}), 400
+        if not credit_report_html:
+            return jsonify({'success': False, 'error': 'Credit report is required'}), 400
+        
+        client = Client(
+            name=client_name,
+            email=client_email,
+            phone=client_phone
+        )
+        db.add(client)
+        db.flush()
+        
+        case_number = generate_case_number()
+        portal_token = secrets.token_urlsafe(32)
+        
+        case = Case(
+            client_id=client.id,
+            case_number=case_number,
+            status='stage1_pending',
+            pricing_tier=pricing_tier,
+            portal_token=portal_token,
+            intake_at=datetime.utcnow()
+        )
+        db.add(case)
+        db.flush()
+        
+        event = CaseEvent(
+            case_id=case.id,
+            event_type='intake',
+            description=f'New client intake: {client_name}'
+        )
+        db.add(event)
+        db.commit()
+        
+        print(f"📥 New client intake: {client_name} (Case #{case_number})")
+        print(f"   Pricing tier: {pricing_tier}")
+        print(f"   Portal token: {portal_token[:20]}...")
+        
+        from threading import Thread
+        def run_analysis():
+            try:
+                import requests
+                response = requests.post(
+                    'http://localhost:5000/api/analyze',
+                    json={
+                        'clientName': client_name,
+                        'clientEmail': client_email,
+                        'creditProvider': credit_provider,
+                        'creditReportHTML': credit_report_html,
+                        'disputeRound': dispute_round,
+                        'analysisMode': 'manual'
+                    },
+                    timeout=600
+                )
+                print(f"✅ Analysis started for {client_name}")
+            except Exception as e:
+                print(f"❌ Analysis error for {client_name}: {e}")
+        
+        thread = Thread(target=run_analysis)
+        thread.start()
+        
+        return jsonify({
+            'success': True,
+            'case_number': case_number,
+            'case_id': case.id,
+            'client_id': client.id,
+            'portal_token': portal_token,
+            'message': f'Client added. Analysis starting...'
+        })
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/clients')
+def dashboard_clients():
+    """Client list page"""
+    db = get_db()
+    try:
+        status_filter = request.args.get('status', 'all')
+        
+        query = db.query(Analysis).order_by(Analysis.created_at.desc())
+        
+        if status_filter == 'stage1_complete':
+            query = query.filter(Analysis.stage == 1, Analysis.approved_at == None)
+        elif status_filter == 'stage2_complete':
+            query = query.filter(Analysis.stage == 2)
+        
+        analyses = query.all()
+        
+        cases = []
+        for analysis in analyses:
+            damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
+            score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
+            client = db.query(Client).filter_by(id=analysis.client_id).first()
+            
+            if analysis.stage == 1 and not analysis.approved_at:
+                status = 'stage1_complete'
+            elif analysis.stage == 2:
+                status = 'stage2_complete'
+            else:
+                status = 'intake'
+            
+            cases.append({
+                'id': analysis.id,
+                'analysis_id': analysis.id,
+                'client_name': analysis.client_name,
+                'client_email': client.email if client else None,
+                'status': status,
+                'status_label': get_status_label(status),
+                'score': score.total_score if score else None,
+                'exposure': damages.total_exposure if damages else None,
+                'violations': db.query(Violation).filter_by(analysis_id=analysis.id).count(),
+                'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M')
+            })
+        
+        return render_template('clients.html', cases=cases, status_filter=status_filter)
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/case/<int:case_id>')
+def dashboard_case_detail(case_id):
+    """Single case detail page"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=case_id).first()
+        if not analysis:
+            return "Case not found", 404
+        
+        violations = db.query(Violation).filter_by(analysis_id=case_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=case_id).first()
+        damages = db.query(Damages).filter_by(analysis_id=case_id).first()
+        score = db.query(CaseScore).filter_by(analysis_id=case_id).first()
+        letters = db.query(DisputeLetter).filter_by(analysis_id=case_id).all()
+        client = db.query(Client).filter_by(id=analysis.client_id).first()
+        
+        return render_template('case_detail.html',
+            analysis=analysis,
+            client=client,
+            violations=violations,
+            standing=standing,
+            damages=damages,
+            score=score,
+            letters=letters
+        )
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/portal/<token>')
+def client_portal(token):
+    """Client-facing portal to view their case"""
+    db = get_db()
+    try:
+        case = db.query(Case).filter_by(portal_token=token).first()
+        if not case:
+            return "Invalid or expired access link", 404
+        
+        client = db.query(Client).filter_by(id=case.client_id).first()
+        analysis = db.query(Analysis).filter_by(id=case.analysis_id).first() if case.analysis_id else None
+        
+        if not analysis:
+            analyses = db.query(Analysis).filter_by(client_id=case.client_id).order_by(Analysis.created_at.desc()).first()
+            analysis = analyses
+        
+        violations = []
+        damages = None
+        score = None
+        letters = []
+        
+        if analysis:
+            violations = db.query(Violation).filter_by(analysis_id=analysis.id).all()
+            damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
+            score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
+            letters = db.query(DisputeLetter).filter_by(analysis_id=analysis.id).all()
+        
+        return render_template('client_portal.html',
+            case=case,
+            client=client,
+            analysis=analysis,
+            violations=violations,
+            damages=damages,
+            score=score,
+            letters=letters
+        )
+    except Exception as e:
+        return f"Error: {str(e)}", 500
     finally:
         db.close()
 

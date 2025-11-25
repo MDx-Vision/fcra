@@ -1,12 +1,23 @@
-# FCRA Automation Server - Consumer Protection Litigation Platform
+# Brightpath Ascend FCRA Platform - Consumer Protection Litigation
 
-## Status: PRODUCTION-READY WITH SECTION-BASED SCALABILITY ✅
+## Status: COMPLETE PLATFORM OPERATIONAL ✅
 
-### System Live & Production-Hardened
+### System Live & Production-Ready
 - **Flask Server**: Running on port 5000
-- **Architecture**: Two-stage analysis system with section-based Stage 1 (SOLVES 200k token limit completely)
-- **Database**: PostgreSQL with litigation tracking tables
-- **Scalability**: Now handles unlimited credit report sizes (100MB+)
+- **Admin Dashboard**: Professional case management UI at `/dashboard`
+- **Client Portal**: Branded client-facing portal at `/portal/<token>`
+- **Architecture**: Two-stage analysis with section-based Stage 1 (SOLVES 200k token limit)
+- **Database**: PostgreSQL with full case lifecycle tables
+- **Scalability**: Handles unlimited credit report sizes (100MB+)
+
+## Platform URLs
+- `/dashboard` - Admin dashboard with pipeline visualization
+- `/dashboard/clients` - Full client list with filters
+- `/dashboard/case/<id>` - Individual case detail view
+- `/portal/<token>` - Client-facing case status portal
+- `/api/intake` - New client intake endpoint
+- `/api/analyze` - Credit report analysis endpoint
+- `/api/approve/<id>` - Approve Stage 1, trigger Stage 2
 
 ## How It Works
 
@@ -83,6 +94,12 @@ POST /api/approve/<analysis_id>
 - `damages`: Calculated statutory/actual/punitive damages
 - `case_scores`: 1-10 case strength scoring
 - `dispute_letters`: Generated PDF letters
+- `cases`: Full case lifecycle management with pricing tiers
+- `case_events`: Timeline of all case activities
+- `documents`: Generated document tracking
+- `notifications`: Email delivery tracking
+- `settlements`: Settlement negotiation tracking
+- `analysis_queue`: Batch processing queue
 
 ### Key Features Implemented
 ✅ Section-based Stage 1 analysis (solves 200k token limit)
@@ -180,7 +197,11 @@ run_stage1_for_all_sections(...)        # Orchestrates full section analysis
 ├── litigation_tools.py         # Damage calculator, case scorer
 ├── pdf_generator.py           # PDF letter generation
 ├── templates/
-│   ├── admin.html             # Admin dashboard
+│   ├── dashboard.html         # Professional admin dashboard
+│   ├── clients.html           # Full client list with filters
+│   ├── case_detail.html       # Individual case detail view
+│   ├── client_portal.html     # Client-facing case status portal
+│   ├── admin.html             # Legacy admin page
 │   └── litigation_review.html  # Verification checkpoint page
 ├── requirements.txt           # Python dependencies
 └── replit.md                  # This file
@@ -252,3 +273,4 @@ Last updated: November 22, 2025, 3:05 AM UTC
 System Status: PRODUCTION-READY AND LIVE ✅
 Section-Based Architecture: OPERATIONAL ✅
 Zero LSP Errors: CONFIRMED ✅
+

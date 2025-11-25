@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clients - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+        }
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #4ade80; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #1a1a2e;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            max-width: 400px;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        .client-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .client-email {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-intake { background: #fef3c7; color: #92400e; }
+        .status-stage1-complete { background: #dbeafe; color: #1e40af; }
+        .status-stage2-complete { background: #dcfce7; color: #166534; }
+        .status-delivered { background: #f0fdf4; color: #15803d; }
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .score-high { background: #dcfce7; color: #166534; }
+        .score-medium { background: #fef3c7; color: #92400e; }
+        .score-low { background: #fee2e2; color: #991b1b; }
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            color: #334155;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #4ade80; }
+        .action-btn.primary { background: #4ade80; border-color: #4ade80; color: #1a1a2e; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                Clients
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>All Clients</h1>
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+        
+        <div class="content-card">
+            <div class="filters">
+                <a href="/dashboard/clients" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
+                <a href="/dashboard/clients?status=stage1_complete" class="filter-btn {% if status_filter == 'stage1_complete' %}active{% endif %}">Needs Review</a>
+                <a href="/dashboard/clients?status=stage2_complete" class="filter-btn {% if status_filter == 'stage2_complete' %}active{% endif %}">Ready to Deliver</a>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()">
+            </div>
+            
+            {% if cases %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Score</th>
+                        <th>Violations</th>
+                        <th>Exposure</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clientTableBody">
+                    {% for case in cases %}
+                    <tr>
+                        <td>
+                            <div class="client-name">{{ case.client_name }}</div>
+                            <div class="client-email">{{ case.client_email or 'No email' }}</div>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ case.status|replace('_', '-') }}">
+                                {{ case.status_label }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if case.score %}
+                            <span class="score-badge {% if case.score >= 8 %}score-high{% elif case.score >= 5 %}score-medium{% else %}score-low{% endif %}">
+                                {{ case.score }}
+                            </span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td>{{ case.violations }}</td>
+                        <td>{% if case.exposure %}${{ "{:,.0f}".format(case.exposure) }}{% else %}-{% endif %}</td>
+                        <td>{{ case.created_at }}</td>
+                        <td>
+                            {% if case.status == 'stage1_complete' %}
+                            <a href="/analysis/{{ case.analysis_id }}/review" class="action-btn primary">Review</a>
+                            {% endif %}
+                            <a href="/dashboard/case/{{ case.id }}" class="action-btn">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <h3>No clients found</h3>
+                <p>Add your first client from the dashboard</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    
+    <script>
+        function searchClients() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#clientTableBody tr');
+            rows.forEach(row => {
+                const name = row.querySelector('.client-name').textContent.toLowerCase();
+                row.style.display = name.includes(query) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

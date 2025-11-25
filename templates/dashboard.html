@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+        }
+        
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #4ade80; }
+        
+        .nav-section {
+            margin-bottom: 25px;
+        }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #4ade80; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-card.highlight .stat-label { color: #94a3b8; }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .stat-card.highlight .stat-value { color: #4ade80; }
+        .stat-change {
+            font-size: 12px;
+            color: #22c55e;
+            font-weight: 500;
+        }
+        .stat-change.negative { color: #ef4444; }
+        
+        .pipeline-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .pipeline-stages {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+        }
+        
+        .pipeline-stage {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .pipeline-stage:hover { border-color: #4ade80; }
+        .pipeline-stage.active { border-color: #4ade80; background: #f0fdf4; }
+        
+        .stage-count {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+        .stage-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .stage-value {
+            font-size: 12px;
+            color: #22c55e;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        
+        .case-list {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .case-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-box svg { color: #94a3b8; margin-right: 10px; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        
+        .client-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .client-email {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-intake { background: #fef3c7; color: #92400e; }
+        .status-stage1 { background: #dbeafe; color: #1e40af; }
+        .status-stage1-complete { background: #d1fae5; color: #065f46; }
+        .status-stage2 { background: #e0e7ff; color: #3730a3; }
+        .status-stage2-complete { background: #dcfce7; color: #166534; }
+        .status-delivered { background: #f0fdf4; color: #15803d; }
+        .status-settled { background: #4ade80; color: #1a1a2e; }
+        
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .score-high { background: #dcfce7; color: #166534; }
+        .score-medium { background: #fef3c7; color: #92400e; }
+        .score-low { background: #fee2e2; color: #991b1b; }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #4ade80; }
+        .action-btn.primary { background: #4ade80; border-color: #4ade80; color: #1a1a2e; }
+        
+        .quick-actions {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .quick-action-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-action-item:hover {
+            border-color: #4ade80;
+            background: #f0fdf4;
+        }
+        .quick-action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        .quick-action-icon.green { background: #dcfce7; }
+        .quick-action-icon.blue { background: #dbeafe; }
+        .quick-action-icon.purple { background: #e0e7ff; }
+        .quick-action-icon.yellow { background: #fef3c7; }
+        
+        .quick-action-text h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 3px;
+        }
+        .quick-action-text p {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .recent-activity {
+            margin-top: 20px;
+        }
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .activity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+            margin-top: 6px;
+        }
+        .activity-dot.green { background: #4ade80; }
+        .activity-dot.blue { background: #3b82f6; }
+        .activity-dot.yellow { background: #eab308; }
+        
+        .activity-text {
+            flex: 1;
+        }
+        .activity-text strong { color: #1a1a2e; }
+        .activity-text p {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .activity-time {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .empty-state p {
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+        .form-group textarea {
+            min-height: 120px;
+            font-family: monospace;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .file-upload {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .file-upload:hover {
+            border-color: #4ade80;
+            background: #f0fdf4;
+        }
+        .file-upload.dragover {
+            border-color: #4ade80;
+            background: #dcfce7;
+        }
+        .file-upload input { display: none; }
+        .file-upload svg {
+            width: 48px;
+            height: 48px;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+        .file-upload h4 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+        .file-upload p {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .pipeline-stages { grid-template-columns: repeat(3, 1fr); }
+            .content-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Clients
+            </a>
+            <a href="/dashboard/queue" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Processing Queue
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Cases</div>
+            <a href="/dashboard/cases?status=stage1_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Pending Review
+            </a>
+            <a href="/dashboard/cases?status=stage2_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Ready to Deliver
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Settlements
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Tools</div>
+            <a href="/dashboard/reports" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Reports
+            </a>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="openBatchModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Batch Upload
+                </button>
+                <button class="btn btn-primary" onclick="openIntakeModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Client
+                </button>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Total Case Value</div>
+                <div class="stat-value">${{ "{:,.0f}".format(stats.total_exposure) }}</div>
+                <div class="stat-change">Potential settlements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Cases</div>
+                <div class="stat-value">{{ stats.active_cases }}</div>
+                <div class="stat-change">{{ stats.new_this_week }} new this week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Case Score</div>
+                <div class="stat-value">{{ "%.1f"|format(stats.avg_score) }}/10</div>
+                <div class="stat-change">{{ stats.high_score_cases }} excellent cases</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending Review</div>
+                <div class="stat-value">{{ stats.pending_review }}</div>
+                <div class="stat-change {% if stats.pending_review > 5 %}negative{% endif %}">
+                    {% if stats.pending_review > 5 %}Needs attention{% else %}On track{% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="pipeline-section">
+            <div class="section-header">
+                <div class="section-title">Case Pipeline</div>
+                <button class="btn btn-secondary" onclick="refreshDashboard()">Refresh</button>
+            </div>
+            <div class="pipeline-stages">
+                <div class="pipeline-stage" onclick="filterByStatus('intake')">
+                    <div class="stage-count">{{ pipeline.intake }}</div>
+                    <div class="stage-label">Intake</div>
+                </div>
+                <div class="pipeline-stage" onclick="filterByStatus('stage1_pending')">
+                    <div class="stage-count">{{ pipeline.stage1_pending }}</div>
+                    <div class="stage-label">Stage 1 Pending</div>
+                </div>
+                <div class="pipeline-stage" onclick="filterByStatus('stage1_complete')">
+                    <div class="stage-count">{{ pipeline.stage1_complete }}</div>
+                    <div class="stage-label">Needs Review</div>
+                    <div class="stage-value">Click to review</div>
+                </div>
+                <div class="pipeline-stage" onclick="filterByStatus('stage2_pending')">
+                    <div class="stage-count">{{ pipeline.stage2_pending }}</div>
+                    <div class="stage-label">Stage 2 Pending</div>
+                </div>
+                <div class="pipeline-stage" onclick="filterByStatus('stage2_complete')">
+                    <div class="stage-count">{{ pipeline.stage2_complete }}</div>
+                    <div class="stage-label">Ready to Deliver</div>
+                    <div class="stage-value">${{ "{:,.0f}".format(pipeline.stage2_value) }}</div>
+                </div>
+                <div class="pipeline-stage" onclick="filterByStatus('delivered')">
+                    <div class="stage-count">{{ pipeline.delivered }}</div>
+                    <div class="stage-label">Delivered</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-grid">
+            <div class="case-list">
+                <div class="section-header">
+                    <div class="section-title">Recent Cases</div>
+                    <a href="/dashboard/clients" class="btn btn-secondary">View All</a>
+                </div>
+                
+                <div class="case-filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="needs_action">Needs Action</button>
+                    <button class="filter-btn" data-filter="high_value">High Value</button>
+                </div>
+                
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()">
+                </div>
+                
+                {% if cases %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Status</th>
+                            <th>Score</th>
+                            <th>Exposure</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="caseTableBody">
+                        {% for case in cases %}
+                        <tr data-case-id="{{ case.id }}">
+                            <td>
+                                <div class="client-name">{{ case.client_name }}</div>
+                                <div class="client-email">{{ case.client_email or 'No email' }}</div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ case.status|replace('_', '-') }}">
+                                    {{ case.status_label }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if case.score %}
+                                <span class="score-badge {% if case.score >= 8 %}score-high{% elif case.score >= 5 %}score-medium{% else %}score-low{% endif %}">
+                                    {{ case.score }}
+                                </span>
+                                {% else %}
+                                <span style="color: #94a3b8;">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if case.exposure %}
+                                ${{ "{:,.0f}".format(case.exposure) }}
+                                {% else %}
+                                <span style="color: #94a3b8;">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if case.status == 'stage1_complete' %}
+                                <button class="action-btn primary" onclick="reviewCase({{ case.analysis_id }})">Review</button>
+                                {% elif case.status == 'stage2_complete' %}
+                                <button class="action-btn primary" onclick="deliverCase({{ case.id }})">Deliver</button>
+                                {% endif %}
+                                <button class="action-btn" onclick="viewCase({{ case.id }})">View</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <h3>No cases yet</h3>
+                    <p>Upload your first credit report to get started</p>
+                    <button class="btn btn-primary" onclick="openIntakeModal()">Add New Client</button>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div>
+                <div class="quick-actions">
+                    <div class="section-title" style="margin-bottom: 15px;">Quick Actions</div>
+                    
+                    <div class="quick-action-item" onclick="openIntakeModal()">
+                        <div class="quick-action-icon green">+</div>
+                        <div class="quick-action-text">
+                            <h4>New Client Intake</h4>
+                            <p>Upload credit report for analysis</p>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-action-item" onclick="openBatchModal()">
+                        <div class="quick-action-icon blue">📂</div>
+                        <div class="quick-action-text">
+                            <h4>Batch Processing</h4>
+                            <p>Upload multiple reports at once</p>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-action-item" onclick="window.location='/dashboard/cases?status=stage1_complete'">
+                        <div class="quick-action-icon purple">✓</div>
+                        <div class="quick-action-text">
+                            <h4>Review Pending ({{ pipeline.stage1_complete }})</h4>
+                            <p>Cases awaiting your approval</p>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-action-item" onclick="window.location='/dashboard/settlements'">
+                        <div class="quick-action-icon yellow">💰</div>
+                        <div class="quick-action-text">
+                            <h4>Settlement Tracker</h4>
+                            <p>Manage negotiations</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions recent-activity" style="margin-top: 20px;">
+                    <div class="section-title" style="margin-bottom: 15px;">Recent Activity</div>
+                    
+                    {% for activity in recent_activity %}
+                    <div class="activity-item">
+                        <div class="activity-dot {{ activity.color }}"></div>
+                        <div class="activity-text">
+                            <strong>{{ activity.title }}</strong>
+                            <p>{{ activity.description }}</p>
+                        </div>
+                        <div class="activity-time">{{ activity.time }}</div>
+                    </div>
+                    {% else %}
+                    <p style="color: #94a3b8; text-align: center; padding: 20px;">No recent activity</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div class="modal-overlay" id="intakeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>New Client Intake</h2>
+                <button class="modal-close" onclick="closeModal('intakeModal')">&times;</button>
+            </div>
+            <form id="intakeForm" onsubmit="submitIntake(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Client Name *</label>
+                            <input type="text" name="clientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="clientEmail">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" name="clientPhone">
+                        </div>
+                        <div class="form-group">
+                            <label>Credit Provider *</label>
+                            <select name="creditProvider" required>
+                                <option value="">Select Provider</option>
+                                <option value="IdentityIQ.com">IdentityIQ.com</option>
+                                <option value="MyScoreIQ.com">MyScoreIQ.com</option>
+                                <option value="SmartCredit.com">SmartCredit.com</option>
+                                <option value="MyFreeScoreNow.com">MyFreeScoreNow.com</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Dispute Round</label>
+                            <select name="disputeRound">
+                                <option value="1">Round 1 - Initial</option>
+                                <option value="2">Round 2 - MOV Request</option>
+                                <option value="3">Round 3 - Pre-Litigation</option>
+                                <option value="4">Round 4 - Final Demand</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Pricing Tier</label>
+                            <select name="pricingTier">
+                                <option value="tier1">Tier 1 - Analysis ($300-500)</option>
+                                <option value="tier2">Tier 2 - Case Management ($750-1,200)</option>
+                                <option value="tier3">Tier 3 - Contingency (25-35%)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Report HTML *</label>
+                        <div class="file-upload" id="fileUpload">
+                            <input type="file" name="creditReportFile" accept=".html,.htm,.txt" onchange="handleFileSelect(event)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <h4>Drop file here or click to upload</h4>
+                            <p>HTML or TXT file from credit monitoring service</p>
+                        </div>
+                        <div id="filePreview" style="display:none; margin-top:10px; padding:10px; background:#f0fdf4; border-radius:8px;">
+                            <strong id="fileName"></strong>
+                            <span id="fileSize" style="color:#64748b; margin-left:10px;"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Or paste credit report HTML directly:</label>
+                        <textarea name="creditReportHTML" placeholder="Paste the full credit report HTML here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('intakeModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Start Analysis</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="batchModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Batch Upload</h2>
+                <button class="modal-close" onclick="closeModal('batchModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom:20px; color:#64748b;">Upload multiple credit reports at once for batch processing.</p>
+                <div class="file-upload" id="batchFileUpload">
+                    <input type="file" name="batchFiles" multiple accept=".html,.htm,.txt" onchange="handleBatchFiles(event)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <h4>Drop files here or click to upload</h4>
+                    <p>Select multiple HTML files</p>
+                </div>
+                <div id="batchFileList" style="margin-top:20px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('batchModal')">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="startBatchProcessing()">Start Batch Analysis</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let uploadedFile = null;
+        let batchFiles = [];
+        
+        function openIntakeModal() {
+            document.getElementById('intakeModal').classList.add('active');
+        }
+        
+        function openBatchModal() {
+            document.getElementById('batchModal').classList.add('active');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                uploadedFile = file;
+                document.getElementById('filePreview').style.display = 'block';
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatBytes(file.size);
+            }
+        }
+        
+        function handleBatchFiles(e) {
+            batchFiles = Array.from(e.target.files);
+            const list = document.getElementById('batchFileList');
+            list.innerHTML = batchFiles.map(f => 
+                `<div style="padding:8px; background:#f8fafc; margin:5px 0; border-radius:6px;">
+                    ${f.name} <span style="color:#64748b;">(${formatBytes(f.size)})</span>
+                </div>`
+            ).join('');
+        }
+        
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+        
+        async function submitIntake(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            let creditReportHTML = formData.get('creditReportHTML');
+            
+            if (uploadedFile && !creditReportHTML) {
+                creditReportHTML = await uploadedFile.text();
+            }
+            
+            if (!creditReportHTML) {
+                alert('Please upload or paste a credit report');
+                return;
+            }
+            
+            const data = {
+                clientName: formData.get('clientName'),
+                clientEmail: formData.get('clientEmail'),
+                clientPhone: formData.get('clientPhone'),
+                creditProvider: formData.get('creditProvider'),
+                disputeRound: parseInt(formData.get('disputeRound')),
+                pricingTier: formData.get('pricingTier'),
+                creditReportHTML: creditReportHTML,
+                analysisMode: 'manual'
+            };
+            
+            try {
+                const btn = form.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.textContent = 'Processing...';
+                
+                const response = await fetch('/api/intake', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Client added successfully! Analysis started.');
+                    closeModal('intakeModal');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Error submitting: ' + err.message);
+            } finally {
+                const btn = form.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.textContent = 'Start Analysis';
+            }
+        }
+        
+        function reviewCase(analysisId) {
+            window.location = '/analysis/' + analysisId + '/review';
+        }
+        
+        function viewCase(caseId) {
+            window.location = '/dashboard/case/' + caseId;
+        }
+        
+        function deliverCase(caseId) {
+            window.location = '/dashboard/case/' + caseId + '/deliver';
+        }
+        
+        function filterByStatus(status) {
+            window.location = '/dashboard/clients?status=' + status;
+        }
+        
+        function searchClients() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#caseTableBody tr');
+            rows.forEach(row => {
+                const name = row.querySelector('.client-name').textContent.toLowerCase();
+                const email = row.querySelector('.client-email').textContent.toLowerCase();
+                row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+            });
+        }
+        
+        function refreshDashboard() {
+            window.location.reload();
+        }
+        
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        const fileUpload = document.getElementById('fileUpload');
+        if (fileUpload) {
+            fileUpload.addEventListener('dragover', e => { e.preventDefault(); fileUpload.classList.add('dragover'); });
+            fileUpload.addEventListener('dragleave', e => { e.preventDefault(); fileUpload.classList.remove('dragover'); });
+            fileUpload.addEventListener('drop', e => {
+                e.preventDefault();
+                fileUpload.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    uploadedFile = e.dataTransfer.files[0];
+                    document.getElementById('filePreview').style.display = 'block';
+                    document.getElementById('fileName').textContent = uploadedFile.name;
+                    document.getElementById('fileSize').textContent = formatBytes(uploadedFile.size);
+                }
+            });
+            fileUpload.addEventListener('click', () => fileUpload.querySelector('input').click());
+        }
+    </script>
+</body>
+</html>

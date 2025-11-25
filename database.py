@@ -220,6 +220,180 @@ class CaseScore(Base):
     
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+# ============================================================
+# NEW TABLES FOR COMPLETE PLATFORM
+# ============================================================
+
+class Case(Base):
+    """Main case tracking - links client to analysis with status pipeline"""
+    __tablename__ = 'cases'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
+    
+    # Case identification
+    case_number = Column(String(50), unique=True, index=True)
+    
+    # Status pipeline
+    status = Column(String(50), default='intake')  # intake, stage1_pending, stage1_complete, stage2_pending, stage2_complete, delivered, settled
+    
+    # Pricing tier
+    pricing_tier = Column(String(50), default='tier1')  # tier1, tier2, tier3
+    base_fee = Column(Float, default=0)
+    contingency_percent = Column(Float, default=0)
+    
+    # Client portal access
+    portal_token = Column(String(100), unique=True, index=True)
+    portal_expires = Column(DateTime)
+    
+    # Tracking
+    intake_at = Column(DateTime)
+    stage1_completed_at = Column(DateTime)
+    stage2_completed_at = Column(DateTime)
+    delivered_at = Column(DateTime)
+    
+    # Notes
+    admin_notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CaseEvent(Base):
+    """Timeline log of all case activities"""
+    __tablename__ = 'case_events'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=False)
+    
+    event_type = Column(String(50))  # intake, analysis_started, analysis_complete, approved, letter_sent, settlement_offer, etc.
+    description = Column(Text)
+    event_data = Column(Text)  # JSON for extra data
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Document(Base):
+    """Stores generated documents with download tracking"""
+    __tablename__ = 'documents'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=False)
+    analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
+    
+    document_type = Column(String(50))  # credit_report, stage1_analysis, stage2_report, dispute_letter, settlement_demand, cfpb_complaint
+    filename = Column(String(255))
+    file_path = Column(String(500))
+    file_size = Column(Integer)
+    
+    # For bureau-specific letters
+    bureau = Column(String(50))
+    
+    # Tracking
+    download_count = Column(Integer, default=0)
+    last_downloaded_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Notification(Base):
+    """Email/SMS notification history"""
+    __tablename__ = 'notifications'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    notification_type = Column(String(50))  # email, sms
+    template = Column(String(100))  # intake_confirmation, stage1_complete, stage2_ready, etc.
+    recipient = Column(String(255))
+    subject = Column(String(255))
+    body = Column(Text)
+    
+    # Status
+    status = Column(String(50), default='pending')  # pending, sent, failed
+    sent_at = Column(DateTime)
+    error_message = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Settlement(Base):
+    """Track settlement negotiations"""
+    __tablename__ = 'settlements'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=False)
+    
+    # Target based on analysis
+    target_amount = Column(Float, default=0)
+    minimum_acceptable = Column(Float, default=0)
+    
+    # Bureau breakdown
+    transunion_target = Column(Float, default=0)
+    experian_target = Column(Float, default=0)
+    equifax_target = Column(Float, default=0)
+    
+    # Negotiation tracking
+    status = Column(String(50), default='pending')  # pending, demand_sent, negotiating, accepted, rejected, litigated
+    
+    # Offers
+    initial_demand = Column(Float, default=0)
+    initial_demand_date = Column(DateTime)
+    counter_offer_1 = Column(Float, default=0)
+    counter_offer_1_date = Column(DateTime)
+    counter_offer_2 = Column(Float, default=0)
+    counter_offer_2_date = Column(DateTime)
+    final_amount = Column(Float, default=0)
+    
+    # Outcome
+    settled_at = Column(DateTime)
+    settlement_notes = Column(Text)
+    
+    # Payment tracking
+    payment_received = Column(Boolean, default=False)
+    payment_amount = Column(Float, default=0)
+    payment_date = Column(DateTime)
+    contingency_earned = Column(Float, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AnalysisQueue(Base):
+    """Batch processing queue"""
+    __tablename__ = 'analysis_queue'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    client_id = Column(Integer, nullable=False)
+    
+    # Queue details
+    priority = Column(Integer, default=5)  # 1=highest, 10=lowest
+    stage = Column(Integer, default=1)  # 1 or 2
+    
+    # Status
+    status = Column(String(50), default='queued')  # queued, processing, completed, failed
+    progress = Column(Integer, default=0)  # 0-100
+    
+    # Credit report data
+    credit_provider = Column(String(100))
+    dispute_round = Column(Integer, default=1)
+    credit_report_html = Column(Text)
+    
+    # Processing info
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    error_message = Column(Text)
+    
+    # Result
+    analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables"""
     Base.metadata.create_all(bind=engine)

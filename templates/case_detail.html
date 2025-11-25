@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Detail - {{ analysis.client_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+        }
+        .logo { color: white; font-size: 20px; font-weight: 700; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
+        .logo span { color: #4ade80; }
+        .nav-item {
+            display: flex; align-items: center; padding: 12px 15px; color: #94a3b8;
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; display: inline-flex; align-items: center;
+            gap: 8px; text-decoration: none;
+        }
+        .btn-primary { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); color: #1a1a2e; }
+        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card-title { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .info-label { color: #64748b; font-size: 14px; }
+        .info-value { color: #1a1a2e; font-weight: 500; font-size: 14px; }
+        .score-large { font-size: 48px; font-weight: 700; text-align: center; padding: 20px; }
+        .score-high { color: #22c55e; }
+        .score-medium { color: #eab308; }
+        .score-low { color: #ef4444; }
+        .exposure-large { font-size: 36px; font-weight: 700; color: #1a1a2e; text-align: center; }
+        .exposure-sub { font-size: 14px; color: #64748b; text-align: center; margin-top: 5px; }
+        .violation-item { padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; }
+        .violation-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .violation-bureau { font-weight: 600; color: #1a1a2e; }
+        .violation-section { font-size: 12px; background: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 10px; }
+        .violation-account { font-size: 13px; color: #64748b; }
+        .violation-desc { font-size: 13px; color: #334155; margin-top: 8px; }
+        .letter-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; }
+        .letter-info { font-weight: 500; color: #1a1a2e; }
+        .download-btn { padding: 6px 12px; background: #4ade80; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; text-decoration: none; color: #1a1a2e; }
+        .standing-item { display: flex; align-items: center; padding: 10px 0; }
+        .standing-check { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 14px; }
+        .standing-check.yes { background: #dcfce7; color: #22c55e; }
+        .standing-check.no { background: #fee2e2; color: #ef4444; }
+        .full-width { grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        <a href="/dashboard" class="nav-item">Dashboard</a>
+        <a href="/dashboard/clients" class="nav-item">Clients</a>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>{{ analysis.client_name }}</h1>
+                <p style="color: #64748b; margin-top: 5px;">Round {{ analysis.dispute_round }} | Created {{ analysis.created_at.strftime('%B %d, %Y') }}</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                {% if analysis.stage == 1 and not analysis.approved_at %}
+                <a href="/analysis/{{ analysis.id }}/review" class="btn btn-primary">Review & Approve</a>
+                {% elif analysis.stage == 2 %}
+                <a href="/analysis/{{ analysis.id }}/download" class="btn btn-primary">Download Package</a>
+                {% endif %}
+                <a href="/dashboard/clients" class="btn btn-secondary">Back</a>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Case Score</div>
+                {% if score %}
+                <div class="score-large {% if score.total_score >= 8 %}score-high{% elif score.total_score >= 5 %}score-medium{% else %}score-low{% endif %}">
+                    {{ score.total_score }}/10
+                </div>
+                <p style="text-align: center; color: #64748b;">{{ score.case_strength }}</p>
+                <div style="margin-top: 20px;">
+                    <div class="info-row">
+                        <span class="info-label">Standing Score</span>
+                        <span class="info-value">{{ score.standing_score }}/3</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Violation Quality</span>
+                        <span class="info-value">{{ score.violation_quality_score }}/4</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Willfulness</span>
+                        <span class="info-value">{{ score.willfulness_score }}/2</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Documentation</span>
+                        <span class="info-value">{{ score.documentation_score }}/1</span>
+                    </div>
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #94a3b8;">No score available</p>
+                {% endif %}
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Damages Exposure</div>
+                {% if damages %}
+                <div class="exposure-large">${{ "{:,.0f}".format(damages.total_exposure) }}</div>
+                <div class="exposure-sub">Total Potential Recovery</div>
+                <div style="margin-top: 20px;">
+                    <div class="info-row">
+                        <span class="info-label">Actual Damages</span>
+                        <span class="info-value">${{ "{:,.0f}".format(damages.actual_damages_total) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Statutory Damages</span>
+                        <span class="info-value">${{ "{:,.0f}".format(damages.statutory_damages_total) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Punitive Damages</span>
+                        <span class="info-value">${{ "{:,.0f}".format(damages.punitive_damages_amount) }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Settlement Target</span>
+                        <span class="info-value" style="color: #22c55e; font-weight: 700;">${{ "{:,.0f}".format(damages.settlement_target) }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #94a3b8;">No damages calculated</p>
+                {% endif %}
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Standing Analysis</div>
+                {% if standing %}
+                <div class="standing-item">
+                    <div class="standing-check {% if standing.has_concrete_harm %}yes{% else %}no{% endif %}">
+                        {% if standing.has_concrete_harm %}✓{% else %}✗{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-weight: 500;">Concrete Harm</div>
+                        <div style="font-size: 12px; color: #64748b;">{{ standing.concrete_harm_type or 'Not documented' }}</div>
+                    </div>
+                </div>
+                <div class="standing-item">
+                    <div class="standing-check {% if standing.has_dissemination %}yes{% else %}no{% endif %}">
+                        {% if standing.has_dissemination %}✓{% else %}✗{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-weight: 500;">Dissemination</div>
+                        <div style="font-size: 12px; color: #64748b;">Third-party access to report</div>
+                    </div>
+                </div>
+                <div class="standing-item">
+                    <div class="standing-check {% if standing.has_causation %}yes{% else %}no{% endif %}">
+                        {% if standing.has_causation %}✓{% else %}✗{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-weight: 500;">Causation</div>
+                        <div style="font-size: 12px; color: #64748b;">"But for" test satisfied</div>
+                    </div>
+                </div>
+                {% else %}
+                <p style="color: #94a3b8;">No standing analysis available</p>
+                {% endif %}
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Generated Letters ({{ letters|length }})</div>
+                {% if letters %}
+                {% for letter in letters %}
+                <div class="letter-item">
+                    <div class="letter-info">{{ letter.bureau }} - Round {{ letter.round_number }}</div>
+                    <a href="/static/generated_letters/{{ letter.file_path|replace('static/generated_letters/', '') }}" class="download-btn" target="_blank">Download</a>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p style="color: #94a3b8;">No letters generated yet</p>
+                {% endif %}
+            </div>
+            
+            <div class="card full-width">
+                <div class="card-title">Violations ({{ violations|length }})</div>
+                {% if violations %}
+                {% for v in violations %}
+                <div class="violation-item">
+                    <div class="violation-header">
+                        <span class="violation-bureau">{{ v.bureau }}</span>
+                        <span class="violation-section">{{ v.fcra_section }}</span>
+                    </div>
+                    <div class="violation-account">{{ v.account_name }}</div>
+                    <div class="violation-desc">{{ v.description[:200] }}{% if v.description|length > 200 %}...{% endif %}</div>
+                    <div style="margin-top: 8px; font-size: 12px; color: #22c55e;">
+                        Damages: ${{ "{:,.0f}".format(v.statutory_damages_min) }} - ${{ "{:,.0f}".format(v.statutory_damages_max) }}
+                        {% if v.is_willful %}<span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 10px; margin-left: 10px;">Willful</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p style="color: #94a3b8;">No violations found</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>
