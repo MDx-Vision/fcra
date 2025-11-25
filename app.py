@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument
 import secrets
 import uuid
 from datetime import timedelta
@@ -5157,6 +5157,359 @@ def api_batch_update_secondary_freezes():
         
     except Exception as e:
         db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# CONTACT LIST MANAGEMENT ENDPOINTS
+# ============================================================
+
+@app.route('/dashboard/contacts')
+def dashboard_contacts():
+    """Enhanced contact list page with CRM features"""
+    db = get_db()
+    try:
+        filter_type = request.args.get('filter', 'all')
+        page = int(request.args.get('page', 1))
+        rows_per_page = request.args.get('rows', '25')
+        
+        query = db.query(Client)
+        
+        if filter_type == 'mark1':
+            query = query.filter(Client.mark_1 == True)
+        elif filter_type == 'mark2':
+            query = query.filter(Client.mark_2 == True)
+        elif filter_type == 'affiliates':
+            query = query.filter(Client.is_affiliate == True)
+        elif filter_type == 'active':
+            query = query.filter(Client.client_type == 'C')
+        elif filter_type == 'leads':
+            query = query.filter(Client.client_type == 'L')
+        elif filter_type == 'follow_up':
+            query = query.filter(Client.follow_up_date != None)
+        elif filter_type == 'signups':
+            query = query.filter(Client.signup_completed == True)
+        elif filter_type == 'last25':
+            query = query.order_by(Client.created_at.desc()).limit(25)
+            contacts = query.all()
+            return render_template('contacts.html', 
+                                 contacts=contacts, 
+                                 filter=filter_type,
+                                 page=1,
+                                 total_pages=1,
+                                 total_contacts=len(contacts),
+                                 rows_per_page=25)
+        
+        total_contacts = query.count()
+        
+        if rows_per_page == 'all':
+            contacts = query.order_by(Client.created_at.desc()).all()
+            total_pages = 1
+            rows_per_page_int = total_contacts
+        else:
+            rows_per_page_int = int(rows_per_page)
+            total_pages = max(1, (total_contacts + rows_per_page_int - 1) // rows_per_page_int)
+            offset = (page - 1) * rows_per_page_int
+            contacts = query.order_by(Client.created_at.desc()).offset(offset).limit(rows_per_page_int).all()
+        
+        return render_template('contacts.html',
+                             contacts=contacts,
+                             filter=filter_type,
+                             page=page,
+                             total_pages=total_pages,
+                             total_contacts=total_contacts,
+                             rows_per_page=rows_per_page)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template('contacts.html',
+                             contacts=[],
+                             filter='all',
+                             page=1,
+                             total_pages=1,
+                             total_contacts=0,
+                             rows_per_page=25)
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/details', methods=['GET'])
+def api_get_client_details(client_id):
+    """Get full client details including documents for modal"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        documents = db.query(ClientDocument).filter_by(client_id=client_id).all()
+        
+        client_data = {
+            'id': client.id,
+            'first_name': client.first_name,
+            'last_name': client.last_name,
+            'name': client.name,
+            'email': client.email,
+            'phone': client.phone,
+            'phone_2': getattr(client, 'phone_2', None),
+            'mobile': getattr(client, 'mobile', None),
+            'company': getattr(client, 'company', None),
+            'website': getattr(client, 'website', None),
+            'address_street': client.address_street,
+            'address_city': client.address_city,
+            'address_state': client.address_state,
+            'address_zip': client.address_zip,
+            'client_type': getattr(client, 'client_type', 'L'),
+            'status_2': getattr(client, 'status_2', None),
+            'is_affiliate': getattr(client, 'is_affiliate', False),
+            'follow_up_date': client.follow_up_date.isoformat() if hasattr(client, 'follow_up_date') and client.follow_up_date else None,
+            'groups': getattr(client, 'groups', None),
+            'mark_1': getattr(client, 'mark_1', False),
+            'mark_2': getattr(client, 'mark_2', False),
+            'created_at': client.created_at.strftime('%Y-%m-%d %H:%M') if client.created_at else None,
+            'updated_at': client.updated_at.strftime('%Y-%m-%d %H:%M') if client.updated_at else None
+        }
+        
+        docs_data = [{
+            'document_type': doc.document_type,
+            'received': doc.received,
+            'received_at': doc.received_at.strftime('%Y-%m-%d') if doc.received_at else None
+        } for doc in documents]
+        
+        return jsonify({'success': True, 'client': client_data, 'documents': docs_data})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/status', methods=['POST'])
+def api_update_client_status(client_id):
+    """Update client status and fields"""
+    db = get_db()
+    try:
+        data = request.json
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        updateable_fields = [
+            'client_type', 'status_2', 'company', 'phone_2', 'mobile', 'website',
+            'is_affiliate', 'follow_up_date', 'groups', 'mark_1', 'mark_2',
+            'first_name', 'last_name', 'email', 'phone',
+            'address_street', 'address_city', 'address_state', 'address_zip'
+        ]
+        
+        for field in updateable_fields:
+            if field in data:
+                value = data[field]
+                if field == 'follow_up_date' and value:
+                    from datetime import date as date_type
+                    if isinstance(value, str):
+                        value = datetime.strptime(value, '%Y-%m-%d').date()
+                setattr(client, field, value)
+        
+        client.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Client updated'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/create', methods=['POST'])
+def api_create_client():
+    """Create a new client"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        first_name = data.get('first_name', '')
+        last_name = data.get('last_name', '')
+        name = f"{first_name} {last_name}".strip() or data.get('email', 'Unknown')
+        
+        client = Client(
+            name=name,
+            first_name=first_name,
+            last_name=last_name,
+            email=data.get('email', ''),
+            phone=data.get('phone', ''),
+            address_street=data.get('address_street', ''),
+            address_city=data.get('address_city', ''),
+            address_state=data.get('address_state', ''),
+            address_zip=data.get('address_zip', ''),
+            portal_token=secrets.token_urlsafe(32)
+        )
+        
+        for field in ['client_type', 'status_2', 'company', 'phone_2', 'mobile', 'website', 'is_affiliate', 'groups']:
+            if field in data:
+                setattr(client, field, data[field])
+        
+        if data.get('follow_up_date'):
+            client.follow_up_date = datetime.strptime(data['follow_up_date'], '%Y-%m-%d').date()
+        
+        db.add(client)
+        db.commit()
+        
+        return jsonify({'success': True, 'client_id': client.id})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/delete', methods=['POST'])
+def api_delete_client(client_id):
+    """Delete a client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        db.query(Task).filter_by(client_id=client_id).delete()
+        db.query(ClientNote).filter_by(client_id=client_id).delete()
+        db.query(ClientDocument).filter_by(client_id=client_id).delete()
+        
+        db.delete(client)
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Client deleted'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/tasks', methods=['GET', 'POST'])
+def api_client_tasks(client_id):
+    """Get or create tasks for a client"""
+    db = get_db()
+    try:
+        if request.method == 'GET':
+            tasks = db.query(Task).filter_by(client_id=client_id).order_by(Task.due_date.desc()).all()
+            tasks_data = [{
+                'id': t.id,
+                'title': t.title,
+                'task_type': t.task_type,
+                'description': t.description,
+                'due_date': t.due_date.isoformat() if t.due_date else None,
+                'due_time': t.due_time,
+                'status': t.status,
+                'assigned_to': t.assigned_to,
+                'created_at': t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else None
+            } for t in tasks]
+            return jsonify({'success': True, 'tasks': tasks_data})
+        else:
+            data = request.json
+            task = Task(
+                client_id=client_id,
+                title=data.get('title'),
+                task_type=data.get('task_type', 'other'),
+                description=data.get('description'),
+                due_time=data.get('due_time'),
+                status='pending',
+                assigned_to=data.get('assigned_to')
+            )
+            if data.get('due_date'):
+                task.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()
+            
+            db.add(task)
+            db.commit()
+            return jsonify({'success': True, 'task_id': task.id})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/notes', methods=['GET', 'POST'])
+def api_client_notes(client_id):
+    """Get or create notes for a client"""
+    db = get_db()
+    try:
+        if request.method == 'GET':
+            notes = db.query(ClientNote).filter_by(client_id=client_id).order_by(ClientNote.created_at.desc()).all()
+            notes_data = [{
+                'id': n.id,
+                'note_content': n.note_content,
+                'created_by': n.created_by,
+                'created_at': n.created_at.strftime('%Y-%m-%d %H:%M') if n.created_at else None
+            } for n in notes]
+            return jsonify({'success': True, 'notes': notes_data})
+        else:
+            data = request.json
+            note = ClientNote(
+                client_id=client_id,
+                note_content=data.get('note_content'),
+                created_by=data.get('created_by', 'Admin')
+            )
+            db.add(note)
+            db.commit()
+            return jsonify({'success': True, 'note_id': note.id})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/documents', methods=['POST'])
+def api_update_client_documents(client_id):
+    """Update document receipt status for a client"""
+    db = get_db()
+    try:
+        data = request.json
+        documents = data.get('documents', [])
+        
+        for doc_data in documents:
+            doc_type = doc_data.get('document_type')
+            received = doc_data.get('received', False)
+            
+            existing = db.query(ClientDocument).filter_by(
+                client_id=client_id, 
+                document_type=doc_type
+            ).first()
+            
+            if existing:
+                existing.received = received
+                existing.received_at = datetime.utcnow() if received and not existing.received_at else existing.received_at
+                existing.updated_at = datetime.utcnow()
+            else:
+                new_doc = ClientDocument(
+                    client_id=client_id,
+                    document_type=doc_type,
+                    received=received,
+                    received_at=datetime.utcnow() if received else None
+                )
+                db.add(new_doc)
+        
+        db.commit()
+        return jsonify({'success': True, 'message': 'Documents updated'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()

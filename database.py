@@ -108,6 +108,19 @@ class Client(Base):
     payment_status = Column(String(50), default='pending')  # pending, paid, failed, refunded
     payment_received_at = Column(DateTime)
     
+    # Contact management fields (CMM style)
+    client_type = Column(String(1), default='L')  # L=Lead, C=Active Client, I=Inactive, O=Other, P=Provider, X=Cancelled
+    status_2 = Column(String(100))  # Secondary status field
+    company = Column(String(255))
+    phone_2 = Column(String(50))
+    mobile = Column(String(50))
+    website = Column(String(255))
+    is_affiliate = Column(Boolean, default=False)
+    follow_up_date = Column(Date)
+    groups = Column(String(500))  # Comma-separated tags
+    mark_1 = Column(Boolean, default=False)  # Color marking flag 1
+    mark_2 = Column(Boolean, default=False)  # Color marking flag 2
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -613,6 +626,57 @@ class SignupDraft(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class Task(Base):
+    """Tasks/reminders for client management"""
+    __tablename__ = 'tasks'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    title = Column(String(255), nullable=False)
+    task_type = Column(String(50))  # call, email, follow_up, document, dispute, other
+    description = Column(Text)
+    
+    due_date = Column(Date)
+    due_time = Column(String(10))  # HH:MM format
+    
+    status = Column(String(50), default='pending')  # pending, completed, cancelled
+    assigned_to = Column(String(100))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ClientNote(Base):
+    """Notes/comments for client records"""
+    __tablename__ = 'client_notes'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    note_content = Column(Text, nullable=False)
+    created_by = Column(String(100))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ClientDocument(Base):
+    """Track document receipt status for clients"""
+    __tablename__ = 'client_documents'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    document_type = Column(String(50), nullable=False)  # agreement, cr_login, drivers_license, ssn_card, utility_bill, poa, other
+    file_path = Column(String(500))
+    
+    received = Column(Boolean, default=False)
+    received_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -655,6 +719,17 @@ def init_db():
         ("clients", "stripe_payment_intent_id", "VARCHAR(255)"),
         ("clients", "payment_status", "VARCHAR(50) DEFAULT 'pending'"),
         ("clients", "payment_received_at", "TIMESTAMP"),
+        ("clients", "client_type", "VARCHAR(1) DEFAULT 'L'"),
+        ("clients", "status_2", "VARCHAR(100)"),
+        ("clients", "company", "VARCHAR(255)"),
+        ("clients", "phone_2", "VARCHAR(50)"),
+        ("clients", "mobile", "VARCHAR(50)"),
+        ("clients", "website", "VARCHAR(255)"),
+        ("clients", "is_affiliate", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "follow_up_date", "DATE"),
+        ("clients", "groups", "VARCHAR(500)"),
+        ("clients", "mark_1", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "mark_2", "BOOLEAN DEFAULT FALSE"),
     ]
     
     conn = engine.connect()

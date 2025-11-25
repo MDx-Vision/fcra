@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact List - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #4ade80; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .main-content {
+            margin-left: 260px;
+            padding: 20px 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #1a1a2e;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #4ade80; }
+
+        .top-nav {
+            display: flex;
+            gap: 2px;
+            background: #e2e8f0;
+            padding: 3px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .top-nav-btn {
+            padding: 8px 14px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .top-nav-btn:hover { background: white; color: #1a1a2e; }
+        .top-nav-btn.active { background: #1a1a2e; color: white; }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .filters-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+        .filter-btn.mark1.active { background: #ef4444; }
+        .filter-btn.mark2.active { background: #f97316; }
+        .filter-btn.affiliate.active { background: #eab308; color: #1a1a2e; }
+
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            flex: 1;
+            max-width: 350px;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 13px;
+            outline: none;
+        }
+        .search-box svg { color: #94a3b8; margin-right: 8px; width: 16px; height: 16px; }
+        .rows-select {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .rows-select select {
+            padding: 6px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            background: white;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 10px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: middle;
+        }
+        .data-table tr:hover { background: #f8fafc; }
+        .data-table tr.mark1 { background: #fef2f2; }
+        .data-table tr.mark2 { background: #fff7ed; }
+
+        .actions-cell {
+            display: flex;
+            gap: 3px;
+            flex-wrap: nowrap;
+        }
+        .action-icon {
+            width: 26px;
+            height: 26px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        .action-icon:hover { background: #e2e8f0; border-color: #94a3b8; }
+        .action-icon.delete { color: #ef4444; }
+        .action-icon.delete:hover { background: #fef2f2; border-color: #ef4444; }
+        .action-icon.task { color: #3b82f6; }
+        .action-icon.task:hover { background: #eff6ff; border-color: #3b82f6; }
+        .action-icon.charge { color: #22c55e; }
+        .action-icon.charge:hover { background: #f0fdf4; border-color: #22c55e; }
+        .action-icon.ai { color: #8b5cf6; }
+        .action-icon.ai:hover { background: #f5f3ff; border-color: #8b5cf6; }
+        .action-icon.workflow { color: #f97316; }
+        .action-icon.workflow:hover { background: #fff7ed; border-color: #f97316; }
+        .action-icon.notes { color: #06b6d4; }
+        .action-icon.notes:hover { background: #ecfeff; border-color: #06b6d4; }
+        .action-icon.docs { color: #0ea5e9; }
+        .action-icon.docs:hover { background: #f0f9ff; border-color: #0ea5e9; }
+        .action-icon.dispute { color: #ec4899; }
+        .action-icon.dispute:hover { background: #fdf2f8; border-color: #ec4899; }
+        .action-icon.portal { color: #14b8a6; }
+        .action-icon.portal:hover { background: #f0fdfa; border-color: #14b8a6; }
+
+        .client-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            cursor: pointer;
+        }
+        .client-name:hover { color: #4ade80; text-decoration: underline; }
+        .client-email {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .status-lead { background: #dbeafe; color: #1e40af; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-inactive { background: #f1f5f9; color: #64748b; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-provider { background: #f3e8ff; color: #7c3aed; }
+        .status-other { background: #fef3c7; color: #92400e; }
+
+        .affiliate-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 700;
+            background: #fef3c7;
+            color: #b45309;
+            text-transform: uppercase;
+        }
+
+        .tags-cell {
+            max-width: 150px;
+        }
+        .tag {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #e0e7ff;
+            color: #4338ca;
+            border-radius: 4px;
+            font-size: 10px;
+            margin: 1px;
+        }
+
+        .mark-toggle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mark-toggle.mark1 { border-color: #ef4444; }
+        .mark-toggle.mark1.active { background: #ef4444; }
+        .mark-toggle.mark2 { border-color: #f97316; }
+        .mark-toggle.mark2.active { background: #f97316; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .pagination-info { font-size: 13px; color: #64748b; }
+        .pagination-btns { display: flex; gap: 5px; }
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .page-btn:hover { border-color: #4ade80; }
+        .page-btn.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 700px;
+            max-width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+            line-height: 1;
+        }
+        .modal-body { padding: 20px; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-group {
+            margin-bottom: 0;
+        }
+        .form-group.full-width { grid-column: span 2; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .form-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .doc-checklist {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .doc-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .doc-item .doc-name { color: #334155; }
+        .doc-status {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .doc-status.received { background: #dcfce7; color: #166534; }
+        .doc-status.pending { background: #fef3c7; color: #92400e; }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+        }
+
+        .notes-panel {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+        .notes-panel h4 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .note-item {
+            padding: 8px 10px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .note-item .note-date {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .note-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            resize: none;
+        }
+
+        @media (max-width: 1400px) {
+            .data-table { font-size: 12px; }
+            .data-table th, .data-table td { padding: 8px 6px; }
+        }
+        @media (max-width: 1200px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full-width { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/contacts" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Contact List
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Cases
+            </a>
+            <a href="/dashboard/signups" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Signups & Payments
+            </a>
+            <a href="/dashboard/queue" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Processing Queue
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Cases</div>
+            <a href="/dashboard/cases?status=stage1_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+                Pending Review
+            </a>
+            <a href="/dashboard/cases?status=stage2_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Ready to Deliver
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Settlements
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Tools</div>
+            <a href="/dashboard/reports" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Reports
+            </a>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>Contact List</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="openAddContactModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Contact
+                </button>
+                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <div class="top-nav">
+            <button class="top-nav-btn active" onclick="openAddContactModal()">Add Contact</button>
+            <button class="top-nav-btn" onclick="selectAllContacts()">Select Contacts</button>
+            <button class="top-nav-btn" onclick="bulkUpdateContacts()">Change Contacts</button>
+            <button class="top-nav-btn" onclick="goToInvoices()">Go To Invoices</button>
+            <button class="top-nav-btn">Marketing</button>
+            <button class="top-nav-btn">VA Manager</button>
+            <button class="top-nav-btn">Tools</button>
+            <button class="top-nav-btn">E-mails Related</button>
+            <button class="top-nav-btn">Post Portals</button>
+            <button class="top-nav-btn" onclick="openMyNotes()">My Notes</button>
+        </div>
+        
+        <div class="content-card">
+            <div class="filters-row">
+                <a href="/dashboard/contacts?filter=mark1" class="filter-btn mark1 {% if filter == 'mark1' %}active{% endif %}">Mark 1</a>
+                <a href="/dashboard/contacts?filter=mark2" class="filter-btn mark2 {% if filter == 'mark2' %}active{% endif %}">Mark 2</a>
+                <a href="/dashboard/contacts?filter=affiliates" class="filter-btn affiliate {% if filter == 'affiliates' %}active{% endif %}">Affiliates</a>
+                <a href="/dashboard/contacts?filter=active" class="filter-btn {% if filter == 'active' %}active{% endif %}">Active</a>
+                <a href="/dashboard/contacts?filter=leads" class="filter-btn {% if filter == 'leads' %}active{% endif %}">Leads</a>
+                <a href="/dashboard/contacts?filter=follow_up" class="filter-btn {% if filter == 'follow_up' %}active{% endif %}">Follow Up</a>
+                <a href="/dashboard/contacts?filter=signups" class="filter-btn {% if filter == 'signups' %}active{% endif %}">Signups</a>
+                <a href="/dashboard/contacts?filter=last25" class="filter-btn {% if filter == 'last25' %}active{% endif %}">Last 25</a>
+                <a href="/dashboard/contacts" class="filter-btn {% if not filter or filter == 'all' %}active{% endif %}">Show All</a>
+            </div>
+
+            <div class="search-controls">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" placeholder="Search by name, email, phone..." id="searchInput" onkeyup="searchContacts()">
+                </div>
+                <div class="rows-select">
+                    <span>Show</span>
+                    <select id="rowsPerPage" onchange="changeRowsPerPage()">
+                        <option value="25" {% if rows_per_page == 25 %}selected{% endif %}>25</option>
+                        <option value="50" {% if rows_per_page == 50 %}selected{% endif %}>50</option>
+                        <option value="100" {% if rows_per_page == 100 %}selected{% endif %}>100</option>
+                        <option value="all" {% if rows_per_page == 'all' %}selected{% endif %}>All</option>
+                    </select>
+                    <span>rows</span>
+                </div>
+            </div>
+            
+            {% if contacts %}
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
+                            <th>Actions</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Company</th>
+                            <th>Status 1</th>
+                            <th>Status 2</th>
+                            <th>Tags/Groups</th>
+                            <th>Follow Up</th>
+                            <th>Mobile</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Affiliate</th>
+                            <th style="width: 50px;">Mark</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contactTableBody">
+                        {% for contact in contacts %}
+                        <tr class="{% if contact.mark_1 %}mark1{% elif contact.mark_2 %}mark2{% endif %}" data-id="{{ contact.id }}">
+                            <td><input type="checkbox" class="contact-checkbox" value="{{ contact.id }}"></td>
+                            <td>
+                                <div class="actions-cell">
+                                    <span class="action-icon delete" title="Delete" onclick="deleteContact({{ contact.id }})">🗑</span>
+                                    <span class="action-icon task" title="Add Task" onclick="openTaskModal({{ contact.id }})">📅</span>
+                                    <span class="action-icon charge" title="Charge Client" onclick="chargeClient({{ contact.id }})">💵</span>
+                                    <span class="action-icon ai" title="Generate Credit Action Plan" onclick="generatePlan({{ contact.id }})">🤖</span>
+                                    <span class="action-icon workflow" title="Workflow Manager" onclick="openWorkflow({{ contact.id }})">⚙️</span>
+                                    <span class="action-icon notes" title="Client Notes" onclick="openNotesModal({{ contact.id }})">📝</span>
+                                    <span class="action-icon docs" title="Documents" onclick="openDocsModal({{ contact.id }})">📄</span>
+                                    <span class="action-icon dispute" title="Dispute Center" onclick="openDisputeCenter({{ contact.id }})">⚖️</span>
+                                    <span class="action-icon portal" title="Client Portal" onclick="viewPortal('{{ contact.portal_token }}')">🌐</span>
+                                </div>
+                            </td>
+                            <td><span class="client-name" onclick="openContactModal({{ contact.id }})">{{ contact.first_name or '-' }}</span></td>
+                            <td>{{ contact.last_name or '-' }}</td>
+                            <td>{{ contact.company or '-' }}</td>
+                            <td>
+                                {% if contact.client_type == 'L' %}
+                                <span class="status-badge status-lead">Lead</span>
+                                {% elif contact.client_type == 'C' %}
+                                <span class="status-badge status-active">Active Client</span>
+                                {% elif contact.client_type == 'I' %}
+                                <span class="status-badge status-inactive">Inactive</span>
+                                {% elif contact.client_type == 'X' %}
+                                <span class="status-badge status-cancelled">Cancelled</span>
+                                {% elif contact.client_type == 'P' %}
+                                <span class="status-badge status-provider">Provider</span>
+                                {% else %}
+                                <span class="status-badge status-other">Other</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ contact.status_2 or '-' }}</td>
+                            <td class="tags-cell">
+                                {% if contact.groups %}
+                                    {% for tag in contact.groups.split(',')[:3] %}
+                                    <span class="tag">{{ tag.strip() }}</span>
+                                    {% endfor %}
+                                    {% if contact.groups.split(',')|length > 3 %}
+                                    <span class="tag">+{{ contact.groups.split(',')|length - 3 }}</span>
+                                    {% endif %}
+                                {% else %}-{% endif %}
+                            </td>
+                            <td>{% if contact.follow_up_date %}{{ contact.follow_up_date.strftime('%m/%d/%y') }}{% else %}-{% endif %}</td>
+                            <td>{{ contact.mobile or '-' }}</td>
+                            <td>{{ contact.phone or '-' }}</td>
+                            <td><span class="client-email">{{ contact.email or '-' }}</span></td>
+                            <td>{% if contact.is_affiliate %}<span class="affiliate-badge">Affiliate</span>{% endif %}</td>
+                            <td>
+                                <div style="display: flex; gap: 3px;">
+                                    <span class="mark-toggle mark1 {% if contact.mark_1 %}active{% endif %}" onclick="toggleMark({{ contact.id }}, 1, this)" title="Mark 1"></span>
+                                    <span class="mark-toggle mark2 {% if contact.mark_2 %}active{% endif %}" onclick="toggleMark({{ contact.id }}, 2, this)" title="Mark 2"></span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <div class="pagination-info">
+                    Showing {{ contacts|length }} of {{ total_contacts }} contacts
+                </div>
+                {% if total_pages > 1 %}
+                <div class="pagination-btns">
+                    {% if page > 1 %}
+                    <a href="/dashboard/contacts?page={{ page - 1 }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn">Previous</a>
+                    {% endif %}
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p <= 3 or p > total_pages - 3 or (p >= page - 1 and p <= page + 1) %}
+                        <a href="/dashboard/contacts?page={{ p }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+                        {% elif p == 4 or p == total_pages - 3 %}
+                        <span class="page-btn" style="border: none;">...</span>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page < total_pages %}
+                    <a href="/dashboard/contacts?page={{ page + 1 }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn">Next</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <h3>No contacts found</h3>
+                <p>{% if filter %}Try a different filter or {% endif %}add your first contact</p>
+                <button class="btn btn-primary" onclick="openAddContactModal()">Add Contact</button>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <div id="contactModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'contactModal')">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="contactModalTitle">Contact Details</h2>
+                <button class="modal-close" onclick="closeModal('contactModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-section">
+                    <div class="form-section-title">Basic Information</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Contact ID</label>
+                            <input type="text" id="contactId" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Client Type</label>
+                            <select id="clientType">
+                                <option value="L">Lead</option>
+                                <option value="C">Active Client</option>
+                                <option value="I">Inactive</option>
+                                <option value="O">Other</option>
+                                <option value="P">Provider</option>
+                                <option value="X">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="firstName">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="lastName">
+                        </div>
+                        <div class="form-group">
+                            <label>Company</label>
+                            <input type="text" id="company">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="email">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">Address</div>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label>Street Address</label>
+                            <input type="text" id="addressStreet">
+                        </div>
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" id="addressCity">
+                        </div>
+                        <div class="form-group">
+                            <label>State</label>
+                            <input type="text" id="addressState">
+                        </div>
+                        <div class="form-group">
+                            <label>ZIP Code</label>
+                            <input type="text" id="addressZip">
+                        </div>
+                        <div class="form-group">
+                            <label>Website</label>
+                            <input type="text" id="website">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">Phone Numbers</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Phone 1</label>
+                            <input type="text" id="phone">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone 2</label>
+                            <input type="text" id="phone2">
+                        </div>
+                        <div class="form-group">
+                            <label>Mobile</label>
+                            <input type="text" id="mobile">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">Status & Groups</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Status 1</label>
+                            <select id="status1">
+                                <option value="L">Lead</option>
+                                <option value="C">Active Client</option>
+                                <option value="I">Inactive</option>
+                                <option value="O">Other</option>
+                                <option value="P">Provider</option>
+                                <option value="X">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status 2</label>
+                            <input type="text" id="status2">
+                        </div>
+                        <div class="form-group">
+                            <label>Follow Up Date</label>
+                            <input type="date" id="followUpDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Is Affiliate</label>
+                            <select id="isAffiliate">
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Groups/Tags (comma-separated)</label>
+                            <input type="text" id="groups" placeholder="e.g., VIP, Round 2, Priority">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">Document Tracking</div>
+                    <div class="doc-checklist" id="docChecklist">
+                    </div>
+                </div>
+
+                <div class="form-section" style="border-bottom: none; margin-bottom: 0;">
+                    <div class="form-section-title">Meta Information</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Created On</label>
+                            <input type="text" id="createdOn" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Updated</label>
+                            <input type="text" id="updatedOn" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('contactModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveContact()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notesModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'notesModal')">
+        <div class="modal" style="width: 500px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Client Notes</h2>
+                <button class="modal-close" onclick="closeModal('notesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Add New Note</label>
+                    <textarea id="newNote" class="note-input" rows="3" placeholder="Enter your note here..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveNote()" style="margin-bottom: 15px;">Add Note</button>
+                
+                <div class="notes-panel">
+                    <h4>Previous Notes</h4>
+                    <div id="notesList">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="taskModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'taskModal')">
+        <div class="modal" style="width: 500px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Add Task</h2>
+                <button class="modal-close" onclick="closeModal('taskModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="taskTitle" placeholder="e.g., Follow up call">
+                </div>
+                <div class="form-group">
+                    <label>Task Type</label>
+                    <select id="taskType">
+                        <option value="call">Phone Call</option>
+                        <option value="email">Email</option>
+                        <option value="follow_up">Follow Up</option>
+                        <option value="document">Document Request</option>
+                        <option value="dispute">Dispute Action</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input type="date" id="taskDueDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Due Time</label>
+                        <input type="time" id="taskDueTime">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="taskDescription" class="note-input" rows="3" placeholder="Additional details..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Assign To</label>
+                    <input type="text" id="taskAssignee" placeholder="Team member name">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('taskModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTask()">Create Task</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="docsModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'docsModal')">
+        <div class="modal" style="width: 550px;" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Document Tracking</h2>
+                <button class="modal-close" onclick="closeModal('docsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="doc-checklist" id="docsModalChecklist">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('docsModal')">Close</button>
+                <button class="btn btn-primary" onclick="saveDocuments()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentContactId = null;
+        let currentNotesClientId = null;
+        let currentTaskClientId = null;
+        let currentDocsClientId = null;
+
+        function searchContacts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#contactTableBody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function changeRowsPerPage() {
+            const rows = document.getElementById('rowsPerPage').value;
+            const url = new URL(window.location);
+            url.searchParams.set('rows', rows);
+            url.searchParams.set('page', 1);
+            window.location = url;
+        }
+
+        function toggleSelectAll(checkbox) {
+            document.querySelectorAll('.contact-checkbox').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        }
+
+        function selectAllContacts() {
+            document.querySelectorAll('.contact-checkbox').forEach(cb => {
+                cb.checked = true;
+            });
+        }
+
+        function bulkUpdateContacts() {
+            const selected = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
+            if (selected.length === 0) {
+                alert('Please select at least one contact');
+                return;
+            }
+            alert('Bulk update for ' + selected.length + ' contacts - Feature coming soon!');
+        }
+
+        function goToInvoices() {
+            window.location.href = '/dashboard/signups';
+        }
+
+        function openMyNotes() {
+            alert('My Notes feature coming soon!');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function closeModalOnOverlay(event, modalId) {
+            if (event.target.classList.contains('modal-overlay')) {
+                closeModal(modalId);
+            }
+        }
+
+        function openAddContactModal() {
+            currentContactId = null;
+            document.getElementById('contactModalTitle').textContent = 'Add New Contact';
+            document.getElementById('contactId').value = 'New';
+            document.getElementById('clientType').value = 'L';
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('company').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('addressStreet').value = '';
+            document.getElementById('addressCity').value = '';
+            document.getElementById('addressState').value = '';
+            document.getElementById('addressZip').value = '';
+            document.getElementById('website').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('phone2').value = '';
+            document.getElementById('mobile').value = '';
+            document.getElementById('status1').value = 'L';
+            document.getElementById('status2').value = '';
+            document.getElementById('followUpDate').value = '';
+            document.getElementById('isAffiliate').value = '0';
+            document.getElementById('groups').value = '';
+            document.getElementById('createdOn').value = 'N/A';
+            document.getElementById('updatedOn').value = 'N/A';
+            renderDocChecklist([]);
+            document.getElementById('contactModal').classList.add('active');
+        }
+
+        async function openContactModal(id) {
+            currentContactId = id;
+            try {
+                const response = await fetch('/api/clients/' + id + '/details');
+                const data = await response.json();
+                if (data.success) {
+                    const c = data.client;
+                    document.getElementById('contactModalTitle').textContent = 'Edit Contact';
+                    document.getElementById('contactId').value = c.id;
+                    document.getElementById('clientType').value = c.client_type || 'L';
+                    document.getElementById('firstName').value = c.first_name || '';
+                    document.getElementById('lastName').value = c.last_name || '';
+                    document.getElementById('company').value = c.company || '';
+                    document.getElementById('email').value = c.email || '';
+                    document.getElementById('addressStreet').value = c.address_street || '';
+                    document.getElementById('addressCity').value = c.address_city || '';
+                    document.getElementById('addressState').value = c.address_state || '';
+                    document.getElementById('addressZip').value = c.address_zip || '';
+                    document.getElementById('website').value = c.website || '';
+                    document.getElementById('phone').value = c.phone || '';
+                    document.getElementById('phone2').value = c.phone_2 || '';
+                    document.getElementById('mobile').value = c.mobile || '';
+                    document.getElementById('status1').value = c.client_type || 'L';
+                    document.getElementById('status2').value = c.status_2 || '';
+                    document.getElementById('followUpDate').value = c.follow_up_date || '';
+                    document.getElementById('isAffiliate').value = c.is_affiliate ? '1' : '0';
+                    document.getElementById('groups').value = c.groups || '';
+                    document.getElementById('createdOn').value = c.created_at || 'N/A';
+                    document.getElementById('updatedOn').value = c.updated_at || 'N/A';
+                    renderDocChecklist(data.documents || []);
+                    document.getElementById('contactModal').classList.add('active');
+                } else {
+                    alert('Error loading contact: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error loading contact: ' + error.message);
+            }
+        }
+
+        function renderDocChecklist(docs) {
+            const docTypes = [
+                { key: 'agreement', label: 'Agreement Signed' },
+                { key: 'cr_login', label: 'CR Login Received' },
+                { key: 'drivers_license', label: "Driver's License" },
+                { key: 'ssn_card', label: 'SSN Card' },
+                { key: 'utility_bill', label: 'Utility Bill' },
+                { key: 'poa', label: 'Power of Attorney' }
+            ];
+            const docMap = {};
+            docs.forEach(d => { docMap[d.document_type] = d.received; });
+            const html = docTypes.map(dt => {
+                const received = docMap[dt.key] || false;
+                return `<div class="doc-item">
+                    <span class="doc-name">${dt.label}</span>
+                    <span class="doc-status ${received ? 'received' : 'pending'}">${received ? 'Received' : 'Pending'}</span>
+                </div>`;
+            }).join('');
+            document.getElementById('docChecklist').innerHTML = html;
+        }
+
+        async function saveContact() {
+            const data = {
+                client_type: document.getElementById('clientType').value,
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                company: document.getElementById('company').value,
+                email: document.getElementById('email').value,
+                address_street: document.getElementById('addressStreet').value,
+                address_city: document.getElementById('addressCity').value,
+                address_state: document.getElementById('addressState').value,
+                address_zip: document.getElementById('addressZip').value,
+                website: document.getElementById('website').value,
+                phone: document.getElementById('phone').value,
+                phone_2: document.getElementById('phone2').value,
+                mobile: document.getElementById('mobile').value,
+                status_2: document.getElementById('status2').value,
+                follow_up_date: document.getElementById('followUpDate').value || null,
+                is_affiliate: document.getElementById('isAffiliate').value === '1',
+                groups: document.getElementById('groups').value
+            };
+
+            try {
+                const url = currentContactId ? '/api/clients/' + currentContactId + '/status' : '/api/clients/create';
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('contactModal');
+                    location.reload();
+                } else {
+                    alert('Error saving contact: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error saving contact: ' + error.message);
+            }
+        }
+
+        async function toggleMark(id, markNum, el) {
+            try {
+                const response = await fetch('/api/clients/' + id + '/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ['mark_' + markNum]: !el.classList.contains('active') })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    el.classList.toggle('active');
+                    const row = el.closest('tr');
+                    if (markNum === 1) {
+                        row.classList.toggle('mark1', el.classList.contains('active'));
+                    } else {
+                        row.classList.toggle('mark2', el.classList.contains('active'));
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling mark:', error);
+            }
+        }
+
+        async function deleteContact(id) {
+            if (!confirm('Are you sure you want to delete this contact?')) return;
+            try {
+                const response = await fetch('/api/clients/' + id + '/delete', { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    document.querySelector('tr[data-id="' + id + '"]').remove();
+                } else {
+                    alert('Error deleting contact: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error deleting contact: ' + error.message);
+            }
+        }
+
+        function openTaskModal(id) {
+            currentTaskClientId = id;
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskType').value = 'call';
+            document.getElementById('taskDueDate').value = '';
+            document.getElementById('taskDueTime').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskAssignee').value = '';
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        async function saveTask() {
+            const data = {
+                title: document.getElementById('taskTitle').value,
+                task_type: document.getElementById('taskType').value,
+                due_date: document.getElementById('taskDueDate').value || null,
+                due_time: document.getElementById('taskDueTime').value || null,
+                description: document.getElementById('taskDescription').value,
+                assigned_to: document.getElementById('taskAssignee').value
+            };
+            if (!data.title) {
+                alert('Please enter a task title');
+                return;
+            }
+            try {
+                const response = await fetch('/api/clients/' + currentTaskClientId + '/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('taskModal');
+                    alert('Task created successfully!');
+                } else {
+                    alert('Error creating task: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error creating task: ' + error.message);
+            }
+        }
+
+        async function openNotesModal(id) {
+            currentNotesClientId = id;
+            document.getElementById('newNote').value = '';
+            document.getElementById('notesModal').classList.add('active');
+            try {
+                const response = await fetch('/api/clients/' + id + '/notes');
+                const data = await response.json();
+                if (data.success) {
+                    const html = data.notes.map(n => `
+                        <div class="note-item">
+                            <div>${n.note_content}</div>
+                            <div class="note-date">${n.created_at} - ${n.created_by || 'Admin'}</div>
+                        </div>
+                    `).join('') || '<div style="color: #94a3b8; text-align: center; padding: 20px;">No notes yet</div>';
+                    document.getElementById('notesList').innerHTML = html;
+                }
+            } catch (error) {
+                document.getElementById('notesList').innerHTML = '<div style="color: #ef4444;">Error loading notes</div>';
+            }
+        }
+
+        async function saveNote() {
+            const content = document.getElementById('newNote').value.trim();
+            if (!content) {
+                alert('Please enter a note');
+                return;
+            }
+            try {
+                const response = await fetch('/api/clients/' + currentNotesClientId + '/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note_content: content })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    document.getElementById('newNote').value = '';
+                    openNotesModal(currentNotesClientId);
+                } else {
+                    alert('Error saving note: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error saving note: ' + error.message);
+            }
+        }
+
+        async function openDocsModal(id) {
+            currentDocsClientId = id;
+            document.getElementById('docsModal').classList.add('active');
+            try {
+                const response = await fetch('/api/clients/' + id + '/details');
+                const data = await response.json();
+                if (data.success) {
+                    const docs = data.documents || [];
+                    const docTypes = [
+                        { key: 'agreement', label: 'Agreement Signed' },
+                        { key: 'cr_login', label: 'CR Login Received' },
+                        { key: 'drivers_license', label: "Driver's License" },
+                        { key: 'ssn_card', label: 'SSN Card' },
+                        { key: 'utility_bill', label: 'Utility Bill' },
+                        { key: 'poa', label: 'Power of Attorney' }
+                    ];
+                    const docMap = {};
+                    docs.forEach(d => { docMap[d.document_type] = d.received; });
+                    const html = docTypes.map(dt => {
+                        const received = docMap[dt.key] || false;
+                        return `<div class="doc-item" style="cursor: pointer;" onclick="toggleDoc(this, '${dt.key}')">
+                            <span class="doc-name">${dt.label}</span>
+                            <span class="doc-status ${received ? 'received' : 'pending'}" data-type="${dt.key}">${received ? 'Received' : 'Pending'}</span>
+                        </div>`;
+                    }).join('');
+                    document.getElementById('docsModalChecklist').innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+
+        function toggleDoc(el, docType) {
+            const statusEl = el.querySelector('.doc-status');
+            const isReceived = statusEl.classList.contains('received');
+            statusEl.classList.toggle('received', !isReceived);
+            statusEl.classList.toggle('pending', isReceived);
+            statusEl.textContent = isReceived ? 'Pending' : 'Received';
+        }
+
+        async function saveDocuments() {
+            const updates = [];
+            document.querySelectorAll('#docsModalChecklist .doc-status').forEach(el => {
+                updates.push({
+                    document_type: el.dataset.type,
+                    received: el.classList.contains('received')
+                });
+            });
+            try {
+                const response = await fetch('/api/clients/' + currentDocsClientId + '/documents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ documents: updates })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    closeModal('docsModal');
+                    alert('Documents updated!');
+                } else {
+                    alert('Error updating documents: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error updating documents: ' + error.message);
+            }
+        }
+
+        function chargeClient(id) {
+            window.location.href = '/dashboard/signups?client=' + id;
+        }
+
+        function generatePlan(id) {
+            alert('Generating Credit Action Plan for client #' + id + ' - Redirecting to analysis...');
+            window.location.href = '/dashboard/clients?action=analyze&client=' + id;
+        }
+
+        function openWorkflow(id) {
+            window.location.href = '/dashboard/case/' + id;
+        }
+
+        function openDisputeCenter(id) {
+            window.location.href = '/dashboard/case/' + id + '#disputes';
+        }
+
+        function viewPortal(token) {
+            if (token) {
+                window.open('/portal/' + token, '_blank');
+            } else {
+                alert('No portal token available for this client');
+            }
+        }
+    </script>
+</body>
+</html>
