@@ -67,16 +67,20 @@ def calculate_damages(violations, actual_damages_input):
         
         # FCRA statutory damages: $100-$1,000 per violation
         # Using conservative estimates within legal limits
-        if '605B' in section.upper() or '605(B)' in section.upper():
+        # Handle both formats: "605B", "§1681e(b)", "1681e", etc.
+        section_upper = section.upper()
+        
+        # §1681c = 605 (obsolete info), §1681e = 607 (accuracy), §1681i = 611 (disputes), §1681s-2 = 623 (furnisher)
+        if '605B' in section_upper or '605(B)' in section_upper or '1681C' in section_upper:
             damages['statutory']['605b']['count'] += 1
             damages['statutory']['605b']['amount'] += 1000  # Max allowed under FCRA
-        elif '607' in section and 'B' in section.upper():
+        elif '607' in section_upper or '1681E' in section_upper:
             damages['statutory']['607b']['count'] += 1
             damages['statutory']['607b']['amount'] += 750  # Mid-high range
-        elif '611' in section:
+        elif '611' in section_upper or '1681I' in section_upper:
             damages['statutory']['611']['count'] += 1
             damages['statutory']['611']['amount'] += 750  # Mid-high range
-        elif '623' in section:
+        elif '623' in section_upper or '1681S' in section_upper:
             damages['statutory']['623']['count'] += 1
             damages['statutory']['623']['amount'] += 750  # Mid-high range
     

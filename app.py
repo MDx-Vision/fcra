@@ -1240,7 +1240,16 @@ def auto_populate_litigation_database(analysis_id, client_id, litigation_data, d
             'violation_type': v.violation_type
         } for v in violations_for_calc]
         
-        actual_damages_input = litigation_data.get('actual_damages', {})
+        # Map Claude's output format to calculate_damages expected format
+        claude_damages = litigation_data.get('actual_damages', {})
+        actual_damages_input = {
+            'credit_denials': claude_damages.get('credit_denials_amount', 0),
+            'higher_interest': claude_damages.get('higher_interest_amount', 0),
+            'credit_monitoring': claude_damages.get('credit_monitoring_amount', 0),
+            'time_stress': claude_damages.get('time_stress_amount', 0),
+            'other': claude_damages.get('other_actual_amount', 0),
+            'notes': claude_damages.get('notes', '')
+        }
         damages_calc = calculate_damages(violations_data, actual_damages_input)
         
         damages = Damages(
@@ -1779,9 +1788,9 @@ def analyze_and_generate_letters():
             analysis_mode='manual',
             stage=1,  # This is Stage 1 analysis
             stage_1_analysis=str(merged_litigation_data),  # Store merged Stage 1 results
-            cost=merged_litigation_data.get('total_cost', 0),
-            tokens_used=merged_litigation_data.get('total_tokens', 0),
-            cache_read=False
+            cost=section_analysis.get('cost', 0),  # Cost is at top level of section_analysis
+            tokens_used=section_analysis.get('tokens_used', 0),  # Tokens at top level
+            cache_read=section_analysis.get('cache_read', False)
         )
         db.add(analysis_record)
         db.commit()
