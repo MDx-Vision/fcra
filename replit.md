@@ -50,3 +50,15 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **PostgreSQL**: Database solution, backed by Neon.
 - **SQLAlchemy**: Python SQL toolkit and Object-Relational Mapper (ORM) for database interactions.
 - **Fernet**: For symmetric encryption of sensitive data.
+- **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
+
+## Recent Changes (November 25, 2025)
+- **Stripe Payment Integration**: Added 4-step signup flow with Plan & Payment selection, Stripe Checkout redirect, and webhook handling for payment confirmation
+- **SignupDraft Model**: Pre-payment intake data storage with 24-hour expiration
+- **Client Payment Fields**: Added signup_plan, signup_amount, stripe_customer_id, payment_status, etc. to Client model
+- **Dispute Item Tracking**: DisputeItem model for account-by-account tracking with bureau-specific tables
+- **Secondary Bureau Freeze Tracking**: SecondaryBureauFreeze model for 9 secondary bureaus (Innovis, ChexSystems, etc.)
+- **Client Portal Status Tab**: Enhanced with interactive status tables and freeze tracking
+
+## Future Integrations (Not Yet Configured)
+- **Email Service**: User declined SendGrid setup - will need to configure transactional email later (for welcome emails, dispute notifications, etc.)
