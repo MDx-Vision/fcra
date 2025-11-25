@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signups & Payments - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+        }
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #4ade80; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #1a1a2e;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #4ade80; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-card.highlight .stat-label { color: #94a3b8; }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .stat-card.highlight .stat-value { color: #4ade80; }
+        .stat-change {
+            font-size: 12px;
+            color: #22c55e;
+            font-weight: 500;
+        }
+        .stat-change.negative { color: #ef4444; }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            max-width: 400px;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        .client-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .client-email {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-paid { background: #dcfce7; color: #166534; }
+        .status-failed { background: #fee2e2; color: #991b1b; }
+        .status-expired { background: #f1f5f9; color: #64748b; }
+        .status-refunded { background: #e0e7ff; color: #3730a3; }
+        .plan-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .plan-tier1 { background: #dbeafe; color: #1e40af; }
+        .plan-tier2 { background: #dcfce7; color: #166534; }
+        .plan-tier3 { background: #fef3c7; color: #92400e; }
+        .plan-tier4 { background: #e0e7ff; color: #3730a3; }
+        .plan-tier5 { background: #fce7f3; color: #9d174d; }
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            color: #334155;
+            display: inline-block;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #4ade80; }
+        .action-btn.primary { background: #4ade80; border-color: #4ade80; color: #1a1a2e; }
+        .action-btn.contacted { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .amount {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .contacted-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            background: #dbeafe;
+            color: #1e40af;
+            margin-left: 8px;
+        }
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Clients
+            </a>
+            <a href="/dashboard/signups" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Signups & Payments
+            </a>
+            <a href="/dashboard/queue" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Processing Queue
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Cases</div>
+            <a href="/dashboard/cases?status=stage1_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Pending Review
+            </a>
+            <a href="/dashboard/cases?status=stage2_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Ready to Deliver
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Settlements
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Tools</div>
+            <a href="/dashboard/reports" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Reports
+            </a>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>Signups & Payments</h1>
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value">${{ "{:,.0f}".format(stats.total_revenue / 100) }}</div>
+                <div class="stat-change">From paid signups</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending Payments</div>
+                <div class="stat-value">{{ stats.pending_count }}</div>
+                <div class="stat-change {% if stats.pending_count > 10 %}negative{% endif %}">
+                    {% if stats.pending_count > 10 %}Need follow-up{% else %}Normal{% endif %}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Paid Clients</div>
+                <div class="stat-value">{{ stats.paid_count }}</div>
+                <div class="stat-change">{{ stats.paid_this_week }} this week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Failed Payments</div>
+                <div class="stat-value">{{ stats.failed_count }}</div>
+                <div class="stat-change {% if stats.failed_count > 0 %}negative{% endif %}">
+                    {% if stats.failed_count > 0 %}Needs attention{% else %}All clear{% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if drafts %}
+        <div class="content-card">
+            <div class="section-title">Pending Signups (Awaiting Payment)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for draft in drafts %}
+                    <tr>
+                        <td>
+                            <div class="client-name">{{ draft.client_name }}</div>
+                            <div class="client-email">{{ draft.client_email }}</div>
+                        </td>
+                        <td>
+                            <span class="plan-badge plan-{{ draft.plan_tier }}">{{ draft.plan_tier }}</span>
+                        </td>
+                        <td class="amount">${{ "{:,.2f}".format(draft.plan_amount / 100) }}</td>
+                        <td>
+                            <span class="status-badge status-{{ draft.status }}">{{ draft.status|capitalize }}</span>
+                        </td>
+                        <td>{{ draft.created_at }}</td>
+                        <td>
+                            <button class="action-btn" onclick="markContacted('draft', {{ draft.id }}, this)" title="Mark as contacted">
+                                📞 Contact
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="content-card">
+            <div class="section-title">Client Signups</div>
+            
+            <div class="filters">
+                <a href="/dashboard/signups" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
+                <a href="/dashboard/signups?status=paid" class="filter-btn {% if status_filter == 'paid' %}active{% endif %}">Paid</a>
+                <a href="/dashboard/signups?status=pending" class="filter-btn {% if status_filter == 'pending' %}active{% endif %}">Pending</a>
+                <a href="/dashboard/signups?status=failed" class="filter-btn {% if status_filter == 'failed' %}active{% endif %}">Failed</a>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()">
+            </div>
+            
+            {% if clients %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Payment Status</th>
+                        <th>Signup Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clientTableBody">
+                    {% for client in clients %}
+                    <tr>
+                        <td>
+                            <div class="client-name">
+                                {{ client.name }}
+                                {% if client.contacted %}<span class="contacted-badge">Contacted</span>{% endif %}
+                            </div>
+                            <div class="client-email">{{ client.email or 'No email' }}</div>
+                        </td>
+                        <td>
+                            {% if client.signup_plan %}
+                            <span class="plan-badge plan-{{ client.signup_plan }}">{{ client.signup_plan }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="amount">
+                            {% if client.signup_amount %}${{ "{:,.2f}".format(client.signup_amount / 100) }}{% else %}-{% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ client.payment_status }}">{{ client.payment_status|capitalize }}</span>
+                        </td>
+                        <td>{{ client.created_at }}</td>
+                        <td>
+                            {% if client.portal_token %}
+                            <a href="/portal/{{ client.portal_token }}" class="action-btn" target="_blank" title="View client portal">
+                                👁 Portal
+                            </a>
+                            {% endif %}
+                            <button class="action-btn {% if client.contacted %}contacted{% endif %}" 
+                                    onclick="markContacted('client', {{ client.id }}, this)" 
+                                    title="{% if client.contacted %}Already contacted{% else %}Mark as contacted{% endif %}">
+                                📞 {% if client.contacted %}Contacted{% else %}Contact{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <h3>No signups found</h3>
+                <p>{% if status_filter != 'all' %}Try a different filter{% else %}Waiting for new signups{% endif %}</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    
+    <script>
+        function searchClients() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#clientTableBody tr');
+            rows.forEach(row => {
+                const name = row.querySelector('.client-name').textContent.toLowerCase();
+                const email = row.querySelector('.client-email').textContent.toLowerCase();
+                row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+            });
+        }
+        
+        async function markContacted(type, id, btn) {
+            try {
+                const response = await fetch('/api/signups/mark-contacted', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type, id })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    btn.classList.add('contacted');
+                    btn.innerHTML = '📞 Contacted';
+                    btn.title = 'Already contacted';
+                    
+                    const nameEl = btn.closest('tr').querySelector('.client-name');
+                    if (!nameEl.querySelector('.contacted-badge')) {
+                        nameEl.innerHTML += '<span class="contacted-badge">Contacted</span>';
+                    }
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error marking as contacted: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

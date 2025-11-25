@@ -3245,6 +3245,150 @@ def dashboard_clients():
         db.close()
 
 
+@app.route('/dashboard/signups')
+def dashboard_signups():
+    """Admin view for signups and payment status"""
+    db = get_db()
+    try:
+        from datetime import timedelta
+        status_filter = request.args.get('status', 'all')
+        
+        # Get SignupDraft records (pending payments)
+        drafts_query = db.query(SignupDraft).filter(SignupDraft.status == 'pending').order_by(SignupDraft.created_at.desc())
+        drafts = []
+        for draft in drafts_query.all():
+            form_data = draft.form_data or {}
+            drafts.append({
+                'id': draft.id,
+                'draft_uuid': draft.draft_uuid,
+                'client_name': form_data.get('firstName', '') + ' ' + form_data.get('lastName', ''),
+                'client_email': form_data.get('email', ''),
+                'plan_tier': draft.plan_tier or 'unknown',
+                'plan_amount': draft.plan_amount or 0,
+                'status': draft.status,
+                'created_at': draft.created_at.strftime('%Y-%m-%d %H:%M') if draft.created_at else '',
+                'expires_at': draft.expires_at.strftime('%Y-%m-%d %H:%M') if draft.expires_at else ''
+            })
+        
+        # Get Client records with payment info
+        clients_query = db.query(Client).filter(Client.signup_plan != None).order_by(Client.created_at.desc())
+        
+        if status_filter == 'paid':
+            clients_query = clients_query.filter(Client.payment_status == 'paid')
+        elif status_filter == 'pending':
+            clients_query = clients_query.filter(Client.payment_status == 'pending')
+        elif status_filter == 'failed':
+            clients_query = clients_query.filter(Client.payment_status == 'failed')
+        
+        clients = []
+        for client in clients_query.limit(100).all():
+            clients.append({
+                'id': client.id,
+                'name': client.name,
+                'email': client.email,
+                'signup_plan': client.signup_plan,
+                'signup_amount': client.signup_amount or 0,
+                'payment_status': client.payment_status or 'pending',
+                'portal_token': client.portal_token,
+                'created_at': client.created_at.strftime('%Y-%m-%d %H:%M') if client.created_at else '',
+                'contacted': 'contacted' in (client.admin_notes or '').lower()
+            })
+        
+        # Calculate stats
+        from sqlalchemy import func
+        one_week_ago = datetime.utcnow() - timedelta(days=7)
+        
+        total_revenue = db.query(func.sum(Client.signup_amount)).filter(
+            Client.payment_status == 'paid',
+            Client.signup_amount != None
+        ).scalar() or 0
+        
+        pending_count = db.query(SignupDraft).filter(SignupDraft.status == 'pending').count()
+        pending_count += db.query(Client).filter(Client.payment_status == 'pending', Client.signup_plan != None).count()
+        
+        paid_count = db.query(Client).filter(Client.payment_status == 'paid').count()
+        paid_this_week = db.query(Client).filter(
+            Client.payment_status == 'paid',
+            Client.payment_received_at >= one_week_ago
+        ).count()
+        
+        failed_count = db.query(Client).filter(Client.payment_status == 'failed').count()
+        
+        stats = {
+            'total_revenue': total_revenue,
+            'pending_count': pending_count,
+            'paid_count': paid_count,
+            'paid_this_week': paid_this_week,
+            'failed_count': failed_count
+        }
+        
+        return render_template('signups.html',
+            drafts=drafts,
+            clients=clients,
+            stats=stats,
+            status_filter=status_filter
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/signups/mark-contacted', methods=['POST'])
+def api_mark_contacted():
+    """Mark a signup as contacted"""
+    db = get_db()
+    try:
+        data = request.json
+        record_type = data.get('type')
+        record_id = data.get('id')
+        
+        if not record_type or not record_id:
+            return jsonify({'success': False, 'error': 'Missing type or id'}), 400
+        
+        if record_type == 'client':
+            client = db.query(Client).filter_by(id=record_id).first()
+            if not client:
+                return jsonify({'success': False, 'error': 'Client not found'}), 404
+            
+            # Add contacted note
+            current_notes = client.admin_notes or ''
+            if 'contacted' not in current_notes.lower():
+                contacted_note = f"[CONTACTED {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}]"
+                client.admin_notes = contacted_note + ('\n' + current_notes if current_notes else '')
+                db.commit()
+            
+            return jsonify({'success': True, 'message': 'Client marked as contacted'})
+        
+        elif record_type == 'draft':
+            draft = db.query(SignupDraft).filter_by(id=record_id).first()
+            if not draft:
+                return jsonify({'success': False, 'error': 'Draft not found'}), 404
+            
+            # Update form_data to include contacted flag
+            form_data = draft.form_data or {}
+            form_data['contacted'] = True
+            form_data['contacted_at'] = datetime.utcnow().isoformat()
+            draft.form_data = form_data
+            flag_modified(draft, 'form_data')
+            db.commit()
+            
+            return jsonify({'success': True, 'message': 'Draft marked as contacted'})
+        
+        else:
+            return jsonify({'success': False, 'error': 'Invalid record type'}), 400
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route('/dashboard/case/<int:case_id>')
 def dashboard_case_detail(case_id):
     """Single case detail page"""
