@@ -59,6 +59,26 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Dispute Item Tracking**: DisputeItem model for account-by-account tracking with bureau-specific tables
 - **Secondary Bureau Freeze Tracking**: SecondaryBureauFreeze model for 9 secondary bureaus (Innovis, ChexSystems, etc.)
 - **Client Portal Status Tab**: Enhanced with interactive status tables and freeze tracking
+- **Enhanced Contact List** (`/dashboard/contacts`): LMR-style client management grid with:
+  - Filter tabs (Mark 1, Mark 2, Affiliates, Active, Leads, Follow Up, Signups, Last 25, Show All)
+  - Quick action icons per row (Delete, Add Task, Charge, AI Plan, Workflow, Notes, Documents, Dispute Center, Portal)
+  - Contact detail popup with document tracking (Agreement, CR Login, Driver's License, SSN, Utility Bill, POA)
+  - Status system (Lead, Active Client, Inactive, Provider, Other, Cancelled)
+  - Task Manager (per-client tasks with due dates)
+  - Client Notes system
+- **New Database Models**: Task, ClientNote, ClientDocument
+- **Extended Client Model**: client_type, status_2, company, phone_2, mobile, website, is_affiliate, follow_up_date, groups, mark_1, mark_2
+
+## Admin Routes
+- `/dashboard` - Main dashboard with pipeline visualization
+- `/dashboard/contacts` - Contact List (LMR-style client grid)
+- `/dashboard/clients` - Cases view (analysis-based)
+- `/dashboard/signups` - Signups & payment tracking
+- `/dashboard/case/<id>` - Individual case details
 
 ## Future Integrations (Not Yet Configured)
-- **Email Service**: User declined SendGrid setup - will need to configure transactional email later (for welcome emails, dispute notifications, etc.)
+- **Email Service**: SendGrid for transactional emails (welcome, status updates, notifications)
+- **SMS Service**: Twilio for messaging and funnel automation
+- **Certified Mail**: SendCertifiedMail.com for legal proof of delivery
+- **Physical Mail**: LetterStream for bulk letter automation
+- **Credit Report Pull**: API integration for auto-pulling reports (IdentityIQ, SmartCredit, etc.)
