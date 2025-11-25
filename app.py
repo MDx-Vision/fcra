@@ -31,9 +31,10 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft
 import secrets
 import uuid
+from datetime import timedelta
 from pdf_generator import LetterPDFGenerator, SectionPDFGenerator, CreditAnalysisPDFGenerator
 from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
 from jwt_utils import require_jwt, create_token
@@ -3469,6 +3470,407 @@ def api_client_signup():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# STRIPE PAYMENT INTEGRATION
+# ============================================================
+
+@app.route('/api/stripe/pricing-tiers', methods=['GET'])
+def get_pricing_tiers():
+    """Return available pricing tiers for display"""
+    from services.stripe_client import PRICING_TIERS
+    
+    tiers = []
+    for key, tier in PRICING_TIERS.items():
+        tiers.append({
+            'id': key,
+            'name': tier['name'],
+            'amount': tier['amount'],
+            'display': tier['display'],
+            'description': get_tier_description(key)
+        })
+    
+    return jsonify({'success': True, 'tiers': tiers}), 200
+
+
+def get_tier_description(tier_key):
+    """Get description for each pricing tier"""
+    descriptions = {
+        'tier1': 'Basic credit restoration package with initial dispute letters',
+        'tier2': 'Standard package with follow-up rounds and bureau monitoring',
+        'tier3': 'Premium package with comprehensive dispute strategy',
+        'tier4': 'Advanced package with litigation preparation support',
+        'tier5': 'Elite package with full litigation support and priority handling'
+    }
+    return descriptions.get(tier_key, '')
+
+
+@app.route('/api/client/signup/draft', methods=['POST'])
+def api_create_signup_draft():
+    """Save draft signup data and return draft UUID for payment flow"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        first_name = data.get('firstName', '').strip()
+        last_name = data.get('lastName', '').strip()
+        email = data.get('email', '').strip()
+        
+        if not first_name or not last_name or not email:
+            return jsonify({'success': False, 'error': 'Name and email are required'}), 400
+        
+        existing_client = db.query(Client).filter_by(email=email).first()
+        if existing_client:
+            return jsonify({'success': False, 'error': 'An account with this email already exists'}), 400
+        
+        plan_tier = data.get('planTier', 'tier1')
+        from services.stripe_client import PRICING_TIERS
+        tier_info = PRICING_TIERS.get(plan_tier)
+        if not tier_info:
+            return jsonify({'success': False, 'error': 'Invalid pricing tier'}), 400
+        
+        draft_uuid = str(uuid.uuid4())
+        expires_at = datetime.utcnow() + timedelta(hours=24)
+        
+        form_data = {
+            'firstName': first_name,
+            'lastName': last_name,
+            'email': email,
+            'phone': data.get('phone', ''),
+            'addressStreet': data.get('addressStreet', ''),
+            'addressCity': data.get('addressCity', ''),
+            'addressState': data.get('addressState', ''),
+            'addressZip': data.get('addressZip', ''),
+            'dateOfBirth': data.get('dateOfBirth', ''),
+            'ssnLast4': data.get('ssnLast4', ''),
+            'referralCode': data.get('referralCode', ''),
+            'creditService': data.get('creditService', ''),
+            'creditUsername': data.get('creditUsername', ''),
+            'creditPassword': data.get('creditPassword', ''),
+            'agreeTerms': data.get('agreeTerms', False),
+            'agreeComms': data.get('agreeComms', False)
+        }
+        
+        draft = SignupDraft(
+            draft_uuid=draft_uuid,
+            form_data=form_data,
+            plan_tier=plan_tier,
+            plan_amount=tier_info['amount'],
+            status='pending',
+            expires_at=expires_at
+        )
+        
+        db.add(draft)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'draftId': draft_uuid,
+            'planTier': plan_tier,
+            'planAmount': tier_info['amount'],
+            'planDisplay': tier_info['display'],
+            'expiresAt': expires_at.isoformat()
+        }), 201
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/stripe/checkout-session', methods=['POST'])
+def api_create_checkout_session():
+    """Create Stripe Checkout session for payment"""
+    db = get_db()
+    try:
+        data = request.json
+        draft_id = data.get('draftId')
+        
+        if not draft_id:
+            return jsonify({'success': False, 'error': 'Draft ID is required'}), 400
+        
+        draft = db.query(SignupDraft).filter_by(draft_uuid=draft_id).first()
+        if not draft:
+            return jsonify({'success': False, 'error': 'Signup draft not found'}), 404
+        
+        if draft.status != 'pending':
+            return jsonify({'success': False, 'error': f'Draft is not pending (status: {draft.status})'}), 400
+        
+        if draft.expires_at < datetime.utcnow():
+            draft.status = 'expired'
+            db.commit()
+            return jsonify({'success': False, 'error': 'Draft has expired. Please start over.'}), 400
+        
+        host = request.host_url.rstrip('/')
+        success_url = f"{host}/signup/success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{host}/signup?cancelled=true"
+        
+        form_data = draft.form_data or {}
+        customer_email = form_data.get('email', '')
+        
+        from services.stripe_client import create_checkout_session
+        session = create_checkout_session(
+            draft_id=draft_id,
+            tier_key=draft.plan_tier,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            customer_email=customer_email
+        )
+        
+        draft.stripe_checkout_session_id = session.id
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'sessionId': session.id,
+            'checkoutUrl': session.url
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/stripe/webhook', methods=['POST'])
+def stripe_webhook():
+    """Handle Stripe webhook events (payment confirmations)"""
+    db = get_db()
+    try:
+        payload = request.get_data()
+        sig_header = request.headers.get('Stripe-Signature')
+        
+        if not sig_header:
+            print("⚠️  Stripe webhook: Missing Stripe-Signature header")
+            return jsonify({'error': 'Missing signature'}), 400
+        
+        from services.stripe_client import verify_webhook_signature, get_webhook_secret
+        
+        try:
+            event = verify_webhook_signature(payload, sig_header)
+        except Exception as e:
+            print(f"⚠️  Stripe webhook signature verification failed: {e}")
+            return jsonify({'error': 'Invalid signature'}), 400
+        
+        event_type = event.get('type') if isinstance(event, dict) else event.type
+        print(f"🔔 Stripe webhook received: {event_type}")
+        
+        if event_type == 'checkout.session.completed':
+            session = event.get('data', {}).get('object', {}) if isinstance(event, dict) else event.data.object
+            handle_checkout_completed(db, session)
+        
+        elif event_type == 'payment_intent.succeeded':
+            payment_intent = event.get('data', {}).get('object', {}) if isinstance(event, dict) else event.data.object
+            handle_payment_succeeded(db, payment_intent)
+        
+        elif event_type == 'payment_intent.payment_failed':
+            payment_intent = event.get('data', {}).get('object', {}) if isinstance(event, dict) else event.data.object
+            handle_payment_failed(db, payment_intent)
+        
+        return jsonify({'received': True}), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"❌ Stripe webhook error: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+def handle_checkout_completed(db, session):
+    """Handle checkout.session.completed event - promote draft to client"""
+    try:
+        session_id = session.get('id') if isinstance(session, dict) else session.id
+        metadata = session.get('metadata', {}) if isinstance(session, dict) else session.metadata
+        customer_id = session.get('customer') if isinstance(session, dict) else session.customer
+        payment_intent_id = session.get('payment_intent') if isinstance(session, dict) else session.payment_intent
+        amount_total = session.get('amount_total') if isinstance(session, dict) else session.amount_total
+        
+        draft_id = metadata.get('draft_id') if metadata else None
+        tier = metadata.get('tier') if metadata else None
+        
+        if not draft_id:
+            print(f"⚠️  Checkout session {session_id} has no draft_id in metadata")
+            return
+        
+        draft = db.query(SignupDraft).filter_by(draft_uuid=draft_id).first()
+        if not draft:
+            print(f"⚠️  Draft {draft_id} not found for session {session_id}")
+            return
+        
+        if draft.status == 'paid':
+            print(f"✅ Draft {draft_id} already processed")
+            return
+        
+        form_data = draft.form_data or {}
+        
+        first_name = form_data.get('firstName', '')
+        last_name = form_data.get('lastName', '')
+        email = form_data.get('email', '')
+        
+        existing = db.query(Client).filter_by(email=email).first()
+        if existing:
+            print(f"⚠️  Client with email {email} already exists")
+            draft.status = 'paid'
+            draft.promoted_client_id = existing.id
+            draft.promoted_at = datetime.utcnow()
+            db.commit()
+            return
+        
+        referral_code = 'BP' + secrets.token_hex(4).upper()
+        portal_token = secrets.token_urlsafe(32)
+        
+        from datetime import date
+        dob_str = form_data.get('dateOfBirth', '')
+        dob = None
+        if dob_str:
+            try:
+                dob = date.fromisoformat(dob_str)
+            except:
+                pass
+        
+        client = Client(
+            name=f"{first_name} {last_name}",
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=form_data.get('phone', ''),
+            address_street=form_data.get('addressStreet', ''),
+            address_city=form_data.get('addressCity', ''),
+            address_state=form_data.get('addressState', ''),
+            address_zip=form_data.get('addressZip', ''),
+            ssn_last_four=form_data.get('ssnLast4', ''),
+            date_of_birth=dob,
+            credit_monitoring_service=form_data.get('creditService', ''),
+            credit_monitoring_username=form_data.get('creditUsername', ''),
+            credit_monitoring_password_encrypted=encrypt_value(form_data.get('creditPassword', '')) if form_data.get('creditPassword') else '',
+            current_dispute_round=0,
+            dispute_status='new',
+            referral_code=referral_code,
+            portal_token=portal_token,
+            status='active',
+            signup_completed=True,
+            agreement_signed=form_data.get('agreeTerms', False),
+            agreement_signed_at=datetime.utcnow() if form_data.get('agreeTerms') else None,
+            signup_plan=tier or draft.plan_tier,
+            signup_amount=amount_total or draft.plan_amount,
+            stripe_customer_id=customer_id,
+            stripe_checkout_session_id=session_id,
+            stripe_payment_intent_id=payment_intent_id,
+            payment_status='paid',
+            payment_received_at=datetime.utcnow()
+        )
+        
+        ref_code = form_data.get('referralCode', '').strip()
+        if ref_code:
+            referrer = db.query(Client).filter_by(referral_code=ref_code).first()
+            if referrer:
+                client.referred_by_client_id = referrer.id
+                referral = ClientReferral(
+                    referring_client_id=referrer.id,
+                    referred_name=client.name,
+                    referred_email=client.email,
+                    referred_phone=client.phone,
+                    status='signed_up'
+                )
+                db.add(referral)
+        
+        db.add(client)
+        db.flush()
+        
+        case_number = generate_case_number()
+        case = Case(
+            client_id=client.id,
+            case_number=case_number,
+            status='intake',
+            pricing_tier=tier or draft.plan_tier,
+            base_fee=amount_total / 100 if amount_total else 0,
+            portal_token=portal_token,
+            intake_at=datetime.utcnow()
+        )
+        db.add(case)
+        db.flush()
+        
+        event = CaseEvent(
+            case_id=case.id,
+            event_type='signup',
+            description=f'Client {client.name} signed up via Stripe payment ({tier or draft.plan_tier})',
+            event_data=json.dumps({'payment_intent': payment_intent_id, 'amount': amount_total})
+        )
+        db.add(event)
+        
+        draft.status = 'paid'
+        draft.promoted_client_id = client.id
+        draft.promoted_at = datetime.utcnow()
+        
+        db.commit()
+        
+        print(f"✅ Promoted draft {draft_id} to client {client.id} ({client.email})")
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        print(f"❌ Error handling checkout completed: {e}")
+
+
+def handle_payment_succeeded(db, payment_intent):
+    """Handle payment_intent.succeeded event"""
+    payment_intent_id = payment_intent.get('id') if isinstance(payment_intent, dict) else payment_intent.id
+    print(f"💰 Payment succeeded: {payment_intent_id}")
+
+
+def handle_payment_failed(db, payment_intent):
+    """Handle payment_intent.payment_failed event"""
+    payment_intent_id = payment_intent.get('id') if isinstance(payment_intent, dict) else payment_intent.id
+    print(f"❌ Payment failed: {payment_intent_id}")
+
+
+@app.route('/signup/success')
+def signup_success():
+    """Success page after Stripe checkout"""
+    session_id = request.args.get('session_id')
+    
+    if not session_id:
+        return render_template('client_signup.html', success=False, error='Missing session ID')
+    
+    db = get_db()
+    try:
+        draft = db.query(SignupDraft).filter_by(stripe_checkout_session_id=session_id).first()
+        
+        if not draft:
+            return render_template('client_signup.html', success=False, error='Session not found')
+        
+        if draft.status == 'paid' and draft.promoted_client_id:
+            client = db.query(Client).filter_by(id=draft.promoted_client_id).first()
+            if client:
+                return render_template('client_signup.html', 
+                    success=True, 
+                    referral_code=client.referral_code,
+                    client_name=client.name,
+                    portal_token=client.portal_token
+                )
+        
+        return render_template('client_signup.html', 
+            success=True,
+            pending=True,
+            message='Your payment is being processed. You will receive a confirmation email shortly.'
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template('client_signup.html', success=False, error=str(e))
     finally:
         db.close()
 

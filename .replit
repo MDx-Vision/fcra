@@ -1,10 +1,11 @@
 modules = ["python-3.11", "postgresql-16"]
 [agent]
 expertMode = true
+integrations = ["stripe:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "openssl", "pkg-config", "rustc", "poppler-utils"]
+packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "openssl", "pkg-config", "poppler-utils", "rustc"]
 
 [workflows]
 runButton = "Project"
@@ -41,10 +42,6 @@ externalPort = 3001
 [[ports]]
 localPort = 43971
 externalPort = 3000
-
-[[ports]]
-localPort = 44475
-externalPort = 3003
 
 [[ports]]
 localPort = 45369

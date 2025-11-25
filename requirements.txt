@@ -13,3 +13,4 @@ fpdf
 fpdf2
 pyjwt
 cryptography
+stripe

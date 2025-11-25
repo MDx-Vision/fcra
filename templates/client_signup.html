@@ -338,9 +338,107 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .pricing-option {
+            position: relative;
+            padding: 25px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        .pricing-option:hover {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.05);
+            transform: translateY(-3px);
+        }
+        .pricing-option.selected {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.2);
+        }
+        .pricing-option input {
+            display: none;
+        }
+        .pricing-option.popular {
+            border-color: #4ade80;
+        }
+        .popular-badge {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .plan-header {
+            margin-bottom: 10px;
+        }
+        .plan-name {
+            display: block;
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .plan-price {
+            display: block;
+            font-size: 28px;
+            font-weight: 700;
+            color: #4ade80;
+        }
+        .plan-desc {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.4;
+            margin: 0;
+        }
+        .plan-features {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .plan-features h4 {
+            font-size: 14px;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .plan-features ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .plan-features li {
+            font-size: 13px;
+            color: #6b7280;
+            padding: 6px 0 6px 22px;
+            position: relative;
+        }
+        .plan-features li:before {
+            content: '\2713';
+            position: absolute;
+            left: 0;
+            color: #4ade80;
+            font-weight: bold;
+        }
         @media (max-width: 768px) {
             .form-row { grid-template-columns: 1fr; }
             .credit-service-grid { grid-template-columns: repeat(2, 1fr); }
+            .pricing-grid { grid-template-columns: 1fr; }
             .progress-bar { flex-wrap: wrap; gap: 15px; }
             .form-card { padding: 25px; }
             .hero h1 { font-size: 28px; }
@@ -374,6 +472,10 @@
             </div>
             <div class="progress-step" id="step3-indicator">
                 <span class="step-number">3</span>
+                <span>Plan & Payment</span>
+            </div>
+            <div class="progress-step" id="step4-indicator">
+                <span class="step-number">4</span>
                 <span>Agreement</span>
             </div>
         </div>
@@ -557,12 +659,83 @@
                     
                     <div class="button-row">
                         <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Back</button>
-                        <button type="button" class="btn btn-primary" onclick="nextStep(3)">Continue to Agreement</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(3)">Continue to Plan Selection</button>
                     </div>
                 </div>
                 
-                <!-- Step 3: Service Agreement -->
+                <!-- Step 3: Plan & Payment -->
                 <div class="form-section" id="step3">
+                    <h2 class="section-title">Choose Your Plan</h2>
+                    
+                    <p style="color: #6b7280; margin-bottom: 25px;">Select the credit restoration plan that best fits your needs. All plans include FCRA analysis, dispute letter generation, and ongoing support.</p>
+                    
+                    <div class="pricing-grid" id="pricingGrid">
+                        <label class="pricing-option" data-tier="tier1">
+                            <input type="radio" name="planTier" value="tier1">
+                            <div class="plan-header">
+                                <span class="plan-name">Basic</span>
+                                <span class="plan-price">$300</span>
+                            </div>
+                            <p class="plan-desc">Initial credit analysis and first round of dispute letters</p>
+                        </label>
+                        
+                        <label class="pricing-option" data-tier="tier2">
+                            <input type="radio" name="planTier" value="tier2">
+                            <div class="plan-header">
+                                <span class="plan-name">Standard</span>
+                                <span class="plan-price">$600</span>
+                            </div>
+                            <p class="plan-desc">Two rounds of disputes with bureau monitoring</p>
+                        </label>
+                        
+                        <label class="pricing-option popular" data-tier="tier3">
+                            <input type="radio" name="planTier" value="tier3" checked>
+                            <span class="popular-badge">Most Popular</span>
+                            <div class="plan-header">
+                                <span class="plan-name">Premium</span>
+                                <span class="plan-price">$900</span>
+                            </div>
+                            <p class="plan-desc">Three rounds with comprehensive strategy and follow-up</p>
+                        </label>
+                        
+                        <label class="pricing-option" data-tier="tier4">
+                            <input type="radio" name="planTier" value="tier4">
+                            <div class="plan-header">
+                                <span class="plan-name">Advanced</span>
+                                <span class="plan-price">$1,200</span>
+                            </div>
+                            <p class="plan-desc">Full service with litigation preparation support</p>
+                        </label>
+                        
+                        <label class="pricing-option" data-tier="tier5">
+                            <input type="radio" name="planTier" value="tier5">
+                            <div class="plan-header">
+                                <span class="plan-name">Elite</span>
+                                <span class="plan-price">$1,500</span>
+                            </div>
+                            <p class="plan-desc">Complete package with priority handling and full litigation support</p>
+                        </label>
+                    </div>
+                    
+                    <div class="plan-features">
+                        <h4>All plans include:</h4>
+                        <ul>
+                            <li>Comprehensive FCRA violation analysis</li>
+                            <li>Professional dispute letter generation</li>
+                            <li>Direct communication with credit bureaus</li>
+                            <li>Progress tracking via client portal</li>
+                            <li>Expert guidance throughout the process</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="button-row">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(4)">Continue to Agreement</button>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Service Agreement -->
+                <div class="form-section" id="step4">
                     <h2 class="section-title">Service Agreement</h2>
                     
                     <div class="agreement-section">
@@ -599,10 +772,10 @@
                     </div>
                     
                     <div class="button-row">
-                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
                         <button type="submit" class="btn btn-primary" id="submitBtn">
                             <span class="loading-spinner" id="loadingSpinner"></span>
-                            Complete Registration
+                            Proceed to Payment
                         </button>
                     </div>
                 </div>
@@ -639,6 +812,19 @@
             });
         });
         
+        // Initialize pricing tier selection
+        document.querySelectorAll('.pricing-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.pricing-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+            });
+            // Set initial selected state for tier3 (Premium)
+            if (option.querySelector('input').checked) {
+                option.classList.add('selected');
+            }
+        });
+        
         // Phone number formatting
         document.getElementById('phone').addEventListener('input', function(e) {
             let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
@@ -668,8 +854,17 @@
                 }
             }
             
-            // Step 3: Check agreement
+            // Step 3: Check plan selection
             if (step === 3) {
+                const planSelected = document.querySelector('input[name="planTier"]:checked');
+                if (!planSelected) {
+                    alert('Please select a pricing plan');
+                    valid = false;
+                }
+            }
+            
+            // Step 4: Check agreement
+            if (step === 4) {
                 if (!document.getElementById('agreeTerms').checked) {
                     alert('Please agree to the terms and conditions to continue');
                     valid = false;
@@ -712,7 +907,7 @@
         document.getElementById('signupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            if (!validateStep(3)) return;
+            if (!validateStep(4)) return;
             
             const submitBtn = document.getElementById('submitBtn');
             const spinner = document.getElementById('loadingSpinner');
@@ -735,30 +930,42 @@
                 creditService: document.querySelector('input[name="creditService"]:checked').value,
                 creditUsername: document.getElementById('creditUsername').value,
                 creditPassword: document.getElementById('creditPassword').value,
+                planTier: document.querySelector('input[name="planTier"]:checked').value,
                 agreeTerms: document.getElementById('agreeTerms').checked,
                 agreeComms: document.getElementById('agreeComms').checked
             };
             
             try {
-                const response = await fetch('/api/client/signup', {
+                // Step 1: Create signup draft
+                const draftResponse = await fetch('/api/client/signup/draft', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
                 
-                const result = await response.json();
+                const draftResult = await draftResponse.json();
                 
-                if (result.success) {
-                    // Hide form, show success
-                    document.getElementById('step3').classList.remove('active');
-                    document.getElementById('successMessage').style.display = 'block';
-                    document.getElementById('clientReferralCode').textContent = result.referralCode || 'BP' + Math.random().toString(36).substr(2, 6).toUpperCase();
-                    
-                    // Update progress
-                    document.getElementById('step3-indicator').classList.remove('active');
-                    document.getElementById('step3-indicator').classList.add('completed');
+                if (!draftResult.success) {
+                    alert('Error: ' + (draftResult.error || 'Failed to save your information'));
+                    submitBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    return;
+                }
+                
+                // Step 2: Create Stripe checkout session
+                const checkoutResponse = await fetch('/api/stripe/checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ draftId: draftResult.draftId })
+                });
+                
+                const checkoutResult = await checkoutResponse.json();
+                
+                if (checkoutResult.success && checkoutResult.checkoutUrl) {
+                    // Redirect to Stripe Checkout
+                    window.location.href = checkoutResult.checkoutUrl;
                 } else {
-                    alert('Registration failed: ' + (result.error || 'Please try again'));
+                    alert('Error: ' + (checkoutResult.error || 'Failed to create payment session'));
                     submitBtn.disabled = false;
                     spinner.style.display = 'none';
                 }
@@ -769,6 +976,29 @@
                 spinner.style.display = 'none';
             }
         });
+        
+        // Handle success/cancel from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('cancelled') === 'true') {
+            alert('Payment was cancelled. You can try again when ready.');
+        }
+        
+        // Check for success state passed from server
+        {% if success %}
+            document.querySelector('.form-card form').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+            {% if referral_code %}
+                document.getElementById('clientReferralCode').textContent = '{{ referral_code }}';
+            {% endif %}
+            // Mark all steps as completed
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById('step' + i + '-indicator');
+                if (indicator) {
+                    indicator.classList.remove('active');
+                    indicator.classList.add('completed');
+                }
+            }
+        {% endif %}
     </script>
 </body>
 </html>

@@ -99,6 +99,15 @@ class Client(Base):
     # Notes
     admin_notes = Column(Text)
     
+    # Payment/Stripe fields
+    signup_plan = Column(String(50))  # tier1, tier2, tier3, tier4, tier5
+    signup_amount = Column(Integer)  # Amount in cents
+    stripe_customer_id = Column(String(255))
+    stripe_checkout_session_id = Column(String(255))
+    stripe_payment_intent_id = Column(String(255))
+    payment_status = Column(String(50), default='pending')  # pending, paid, failed, refunded
+    payment_received_at = Column(DateTime)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -573,6 +582,37 @@ class ClientReferral(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class SignupDraft(Base):
+    """Store pre-payment signup data temporarily until payment is confirmed"""
+    __tablename__ = 'signup_drafts'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    draft_uuid = Column(String(36), unique=True, index=True, nullable=False)
+    
+    # All form data stored as JSON
+    form_data = Column(JSON, nullable=False)
+    
+    # Selected plan
+    plan_tier = Column(String(50))  # tier1-tier5
+    plan_amount = Column(Integer)  # Amount in cents
+    
+    # Stripe tracking
+    stripe_checkout_session_id = Column(String(255))
+    
+    # Status tracking
+    status = Column(String(50), default='pending')  # pending, paid, expired, cancelled
+    
+    # Expiration
+    expires_at = Column(DateTime, nullable=False)
+    
+    # Promotion to full client
+    promoted_client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    promoted_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -608,6 +648,13 @@ def init_db():
         ("clients", "agreement_signed_at", "TIMESTAMP"),
         ("clients", "cmm_contact_id", "VARCHAR(100)"),
         ("clients", "admin_notes", "TEXT"),
+        ("clients", "signup_plan", "VARCHAR(50)"),
+        ("clients", "signup_amount", "INTEGER"),
+        ("clients", "stripe_customer_id", "VARCHAR(255)"),
+        ("clients", "stripe_checkout_session_id", "VARCHAR(255)"),
+        ("clients", "stripe_payment_intent_id", "VARCHAR(255)"),
+        ("clients", "payment_status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("clients", "payment_received_at", "TIMESTAMP"),
     ]
     
     conn = engine.connect()
