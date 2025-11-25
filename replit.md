@@ -11,13 +11,28 @@
 - **Scalability**: Handles unlimited credit report sizes (100MB+)
 
 ## Platform URLs
+
+### Public/Client Pages
+- `/signup` - New client signup portal (3-step registration)
+- `/portal/<token>` - Client-facing case status portal with tabs
+
+### Admin Pages
 - `/dashboard` - Admin dashboard with pipeline visualization
 - `/dashboard/clients` - Full client list with filters
 - `/dashboard/case/<id>` - Individual case detail view
-- `/portal/<token>` - Client-facing case status portal
+- `/dashboard/import` - Import existing clients (single or bulk CSV)
+
+### API Endpoints
 - `/api/intake` - New client intake endpoint
 - `/api/analyze` - Credit report analysis endpoint
 - `/api/approve/<id>` - Approve Stage 1, trigger Stage 2
+- `/api/client/signup` - Complete new client registration
+- `/api/client/import` - Import single existing client
+- `/api/client/import/bulk` - Bulk CSV import
+- `/api/cra-response` - Upload CRA response letters
+- `/api/referral` - Submit client referrals
+- `/api/credit-analysis/generate/<id>` - Generate credit analysis PDF
+- `/api/import/template` - Download CSV import template
 
 ## How It Works
 
