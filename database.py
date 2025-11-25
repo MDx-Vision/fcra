@@ -130,7 +130,7 @@ class Standing(Base):
     
     # Post-TransUnion standing elements
     has_concrete_harm = Column(Boolean, default=False)
-    concrete_harm_type = Column(String(100))
+    concrete_harm_type = Column(Text)
     concrete_harm_details = Column(Text)
     
     has_dissemination = Column(Boolean, default=False)
