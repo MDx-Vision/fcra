@@ -490,6 +490,64 @@ class CRAResponse(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class DisputeItem(Base):
+    """Track individual account/item disputes with status"""
+    __tablename__ = 'dispute_items'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
+    
+    # Which bureau and round
+    bureau = Column(String(50), nullable=False)  # Experian, TransUnion, Equifax
+    dispute_round = Column(Integer, default=1)
+    
+    # Item details
+    item_type = Column(String(50))  # inquiry, collection, late_payment, personal_info, public_record
+    creditor_name = Column(String(255))
+    account_id = Column(String(100))  # Masked account number
+    
+    # Status tracking
+    status = Column(String(50), default='to_do')  # sent, deleted, updated, in_progress, to_do, no_change, no_answer, on_hold, positive, duplicate, other
+    
+    # Dates
+    follow_up_date = Column(Date)  # When to follow up
+    sent_date = Column(Date)  # When dispute was sent
+    response_date = Column(Date)  # When response received
+    
+    # Client/admin interaction
+    reason = Column(Text)  # Reason for dispute or status
+    comments = Column(Text)  # Client or admin comments
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SecondaryBureauFreeze(Base):
+    """Track freeze status with secondary credit bureaus"""
+    __tablename__ = 'secondary_bureau_freezes'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    # Secondary bureau info
+    bureau_name = Column(String(100), nullable=False)  # Innovis, ChexSystems, Clarity, LexisNexis, etc.
+    
+    # Status
+    status = Column(String(50), default='pending')  # pending, frozen, not_frozen, error
+    
+    # Dates
+    follow_up_date = Column(Date)
+    freeze_requested_at = Column(DateTime)
+    freeze_confirmed_at = Column(DateTime)
+    
+    # Notes
+    comments = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ClientReferral(Base):
     """Track referrals between clients"""
     __tablename__ = 'client_referrals'

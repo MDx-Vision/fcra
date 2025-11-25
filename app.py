@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, ClientReferral
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral
 import secrets
 import uuid
 from pdf_generator import LetterPDFGenerator, SectionPDFGenerator, CreditAnalysisPDFGenerator
@@ -3309,6 +3309,29 @@ def client_portal(token):
         
         cra_responses = db.query(CRAResponse).filter_by(client_id=client.id).order_by(CRAResponse.created_at.desc()).all()
         
+        # Get dispute items grouped by bureau
+        dispute_items = db.query(DisputeItem).filter_by(client_id=client.id).order_by(DisputeItem.bureau, DisputeItem.created_at.desc()).all()
+        
+        # Get secondary bureau freezes
+        secondary_freezes = db.query(SecondaryBureauFreeze).filter_by(client_id=client.id).all()
+        
+        # If no secondary freezes exist for this client, create default ones
+        if not secondary_freezes:
+            default_bureaus = [
+                'Innovis', 'ChexSystems', 'Clarity Services Inc', 'LexisNexis', 
+                'CoreLogic Teletrack', 'Factor Trust Inc', 'MicroBilt / PRBC',
+                'LexisNexis Risk Solutions (A TransUnion Company)', 'DataX Ltd'
+            ]
+            for bureau in default_bureaus:
+                freeze = SecondaryBureauFreeze(
+                    client_id=client.id,
+                    bureau_name=bureau,
+                    status='pending'
+                )
+                db.add(freeze)
+            db.commit()
+            secondary_freezes = db.query(SecondaryBureauFreeze).filter_by(client_id=client.id).all()
+        
         return render_template('client_portal.html',
             case=case,
             client=client,
@@ -3318,6 +3341,8 @@ def client_portal(token):
             score=score,
             letters=letters,
             cra_responses=cra_responses,
+            dispute_items=dispute_items,
+            secondary_freezes=secondary_freezes,
             now=datetime.utcnow()
         )
     except Exception as e:
@@ -4521,6 +4546,71 @@ def api_generate_round_letters(analysis_id):
         db.rollback()
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# DISPUTE ITEM & SECONDARY FREEZE API ENDPOINTS
+# ============================================================
+
+@app.route('/api/dispute-items/batch-update', methods=['POST'])
+def api_batch_update_dispute_items():
+    """Batch update dispute item comments from client portal"""
+    db = get_db()
+    try:
+        data = request.json
+        updates = data.get('updates', [])
+        
+        for update in updates:
+            item_id = update.get('id')
+            comments = update.get('comments', '')
+            
+            if item_id:
+                item = db.query(DisputeItem).filter_by(id=item_id).first()
+                if item:
+                    item.comments = comments
+                    item.updated_at = datetime.utcnow()
+        
+        db.commit()
+        return jsonify({'success': True, 'updated': len(updates)}), 200
+        
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/secondary-freezes/batch-update', methods=['POST'])
+def api_batch_update_secondary_freezes():
+    """Batch update secondary bureau freeze status from client portal"""
+    db = get_db()
+    try:
+        data = request.json
+        updates = data.get('updates', [])
+        
+        for update in updates:
+            freeze_id = update.get('id')
+            status = update.get('status', 'pending')
+            comments = update.get('comments', '')
+            
+            if freeze_id:
+                freeze = db.query(SecondaryBureauFreeze).filter_by(id=freeze_id).first()
+                if freeze:
+                    freeze.status = status
+                    freeze.comments = comments
+                    freeze.updated_at = datetime.utcnow()
+                    
+                    if status == 'frozen' and not freeze.freeze_confirmed_at:
+                        freeze.freeze_confirmed_at = datetime.utcnow()
+        
+        db.commit()
+        return jsonify({'success': True, 'updated': len(updates)}), 200
+        
+    except Exception as e:
+        db.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()

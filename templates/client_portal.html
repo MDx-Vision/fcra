@@ -475,6 +475,50 @@
             .nav-tabs { overflow-x: auto; }
             .header { flex-direction: column; gap: 15px; }
         }
+        
+        /* Status Badge Styles */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .status-badge.status-sent { background: #dbeafe; color: #1e40af; }
+        .status-badge.status-deleted { background: #dcfce7; color: #166534; }
+        .status-badge.status-updated { background: #fef3c7; color: #92400e; }
+        .status-badge.status-in_progress { background: #e0e7ff; color: #3730a3; }
+        .status-badge.status-to_do { background: #f3f4f6; color: #374151; }
+        .status-badge.status-no_change { background: #fecaca; color: #991b1b; }
+        .status-badge.status-no_answer { background: #fed7aa; color: #9a3412; }
+        .status-badge.status-on_hold { background: #e5e7eb; color: #4b5563; }
+        .status-badge.status-positive { background: #bbf7d0; color: #166534; }
+        .status-badge.status-duplicate { background: #f5f5f4; color: #78716c; }
+        .status-badge.status-other { background: #f3e8ff; color: #6b21a8; }
+        .status-badge.status-frozen { background: #dbeafe; color: #1e40af; }
+        .status-badge.status-pending { background: #fef3c7; color: #92400e; }
+        .status-badge.status-not_frozen { background: #fecaca; color: #991b1b; }
+        
+        .comment-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .comment-input:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+        
+        .bureau-section {
+            border-left: 4px solid #e5e7eb;
+        }
+        .bureau-section:nth-child(1) { border-left-color: #991b1b; }
+        .bureau-section:nth-child(2) { border-left-color: #1e40af; }
+        .bureau-section:nth-child(3) { border-left-color: #0369a1; }
     </style>
 </head>
 <body>
@@ -559,69 +603,270 @@
         
         <!-- Status Tab -->
         <div class="tab-content" id="status">
-            <div class="card">
-                <div class="card-title">Case Progress</div>
-                <div class="progress-timeline">
-                    <div class="timeline-step {% if analysis %}complete{% endif %}">
-                        <div class="step-circle">1</div>
-                        <div class="step-label">Report Received</div>
+            <div class="card" style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="card-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">Credit Report Status for {{ client.name if client else 'Client' }}</div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="showAllItems()" class="submit-btn" style="padding: 8px 15px; font-size: 12px;">Show all</button>
+                        <button onclick="submitStatusChanges()" class="submit-btn" style="padding: 8px 15px; font-size: 12px;">Submit changes</button>
                     </div>
-                    <div class="timeline-step {% if analysis and analysis.stage >= 1 %}complete{% endif %}">
-                        <div class="step-circle">2</div>
-                        <div class="step-label">Analysis Complete</div>
-                    </div>
-                    <div class="timeline-step {% if analysis and analysis.stage == 2 %}complete{% elif analysis and analysis.approved_at %}current{% endif %}">
-                        <div class="step-circle">3</div>
-                        <div class="step-label">Documents Prepared</div>
-                    </div>
-                    <div class="timeline-step {% if analysis and analysis.stage == 2 %}current{% endif %}">
-                        <div class="step-circle">4</div>
-                        <div class="step-label">Ready to Send</div>
-                    </div>
-                    <div class="timeline-step">
-                        <div class="step-circle">5</div>
-                        <div class="step-label">Awaiting Response</div>
-                    </div>
+                </div>
+                <p style="color: #dc2626; font-size: 13px; margin-bottom: 15px;">
+                    If there is a derogatory item you don't want to be disputed, please let us know in the Dispute Reason or the Comment field.
+                </p>
+                <a href="#legend" style="color: #3b82f6; font-size: 13px; text-decoration: underline;">How to use the Status Area?</a>
+            </div>
+            
+            <!-- EQUIFAX Section -->
+            <div class="card bureau-section" style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Equifax.svg/200px-Equifax.svg.png" alt="Equifax" style="height: 25px;" onerror="this.style.display='none'">
+                    <span style="font-weight: 700; font-size: 18px; color: #991b1b;">EQUIFAX</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="status-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Follow up</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Type</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">R</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Creditor</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Account ID</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Status</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Reason</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set equifax_items = dispute_items|selectattr('bureau', 'equalto', 'Equifax')|list if dispute_items else [] %}
+                            {% if equifax_items %}
+                                {% for item in equifax_items %}
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 10px;">{{ item.follow_up_date.strftime('%Y-%m-%d') if item.follow_up_date else 'n/a' }}</td>
+                                    <td style="padding: 10px;">{{ item.item_type|title if item.item_type else '' }}</td>
+                                    <td style="padding: 10px;">{{ item.dispute_round }}</td>
+                                    <td style="padding: 10px;">{{ item.creditor_name or '' }}</td>
+                                    <td style="padding: 10px;">{{ item.account_id or 'n/a' }}</td>
+                                    <td style="padding: 10px;">
+                                        <span class="status-badge status-{{ item.status }}">{{ item.status|upper }}</span>
+                                    </td>
+                                    <td style="padding: 10px;">{{ item.reason or '' }}</td>
+                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="8" style="padding: 20px; text-align: center; color: #64748b;">No items tracked yet for Equifax</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if equifax_items %}
+                <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
+                    Total Items: {{ equifax_items|length }} | 
+                    Deleted: {{ equifax_items|selectattr('status', 'equalto', 'deleted')|list|length }} |
+                    In Progress: {{ equifax_items|selectattr('status', 'equalto', 'in_progress')|list|length }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- EXPERIAN Section -->
+            <div class="card bureau-section" style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Experian_logo.svg/200px-Experian_logo.svg.png" alt="Experian" style="height: 25px;" onerror="this.style.display='none'">
+                    <span style="font-weight: 700; font-size: 18px; color: #1e40af;">Experian</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="status-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Follow up</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Type</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">R</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Creditor</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Account ID</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Status</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Reason</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set experian_items = dispute_items|selectattr('bureau', 'equalto', 'Experian')|list if dispute_items else [] %}
+                            {% if experian_items %}
+                                {% for item in experian_items %}
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 10px;">{{ item.follow_up_date.strftime('%Y-%m-%d') if item.follow_up_date else 'n/a' }}</td>
+                                    <td style="padding: 10px;">{{ item.item_type|title if item.item_type else '' }}</td>
+                                    <td style="padding: 10px;">{{ item.dispute_round }}</td>
+                                    <td style="padding: 10px;">{{ item.creditor_name or '' }}</td>
+                                    <td style="padding: 10px;">{{ item.account_id or 'n/a' }}</td>
+                                    <td style="padding: 10px;">
+                                        <span class="status-badge status-{{ item.status }}">{{ item.status|upper }}</span>
+                                    </td>
+                                    <td style="padding: 10px;">{{ item.reason or '' }}</td>
+                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="8" style="padding: 20px; text-align: center; color: #64748b;">No items tracked yet for Experian</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if experian_items %}
+                <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
+                    Total Items: {{ experian_items|length }} | 
+                    Deleted: {{ experian_items|selectattr('status', 'equalto', 'deleted')|list|length }} |
+                    In Progress: {{ experian_items|selectattr('status', 'equalto', 'in_progress')|list|length }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- TRANSUNION Section -->
+            <div class="card bureau-section" style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/TransUnion_logo.svg/200px-TransUnion_logo.svg.png" alt="TransUnion" style="height: 25px;" onerror="this.style.display='none'">
+                    <span style="font-weight: 700; font-size: 18px; color: #0369a1;">TransUnion</span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="status-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Follow up</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Type</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">R</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Creditor</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Account ID</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Status</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Reason</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set transunion_items = dispute_items|selectattr('bureau', 'equalto', 'TransUnion')|list if dispute_items else [] %}
+                            {% if transunion_items %}
+                                {% for item in transunion_items %}
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 10px;">{{ item.follow_up_date.strftime('%Y-%m-%d') if item.follow_up_date else 'n/a' }}</td>
+                                    <td style="padding: 10px;">{{ item.item_type|title if item.item_type else '' }}</td>
+                                    <td style="padding: 10px;">{{ item.dispute_round }}</td>
+                                    <td style="padding: 10px;">{{ item.creditor_name or '' }}</td>
+                                    <td style="padding: 10px;">{{ item.account_id or 'n/a' }}</td>
+                                    <td style="padding: 10px;">
+                                        <span class="status-badge status-{{ item.status }}">{{ item.status|upper }}</span>
+                                    </td>
+                                    <td style="padding: 10px;">{{ item.reason or '' }}</td>
+                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="8" style="padding: 20px; text-align: center; color: #64748b;">No items tracked yet for TransUnion</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if transunion_items %}
+                <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
+                    Total Items: {{ transunion_items|length }} | 
+                    Deleted: {{ transunion_items|selectattr('status', 'equalto', 'deleted')|list|length }} |
+                    In Progress: {{ transunion_items|selectattr('status', 'equalto', 'in_progress')|list|length }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Secondary Bureaus Freeze Section -->
+            <div class="card" style="margin-bottom: 20px; border: 2px solid #e5e7eb;">
+                <div class="card-title" style="color: #1a1a2e;">Secondary Bureaus Freeze</div>
+                <p style="color: #dc2626; font-size: 12px; margin-bottom: 15px; line-height: 1.5;">
+                    When you receive a response from a Secondary Bureau that they have FROZEN their report, please let us know by changing the Status to FROZEN as appropriate and then clicking the SUBMIT button. If they respond that they did NOT FREEZE the report, please change to NOT FROZEN instead and click the SUBMIT button. Thank you.
+                </p>
+                <div style="overflow-x: auto;">
+                    <table class="status-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Follow up</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Type</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Creditor</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Account ID</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Status</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Secondary Bureau</th>
+                                <th style="text-align: left; padding: 10px; color: #64748b;">Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if secondary_freezes %}
+                                {% for freeze in secondary_freezes %}
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 10px;">{{ freeze.follow_up_date.strftime('%Y-%m-%d') if freeze.follow_up_date else 'n/a' }}</td>
+                                    <td style="padding: 10px;">Freeze</td>
+                                    <td style="padding: 10px;">n/a</td>
+                                    <td style="padding: 10px;">n/a</td>
+                                    <td style="padding: 10px;">
+                                        <select class="freeze-status-select" data-id="{{ freeze.id }}" style="padding: 5px; border-radius: 4px; border: 1px solid #e5e7eb; font-size: 12px;">
+                                            <option value="pending" {% if freeze.status == 'pending' %}selected{% endif %}>PENDING</option>
+                                            <option value="frozen" {% if freeze.status == 'frozen' %}selected{% endif %}>FROZEN</option>
+                                            <option value="not_frozen" {% if freeze.status == 'not_frozen' %}selected{% endif %}>NOT FROZEN</option>
+                                        </select>
+                                    </td>
+                                    <td style="padding: 10px; font-weight: 500;">{{ freeze.bureau_name }}</td>
+                                    <td style="padding: 10px;"><input type="text" class="freeze-comment-input" data-id="{{ freeze.id }}" value="{{ freeze.comments or '' }}" placeholder="Add comment" style="width: 100%; padding: 5px; border: 1px solid #e5e7eb; border-radius: 4px;"></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr><td colspan="7" style="padding: 20px; text-align: center; color: #64748b;">No secondary bureau freezes tracked</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="submitFreezeChanges()" class="submit-btn" style="padding: 10px 25px;">Submit changes</button>
                 </div>
             </div>
             
-            <div class="card">
-                <div class="card-title">Round {{ client.current_dispute_round if client and client.current_dispute_round else 1 }} Status</div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid #e5e7eb;">
-                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Bureau</th>
-                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Letter Sent</th>
-                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Response</th>
-                            <th style="text-align: left; padding: 12px; color: #64748b; font-size: 13px;">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for bureau in ['Experian', 'TransUnion', 'Equifax'] %}
-                        <tr style="border-bottom: 1px solid #e5e7eb;">
-                            <td style="padding: 15px; font-weight: 500;">{{ bureau }}</td>
-                            <td style="padding: 15px; color: #64748b;">
-                                {% if letters %}
-                                    {% set bureau_letter = letters|selectattr('bureau', 'equalto', bureau)|first %}
-                                    {% if bureau_letter %}
-                                        {{ bureau_letter.created_at.strftime('%m/%d/%Y') if bureau_letter.created_at else '-' }}
-                                    {% else %}
-                                        Pending
-                                    {% endif %}
-                                {% else %}
-                                    Pending
-                                {% endif %}
-                            </td>
-                            <td style="padding: 15px; color: #64748b;">-</td>
-                            <td style="padding: 15px;">
-                                <span style="display: inline-block; padding: 4px 12px; background: #fef3c7; color: #92400e; border-radius: 20px; font-size: 12px; font-weight: 500;">
-                                    Pending
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Status Legend -->
+            <div class="card" id="legend">
+                <div class="card-title">Legend</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px;">
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-deleted">DELETED</span>
+                        <span style="font-size: 12px; color: #64748b;">Negative item has been removed from report (positive).</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-updated">UPDATED</span>
+                        <span style="font-size: 12px; color: #64748b;">Negative item has been updated to positive status (positive).</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-in_progress">IN PROGRESS</span>
+                        <span style="font-size: 12px; color: #64748b;">Request for investigation has been sent to the credit bureau or creditor. Expecting return correspondence in mail.</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-to_do">TO DO</span>
+                        <span style="font-size: 12px; color: #64748b;">Dispute is scheduled to be sent.</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-no_change">NO CHANGE</span>
+                        <span style="font-size: 12px; color: #64748b;">Negative item has been verified. New dispute initiated.</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-no_answer">NO ANSWER</span>
+                        <span style="font-size: 12px; color: #64748b;">Request for investigation has been ignored. New dispute initiated.</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-on_hold">ON HOLD</span>
+                        <span style="font-size: 12px; color: #64748b;">Item is not being worked on at current time.</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-positive">POSITIVE</span>
+                        <span style="font-size: 12px; color: #64748b;">Account is in good standing, no action needed.</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-sent">SENT</span>
+                        <span style="font-size: 12px; color: #64748b;">Dispute letter has been sent to the bureau.</span>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <span class="status-badge status-duplicate">DUPLICATE</span>
+                        <span style="font-size: 12px; color: #64748b;">This is a duplicate entry, tracked elsewhere.</span>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -923,6 +1168,86 @@
                 alert('Connection error. Please try again.');
             }
         });
+        
+        // Status tab functions
+        function showAllItems() {
+            document.querySelectorAll('.bureau-section').forEach(section => {
+                section.style.display = 'block';
+            });
+        }
+        
+        async function submitStatusChanges() {
+            const updates = [];
+            document.querySelectorAll('.comment-input').forEach(input => {
+                const id = input.dataset.id;
+                const value = input.value;
+                if (id && value !== input.defaultValue) {
+                    updates.push({ id: parseInt(id), comments: value });
+                }
+            });
+            
+            if (updates.length === 0) {
+                alert('No changes to submit.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/dispute-items/batch-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ updates })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Changes saved successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to save changes: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('Connection error. Please try again.');
+            }
+        }
+        
+        async function submitFreezeChanges() {
+            const updates = [];
+            
+            document.querySelectorAll('.freeze-status-select').forEach(select => {
+                const id = select.dataset.id;
+                const commentInput = document.querySelector(`.freeze-comment-input[data-id="${id}"]`);
+                updates.push({
+                    id: parseInt(id),
+                    status: select.value,
+                    comments: commentInput ? commentInput.value : ''
+                });
+            });
+            
+            if (updates.length === 0) {
+                alert('No changes to submit.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/secondary-freezes/batch-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ updates })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Freeze status changes saved successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to save changes: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('Connection error. Please try again.');
+            }
+        }
     </script>
 </body>
 </html>

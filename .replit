@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "openssl", "pkg-config", "rustc"]
+packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "openssl", "pkg-config", "rustc", "poppler-utils"]
 
 [workflows]
 runButton = "Project"
@@ -33,10 +33,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 35443
-externalPort = 3003
 
 [[ports]]
 localPort = 42133
