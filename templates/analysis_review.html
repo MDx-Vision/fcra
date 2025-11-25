@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Review - {{ analysis.client_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+        }
+        .logo { color: white; font-size: 20px; font-weight: 700; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
+        .logo span { color: #4ade80; }
+        .nav-item {
+            display: flex; align-items: center; padding: 12px 15px; color: #94a3b8;
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; display: inline-flex; align-items: center;
+            gap: 8px; text-decoration: none;
+        }
+        .btn-primary { background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); color: #1a1a2e; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card-title { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0; }
+        .tab { padding: 12px 24px; cursor: pointer; font-weight: 500; color: #64748b; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .tab.active { color: #1a1a2e; border-bottom-color: #4ade80; }
+        .tab:hover { color: #1a1a2e; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .violation-item { padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; position: relative; }
+        .violation-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .violation-bureau { font-weight: 600; color: #1a1a2e; }
+        .violation-section { font-size: 12px; background: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 10px; }
+        .violation-account { font-size: 13px; color: #64748b; }
+        .violation-desc { font-size: 13px; color: #334155; margin-top: 8px; }
+        .violation-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
+        .edit-btn, .delete-btn { padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; border: none; }
+        .edit-btn { background: #dbeafe; color: #1e40af; }
+        .delete-btn { background: #fee2e2; color: #991b1b; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 500; color: #334155; margin-bottom: 5px; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { 
+            width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px;
+        }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .checkbox-group { display: flex; align-items: center; gap: 10px; }
+        .checkbox-group input { width: auto; }
+        .standing-check { display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; }
+        .standing-check.yes { background: #dcfce7; }
+        .standing-check.no { background: #fee2e2; }
+        .damages-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+        .damages-label { color: #64748b; }
+        .damages-value { font-weight: 600; color: #1a1a2e; }
+        .score-display { font-size: 48px; font-weight: 700; text-align: center; padding: 20px; }
+        .score-high { color: #22c55e; }
+        .score-medium { color: #eab308; }
+        .score-low { color: #ef4444; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 16px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 20px; color: #1a1a2e; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; }
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-approved { background: #dcfce7; color: #166534; }
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; }
+        .alert-success { background: #dcfce7; color: #166534; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        .alert-warning { background: #fef3c7; color: #92400e; }
+        .add-btn { background: #4ade80; color: #1a1a2e; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+        .add-btn:hover { background: #22c55e; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        <a href="/dashboard" class="nav-item">Dashboard</a>
+        <a href="/dashboard/clients" class="nav-item">Clients</a>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Review: {{ analysis.client_name }}</h1>
+                <p style="color: #64748b; margin-top: 5px;">
+                    Analysis ID: {{ analysis.id }} | Round {{ analysis.dispute_round }} | 
+                    <span class="status-badge {% if analysis.approved_at %}status-approved{% else %}status-pending{% endif %}">
+                        {% if analysis.approved_at %}Approved{% else %}Pending Review{% endif %}
+                    </span>
+                </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="saveBtn" class="btn btn-secondary" onclick="saveAllChanges()">Save Changes</button>
+                <button id="approveBtn" class="btn btn-primary" onclick="approveAnalysis()" {% if analysis.approved_at %}disabled{% endif %}>
+                    {% if analysis.approved_at %}Already Approved{% else %}Approve & Generate Documents{% endif %}
+                </button>
+                <a href="/dashboard/case/{{ analysis.id }}" class="btn btn-secondary">Back to Case</a>
+            </div>
+        </div>
+        
+        <div id="alertContainer"></div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('violations')">Violations ({{ violations|length }})</div>
+            <div class="tab" onclick="showTab('standing')">Standing</div>
+            <div class="tab" onclick="showTab('damages')">Damages</div>
+            <div class="tab" onclick="showTab('score')">Case Score</div>
+        </div>
+        
+        <div id="violations" class="tab-content active">
+            <div class="card">
+                <div class="card-title">
+                    <span>FCRA Violations</span>
+                    <button class="add-btn" onclick="openAddViolationModal()">+ Add Violation</button>
+                </div>
+                
+                {% if violations %}
+                {% for v in violations %}
+                <div class="violation-item" id="violation-{{ v.id }}">
+                    <div class="violation-actions">
+                        <button class="edit-btn" onclick="openEditViolationModal({{ v.id }})">Edit</button>
+                        <button class="delete-btn" onclick="deleteViolation({{ v.id }})">Delete</button>
+                    </div>
+                    <div class="violation-header">
+                        <span class="violation-bureau">{{ v.bureau }}</span>
+                        <span class="violation-section">{{ v.fcra_section }}</span>
+                    </div>
+                    <div class="violation-account">{{ v.account_name }}</div>
+                    <div class="violation-desc">{{ v.description[:200] }}{% if v.description|length > 200 %}...{% endif %}</div>
+                    <div style="margin-top: 8px; font-size: 12px;">
+                        <span style="color: #22c55e;">Damages: ${{ "{:,.0f}".format(v.statutory_damages_min) }} - ${{ "{:,.0f}".format(v.statutory_damages_max) }}</span>
+                        {% if v.is_willful %}<span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 10px; margin-left: 10px;">Willful</span>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p style="color: #94a3b8; text-align: center; padding: 30px;">No violations found. Click "Add Violation" to add one manually.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div id="standing" class="tab-content">
+            <div class="card">
+                <div class="card-title">Standing Analysis (Post-TransUnion v. Ramirez)</div>
+                
+                <form id="standingForm">
+                    <div class="standing-check {% if standing and standing.has_concrete_harm %}yes{% else %}no{% endif %}">
+                        <input type="checkbox" id="has_concrete_harm" name="has_concrete_harm" {% if standing and standing.has_concrete_harm %}checked{% endif %}>
+                        <label for="has_concrete_harm" style="font-weight: 600;">Concrete Harm Documented</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Harm Type</label>
+                        <input type="text" id="concrete_harm_type" name="concrete_harm_type" value="{{ standing.concrete_harm_type if standing else '' }}" placeholder="e.g., Credit denial, higher interest rates">
+                    </div>
+                    <div class="form-group">
+                        <label>Harm Details</label>
+                        <textarea id="concrete_harm_details" name="concrete_harm_details" placeholder="Describe the specific harm experienced...">{{ standing.concrete_harm_details if standing else '' }}</textarea>
+                    </div>
+                    
+                    <div class="standing-check {% if standing and standing.has_dissemination %}yes{% else %}no{% endif %}">
+                        <input type="checkbox" id="has_dissemination" name="has_dissemination" {% if standing and standing.has_dissemination %}checked{% endif %}>
+                        <label for="has_dissemination" style="font-weight: 600;">Dissemination Confirmed</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Dissemination Details</label>
+                        <textarea id="dissemination_details" name="dissemination_details" placeholder="Describe third-party access to the report...">{{ standing.dissemination_details if standing else '' }}</textarea>
+                    </div>
+                    
+                    <div class="standing-check {% if standing and standing.has_causation %}yes{% else %}no{% endif %}">
+                        <input type="checkbox" id="has_causation" name="has_causation" {% if standing and standing.has_causation %}checked{% endif %}>
+                        <label for="has_causation" style="font-weight: 600;">Causation Established</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Causation Details</label>
+                        <textarea id="causation_details" name="causation_details" placeholder="Describe how errors caused the harm...">{{ standing.causation_details if standing else '' }}</textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Denial Letters Count</label>
+                            <input type="number" id="denial_letters_count" name="denial_letters_count" value="{{ standing.denial_letters_count if standing else 0 }}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Adverse Action Notices Count</label>
+                            <input type="number" id="adverse_action_notices_count" name="adverse_action_notices_count" value="{{ standing.adverse_action_notices_count if standing else 0 }}" min="0">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="damages" class="tab-content">
+            <div class="card">
+                <div class="card-title">Damages Calculation</div>
+                
+                <form id="damagesForm">
+                    <h3 style="margin-bottom: 15px; color: #1a1a2e;">Actual Damages</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Credit Denials Amount ($)</label>
+                            <input type="number" id="credit_denials_amount" name="credit_denials_amount" value="{{ damages.credit_denials_amount if damages else 0 }}" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Higher Interest Amount ($)</label>
+                            <input type="number" id="higher_interest_amount" name="higher_interest_amount" value="{{ damages.higher_interest_amount if damages else 0 }}" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Credit Monitoring Costs ($)</label>
+                            <input type="number" id="credit_monitoring_amount" name="credit_monitoring_amount" value="{{ damages.credit_monitoring_amount if damages else 0 }}" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label>Time & Stress Amount ($)</label>
+                            <input type="number" id="time_stress_amount" name="time_stress_amount" value="{{ damages.time_stress_amount if damages else 0 }}" min="0" step="0.01">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Other Actual Damages ($)</label>
+                        <input type="number" id="other_actual_amount" name="other_actual_amount" value="{{ damages.other_actual_amount if damages else 0 }}" min="0" step="0.01">
+                    </div>
+                    
+                    <h3 style="margin: 20px 0 15px; color: #1a1a2e;">Calculated Totals</h3>
+                    <div class="damages-row">
+                        <span class="damages-label">Actual Damages Total</span>
+                        <span class="damages-value">${{ "{:,.2f}".format(damages.actual_damages_total if damages else 0) }}</span>
+                    </div>
+                    <div class="damages-row">
+                        <span class="damages-label">Statutory Damages Total</span>
+                        <span class="damages-value">${{ "{:,.2f}".format(damages.statutory_damages_total if damages else 0) }}</span>
+                    </div>
+                    <div class="damages-row">
+                        <span class="damages-label">Punitive Damages</span>
+                        <span class="damages-value">${{ "{:,.2f}".format(damages.punitive_damages_amount if damages else 0) }}</span>
+                    </div>
+                    <div class="damages-row">
+                        <span class="damages-label">Total Exposure</span>
+                        <span class="damages-value" style="color: #22c55e; font-size: 18px;">${{ "{:,.2f}".format(damages.total_exposure if damages else 0) }}</span>
+                    </div>
+                    <div class="damages-row">
+                        <span class="damages-label">Settlement Target (65%)</span>
+                        <span class="damages-value" style="color: #1a1a2e;">${{ "{:,.2f}".format(damages.settlement_target if damages else 0) }}</span>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Damages Notes</label>
+                        <textarea id="damages_notes" name="damages_notes" placeholder="Additional notes about damages calculation...">{{ damages.notes if damages else '' }}</textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="score" class="tab-content">
+            <div class="card">
+                <div class="card-title">Case Strength Score</div>
+                
+                {% if score %}
+                <div class="score-display {% if score.total_score >= 8 %}score-high{% elif score.total_score >= 5 %}score-medium{% else %}score-low{% endif %}">
+                    {{ score.total_score }}/10
+                </div>
+                <p style="text-align: center; color: #64748b; margin-bottom: 20px;">{{ score.case_strength }}</p>
+                
+                <div class="damages-row">
+                    <span class="damages-label">Standing Score</span>
+                    <span class="damages-value">{{ score.standing_score }}/3</span>
+                </div>
+                <div class="damages-row">
+                    <span class="damages-label">Violation Quality</span>
+                    <span class="damages-value">{{ score.violation_quality_score }}/4</span>
+                </div>
+                <div class="damages-row">
+                    <span class="damages-label">Willfulness</span>
+                    <span class="damages-value">{{ score.willfulness_score }}/2</span>
+                </div>
+                <div class="damages-row">
+                    <span class="damages-label">Documentation</span>
+                    <span class="damages-value">{{ score.documentation_score }}/1</span>
+                </div>
+                <div class="damages-row">
+                    <span class="damages-label">Settlement Probability</span>
+                    <span class="damages-value">{{ "{:.0f}".format(score.settlement_probability * 100) }}%</span>
+                </div>
+                <div class="damages-row">
+                    <span class="damages-label">Recommendation</span>
+                    <span class="damages-value">{{ score.recommendation }}</span>
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #94a3b8; padding: 30px;">No score calculated yet. Save standing and damages first.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+    
+    <div id="violationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="violationModalTitle">Add Violation</h2>
+                <button class="close-btn" onclick="closeViolationModal()">&times;</button>
+            </div>
+            <form id="violationForm">
+                <input type="hidden" id="violation_id" name="violation_id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Bureau</label>
+                        <select id="v_bureau" name="bureau" required>
+                            <option value="Equifax">Equifax</option>
+                            <option value="Experian">Experian</option>
+                            <option value="TransUnion">TransUnion</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>FCRA Section</label>
+                        <select id="v_fcra_section" name="fcra_section" required>
+                            <option value="605">605 - Obsolete Information</option>
+                            <option value="605(b)">605(b) - Identity Theft Block</option>
+                            <option value="607(b)">607(b) - Maximum Accuracy</option>
+                            <option value="611">611 - Reinvestigation</option>
+                            <option value="623">623 - Furnisher Duties</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Account Name</label>
+                    <input type="text" id="v_account_name" name="account_name" required placeholder="e.g., Capital One Credit Card">
+                </div>
+                <div class="form-group">
+                    <label>Violation Type</label>
+                    <input type="text" id="v_violation_type" name="violation_type" required placeholder="e.g., Balance discrepancy">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="v_description" name="description" required placeholder="Detailed description of the violation..."></textarea>
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>Min Damages ($)</label>
+                        <input type="number" id="v_statutory_damages_min" name="statutory_damages_min" value="100" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Damages ($)</label>
+                        <input type="number" id="v_statutory_damages_max" name="statutory_damages_max" value="1000" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: block; margin-bottom: 10px;">&nbsp;</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="v_is_willful" name="is_willful">
+                            <label for="v_is_willful">Willful Violation</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Willfulness Notes</label>
+                    <textarea id="v_willfulness_notes" name="willfulness_notes" placeholder="Evidence of willful noncompliance..."></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeViolationModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Violation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const analysisId = {{ analysis.id }};
+        
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alert);
+            
+            setTimeout(() => alert.remove(), 5000);
+        }
+        
+        function openAddViolationModal() {
+            document.getElementById('violationModalTitle').textContent = 'Add Violation';
+            document.getElementById('violationForm').reset();
+            document.getElementById('violation_id').value = '';
+            document.getElementById('violationModal').classList.add('active');
+        }
+        
+        async function openEditViolationModal(id) {
+            document.getElementById('violationModalTitle').textContent = 'Edit Violation';
+            
+            try {
+                const resp = await fetch(`/api/violation/${id}`);
+                const data = await resp.json();
+                
+                if (data.success) {
+                    const v = data.violation;
+                    document.getElementById('violation_id').value = v.id;
+                    document.getElementById('v_bureau').value = v.bureau;
+                    document.getElementById('v_fcra_section').value = v.fcra_section;
+                    document.getElementById('v_account_name').value = v.account_name;
+                    document.getElementById('v_violation_type').value = v.violation_type;
+                    document.getElementById('v_description').value = v.description;
+                    document.getElementById('v_statutory_damages_min').value = v.statutory_damages_min;
+                    document.getElementById('v_statutory_damages_max').value = v.statutory_damages_max;
+                    document.getElementById('v_is_willful').checked = v.is_willful;
+                    document.getElementById('v_willfulness_notes').value = v.willfulness_notes || '';
+                    
+                    document.getElementById('violationModal').classList.add('active');
+                }
+            } catch (err) {
+                showAlert('Failed to load violation: ' + err.message, 'error');
+            }
+        }
+        
+        function closeViolationModal() {
+            document.getElementById('violationModal').classList.remove('active');
+        }
+        
+        document.getElementById('violationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const violationId = document.getElementById('violation_id').value;
+            const isEdit = !!violationId;
+            
+            const formData = {
+                analysis_id: analysisId,
+                bureau: document.getElementById('v_bureau').value,
+                fcra_section: document.getElementById('v_fcra_section').value,
+                account_name: document.getElementById('v_account_name').value,
+                violation_type: document.getElementById('v_violation_type').value,
+                description: document.getElementById('v_description').value,
+                statutory_damages_min: parseFloat(document.getElementById('v_statutory_damages_min').value) || 100,
+                statutory_damages_max: parseFloat(document.getElementById('v_statutory_damages_max').value) || 1000,
+                is_willful: document.getElementById('v_is_willful').checked,
+                willfulness_notes: document.getElementById('v_willfulness_notes').value
+            };
+            
+            try {
+                const url = isEdit ? `/api/violation/${violationId}` : '/api/violation';
+                const resp = await fetch(url, {
+                    method: isEdit ? 'PUT' : 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await resp.json();
+                
+                if (data.success) {
+                    showAlert(isEdit ? 'Violation updated successfully' : 'Violation added successfully');
+                    closeViolationModal();
+                    location.reload();
+                } else {
+                    showAlert(data.error || 'Failed to save violation', 'error');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message, 'error');
+            }
+        });
+        
+        async function deleteViolation(id) {
+            if (!confirm('Are you sure you want to delete this violation?')) return;
+            
+            try {
+                const resp = await fetch(`/api/violation/${id}`, { method: 'DELETE' });
+                const data = await resp.json();
+                
+                if (data.success) {
+                    document.getElementById(`violation-${id}`).remove();
+                    showAlert('Violation deleted');
+                } else {
+                    showAlert(data.error || 'Failed to delete', 'error');
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message, 'error');
+            }
+        }
+        
+        async function saveAllChanges() {
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            try {
+                const standingData = {
+                    has_concrete_harm: document.getElementById('has_concrete_harm').checked,
+                    concrete_harm_type: document.getElementById('concrete_harm_type').value,
+                    concrete_harm_details: document.getElementById('concrete_harm_details').value,
+                    has_dissemination: document.getElementById('has_dissemination').checked,
+                    dissemination_details: document.getElementById('dissemination_details').value,
+                    has_causation: document.getElementById('has_causation').checked,
+                    causation_details: document.getElementById('causation_details').value,
+                    denial_letters_count: parseInt(document.getElementById('denial_letters_count').value) || 0,
+                    adverse_action_notices_count: parseInt(document.getElementById('adverse_action_notices_count').value) || 0
+                };
+                
+                const standingResp = await fetch(`/api/analysis/${analysisId}/standing`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(standingData)
+                });
+                
+                const damagesData = {
+                    credit_denials_amount: parseFloat(document.getElementById('credit_denials_amount').value) || 0,
+                    higher_interest_amount: parseFloat(document.getElementById('higher_interest_amount').value) || 0,
+                    credit_monitoring_amount: parseFloat(document.getElementById('credit_monitoring_amount').value) || 0,
+                    time_stress_amount: parseFloat(document.getElementById('time_stress_amount').value) || 0,
+                    other_actual_amount: parseFloat(document.getElementById('other_actual_amount').value) || 0,
+                    notes: document.getElementById('damages_notes').value
+                };
+                
+                const damagesResp = await fetch(`/api/analysis/${analysisId}/damages`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(damagesData)
+                });
+                
+                if (standingResp.ok && damagesResp.ok) {
+                    showAlert('All changes saved successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert('Some changes may not have saved', 'warning');
+                }
+            } catch (err) {
+                showAlert('Error saving: ' + err.message, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Changes';
+            }
+        }
+        
+        async function approveAnalysis() {
+            if (!confirm('Approve this analysis and generate all client documents? This will create the comprehensive client report, internal memo, and dispute letters.')) return;
+            
+            const approveBtn = document.getElementById('approveBtn');
+            approveBtn.disabled = true;
+            approveBtn.textContent = 'Generating Documents...';
+            
+            try {
+                const resp = await fetch(`/api/approve/${analysisId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await resp.json();
+                
+                if (data.success) {
+                    showAlert('Analysis approved! Documents are being generated...');
+                    setTimeout(() => location.href = `/dashboard/case/${analysisId}`, 2000);
+                } else {
+                    showAlert(data.error || 'Failed to approve', 'error');
+                    approveBtn.disabled = false;
+                    approveBtn.textContent = 'Approve & Generate Documents';
+                }
+            } catch (err) {
+                showAlert('Error: ' + err.message, 'error');
+                approveBtn.disabled = false;
+                approveBtn.textContent = 'Approve & Generate Documents';
+            }
+        }
+        
+        document.querySelectorAll('.standing-check input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', function() {
+                const parent = this.closest('.standing-check');
+                parent.classList.remove('yes', 'no');
+                parent.classList.add(this.checked ? 'yes' : 'no');
+            });
+        });
+    </script>
+</body>
+</html>
