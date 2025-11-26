@@ -8804,6 +8804,34 @@ def estimate_score_improvement():
     return jsonify({'success': True, 'data': estimate})
 
 
+@app.route('/api/credit-score/item-types')
+def get_credit_score_item_types():
+    """Get all negative item types with their score impact data"""
+    from services.credit_score_calculator import get_all_item_types, SEVERITY_LEVELS
+    
+    item_types = get_all_item_types()
+    return jsonify({
+        'success': True,
+        'data': {
+            'categories': item_types,
+            'severity_levels': SEVERITY_LEVELS
+        }
+    })
+
+
+@app.route('/api/credit-score/estimate-detailed', methods=['POST'])
+def estimate_score_detailed():
+    """Detailed estimate based on specific item types"""
+    from services.credit_score_calculator import estimate_by_item_types
+    
+    data = request.json
+    current_score = data.get('current_score', 550)
+    selected_items = data.get('items', [])
+    
+    estimate = estimate_by_item_types(current_score, selected_items)
+    return jsonify({'success': True, 'data': estimate})
+
+
 @app.route('/api/credit-score/history/<int:client_id>')
 def get_credit_score_history(client_id):
     """Get all score snapshots for a client"""
