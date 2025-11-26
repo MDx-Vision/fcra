@@ -45,6 +45,16 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Email/SMS Automation**: SendGrid and Twilio-powered systems for automated client communications with configurable templates and merge tags.
 - **Document Center**: Unified document upload system with type-first selection and admin review workflow.
 - **Flexible Signup System**: Configurable fields and multi-payment options (Stripe, PayPal, etc.).
+- **Credit Score Improvement Tracker** (`/dashboard/credit-tracker`): Comprehensive score tracking and projection system with:
+  - **Quick Estimator**: Simple current score + negative count for rough projections
+  - **Detailed Calculator**: 35+ specific negative item types with accurate impact ranges based on industry research
+  - **Item Categories**: Payment History, Derogatory Marks, Public Records, Credit Utilization, Credit Inquiries, Reporting Errors, Fraud/Identity Theft, Account Status
+  - **Severity Levels**: Low, Moderate, High, Severe, Critical - each with color coding and accurate impact ranges
+  - **Per-Item Impact Data**: Different items have different score impacts (e.g., hard inquiry +5-15 pts vs collection +50-110 pts vs bankruptcy +130-240 pts)
+  - **Client Progress Tracking**: Before/after scores, items removed, timeline visualization
+  - **Score Snapshots**: Track Equifax, Experian, TransUnion scores over time with dispute round correlation
+  - **Client Portal Integration**: Score Progress tab shows clients their improvement journey with Chart.js visualizations
+  - **API Endpoints**: `/api/credit-score/item-types`, `/api/credit-score/estimate-detailed`, `/api/credit-score/projection/<id>`, `/api/credit-score/history/<id>`
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
