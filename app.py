@@ -4307,6 +4307,7 @@ def client_portal(token):
             secondary_freezes = db.query(SecondaryBureauFreeze).filter_by(client_id=client.id).all()
         
         return render_template('client_portal.html',
+            token=token,
             case=case,
             client=client,
             analysis=analysis,
