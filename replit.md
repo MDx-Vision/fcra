@@ -53,6 +53,15 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
 
 ## Recent Changes (November 26, 2025)
+- **Unlayer Visual Email Template Editor** (`/dashboard/settings/email`): Drag-and-drop email designer
+  - Embedded Unlayer editor for visual template design (no coding required)
+  - 8 template types: Welcome, Document Reminder, Case Update, Dispute Sent, CRA Response, Payment Reminder, Analysis Ready, Letters Ready
+  - Merge tags support: {{client_name}}, {{client_email}}, {{portal_link}}, {{case_status}}, {{missing_docs}}, {{company_name}}, {{support_email}}
+  - Save custom templates to database with design JSON for re-editing
+  - Reset to default functionality
+  - Preview/test email with sample merge tag values
+  - EmailTemplate model stores custom designs
+  - Falls back to hardcoded branded templates if no custom template saved
 - **Email Automation System** (`/dashboard/settings/email`): SendGrid-powered automated emails
   - Welcome Email: Sent when new client signs up (all 3 flows: Free, Manual, Stripe)
   - Document Reminder Email: When docs missing after configurable delay
