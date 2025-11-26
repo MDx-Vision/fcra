@@ -1,12 +1,15 @@
 """
 Freeze Letter Service
 Generates bulk credit freeze letters for all 12 credit bureaus.
-Uses fpdf2 for PDF generation.
+Uses fpdf2 for PDF generation and python-docx for Word document generation.
 """
 import os
 import uuid
 from datetime import datetime
 from fpdf import FPDF
+from docx import Document
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from database import get_db, Client, FreezeLetterBatch
 
@@ -355,6 +358,120 @@ def _add_letter_to_pdf(pdf, letter_content):
     pdf.cell(0, 6, f"Date: {letter_content['date']}", ln=True)
 
 
+def _create_freeze_letter_docx(letter_content):
+    """
+    Create a single freeze letter page for a Word document.
+    
+    Args:
+        letter_content: Dict with letter content from generate_single_freeze_letter
+    
+    Returns:
+        List of paragraph/content data to add to the document
+    """
+    content_items = []
+    
+    content_items.append({'type': 'paragraph', 'text': letter_content['date'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': letter_content['bureau_name'], 'bold': True, 'size': 11})
+    for line in letter_content['bureau_address'].split('\n'):
+        if line.strip():
+            content_items.append({'type': 'paragraph', 'text': line.strip(), 'bold': False, 'size': 11})
+    
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'RE: Request for Security Freeze on Credit File', 'bold': True, 'size': 12})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'To Whom It May Concern:', 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    intro_text = (
+        f"I am writing to request a security freeze be placed on my credit file pursuant to my rights "
+        f"under the Fair Credit Reporting Act (FCRA) Section 605A (15 U.S.C. 1681c-1) and applicable "
+        f"state law. This freeze will prevent credit reporting agencies from releasing my credit report "
+        f"without my authorization."
+    )
+    content_items.append({'type': 'paragraph', 'text': intro_text, 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'CONSUMER IDENTIFICATION INFORMATION:', 'bold': True, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"Full Legal Name: {letter_content['client_name']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"Current Address: {letter_content['client_address']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"Date of Birth: {letter_content['dob']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"SSN (Last 4 digits): XXX-XX-{letter_content['ssn_last4']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'LEGAL AUTHORITY:', 'bold': True, 'size': 11})
+    legal_text = (
+        "Under FCRA Section 605A, as amended by the Economic Growth, Regulatory Relief, and Consumer "
+        "Protection Act of 2018, consumers have the right to place, temporarily lift, or permanently "
+        "remove a security freeze on their credit file at no cost. You are required to place this "
+        "freeze within one (1) business day of receiving this request if submitted electronically, "
+        "or within three (3) business days if submitted by mail."
+    )
+    content_items.append({'type': 'paragraph', 'text': legal_text, 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'REQUEST:', 'bold': True, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': "I hereby request that you:", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': "1. Place a security freeze on my credit file immediately upon receipt of this letter.", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': "2. Provide me with written confirmation that the freeze has been placed, including any PIN, password, or other authentication method I will need to temporarily lift or permanently remove the freeze in the future.", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': "3. Send the confirmation to my address listed above within the timeframe required by law.", 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'ENCLOSURES:', 'bold': True, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': "1. Copy of government-issued photo identification (driver's license or state ID)", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': "2. Proof of current address (utility bill, bank statement, or similar document)", 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    notice_text = (
+        "Please be advised that failure to comply with this request within the legally mandated "
+        "timeframe may constitute a violation of the Fair Credit Reporting Act, subjecting your "
+        "organization to statutory damages, actual damages, and attorney's fees."
+    )
+    content_items.append({'type': 'paragraph', 'text': notice_text, 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'Thank you for your prompt attention to this matter.', 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    content_items.append({'type': 'paragraph', 'text': 'Sincerely,', 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    content_items.append({'type': 'spacing'})
+    content_items.append({'type': 'paragraph', 'text': '_' * 40, 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': letter_content['client_name'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"Date: {letter_content['date']}", 'bold': False, 'size': 11})
+    
+    return content_items
+
+
+def _add_freeze_letter_to_docx(doc, letter_content, add_page_break=True):
+    """
+    Add a single freeze letter to the Word document.
+    
+    Args:
+        doc: Document object
+        letter_content: Dict with letter content
+        add_page_break: Whether to add a page break after the letter
+    """
+    content_items = _create_freeze_letter_docx(letter_content)
+    
+    for item in content_items:
+        if item['type'] == 'spacing':
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(6)
+        elif item['type'] == 'paragraph':
+            p = doc.add_paragraph()
+            run = p.add_run(item['text'])
+            run.font.name = 'Arial'
+            run.font.size = Pt(item.get('size', 11))
+            run.bold = item.get('bold', False)
+            p.paragraph_format.space_after = Pt(2)
+    
+    if add_page_break:
+        doc.add_page_break()
+
+
 def generate_freeze_letters(client_id, bureaus=None):
     """
     Generate bulk freeze letters for specified bureaus (or all 12 if bureaus is None).
@@ -403,13 +520,24 @@ def generate_freeze_letters(client_id, bureaus=None):
         pdf_path = os.path.join(output_dir, pdf_filename)
         
         pdf = FreezeLetterPDF()
+        doc = Document()
         
+        letter_contents = []
         for bureau_name in target_bureaus:
             bureau_info = CRA_ADDRESSES[bureau_name]
             letter_content = generate_single_freeze_letter(client, bureau_name, bureau_info)
+            letter_contents.append(letter_content)
             _add_letter_to_pdf(pdf, letter_content)
         
         pdf.output(pdf_path)
+        
+        for i, letter_content in enumerate(letter_contents):
+            is_last = (i == len(letter_contents) - 1)
+            _add_freeze_letter_to_docx(doc, letter_content, add_page_break=not is_last)
+        
+        docx_filename = f"{client_name_safe}_Freeze_Letters_{timestamp}.docx"
+        docx_path = os.path.join(output_dir, docx_filename)
+        doc.save(docx_path)
         
         freeze_batch = FreezeLetterBatch(
             client_id=client_id,
@@ -417,6 +545,7 @@ def generate_freeze_letters(client_id, bureaus=None):
             bureaus_included=target_bureaus,
             total_bureaus=len(target_bureaus),
             generated_pdf_path=pdf_path,
+            generated_docx_path=docx_path,
             status='generated',
             created_at=datetime.utcnow()
         )
@@ -430,6 +559,7 @@ def generate_freeze_letters(client_id, bureaus=None):
             'batch_id': batch_uuid,
             'batch_db_id': freeze_batch.id,
             'pdf_path': pdf_path,
+            'docx_path': docx_path,
             'bureaus_included': target_bureaus,
             'total_letters': len(target_bureaus)
         }

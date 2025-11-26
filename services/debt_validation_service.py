@@ -2,11 +2,15 @@
 Debt Validation Letter Service
 Generates FDCPA-compliant debt validation letters for collection accounts.
 Auto-populates client PII and can be triggered automatically or on-demand.
+Uses fpdf2 for PDF generation and python-docx for Word document generation.
 """
 import os
 import uuid
 from datetime import datetime
 from fpdf import FPDF
+from docx import Document
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from database import get_db, Client, Case, Violation
 
@@ -276,6 +280,157 @@ def _add_validation_letter_to_pdf(pdf, letter_content):
     pdf.cell(0, 5, '    Federal Trade Commission', ln=True)
 
 
+def _create_validation_letter_docx(letter_content):
+    """
+    Create content for a single debt validation letter for a Word document.
+    
+    Args:
+        letter_content: Dict with letter content from generate_debt_validation_letter
+    
+    Returns:
+        List of paragraph/content data to add to the document
+    """
+    content_items = []
+    
+    content_items.append({'type': 'paragraph', 'text': letter_content['client_name'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': letter_content['client_address'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': letter_content['client_city_state_zip'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    content_items.append({'type': 'paragraph', 'text': letter_content['date'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': letter_content['creditor_name'], 'bold': True, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': letter_content['creditor_address'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': letter_content['creditor_city_state_zip'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    if letter_content.get('reference_number'):
+        content_items.append({'type': 'paragraph', 'text': f"RE: Account Reference #{letter_content['reference_number']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"RE: Alleged Account #{letter_content['account_number']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"Alleged Original Creditor: {letter_content['original_creditor']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': f"Alleged Balance: {letter_content['balance']}", 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'NOTICE OF DISPUTE AND DEMAND FOR DEBT VALIDATION', 'bold': True, 'size': 12, 'center': True})
+    content_items.append({'type': 'paragraph', 'text': 'PURSUANT TO 15 U.S.C. 1692g (FDCPA)', 'bold': True, 'size': 12, 'center': True})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'To Whom It May Concern:', 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    dispute_text = (
+        "I am writing in response to your communication regarding the above-referenced account. "
+        "I DISPUTE THIS ALLEGED DEBT IN ITS ENTIRETY. This letter serves as my formal written dispute "
+        "and demand for validation of this alleged debt pursuant to the Fair Debt Collection Practices "
+        "Act, 15 U.S.C. 1692g."
+    )
+    content_items.append({'type': 'paragraph', 'text': dispute_text, 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    cease_text = (
+        "PLEASE BE ADVISED: Until you provide the validation requested below, you must CEASE AND DESIST "
+        "all collection activities. Any continued collection attempts prior to validation will constitute "
+        "a violation of the FDCPA, subjecting your company to statutory damages of up to $1,000 per "
+        "violation, plus actual damages and attorney's fees."
+    )
+    content_items.append({'type': 'paragraph', 'text': cease_text, 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'REQUIRED DOCUMENTATION FOR PROPER VALIDATION:', 'bold': True, 'size': 11})
+    
+    validation_items = [
+        "1. Complete payment history from the original creditor showing all charges, payments, and fees",
+        "2. A copy of the original signed contract or agreement bearing my signature",
+        "3. Documentation proving the chain of assignment/ownership from original creditor to you",
+        "4. Verification that the statute of limitations has not expired on this alleged debt",
+        "5. Documentation showing your license to collect debts in my state of residence",
+        "6. Proof that you have authority to collect this specific debt",
+        "7. Name and address of the original creditor",
+        "8. The exact amount of the alleged debt broken down by principal, interest, and fees",
+        "9. Documentation showing the date of first delinquency (DOFD)",
+        "10. If applicable, assignment or bill of sale from the original creditor to your company"
+    ]
+    for item in validation_items:
+        content_items.append({'type': 'paragraph', 'text': item, 'bold': False, 'size': 11})
+    
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'ADDITIONAL DEMANDS:', 'bold': True, 'size': 11})
+    demands = [
+        "- CEASE all telephone calls to me, my family, and my place of employment",
+        "- DO NOT report this disputed debt to any credit reporting agency",
+        "- If already reported, REMOVE this tradeline from all credit reports immediately",
+        "- Communicate with me ONLY in writing at the address listed above"
+    ]
+    for demand in demands:
+        content_items.append({'type': 'paragraph', 'text': demand, 'bold': False, 'size': 11})
+    
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'LEGAL NOTICE:', 'bold': True, 'size': 11})
+    legal_notice = (
+        "Be advised that I am aware of my rights under the Fair Debt Collection Practices Act (FDCPA), "
+        "the Fair Credit Reporting Act (FCRA), and applicable state laws. Any violation of these laws "
+        "will be documented and may be used in legal proceedings against your company. "
+        "This letter is dated and will be sent via certified mail to preserve evidence of your receipt."
+    )
+    content_items.append({'type': 'paragraph', 'text': legal_notice, 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    response_text = (
+        "You have 30 days from receipt of this letter to provide the requested validation. Failure to "
+        "respond within this timeframe shall be deemed an acknowledgment that this debt is invalid and "
+        "must be deleted from all credit reporting agencies."
+    )
+    content_items.append({'type': 'paragraph', 'text': response_text, 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'Govern yourself accordingly.', 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    content_items.append({'type': 'paragraph', 'text': 'Sincerely,', 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    content_items.append({'type': 'spacing'})
+    content_items.append({'type': 'paragraph', 'text': '_' * 40, 'bold': False, 'size': 11})
+    content_items.append({'type': 'paragraph', 'text': letter_content['client_name'], 'bold': False, 'size': 11})
+    content_items.append({'type': 'spacing'})
+    
+    content_items.append({'type': 'paragraph', 'text': 'CC: Consumer Financial Protection Bureau', 'bold': False, 'size': 9, 'italic': True})
+    content_items.append({'type': 'paragraph', 'text': '    State Attorney General Office', 'bold': False, 'size': 9, 'italic': True})
+    content_items.append({'type': 'paragraph', 'text': '    Federal Trade Commission', 'bold': False, 'size': 9, 'italic': True})
+    
+    return content_items
+
+
+def _add_validation_letter_to_docx(doc, letter_content, add_page_break=True):
+    """
+    Add a single debt validation letter to the Word document.
+    
+    Args:
+        doc: Document object
+        letter_content: Dict with letter content
+        add_page_break: Whether to add a page break after the letter
+    """
+    content_items = _create_validation_letter_docx(letter_content)
+    
+    for item in content_items:
+        if item['type'] == 'spacing':
+            p = doc.add_paragraph()
+            p.paragraph_format.space_after = Pt(6)
+        elif item['type'] == 'paragraph':
+            p = doc.add_paragraph()
+            run = p.add_run(item['text'])
+            run.font.name = 'Arial'
+            run.font.size = Pt(item.get('size', 11))
+            run.bold = item.get('bold', False)
+            run.italic = item.get('italic', False)
+            p.paragraph_format.space_after = Pt(2)
+            if item.get('center'):
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    if add_page_break:
+        doc.add_page_break()
+
+
 def generate_validation_letters(client_id, collections=None, case_id=None):
     """
     Generate debt validation letters for collection accounts.
@@ -343,16 +498,28 @@ def generate_validation_letters(client_id, collections=None, case_id=None):
         pdf_path = os.path.join(output_dir, pdf_filename)
         
         pdf = DebtValidationPDF()
+        doc = Document()
         
+        letter_contents = []
         for collection in collections:
             letter_content = generate_debt_validation_letter(client, collection)
+            letter_contents.append(letter_content)
             _add_validation_letter_to_pdf(pdf, letter_content)
         
         pdf.output(pdf_path)
         
+        for i, letter_content in enumerate(letter_contents):
+            is_last = (i == len(letter_contents) - 1)
+            _add_validation_letter_to_docx(doc, letter_content, add_page_break=not is_last)
+        
+        docx_filename = f"{client_name_safe}_Debt_Validation_Letters_{timestamp}.docx"
+        docx_path = os.path.join(output_dir, docx_filename)
+        doc.save(docx_path)
+        
         return {
             'success': True,
             'pdf_path': pdf_path,
+            'docx_path': docx_path,
             'letters_generated': len(collections),
             'collections': [c.get('creditor_name', 'Unknown') for c in collections]
         }

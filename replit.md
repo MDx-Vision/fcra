@@ -60,6 +60,7 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
   - Settlement Calculator: Case value estimation based on violations, willfulness, actual damages
   - Certified Mail: SendCertifiedMail.com integration for proof of delivery
   - Notarization: Proof.com integration for remote online notarization (limited POA)
+- **Word Document Export**: Both freeze letters and validation letters now generate .docx files alongside PDFs for attorney/client editing
 - **New Automation Services** (services/):
   - `notarization_service.py`: Remote notarization via Proof.com API (mock mode available)
   - `settlement_calculator.py`: FCRA settlement value calculator with case factors

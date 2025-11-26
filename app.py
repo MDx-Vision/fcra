@@ -6346,15 +6346,29 @@ def api_get_recent_freeze_letters():
 
 @app.route('/api/freeze-letters/download/<batch_id>')
 def api_download_freeze_letters(batch_id):
-    """Download freeze letters PDF"""
+    """Download freeze letters PDF or DOCX"""
     db = get_db()
     try:
         from database import FreezeLetterBatch
         batch = db.query(FreezeLetterBatch).filter_by(batch_uuid=batch_id).first()
         
-        if batch and batch.generated_pdf_path and os.path.exists(batch.generated_pdf_path):
-            return send_file(batch.generated_pdf_path, as_attachment=True)
-        return jsonify({'success': False, 'error': 'PDF not found'}), 404
+        if not batch:
+            return jsonify({'success': False, 'error': 'Batch not found'}), 404
+        
+        file_format = request.args.get('format', 'pdf').lower()
+        
+        if file_format == 'docx':
+            if batch.generated_docx_path and os.path.exists(batch.generated_docx_path):
+                return send_file(batch.generated_docx_path, as_attachment=True)
+            elif batch.generated_pdf_path:
+                docx_path = batch.generated_pdf_path.replace('.pdf', '.docx')
+                if os.path.exists(docx_path):
+                    return send_file(docx_path, as_attachment=True)
+            return jsonify({'success': False, 'error': 'Word document not found'}), 404
+        else:
+            if batch.generated_pdf_path and os.path.exists(batch.generated_pdf_path):
+                return send_file(batch.generated_pdf_path, as_attachment=True)
+            return jsonify({'success': False, 'error': 'PDF not found'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:

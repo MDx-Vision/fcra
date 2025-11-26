@@ -869,6 +869,7 @@ class FreezeLetterBatch(Base):
     total_bureaus = Column(Integer, default=12)
     
     generated_pdf_path = Column(String(500))
+    generated_docx_path = Column(String(500))
     
     mail_method = Column(String(50))
     certified_mail_tracking = Column(JSON)
