@@ -1,7 +1,7 @@
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Table, TableStyle, Image
 from reportlab.lib.colors import HexColor, black, white, lightgrey
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
 from reportlab.pdfbase import pdfmetrics
@@ -10,6 +10,67 @@ from datetime import datetime
 import os
 import re
 from fpdf import FPDF
+
+BRIGHTPATH_LOGO_PATH = "static/images/logo.png"
+BRIGHTPATH_TAGLINE = "Empowering you to protect your credit-one call at a time."
+BRIGHTPATH_COPYRIGHT = "(C) 2025 Brightpath Ascend Group. All rights reserved."
+BRIGHTPATH_TEAL = HexColor('#319795')
+BRIGHTPATH_LIME = HexColor('#84cc16')
+
+
+class BrandedPDFTemplate:
+    """Base template with Brightpath Ascend Group branding for all client-facing PDFs"""
+    
+    def __init__(self, doc, logo_path=None):
+        self.doc = doc
+        self.logo_path = logo_path or BRIGHTPATH_LOGO_PATH
+        self.page_width = letter[0]
+        self.page_height = letter[1]
+    
+    def add_header_footer(self, canvas, doc):
+        """Add branded header and footer to each page"""
+        canvas.saveState()
+        
+        if os.path.exists(self.logo_path):
+            try:
+                canvas.drawImage(
+                    self.logo_path, 
+                    doc.leftMargin, 
+                    self.page_height - 50,
+                    width=40,
+                    height=40,
+                    preserveAspectRatio=True,
+                    mask='auto'
+                )
+                canvas.setFont('Helvetica-Bold', 14)
+                canvas.setFillColor(BRIGHTPATH_TEAL)
+                canvas.drawString(doc.leftMargin + 48, self.page_height - 35, "Brightpath Ascend Group")
+            except:
+                canvas.setFont('Helvetica-Bold', 14)
+                canvas.setFillColor(BRIGHTPATH_TEAL)
+                canvas.drawString(doc.leftMargin, self.page_height - 35, "Brightpath Ascend Group")
+        else:
+            canvas.setFont('Helvetica-Bold', 14)
+            canvas.setFillColor(BRIGHTPATH_TEAL)
+            canvas.drawString(doc.leftMargin, self.page_height - 35, "Brightpath Ascend Group")
+        
+        canvas.setStrokeColor(BRIGHTPATH_LIME)
+        canvas.setLineWidth(2)
+        canvas.line(doc.leftMargin, self.page_height - 55, self.page_width - doc.rightMargin, self.page_height - 55)
+        
+        canvas.setFont('Helvetica-Oblique', 9)
+        canvas.setFillColor(HexColor('#4a5568'))
+        canvas.drawCentredString(self.page_width / 2, 35, BRIGHTPATH_TAGLINE)
+        
+        canvas.setFont('Helvetica', 8)
+        canvas.setFillColor(HexColor('#718096'))
+        canvas.drawCentredString(self.page_width / 2, 22, BRIGHTPATH_COPYRIGHT)
+        
+        canvas.setFont('Helvetica', 8)
+        canvas.setFillColor(HexColor('#a0aec0'))
+        canvas.drawRightString(self.page_width - doc.rightMargin, 22, f"Page {doc.page}")
+        
+        canvas.restoreState()
 
 class SectionPDFGenerator:
     """Generate clean PDFs for each credit report section"""
@@ -39,6 +100,7 @@ class SectionPDFGenerator:
 class LetterPDFGenerator:
     def __init__(self):
         self.custom_color = HexColor('#1a1a8e')
+        self.use_branding = True
         
     def sanitize_text_for_pdf(self, text):
         """Remove or replace Unicode characters that Helvetica doesn't support"""
@@ -92,9 +154,11 @@ class LetterPDFGenerator:
             pagesize=letter,
             rightMargin=72,
             leftMargin=72,
-            topMargin=72,
-            bottomMargin=18,
+            topMargin=85,
+            bottomMargin=60,
         )
+        
+        branded_template = BrandedPDFTemplate(doc) if self.use_branding else None
         
         story = []
         styles = getSampleStyleSheet()
@@ -163,7 +227,11 @@ class LetterPDFGenerator:
             story.append(Paragraph(line, custom_body_style))
             story.append(Spacer(1, 0.05*inch))
         
-        doc.build(story)
+        if branded_template:
+            doc.build(story, onFirstPage=branded_template.add_header_footer, 
+                      onLaterPages=branded_template.add_header_footer)
+        else:
+            doc.build(story)
         
         return output_path
     
@@ -209,6 +277,7 @@ class CreditAnalysisPDFGenerator:
         self.company_website = "http://www.brightpathascendgroup.com"
         self.primary_color = HexColor('#1a1a2e')
         self.accent_color = HexColor('#4ade80')
+        self.use_branding = True
     
     def sanitize_text(self, text):
         """Remove or replace Unicode characters that Helvetica doesn't support"""
@@ -245,9 +314,11 @@ class CreditAnalysisPDFGenerator:
             pagesize=letter,
             rightMargin=72,
             leftMargin=72,
-            topMargin=72,
-            bottomMargin=72,
+            topMargin=85,
+            bottomMargin=70,
         )
+        
+        branded_template = BrandedPDFTemplate(doc) if self.use_branding else None
         
         story = []
         styles = getSampleStyleSheet()
@@ -493,6 +564,10 @@ class CreditAnalysisPDFGenerator:
         story.append(Paragraph(f"Website: {self.company_website}", body_style))
         
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        doc.build(story)
+        if branded_template:
+            doc.build(story, onFirstPage=branded_template.add_header_footer,
+                      onLaterPages=branded_template.add_header_footer)
+        else:
+            doc.build(story)
         
         return output_path
