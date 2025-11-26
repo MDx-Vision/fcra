@@ -747,6 +747,23 @@ class SMSLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class EmailLog(Base):
+    """Log all email send attempts for tracking and debugging"""
+    __tablename__ = 'email_logs'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    email_address = Column(String(255))
+    subject = Column(String(500))
+    template_type = Column(String(50))
+    status = Column(String(20))
+    message_id = Column(String(100))
+    sent_at = Column(DateTime, default=datetime.utcnow)
+    error_message = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)

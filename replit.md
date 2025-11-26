@@ -53,6 +53,19 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
 
 ## Recent Changes (November 26, 2025)
+- **Email Automation System** (`/dashboard/settings/email`): SendGrid-powered automated emails
+  - Welcome Email: Sent when new client signs up (all 3 flows: Free, Manual, Stripe)
+  - Document Reminder Email: When docs missing after configurable delay
+  - Case Update Email: When case status changes
+  - Dispute Sent Email: When letter mailed to bureau
+  - CRA Response Email: When bureau response received
+  - Payment Reminder Email: For pending payments
+  - Analysis Ready Email: When AI analysis completes
+  - Letters Ready Email: When dispute letters are generated
+  - EmailLog model tracks all sent messages with delivery status
+  - Test email functionality for verification
+  - Individual toggles per notification type
+  - HTML email templates with Brightpath Ascend branding
 - **SMS Automation System** (`/dashboard/settings/sms`): Twilio-powered automated messaging
   - Welcome SMS: Sent when new client signs up
   - Document Reminder SMS: When docs missing after configurable delay
@@ -106,9 +119,9 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 
 ## Configured Integrations
 - **Twilio**: SMS automation for client notifications (welcome, updates, reminders)
+- **SendGrid**: Email automation for client notifications (welcome, case updates, reminders)
 
 ## Future Integrations (Not Yet Configured)
-- **Email Service**: SendGrid for transactional emails (welcome, status updates, notifications)
 - **Certified Mail**: SendCertifiedMail.com for legal proof of delivery
 - **Physical Mail**: LetterStream for bulk letter automation
 - **Credit Report Pull**: API integration for auto-pulling reports (IdentityIQ, SmartCredit, etc.)

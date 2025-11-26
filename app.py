@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog
 from werkzeug.utils import secure_filename
 import secrets
 import uuid
@@ -3703,6 +3703,160 @@ def api_get_sms_logs():
         db.close()
 
 
+# ============================================================
+# EMAIL AUTOMATION ROUTES
+# ============================================================
+
+@app.route('/dashboard/settings/email')
+def dashboard_email_settings():
+    """Email Settings page for configuring SendGrid email automation"""
+    db = get_db()
+    try:
+        from services.email_service import is_sendgrid_configured
+        from services.email_automation import get_email_settings
+        from datetime import timedelta
+        
+        sendgrid_configured = False
+        try:
+            sendgrid_configured = is_sendgrid_configured()
+        except Exception as e:
+            print(f"SendGrid check failed: {e}")
+        
+        settings = get_email_settings(db)
+        
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        logs = db.query(EmailLog).filter(
+            EmailLog.sent_at >= thirty_days_ago
+        ).order_by(EmailLog.sent_at.desc()).limit(50).all()
+        
+        total = db.query(EmailLog).filter(EmailLog.sent_at >= thirty_days_ago).count()
+        sent = db.query(EmailLog).filter(
+            EmailLog.sent_at >= thirty_days_ago,
+            EmailLog.status == 'sent'
+        ).count()
+        failed = db.query(EmailLog).filter(
+            EmailLog.sent_at >= thirty_days_ago,
+            EmailLog.status == 'failed'
+        ).count()
+        
+        template_types = db.query(EmailLog.template_type).filter(
+            EmailLog.sent_at >= thirty_days_ago
+        ).distinct().count()
+        
+        stats = {
+            'total': total,
+            'sent': sent,
+            'failed': failed,
+            'templates_used': template_types
+        }
+        
+        return render_template('email_settings.html',
+            sendgrid_configured=sendgrid_configured,
+            settings=settings,
+            logs=logs,
+            stats=stats
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/email/settings', methods=['POST'])
+def api_save_email_settings():
+    """Save email automation settings"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        setting_keys = [
+            'email_enabled', 'welcome_email_enabled', 'document_reminder_enabled',
+            'case_update_enabled', 'dispute_sent_enabled', 'cra_response_enabled',
+            'payment_reminder_enabled', 'analysis_ready_enabled', 'letters_ready_enabled'
+        ]
+        
+        for key in setting_keys:
+            if key in data:
+                value = data[key]
+                if isinstance(value, bool):
+                    value = 'true' if value else 'false'
+                else:
+                    value = str(value)
+                
+                setting = db.query(SignupSettings).filter_by(setting_key=f'email_{key}').first()
+                if setting:
+                    setting.setting_value = value
+                    setting.updated_at = datetime.utcnow()
+                else:
+                    setting = SignupSettings(
+                        setting_key=f'email_{key}',
+                        setting_value=value
+                    )
+                    db.add(setting)
+        
+        db.commit()
+        return jsonify({'success': True, 'message': 'Email settings saved'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/email/test', methods=['POST'])
+def api_send_test_email():
+    """Send a test email to verify SendGrid configuration"""
+    try:
+        from services.email_automation import send_test_email
+        
+        data = request.json
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({'success': False, 'error': 'Email address required'}), 400
+        
+        result = send_test_email(email)
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/email/send', methods=['POST'])
+def api_send_email():
+    """Send an email to a specific client"""
+    db = get_db()
+    try:
+        from services.email_automation import send_custom_email
+        
+        data = request.json
+        client_id = data.get('client_id')
+        subject = data.get('subject')
+        message = data.get('message')
+        
+        if not client_id or not subject or not message:
+            return jsonify({'success': False, 'error': 'client_id, subject, and message required'}), 400
+        
+        result = send_custom_email(db, client_id, subject, message)
+        
+        return jsonify(result)
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/email/setup')
+def api_email_setup():
+    """Redirect to SendGrid integration setup"""
+    return redirect('/dashboard/settings/email')
+
+
 @app.route('/api/signups/confirm-payment', methods=['POST'])
 def api_confirm_payment():
     """Confirm manual payment for a client"""
@@ -4131,6 +4285,14 @@ def api_complete_free_signup():
         except Exception as sms_error:
             print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
         
+        try:
+            from services.email_automation import trigger_welcome_email
+            email_result = trigger_welcome_email(db, client.id)
+            if email_result.get('sent'):
+                print(f"📧 Welcome email sent to client {client.id}")
+        except Exception as email_error:
+            print(f"⚠️  Email trigger error (non-fatal): {email_error}")
+        
         return jsonify({
             'success': True,
             'clientId': client.id,
@@ -4203,6 +4365,14 @@ def api_complete_manual_signup():
                 print(f"📱 Welcome SMS sent to client {client.id}")
         except Exception as sms_error:
             print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
+        
+        try:
+            from services.email_automation import trigger_welcome_email
+            email_result = trigger_welcome_email(db, client.id)
+            if email_result.get('sent'):
+                print(f"📧 Welcome email sent to client {client.id}")
+        except Exception as email_error:
+            print(f"⚠️  Email trigger error (non-fatal): {email_error}")
         
         return jsonify({
             'success': True,
@@ -4463,6 +4633,16 @@ def handle_checkout_completed(db, session):
                 print(f"📱 Welcome SMS skipped: {sms_result.get('reason', 'unknown')}")
         except Exception as sms_error:
             print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
+        
+        try:
+            from services.email_automation import trigger_welcome_email
+            email_result = trigger_welcome_email(db, client.id)
+            if email_result.get('sent'):
+                print(f"📧 Welcome email sent to client {client.id}")
+            else:
+                print(f"📧 Welcome email skipped: {email_result.get('reason', 'unknown')}")
+        except Exception as email_error:
+            print(f"⚠️  Email trigger error (non-fatal): {email_error}")
         
     except Exception as e:
         db.rollback()

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Settings - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-test {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .icon { font-size: 24px; }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .status-badge.connected { background: #dcfce7; color: #166534; }
+        .status-badge.disconnected { background: #fee2e2; color: #991b1b; }
+        .config-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .config-row:last-child { border-bottom: none; }
+        .config-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        .config-info p {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: #e2e8f0;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .toggle-switch.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); }
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .toggle-switch.active::after { left: 25px; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card .label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-card .value.success { color: #16a34a; }
+        .stat-card .value.error { color: #dc2626; }
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .logs-table th {
+            text-align: left;
+            padding: 12px;
+            background: #f8fafc;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        .logs-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .logs-table tr:hover { background: #f8fafc; }
+        .log-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .log-status.sent { background: #dcfce7; color: #166534; }
+        .log-status.failed { background: #fee2e2; color: #991b1b; }
+        .test-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .test-input-row {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        .test-input-group { flex: 1; }
+        .test-input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .test-input-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+        .test-result.success { background: #dcfce7; color: #166534; display: block; }
+        .test-result.error { background: #fee2e2; color: #991b1b; display: block; }
+        .email-from {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .email-from .icon { font-size: 20px; }
+        .email-from .info { font-size: 14px; color: #166534; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+            Brightpath <span>Ascend</span>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/contacts" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Contact List
+            </a>
+            <a href="/dashboard/signups" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Signups & Payments
+            </a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Settings</div>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                General Settings
+            </a>
+            <a href="/dashboard/settings/sms" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                SMS Automation
+            </a>
+            <a href="/dashboard/settings/email" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                Email Automation
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Email Automation Settings</h1>
+            <div class="header-actions">
+                <a href="/dashboard/settings" class="btn btn-secondary">Back to Settings</a>
+                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Total Emails (30 days)</div>
+                <div class="value">{{ stats.total }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Successfully Sent</div>
+                <div class="value success">{{ stats.sent }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Failed</div>
+                <div class="value error">{{ stats.failed }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Templates Used</div>
+                <div class="value">{{ stats.templates_used }}</div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">
+                <span class="icon">🔌</span>
+                SendGrid Connection
+            </div>
+            
+            {% if sendgrid_configured %}
+            <div class="email-from">
+                <span class="icon">✅</span>
+                <span class="info">SendGrid is connected and ready to send emails</span>
+            </div>
+            {% else %}
+            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <p style="color: #92400e; margin: 0;">
+                    <strong>SendGrid Not Connected</strong><br>
+                    <span style="font-size: 13px;">Click the button below to connect your SendGrid account and start sending automated emails.</span>
+                </p>
+                <button class="btn btn-primary" style="margin-top: 12px;" onclick="setupSendGrid()">Connect SendGrid</button>
+            </div>
+            {% endif %}
+            
+            <div class="test-section">
+                <h4 style="margin-bottom: 15px; color: #1a1a2e;">Send Test Email</h4>
+                <div class="test-input-row">
+                    <div class="test-input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="testEmail" placeholder="test@example.com">
+                    </div>
+                    <button class="btn btn-test" onclick="sendTestEmail()" {% if not sendgrid_configured %}disabled{% endif %}>
+                        Send Test
+                    </button>
+                </div>
+                <div id="testResult" class="test-result"></div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">
+                <span class="icon">⚡</span>
+                Email Notifications
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Email Automation Enabled</h4>
+                    <p>Master switch for all automated email notifications</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.email_enabled }}" id="toggle_email_enabled" onclick="toggleSetting('email_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Welcome Email</h4>
+                    <p>Send welcome email when a new client signs up</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.welcome_email_enabled }}" id="toggle_welcome_email_enabled" onclick="toggleSetting('welcome_email_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Document Reminder</h4>
+                    <p>Remind clients about missing required documents</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.document_reminder_enabled }}" id="toggle_document_reminder_enabled" onclick="toggleSetting('document_reminder_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Case Status Updates</h4>
+                    <p>Notify clients when their case status changes</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.case_update_enabled }}" id="toggle_case_update_enabled" onclick="toggleSetting('case_update_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Dispute Sent Notification</h4>
+                    <p>Notify when dispute letter is mailed to a bureau</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.dispute_sent_enabled }}" id="toggle_dispute_sent_enabled" onclick="toggleSetting('dispute_sent_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>CRA Response Received</h4>
+                    <p>Notify when bureau response is logged</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.cra_response_enabled }}" id="toggle_cra_response_enabled" onclick="toggleSetting('cra_response_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Payment Reminders</h4>
+                    <p>Send payment reminder for pending balances</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.payment_reminder_enabled }}" id="toggle_payment_reminder_enabled" onclick="toggleSetting('payment_reminder_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Analysis Ready</h4>
+                    <p>Notify when credit analysis is complete</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.analysis_ready_enabled }}" id="toggle_analysis_ready_enabled" onclick="toggleSetting('analysis_ready_enabled')"></div>
+            </div>
+            
+            <div class="config-row">
+                <div class="config-info">
+                    <h4>Letters Ready</h4>
+                    <p>Notify when dispute letters are generated</p>
+                </div>
+                <div class="toggle-switch {{ 'active' if settings.letters_ready_enabled }}" id="toggle_letters_ready_enabled" onclick="toggleSetting('letters_ready_enabled')"></div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">
+                <span class="icon">📋</span>
+                Recent Email Logs
+            </div>
+            
+            {% if logs %}
+            <table class="logs-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Recipient</th>
+                        <th>Subject</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.sent_at.strftime('%Y-%m-%d %H:%M') if log.sent_at else 'N/A' }}</td>
+                        <td>{{ log.email_address or 'N/A' }}</td>
+                        <td>{{ log.subject[:50] }}{{ '...' if log.subject and log.subject|length > 50 else '' }}</td>
+                        <td>{{ log.template_type or 'custom' }}</td>
+                        <td><span class="log-status {{ log.status }}">{{ log.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: #64748b;">
+                <p>No email logs yet. Emails will appear here once sent.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        const settings = {
+            email_enabled: {{ 'true' if settings.email_enabled else 'false' }},
+            welcome_email_enabled: {{ 'true' if settings.welcome_email_enabled else 'false' }},
+            document_reminder_enabled: {{ 'true' if settings.document_reminder_enabled else 'false' }},
+            case_update_enabled: {{ 'true' if settings.case_update_enabled else 'false' }},
+            dispute_sent_enabled: {{ 'true' if settings.dispute_sent_enabled else 'false' }},
+            cra_response_enabled: {{ 'true' if settings.cra_response_enabled else 'false' }},
+            payment_reminder_enabled: {{ 'true' if settings.payment_reminder_enabled else 'false' }},
+            analysis_ready_enabled: {{ 'true' if settings.analysis_ready_enabled else 'false' }},
+            letters_ready_enabled: {{ 'true' if settings.letters_ready_enabled else 'false' }}
+        };
+
+        function toggleSetting(key) {
+            settings[key] = !settings[key];
+            const toggle = document.getElementById('toggle_' + key);
+            toggle.classList.toggle('active');
+        }
+
+        async function saveSettings() {
+            try {
+                const response = await fetch('/api/email/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Settings saved successfully!');
+                } else {
+                    alert('Error saving settings: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error saving settings: ' + error.message);
+            }
+        }
+
+        async function sendTestEmail() {
+            const email = document.getElementById('testEmail').value.trim();
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.className = 'test-result';
+            resultDiv.textContent = 'Sending...';
+            resultDiv.style.display = 'block';
+            resultDiv.style.background = '#f1f5f9';
+            resultDiv.style.color = '#64748b';
+            
+            try {
+                const response = await fetch('/api/email/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.textContent = 'Test email sent successfully! Check your inbox.';
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = 'Failed: ' + (result.error || 'Unknown error');
+                }
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function setupSendGrid() {
+            window.location.href = '/api/email/setup';
+        }
+    </script>
+</body>
+</html>
