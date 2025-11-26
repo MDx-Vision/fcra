@@ -7881,6 +7881,367 @@ def api_list_attorney_referrals():
         db.close()
 
 
+# ==============================================================================
+# E-SIGNATURE API
+# ==============================================================================
+
+@app.route('/api/esignature/create', methods=['POST'])
+def api_create_signature_request():
+    """Create a new e-signature request"""
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        document_type = data.get('document_type', 'client_agreement')
+        document_name = data.get('document_name')
+        document_path = data.get('document_path')
+        signer_email = data.get('signer_email')
+        signer_name = data.get('signer_name')
+        
+        if not all([client_id, document_name, signer_email, signer_name]):
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        from services.esignature_service import create_signature_request
+        result = create_signature_request(
+            client_id, document_type, document_name, document_path,
+            signer_email, signer_name
+        )
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/sign/<token>')
+def signature_page(token):
+    """Display signature capture page for client"""
+    from services.esignature_service import verify_signing_token
+    result = verify_signing_token(token)
+    
+    if not result.get('success'):
+        return render_template('signature_error.html', error=result.get('error', 'Invalid or expired link'))
+    
+    return render_template('signature_capture.html', 
+                         request_data=result,
+                         token=token)
+
+
+@app.route('/api/esignature/capture', methods=['POST'])
+def api_capture_signature():
+    """Capture and save signature"""
+    try:
+        data = request.json or {}
+        token = data.get('token')
+        signature_data = data.get('signature_data')
+        
+        if not token or not signature_data:
+            return jsonify({'success': False, 'error': 'Token and signature_data required'}), 400
+        
+        from services.esignature_service import verify_signing_token, capture_signature
+        
+        verify_result = verify_signing_token(token)
+        if not verify_result.get('success'):
+            return jsonify(verify_result), 400
+        
+        request_id = verify_result.get('request_id')
+        result = capture_signature(request_id, signature_data)
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/esignature/<int:request_id>/status', methods=['GET'])
+def api_get_signature_status(request_id):
+    """Get status of a signature request"""
+    try:
+        from services.esignature_service import get_signature_status
+        result = get_signature_status(request_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/esignature/client/<int:client_id>/pending', methods=['GET'])
+def api_get_pending_signatures(client_id):
+    """Get pending signature requests for a client"""
+    try:
+        from services.esignature_service import get_pending_signatures
+        result = get_pending_signatures(client_id)
+        return jsonify({'success': True, 'pending': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/esignature/<int:request_id>/remind', methods=['POST'])
+def api_send_signature_reminder(request_id):
+    """Send reminder for pending signature"""
+    try:
+        from services.esignature_service import send_signature_reminder
+        result = send_signature_reminder(request_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/esignature/types', methods=['GET'])
+def api_get_signature_types():
+    """Get supported document types for e-signature"""
+    try:
+        from services.esignature_service import list_document_types
+        types = list_document_types()
+        return jsonify({'success': True, 'types': types})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==============================================================================
+# METRO2 VIOLATION DETECTION API
+# ==============================================================================
+
+@app.route('/api/metro2/detect-violations', methods=['POST'])
+def api_detect_metro2_violations():
+    """Detect Metro2 format violations in tradeline data"""
+    try:
+        data = request.json or {}
+        tradeline_data = data.get('tradeline_data', {})
+        
+        if not tradeline_data:
+            return jsonify({'success': False, 'error': 'tradeline_data required'}), 400
+        
+        from services.metro2_service import detect_metro2_violations
+        violations = detect_metro2_violations(tradeline_data)
+        
+        return jsonify({
+            'success': True,
+            'violations': violations,
+            'violation_count': len(violations)
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/metro2/analyze-collection', methods=['POST'])
+def api_analyze_collection_account():
+    """Analyze a collection account for Metro2 violations"""
+    try:
+        data = request.json or {}
+        collection_data = data.get('collection_data', {})
+        
+        if not collection_data:
+            return jsonify({'success': False, 'error': 'collection_data required'}), 400
+        
+        from services.metro2_service import analyze_collection_account
+        violations = analyze_collection_account(collection_data)
+        
+        return jsonify({
+            'success': True,
+            'violations': violations,
+            'violation_count': len(violations)
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/metro2/calculate-damages', methods=['POST'])
+def api_calculate_metro2_damages():
+    """Calculate potential damages from Metro2 violations"""
+    try:
+        data = request.json or {}
+        violations = data.get('violations', [])
+        
+        from services.metro2_service import calculate_violation_damages
+        damage_info = calculate_violation_damages(violations)
+        
+        return jsonify({
+            'success': True,
+            'damages': damage_info
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/metro2/generate-dispute-points', methods=['POST'])
+def api_generate_metro2_dispute_points():
+    """Generate dispute language for Metro2 violations"""
+    try:
+        data = request.json or {}
+        violations = data.get('violations', [])
+        
+        from services.metro2_service import generate_metro2_dispute_points
+        dispute_points = generate_metro2_dispute_points(violations)
+        
+        return jsonify({
+            'success': True,
+            'dispute_points': dispute_points
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/metro2/payment-codes', methods=['GET'])
+def api_get_payment_codes():
+    """Get Metro2 payment status code reference"""
+    try:
+        from services.metro2_service import PAYMENT_STATUS_CODES, PAYMENT_HISTORY_CODES
+        return jsonify({
+            'success': True,
+            'status_codes': PAYMENT_STATUS_CODES,
+            'history_codes': PAYMENT_HISTORY_CODES
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==============================================================================
+# PWA MANIFEST AND SERVICE WORKER
+# ==============================================================================
+
+@app.route('/manifest.json')
+def pwa_manifest():
+    """Serve PWA manifest for installable web app"""
+    manifest = {
+        "name": "Brightpath Ascend FCRA Platform",
+        "short_name": "Brightpath FCRA",
+        "description": "Comprehensive FCRA litigation automation platform",
+        "start_url": "/dashboard",
+        "display": "standalone",
+        "background_color": "#1a1a2e",
+        "theme_color": "#319795",
+        "orientation": "any",
+        "icons": [
+            {
+                "src": "/static/images/icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": "/static/images/icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }
+        ],
+        "categories": ["business", "productivity"],
+        "shortcuts": [
+            {
+                "name": "Dashboard",
+                "short_name": "Dashboard",
+                "description": "View dashboard",
+                "url": "/dashboard",
+                "icons": [{"src": "/static/images/icon-192.png", "sizes": "192x192"}]
+            },
+            {
+                "name": "Contacts",
+                "short_name": "Contacts",
+                "description": "Manage contacts",
+                "url": "/dashboard/contacts",
+                "icons": [{"src": "/static/images/icon-192.png", "sizes": "192x192"}]
+            }
+        ]
+    }
+    return jsonify(manifest)
+
+
+@app.route('/sw.js')
+def service_worker():
+    """Serve service worker for offline functionality and push notifications"""
+    sw_content = '''
+// Brightpath Ascend FCRA Platform Service Worker
+const CACHE_NAME = 'brightpath-fcra-v1';
+const urlsToCache = [
+    '/',
+    '/dashboard',
+    '/static/images/logo.png',
+    'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
+];
+
+// Install event
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(urlsToCache))
+    );
+    self.skipWaiting();
+});
+
+// Activate event
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.filter(name => name !== CACHE_NAME)
+                    .map(name => caches.delete(name))
+            );
+        })
+    );
+    self.clients.claim();
+});
+
+// Fetch event - network first, cache fallback
+self.addEventListener('fetch', event => {
+    if (event.request.method !== 'GET') return;
+    
+    event.respondWith(
+        fetch(event.request)
+            .then(response => {
+                if (response.status === 200) {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME)
+                        .then(cache => cache.put(event.request, responseClone));
+                }
+                return response;
+            })
+            .catch(() => caches.match(event.request))
+    );
+});
+
+// Push notification event
+self.addEventListener('push', event => {
+    const data = event.data ? event.data.json() : {};
+    const title = data.title || 'Brightpath Ascend';
+    const options = {
+        body: data.body || 'You have a new notification',
+        icon: '/static/images/icon-192.png',
+        badge: '/static/images/icon-192.png',
+        data: data.url || '/dashboard',
+        actions: [
+            { action: 'open', title: 'Open' },
+            { action: 'dismiss', title: 'Dismiss' }
+        ]
+    };
+    
+    event.waitUntil(
+        self.registration.showNotification(title, options)
+    );
+});
+
+// Notification click event
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    
+    if (event.action === 'dismiss') return;
+    
+    event.waitUntil(
+        clients.openWindow(event.notification.data)
+    );
+});
+'''
+    response = app.response_class(
+        response=sw_content,
+        status=200,
+        mimetype='application/javascript'
+    )
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
 @app.errorhandler(500)
 def handle_500_error(error):

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signing Error - Brightpath Ascend Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .logo img { height: 45px; margin-right: 12px; background: transparent; }
+        .logo span { color: #84cc16; font-weight: 600; }
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+        }
+        .error-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            text-align: center;
+        }
+        .error-header {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            padding: 30px;
+        }
+        .error-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+        }
+        .error-icon svg {
+            width: 35px;
+            height: 35px;
+            color: white;
+        }
+        .error-header h1 {
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .error-body {
+            padding: 35px 30px;
+        }
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .error-message p {
+            color: #991b1b;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .info-section {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+        .info-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .info-section p {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            color: #1a1a2e;
+        }
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        .contact-section {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            text-align: left;
+        }
+        .contact-section h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .contact-item:last-child { margin-bottom: 0; }
+        .contact-item svg {
+            width: 16px;
+            height: 16px;
+            color: #319795;
+            flex-shrink: 0;
+        }
+        .contact-item a {
+            color: #1a1a2e;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .contact-item a:hover {
+            color: #319795;
+        }
+        .contact-item span {
+            color: #64748b;
+            font-size: 13px;
+        }
+        .footer {
+            background: #1a1a2e;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        .footer p {
+            color: #64748b;
+            font-size: 12px;
+        }
+        @media (max-width: 480px) {
+            .main-content { padding: 15px; }
+            .error-body { padding: 25px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend Group">
+            <span>Brightpath Ascend Group</span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="error-container">
+            <div class="error-header">
+                <div class="error-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h1>Unable to Sign Document</h1>
+            </div>
+            
+            <div class="error-body">
+                <div class="error-message">
+                    <p>{{ error or 'The signing link is invalid or has expired.' }}</p>
+                </div>
+
+                <div class="info-section">
+                    <h3>What happened?</h3>
+                    <p>This could occur if:</p>
+                    <p>• The signing link has expired (links are valid for 7 days)</p>
+                    <p>• The document has already been signed</p>
+                    <p>• The link was entered incorrectly</p>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="mailto:support@brightpathascend.com?subject=Request New Signing Link" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Request New Signing Link
+                    </a>
+                    <a href="/" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Return to Home
+                    </a>
+                </div>
+
+                <div class="contact-section">
+                    <h3>Need Help?</h3>
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <a href="mailto:support@brightpathascend.com">support@brightpathascend.com</a>
+                    </div>
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span>Contact your representative</span>
+                    </div>
+                    <div class="contact-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Mon-Fri, 9AM - 6PM EST</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Brightpath Ascend Group. All rights reserved.</p>
+    </footer>
+</body>
+</html>

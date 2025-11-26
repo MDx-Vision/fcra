@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sign Document - Brightpath Ascend Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .logo img { height: 45px; margin-right: 12px; background: transparent; }
+        .logo span { color: #84cc16; font-weight: 600; }
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 20px;
+        }
+        .signature-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+        }
+        .container-header {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            padding: 25px 30px;
+            text-align: center;
+        }
+        .container-header h1 {
+            color: #1a1a2e;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .container-header p {
+            color: rgba(26, 26, 46, 0.8);
+            font-size: 14px;
+        }
+        .container-body {
+            padding: 30px;
+        }
+        .document-info {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #319795;
+        }
+        .info-row {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        .info-row:last-child { margin-bottom: 0; }
+        .info-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            width: 120px;
+            flex-shrink: 0;
+        }
+        .info-value {
+            font-size: 14px;
+            color: #1a1a2e;
+            font-weight: 500;
+        }
+        .signature-section {
+            margin-bottom: 25px;
+        }
+        .signature-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .signature-label svg {
+            width: 18px;
+            height: 18px;
+            color: #319795;
+        }
+        .canvas-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            position: relative;
+        }
+        .canvas-container.active {
+            border-color: #319795;
+            box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+        }
+        #signatureCanvas {
+            width: 100%;
+            height: 200px;
+            display: block;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        .canvas-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #94a3b8;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .canvas-placeholder.hidden { opacity: 0; }
+        .canvas-placeholder svg {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+        .canvas-placeholder p {
+            font-size: 14px;
+        }
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            flex: 1;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #e2e8f0;
+            color: #1a1a2e;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+        }
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(26, 26, 46, 0.2);
+            border-top-color: #1a1a2e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .legal-notice {
+            font-size: 12px;
+            color: #64748b;
+            text-align: center;
+            line-height: 1.6;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .success-state {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .success-state.active {
+            display: block;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+        .success-state h2 {
+            font-size: 24px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .success-state p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .error-message {
+            display: none;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #991b1b;
+            font-size: 13px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .error-message.active { display: block; }
+        .form-state {
+            display: block;
+        }
+        .form-state.hidden { display: none; }
+        .footer {
+            background: #1a1a2e;
+            padding: 15px 20px;
+            text-align: center;
+        }
+        .footer p {
+            color: #64748b;
+            font-size: 12px;
+        }
+        @media (max-width: 480px) {
+            .main-content { padding: 15px; }
+            .container-body { padding: 20px; }
+            .info-row { flex-direction: column; }
+            .info-label { width: 100%; margin-bottom: 4px; }
+            .button-row { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend Group">
+            <span>Brightpath Ascend Group</span>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="signature-container">
+            <div class="container-header">
+                <h1>Electronic Signature</h1>
+                <p>Please review and sign the document below</p>
+            </div>
+            
+            <div class="container-body">
+                <div class="form-state" id="formState">
+                    <div class="document-info">
+                        <div class="info-row">
+                            <span class="info-label">Document</span>
+                            <span class="info-value">{{ request_data.document_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Document Type</span>
+                            <span class="info-value">{{ request_data.document_type_display }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Signer</span>
+                            <span class="info-value">{{ request_data.signer_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">{{ request_data.signer_email }}</span>
+                        </div>
+                    </div>
+
+                    <div class="error-message" id="errorMessage"></div>
+
+                    <div class="signature-section">
+                        <div class="signature-label">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Sign Below
+                        </div>
+                        <div class="canvas-container" id="canvasContainer">
+                            <canvas id="signatureCanvas"></canvas>
+                            <div class="canvas-placeholder" id="canvasPlaceholder">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                <p>Draw your signature here</p>
+                            </div>
+                        </div>
+                        <div class="button-row">
+                            <button type="button" class="btn btn-secondary" id="clearBtn">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Clear
+                            </button>
+                            <button type="button" class="btn btn-primary" id="signBtn" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="signBtnIcon">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span id="signBtnText">Sign Document</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="legal-notice">
+                        By clicking "Sign Document", you agree that this electronic signature is the legal equivalent of your handwritten signature 
+                        and you consent to be legally bound by this document.
+                    </div>
+                </div>
+
+                <div class="success-state" id="successState">
+                    <div class="success-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2>Document Signed!</h2>
+                    <p>Your signature has been captured successfully.<br>You will receive a confirmation email shortly.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; {{ now.strftime('%Y') if now else '2025' }} Brightpath Ascend Group. All rights reserved.</p>
+    </footer>
+
+    <script>
+        (function() {
+            const canvas = document.getElementById('signatureCanvas');
+            const ctx = canvas.getContext('2d');
+            const canvasContainer = document.getElementById('canvasContainer');
+            const canvasPlaceholder = document.getElementById('canvasPlaceholder');
+            const clearBtn = document.getElementById('clearBtn');
+            const signBtn = document.getElementById('signBtn');
+            const signBtnIcon = document.getElementById('signBtnIcon');
+            const signBtnText = document.getElementById('signBtnText');
+            const errorMessage = document.getElementById('errorMessage');
+            const formState = document.getElementById('formState');
+            const successState = document.getElementById('successState');
+            
+            const token = "{{ token }}";
+            
+            let isDrawing = false;
+            let hasSignature = false;
+            let lastX = 0;
+            let lastY = 0;
+            
+            function resizeCanvas() {
+                const rect = canvasContainer.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = rect.width * dpr;
+                canvas.height = 200 * dpr;
+                canvas.style.width = rect.width + 'px';
+                canvas.style.height = '200px';
+                ctx.scale(dpr, dpr);
+                ctx.strokeStyle = '#1a1a2e';
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+            }
+            
+            function getPosition(e) {
+                const rect = canvas.getBoundingClientRect();
+                let clientX, clientY;
+                
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+            
+            function startDrawing(e) {
+                e.preventDefault();
+                isDrawing = true;
+                const pos = getPosition(e);
+                lastX = pos.x;
+                lastY = pos.y;
+                canvasContainer.classList.add('active');
+                canvasPlaceholder.classList.add('hidden');
+            }
+            
+            function draw(e) {
+                if (!isDrawing) return;
+                e.preventDefault();
+                
+                const pos = getPosition(e);
+                
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                
+                lastX = pos.x;
+                lastY = pos.y;
+                
+                if (!hasSignature) {
+                    hasSignature = true;
+                    signBtn.disabled = false;
+                }
+            }
+            
+            function stopDrawing(e) {
+                if (isDrawing) {
+                    e.preventDefault();
+                    isDrawing = false;
+                    canvasContainer.classList.remove('active');
+                }
+            }
+            
+            function clearCanvas() {
+                const dpr = window.devicePixelRatio || 1;
+                ctx.clearRect(0, 0, canvas.width / dpr, canvas.height / dpr);
+                hasSignature = false;
+                signBtn.disabled = true;
+                canvasPlaceholder.classList.remove('hidden');
+            }
+            
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.add('active');
+            }
+            
+            function hideError() {
+                errorMessage.classList.remove('active');
+            }
+            
+            function setLoading(loading) {
+                if (loading) {
+                    signBtn.disabled = true;
+                    clearBtn.disabled = true;
+                    signBtnIcon.outerHTML = '<div class="spinner" id="signBtnIcon"></div>';
+                    signBtnText.textContent = 'Signing...';
+                } else {
+                    signBtn.disabled = !hasSignature;
+                    clearBtn.disabled = false;
+                    document.getElementById('signBtnIcon').outerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="signBtnIcon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+                    signBtnText.textContent = 'Sign Document';
+                }
+            }
+            
+            function showSuccess() {
+                formState.classList.add('hidden');
+                successState.classList.add('active');
+            }
+            
+            async function submitSignature() {
+                if (!hasSignature) return;
+                
+                hideError();
+                setLoading(true);
+                
+                try {
+                    const signatureData = canvas.toDataURL('image/png');
+                    
+                    const response = await fetch('/api/esignature/capture', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            token: token,
+                            signature_data: signatureData
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showSuccess();
+                    } else {
+                        showError(result.error || 'Failed to capture signature. Please try again.');
+                        setLoading(false);
+                    }
+                } catch (error) {
+                    console.error('Error submitting signature:', error);
+                    showError('An error occurred. Please check your connection and try again.');
+                    setLoading(false);
+                }
+            }
+            
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+            
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing, { passive: false });
+            canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+            
+            clearBtn.addEventListener('click', clearCanvas);
+            signBtn.addEventListener('click', submitSignature);
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+        })();
+    </script>
+</body>
+</html>
