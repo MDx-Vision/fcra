@@ -716,6 +716,17 @@ class ClientUpload(Base):
     action_deadline = Column(Date)
     priority = Column(String(20), default='normal')
     
+    harm_amount = Column(Float)
+    harm_description = Column(Text)
+    creditor_name = Column(String(200))
+    lender_name = Column(String(200))
+    dispute_reference = Column(String(255))
+    income_period = Column(String(50))
+    call_duration = Column(Integer)
+    call_date = Column(DateTime)
+    ocr_extracted = Column(Boolean, default=False)
+    ocr_data = Column(JSON)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -774,6 +785,272 @@ class EmailTemplate(Base):
     html_content = Column(Text)
     design_json = Column(Text)
     is_custom = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CaseDeadline(Base):
+    """Track deadlines for dispute responses and required actions"""
+    __tablename__ = 'case_deadlines'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    
+    deadline_type = Column(String(50), nullable=False)
+    bureau = Column(String(50))
+    dispute_round = Column(Integer)
+    
+    start_date = Column(Date, nullable=False)
+    deadline_date = Column(Date, nullable=False)
+    days_allowed = Column(Integer, default=30)
+    
+    status = Column(String(50), default='active')
+    completed_at = Column(DateTime)
+    
+    reminder_sent_7_days = Column(Boolean, default=False)
+    reminder_sent_3_days = Column(Boolean, default=False)
+    reminder_sent_1_day = Column(Boolean, default=False)
+    overdue_notice_sent = Column(Boolean, default=False)
+    
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class NotarizationOrder(Base):
+    """Track remote online notarization orders via Proof.com or NotaryLive"""
+    __tablename__ = 'notarization_orders'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    provider = Column(String(50), nullable=False)
+    external_order_id = Column(String(255))
+    external_transaction_id = Column(String(255))
+    
+    document_type = Column(String(100))
+    document_name = Column(String(255))
+    document_path = Column(String(500))
+    
+    signer_email = Column(String(255))
+    signer_name = Column(String(255))
+    
+    session_link = Column(String(500))
+    
+    status = Column(String(50), default='pending')
+    
+    notarized_document_path = Column(String(500))
+    audit_trail_path = Column(String(500))
+    video_recording_path = Column(String(500))
+    
+    notarized_at = Column(DateTime)
+    expires_at = Column(DateTime)
+    
+    cost = Column(Float)
+    
+    webhook_data = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class FreezeLetterBatch(Base):
+    """Track bulk freeze letter generation batches"""
+    __tablename__ = 'freeze_letter_batches'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    batch_uuid = Column(String(36), unique=True, index=True)
+    
+    bureaus_included = Column(JSON)
+    total_bureaus = Column(Integer, default=12)
+    
+    generated_pdf_path = Column(String(500))
+    
+    mail_method = Column(String(50))
+    certified_mail_tracking = Column(JSON)
+    
+    status = Column(String(50), default='generated')
+    mailed_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CertifiedMailOrder(Base):
+    """Track certified mail orders via SendCertifiedMail.com"""
+    __tablename__ = 'certified_mail_orders'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    external_order_id = Column(String(255))
+    tracking_number = Column(String(100))
+    
+    recipient_name = Column(String(255))
+    recipient_address = Column(Text)
+    recipient_type = Column(String(50))
+    
+    document_type = Column(String(100))
+    document_path = Column(String(500))
+    
+    letter_type = Column(String(50))
+    dispute_round = Column(Integer)
+    bureau = Column(String(50))
+    
+    status = Column(String(50), default='pending')
+    
+    cost = Column(Float)
+    
+    submitted_at = Column(DateTime)
+    mailed_at = Column(DateTime)
+    delivered_at = Column(DateTime)
+    delivery_proof_path = Column(String(500))
+    
+    webhook_data = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SettlementEstimate(Base):
+    """Store settlement calculations for cases"""
+    __tablename__ = 'settlement_estimates'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    
+    total_violations = Column(Integer, default=0)
+    willful_violations = Column(Integer, default=0)
+    negligent_violations = Column(Integer, default=0)
+    
+    statutory_damages_low = Column(Float, default=0)
+    statutory_damages_high = Column(Float, default=0)
+    
+    actual_damages = Column(Float, default=0)
+    actual_damages_breakdown = Column(JSON)
+    
+    punitive_multiplier = Column(Float, default=1.0)
+    punitive_damages_low = Column(Float, default=0)
+    punitive_damages_high = Column(Float, default=0)
+    
+    attorney_fees_estimate = Column(Float, default=0)
+    
+    total_low = Column(Float, default=0)
+    total_high = Column(Float, default=0)
+    
+    settlement_likelihood = Column(String(50))
+    recommended_demand = Column(Float)
+    
+    calculation_notes = Column(Text)
+    calculation_data = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AttorneyReferral(Base):
+    """Track attorney referrals for high-value cases"""
+    __tablename__ = 'attorney_referrals'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    
+    attorney_name = Column(String(255))
+    attorney_firm = Column(String(255))
+    attorney_email = Column(String(255))
+    attorney_phone = Column(String(50))
+    
+    referral_reason = Column(Text)
+    case_summary = Column(Text)
+    estimated_value = Column(Float)
+    
+    status = Column(String(50), default='pending')
+    
+    referred_at = Column(DateTime)
+    attorney_response_at = Column(DateTime)
+    attorney_accepted = Column(Boolean)
+    
+    fee_arrangement = Column(String(100))
+    referral_fee_percent = Column(Float)
+    
+    outcome = Column(Text)
+    settlement_amount = Column(Float)
+    referral_fee_received = Column(Float)
+    
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class LimitedPOA(Base):
+    """Track Limited Power of Attorney documents for clients"""
+    __tablename__ = 'limited_poa'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    poa_type = Column(String(100), default='credit_dispute')
+    
+    document_path = Column(String(500))
+    
+    signed = Column(Boolean, default=False)
+    signed_at = Column(DateTime)
+    signature_method = Column(String(50))
+    
+    notarized = Column(Boolean, default=False)
+    notarized_at = Column(DateTime)
+    notarization_order_id = Column(Integer, ForeignKey('notarization_orders.id'), nullable=True)
+    notarized_document_path = Column(String(500))
+    
+    effective_date = Column(Date)
+    expiration_date = Column(Date)
+    
+    scope = Column(JSON)
+    
+    revoked = Column(Boolean, default=False)
+    revoked_at = Column(DateTime)
+    revocation_reason = Column(Text)
+    
+    status = Column(String(50), default='draft')
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ESignatureRequest(Base):
+    """Track e-signature requests for client agreements"""
+    __tablename__ = 'esignature_requests'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    provider = Column(String(50))
+    external_request_id = Column(String(255))
+    
+    document_type = Column(String(100))
+    document_name = Column(String(255))
+    document_path = Column(String(500))
+    
+    signer_email = Column(String(255))
+    signer_name = Column(String(255))
+    
+    signing_link = Column(String(500))
+    
+    status = Column(String(50), default='pending')
+    
+    signed_at = Column(DateTime)
+    signed_document_path = Column(String(500))
+    
+    expires_at = Column(DateTime)
+    
+    webhook_data = Column(JSON)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
