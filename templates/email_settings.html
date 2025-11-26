@@ -644,6 +644,45 @@
                         <span class="desc">Support email address</span>
                     </div>
                 </div>
+                <h4 style="margin-top: 15px;">Credit Bureau Addresses</h4>
+                <div class="merge-tags-grid">
+                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_name}}')">
+                        <code>{{equifax_name}}</code>
+                        <span class="desc">Equifax full name</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_address}}')">
+                        <code>{{equifax_address}}</code>
+                        <span class="desc">Equifax mailing address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_phone}}')">
+                        <code>{{equifax_phone}}</code>
+                        <span class="desc">Equifax phone number</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{experian_name}}')">
+                        <code>{{experian_name}}</code>
+                        <span class="desc">Experian full name</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{experian_address}}')">
+                        <code>{{experian_address}}</code>
+                        <span class="desc">Experian mailing address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{experian_phone}}')">
+                        <code>{{experian_phone}}</code>
+                        <span class="desc">Experian phone number</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_name}}')">
+                        <code>{{transunion_name}}</code>
+                        <span class="desc">TransUnion full name</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_address}}')">
+                        <code>{{transunion_address}}</code>
+                        <span class="desc">TransUnion mailing address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_phone}}')">
+                        <code>{{transunion_phone}}</code>
+                        <span class="desc">TransUnion phone number</span>
+                    </div>
+                </div>
             </div>
             
             <div class="editor-container" style="position: relative;">
@@ -817,7 +856,16 @@
                     { name: 'Case Status', value: '{{case_status}}' },
                     { name: 'Missing Documents', value: '{{missing_docs}}' },
                     { name: 'Company Name', value: '{{company_name}}' },
-                    { name: 'Support Email', value: '{{support_email}}' }
+                    { name: 'Support Email', value: '{{support_email}}' },
+                    { name: 'Equifax Name', value: '{{equifax_name}}' },
+                    { name: 'Equifax Address', value: '{{equifax_address}}' },
+                    { name: 'Equifax Phone', value: '{{equifax_phone}}' },
+                    { name: 'Experian Name', value: '{{experian_name}}' },
+                    { name: 'Experian Address', value: '{{experian_address}}' },
+                    { name: 'Experian Phone', value: '{{experian_phone}}' },
+                    { name: 'TransUnion Name', value: '{{transunion_name}}' },
+                    { name: 'TransUnion Address', value: '{{transunion_address}}' },
+                    { name: 'TransUnion Phone', value: '{{transunion_phone}}' }
                 ]
             });
 

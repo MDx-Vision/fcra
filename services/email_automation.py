@@ -20,18 +20,32 @@ def get_custom_template(db, template_type):
     return None, None
 
 
+CRA_ADDRESSES = {
+    'equifax_name': 'Equifax Information Services LLC',
+    'equifax_address': 'P.O. Box 740256, Atlanta, GA 30374-0256',
+    'equifax_phone': '1-800-685-1111',
+    'experian_name': 'Experian',
+    'experian_address': 'P.O. Box 4500, Allen, TX 75013',
+    'experian_phone': '1-888-397-3742',
+    'transunion_name': 'TransUnion LLC',
+    'transunion_address': 'P.O. Box 2000, Chester, PA 19016-2000',
+    'transunion_phone': '1-800-916-8800',
+}
+
+
 def apply_template_merge_tags(html_content, values):
     """
     Replace merge tags in HTML content with actual values.
     Supports: {{client_name}}, {{client_email}}, {{portal_link}}, {{case_status}}, 
-              {{missing_docs}}, {{company_name}}, {{support_email}}, and dynamic values.
+              {{missing_docs}}, {{company_name}}, {{support_email}}, CRA addresses, and dynamic values.
     """
     if not html_content:
         return html_content
     
     default_values = {
         'company_name': 'Brightpath Ascend Group',
-        'support_email': 'support@brightpathascend.com'
+        'support_email': 'support@brightpathascend.com',
+        **CRA_ADDRESSES
     }
     
     all_values = {**default_values, **values}

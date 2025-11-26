@@ -4103,13 +4103,28 @@ def get_default_subject(template_type):
     return subjects.get(template_type, f'{template_type.replace("_", " ").title()} Notification')
 
 
+CRA_ADDRESSES = {
+    'equifax_name': 'Equifax Information Services LLC',
+    'equifax_address': 'P.O. Box 740256, Atlanta, GA 30374-0256',
+    'equifax_phone': '1-800-685-1111',
+    'experian_name': 'Experian',
+    'experian_address': 'P.O. Box 4500, Allen, TX 75013',
+    'experian_phone': '1-888-397-3742',
+    'transunion_name': 'TransUnion LLC',
+    'transunion_address': 'P.O. Box 2000, Chester, PA 19016-2000',
+    'transunion_phone': '1-800-916-8800',
+}
+
+
 def apply_merge_tags(html_content, values):
     """Replace merge tags in HTML content with actual values"""
     if not html_content:
         return html_content
     
+    all_values = {**CRA_ADDRESSES, **values}
+    
     result = html_content
-    for tag, value in values.items():
+    for tag, value in all_values.items():
         result = result.replace('{{' + tag + '}}', str(value) if value else '')
     return result
 
