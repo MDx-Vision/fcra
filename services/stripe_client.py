@@ -98,6 +98,7 @@ def get_webhook_secret():
 
 
 PRICING_TIERS = {
+    'free': {'name': 'Free Analysis', 'amount': 0, 'display': 'FREE'},
     'tier1': {'name': 'Basic', 'amount': 30000, 'display': '$300'},
     'tier2': {'name': 'Standard', 'amount': 60000, 'display': '$600'},
     'tier3': {'name': 'Premium', 'amount': 90000, 'display': '$900'},

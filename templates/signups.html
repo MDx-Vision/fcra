@@ -231,6 +231,24 @@
         .plan-tier3 { background: #fef3c7; color: #92400e; }
         .plan-tier4 { background: #e0e7ff; color: #3730a3; }
         .plan-tier5 { background: #fce7f3; color: #9d174d; }
+        .plan-free { background: #dcfce7; color: #166534; }
+        .method-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        .method-stripe { background: #e0e7ff; color: #3730a3; }
+        .method-paypal { background: #dbeafe; color: #1e40af; }
+        .method-cashapp { background: #dcfce7; color: #166534; }
+        .method-venmo { background: #dbeafe; color: #1e40af; }
+        .method-zelle { background: #fce7f3; color: #9d174d; }
+        .method-pending { background: #fef3c7; color: #92400e; }
+        .method-free { background: #dcfce7; color: #166534; }
+        .confirm-btn { background: #22c55e; border-color: #22c55e; color: white; }
+        .confirm-btn:hover { background: #16a34a; }
         .action-btn {
             padding: 6px 12px;
             border: 1px solid #e2e8f0;
@@ -412,6 +430,8 @@
                 <a href="/dashboard/signups" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
                 <a href="/dashboard/signups?status=paid" class="filter-btn {% if status_filter == 'paid' %}active{% endif %}">Paid</a>
                 <a href="/dashboard/signups?status=pending" class="filter-btn {% if status_filter == 'pending' %}active{% endif %}">Pending</a>
+                <a href="/dashboard/signups?status=pending_manual" class="filter-btn {% if status_filter == 'pending_manual' %}active{% endif %}">Awaiting Confirmation</a>
+                <a href="/dashboard/signups?status=free" class="filter-btn {% if status_filter == 'free' %}active{% endif %}">Free Tier</a>
                 <a href="/dashboard/signups?status=failed" class="filter-btn {% if status_filter == 'failed' %}active{% endif %}">Failed</a>
             </div>
             
@@ -426,6 +446,7 @@
                         <th>Client</th>
                         <th>Plan</th>
                         <th>Amount</th>
+                        <th>Payment Method</th>
                         <th>Payment Status</th>
                         <th>Signup Date</th>
                         <th>Actions</th>
@@ -450,6 +471,9 @@
                             {% if client.signup_amount %}${{ "{:,.2f}".format(client.signup_amount / 100) }}{% else %}-{% endif %}
                         </td>
                         <td>
+                            <span class="method-badge method-{{ client.payment_method }}">{{ client.payment_method }}</span>
+                        </td>
+                        <td>
                             <span class="status-badge status-{{ client.payment_status }}">{{ client.payment_status|capitalize }}</span>
                         </td>
                         <td>{{ client.created_at }}</td>
@@ -458,6 +482,13 @@
                             <a href="/portal/{{ client.portal_token }}" class="action-btn" target="_blank" title="View client portal">
                                 👁 Portal
                             </a>
+                            {% endif %}
+                            {% if client.payment_pending %}
+                            <button class="action-btn confirm-btn" 
+                                    onclick="confirmPayment({{ client.id }}, this)" 
+                                    title="Confirm payment received">
+                                ✓ Confirm Payment
+                            </button>
                             {% endif %}
                             <button class="action-btn {% if client.contacted %}contacted{% endif %}" 
                                     onclick="markContacted('client', {{ client.id }}, this)" 
@@ -513,6 +544,35 @@
                 }
             } catch (error) {
                 alert('Error marking as contacted: ' + error.message);
+            }
+        }
+        
+        async function confirmPayment(clientId, btn) {
+            if (!confirm('Confirm that payment has been received for this client?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/signups/confirm-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const row = btn.closest('tr');
+                    const statusCell = row.querySelector('.status-badge');
+                    statusCell.className = 'status-badge status-paid';
+                    statusCell.textContent = 'Paid';
+                    btn.remove();
+                    alert('Payment confirmed!');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error confirming payment: ' + error.message);
             }
         }
     </script>

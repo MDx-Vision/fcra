@@ -100,13 +100,15 @@ class Client(Base):
     admin_notes = Column(Text)
     
     # Payment/Stripe fields
-    signup_plan = Column(String(50))  # tier1, tier2, tier3, tier4, tier5
+    signup_plan = Column(String(50))  # free, tier1, tier2, tier3, tier4, tier5
     signup_amount = Column(Integer)  # Amount in cents
     stripe_customer_id = Column(String(255))
     stripe_checkout_session_id = Column(String(255))
     stripe_payment_intent_id = Column(String(255))
     payment_status = Column(String(50), default='pending')  # pending, paid, failed, refunded
     payment_received_at = Column(DateTime)
+    payment_method = Column(String(50), default='pending')  # stripe, paypal, cashapp, venmo, zelle, pending, free
+    payment_pending = Column(Boolean, default=False)  # True if waiting for manual confirmation
     
     # Contact management fields (CMM style)
     client_type = Column(String(1), default='L')  # L=Lead, C=Active Client, I=Inactive, O=Other, P=Provider, X=Cancelled
@@ -677,6 +679,16 @@ class ClientDocument(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class SignupSettings(Base):
+    """Store configurable signup settings as key-value pairs"""
+    __tablename__ = 'signup_settings'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    setting_key = Column(String(100), unique=True, nullable=False)
+    setting_value = Column(Text)  # JSON for complex settings
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -730,6 +742,8 @@ def init_db():
         ("clients", "groups", "VARCHAR(500)"),
         ("clients", "mark_1", "BOOLEAN DEFAULT FALSE"),
         ("clients", "mark_2", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "payment_method", "VARCHAR(50) DEFAULT 'pending'"),
+        ("clients", "payment_pending", "BOOLEAN DEFAULT FALSE"),
     ]
     
     conn = engine.connect()

@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings
 import secrets
 import uuid
 from datetime import timedelta
@@ -3279,6 +3279,10 @@ def dashboard_signups():
             clients_query = clients_query.filter(Client.payment_status == 'pending')
         elif status_filter == 'failed':
             clients_query = clients_query.filter(Client.payment_status == 'failed')
+        elif status_filter == 'pending_manual':
+            clients_query = clients_query.filter(Client.payment_pending == True)
+        elif status_filter == 'free':
+            clients_query = clients_query.filter(Client.signup_plan == 'free')
         
         clients = []
         for client in clients_query.limit(100).all():
@@ -3289,6 +3293,8 @@ def dashboard_signups():
                 'signup_plan': client.signup_plan,
                 'signup_amount': client.signup_amount or 0,
                 'payment_status': client.payment_status or 'pending',
+                'payment_method': getattr(client, 'payment_method', None) or 'pending',
+                'payment_pending': getattr(client, 'payment_pending', False) or False,
                 'portal_token': client.portal_token,
                 'created_at': client.created_at.strftime('%Y-%m-%d %H:%M') if client.created_at else '',
                 'contacted': 'contacted' in (client.admin_notes or '').lower()
@@ -3384,6 +3390,153 @@ def api_mark_contacted():
         db.rollback()
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/settings')
+def dashboard_settings():
+    """Admin settings page for signup configuration"""
+    db = get_db()
+    try:
+        import json
+        
+        settings = {}
+        all_settings = db.query(SignupSettings).all()
+        for s in all_settings:
+            try:
+                settings[s.setting_key] = json.loads(s.setting_value) if s.setting_value else None
+            except:
+                settings[s.setting_key] = s.setting_value
+        
+        defaults = {
+            'field_name': 'required',
+            'field_email': 'required',
+            'field_phone': 'required',
+            'field_address': 'optional',
+            'field_dob': 'optional',
+            'field_ssn': 'deferred',
+            'field_credit_login': 'deferred',
+            'field_referral': 'optional',
+            'tier_free_enabled': True,
+            'tier_free_desc': 'Basic Analysis - Free',
+            'tier1_enabled': True,
+            'tier1_price': 300,
+            'tier1_desc': 'Initial credit analysis',
+            'tier2_enabled': True,
+            'tier2_price': 600,
+            'tier2_desc': 'Two rounds of disputes',
+            'tier3_enabled': True,
+            'tier3_price': 900,
+            'tier3_desc': 'Three rounds comprehensive',
+            'tier4_enabled': True,
+            'tier4_price': 1200,
+            'tier4_desc': 'Litigation preparation',
+            'tier5_enabled': True,
+            'tier5_price': 1500,
+            'tier5_desc': 'Complete package',
+            'allow_pay_later': True,
+            'payment_stripe_enabled': True,
+            'payment_paypal_enabled': False,
+            'payment_cashapp_enabled': False,
+            'payment_venmo_enabled': False,
+            'payment_zelle_enabled': False,
+            'payment_cashapp': '',
+            'payment_venmo': '',
+            'payment_zelle': '',
+            'payment_paypal': ''
+        }
+        
+        for key, value in defaults.items():
+            if key not in settings:
+                settings[key] = value
+        
+        return render_template('settings.html', settings=settings)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settings/save', methods=['POST'])
+def api_save_settings():
+    """Save signup settings"""
+    db = get_db()
+    try:
+        import json
+        data = request.json
+        
+        for key, value in data.items():
+            setting = db.query(SignupSettings).filter_by(setting_key=key).first()
+            if setting:
+                setting.setting_value = json.dumps(value) if not isinstance(value, str) else value
+                setting.updated_at = datetime.utcnow()
+            else:
+                setting = SignupSettings(
+                    setting_key=key,
+                    setting_value=json.dumps(value) if not isinstance(value, str) else value
+                )
+                db.add(setting)
+        
+        db.commit()
+        return jsonify({'success': True, 'message': 'Settings saved'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settings/get')
+def api_get_settings():
+    """Get all signup settings as JSON"""
+    db = get_db()
+    try:
+        import json
+        settings = {}
+        all_settings = db.query(SignupSettings).all()
+        for s in all_settings:
+            try:
+                settings[s.setting_key] = json.loads(s.setting_value) if s.setting_value else None
+            except:
+                settings[s.setting_key] = s.setting_value
+        return jsonify({'success': True, 'settings': settings})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/signups/confirm-payment', methods=['POST'])
+def api_confirm_payment():
+    """Confirm manual payment for a client"""
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get('client_id')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Missing client_id'}), 400
+        
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        client.payment_status = 'paid'
+        client.payment_pending = False
+        client.payment_received_at = datetime.utcnow()
+        
+        current_notes = client.admin_notes or ''
+        payment_note = f"[PAYMENT CONFIRMED {datetime.utcnow().strftime('%Y-%m-%d %H:%M')} via {client.payment_method or 'manual'}]"
+        client.admin_notes = payment_note + ('\n' + current_notes if current_notes else '')
+        
+        db.commit()
+        return jsonify({'success': True, 'message': 'Payment confirmed'})
+    except Exception as e:
+        db.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
@@ -3717,6 +3870,137 @@ def api_create_signup_draft():
             'planAmount': tier_info['amount'],
             'planDisplay': tier_info['display'],
             'expiresAt': expires_at.isoformat()
+        }), 201
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client/signup/complete-free', methods=['POST'])
+def api_complete_free_signup():
+    """Complete a free tier signup without payment"""
+    db = get_db()
+    try:
+        data = request.json
+        draft_id = data.get('draftId')
+        
+        if not draft_id:
+            return jsonify({'success': False, 'error': 'Draft ID is required'}), 400
+        
+        draft = db.query(SignupDraft).filter_by(draft_uuid=draft_id).first()
+        if not draft:
+            return jsonify({'success': False, 'error': 'Signup draft not found'}), 404
+        
+        if draft.status != 'pending':
+            return jsonify({'success': False, 'error': f'Draft is not pending (status: {draft.status})'}), 400
+        
+        form_data = draft.form_data or {}
+        
+        referral_code = generate_referral_code()
+        portal_token = str(uuid.uuid4())
+        
+        client = Client(
+            name=f"{form_data.get('firstName', '')} {form_data.get('lastName', '')}".strip(),
+            email=form_data.get('email', ''),
+            phone=form_data.get('phone', ''),
+            address=f"{form_data.get('addressStreet', '')}, {form_data.get('addressCity', '')} {form_data.get('addressState', '')} {form_data.get('addressZip', '')}".strip(' ,'),
+            credit_service=form_data.get('creditService', ''),
+            credit_username=form_data.get('creditUsername', ''),
+            credit_password=form_data.get('creditPassword', ''),
+            status='lead',
+            signup_plan='free',
+            signup_amount=0,
+            payment_status='paid',
+            payment_method='free',
+            payment_pending=False,
+            payment_received_at=datetime.utcnow(),
+            referral_code=referral_code,
+            portal_token=portal_token,
+            referred_by=form_data.get('referralCode', ''),
+            consent_signed=form_data.get('agreeTerms', False),
+            consent_date=datetime.utcnow() if form_data.get('agreeTerms') else None
+        )
+        
+        db.add(client)
+        draft.status = 'completed'
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'clientId': client.id,
+            'referralCode': referral_code,
+            'portalToken': portal_token
+        }), 201
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client/signup/complete-manual', methods=['POST'])
+def api_complete_manual_signup():
+    """Complete a signup with manual payment (CashApp, Venmo, Zelle, PayPal, Pay Later)"""
+    db = get_db()
+    try:
+        data = request.json
+        draft_id = data.get('draftId')
+        payment_method = data.get('paymentMethod', 'pending')
+        
+        if not draft_id:
+            return jsonify({'success': False, 'error': 'Draft ID is required'}), 400
+        
+        draft = db.query(SignupDraft).filter_by(draft_uuid=draft_id).first()
+        if not draft:
+            return jsonify({'success': False, 'error': 'Signup draft not found'}), 404
+        
+        if draft.status != 'pending':
+            return jsonify({'success': False, 'error': f'Draft is not pending (status: {draft.status})'}), 400
+        
+        form_data = draft.form_data or {}
+        
+        referral_code = generate_referral_code()
+        portal_token = str(uuid.uuid4())
+        
+        client = Client(
+            name=f"{form_data.get('firstName', '')} {form_data.get('lastName', '')}".strip(),
+            email=form_data.get('email', ''),
+            phone=form_data.get('phone', ''),
+            address=f"{form_data.get('addressStreet', '')}, {form_data.get('addressCity', '')} {form_data.get('addressState', '')} {form_data.get('addressZip', '')}".strip(' ,'),
+            credit_service=form_data.get('creditService', ''),
+            credit_username=form_data.get('creditUsername', ''),
+            credit_password=form_data.get('creditPassword', ''),
+            status='lead',
+            signup_plan=draft.plan_tier,
+            signup_amount=draft.plan_amount,
+            payment_status='pending',
+            payment_method=payment_method,
+            payment_pending=True,
+            referral_code=referral_code,
+            portal_token=portal_token,
+            referred_by=form_data.get('referralCode', ''),
+            consent_signed=form_data.get('agreeTerms', False),
+            consent_date=datetime.utcnow() if form_data.get('agreeTerms') else None
+        )
+        
+        db.add(client)
+        draft.status = 'completed'
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'clientId': client.id,
+            'referralCode': referral_code,
+            'portalToken': portal_token,
+            'paymentPending': True
         }), 201
         
     except Exception as e:

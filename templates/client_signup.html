@@ -435,6 +435,101 @@
             color: #4ade80;
             font-weight: bold;
         }
+        .pricing-option.free-tier {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%);
+            border-color: #4ade80;
+        }
+        .pricing-option.free-tier .plan-price {
+            color: #22c55e;
+        }
+        .payment-methods {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .payment-methods-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+        }
+        .payment-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        .payment-option {
+            padding: 15px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+        }
+        .payment-option:hover {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.05);
+        }
+        .payment-option.selected {
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+        .payment-option input {
+            display: none;
+        }
+        .payment-option .payment-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+        .payment-option .payment-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .manual-payment-info {
+            display: none;
+            background: #f0fdf4;
+            border: 2px solid #4ade80;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .manual-payment-info.active {
+            display: block;
+        }
+        .manual-payment-info h4 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .manual-payment-info .payment-handle {
+            font-size: 24px;
+            font-weight: 700;
+            color: #22c55e;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+        .manual-payment-info p {
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .pay-later-info {
+            display: none;
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pay-later-info.active {
+            display: block;
+        }
+        .pay-later-info h4 {
+            color: #92400e;
+        }
         @media (max-width: 768px) {
             .form-row { grid-template-columns: 1fr; }
             .credit-service-grid { grid-template-columns: repeat(2, 1fr); }
@@ -670,6 +765,15 @@
                     <p style="color: #6b7280; margin-bottom: 25px;">Select the credit restoration plan that best fits your needs. All plans include FCRA analysis, dispute letter generation, and ongoing support.</p>
                     
                     <div class="pricing-grid" id="pricingGrid">
+                        <label class="pricing-option free-tier" data-tier="free" id="freeTierOption">
+                            <input type="radio" name="planTier" value="free">
+                            <div class="plan-header">
+                                <span class="plan-name">Free Analysis</span>
+                                <span class="plan-price">FREE</span>
+                            </div>
+                            <p class="plan-desc">Basic credit report analysis - great way to get started</p>
+                        </label>
+                        
                         <label class="pricing-option" data-tier="tier1">
                             <input type="radio" name="planTier" value="tier1">
                             <div class="plan-header">
@@ -715,6 +819,71 @@
                             </div>
                             <p class="plan-desc">Complete package with priority handling and full litigation support</p>
                         </label>
+                    </div>
+                    
+                    <div class="payment-methods" id="paymentMethodsSection">
+                        <div class="payment-methods-title">Select Payment Method</div>
+                        <div class="payment-methods-grid">
+                            <label class="payment-option selected" data-method="stripe">
+                                <input type="radio" name="paymentMethod" value="stripe" checked>
+                                <div class="payment-icon">💳</div>
+                                <div class="payment-name">Credit/Debit Card</div>
+                            </label>
+                            <label class="payment-option" data-method="paypal" id="paypalOption" style="display:none;">
+                                <input type="radio" name="paymentMethod" value="paypal">
+                                <div class="payment-icon">🅿️</div>
+                                <div class="payment-name">PayPal</div>
+                            </label>
+                            <label class="payment-option" data-method="cashapp" id="cashappOption" style="display:none;">
+                                <input type="radio" name="paymentMethod" value="cashapp">
+                                <div class="payment-icon">💵</div>
+                                <div class="payment-name">Cash App</div>
+                            </label>
+                            <label class="payment-option" data-method="venmo" id="venmoOption" style="display:none;">
+                                <input type="radio" name="paymentMethod" value="venmo">
+                                <div class="payment-icon">📱</div>
+                                <div class="payment-name">Venmo</div>
+                            </label>
+                            <label class="payment-option" data-method="zelle" id="zelleOption" style="display:none;">
+                                <input type="radio" name="paymentMethod" value="zelle">
+                                <div class="payment-icon">🏦</div>
+                                <div class="payment-name">Zelle</div>
+                            </label>
+                            <label class="payment-option" data-method="paylater" id="paylaterOption" style="display:none;">
+                                <input type="radio" name="paymentMethod" value="paylater">
+                                <div class="payment-icon">⏱️</div>
+                                <div class="payment-name">Pay Later</div>
+                            </label>
+                        </div>
+                        
+                        <div class="manual-payment-info" id="cashappInfo">
+                            <h4>Send Payment via Cash App</h4>
+                            <div class="payment-handle" id="cashappHandle">$cashtag</div>
+                            <p>Send <strong id="cashappAmount">$0</strong> to the Cash App above, then complete your signup. We'll confirm your payment manually.</p>
+                        </div>
+                        
+                        <div class="manual-payment-info" id="venmoInfo">
+                            <h4>Send Payment via Venmo</h4>
+                            <div class="payment-handle" id="venmoHandle">@username</div>
+                            <p>Send <strong id="venmoAmount">$0</strong> to the Venmo above, then complete your signup. We'll confirm your payment manually.</p>
+                        </div>
+                        
+                        <div class="manual-payment-info" id="zelleInfo">
+                            <h4>Send Payment via Zelle</h4>
+                            <div class="payment-handle" id="zelleHandle">email@example.com</div>
+                            <p>Send <strong id="zelleAmount">$0</strong> to the Zelle above, then complete your signup. We'll confirm your payment manually.</p>
+                        </div>
+                        
+                        <div class="manual-payment-info" id="paypalInfo">
+                            <h4>Send Payment via PayPal</h4>
+                            <div class="payment-handle" id="paypalHandle">email@paypal.com</div>
+                            <p>Send <strong id="paypalAmount">$0</strong> to the PayPal above, then complete your signup. We'll confirm your payment manually.</p>
+                        </div>
+                        
+                        <div class="pay-later-info" id="paylaterInfo">
+                            <h4>Pay Later</h4>
+                            <p>You can complete your signup now and pay later. We'll contact you to arrange payment before starting your case.</p>
+                        </div>
                     </div>
                     
                     <div class="plan-features">
@@ -803,6 +972,104 @@
     </div>
     
     <script>
+        // Payment settings loaded from server
+        let paymentSettings = {
+            payment_stripe_enabled: true,
+            payment_paypal_enabled: false,
+            payment_cashapp_enabled: false,
+            payment_venmo_enabled: false,
+            payment_zelle_enabled: false,
+            allow_pay_later: true,
+            payment_cashapp: '',
+            payment_venmo: '',
+            payment_zelle: '',
+            payment_paypal: '',
+            tier_free_enabled: true
+        };
+        
+        const tierPrices = {
+            'free': 0,
+            'tier1': 300,
+            'tier2': 600,
+            'tier3': 900,
+            'tier4': 1200,
+            'tier5': 1500
+        };
+        
+        // Load settings from server
+        async function loadPaymentSettings() {
+            try {
+                const response = await fetch('/api/settings/get');
+                const result = await response.json();
+                if (result.success && result.settings) {
+                    paymentSettings = { ...paymentSettings, ...result.settings };
+                    updatePaymentMethodsVisibility();
+                    updateFreeTierVisibility();
+                }
+            } catch (e) {
+                console.log('Using default settings');
+            }
+        }
+        
+        function updateFreeTierVisibility() {
+            const freeTierOption = document.getElementById('freeTierOption');
+            if (freeTierOption) {
+                freeTierOption.style.display = paymentSettings.tier_free_enabled ? '' : 'none';
+            }
+        }
+        
+        function updatePaymentMethodsVisibility() {
+            if (paymentSettings.payment_stripe_enabled) {
+                document.querySelector('[data-method="stripe"]').style.display = '';
+            }
+            if (paymentSettings.payment_paypal_enabled) {
+                document.getElementById('paypalOption').style.display = '';
+                document.getElementById('paypalHandle').textContent = paymentSettings.payment_paypal || 'Not configured';
+            }
+            if (paymentSettings.payment_cashapp_enabled) {
+                document.getElementById('cashappOption').style.display = '';
+                document.getElementById('cashappHandle').textContent = paymentSettings.payment_cashapp || 'Not configured';
+            }
+            if (paymentSettings.payment_venmo_enabled) {
+                document.getElementById('venmoOption').style.display = '';
+                document.getElementById('venmoHandle').textContent = paymentSettings.payment_venmo || 'Not configured';
+            }
+            if (paymentSettings.payment_zelle_enabled) {
+                document.getElementById('zelleOption').style.display = '';
+                document.getElementById('zelleHandle').textContent = paymentSettings.payment_zelle || 'Not configured';
+            }
+            if (paymentSettings.allow_pay_later) {
+                document.getElementById('paylaterOption').style.display = '';
+            }
+        }
+        
+        function updatePaymentAmounts() {
+            const selectedPlan = document.querySelector('input[name="planTier"]:checked');
+            if (!selectedPlan) return;
+            
+            const price = tierPrices[selectedPlan.value] || 0;
+            const priceFormatted = '$' + price;
+            
+            document.getElementById('cashappAmount').textContent = priceFormatted;
+            document.getElementById('venmoAmount').textContent = priceFormatted;
+            document.getElementById('zelleAmount').textContent = priceFormatted;
+            document.getElementById('paypalAmount').textContent = priceFormatted;
+        }
+        
+        function hideAllPaymentInfos() {
+            document.querySelectorAll('.manual-payment-info, .pay-later-info').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+        
+        function showPaymentInfo(method) {
+            hideAllPaymentInfos();
+            const infoEl = document.getElementById(method + 'Info');
+            if (infoEl) {
+                infoEl.classList.add('active');
+            }
+        }
+        
         // Initialize credit service selection
         document.querySelectorAll('.credit-service-option').forEach(option => {
             option.addEventListener('click', function() {
@@ -818,12 +1085,41 @@
                 document.querySelectorAll('.pricing-option').forEach(o => o.classList.remove('selected'));
                 this.classList.add('selected');
                 this.querySelector('input').checked = true;
+                
+                // Check if free tier selected - hide payment methods
+                const selectedValue = this.querySelector('input').value;
+                const paymentSection = document.getElementById('paymentMethodsSection');
+                if (selectedValue === 'free') {
+                    paymentSection.style.display = 'none';
+                } else {
+                    paymentSection.style.display = '';
+                    updatePaymentAmounts();
+                }
             });
             // Set initial selected state for tier3 (Premium)
             if (option.querySelector('input').checked) {
                 option.classList.add('selected');
             }
         });
+        
+        // Initialize payment method selection
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+                this.querySelector('input').checked = true;
+                
+                const method = this.dataset.method;
+                if (['cashapp', 'venmo', 'zelle', 'paypal', 'paylater'].includes(method)) {
+                    showPaymentInfo(method);
+                } else {
+                    hideAllPaymentInfos();
+                }
+            });
+        });
+        
+        // Load settings on page load
+        loadPaymentSettings();
         
         // Phone number formatting
         document.getElementById('phone').addEventListener('input', function(e) {
@@ -915,6 +1211,9 @@
             submitBtn.disabled = true;
             spinner.style.display = 'inline-block';
             
+            const selectedPlan = document.querySelector('input[name="planTier"]:checked').value;
+            const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'stripe';
+            
             const formData = {
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
@@ -927,10 +1226,11 @@
                 dateOfBirth: document.getElementById('dateOfBirth').value,
                 ssnLast4: document.getElementById('ssnLast4').value,
                 referralCode: document.getElementById('referralCode').value,
-                creditService: document.querySelector('input[name="creditService"]:checked').value,
+                creditService: document.querySelector('input[name="creditService"]:checked')?.value || '',
                 creditUsername: document.getElementById('creditUsername').value,
                 creditPassword: document.getElementById('creditPassword').value,
-                planTier: document.querySelector('input[name="planTier"]:checked').value,
+                planTier: selectedPlan,
+                paymentMethod: selectedPlan === 'free' ? 'free' : selectedPaymentMethod,
                 agreeTerms: document.getElementById('agreeTerms').checked,
                 agreeComms: document.getElementById('agreeComms').checked
             };
@@ -952,22 +1252,61 @@
                     return;
                 }
                 
-                // Step 2: Create Stripe checkout session
-                const checkoutResponse = await fetch('/api/stripe/checkout-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ draftId: draftResult.draftId })
-                });
-                
-                const checkoutResult = await checkoutResponse.json();
-                
-                if (checkoutResult.success && checkoutResult.checkoutUrl) {
-                    // Redirect to Stripe Checkout
-                    window.location.href = checkoutResult.checkoutUrl;
+                // Handle different payment flows
+                if (selectedPlan === 'free') {
+                    // Free tier - complete immediately
+                    const completeResponse = await fetch('/api/client/signup/complete-free', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ draftId: draftResult.draftId })
+                    });
+                    
+                    const completeResult = await completeResponse.json();
+                    
+                    if (completeResult.success) {
+                        showSuccessMessage(completeResult.referralCode);
+                    } else {
+                        alert('Error: ' + (completeResult.error || 'Failed to complete signup'));
+                        submitBtn.disabled = false;
+                        spinner.style.display = 'none';
+                    }
+                } else if (['cashapp', 'venmo', 'zelle', 'paypal', 'paylater'].includes(selectedPaymentMethod)) {
+                    // Manual payment - complete with pending status
+                    const completeResponse = await fetch('/api/client/signup/complete-manual', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            draftId: draftResult.draftId,
+                            paymentMethod: selectedPaymentMethod
+                        })
+                    });
+                    
+                    const completeResult = await completeResponse.json();
+                    
+                    if (completeResult.success) {
+                        showSuccessMessage(completeResult.referralCode, true);
+                    } else {
+                        alert('Error: ' + (completeResult.error || 'Failed to complete signup'));
+                        submitBtn.disabled = false;
+                        spinner.style.display = 'none';
+                    }
                 } else {
-                    alert('Error: ' + (checkoutResult.error || 'Failed to create payment session'));
-                    submitBtn.disabled = false;
-                    spinner.style.display = 'none';
+                    // Stripe payment - redirect to checkout
+                    const checkoutResponse = await fetch('/api/stripe/checkout-session', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ draftId: draftResult.draftId })
+                    });
+                    
+                    const checkoutResult = await checkoutResponse.json();
+                    
+                    if (checkoutResult.success && checkoutResult.checkoutUrl) {
+                        window.location.href = checkoutResult.checkoutUrl;
+                    } else {
+                        alert('Error: ' + (checkoutResult.error || 'Failed to create payment session'));
+                        submitBtn.disabled = false;
+                        spinner.style.display = 'none';
+                    }
                 }
             } catch (error) {
                 console.error('Signup error:', error);
@@ -976,6 +1315,28 @@
                 spinner.style.display = 'none';
             }
         });
+        
+        function showSuccessMessage(referralCode, isPending = false) {
+            document.querySelector('.form-card form').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'block';
+            if (referralCode) {
+                document.getElementById('clientReferralCode').textContent = referralCode;
+            }
+            if (isPending) {
+                const successTitle = document.querySelector('#successMessage h2');
+                const successDesc = document.querySelector('#successMessage > p');
+                if (successTitle) successTitle.textContent = 'Almost There!';
+                if (successDesc) successDesc.textContent = 'Your signup is being processed. Once we confirm your payment, we\'ll begin working on your credit analysis.';
+            }
+            // Mark all steps as completed
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById('step' + i + '-indicator');
+                if (indicator) {
+                    indicator.classList.remove('active');
+                    indicator.classList.add('completed');
+                }
+            }
+        }
         
         // Handle success/cancel from URL params
         const urlParams = new URLSearchParams(window.location.search);
