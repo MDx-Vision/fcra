@@ -23,6 +23,8 @@
             z-index: 100;
         }
         .logo {
+            display: flex;
+            align-items: center;
             color: white;
             font-size: 20px;
             font-weight: 700;
@@ -30,7 +32,8 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
             margin-bottom: 30px;
         }
-        .logo span { color: #4ade80; }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
         .nav-section { margin-bottom: 25px; }
         .nav-section-title {
             color: #64748b;
@@ -51,7 +54,7 @@
             transition: all 0.2s;
         }
         .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
         .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
         .main-content {
             margin-left: 260px;
@@ -82,7 +85,7 @@
             text-decoration: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             color: #1a1a2e;
         }
         .btn-secondary {
@@ -90,7 +93,7 @@
             color: #1a1a2e;
             border: 2px solid #e2e8f0;
         }
-        .btn-secondary:hover { border-color: #4ade80; }
+        .btn-secondary:hover { border-color: #84cc16; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -120,10 +123,10 @@
             color: #1a1a2e;
             margin-bottom: 8px;
         }
-        .stat-card.highlight .stat-value { color: #4ade80; }
+        .stat-card.highlight .stat-value { color: #84cc16; }
         .stat-change {
             font-size: 12px;
-            color: #22c55e;
+            color: #84cc16;
             font-weight: 500;
         }
         .stat-change.negative { color: #ef4444; }
@@ -247,8 +250,8 @@
         .method-zelle { background: #fce7f3; color: #9d174d; }
         .method-pending { background: #fef3c7; color: #92400e; }
         .method-free { background: #dcfce7; color: #166534; }
-        .confirm-btn { background: #22c55e; border-color: #22c55e; color: white; }
-        .confirm-btn:hover { background: #16a34a; }
+        .confirm-btn { background: #84cc16; border-color: #84cc16; color: white; }
+        .confirm-btn:hover { background: #65a30d; }
         .action-btn {
             padding: 6px 12px;
             border: 1px solid #e2e8f0;
@@ -261,8 +264,8 @@
             color: #334155;
             display: inline-block;
         }
-        .action-btn:hover { background: #f8fafc; border-color: #4ade80; }
-        .action-btn.primary { background: #4ade80; border-color: #4ade80; color: #1a1a2e; }
+        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
         .action-btn.contacted { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
         .empty-state {
             text-align: center;
@@ -295,7 +298,7 @@
 </head>
 <body>
     <nav class="sidebar">
-        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
         <div class="nav-section">
             <div class="nav-section-title">Main</div>
             <a href="/dashboard" class="nav-item">

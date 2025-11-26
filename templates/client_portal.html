@@ -25,11 +25,14 @@
             gap: 30px;
         }
         .logo {
+            display: flex;
+            align-items: center;
             color: white;
             font-size: 20px;
             font-weight: 700;
         }
-        .logo span { color: #4ade80; }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
         .portal-title {
             color: white;
             font-size: 14px;
@@ -47,7 +50,7 @@
             font-size: 14px;
         }
         .greeting strong {
-            color: #4ade80;
+            color: #84cc16;
         }
         .date-display {
             color: rgba(255,255,255,0.6);
@@ -76,9 +79,9 @@
             background: #f8fafc;
         }
         .nav-tab.active {
-            color: #4ade80;
-            border-bottom-color: #4ade80;
-            background: rgba(74, 222, 128, 0.05);
+            color: #84cc16;
+            border-bottom-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
         }
         .container {
             max-width: 1200px;
@@ -147,7 +150,7 @@
             font-weight: 700;
             color: #1a1a2e;
         }
-        .stat-value.green { color: #22c55e; }
+        .stat-value.green { color: #84cc16; }
         .stat-value.blue { color: #3b82f6; }
         .stat-label {
             font-size: 13px;
@@ -190,7 +193,7 @@
             font-size: 14px;
         }
         .timeline-step.complete .step-circle {
-            background: #22c55e;
+            background: #84cc16;
             color: white;
         }
         .timeline-step.current .step-circle {
@@ -206,7 +209,7 @@
             font-size: 12px;
             color: #64748b;
         }
-        .timeline-step.complete .step-label { color: #22c55e; }
+        .timeline-step.complete .step-label { color: #84cc16; }
         .timeline-step.current .step-label { color: #3b82f6; font-weight: 600; }
         .violations-grid {
             display: grid;
@@ -267,7 +270,7 @@
         }
         .download-btn {
             padding: 8px 16px;
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             border: none;
             border-radius: 6px;
             color: #1a1a2e;
@@ -278,7 +281,7 @@
         }
         .download-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
         }
         .upload-area {
             border: 2px dashed #e5e7eb;
@@ -290,8 +293,8 @@
             transition: all 0.3s;
         }
         .upload-area:hover {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.05);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
         }
         .upload-icon {
             font-size: 48px;
@@ -335,7 +338,7 @@
         .contact-icon {
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -415,7 +418,7 @@
         .referral-code-value {
             font-size: 24px;
             font-weight: 700;
-            color: #4ade80;
+            color: #84cc16;
             font-family: monospace;
             letter-spacing: 2px;
         }
@@ -454,7 +457,7 @@
         }
         .submit-btn {
             padding: 12px 30px;
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             border: none;
             border-radius: 8px;
             color: #1a1a2e;
@@ -464,7 +467,7 @@
         }
         .submit-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
         }
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -510,7 +513,7 @@
         }
         .comment-input:focus {
             outline: none;
-            border-color: #4ade80;
+            border-color: #84cc16;
         }
         
         .bureau-section {
@@ -524,7 +527,7 @@
 <body>
     <header class="header">
         <div class="header-left">
-            <div class="logo">Brightpath <span>Ascend</span></div>
+            <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
             <span class="portal-title">Client Portal</span>
         </div>
         <div class="header-right">

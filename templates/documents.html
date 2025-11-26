@@ -23,6 +23,8 @@
             z-index: 100;
         }
         .logo {
+            display: flex;
+            align-items: center;
             color: white;
             font-size: 20px;
             font-weight: 700;
@@ -30,7 +32,8 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
             margin-bottom: 30px;
         }
-        .logo span { color: #4ade80; }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
         .nav-section { margin-bottom: 25px; }
         .nav-section-title {
             color: #64748b;
@@ -51,7 +54,7 @@
             transition: all 0.2s;
         }
         .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
         .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
         .nav-badge {
             margin-left: auto;
@@ -91,7 +94,7 @@
             text-decoration: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             color: #1a1a2e;
         }
         .btn-secondary {
@@ -236,8 +239,8 @@
             text-decoration: none;
             color: #334155;
         }
-        .action-btn:hover { background: #f8fafc; border-color: #4ade80; }
-        .action-btn.primary { background: #4ade80; border-color: #4ade80; color: #1a1a2e; }
+        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
         .action-btn.danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
         .file-info {
             display: flex;
@@ -345,15 +348,15 @@
             font-weight: 600;
             color: #64748b;
         }
-        .step.active .step-number { background: #4ade80; color: #1a1a2e; }
-        .step.completed .step-number { background: #22c55e; color: white; }
+        .step.active .step-number { background: #84cc16; color: #1a1a2e; }
+        .step.completed .step-number { background: #319795; color: white; }
         .step-line {
             width: 60px;
             height: 2px;
             background: #e2e8f0;
             margin: 0 10px;
         }
-        .step.completed + .step .step-line { background: #22c55e; }
+        .step.completed + .step .step-line { background: #319795; }
         .category-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -368,15 +371,15 @@
             text-align: center;
             transition: all 0.2s;
         }
-        .category-btn:hover { border-color: #4ade80; background: #f0fdf4; }
-        .category-btn.selected { border-color: #4ade80; background: #dcfce7; }
+        .category-btn:hover { border-color: #84cc16; background: #f0fdf4; }
+        .category-btn.selected { border-color: #84cc16; background: #dcfce7; }
         .category-btn svg {
             width: 32px;
             height: 32px;
             margin-bottom: 10px;
             color: #64748b;
         }
-        .category-btn.selected svg { color: #22c55e; }
+        .category-btn.selected svg { color: #319795; }
         .category-btn-label {
             font-size: 14px;
             font-weight: 600;
@@ -397,8 +400,8 @@
             font-size: 14px;
             transition: all 0.2s;
         }
-        .type-btn:hover { border-color: #4ade80; }
-        .type-btn.selected { border-color: #4ade80; background: #dcfce7; }
+        .type-btn:hover { border-color: #84cc16; }
+        .type-btn.selected { border-color: #84cc16; background: #dcfce7; }
         .form-group {
             margin-bottom: 20px;
         }
@@ -419,7 +422,7 @@
         }
         .form-input:focus, .form-select:focus, .form-textarea:focus {
             outline: none;
-            border-color: #4ade80;
+            border-color: #84cc16;
         }
         .form-row {
             display: grid;
@@ -434,7 +437,7 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .dropzone:hover, .dropzone.dragover { border-color: #4ade80; background: #f0fdf4; }
+        .dropzone:hover, .dropzone.dragover { border-color: #84cc16; background: #f0fdf4; }
         .dropzone svg {
             width: 48px;
             height: 48px;
@@ -445,7 +448,7 @@
             font-size: 14px;
             color: #64748b;
         }
-        .dropzone-text strong { color: #4ade80; }
+        .dropzone-text strong { color: #84cc16; }
         .file-preview {
             display: flex;
             align-items: center;
@@ -494,7 +497,7 @@
 </head>
 <body>
     <nav class="sidebar">
-        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
         <div class="nav-section">
             <div class="nav-section-title">Main</div>
             <a href="/dashboard" class="nav-item">

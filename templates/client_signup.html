@@ -22,11 +22,14 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         .logo {
+            display: flex;
+            align-items: center;
             color: white;
             font-size: 20px;
             font-weight: 700;
         }
-        .logo span { color: #4ade80; }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
         .header-links a {
             color: rgba(255,255,255,0.7);
             text-decoration: none;
@@ -48,7 +51,7 @@
         .hero h1 {
             font-size: 36px;
             margin-bottom: 15px;
-            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -71,8 +74,8 @@
             gap: 10px;
             color: rgba(255,255,255,0.4);
         }
-        .progress-step.active { color: #4ade80; }
-        .progress-step.completed { color: #4ade80; }
+        .progress-step.active { color: #84cc16; }
+        .progress-step.completed { color: #84cc16; }
         .step-number {
             width: 30px;
             height: 30px;
@@ -85,12 +88,12 @@
             font-weight: 600;
         }
         .progress-step.completed .step-number {
-            background: #4ade80;
-            border-color: #4ade80;
+            background: #84cc16;
+            border-color: #84cc16;
             color: #1a1a2e;
         }
         .progress-step.active .step-number {
-            background: rgba(74, 222, 128, 0.2);
+            background: rgba(132, 204, 22, 0.2);
         }
         .form-card {
             background: white;
@@ -150,9 +153,9 @@
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #4ade80;
+            border-color: #84cc16;
             background: white;
-            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+            box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
         }
         .form-group input.error {
             border-color: #ef4444;
@@ -186,12 +189,12 @@
             transition: all 0.3s;
         }
         .credit-service-option:hover {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.05);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
         }
         .credit-service-option.selected {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.1);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.1);
         }
         .credit-service-option input {
             display: none;
@@ -233,7 +236,7 @@
             width: 20px;
             height: 20px;
             margin-top: 2px;
-            accent-color: #4ade80;
+            accent-color: #84cc16;
         }
         .checkbox-group label {
             font-size: 14px;
@@ -263,13 +266,13 @@
             background: #e5e7eb;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             color: #1a1a2e;
             flex: 1;
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(74, 222, 128, 0.4);
+            box-shadow: 0 5px 20px rgba(49, 151, 149, 0.4);
         }
         .btn-primary:disabled {
             background: #d1d5db;
@@ -285,7 +288,7 @@
         .success-icon {
             width: 80px;
             height: 80px;
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -322,7 +325,7 @@
         .referral-code .code {
             font-size: 24px;
             font-weight: 700;
-            color: #4ade80;
+            color: #84cc16;
             font-family: monospace;
         }
         .loading-spinner {
@@ -355,27 +358,27 @@
             background: white;
         }
         .pricing-option:hover {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.05);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
             transform: translateY(-3px);
         }
         .pricing-option.selected {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.1);
-            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.2);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.1);
+            box-shadow: 0 4px 15px rgba(132, 204, 22, 0.2);
         }
         .pricing-option input {
             display: none;
         }
         .pricing-option.popular {
-            border-color: #4ade80;
+            border-color: #84cc16;
         }
         .popular-badge {
             position: absolute;
             top: -10px;
             left: 50%;
             transform: translateX(-50%);
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             color: white;
             font-size: 11px;
             font-weight: 600;
@@ -398,7 +401,7 @@
             display: block;
             font-size: 28px;
             font-weight: 700;
-            color: #4ade80;
+            color: #84cc16;
         }
         .plan-desc {
             font-size: 13px;
@@ -432,15 +435,15 @@
             content: '\2713';
             position: absolute;
             left: 0;
-            color: #4ade80;
+            color: #84cc16;
             font-weight: bold;
         }
         .pricing-option.free-tier {
-            background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%);
-            border-color: #4ade80;
+            background: linear-gradient(135deg, rgba(49, 151, 149, 0.1) 0%, rgba(132, 204, 22, 0.1) 100%);
+            border-color: #84cc16;
         }
         .pricing-option.free-tier .plan-price {
-            color: #22c55e;
+            color: #84cc16;
         }
         .payment-methods {
             margin-top: 30px;
@@ -468,12 +471,12 @@
             background: white;
         }
         .payment-option:hover {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.05);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
         }
         .payment-option.selected {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.1);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.1);
         }
         .payment-option input {
             display: none;
@@ -490,7 +493,7 @@
         .manual-payment-info {
             display: none;
             background: #f0fdf4;
-            border: 2px solid #4ade80;
+            border: 2px solid #84cc16;
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
@@ -507,7 +510,7 @@
         .manual-payment-info .payment-handle {
             font-size: 24px;
             font-weight: 700;
-            color: #22c55e;
+            color: #84cc16;
             font-family: monospace;
             margin-bottom: 10px;
         }
@@ -542,7 +545,7 @@
 </head>
 <body>
     <header class="header">
-        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
         <div class="header-links">
             <a href="/">Home</a>
             <a href="/login">Client Login</a>

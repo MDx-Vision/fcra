@@ -8,7 +8,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -20,7 +20,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 20px;
         }
-        h1 { color: #667eea; margin-bottom: 10px; font-size: 28px; }
+        h1 { color: #319795; margin-bottom: 10px; font-size: 28px; }
         .subtitle { color: #666; margin-bottom: 30px; font-size: 15px; }
         label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; margin-top: 15px; }
         label:first-of-type { margin-top: 0; }
@@ -33,7 +33,7 @@
             font-family: inherit;
         }
         textarea { min-height: 200px; resize: vertical; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; background: #f8f9ff; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #319795; background: #f0fdfa; }
         .button-group { display: flex; gap: 10px; margin-top: 25px; }
         button {
             flex: 1;
@@ -46,10 +46,10 @@
             transition: all 0.3s;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #319795, #84cc16);
             color: white;
         }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(49,151,149,0.4); }
         .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         #status {
             margin-top: 20px;
@@ -64,7 +64,7 @@
         .loading { background: #e7f3ff; color: #004085; border: 1px solid #b8daff; }
         .spinner {
             border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border-top: 3px solid #319795;
             border-radius: 50%;
             width: 16px;
             height: 16px;
@@ -74,7 +74,7 @@
             vertical-align: middle;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        a { color: #667eea; text-decoration: none; }
+        a { color: #319795; text-decoration: none; }
         a:hover { text-decoration: underline; }
     </style>
 </head>
@@ -181,9 +181,9 @@
                 const viewBtn = document.createElement('a');
                 viewBtn.href = '/analysis/' + analysisId + '/review';
                 viewBtn.textContent = '📋 View Results & Accept Case';
-                viewBtn.style.cssText = 'display: inline-block; background: #28a745; color: white; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none; margin-top: 10px;';
-                viewBtn.onmouseover = function() { this.style.background = '#218838'; };
-                viewBtn.onmouseout = function() { this.style.background = '#28a745'; };
+                viewBtn.style.cssText = 'display: inline-block; background: linear-gradient(135deg, #319795, #84cc16); color: white; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none; margin-top: 10px;';
+                viewBtn.onmouseover = function() { this.style.background = 'linear-gradient(135deg, #2c7a7b, #65a30d)'; };
+                viewBtn.onmouseout = function() { this.style.background = 'linear-gradient(135deg, #319795, #84cc16)'; };
                 statusEl.appendChild(viewBtn);
                 statusEl.className = 'show success';
                 form.reset();

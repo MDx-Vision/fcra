@@ -20,11 +20,14 @@
             align-items: center;
         }
         .logo {
+            display: flex;
+            align-items: center;
             color: white;
             font-size: 20px;
             font-weight: 700;
         }
-        .logo span { color: #4ade80; }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
         .nav-links a {
             color: rgba(255,255,255,0.7);
             text-decoration: none;
@@ -62,11 +65,11 @@
             transition: all 0.3s;
         }
         .import-option:hover {
-            border-color: #4ade80;
+            border-color: #84cc16;
         }
         .import-option.active {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.05);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
         }
         .import-option h3 {
             font-size: 18px;
@@ -134,8 +137,8 @@
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #4ade80;
-            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+            border-color: #84cc16;
+            box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
         }
         .form-group .help-text {
             color: #6b7280;
@@ -152,12 +155,12 @@
             border: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             color: #1a1a2e;
         }
         .btn-primary:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.3);
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
         }
         .btn-secondary {
             background: #f3f4f6;
@@ -181,8 +184,8 @@
             background: #fafafa;
         }
         .upload-area:hover {
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.05);
+            border-color: #84cc16;
+            background: rgba(132, 204, 22, 0.05);
         }
         .upload-icon {
             font-size: 48px;
@@ -210,7 +213,7 @@
             margin-bottom: 10px;
         }
         .result-item.success {
-            border-left: 4px solid #22c55e;
+            border-left: 4px solid #84cc16;
         }
         .result-item.error {
             border-left: 4px solid #ef4444;
@@ -267,7 +270,7 @@
 </head>
 <body>
     <header class="header">
-        <div class="logo">Brightpath <span>Ascend</span> Admin</div>
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span> Admin</div>
         <nav class="nav-links">
             <a href="/dashboard">Dashboard</a>
             <a href="/dashboard/clients">Clients</a>

@@ -24,6 +24,8 @@
             overflow-y: auto;
         }
         .logo {
+            display: flex;
+            align-items: center;
             color: white;
             font-size: 20px;
             font-weight: 700;
@@ -31,7 +33,8 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
             margin-bottom: 30px;
         }
-        .logo span { color: #4ade80; }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
         .nav-section { margin-bottom: 25px; }
         .nav-section-title {
             color: #64748b;
@@ -52,7 +55,7 @@
             transition: all 0.2s;
         }
         .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
         .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
         .main-content {
             margin-left: 260px;
@@ -83,7 +86,7 @@
             text-decoration: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
             color: #1a1a2e;
         }
         .btn-secondary {
@@ -91,7 +94,7 @@
             color: #1a1a2e;
             border: 1px solid #e2e8f0;
         }
-        .btn-secondary:hover { border-color: #4ade80; }
+        .btn-secondary:hover { border-color: #84cc16; }
 
         .top-nav {
             display: flex;
@@ -241,8 +244,8 @@
         .action-icon.delete:hover { background: #fef2f2; border-color: #ef4444; }
         .action-icon.task { color: #3b82f6; }
         .action-icon.task:hover { background: #eff6ff; border-color: #3b82f6; }
-        .action-icon.charge { color: #22c55e; }
-        .action-icon.charge:hover { background: #f0fdf4; border-color: #22c55e; }
+        .action-icon.charge { color: #84cc16; }
+        .action-icon.charge:hover { background: #f0fdf4; border-color: #84cc16; }
         .action-icon.ai { color: #8b5cf6; }
         .action-icon.ai:hover { background: #f5f3ff; border-color: #8b5cf6; }
         .action-icon.workflow { color: #f97316; }
@@ -261,7 +264,7 @@
             color: #1a1a2e;
             cursor: pointer;
         }
-        .client-name:hover { color: #4ade80; text-decoration: underline; }
+        .client-name:hover { color: #84cc16; text-decoration: underline; }
         .client-email {
             font-size: 11px;
             color: #94a3b8;
@@ -349,7 +352,7 @@
             font-size: 12px;
             cursor: pointer;
         }
-        .page-btn:hover { border-color: #4ade80; }
+        .page-btn:hover { border-color: #84cc16; }
         .page-btn.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
 
         .modal-overlay {
@@ -429,7 +432,7 @@
         .form-group select:focus,
         .form-group textarea:focus {
             outline: none;
-            border-color: #4ade80;
+            border-color: #84cc16;
         }
         .form-section {
             margin-bottom: 20px;
@@ -694,7 +697,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .doc-toggle-switch.on {
-            background: #4ade80;
+            background: #84cc16;
         }
         .doc-toggle-switch.on::after {
             left: 20px;
@@ -703,7 +706,7 @@
 </head>
 <body>
     <nav class="sidebar">
-        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
         <div class="nav-section">
             <div class="nav-section-title">Main</div>
             <a href="/dashboard" class="nav-item">
