@@ -4123,7 +4123,7 @@ CRA_ADDRESSES = {
     'transunion_freeze_address': 'P.O. Box 160, Woodlyn, PA 19094',
     'transunion_freeze_phone': '1-888-909-8872',
     
-    # Secondary Bureaus
+    # Secondary Bureaus (9 bureaus)
     'innovis_name': 'Innovis',
     'innovis_address': 'P.O. Box 1358, Columbus, OH 43216-1358',
     'innovis_phone': '1-800-540-2505',
@@ -4134,30 +4134,33 @@ CRA_ADDRESSES = {
     'chexsystems_phone': '1-800-428-9623',
     'chexsystems_freeze_address': 'P.O. Box 583399, Minneapolis, MN 55458',
     
-    'lexisnexis_name': 'LexisNexis Consumer Center',
-    'lexisnexis_address': 'P.O. Box 105108, Atlanta, GA 30348-5108',
-    'lexisnexis_phone': '1-888-497-0011',
-    'lexisnexis_freeze_address': 'P.O. Box 105108, Atlanta, GA 30348-5108',
-    
-    'clarity_name': 'Clarity Services (Experian)',
-    'clarity_address': 'P.O. Box 5400, Clearwater, FL 33758',
+    'clarity_name': 'Clarity Services Inc',
+    'clarity_address': 'P.O. Box 5717, Clearwater, FL 33758',
     'clarity_phone': '1-866-390-3118',
     
-    'sagestream_name': 'SageStream',
-    'sagestream_address': 'P.O. Box 503793, San Diego, CA 92150',
-    'sagestream_phone': '1-888-395-0277',
+    'lexisnexis_name': 'LexisNexis',
+    'lexisnexis_address': 'P.O. Box 105108, Atlanta, GA 30348-5108',
+    'lexisnexis_phone': '1-888-497-0011',
     
-    'nctue_name': 'NCTUE (National Consumer Telecom & Utilities Exchange)',
-    'nctue_address': 'P.O. Box 105161, Atlanta, GA 30348',
-    'nctue_phone': '1-866-349-5355',
-    
-    'ars_name': 'ARS/Telecheck',
-    'ars_address': 'Attn: Consumer Resolutions, 5251 Westheimer Road, Houston, TX 77056',
-    'ars_phone': '1-800-366-2425',
-    
-    'corelogic_name': 'CoreLogic Credco',
+    'corelogic_name': 'CoreLogic Teletrack',
     'corelogic_address': 'P.O. Box 509124, San Diego, CA 92150',
-    'corelogic_phone': '1-877-532-8778',
+    'corelogic_phone': '1-877-309-5226',
+    
+    'factortrust_name': 'Factor Trust Inc',
+    'factortrust_address': 'P.O. Box 327, Alpharetta, GA 30009',
+    'factortrust_phone': '1-484-671-5880',
+    
+    'microbilt_name': 'MicroBilt / PRBC',
+    'microbilt_address': '1640 Airport Road, Suite 115, Kennesaw, GA 30144',
+    'microbilt_phone': '1-866-536-3569',
+    
+    'lexisnexis_risk_name': 'LexisNexis Risk Solutions',
+    'lexisnexis_risk_address': 'P.O. Box 105108, Atlanta, GA 30348',
+    'lexisnexis_risk_phone': '1-800-456-1244',
+    
+    'datax_name': 'DataX Ltd',
+    'datax_address': 'P.O. Box 105168, Atlanta, GA 30348',
+    'datax_phone': '1-800-295-4790',
 }
 
 
