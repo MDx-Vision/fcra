@@ -99,6 +99,9 @@ class Client(Base):
     # Notes
     admin_notes = Column(Text)
     
+    # Profile/Avatar
+    avatar_filename = Column(String(255))  # Stored in static/avatars/
+    
     # Payment/Stripe fields
     signup_plan = Column(String(50))  # free, tier1, tier2, tier3, tier4, tier5
     signup_amount = Column(Integer)  # Amount in cents
@@ -1245,6 +1248,7 @@ def init_db():
         ("clients", "mark_2", "BOOLEAN DEFAULT FALSE"),
         ("clients", "payment_method", "VARCHAR(50) DEFAULT 'pending'"),
         ("clients", "payment_pending", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "avatar_filename", "VARCHAR(255)"),
     ]
     
     conn = engine.connect()
