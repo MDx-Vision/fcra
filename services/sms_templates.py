@@ -3,7 +3,7 @@ SMS Message Templates for Brightpath Ascend FCRA Platform
 All templates are designed to be under 160 characters for single SMS when possible
 """
 
-COMPANY_NAME = "Brightpath Ascend"
+COMPANY_NAME = "Brightpath Ascend Group"
 REPLY_STOP = "Reply STOP to unsubscribe."
 
 
