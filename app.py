@@ -3857,15 +3857,32 @@ def api_email_setup():
     return redirect('/dashboard/settings/email')
 
 
+VALID_TEMPLATE_TYPES = [
+    'welcome', 'document_reminder', 'case_update', 'dispute_sent',
+    'cra_response', 'payment_reminder', 'analysis_ready', 'letters_ready'
+]
+
+
+def validate_template_type(template_type):
+    """Validate that template_type is one of the allowed types"""
+    return template_type in VALID_TEMPLATE_TYPES
+
+
+def validate_email_format(email):
+    """Basic email format validation"""
+    import re
+    if not email:
+        return False
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return bool(re.match(pattern, email))
+
+
 @app.route('/api/email-templates', methods=['GET'])
 def api_get_email_templates():
     """Get all email templates - lists all template types with custom status"""
     db = get_db()
     try:
-        template_types = [
-            'welcome', 'document_reminder', 'case_update', 'dispute_sent',
-            'cra_response', 'payment_reminder', 'analysis_ready', 'letters_ready'
-        ]
+        template_types = VALID_TEMPLATE_TYPES
         
         custom_templates = db.query(EmailTemplate).all()
         custom_map = {t.template_type: t for t in custom_templates}
@@ -3900,6 +3917,9 @@ def api_get_email_templates():
 @app.route('/api/email-templates/<template_type>', methods=['GET'])
 def api_get_email_template(template_type):
     """Get a specific email template by type"""
+    if not validate_template_type(template_type):
+        return jsonify({'success': False, 'error': f'Invalid template type: {template_type}'}), 400
+    
     db = get_db()
     try:
         template = db.query(EmailTemplate).filter_by(template_type=template_type).first()
@@ -3937,6 +3957,9 @@ def api_get_email_template(template_type):
 @app.route('/api/email-templates/<template_type>', methods=['POST'])
 def api_save_email_template(template_type):
     """Save or update an email template"""
+    if not validate_template_type(template_type):
+        return jsonify({'success': False, 'error': f'Invalid template type: {template_type}'}), 400
+    
     db = get_db()
     try:
         data = request.json
@@ -3944,7 +3967,7 @@ def api_save_email_template(template_type):
         html_content = data.get('html_content')
         design_json = data.get('design_json')
         
-        if not subject:
+        if not subject or not subject.strip():
             return jsonify({'success': False, 'error': 'Subject is required'}), 400
         
         template = db.query(EmailTemplate).filter_by(template_type=template_type).first()
@@ -3986,6 +4009,9 @@ def api_save_email_template(template_type):
 @app.route('/api/email-templates/<template_type>/reset', methods=['POST'])
 def api_reset_email_template(template_type):
     """Reset a template to default (delete custom version)"""
+    if not validate_template_type(template_type):
+        return jsonify({'success': False, 'error': f'Invalid template type: {template_type}'}), 400
+    
     db = get_db()
     try:
         template = db.query(EmailTemplate).filter_by(template_type=template_type).first()
@@ -4012,21 +4038,27 @@ def api_reset_email_template(template_type):
 @app.route('/api/email-templates/<template_type>/preview', methods=['POST'])
 def api_preview_email_template(template_type):
     """Send a preview email with the template"""
+    if not validate_template_type(template_type):
+        return jsonify({'success': False, 'error': f'Invalid template type: {template_type}'}), 400
+    
     db = get_db()
     try:
         from services.email_service import send_email, is_sendgrid_configured
         from services import email_templates as default_templates
         
         if not is_sendgrid_configured():
-            return jsonify({'success': False, 'error': 'SendGrid not configured'}), 400
+            return jsonify({'success': False, 'error': 'SendGrid not configured. Please connect SendGrid first.'}), 400
         
         data = request.json
-        preview_email = data.get('email')
+        preview_email = data.get('email', '').strip()
         html_content = data.get('html_content')
         subject = data.get('subject', f'Preview: {template_type}')
         
         if not preview_email:
             return jsonify({'success': False, 'error': 'Preview email address required'}), 400
+        
+        if not validate_email_format(preview_email):
+            return jsonify({'success': False, 'error': 'Invalid email format'}), 400
         
         if html_content:
             test_html = apply_merge_tags(html_content, {
