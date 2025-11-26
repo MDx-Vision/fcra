@@ -730,6 +730,23 @@ class SignupSettings(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class SMSLog(Base):
+    """Log all SMS send attempts for tracking and debugging"""
+    __tablename__ = 'sms_logs'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    phone_number = Column(String(20))
+    message = Column(Text)
+    template_type = Column(String(50))
+    status = Column(String(20))
+    twilio_sid = Column(String(50))
+    sent_at = Column(DateTime, default=datetime.utcnow)
+    error_message = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)

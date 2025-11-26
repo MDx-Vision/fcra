@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog
 from werkzeug.utils import secure_filename
 import secrets
 import uuid
@@ -3512,6 +3512,197 @@ def api_get_settings():
         db.close()
 
 
+@app.route('/dashboard/settings/sms')
+def dashboard_sms_settings():
+    """SMS Settings page for configuring Twilio SMS automation"""
+    db = get_db()
+    try:
+        from services.sms_service import is_twilio_configured, get_twilio_phone_number
+        from services.sms_automation import get_sms_settings
+        from datetime import timedelta
+        
+        twilio_configured = False
+        twilio_phone = None
+        try:
+            twilio_configured = is_twilio_configured()
+            if twilio_configured:
+                twilio_phone = get_twilio_phone_number()
+        except Exception as e:
+            print(f"Twilio check failed: {e}")
+        
+        settings = get_sms_settings(db)
+        
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        logs = db.query(SMSLog).filter(
+            SMSLog.sent_at >= thirty_days_ago
+        ).order_by(SMSLog.sent_at.desc()).limit(50).all()
+        
+        total = db.query(SMSLog).filter(SMSLog.sent_at >= thirty_days_ago).count()
+        sent = db.query(SMSLog).filter(
+            SMSLog.sent_at >= thirty_days_ago,
+            SMSLog.status == 'sent'
+        ).count()
+        failed = db.query(SMSLog).filter(
+            SMSLog.sent_at >= thirty_days_ago,
+            SMSLog.status == 'failed'
+        ).count()
+        
+        template_types = db.query(SMSLog.template_type).filter(
+            SMSLog.sent_at >= thirty_days_ago
+        ).distinct().count()
+        
+        stats = {
+            'total': total,
+            'sent': sent,
+            'failed': failed,
+            'templates_used': template_types
+        }
+        
+        return render_template('sms_settings.html',
+            twilio_configured=twilio_configured,
+            twilio_phone=twilio_phone,
+            settings=settings,
+            logs=logs,
+            stats=stats
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sms/settings', methods=['POST'])
+def api_save_sms_settings():
+    """Save SMS automation settings"""
+    db = get_db()
+    try:
+        data = request.json
+        
+        setting_keys = [
+            'sms_enabled', 'welcome_sms_enabled', 'document_reminder_enabled',
+            'case_update_enabled', 'dispute_sent_enabled', 'cra_response_enabled',
+            'payment_reminder_enabled', 'reminder_delay_hours'
+        ]
+        
+        for key in setting_keys:
+            if key in data:
+                value = data[key]
+                if isinstance(value, bool):
+                    value = 'true' if value else 'false'
+                else:
+                    value = str(value)
+                
+                setting = db.query(SignupSettings).filter_by(setting_key=f'sms_{key}').first()
+                if setting:
+                    setting.setting_value = value
+                    setting.updated_at = datetime.utcnow()
+                else:
+                    setting = SignupSettings(
+                        setting_key=f'sms_{key}',
+                        setting_value=value
+                    )
+                    db.add(setting)
+        
+        db.commit()
+        return jsonify({'success': True, 'message': 'SMS settings saved'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sms/test', methods=['POST'])
+def api_send_test_sms():
+    """Send a test SMS to verify Twilio configuration"""
+    try:
+        from services.sms_automation import send_test_sms
+        
+        data = request.json
+        phone = data.get('phone')
+        message = data.get('message')
+        
+        if not phone:
+            return jsonify({'success': False, 'error': 'Phone number required'}), 400
+        
+        result = send_test_sms(phone, message)
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/sms/send', methods=['POST'])
+def api_send_sms():
+    """Send an SMS to a specific client"""
+    db = get_db()
+    try:
+        from services.sms_automation import send_custom_sms
+        
+        data = request.json
+        client_id = data.get('client_id')
+        message = data.get('message')
+        
+        if not client_id or not message:
+            return jsonify({'success': False, 'error': 'client_id and message required'}), 400
+        
+        result = send_custom_sms(db, client_id, message)
+        
+        return jsonify(result)
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sms/logs')
+def api_get_sms_logs():
+    """Get SMS logs with optional filters"""
+    db = get_db()
+    try:
+        from datetime import timedelta
+        
+        days = request.args.get('days', 30, type=int)
+        client_id = request.args.get('client_id', type=int)
+        status = request.args.get('status')
+        limit = request.args.get('limit', 100, type=int)
+        
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        query = db.query(SMSLog).filter(SMSLog.sent_at >= cutoff)
+        
+        if client_id:
+            query = query.filter(SMSLog.client_id == client_id)
+        if status:
+            query = query.filter(SMSLog.status == status)
+        
+        logs = query.order_by(SMSLog.sent_at.desc()).limit(limit).all()
+        
+        logs_data = []
+        for log in logs:
+            logs_data.append({
+                'id': log.id,
+                'client_id': log.client_id,
+                'phone_number': log.phone_number,
+                'message': log.message[:100] + '...' if len(log.message or '') > 100 else log.message,
+                'template_type': log.template_type,
+                'status': log.status,
+                'twilio_sid': log.twilio_sid,
+                'sent_at': log.sent_at.isoformat() if log.sent_at else None,
+                'error_message': log.error_message
+            })
+        
+        return jsonify({'success': True, 'logs': logs_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route('/api/signups/confirm-payment', methods=['POST'])
 def api_confirm_payment():
     """Confirm manual payment for a client"""
@@ -3932,6 +4123,14 @@ def api_complete_free_signup():
         draft.status = 'completed'
         db.commit()
         
+        try:
+            from services.sms_automation import trigger_welcome_sms
+            sms_result = trigger_welcome_sms(db, client.id)
+            if sms_result.get('sent'):
+                print(f"📱 Welcome SMS sent to client {client.id}")
+        except Exception as sms_error:
+            print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
+        
         return jsonify({
             'success': True,
             'clientId': client.id,
@@ -3996,6 +4195,14 @@ def api_complete_manual_signup():
         db.add(client)
         draft.status = 'completed'
         db.commit()
+        
+        try:
+            from services.sms_automation import trigger_welcome_sms
+            sms_result = trigger_welcome_sms(db, client.id)
+            if sms_result.get('sent'):
+                print(f"📱 Welcome SMS sent to client {client.id}")
+        except Exception as sms_error:
+            print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
         
         return jsonify({
             'success': True,
@@ -4247,6 +4454,16 @@ def handle_checkout_completed(db, session):
         
         print(f"✅ Promoted draft {draft_id} to client {client.id} ({client.email})")
         
+        try:
+            from services.sms_automation import trigger_welcome_sms
+            sms_result = trigger_welcome_sms(db, client.id)
+            if sms_result.get('sent'):
+                print(f"📱 Welcome SMS sent to client {client.id}")
+            else:
+                print(f"📱 Welcome SMS skipped: {sms_result.get('reason', 'unknown')}")
+        except Exception as sms_error:
+            print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
+        
     except Exception as e:
         db.rollback()
         import traceback
@@ -4461,6 +4678,14 @@ def api_cra_response_upload():
                 pass
         
         db.commit()
+        
+        try:
+            from services.sms_automation import trigger_cra_response
+            sms_result = trigger_cra_response(db, int(client_id), bureau)
+            if sms_result.get('sent'):
+                print(f"📱 CRA response SMS sent to client {client_id} for {bureau}")
+        except Exception as sms_error:
+            print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
         
         return jsonify({
             'success': True,

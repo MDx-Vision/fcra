@@ -14,3 +14,4 @@ fpdf2
 pyjwt
 cryptography
 stripe
+twilio
