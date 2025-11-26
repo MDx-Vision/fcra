@@ -1,7 +1,7 @@
 # Brightpath Ascend FCRA Platform
 
 ## Overview
-The Brightpath Ascend FCRA Platform is a comprehensive, production-ready system designed for consumer protection litigation, specifically focusing on FCRA (Fair Credit Reporting Act) violations. It automates the analysis of credit reports and generates all necessary legal documentation for litigation. The platform aims to serve as a full litigation management tool, moving beyond simple credit repair to facilitate robust legal action against credit reporting agencies. It is envisioned to generate significant revenue through a tiered pricing model, targeting a substantial client base.
+The Brightpath Ascend FCRA Platform is a production-ready system designed for consumer protection litigation, specifically focusing on FCRA (Fair Credit Reporting Act) violations. It automates the analysis of credit reports and generates all necessary legal documentation for litigation, serving as a full litigation management tool. The platform aims to facilitate robust legal action against credit reporting agencies and generate significant revenue through a tiered pricing model.
 
 ## User Preferences
 - Cost-conscious but values AI quality (accepts $1-3 per analysis)
@@ -11,168 +11,50 @@ The Brightpath Ascend FCRA Platform is a comprehensive, production-ready system 
 - Prefers analytical, data-driven decisions with clear case metrics
 
 ## System Architecture
-The platform is built on a Flask web framework and employs a novel two-stage, section-based analysis approach to overcome token limits and enhance analytical depth.
+The platform is built on a Flask web framework and employs a two-stage, section-based analysis approach to overcome token limits and enhance analytical depth.
 
 ### UI/UX Decisions
 - **Admin Dashboard**: Professional case management interface at `/dashboard` for pipeline visualization, client lists, and case details.
 - **Client Portal**: Branded client-facing portal at `/portal/<token>` for case status.
-- **Review Checkpoints**: Dedicated interfaces (`/analysis/<id>/review`) for manual review and editing of AI-extracted data before document generation.
-- **PDF Generation**: Documents are generated with specific formatting (e.g., blue text for manual review encouragement) for clarity and legal efficacy.
+- **Review Checkpoints**: Dedicated interfaces (`/analysis/<id>/review`) for manual review and editing of AI-extracted data.
+- **PDF Generation**: Documents are generated with specific formatting (e.g., blue text for manual review encouragement) and Brightpath Ascend branding.
 
 ### Technical Implementations
 - **Two-Stage Analysis**:
-    - **Stage 1 (Section-Based Analysis)**: Credit reports (of any size, 100MB+) are intelligently split into sections (tradelines, collections, public records, inquiries). Anthropic Claude analyzes each section separately to avoid token limits, extracting violations, assessing standing, and calculating damages. Results are then intelligently merged (e.g., violations tagged by source, standing OR'ed, damages summed).
-    - **Stage 2 (Comprehensive Document Generation)**: Upon approval of Stage 1 findings, Claude generates an 80-120 page forensic litigation package, including standing analysis, violation analysis, willfulness assessment, settlement analysis, and dispute letters (Rounds 1-4).
-- **Intelligent Data Merging**: Violations are tagged with their source section, standing is determined using OR logic across sections, and damages are summed.
-- **Rapid Legal Protection Protocol (RLPP)**: A strategy for tactical bundling of violations and escalation of dispute rounds (R1-R4) to maximize impact.
-- **Automated Data Extraction**: Claude outputs structured JSON data (`<LITIGATION_DATA>`) which is automatically parsed to populate the database, eliminating manual data entry.
-- **PDF Generation**: Modular PDF generators (ClientReportBuilder, InternalMemoBuilder, RoundLetterBuilder) create detailed reports and letters.
-- **Security**: Password encryption using Fernet symmetric encryption with environment-managed keys.
+    - **Stage 1 (Section-Based Analysis)**: Credit reports are split into sections. Anthropic Claude analyzes each section, extracting violations, assessing standing, and calculating damages. Results are intelligently merged.
+    - **Stage 2 (Comprehensive Document Generation)**: Claude generates a forensic litigation package, including standing analysis, violation analysis, willfulness assessment, settlement analysis, and dispute letters.
+- **Automated Data Extraction**: Claude outputs structured JSON data, which is automatically parsed to populate the database.
+- **PDF Generation**: Modular PDF generators create detailed reports and letters.
+- **Security**: Password encryption using Fernet symmetric encryption.
+- **Rapid Legal Protection Protocol (RLPP)**: A strategy for tactical bundling of violations and escalation of dispute rounds.
+- **Automation Tools Dashboard**: A 6-tab admin interface for services like Freeze Letters, Validation Letters, Deadlines, Settlement Calculator, Certified Mail, and Notarization.
+- **Action Plan Generator**: Creates branded action plan PDFs with case overviews, deadlines, task checklists, and cost estimates.
+- **E-Signature System**: Client-facing signature capture for various legal documents.
+- **Metro2 Violation Detection API**: Detects 10 types of Metro2 format violations with auto-generated dispute language and damage calculation.
+- **PWA Support**: Progressive Web App manifest and service worker for offline caching and push notifications.
+- **Email/SMS Automation**: SendGrid and Twilio-powered systems for automated client communications with configurable templates and merge tags.
+- **Document Center**: Unified document upload system with type-first selection and admin review workflow.
+- **Flexible Signup System**: Configurable fields and multi-payment options (Stripe, PayPal, etc.).
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
-- Post-TransUnion standing analysis (concrete harm, dissemination, causation).
-- Willfulness assessment based on the Safeco standard.
-- Statute of limitations verification.
+- Post-TransUnion standing analysis, willfulness assessment, and statute of limitations verification.
 - Comprehensive damages calculation (statutory, actual, punitive).
-- Case scoring (1-10 scale) based on various factors.
+- Case scoring (1-10 scale).
 - Cost tracking for token usage and cache savings.
 
 ### System Design Choices
-- **Scalability**: The section-based approach ensures infinite scalability for credit report sizes and efficient processing for a large client base.
-- **Cost Efficiency**: Prompt caching significantly reduces API costs for repeat analyses and batch processing.
-- **Data Integrity**: Zero data loss due to intelligent sectioning and analysis.
-- **Workflow Optimization**: Integration of verification checkpoints for manual review ensures accuracy and control.
+- **Scalability**: Section-based analysis ensures scalability for credit report sizes and large client bases.
+- **Cost Efficiency**: Prompt caching reduces API costs.
+- **Data Integrity**: Intelligent sectioning and analysis prevent data loss.
+- **Workflow Optimization**: Verification checkpoints ensure accuracy and control.
 
 ## External Dependencies
 - **Flask**: Python web framework.
-- **Anthropic Claude 3 Sonnet 4**: Primary AI analysis engine for credit report processing and document generation.
+- **Anthropic Claude 3 Sonnet 4**: Primary AI analysis engine.
 - **PostgreSQL**: Database solution, backed by Neon.
-- **SQLAlchemy**: Python SQL toolkit and Object-Relational Mapper (ORM) for database interactions.
-- **Fernet**: For symmetric encryption of sensitive data.
-- **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
-
-## Recent Changes (November 26, 2025)
-- **Automation Tools Dashboard** (`/dashboard/automation-tools`): 6-tab admin interface for automation services
-  - Freeze Letters: Bulk generation for all 12 bureaus (3 CRAs + 9 secondary) with auto-populated client PII
-  - Validation Letters: FDCPA-compliant debt validation letters for collection accounts with one-click or auto-generation from case analysis
-  - Deadlines: Automated tracking with email reminders for FCRA response deadlines
-  - Settlement Calculator: Case value estimation based on violations, willfulness, actual damages
-  - Certified Mail: SendCertifiedMail.com integration for proof of delivery
-  - Notarization: Proof.com integration for remote online notarization (limited POA)
-- **Word Document Export**: Both freeze letters and validation letters now generate .docx files alongside PDFs for attorney/client editing
-- **New Automation Services** (services/):
-  - `notarization_service.py`: Remote notarization via Proof.com API (mock mode available)
-  - `settlement_calculator.py`: FCRA settlement value calculator with case factors
-  - `deadline_service.py`: Automated deadline tracking with email reminders
-  - `freeze_letter_service.py`: Bulk freeze letters for 12 bureaus with PDF generation
-  - `certified_mail_service.py`: SendCertifiedMail.com API integration (mock mode available)
-  - `ocr_service.py`: Claude vision API for CRA response extraction and violation detection
-  - `esignature_service.py`: In-app electronic signature capture with canvas UI
-  - `metro2_service.py`: Metro2 format violation detection (10 violation types)
-- **New Database Models**:
-  - CaseDeadline: Track dispute deadlines with reminder status
-  - NotarizationOrder: Remote notarization requests and status
-  - FreezeLetterBatch: Bulk freeze letter generation tracking
-  - CertifiedMailOrder: Certified mail orders with tracking
-  - SettlementEstimate: Case value estimates with breakdown
-  - AttorneyReferral: Referral workflow for litigation-ready cases
-  - Metro2DisputeLog: Metro2 format violations per tradeline
-  - CRAResponseOCR: OCR extraction results from response documents
-  - ESignatureRequest: E-signature request tracking with tokens
-- **E-Signature System** (`/sign/<token>`):
-  - Client-facing signature capture with HTML5 canvas
-  - Mobile-responsive touch support
-  - Document types: Client Agreement, Limited POA, Dispute Authorization, Fee Agreement
-  - Email reminders for pending signatures
-- **Metro2 Violation Detection API**:
-  - Detect 10 violation types: INVALID_STATUS_CODE, BALANCE_EXCEEDS_LIMIT, INVALID_DATE_SEQUENCE, MISSING_DOFD, FUTURE_DATE, STALE_REPORTING, REAGING, BALANCE_ON_CLOSED, DUPLICATE_REPORTING, INVALID_PAYMENT_HISTORY
-  - Collection account analysis: Missing original creditor, DOFD mismatch, zombie debt, junk debt buyer
-  - Auto-generated dispute language with FCRA citations
-  - Damage calculation per violation
-- **PWA Support** (`/manifest.json`, `/sw.js`):
-  - Progressive Web App manifest for installation
-  - Service worker for offline caching
-  - Push notification support
-
-- **Unlayer Visual Email Template Editor** (`/dashboard/settings/email`): Drag-and-drop email designer
-  - Embedded Unlayer editor for visual template design (no coding required)
-  - 8 template types: Welcome, Document Reminder, Case Update, Dispute Sent, CRA Response, Payment Reminder, Analysis Ready, Letters Ready
-  - Merge tags support: {{client_name}}, {{client_email}}, {{portal_link}}, {{case_status}}, {{missing_docs}}, {{company_name}}, {{support_email}}
-  - Save custom templates to database with design JSON for re-editing
-  - Reset to default functionality
-  - Preview/test email with sample merge tag values
-  - EmailTemplate model stores custom designs
-  - Falls back to hardcoded branded templates if no custom template saved
-- **Email Automation System** (`/dashboard/settings/email`): SendGrid-powered automated emails
-  - Welcome Email: Sent when new client signs up (all 3 flows: Free, Manual, Stripe)
-  - Document Reminder Email: When docs missing after configurable delay
-  - Case Update Email: When case status changes
-  - Dispute Sent Email: When letter mailed to bureau
-  - CRA Response Email: When bureau response received
-  - Payment Reminder Email: For pending payments
-  - Analysis Ready Email: When AI analysis completes
-  - Letters Ready Email: When dispute letters are generated
-  - EmailLog model tracks all sent messages with delivery status
-  - Test email functionality for verification
-  - Individual toggles per notification type
-  - HTML email templates with Brightpath Ascend branding
-- **SMS Automation System** (`/dashboard/settings/sms`): Twilio-powered automated messaging
-  - Welcome SMS: Sent when new client signs up
-  - Document Reminder SMS: When docs missing after configurable delay
-  - Case Update SMS: When case status changes
-  - Dispute Sent SMS: When letter mailed to bureau
-  - CRA Response SMS: When bureau response received
-  - Payment Reminder SMS: For pending payments
-  - SMSLog model tracks all sent messages with delivery status
-  - Test SMS functionality for verification
-  - Individual toggles per notification type
-- **LMR-Style Document Indicators** on Contact List
-  - DOCS column with 6 status icons (A, C, D, S, U, P)
-  - Color coding: Green=received, Red=required/missing, Gray=optional/missing
-  - Documents dropdown menu with toggle received status
-  - Shows count (e.g., "3/6 Documents Received")
-- **Document Center** (`/dashboard/documents`): Unified document upload system with type-first selection
-  - Categories: CRA Response, Collection Letters, Legal/Lawsuit, Credit Reports, Identity Docs
-  - Supports collection agency letters, lawsuit complaints, summons, garnishments
-  - Admin review workflow with priority flags and action deadlines
-  - Client portal upload integration
-- **Flexible Signup System**: Configurable fields (Required/Optional/Hidden/Deferred) via admin settings
-- **FREE Tier Lead Magnet**: Basic Analysis tier at $0 that skips payment to capture leads
-- **Multi-Payment Options**: Support for Stripe, PayPal, Cash App, Venmo, Zelle, and Pay Later
-- **Admin Settings Page** (`/dashboard/settings`): Configure signup fields, pricing tiers, and payment methods
-- **Payment Confirmation**: Admin can confirm manual payments (Cash App, Venmo, Zelle) in signups view
-- **Payment Status Tracking**: Client model tracks payment_method and payment_pending status
-
-## Previous Changes (November 25, 2025)
-- **Stripe Payment Integration**: Added 4-step signup flow with Plan & Payment selection, Stripe Checkout redirect, and webhook handling for payment confirmation
-- **SignupDraft Model**: Pre-payment intake data storage with 24-hour expiration
-- **Client Payment Fields**: Added signup_plan, signup_amount, stripe_customer_id, payment_status, etc. to Client model
-- **Dispute Item Tracking**: DisputeItem model for account-by-account tracking with bureau-specific tables
-- **Secondary Bureau Freeze Tracking**: SecondaryBureauFreeze model for 9 secondary bureaus (Innovis, ChexSystems, etc.)
-- **Client Portal Status Tab**: Enhanced with interactive status tables and freeze tracking
-- **Enhanced Contact List** (`/dashboard/contacts`): LMR-style client management grid with:
-  - Filter tabs (Mark 1, Mark 2, Affiliates, Active, Leads, Follow Up, Signups, Last 25, Show All)
-  - Quick action icons per row (Delete, Add Task, Charge, AI Plan, Workflow, Notes, Documents, Dispute Center, Portal)
-  - Contact detail popup with document tracking (Agreement, CR Login, Driver's License, SSN, Utility Bill, POA)
-  - Status system (Lead, Active Client, Inactive, Provider, Other, Cancelled)
-  - Task Manager (per-client tasks with due dates)
-  - Client Notes system
-- **New Database Models**: Task, ClientNote, ClientDocument
-- **Extended Client Model**: client_type, status_2, company, phone_2, mobile, website, is_affiliate, follow_up_date, groups, mark_1, mark_2
-
-## Admin Routes
-- `/dashboard` - Main dashboard with pipeline visualization
-- `/dashboard/contacts` - Contact List (LMR-style client grid)
-- `/dashboard/clients` - Cases view (analysis-based)
-- `/dashboard/signups` - Signups & payment tracking
-- `/dashboard/case/<id>` - Individual case details
-
-## Configured Integrations
-- **Twilio**: SMS automation for client notifications (welcome, updates, reminders)
-- **SendGrid**: Email automation for client notifications (welcome, case updates, reminders)
-
-## Future Integrations (Not Yet Configured)
-- **Certified Mail**: SendCertifiedMail.com for legal proof of delivery
-- **Physical Mail**: LetterStream for bulk letter automation
-- **Credit Report Pull**: API integration for auto-pulling reports (IdentityIQ, SmartCredit, etc.)
+- **SQLAlchemy**: ORM for database interactions.
+- **Fernet**: For symmetric encryption.
+- **Stripe**: Payment processing.
+- **Twilio**: SMS automation.
+- **SendGrid**: Email automation.

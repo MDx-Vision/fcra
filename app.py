@@ -6375,6 +6375,132 @@ def api_download_freeze_letters(batch_id):
         db.close()
 
 
+@app.route('/api/action-plan/generate/<int:client_id>', methods=['POST'])
+def api_generate_action_plan(client_id):
+    """Generate a branded Action Plan PDF for a client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        data = request.json or {}
+        
+        from services.pdf.brightpath_builder import create_action_plan_pdf
+        from datetime import datetime, timedelta
+        
+        client_name = client.name or f"{client.first_name or ''} {client.last_name or ''}".strip()
+        
+        case = db.query(Case).filter_by(client_id=client_id).first()
+        
+        hearing_date = data.get('hearing_date', (datetime.now() + timedelta(days=21)).strftime('%B %d, %Y'))
+        fcra_value = "$56,000 - $76,000 (estimated)"
+        if case and case.total_potential_damages:
+            low = int(case.total_potential_damages * 0.8)
+            high = int(case.total_potential_damages * 1.2)
+            fcra_value = f"${low:,} - ${high:,} (estimated)"
+        
+        case_info = {
+            'plaintiff': data.get('plaintiff', 'N/A'),
+            'defendant': client_name,
+            'amount': data.get('amount_claimed', 'N/A'),
+            'court': data.get('court', 'N/A'),
+            'case_number': data.get('case_number', ''),
+            'hearing_date': hearing_date,
+            'fcra_value': fcra_value
+        }
+        
+        critical_deadline = data.get('critical_deadline')
+        deadlines = [f"CRITICAL DEADLINE: {critical_deadline}"] if critical_deadline else []
+        
+        base_date = datetime.now()
+        week1_tasks = data.get('week1_tasks', [
+            {'text': 'File Notice of Intent to Defend at courthouse', 'checked': False, 'date': (base_date + timedelta(days=2)).strftime('%b %d')},
+            {'text': 'Mail Demand Letter to Plaintiff\'s attorneys (certified)', 'checked': False, 'date': (base_date + timedelta(days=2)).strftime('%b %d')},
+            {'text': 'Mail MOV Demand (certified)', 'checked': False, 'date': (base_date + timedelta(days=2)).strftime('%b %d')},
+            {'text': 'Organize all credit reports and documents', 'checked': False, 'date': (base_date + timedelta(days=3)).strftime('%b %d')},
+            {'text': 'Review and prepare Answer with Affirmative Defenses', 'checked': False, 'date': (base_date + timedelta(days=4)).strftime('%b %d')},
+        ])
+        
+        week2_tasks = data.get('week2_tasks', [
+            {'text': 'File Answer with Affirmative Defenses at courthouse', 'checked': False, 'date': (base_date + timedelta(days=7)).strftime('%b %d')},
+            {'text': 'Prepare evidence binder (organized by violation)', 'checked': False, 'date': (base_date + timedelta(days=8)).strftime('%b %d')},
+            {'text': 'Practice presenting your case (5-10 minutes)', 'checked': False, 'date': (base_date + timedelta(days=8)).strftime('%b %d')},
+            {'text': 'Review questions to ask at hearing', 'checked': False, 'date': (base_date + timedelta(days=9)).strftime('%b %d')},
+            {'text': 'Confirm hearing time and location', 'checked': False, 'date': (base_date + timedelta(days=9)).strftime('%b %d')},
+        ])
+        
+        hearing_tasks = data.get('hearing_tasks', [
+            {'text': 'Arrive 30 minutes early', 'checked': False},
+            {'text': 'Bring evidence binder and all documents', 'checked': False},
+            {'text': 'Dress professionally (business casual minimum)', 'checked': False},
+            {'text': 'Turn off cell phone before entering courtroom', 'checked': False},
+            {'text': 'Address judge as \'Your Honor\'', 'checked': False},
+        ])
+        
+        what_to_bring = data.get('what_to_bring', [
+            'All 3 credit reports (Experian, TransUnion, Equifax)',
+            'Notice of Intent to Defend (filed copy)',
+            'Answer with Affirmative Defenses (filed copy)',
+            'Demand Letter to attorneys (copy + certified mail receipt)',
+            'MOV Demand (copy + certified mail receipt)',
+            'Any responses received',
+            'Government-issued photo ID',
+            'Pen and notepad for notes'
+        ])
+        
+        costs = data.get('costs', [
+            ('Filing Notice of Intent to Defend', '$0 - $25'),
+            ('Certified Mail (Demand Letter)', '$8 - $12'),
+            ('Certified Mail (MOV Demand)', '$8 - $12'),
+            ('Filing Answer', '$0 - $25'),
+            ('TOTAL ESTIMATED', '$16 - $74')
+        ])
+        
+        output_dir = 'generated_documents/action_plans'
+        os.makedirs(output_dir, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        client_name_safe = client_name.replace(' ', '_').replace('/', '_')[:50]
+        output_path = os.path.join(output_dir, f"{client_name_safe}_Action_Plan_{timestamp}.pdf")
+        
+        pdf_path = create_action_plan_pdf(
+            client_name=client_name,
+            case_info=case_info,
+            deadlines=deadlines,
+            week1_tasks=week1_tasks,
+            week2_tasks=week2_tasks,
+            hearing_tasks=hearing_tasks,
+            what_to_bring=what_to_bring,
+            costs=costs,
+            output_path=output_path
+        )
+        
+        return jsonify({
+            'success': True,
+            'pdf_path': pdf_path,
+            'message': f'Action Plan generated for {client_name}'
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/action-plan/download/<path:filename>')
+def api_download_action_plan(filename):
+    """Download an action plan PDF"""
+    try:
+        filepath = os.path.join('generated_documents/action_plans', os.path.basename(filename))
+        if os.path.exists(filepath):
+            return send_file(filepath, as_attachment=True)
+        return jsonify({'success': False, 'error': 'File not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/deadlines/upcoming', methods=['GET'])
 def api_get_upcoming_deadlines():
     """Get upcoming deadlines with urgency indicators"""
