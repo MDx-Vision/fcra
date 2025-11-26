@@ -7534,6 +7534,152 @@ def api_certified_mail_webhook():
 
 
 # ==============================================================================
+# OCR / DOCUMENT EXTRACTION API
+# ==============================================================================
+
+@app.route('/api/ocr/extract-cra-response', methods=['POST'])
+def api_extract_cra_response():
+    """Extract data from a CRA response document using AI"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        upload_id = data.get('upload_id')
+        file_path = data.get('file_path')
+        file_type = data.get('file_type', 'pdf')
+        bureau = data.get('bureau')
+        
+        if not upload_id and not file_path:
+            return jsonify({'success': False, 'error': 'upload_id or file_path required'}), 400
+        
+        if upload_id:
+            upload = db.query(ClientUpload).filter_by(id=upload_id).first()
+            if not upload:
+                return jsonify({'success': False, 'error': 'Upload not found'}), 404
+            file_path = upload.file_path
+            file_type = upload.file_type
+            bureau = upload.bureau
+        
+        from services.ocr_service import extract_cra_response_data, update_client_upload_ocr
+        result = extract_cra_response_data(file_path, file_type, bureau)
+        
+        if upload_id and result.get('success'):
+            update_client_upload_ocr(upload_id, result.get('data', {}))
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/ocr/analyze-collection-letter', methods=['POST'])
+def api_analyze_collection_letter():
+    """Analyze a collection letter for FDCPA violations"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        upload_id = data.get('upload_id')
+        file_path = data.get('file_path')
+        file_type = data.get('file_type', 'pdf')
+        
+        if not upload_id and not file_path:
+            return jsonify({'success': False, 'error': 'upload_id or file_path required'}), 400
+        
+        if upload_id:
+            upload = db.query(ClientUpload).filter_by(id=upload_id).first()
+            if not upload:
+                return jsonify({'success': False, 'error': 'Upload not found'}), 404
+            file_path = upload.file_path
+            file_type = upload.file_type
+        
+        from services.ocr_service import analyze_collection_letter, update_client_upload_ocr
+        result = analyze_collection_letter(file_path, file_type)
+        
+        if upload_id and result.get('success'):
+            update_client_upload_ocr(upload_id, result.get('data', {}))
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/ocr/detect-violations', methods=['POST'])
+def api_detect_fcra_violations():
+    """Detect FCRA violations from document data"""
+    try:
+        data = request.json or {}
+        document_data = data.get('document_data', {})
+        document_type = data.get('document_type', 'cra_response')
+        
+        if not document_data:
+            return jsonify({'success': False, 'error': 'document_data required'}), 400
+        
+        from services.ocr_service import detect_fcra_violations
+        result = detect_fcra_violations(document_data, document_type)
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ocr/process-upload/<int:upload_id>', methods=['POST'])
+def api_process_upload_ocr(upload_id):
+    """Process a client upload with AI extraction based on category"""
+    db = get_db()
+    try:
+        upload = db.query(ClientUpload).filter_by(id=upload_id).first()
+        if not upload:
+            return jsonify({'success': False, 'error': 'Upload not found'}), 404
+        
+        category = upload.category
+        
+        from services.ocr_service import process_upload_for_ocr
+        result = process_upload_for_ocr(upload_id, category)
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/ocr/batch-process', methods=['POST'])
+def api_batch_process_ocr():
+    """Batch process multiple uploads with AI extraction"""
+    try:
+        data = request.json or {}
+        upload_ids = data.get('upload_ids', [])
+        category = data.get('category', 'cra_response')
+        
+        if not upload_ids:
+            return jsonify({'success': False, 'error': 'upload_ids required'}), 400
+        
+        from services.ocr_service import batch_process_uploads
+        result = batch_process_uploads(upload_ids, category)
+        
+        return jsonify({
+            'success': True,
+            'processed': result.get('processed', 0),
+            'failed': result.get('failed', 0),
+            'results': result.get('results', [])
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==============================================================================
 # LIMITED POA MANAGEMENT API
 # ==============================================================================
 
