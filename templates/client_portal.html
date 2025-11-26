@@ -156,12 +156,16 @@
             background: white;
             border-bottom: 1px solid #e5e7eb;
             display: flex;
-            padding: 0 30px;
+            padding: 0 15px;
             gap: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
         }
+        .nav-tabs::-webkit-scrollbar { display: none; }
         .nav-tab {
-            padding: 15px 25px;
+            padding: 15px 20px;
             color: #64748b;
             text-decoration: none;
             font-size: 14px;
@@ -169,6 +173,9 @@
             border-bottom: 3px solid transparent;
             transition: all 0.3s;
             cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: rgba(132, 204, 22, 0.3);
         }
         .nav-tab:hover {
             color: #1a1a2e;
