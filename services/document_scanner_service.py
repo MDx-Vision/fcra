@@ -24,30 +24,54 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 DOCUMENT_TYPES = {
-    'credit_report': {
-        'name': 'Credit Report',
-        'description': 'Full credit report from any bureau',
-        'ocr_prompt': 'Extract all text from this credit report page. Preserve the structure including account names, balances, dates, payment history, and any negative items or collections.'
+    'cra_response_r1': {
+        'name': 'CRA Response - Round 1',
+        'description': 'First dispute round response from CRA',
+        'round': 1,
+        'ocr_prompt': 'Extract all text from this credit reporting agency Round 1 response letter. Include dates, case numbers, bureau name, and detailed statements about investigation results for each disputed item.'
     },
-    'cra_response': {
-        'name': 'CRA Response Letter',
-        'description': 'Response letter from credit reporting agency',
-        'ocr_prompt': 'Extract all text from this credit reporting agency response letter. Include dates, case numbers, and any statements about investigation results.'
+    'cra_response_r2': {
+        'name': 'CRA Response - Round 2',
+        'description': 'Second dispute round response from CRA',
+        'round': 2,
+        'ocr_prompt': 'Extract all text from this credit reporting agency Round 2 response letter. Include dates, case numbers, bureau name, and detailed statements about re-investigation results. Note any items that were verified vs deleted.'
+    },
+    'cra_response_r3': {
+        'name': 'CRA Response - Round 3',
+        'description': 'Third dispute round response from CRA',
+        'round': 3,
+        'ocr_prompt': 'Extract all text from this credit reporting agency Round 3 response letter. Include dates, case numbers, bureau name, and detailed statements. Note any frivolous dispute claims or continued verification statements.'
+    },
+    'cra_response_r4': {
+        'name': 'CRA Response - Round 4',
+        'description': 'Fourth dispute round (Method of Verification)',
+        'round': 4,
+        'ocr_prompt': 'Extract all text from this credit reporting agency Round 4/MOV response letter. Include dates, case numbers, bureau name, method of verification details, and any compliance statements.'
     },
     'collection_letter': {
         'name': 'Collection Letter',
         'description': 'Letter from debt collector',
-        'ocr_prompt': 'Extract all text from this collection letter. Include creditor name, account numbers, amounts, dates, and any legal notices.'
+        'ocr_prompt': 'Extract all text from this collection letter. Include creditor name, original creditor, account numbers, amounts claimed, dates, and any legal notices or validation information.'
+    },
+    'creditor_response': {
+        'name': 'Creditor/Furnisher Response',
+        'description': 'Response from creditor or data furnisher',
+        'ocr_prompt': 'Extract all text from this creditor/furnisher response. Include company name, account details, dates, and their position on the dispute.'
     },
     'court_document': {
         'name': 'Court Document',
         'description': 'Lawsuit, summons, or court filing',
-        'ocr_prompt': 'Extract all text from this court document. Include case numbers, party names, dates, claims, and any legal language.'
+        'ocr_prompt': 'Extract all text from this court document. Include case numbers, party names, court name, dates, claims, and any legal language or deadlines.'
     },
     'id_document': {
         'name': 'ID Document',
         'description': 'Driver license, passport, or other ID',
         'ocr_prompt': 'Extract the name, address, date of birth, and document number from this ID document. Do not include the full ID number for security.'
+    },
+    'proof_of_address': {
+        'name': 'Proof of Address',
+        'description': 'Utility bill, bank statement for address verification',
+        'ocr_prompt': 'Extract the name, address, and date from this proof of address document. Include the type of document (utility bill, bank statement, etc.).'
     },
     'other': {
         'name': 'Other Document',

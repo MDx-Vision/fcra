@@ -31,10 +31,12 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Action Plan Generator**: Creates branded action plan PDFs with case overviews, deadlines, task checklists, and cost estimates.
 - **Mobile Document Scanner** (`/scanner`): Multi-page document scanning with:
   - Camera capture or file upload
-  - Multi-page queue with reordering
+  - Multi-page queue with visual "Add More Pages" prompt
   - Automatic PDF generation from images
-  - Claude Vision OCR text extraction
-  - Support for credit reports, CRA responses, collection letters, court documents
+  - Claude Vision OCR text extraction (~$0.01-0.03/page)
+  - CRA Response round selection (R1, R2, R3, R4) for dispute tracking
+  - Document types: CRA Responses, Collection Letters, Creditor Responses, Court Documents, ID, Proof of Address
+  - Note: Credit reports pulled via API integrations, not scanned
 - **E-Signature System**: Client-facing signature capture for various legal documents.
 - **Metro2 Violation Detection API**: Detects 10 types of Metro2 format violations with auto-generated dispute language and damage calculation.
 - **PWA Support**: Progressive Web App manifest and service worker for offline caching and push notifications.

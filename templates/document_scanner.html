@@ -172,6 +172,31 @@
             transition: opacity 0.2s;
         }
         
+        .round-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        
+        .add-more-prompt {
+            background: linear-gradient(135deg, rgba(0,128,128,0.1), rgba(50,205,50,0.1));
+            border: 2px dashed var(--teal);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .add-more-prompt i {
+            font-size: 1.5rem;
+            color: var(--teal);
+        }
+        
         .page-thumbnail:hover .remove-btn {
             opacity: 1;
         }
@@ -287,23 +312,14 @@
         <div id="step-select-type">
             <h5 class="mb-3">Select Document Type</h5>
             
-            <div class="doc-type-card" data-type="credit_report">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-file-earmark-text fs-4 me-3 text-primary"></i>
-                    <div>
-                        <strong>Credit Report</strong>
-                        <div class="text-muted small">Full credit report from any bureau</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card" data-type="cra_response">
+            <div class="doc-type-card" data-type="cra_response" data-has-rounds="true">
                 <div class="d-flex align-items-center">
                     <i class="bi bi-envelope-open fs-4 me-3 text-info"></i>
                     <div>
                         <strong>CRA Response Letter</strong>
-                        <div class="text-muted small">Response from credit reporting agency</div>
+                        <div class="text-muted small">Response from credit bureau (select round next)</div>
                     </div>
+                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
                 </div>
             </div>
             
@@ -313,6 +329,16 @@
                     <div>
                         <strong>Collection Letter</strong>
                         <div class="text-muted small">Letter from debt collector</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="doc-type-card" data-type="creditor_response">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-bank fs-4 me-3 text-primary"></i>
+                    <div>
+                        <strong>Creditor/Furnisher Response</strong>
+                        <div class="text-muted small">Response from creditor or data furnisher</div>
                     </div>
                 </div>
             </div>
@@ -327,12 +353,77 @@
                 </div>
             </div>
             
+            <div class="doc-type-card" data-type="id_document">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-person-badge fs-4 me-3 text-success"></i>
+                    <div>
+                        <strong>ID Document</strong>
+                        <div class="text-muted small">Driver license, passport, or other ID</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="doc-type-card" data-type="proof_of_address">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-house fs-4 me-3 text-secondary"></i>
+                    <div>
+                        <strong>Proof of Address</strong>
+                        <div class="text-muted small">Utility bill, bank statement</div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="doc-type-card" data-type="other">
                 <div class="d-flex align-items-center">
-                    <i class="bi bi-file-earmark fs-4 me-3 text-secondary"></i>
+                    <i class="bi bi-file-earmark fs-4 me-3 text-muted"></i>
                     <div>
                         <strong>Other Document</strong>
                         <div class="text-muted small">Any other document type</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="step-select-round" class="d-none">
+            <h5 class="mb-3">Select Dispute Round</h5>
+            <p class="text-muted mb-3">Which dispute round is this response from?</p>
+            
+            <div class="doc-type-card round-card" data-round="1" data-type="cra_response_r1">
+                <div class="d-flex align-items-center">
+                    <div class="round-badge bg-primary text-white">R1</div>
+                    <div class="ms-3">
+                        <strong>Round 1 Response</strong>
+                        <div class="text-muted small">Initial dispute investigation results</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="doc-type-card round-card" data-round="2" data-type="cra_response_r2">
+                <div class="d-flex align-items-center">
+                    <div class="round-badge bg-info text-white">R2</div>
+                    <div class="ms-3">
+                        <strong>Round 2 Response</strong>
+                        <div class="text-muted small">Re-investigation results</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="doc-type-card round-card" data-round="3" data-type="cra_response_r3">
+                <div class="d-flex align-items-center">
+                    <div class="round-badge bg-warning text-dark">R3</div>
+                    <div class="ms-3">
+                        <strong>Round 3 Response</strong>
+                        <div class="text-muted small">Escalated dispute response</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="doc-type-card round-card" data-round="4" data-type="cra_response_r4">
+                <div class="d-flex align-items-center">
+                    <div class="round-badge bg-danger text-white">R4</div>
+                    <div class="ms-3">
+                        <strong>Round 4 / MOV Response</strong>
+                        <div class="text-muted small">Method of Verification request response</div>
                     </div>
                 </div>
             </div>
@@ -384,8 +475,20 @@
             </div>
             
             <div id="pages-container">
-                <h6 class="mb-2">Scanned Pages</h6>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Scanned Pages</h6>
+                    <small class="text-muted" id="pages-hint">Capture all pages, then process</small>
+                </div>
                 <div class="page-queue" id="page-queue"></div>
+                
+                <div class="add-more-prompt" id="add-more-prompt" style="display: none;">
+                    <i class="bi bi-plus-circle-dotted"></i>
+                    <p class="mb-1 mt-2"><strong>Page captured!</strong></p>
+                    <p class="text-muted mb-0 small">
+                        Tap <strong>Camera</strong> or <strong>Upload</strong> above to add more pages.<br>
+                        When done, tap <strong>Process Document</strong> below.
+                    </p>
+                </div>
             </div>
         </div>
         
@@ -442,6 +545,8 @@
     <script>
         let currentStep = 1;
         let selectedDocType = null;
+        let needsRoundSelection = false;
+        let selectedRound = null;
         let sessionId = null;
         let pages = [];
         let videoStream = null;
@@ -449,10 +554,21 @@
         const clientId = new URLSearchParams(window.location.search).get('client_id');
         const clientName = new URLSearchParams(window.location.search).get('client_name') || 'Client';
         
-        document.querySelectorAll('.doc-type-card').forEach(card => {
+        document.querySelectorAll('.doc-type-card:not(.round-card)').forEach(card => {
             card.addEventListener('click', () => {
-                document.querySelectorAll('.doc-type-card').forEach(c => c.classList.remove('selected'));
+                document.querySelectorAll('.doc-type-card:not(.round-card)').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
+                selectedDocType = card.dataset.type;
+                needsRoundSelection = card.dataset.hasRounds === 'true';
+                document.getElementById('btn-next').disabled = false;
+            });
+        });
+        
+        document.querySelectorAll('.round-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.round-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedRound = card.dataset.round;
                 selectedDocType = card.dataset.type;
                 document.getElementById('btn-next').disabled = false;
             });
@@ -483,10 +599,18 @@
         
         async function goNext() {
             if (currentStep === 1 && selectedDocType) {
+                if (needsRoundSelection) {
+                    document.getElementById('step-select-type').classList.add('d-none');
+                    document.getElementById('step-select-round').classList.remove('d-none');
+                    document.getElementById('btn-next').disabled = true;
+                    needsRoundSelection = false;
+                    return;
+                }
+                
                 currentStep = 2;
                 document.getElementById('step-select-type').classList.add('d-none');
+                document.getElementById('step-select-round').classList.add('d-none');
                 document.getElementById('step-capture').classList.remove('d-none');
-                document.getElementById('btn-next').textContent = 'Process Document';
                 document.getElementById('btn-next').innerHTML = '<i class="bi bi-gear"></i> Process Document';
                 document.getElementById('btn-next').disabled = true;
                 updateStepIndicator();
@@ -498,12 +622,25 @@
         }
         
         function goBack() {
+            const roundStep = document.getElementById('step-select-round');
+            
+            if (!roundStep.classList.contains('d-none')) {
+                roundStep.classList.add('d-none');
+                document.getElementById('step-select-type').classList.remove('d-none');
+                document.querySelectorAll('.round-card').forEach(c => c.classList.remove('selected'));
+                selectedRound = null;
+                needsRoundSelection = true;
+                document.getElementById('btn-next').disabled = false;
+                return;
+            }
+            
             if (currentStep === 2) {
                 currentStep = 1;
                 document.getElementById('step-capture').classList.add('d-none');
                 document.getElementById('step-select-type').classList.remove('d-none');
                 document.getElementById('btn-next').innerHTML = 'Next <i class="bi bi-arrow-right"></i>';
                 document.getElementById('btn-next').disabled = !selectedDocType;
+                document.getElementById('add-more-prompt').style.display = 'none';
                 stopCamera();
                 updateStepIndicator();
             } else if (currentStep === 3) {
@@ -597,6 +734,12 @@
                     });
                     renderPageQueue();
                     updatePageCount();
+                    
+                    document.getElementById('add-more-prompt').style.display = 'block';
+                    
+                    setTimeout(() => {
+                        document.getElementById('add-more-prompt').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
                 }
             } catch (error) {
                 console.error('Upload failed:', error);
@@ -681,10 +824,15 @@
             document.getElementById('bottom-actions').classList.add('d-none');
             
             const docTypes = {
-                'credit_report': 'Credit Report',
-                'cra_response': 'CRA Response Letter',
+                'cra_response_r1': 'CRA Response - Round 1',
+                'cra_response_r2': 'CRA Response - Round 2',
+                'cra_response_r3': 'CRA Response - Round 3',
+                'cra_response_r4': 'CRA Response - Round 4',
                 'collection_letter': 'Collection Letter',
+                'creditor_response': 'Creditor Response',
                 'court_document': 'Court Document',
+                'id_document': 'ID Document',
+                'proof_of_address': 'Proof of Address',
                 'other': 'Other Document'
             };
             
@@ -705,14 +853,18 @@
         function startNewScan() {
             currentStep = 1;
             selectedDocType = null;
+            needsRoundSelection = false;
+            selectedRound = null;
             sessionId = null;
             pages = [];
             
             document.querySelectorAll('.doc-type-card').forEach(c => c.classList.remove('selected'));
             document.getElementById('page-queue').innerHTML = '';
+            document.getElementById('add-more-prompt').style.display = 'none';
             
             document.getElementById('step-result').classList.add('d-none');
             document.getElementById('step-capture').classList.add('d-none');
+            document.getElementById('step-select-round').classList.add('d-none');
             document.getElementById('step-select-type').classList.remove('d-none');
             document.getElementById('bottom-actions').classList.remove('d-none');
             
