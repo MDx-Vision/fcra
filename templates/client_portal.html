@@ -634,7 +634,7 @@
             <span class="portal-title">Client Portal</span>
         </div>
         <div class="header-right">
-            <div class="user-profile" onclick="document.querySelector('[data-tab=profile]').click()">
+            <div class="user-profile" onclick="switchTab('profile', document.querySelectorAll('.nav-tab')[5])">
                 <div class="avatar" id="headerAvatar">
                     {% if client and client.avatar_filename %}
                     <img src="/static/avatars/{{ client.avatar_filename }}" alt="Avatar">
@@ -1720,7 +1720,6 @@
         
         let docSelectedCategory = '';
         let docSelectedType = '';
-        const portalToken = '{{ client.portal_token if client else "" }}';
         
         const docTypesByCategory = {
             cra_response: [
