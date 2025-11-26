@@ -7638,6 +7638,128 @@ def api_portal_get_uploads(token):
         db.close()
 
 
+@app.route('/api/portal/<token>/avatar', methods=['POST'])
+def api_portal_upload_avatar(token):
+    """Upload avatar image for client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(portal_token=token).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Invalid portal token'}), 404
+        
+        if 'avatar' not in request.files:
+            return jsonify({'success': False, 'error': 'No image uploaded'}), 400
+        
+        file = request.files['avatar']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        if ext not in allowed_extensions:
+            return jsonify({'success': False, 'error': 'Only image files allowed (png, jpg, jpeg, gif, webp)'}), 400
+        
+        if client.avatar_filename:
+            old_path = os.path.join('static', 'avatars', client.avatar_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        filename = f"client_{client.id}_{timestamp}.{ext}"
+        avatar_path = os.path.join('static', 'avatars', filename)
+        
+        os.makedirs(os.path.join('static', 'avatars'), exist_ok=True)
+        file.save(avatar_path)
+        
+        client.avatar_filename = filename
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Avatar uploaded successfully',
+            'avatar_url': f'/static/avatars/{filename}'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/<token>/avatar', methods=['DELETE'])
+def api_portal_delete_avatar(token):
+    """Delete client avatar"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(portal_token=token).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Invalid portal token'}), 404
+        
+        if client.avatar_filename:
+            old_path = os.path.join('static', 'avatars', client.avatar_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+            client.avatar_filename = None
+            db.commit()
+        
+        return jsonify({'success': True, 'message': 'Avatar removed'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client/<int:client_id>/avatar', methods=['POST'])
+def api_admin_upload_avatar(client_id):
+    """Admin upload avatar for client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        if 'avatar' not in request.files:
+            return jsonify({'success': False, 'error': 'No image uploaded'}), 400
+        
+        file = request.files['avatar']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        if ext not in allowed_extensions:
+            return jsonify({'success': False, 'error': 'Only image files allowed'}), 400
+        
+        if client.avatar_filename:
+            old_path = os.path.join('static', 'avatars', client.avatar_filename)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        filename = f"client_{client.id}_{timestamp}.{ext}"
+        avatar_path = os.path.join('static', 'avatars', filename)
+        
+        os.makedirs(os.path.join('static', 'avatars'), exist_ok=True)
+        file.save(avatar_path)
+        
+        client.avatar_filename = filename
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Avatar uploaded successfully',
+            'avatar_url': f'/static/avatars/{filename}'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route('/api/settlement/client/<int:client_id>', methods=['GET'])
 def api_get_client_settlements(client_id):
     """Get all settlement estimates for a client"""
