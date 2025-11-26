@@ -53,6 +53,46 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
 
 ## Recent Changes (November 26, 2025)
+- **Automation Tools Dashboard** (`/dashboard/automation-tools`): 5-tab admin interface for automation services
+  - Freeze Letters: Bulk generation for all 12 bureaus (3 CRAs + 9 secondary)
+  - Deadlines: Automated tracking with email reminders for FCRA response deadlines
+  - Settlement Calculator: Case value estimation based on violations, willfulness, actual damages
+  - Certified Mail: SendCertifiedMail.com integration for proof of delivery
+  - Notarization: Proof.com integration for remote online notarization (limited POA)
+- **New Automation Services** (services/):
+  - `notarization_service.py`: Remote notarization via Proof.com API (mock mode available)
+  - `settlement_calculator.py`: FCRA settlement value calculator with case factors
+  - `deadline_service.py`: Automated deadline tracking with email reminders
+  - `freeze_letter_service.py`: Bulk freeze letters for 12 bureaus with PDF generation
+  - `certified_mail_service.py`: SendCertifiedMail.com API integration (mock mode available)
+  - `ocr_service.py`: Claude vision API for CRA response extraction and violation detection
+  - `esignature_service.py`: In-app electronic signature capture with canvas UI
+  - `metro2_service.py`: Metro2 format violation detection (10 violation types)
+- **New Database Models**:
+  - CaseDeadline: Track dispute deadlines with reminder status
+  - NotarizationOrder: Remote notarization requests and status
+  - FreezeLetterBatch: Bulk freeze letter generation tracking
+  - CertifiedMailOrder: Certified mail orders with tracking
+  - SettlementEstimate: Case value estimates with breakdown
+  - AttorneyReferral: Referral workflow for litigation-ready cases
+  - Metro2DisputeLog: Metro2 format violations per tradeline
+  - CRAResponseOCR: OCR extraction results from response documents
+  - ESignatureRequest: E-signature request tracking with tokens
+- **E-Signature System** (`/sign/<token>`):
+  - Client-facing signature capture with HTML5 canvas
+  - Mobile-responsive touch support
+  - Document types: Client Agreement, Limited POA, Dispute Authorization, Fee Agreement
+  - Email reminders for pending signatures
+- **Metro2 Violation Detection API**:
+  - Detect 10 violation types: INVALID_STATUS_CODE, BALANCE_EXCEEDS_LIMIT, INVALID_DATE_SEQUENCE, MISSING_DOFD, FUTURE_DATE, STALE_REPORTING, REAGING, BALANCE_ON_CLOSED, DUPLICATE_REPORTING, INVALID_PAYMENT_HISTORY
+  - Collection account analysis: Missing original creditor, DOFD mismatch, zombie debt, junk debt buyer
+  - Auto-generated dispute language with FCRA citations
+  - Damage calculation per violation
+- **PWA Support** (`/manifest.json`, `/sw.js`):
+  - Progressive Web App manifest for installation
+  - Service worker for offline caching
+  - Push notification support
+
 - **Unlayer Visual Email Template Editor** (`/dashboard/settings/email`): Drag-and-drop email designer
   - Embedded Unlayer editor for visual template design (no coding required)
   - 8 template types: Welcome, Document Reminder, Case Update, Dispute Sent, CRA Response, Payment Reminder, Analysis Ready, Letters Ready

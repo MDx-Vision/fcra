@@ -1023,6 +1023,83 @@ class LimitedPOA(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class Metro2DisputeLog(Base):
+    """Track Metro2 format violations detected during analysis"""
+    __tablename__ = 'metro2_dispute_logs'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    
+    tradeline_identifier = Column(String(255))
+    creditor_name = Column(String(255))
+    account_number_masked = Column(String(50))
+    
+    violation_type = Column(String(100))
+    violation_description = Column(Text)
+    fcra_section = Column(String(50))
+    severity = Column(String(20))
+    
+    evidence = Column(JSON)
+    dispute_language = Column(Text)
+    
+    damage_estimate_low = Column(Integer, default=0)
+    damage_estimate_high = Column(Integer, default=0)
+    
+    disputed = Column(Boolean, default=False)
+    disputed_at = Column(DateTime)
+    dispute_round = Column(Integer)
+    
+    resolved = Column(Boolean, default=False)
+    resolved_at = Column(DateTime)
+    resolution_type = Column(String(100))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CRAResponseOCR(Base):
+    """Store OCR extraction results from CRA response documents"""
+    __tablename__ = 'cra_response_ocr'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    upload_id = Column(Integer, ForeignKey('client_uploads.id'), nullable=True)
+    
+    bureau = Column(String(50))
+    document_type = Column(String(100))
+    
+    document_date = Column(Date)
+    response_date = Column(Date)
+    
+    raw_text = Column(Text)
+    structured_data = Column(JSON)
+    
+    items_verified = Column(JSON)
+    items_deleted = Column(JSON)
+    items_updated = Column(JSON)
+    items_reinvestigated = Column(JSON)
+    
+    new_violations_detected = Column(JSON)
+    
+    reinvestigation_complete = Column(Boolean, default=False)
+    frivolous_claim = Column(Boolean, default=False)
+    
+    ocr_confidence = Column(Float)
+    extraction_method = Column(String(50), default='claude_vision')
+    
+    processed_at = Column(DateTime, default=datetime.utcnow)
+    reviewed = Column(Boolean, default=False)
+    reviewed_by = Column(String(100))
+    reviewed_at = Column(DateTime)
+    
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ESignatureRequest(Base):
     """Track e-signature requests for client agreements"""
     __tablename__ = 'esignature_requests'
