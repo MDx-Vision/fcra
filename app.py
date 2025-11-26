@@ -4245,20 +4245,29 @@ def client_portal(token):
     """Client-facing portal to view their case"""
     db = get_db()
     try:
-        case = db.query(Case).filter_by(portal_token=token).first()
-        if not case:
-            client = db.query(Client).filter_by(portal_token=token).first()
-            if client:
-                case = db.query(Case).filter_by(client_id=client.id).first()
+        # First try to find client by portal token
+        client = db.query(Client).filter_by(portal_token=token).first()
         
-        if not case:
+        # If not found, try to find a case with this token
+        case = None
+        if client:
+            case = db.query(Case).filter_by(client_id=client.id).first()
+        else:
+            case = db.query(Case).filter_by(portal_token=token).first()
+            if case:
+                client = db.query(Client).filter_by(id=case.client_id).first()
+        
+        # Must have at least a client
+        if not client:
             return "Invalid or expired access link", 404
         
-        client = db.query(Client).filter_by(id=case.client_id).first()
-        analysis = db.query(Analysis).filter_by(id=case.analysis_id).first() if case.analysis_id else None
+        # Get analysis - first try from case, then by client
+        analysis = None
+        if case and case.analysis_id:
+            analysis = db.query(Analysis).filter_by(id=case.analysis_id).first()
         
         if not analysis:
-            analysis = db.query(Analysis).filter_by(client_id=case.client_id).order_by(Analysis.created_at.desc()).first()
+            analysis = db.query(Analysis).filter_by(client_id=client.id).order_by(Analysis.created_at.desc()).first()
         
         violations = []
         damages = None
