@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate
 from werkzeug.utils import secure_filename
 import secrets
 import uuid
@@ -3855,6 +3855,231 @@ def api_send_email():
 def api_email_setup():
     """Redirect to SendGrid integration setup"""
     return redirect('/dashboard/settings/email')
+
+
+@app.route('/api/email-templates', methods=['GET'])
+def api_get_email_templates():
+    """Get all email templates - lists all template types with custom status"""
+    db = get_db()
+    try:
+        template_types = [
+            'welcome', 'document_reminder', 'case_update', 'dispute_sent',
+            'cra_response', 'payment_reminder', 'analysis_ready', 'letters_ready'
+        ]
+        
+        custom_templates = db.query(EmailTemplate).all()
+        custom_map = {t.template_type: t for t in custom_templates}
+        
+        templates = []
+        for tt in template_types:
+            if tt in custom_map:
+                t = custom_map[tt]
+                templates.append({
+                    'template_type': tt,
+                    'subject': t.subject,
+                    'is_custom': t.is_custom,
+                    'has_custom': True,
+                    'updated_at': t.updated_at.isoformat() if t.updated_at else None
+                })
+            else:
+                templates.append({
+                    'template_type': tt,
+                    'subject': get_default_subject(tt),
+                    'is_custom': False,
+                    'has_custom': False,
+                    'updated_at': None
+                })
+        
+        return jsonify({'success': True, 'templates': templates})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/email-templates/<template_type>', methods=['GET'])
+def api_get_email_template(template_type):
+    """Get a specific email template by type"""
+    db = get_db()
+    try:
+        template = db.query(EmailTemplate).filter_by(template_type=template_type).first()
+        
+        if template:
+            return jsonify({
+                'success': True,
+                'template': {
+                    'template_type': template.template_type,
+                    'subject': template.subject,
+                    'html_content': template.html_content,
+                    'design_json': template.design_json,
+                    'is_custom': template.is_custom,
+                    'updated_at': template.updated_at.isoformat() if template.updated_at else None
+                }
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'template': {
+                    'template_type': template_type,
+                    'subject': get_default_subject(template_type),
+                    'html_content': None,
+                    'design_json': None,
+                    'is_custom': False,
+                    'updated_at': None
+                }
+            })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/email-templates/<template_type>', methods=['POST'])
+def api_save_email_template(template_type):
+    """Save or update an email template"""
+    db = get_db()
+    try:
+        data = request.json
+        subject = data.get('subject')
+        html_content = data.get('html_content')
+        design_json = data.get('design_json')
+        
+        if not subject:
+            return jsonify({'success': False, 'error': 'Subject is required'}), 400
+        
+        template = db.query(EmailTemplate).filter_by(template_type=template_type).first()
+        
+        if template:
+            template.subject = subject
+            template.html_content = html_content
+            template.design_json = design_json
+            template.is_custom = True
+            template.updated_at = datetime.utcnow()
+        else:
+            template = EmailTemplate(
+                template_type=template_type,
+                subject=subject,
+                html_content=html_content,
+                design_json=design_json,
+                is_custom=True
+            )
+            db.add(template)
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Template "{template_type}" saved successfully',
+            'template': {
+                'template_type': template.template_type,
+                'subject': template.subject,
+                'is_custom': template.is_custom
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/email-templates/<template_type>/reset', methods=['POST'])
+def api_reset_email_template(template_type):
+    """Reset a template to default (delete custom version)"""
+    db = get_db()
+    try:
+        template = db.query(EmailTemplate).filter_by(template_type=template_type).first()
+        
+        if template:
+            db.delete(template)
+            db.commit()
+            return jsonify({
+                'success': True,
+                'message': f'Template "{template_type}" reset to default'
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': f'Template "{template_type}" was already using default'
+            })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/email-templates/<template_type>/preview', methods=['POST'])
+def api_preview_email_template(template_type):
+    """Send a preview email with the template"""
+    db = get_db()
+    try:
+        from services.email_service import send_email, is_sendgrid_configured
+        from services import email_templates as default_templates
+        
+        if not is_sendgrid_configured():
+            return jsonify({'success': False, 'error': 'SendGrid not configured'}), 400
+        
+        data = request.json
+        preview_email = data.get('email')
+        html_content = data.get('html_content')
+        subject = data.get('subject', f'Preview: {template_type}')
+        
+        if not preview_email:
+            return jsonify({'success': False, 'error': 'Preview email address required'}), 400
+        
+        if html_content:
+            test_html = apply_merge_tags(html_content, {
+                'client_name': 'Test Client',
+                'client_email': preview_email,
+                'portal_link': 'https://example.com/portal/test123',
+                'case_status': 'Active',
+                'missing_docs': 'Driver\'s License, Utility Bill',
+                'company_name': 'Brightpath Ascend Group',
+                'support_email': 'support@brightpathascend.com'
+            })
+        else:
+            test_html = default_templates.get_base_template(
+                '<h2>Template Preview</h2><p>This is a preview of the default template.</p>',
+                subject
+            )
+        
+        result = send_email(preview_email, f'[Preview] {subject}', test_html)
+        
+        if result['success']:
+            return jsonify({'success': True, 'message': 'Preview email sent!'})
+        else:
+            return jsonify({'success': False, 'error': result.get('error', 'Failed to send')}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+def get_default_subject(template_type):
+    """Get the default subject line for a template type"""
+    subjects = {
+        'welcome': 'Welcome to Brightpath Ascend Group!',
+        'document_reminder': 'Action Required: Documents Needed',
+        'case_update': 'Case Update',
+        'dispute_sent': 'Dispute Letter Sent',
+        'cra_response': 'Response Received',
+        'payment_reminder': 'Payment Reminder',
+        'analysis_ready': 'Your Credit Analysis is Ready!',
+        'letters_ready': 'Your Dispute Letters Are Ready!'
+    }
+    return subjects.get(template_type, f'{template_type.replace("_", " ").title()} Notification')
+
+
+def apply_merge_tags(html_content, values):
+    """Replace merge tags in HTML content with actual values"""
+    if not html_content:
+        return html_content
+    
+    result = html_content
+    for tag, value in values.items():
+        result = result.replace('{{' + tag + '}}', str(value) if value else '')
+    return result
 
 
 @app.route('/api/signups/confirm-payment', methods=['POST'])

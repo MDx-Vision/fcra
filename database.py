@@ -764,6 +764,20 @@ class EmailLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class EmailTemplate(Base):
+    """Store custom email templates created with Unlayer visual editor"""
+    __tablename__ = 'email_templates'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    template_type = Column(String(50), nullable=False, unique=True)
+    subject = Column(String(500), nullable=False)
+    html_content = Column(Text)
+    design_json = Column(Text)
+    is_custom = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)

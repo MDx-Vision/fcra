@@ -277,7 +277,136 @@
         }
         .email-from .icon { font-size: 20px; }
         .email-from .info { font-size: 14px; color: #166534; }
+        .template-selector {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .template-selector select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 250px;
+            background: white;
+        }
+        .template-selector .subject-input {
+            flex: 1;
+            min-width: 300px;
+        }
+        .template-selector .subject-input input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .editor-container {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        #unlayer-editor {
+            height: 600px;
+            width: 100%;
+        }
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 15px 0;
+        }
+        .editor-actions .left-actions,
+        .editor-actions .right-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .merge-tags-panel {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .merge-tags-panel h4 {
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .merge-tags-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .merge-tag {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .merge-tag:hover {
+            border-color: #319795;
+            background: #f0fdfa;
+        }
+        .merge-tag code {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #1a1a2e;
+        }
+        .merge-tag .desc {
+            color: #64748b;
+            margin-top: 4px;
+            display: block;
+        }
+        .template-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .template-status.custom { background: #dbeafe; color: #1d4ed8; }
+        .template-status.default { background: #f1f5f9; color: #64748b; }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-preview {
+            background: #8b5cf6;
+            color: white;
+        }
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .loading-overlay.hidden { display: none; }
     </style>
+    <script src="https://editor.unlayer.com/embed.js"></script>
 </head>
 <body>
     <nav class="sidebar">
@@ -460,6 +589,90 @@
             </div>
         </div>
 
+        <div class="content-card" id="template-editor-section">
+            <div class="section-title">
+                <span class="icon">🎨</span>
+                Visual Email Template Editor
+                <span id="templateStatus" class="template-status default">Using Default</span>
+            </div>
+            
+            <div class="template-selector">
+                <select id="templateType" onchange="loadTemplate()">
+                    <option value="welcome">Welcome Email</option>
+                    <option value="document_reminder">Document Reminder</option>
+                    <option value="case_update">Case Status Update</option>
+                    <option value="dispute_sent">Dispute Sent Notification</option>
+                    <option value="cra_response">CRA Response Received</option>
+                    <option value="payment_reminder">Payment Reminder</option>
+                    <option value="analysis_ready">Analysis Ready</option>
+                    <option value="letters_ready">Letters Ready</option>
+                </select>
+                <div class="subject-input">
+                    <input type="text" id="templateSubject" placeholder="Email Subject Line">
+                </div>
+            </div>
+            
+            <div class="merge-tags-panel">
+                <h4>Available Merge Tags (click to copy)</h4>
+                <div class="merge-tags-grid">
+                    <div class="merge-tag" onclick="copyMergeTag('{{client_name}}')">
+                        <code>{{client_name}}</code>
+                        <span class="desc">Client's full name</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{client_email}}')">
+                        <code>{{client_email}}</code>
+                        <span class="desc">Client's email address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{portal_link}}')">
+                        <code>{{portal_link}}</code>
+                        <span class="desc">Client portal URL</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{case_status}}')">
+                        <code>{{case_status}}</code>
+                        <span class="desc">Current case status</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{missing_docs}}')">
+                        <code>{{missing_docs}}</code>
+                        <span class="desc">List of missing documents</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{company_name}}')">
+                        <code>{{company_name}}</code>
+                        <span class="desc">Company name</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{support_email}}')">
+                        <code>{{support_email}}</code>
+                        <span class="desc">Support email address</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="editor-container" style="position: relative;">
+                <div id="unlayer-editor"></div>
+                <div id="editorLoading" class="loading-overlay">
+                    <span>Loading editor...</span>
+                </div>
+            </div>
+            
+            <div class="editor-actions">
+                <div class="left-actions">
+                    <button class="btn btn-primary" onclick="saveTemplate()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Save Template
+                    </button>
+                    <button class="btn btn-preview" onclick="previewTemplate()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Send Preview
+                    </button>
+                </div>
+                <div class="right-actions">
+                    <button class="btn btn-secondary" onclick="resetTemplate()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        Reset to Default
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="content-card">
             <div class="section-title">
                 <span class="icon">📋</span>
@@ -571,6 +784,209 @@
 
         function setupSendGrid() {
             window.location.href = '/api/email/setup';
+        }
+
+        let currentTemplateData = null;
+        let editorReady = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initUnlayerEditor();
+        });
+
+        function initUnlayerEditor() {
+            unlayer.init({
+                id: 'unlayer-editor',
+                displayMode: 'email',
+                features: {
+                    textEditor: {
+                        spellChecker: true
+                    }
+                },
+                appearance: {
+                    theme: 'light',
+                    panels: {
+                        tools: {
+                            dock: 'left'
+                        }
+                    }
+                },
+                mergeTags: [
+                    { name: 'Client Name', value: '{{client_name}}' },
+                    { name: 'Client Email', value: '{{client_email}}' },
+                    { name: 'Portal Link', value: '{{portal_link}}' },
+                    { name: 'Case Status', value: '{{case_status}}' },
+                    { name: 'Missing Documents', value: '{{missing_docs}}' },
+                    { name: 'Company Name', value: '{{company_name}}' },
+                    { name: 'Support Email', value: '{{support_email}}' }
+                ]
+            });
+
+            unlayer.addEventListener('editor:ready', function() {
+                editorReady = true;
+                document.getElementById('editorLoading').classList.add('hidden');
+                loadTemplate();
+            });
+        }
+
+        async function loadTemplate() {
+            const templateType = document.getElementById('templateType').value;
+            
+            try {
+                const response = await fetch(`/api/email-templates/${templateType}`);
+                const data = await response.json();
+                
+                if (data.success && data.template) {
+                    currentTemplateData = data.template;
+                    document.getElementById('templateSubject').value = data.template.subject || '';
+                    
+                    const statusEl = document.getElementById('templateStatus');
+                    if (data.template.is_custom) {
+                        statusEl.className = 'template-status custom';
+                        statusEl.textContent = 'Custom Template';
+                    } else {
+                        statusEl.className = 'template-status default';
+                        statusEl.textContent = 'Using Default';
+                    }
+                    
+                    if (data.template.design_json && editorReady) {
+                        try {
+                            const designJson = JSON.parse(data.template.design_json);
+                            unlayer.loadDesign(designJson);
+                        } catch (e) {
+                            console.log('No saved design, loading blank template');
+                            unlayer.loadDesign({});
+                        }
+                    } else if (editorReady) {
+                        unlayer.loadDesign({});
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+            }
+        }
+
+        function saveTemplate() {
+            const templateType = document.getElementById('templateType').value;
+            const subject = document.getElementById('templateSubject').value.trim();
+            
+            if (!subject) {
+                alert('Please enter a subject line');
+                return;
+            }
+            
+            unlayer.exportHtml(function(data) {
+                unlayer.saveDesign(function(design) {
+                    const payload = {
+                        subject: subject,
+                        html_content: data.html,
+                        design_json: JSON.stringify(design)
+                    };
+                    
+                    fetch(`/api/email-templates/${templateType}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('Template saved successfully!');
+                            const statusEl = document.getElementById('templateStatus');
+                            statusEl.className = 'template-status custom';
+                            statusEl.textContent = 'Custom Template';
+                        } else {
+                            alert('Error saving template: ' + result.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error saving template: ' + error.message);
+                    });
+                });
+            });
+        }
+
+        async function resetTemplate() {
+            const templateType = document.getElementById('templateType').value;
+            const templateNames = {
+                'welcome': 'Welcome Email',
+                'document_reminder': 'Document Reminder',
+                'case_update': 'Case Status Update',
+                'dispute_sent': 'Dispute Sent Notification',
+                'cra_response': 'CRA Response Received',
+                'payment_reminder': 'Payment Reminder',
+                'analysis_ready': 'Analysis Ready',
+                'letters_ready': 'Letters Ready'
+            };
+            
+            if (!confirm(`Reset "${templateNames[templateType]}" to the default template? Any customizations will be lost.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/email-templates/${templateType}/reset`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Template reset to default!');
+                    loadTemplate();
+                } else {
+                    alert('Error resetting template: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error resetting template: ' + error.message);
+            }
+        }
+
+        function previewTemplate() {
+            const email = prompt('Enter email address to send preview:');
+            if (!email || !email.trim()) {
+                return;
+            }
+            
+            const subject = document.getElementById('templateSubject').value.trim();
+            if (!subject) {
+                alert('Please enter a subject line first');
+                return;
+            }
+            
+            const templateType = document.getElementById('templateType').value;
+            
+            unlayer.exportHtml(function(data) {
+                fetch(`/api/email-templates/${templateType}/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email.trim(),
+                        subject: subject,
+                        html_content: data.html
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert('Preview email sent! Check your inbox.');
+                    } else {
+                        alert('Failed to send preview: ' + result.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error sending preview: ' + error.message);
+                });
+            });
+        }
+
+        function copyMergeTag(tag) {
+            navigator.clipboard.writeText(tag).then(() => {
+                const originalText = event.currentTarget.querySelector('code').textContent;
+                event.currentTarget.querySelector('code').textContent = 'Copied!';
+                setTimeout(() => {
+                    event.currentTarget.querySelector('code').textContent = originalText;
+                }, 1000);
+            }).catch(() => {
+                prompt('Copy this merge tag:', tag);
+            });
         }
     </script>
 </body>
