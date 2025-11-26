@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection
 from werkzeug.utils import secure_filename
 import secrets
 import uuid
@@ -8708,6 +8708,132 @@ self.addEventListener('notificationclick', event => {
     )
     response.headers['Cache-Control'] = 'no-cache'
     return response
+
+
+# ============================================================
+# CREDIT SCORE IMPROVEMENT TRACKING
+# ============================================================
+
+@app.route('/api/credit-score/snapshot', methods=['POST'])
+def add_credit_score_snapshot():
+    """Add a new credit score snapshot for a client"""
+    from services.credit_score_calculator import add_score_snapshot
+    
+    data = request.json
+    client_id = data.get('client_id')
+    
+    if not client_id:
+        return jsonify({'success': False, 'error': 'client_id required'}), 400
+    
+    result = add_score_snapshot(
+        client_id=client_id,
+        equifax=data.get('equifax'),
+        experian=data.get('experian'),
+        transunion=data.get('transunion'),
+        negatives=data.get('negatives', 0),
+        removed=data.get('removed', 0),
+        milestone=data.get('milestone'),
+        dispute_round=data.get('dispute_round', 0),
+        snapshot_type=data.get('snapshot_type', 'manual'),
+        source=data.get('source'),
+        notes=data.get('notes')
+    )
+    
+    return jsonify(result)
+
+
+@app.route('/api/credit-score/projection/<int:client_id>')
+def get_credit_score_projection(client_id):
+    """Get comprehensive credit score projection for a client"""
+    from services.credit_score_calculator import calculate_client_projection
+    
+    projection = calculate_client_projection(client_id)
+    if not projection:
+        return jsonify({'success': False, 'error': 'Client not found'}), 404
+    
+    return jsonify({'success': True, 'data': projection})
+
+
+@app.route('/api/credit-score/summary/<int:client_id>')
+def get_credit_score_summary(client_id):
+    """Get quick summary of client's credit improvement"""
+    from services.credit_score_calculator import get_improvement_summary
+    
+    summary = get_improvement_summary(client_id)
+    return jsonify({'success': True, 'data': summary})
+
+
+@app.route('/api/credit-score/timeline/<int:client_id>')
+def get_credit_score_timeline(client_id):
+    """Get score history timeline for charts"""
+    from services.credit_score_calculator import get_score_timeline
+    
+    timeline = get_score_timeline(client_id)
+    return jsonify({'success': True, 'data': timeline})
+
+
+@app.route('/api/credit-score/estimate', methods=['POST'])
+def estimate_score_improvement():
+    """Quick estimate of potential score improvement"""
+    from services.credit_score_calculator import quick_estimate
+    
+    data = request.json
+    current_score = data.get('current_score', 550)
+    num_negatives = data.get('num_negatives', 0)
+    
+    estimate = quick_estimate(current_score, num_negatives)
+    return jsonify({'success': True, 'data': estimate})
+
+
+@app.route('/api/credit-score/history/<int:client_id>')
+def get_credit_score_history(client_id):
+    """Get all score snapshots for a client"""
+    db = get_db()
+    try:
+        snapshots = db.query(CreditScoreSnapshot).filter_by(
+            client_id=client_id
+        ).order_by(CreditScoreSnapshot.created_at.desc()).all()
+        
+        history = []
+        for s in snapshots:
+            history.append({
+                'id': s.id,
+                'equifax': s.equifax_score,
+                'experian': s.experian_score,
+                'transunion': s.transunion_score,
+                'average': s.average_score,
+                'negatives': s.total_negatives,
+                'removed': s.total_removed,
+                'milestone': s.milestone,
+                'dispute_round': s.dispute_round,
+                'snapshot_type': s.snapshot_type,
+                'source': s.source,
+                'notes': s.notes,
+                'created_at': s.created_at.isoformat() if s.created_at else None,
+            })
+        
+        return jsonify({'success': True, 'data': history})
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/credit-tracker')
+def credit_tracker_dashboard():
+    """Credit score improvement tracker dashboard page"""
+    return render_template('credit_tracker.html')
+
+
+@app.route('/dashboard/credit-tracker/<int:client_id>')
+def credit_tracker_client(client_id):
+    """Credit score tracker for specific client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return "Client not found", 404
+        return render_template('credit_tracker_client.html', client=client)
+    finally:
+        db.close()
 
 
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
