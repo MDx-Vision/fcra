@@ -53,6 +53,11 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
 
 ## Recent Changes (November 26, 2025)
+- **Document Center** (`/dashboard/documents`): Unified document upload system with type-first selection
+  - Categories: CRA Response, Collection Letters, Legal/Lawsuit, Credit Reports, Identity Docs
+  - Supports collection agency letters, lawsuit complaints, summons, garnishments
+  - Admin review workflow with priority flags and action deadlines
+  - Client portal upload integration
 - **Flexible Signup System**: Configurable fields (Required/Optional/Hidden/Deferred) via admin settings
 - **FREE Tier Lead Magnet**: Basic Analysis tier at $0 that skips payment to capture leads
 - **Multi-Payment Options**: Support for Stripe, PayPal, Cash App, Venmo, Zelle, and Pay Later
