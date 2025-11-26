@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation Tools - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .main-content {
+            margin-left: 260px;
+            padding: 20px 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+        .btn-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .btn-danger:hover { background: #fecaca; }
+
+        .top-nav {
+            display: flex;
+            gap: 2px;
+            background: #e2e8f0;
+            padding: 3px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .top-nav-btn {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .top-nav-btn:hover { background: white; color: #1a1a2e; }
+        .top-nav-btn.active { background: #1a1a2e; color: white; }
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #84cc16;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .checkbox-item:hover { background: #f1f5f9; }
+        .checkbox-item.checked { background: #dcfce7; border-color: #84cc16; }
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #84cc16;
+        }
+        .checkbox-item span {
+            font-size: 13px;
+            color: #334155;
+        }
+
+        .bureau-section {
+            margin-bottom: 20px;
+        }
+        .bureau-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bureau-section-title .badge {
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+        }
+
+        .quick-select-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 10px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+            background: #f8fafc;
+            white-space: nowrap;
+        }
+        .data-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: middle;
+        }
+        .data-table tr:hover { background: #f8fafc; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-processing { background: #dbeafe; color: #1e40af; }
+        .status-complete { background: #dcfce7; color: #166534; }
+        .status-mailed { background: #e0e7ff; color: #4338ca; }
+        .status-transit { background: #fef3c7; color: #92400e; }
+        .status-delivered { background: #dcfce7; color: #166534; }
+        .status-scheduled { background: #dbeafe; color: #1e40af; }
+        .status-failed { background: #fee2e2; color: #991b1b; }
+
+        .urgency-overdue { background: #fee2e2; color: #991b1b; }
+        .urgency-critical { background: #ffedd5; color: #c2410c; }
+        .urgency-high { background: #fef3c7; color: #92400e; }
+        .urgency-normal { background: #f1f5f9; color: #64748b; }
+
+        .deadline-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .deadline-stat {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border-left: 4px solid #e2e8f0;
+        }
+        .deadline-stat.overdue { border-left-color: #ef4444; }
+        .deadline-stat.critical { border-left-color: #f97316; }
+        .deadline-stat.high { border-left-color: #eab308; }
+        .deadline-stat.normal { border-left-color: #94a3b8; }
+        .deadline-stat .count {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .deadline-stat .label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+
+        .actions-cell {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+
+        .results-panel {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
+        .results-panel.hidden { display: none; }
+        .results-panel h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .result-row:last-child { border-bottom: none; }
+        .result-row.total {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            margin: 15px -20px -20px -20px;
+            padding: 15px 20px;
+            border-radius: 0 0 12px 12px;
+            color: #1a1a2e;
+        }
+        .result-label {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .result-row.total .result-label {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+        .result-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .result-row.total .result-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .likelihood-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .likelihood-high { background: #dcfce7; color: #166534; }
+        .likelihood-medium { background: #fef3c7; color: #92400e; }
+        .likelihood-low { background: #fee2e2; color: #991b1b; }
+
+        .damages-list {
+            margin-top: 15px;
+        }
+        .damage-item {
+            display: grid;
+            grid-template-columns: 200px 120px 1fr 40px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .damage-item select,
+        .damage-item input {
+            padding: 8px 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .remove-damage {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fee2e2;
+            color: #991b1b;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .remove-damage:hover { background: #fecaca; }
+
+        .add-damage-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: 1px dashed #94a3b8;
+            border-radius: 6px;
+            color: #64748b;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .add-damage-btn:hover {
+            background: #e2e8f0;
+            border-color: #84cc16;
+            color: #1a1a2e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+        }
+        .empty-state h3 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #319795;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #166534;
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .toast.error { background: #991b1b; }
+        .toast.show { display: block; }
+
+        @media (max-width: 1200px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .checkbox-grid { grid-template-columns: repeat(2, 1fr); }
+            .damage-item { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 0; padding: 0; }
+            .main-content { margin-left: 0; }
+            .checkbox-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/contacts" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Contact List
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Cases
+            </a>
+            <a href="/dashboard/signups" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Signups & Payments
+            </a>
+            <a href="/dashboard/queue" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Processing Queue
+            </a>
+            <a href="/dashboard/documents" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Documents
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Client Management</div>
+            <a href="/dashboard/automation-tools" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Automation Tools
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Cases</div>
+            <a href="/dashboard/cases?status=stage1_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+                Pending Review
+            </a>
+            <a href="/dashboard/cases?status=stage2_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Ready to Deliver
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Settlements
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Tools</div>
+            <a href="/dashboard/reports" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Reports
+            </a>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>Automation Tools</h1>
+            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <div class="top-nav">
+            <button class="top-nav-btn active" data-tab="freeze-letters" onclick="switchTab('freeze-letters')">Freeze Letters</button>
+            <button class="top-nav-btn" data-tab="deadlines" onclick="switchTab('deadlines')">Deadlines</button>
+            <button class="top-nav-btn" data-tab="settlement-calculator" onclick="switchTab('settlement-calculator')">Settlement Calculator</button>
+            <button class="top-nav-btn" data-tab="certified-mail" onclick="switchTab('certified-mail')">Certified Mail</button>
+            <button class="top-nav-btn" data-tab="notarization" onclick="switchTab('notarization')">Notarization</button>
+        </div>
+
+        <div id="tab-freeze-letters" class="tab-content active">
+            <div class="content-card">
+                <div class="section-title">Generate Freeze Letters</div>
+                
+                <div class="form-group" style="max-width: 400px;">
+                    <label>Select Client</label>
+                    <select id="freezeClientSelect">
+                        <option value="">-- Select a Client --</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="bureau-section">
+                    <div class="bureau-section-title">
+                        Primary Credit Bureaus
+                        <span class="badge">Big 3</span>
+                    </div>
+                    <div class="checkbox-grid" id="primaryBureaus">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="equifax"> <span>Equifax</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="experian"> <span>Experian</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="transunion"> <span>TransUnion</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bureau-section">
+                    <div class="bureau-section-title">
+                        Secondary Bureaus
+                        <span class="badge">Specialty</span>
+                    </div>
+                    <div class="checkbox-grid" id="secondaryBureaus">
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="innovis"> <span>Innovis</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="chexsystems"> <span>ChexSystems</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="clarity_services"> <span>Clarity Services</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="lexisnexis"> <span>LexisNexis</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="corelogic"> <span>CoreLogic</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="factor_trust"> <span>Factor Trust</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="microbilt"> <span>MicroBilt</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="lexisnexis_risk"> <span>LexisNexis Risk</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" name="bureau" value="datax"> <span>DataX</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="quick-select-btns">
+                    <button class="btn btn-secondary btn-sm" onclick="selectAllPrimary()">Select All Primary</button>
+                    <button class="btn btn-secondary btn-sm" onclick="selectAllSecondary()">Select All Secondary</button>
+                    <button class="btn btn-secondary btn-sm" onclick="clearAllBureaus()">Clear All</button>
+                </div>
+
+                <button class="btn btn-primary" onclick="generateFreezeLetters()" id="generateFreezeBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Generate Freeze Letters
+                </button>
+            </div>
+
+            <div class="content-card">
+                <div class="section-title">Recent Freeze Letter Batches</div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="freezeLettersTable">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th>Bureaus</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <p>No freeze letter batches yet</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-deadlines" class="tab-content">
+            <div class="deadline-stats">
+                <div class="deadline-stat overdue">
+                    <div class="count" id="overdueCount">0</div>
+                    <div class="label">Overdue</div>
+                </div>
+                <div class="deadline-stat critical">
+                    <div class="count" id="criticalCount">0</div>
+                    <div class="label">Critical (1-3 days)</div>
+                </div>
+                <div class="deadline-stat high">
+                    <div class="count" id="highCount">0</div>
+                    <div class="label">High (4-7 days)</div>
+                </div>
+                <div class="deadline-stat normal">
+                    <div class="count" id="normalCount">0</div>
+                    <div class="label">Normal (8+ days)</div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="filters-row">
+                    <button class="filter-btn active" data-deadline-filter="all" onclick="filterDeadlines('all')">All</button>
+                    <button class="filter-btn" data-deadline-filter="overdue" onclick="filterDeadlines('overdue')">Overdue</button>
+                    <button class="filter-btn" data-deadline-filter="week" onclick="filterDeadlines('week')">This Week</button>
+                    <button class="filter-btn" data-deadline-filter="month" onclick="filterDeadlines('month')">This Month</button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="deadlinesTable">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Deadline Type</th>
+                                <th>Bureau</th>
+                                <th>Due Date</th>
+                                <th>Days Left</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deadlinesTableBody">
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <p>Loading deadlines...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-settlement-calculator" class="tab-content">
+            <div class="content-card">
+                <div class="section-title">Calculate Settlement Value</div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client</label>
+                        <select id="settlementClientSelect">
+                            <option value="">-- Select a Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Violations</label>
+                        <input type="number" id="totalViolations" min="0" value="0" onchange="updateViolationFields()">
+                    </div>
+                    <div class="form-group">
+                        <label>Willful Violations</label>
+                        <input type="number" id="willfulViolations" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Negligent Violations</label>
+                        <input type="number" id="negligentViolations" min="0" value="0">
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 25px;">Actual Damages</div>
+                <div class="damages-list" id="damagesList">
+                </div>
+                <button class="add-damage-btn" onclick="addDamageItem()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Damage Item
+                </button>
+
+                <div style="margin-top: 25px;">
+                    <button class="btn btn-primary" onclick="calculateSettlement()" id="calculateBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        Calculate Settlement
+                    </button>
+                </div>
+
+                <div class="results-panel hidden" id="settlementResults">
+                    <h3>Settlement Analysis</h3>
+                    <div class="result-row">
+                        <span class="result-label">Statutory Damages</span>
+                        <span class="result-value" id="statutoryDamages">$0 - $0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Punitive Damages</span>
+                        <span class="result-value" id="punitiveDamages">$0 - $0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Actual Damages Total</span>
+                        <span class="result-value" id="actualDamagesTotal">$0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Attorney Fees Estimate</span>
+                        <span class="result-value" id="attorneyFees">$0</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Settlement Likelihood</span>
+                        <span class="result-value" id="settlementLikelihood">
+                            <span class="likelihood-badge likelihood-medium">Medium</span>
+                        </span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Recommended Demand</span>
+                        <span class="result-value" id="recommendedDemand">$0</span>
+                    </div>
+                    <div class="result-row total">
+                        <span class="result-label">Total Recovery Range</span>
+                        <span class="result-value" id="totalRecoveryRange">$0 - $0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-certified-mail" class="tab-content">
+            <div class="content-card">
+                <div class="section-title">Recent Certified Mailings</div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="certifiedMailTable">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Recipient</th>
+                                <th>Document Type</th>
+                                <th>Tracking #</th>
+                                <th>Status</th>
+                                <th>Cost</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <h3>No certified mailings yet</h3>
+                                    <p>Certified mail tracking will appear here once letters are mailed</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-notarization" class="tab-content">
+            <div class="content-card">
+                <div class="section-title">Recent Notarization Orders</div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="notarizationTable">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Document</th>
+                                <th>Status</th>
+                                <th>Session Link</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" class="empty-state">
+                                    <h3>No notarization orders yet</h3>
+                                    <p>Online notarization requests will appear here</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.top-nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            if (tabId === 'deadlines') {
+                loadDeadlines();
+            }
+        }
+
+        function selectAllPrimary() {
+            document.querySelectorAll('#primaryBureaus input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+                cb.closest('.checkbox-item').classList.add('checked');
+            });
+        }
+
+        function selectAllSecondary() {
+            document.querySelectorAll('#secondaryBureaus input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+                cb.closest('.checkbox-item').classList.add('checked');
+            });
+        }
+
+        function clearAllBureaus() {
+            document.querySelectorAll('input[name="bureau"]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.checkbox-item').classList.remove('checked');
+            });
+        }
+
+        document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                this.closest('.checkbox-item').classList.toggle('checked', this.checked);
+            });
+        });
+
+        async function generateFreezeLetters() {
+            const clientId = document.getElementById('freezeClientSelect').value;
+            if (!clientId) {
+                showToast('Please select a client', true);
+                return;
+            }
+
+            const selectedBureaus = Array.from(document.querySelectorAll('input[name="bureau"]:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedBureaus.length === 0) {
+                showToast('Please select at least one bureau', true);
+                return;
+            }
+
+            const btn = document.getElementById('generateFreezeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+
+            try {
+                const response = await fetch('/api/freeze-letters/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: clientId,
+                        bureaus: selectedBureaus
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Freeze letters generated successfully!');
+                    loadFreezeLetterBatches();
+                } else {
+                    showToast(data.error || 'Failed to generate letters', true);
+                }
+            } catch (error) {
+                showToast('Error generating letters: ' + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate Freeze Letters';
+            }
+        }
+
+        async function loadFreezeLetterBatches() {
+            try {
+                const response = await fetch('/api/freeze-letters/recent');
+                const data = await response.json();
+                
+                const tbody = document.querySelector('#freezeLettersTable tbody');
+                
+                if (data.batches && data.batches.length > 0) {
+                    tbody.innerHTML = data.batches.map(batch => `
+                        <tr>
+                            <td>${batch.client_name}</td>
+                            <td>${new Date(batch.created_at).toLocaleDateString()}</td>
+                            <td>${batch.bureaus.join(', ')}</td>
+                            <td><span class="status-badge status-${batch.status}">${batch.status}</span></td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm" onclick="downloadFreezePDF('${batch.id}')">
+                                    Download PDF
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading freeze letter batches:', error);
+            }
+        }
+
+        function downloadFreezePDF(batchId) {
+            window.open(`/api/freeze-letters/download/${batchId}`, '_blank');
+        }
+
+        async function loadDeadlines() {
+            try {
+                const response = await fetch('/api/deadlines/upcoming');
+                const data = await response.json();
+                
+                if (data.success && data.deadlines) {
+                    renderDeadlines(data.deadlines);
+                    updateDeadlineStats(data.deadlines);
+                }
+            } catch (error) {
+                console.error('Error loading deadlines:', error);
+            }
+        }
+
+        function renderDeadlines(deadlines) {
+            const tbody = document.getElementById('deadlinesTableBody');
+            
+            if (deadlines.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><p>No upcoming deadlines</p></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = deadlines.map(deadline => {
+                const urgencyClass = getUrgencyClass(deadline.days_left);
+                return `
+                    <tr>
+                        <td>${deadline.client_name}</td>
+                        <td>${deadline.type}</td>
+                        <td>${deadline.bureau || '-'}</td>
+                        <td>${new Date(deadline.due_date).toLocaleDateString()}</td>
+                        <td><span class="status-badge ${urgencyClass}">${deadline.days_left} days</span></td>
+                        <td><span class="status-badge status-${deadline.status}">${deadline.status}</span></td>
+                        <td class="actions-cell">
+                            <button class="btn btn-secondary btn-sm" onclick="completeDeadline('${deadline.id}')">Complete</button>
+                            <button class="btn btn-secondary btn-sm" onclick="extendDeadline('${deadline.id}', 15)">+15 days</button>
+                            <button class="btn btn-secondary btn-sm" onclick="extendDeadline('${deadline.id}', 30)">+30 days</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getUrgencyClass(daysLeft) {
+            if (daysLeft < 0) return 'urgency-overdue';
+            if (daysLeft <= 3) return 'urgency-critical';
+            if (daysLeft <= 7) return 'urgency-high';
+            return 'urgency-normal';
+        }
+
+        function updateDeadlineStats(deadlines) {
+            const stats = {
+                overdue: deadlines.filter(d => d.days_left < 0).length,
+                critical: deadlines.filter(d => d.days_left >= 0 && d.days_left <= 3).length,
+                high: deadlines.filter(d => d.days_left > 3 && d.days_left <= 7).length,
+                normal: deadlines.filter(d => d.days_left > 7).length
+            };
+            
+            document.getElementById('overdueCount').textContent = stats.overdue;
+            document.getElementById('criticalCount').textContent = stats.critical;
+            document.getElementById('highCount').textContent = stats.high;
+            document.getElementById('normalCount').textContent = stats.normal;
+        }
+
+        function filterDeadlines(filter) {
+            document.querySelectorAll('[data-deadline-filter]').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-deadline-filter="${filter}"]`).classList.add('active');
+            loadDeadlines(filter);
+        }
+
+        async function completeDeadline(id) {
+            try {
+                const response = await fetch(`/api/deadlines/${id}/complete`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Deadline marked as complete');
+                    loadDeadlines();
+                }
+            } catch (error) {
+                showToast('Error completing deadline', true);
+            }
+        }
+
+        async function extendDeadline(id, days) {
+            try {
+                const response = await fetch(`/api/deadlines/${id}/extend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ days: days })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast(`Deadline extended by ${days} days`);
+                    loadDeadlines();
+                }
+            } catch (error) {
+                showToast('Error extending deadline', true);
+            }
+        }
+
+        let damageItemCount = 0;
+
+        function addDamageItem() {
+            damageItemCount++;
+            const damagesList = document.getElementById('damagesList');
+            const item = document.createElement('div');
+            item.className = 'damage-item';
+            item.id = `damage-${damageItemCount}`;
+            item.innerHTML = `
+                <select name="damageType">
+                    <option value="credit_denial">Credit Denial</option>
+                    <option value="higher_interest">Higher Interest</option>
+                    <option value="emotional_distress">Emotional Distress</option>
+                    <option value="lost_employment">Lost Employment</option>
+                    <option value="medical_costs">Medical Costs</option>
+                    <option value="time_spent">Time Spent</option>
+                </select>
+                <input type="number" name="damageAmount" placeholder="Amount ($)" min="0" step="0.01">
+                <input type="text" name="damageDescription" placeholder="Description">
+                <button class="remove-damage" onclick="removeDamageItem(${damageItemCount})">&times;</button>
+            `;
+            damagesList.appendChild(item);
+        }
+
+        function removeDamageItem(id) {
+            const item = document.getElementById(`damage-${id}`);
+            if (item) item.remove();
+        }
+
+        async function calculateSettlement() {
+            const clientId = document.getElementById('settlementClientSelect').value;
+            const totalViolations = parseInt(document.getElementById('totalViolations').value) || 0;
+            const willfulViolations = parseInt(document.getElementById('willfulViolations').value) || 0;
+            const negligentViolations = parseInt(document.getElementById('negligentViolations').value) || 0;
+
+            const damages = [];
+            document.querySelectorAll('.damage-item').forEach(item => {
+                const type = item.querySelector('[name="damageType"]').value;
+                const amount = parseFloat(item.querySelector('[name="damageAmount"]').value) || 0;
+                const description = item.querySelector('[name="damageDescription"]').value;
+                if (amount > 0) {
+                    damages.push({ type, amount, description });
+                }
+            });
+
+            const btn = document.getElementById('calculateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Calculating...';
+
+            try {
+                const response = await fetch('/api/settlement/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: clientId,
+                        total_violations: totalViolations,
+                        willful_violations: willfulViolations,
+                        negligent_violations: negligentViolations,
+                        actual_damages: damages
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySettlementResults(data);
+                } else {
+                    showToast(data.error || 'Calculation failed', true);
+                }
+            } catch (error) {
+                showToast('Error calculating settlement: ' + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Calculate Settlement';
+            }
+        }
+
+        function displaySettlementResults(data) {
+            const resultsPanel = document.getElementById('settlementResults');
+            resultsPanel.classList.remove('hidden');
+
+            document.getElementById('statutoryDamages').textContent = 
+                `$${formatNumber(data.statutory_min)} - $${formatNumber(data.statutory_max)}`;
+            document.getElementById('punitiveDamages').textContent = 
+                `$${formatNumber(data.punitive_min)} - $${formatNumber(data.punitive_max)}`;
+            document.getElementById('actualDamagesTotal').textContent = 
+                `$${formatNumber(data.actual_damages_total)}`;
+            document.getElementById('attorneyFees').textContent = 
+                `$${formatNumber(data.attorney_fees)}`;
+            
+            const likelihoodBadge = document.getElementById('settlementLikelihood');
+            const likelihoodClass = data.likelihood === 'High' ? 'likelihood-high' : 
+                                   data.likelihood === 'Medium' ? 'likelihood-medium' : 'likelihood-low';
+            likelihoodBadge.innerHTML = `<span class="likelihood-badge ${likelihoodClass}">${data.likelihood}</span>`;
+            
+            document.getElementById('recommendedDemand').textContent = 
+                `$${formatNumber(data.recommended_demand)}`;
+            document.getElementById('totalRecoveryRange').textContent = 
+                `$${formatNumber(data.total_min)} - $${formatNumber(data.total_max)}`;
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US').format(Math.round(num));
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show' + (isError ? ' error' : '');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tab = urlParams.get('tab');
+            if (tab) {
+                switchTab(tab);
+            }
+        });
+    </script>
+</body>
+</html>

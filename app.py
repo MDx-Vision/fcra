@@ -6246,6 +6246,239 @@ def dashboard_contacts():
         db.close()
 
 
+@app.route('/dashboard/automation-tools')
+def dashboard_automation_tools():
+    """Automation tools dashboard page"""
+    db = get_db()
+    try:
+        clients = db.query(Client).order_by(Client.first_name).all()
+        return render_template('automation_tools.html', clients=clients)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template('automation_tools.html', clients=[])
+    finally:
+        db.close()
+
+
+@app.route('/api/freeze-letters/generate', methods=['POST'])
+def api_generate_freeze_letters():
+    """Generate freeze letters for selected bureaus"""
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get('client_id')
+        bureaus = data.get('bureaus', [])
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Client ID is required'}), 400
+        if not bureaus:
+            return jsonify({'success': False, 'error': 'At least one bureau must be selected'}), 400
+        
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        bureau_name_map = {
+            'equifax': 'Equifax',
+            'experian': 'Experian',
+            'transunion': 'TransUnion',
+            'innovis': 'Innovis',
+            'chexsystems': 'ChexSystems',
+            'clarity_services': 'Clarity Services Inc',
+            'lexisnexis': 'LexisNexis',
+            'corelogic': 'CoreLogic Teletrack',
+            'factor_trust': 'Factor Trust Inc',
+            'microbilt': 'MicroBilt/PRBC',
+            'lexisnexis_risk': 'LexisNexis Risk Solutions',
+            'datax': 'DataX Ltd'
+        }
+        
+        mapped_bureaus = [bureau_name_map.get(b, b) for b in bureaus]
+        
+        from services.freeze_letter_service import generate_freeze_letters
+        result = generate_freeze_letters(client_id, mapped_bureaus)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'batch_id': result.get('batch_id'),
+                'pdf_path': result.get('pdf_path'),
+                'bureaus_count': len(mapped_bureaus)
+            })
+        else:
+            return jsonify({'success': False, 'error': result.get('error', 'Unknown error')}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/freeze-letters/recent', methods=['GET'])
+def api_get_recent_freeze_letters():
+    """Get recent freeze letter batches"""
+    db = get_db()
+    try:
+        from database import FreezeLetterBatch
+        batches = db.query(FreezeLetterBatch).order_by(FreezeLetterBatch.created_at.desc()).limit(20).all()
+        
+        result = []
+        for batch in batches:
+            client = db.query(Client).filter_by(id=batch.client_id).first()
+            result.append({
+                'id': batch.batch_uuid,
+                'client_name': client.name if client else f'Client {batch.client_id}',
+                'created_at': batch.created_at.isoformat() if batch.created_at else None,
+                'bureaus': batch.bureaus_included or [],
+                'status': batch.status or 'generated'
+            })
+        
+        return jsonify({'success': True, 'batches': result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': True, 'batches': []})
+    finally:
+        db.close()
+
+
+@app.route('/api/freeze-letters/download/<batch_id>')
+def api_download_freeze_letters(batch_id):
+    """Download freeze letters PDF"""
+    db = get_db()
+    try:
+        from database import FreezeLetterBatch
+        batch = db.query(FreezeLetterBatch).filter_by(batch_uuid=batch_id).first()
+        
+        if batch and batch.generated_pdf_path and os.path.exists(batch.generated_pdf_path):
+            return send_file(batch.generated_pdf_path, as_attachment=True)
+        return jsonify({'success': False, 'error': 'PDF not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/upcoming', methods=['GET'])
+def api_get_upcoming_deadlines():
+    """Get upcoming deadlines with urgency indicators"""
+    db = get_db()
+    try:
+        from services.deadline_service import get_upcoming_deadlines
+        deadlines = get_upcoming_deadlines(db, days_ahead=90, include_overdue=True)
+        
+        formatted = []
+        for d in deadlines:
+            formatted.append({
+                'id': d['id'],
+                'client_name': d.get('client_name', 'Unknown'),
+                'type': d.get('deadline_type_name', d.get('deadline_type', 'Unknown')),
+                'bureau': d.get('bureau'),
+                'due_date': d['deadline_date'].isoformat() if hasattr(d['deadline_date'], 'isoformat') else str(d['deadline_date']),
+                'days_left': d.get('days_remaining', 0),
+                'status': d.get('status', 'active')
+            })
+        
+        return jsonify({'success': True, 'deadlines': formatted})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': True, 'deadlines': []})
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/<int:deadline_id>/complete', methods=['POST'])
+def api_complete_deadline(deadline_id):
+    """Mark a deadline as complete"""
+    db = get_db()
+    try:
+        from services.deadline_service import complete_deadline
+        result = complete_deadline(db, deadline_id)
+        return jsonify({'success': result is not None})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/<int:deadline_id>/extend', methods=['POST'])
+def api_extend_deadline(deadline_id):
+    """Extend a deadline by specified days"""
+    db = get_db()
+    try:
+        data = request.json
+        extra_days = data.get('days', 15)
+        
+        from services.deadline_service import extend_deadline
+        from database import CaseDeadline
+        
+        deadline = db.query(CaseDeadline).filter_by(id=deadline_id).first()
+        if deadline:
+            new_total_days = deadline.days_allowed + extra_days
+            result = extend_deadline(db, deadline_id, new_total_days)
+            return jsonify({'success': result is not None})
+        return jsonify({'success': False, 'error': 'Deadline not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlement/calculate', methods=['POST'])
+def api_calculate_settlement():
+    """Calculate settlement value based on violations and damages"""
+    try:
+        data = request.json
+        
+        total_violations = data.get('total_violations', 0)
+        willful_violations = data.get('willful_violations', 0)
+        negligent_violations = data.get('negligent_violations', 0)
+        actual_damages = data.get('actual_damages', [])
+        
+        statutory_min = willful_violations * 100
+        statutory_max = willful_violations * 1000
+        
+        actual_total = sum(float(d.get('amount', 0)) for d in actual_damages)
+        
+        punitive_min = statutory_min * 1.0
+        punitive_max = statutory_max * 3.0
+        
+        total_min = statutory_min + actual_total + punitive_min
+        total_max = statutory_max + actual_total + punitive_max
+        
+        attorney_fees = (total_min + total_max) / 2 * 0.35
+        
+        if willful_violations > 3 and total_max > 10000:
+            likelihood = 'High'
+        elif total_max > 5000:
+            likelihood = 'Medium'
+        else:
+            likelihood = 'Low'
+        
+        recommended_demand = ((total_min + total_max) / 2) * 2.5
+        
+        return jsonify({
+            'success': True,
+            'statutory_min': statutory_min,
+            'statutory_max': statutory_max,
+            'punitive_min': punitive_min,
+            'punitive_max': punitive_max,
+            'actual_damages_total': actual_total,
+            'attorney_fees': attorney_fees,
+            'total_min': total_min,
+            'total_max': total_max,
+            'likelihood': likelihood,
+            'recommended_demand': recommended_demand
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/clients/<int:client_id>/details', methods=['GET'])
 def api_get_client_details(client_id):
     """Get full client details including documents for modal"""
@@ -6996,132 +7229,6 @@ def api_portal_get_uploads(token):
         db.close()
 
 
-# ==============================================================================
-# FREEZE LETTER GENERATION API
-# ==============================================================================
-
-@app.route('/api/freeze-letters/generate', methods=['POST'])
-def api_generate_freeze_letters():
-    """Generate freeze letters for all 12 bureaus"""
-    db = get_db()
-    try:
-        data = request.json or {}
-        client_id = data.get('client_id')
-        bureaus = data.get('bureaus')  # Optional: list of specific bureaus
-        
-        if not client_id:
-            return jsonify({'success': False, 'error': 'client_id required'}), 400
-        
-        client = db.query(Client).filter_by(id=int(client_id)).first()
-        if not client:
-            return jsonify({'success': False, 'error': 'Client not found'}), 404
-        
-        from services.freeze_letter_service import generate_freeze_letters
-        result = generate_freeze_letters(client_id, bureaus)
-        
-        return jsonify({
-            'success': True,
-            'batch_id': result['batch_id'],
-            'pdf_path': result['pdf_path'],
-            'bureaus_included': result['bureaus_included'],
-            'message': f"Generated freeze letters for {len(result['bureaus_included'])} bureaus"
-        })
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        db.close()
-
-
-@app.route('/api/freeze-letters/bureaus', methods=['GET'])
-def api_get_freeze_bureaus():
-    """Get list of all 12 bureaus with freeze addresses"""
-    try:
-        from services.freeze_letter_service import get_all_bureau_addresses
-        bureaus = get_all_bureau_addresses()
-        return jsonify({'success': True, 'bureaus': bureaus})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/api/freeze-letters/client/<int:client_id>', methods=['GET'])
-def api_get_client_freeze_batches(client_id):
-    """Get all freeze letter batches for a client"""
-    db = get_db()
-    try:
-        from database import FreezeLetterBatch
-        batches = db.query(FreezeLetterBatch).filter_by(client_id=client_id).order_by(FreezeLetterBatch.created_at.desc()).all()
-        
-        batches_data = [{
-            'id': b.id,
-            'batch_uuid': b.batch_uuid,
-            'bureaus_included': b.bureaus_included,
-            'total_bureaus': b.total_bureaus,
-            'pdf_path': b.generated_pdf_path,
-            'status': b.status,
-            'mailed_at': b.mailed_at.isoformat() if b.mailed_at else None,
-            'created_at': b.created_at.isoformat() if b.created_at else None
-        } for b in batches]
-        
-        return jsonify({'success': True, 'batches': batches_data})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        db.close()
-
-
-# ==============================================================================
-# SETTLEMENT CALCULATOR API
-# ==============================================================================
-
-@app.route('/api/settlement/calculate', methods=['POST'])
-def api_calculate_settlement():
-    """Calculate potential settlement for a case"""
-    try:
-        data = request.json or {}
-        client_id = data.get('client_id')
-        case_id = data.get('case_id')
-        
-        if not client_id:
-            return jsonify({'success': False, 'error': 'client_id required'}), 400
-        
-        violations_data = {
-            'total_violations': data.get('total_violations', 0),
-            'willful_violations': data.get('willful_violations', 0),
-            'negligent_violations': data.get('negligent_violations', 0),
-            'actual_damages_items': data.get('actual_damages_items', [])
-        }
-        
-        from services.settlement_calculator import calculate_settlement
-        result = calculate_settlement(case_id, client_id, violations_data)
-        
-        return jsonify({
-            'success': True,
-            'estimate_id': result['estimate_id'],
-            'statutory_damages': {
-                'low': result['statutory_damages_low'],
-                'high': result['statutory_damages_high']
-            },
-            'actual_damages': result['actual_damages'],
-            'punitive_damages': {
-                'low': result['punitive_damages_low'],
-                'high': result['punitive_damages_high']
-            },
-            'attorney_fees': result['attorney_fees_estimate'],
-            'total': {
-                'low': result['total_low'],
-                'high': result['total_high']
-            },
-            'settlement_likelihood': result['settlement_likelihood'],
-            'recommended_demand': result['recommended_demand']
-        })
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
 @app.route('/api/settlement/client/<int:client_id>', methods=['GET'])
 def api_get_client_settlements(client_id):
     """Get all settlement estimates for a client"""
@@ -7208,73 +7315,6 @@ def api_get_client_deadlines(client_id):
         
         return jsonify({'success': True, 'deadlines': deadlines})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        db.close()
-
-
-@app.route('/api/deadlines/upcoming', methods=['GET'])
-def api_get_upcoming_deadlines():
-    """Get all upcoming deadlines across all clients"""
-    db = get_db()
-    try:
-        days_ahead = int(request.args.get('days', 7))
-        include_overdue = request.args.get('include_overdue', 'true').lower() == 'true'
-        
-        from services.deadline_service import get_upcoming_deadlines
-        deadlines = get_upcoming_deadlines(db, days_ahead, include_overdue)
-        
-        return jsonify({'success': True, 'deadlines': deadlines})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        db.close()
-
-
-@app.route('/api/deadlines/<int:deadline_id>/complete', methods=['POST'])
-def api_complete_deadline(deadline_id):
-    """Mark a deadline as completed"""
-    db = get_db()
-    try:
-        data = request.json or {}
-        notes = data.get('notes')
-        
-        from services.deadline_service import complete_deadline
-        result = complete_deadline(db, deadline_id, notes)
-        
-        if result:
-            return jsonify({'success': True, 'message': 'Deadline marked as completed'})
-        else:
-            return jsonify({'success': False, 'error': 'Deadline not found'}), 404
-    except Exception as e:
-        db.rollback()
-        return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        db.close()
-
-
-@app.route('/api/deadlines/<int:deadline_id>/extend', methods=['POST'])
-def api_extend_deadline(deadline_id):
-    """Extend a deadline by adding more days"""
-    db = get_db()
-    try:
-        data = request.json or {}
-        new_days = data.get('days', 30)
-        notes = data.get('notes')
-        
-        from services.deadline_service import extend_deadline
-        result = extend_deadline(db, deadline_id, new_days, notes)
-        
-        if result:
-            return jsonify({
-                'success': True,
-                'new_deadline_date': result.deadline_date.isoformat(),
-                'message': f'Deadline extended to {result.deadline_date}'
-            })
-        else:
-            return jsonify({'success': False, 'error': 'Deadline not found'}), 404
-    except Exception as e:
-        db.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
