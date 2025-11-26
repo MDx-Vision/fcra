@@ -52,7 +52,15 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Fernet**: For symmetric encryption of sensitive data.
 - **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
 
-## Recent Changes (November 25, 2025)
+## Recent Changes (November 26, 2025)
+- **Flexible Signup System**: Configurable fields (Required/Optional/Hidden/Deferred) via admin settings
+- **FREE Tier Lead Magnet**: Basic Analysis tier at $0 that skips payment to capture leads
+- **Multi-Payment Options**: Support for Stripe, PayPal, Cash App, Venmo, Zelle, and Pay Later
+- **Admin Settings Page** (`/dashboard/settings`): Configure signup fields, pricing tiers, and payment methods
+- **Payment Confirmation**: Admin can confirm manual payments (Cash App, Venmo, Zelle) in signups view
+- **Payment Status Tracking**: Client model tracks payment_method and payment_pending status
+
+## Previous Changes (November 25, 2025)
 - **Stripe Payment Integration**: Added 4-step signup flow with Plan & Payment selection, Stripe Checkout redirect, and webhook handling for payment confirmation
 - **SignupDraft Model**: Pre-payment intake data storage with 24-hour expiration
 - **Client Payment Fields**: Added signup_plan, signup_amount, stripe_customer_id, payment_status, etc. to Client model
