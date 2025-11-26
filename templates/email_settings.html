@@ -644,7 +644,7 @@
                         <span class="desc">Support email address</span>
                     </div>
                 </div>
-                <h4 style="margin-top: 15px;">Credit Bureau Addresses</h4>
+                <h4 style="margin-top: 15px;">Main CRAs - Dispute Addresses</h4>
                 <div class="merge-tags-grid">
                     <div class="merge-tag" onclick="copyMergeTag('{{equifax_name}}')">
                         <code>{{equifax_name}}</code>
@@ -652,11 +652,11 @@
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{equifax_address}}')">
                         <code>{{equifax_address}}</code>
-                        <span class="desc">Equifax mailing address</span>
+                        <span class="desc">Equifax dispute address</span>
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{equifax_phone}}')">
                         <code>{{equifax_phone}}</code>
-                        <span class="desc">Equifax phone number</span>
+                        <span class="desc">Equifax phone</span>
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{experian_name}}')">
                         <code>{{experian_name}}</code>
@@ -664,11 +664,11 @@
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{experian_address}}')">
                         <code>{{experian_address}}</code>
-                        <span class="desc">Experian mailing address</span>
+                        <span class="desc">Experian dispute address</span>
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{experian_phone}}')">
                         <code>{{experian_phone}}</code>
-                        <span class="desc">Experian phone number</span>
+                        <span class="desc">Experian phone</span>
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{transunion_name}}')">
                         <code>{{transunion_name}}</code>
@@ -676,11 +676,139 @@
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{transunion_address}}')">
                         <code>{{transunion_address}}</code>
-                        <span class="desc">TransUnion mailing address</span>
+                        <span class="desc">TransUnion dispute address</span>
                     </div>
                     <div class="merge-tag" onclick="copyMergeTag('{{transunion_phone}}')">
                         <code>{{transunion_phone}}</code>
-                        <span class="desc">TransUnion phone number</span>
+                        <span class="desc">TransUnion phone</span>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 15px;">Main CRAs - Freeze Addresses</h4>
+                <div class="merge-tags-grid">
+                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_freeze_address}}')">
+                        <code>{{equifax_freeze_address}}</code>
+                        <span class="desc">Equifax freeze address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_freeze_phone}}')">
+                        <code>{{equifax_freeze_phone}}</code>
+                        <span class="desc">Equifax freeze phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{experian_freeze_address}}')">
+                        <code>{{experian_freeze_address}}</code>
+                        <span class="desc">Experian freeze address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{experian_freeze_phone}}')">
+                        <code>{{experian_freeze_phone}}</code>
+                        <span class="desc">Experian freeze phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_freeze_address}}')">
+                        <code>{{transunion_freeze_address}}</code>
+                        <span class="desc">TransUnion freeze address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_freeze_phone}}')">
+                        <code>{{transunion_freeze_phone}}</code>
+                        <span class="desc">TransUnion freeze phone</span>
+                    </div>
+                </div>
+                
+                <h4 style="margin-top: 15px;">Secondary Bureaus</h4>
+                <div class="merge-tags-grid">
+                    <div class="merge-tag" onclick="copyMergeTag('{{innovis_name}}')">
+                        <code>{{innovis_name}}</code>
+                        <span class="desc">Innovis</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{innovis_address}}')">
+                        <code>{{innovis_address}}</code>
+                        <span class="desc">Innovis address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{innovis_phone}}')">
+                        <code>{{innovis_phone}}</code>
+                        <span class="desc">Innovis phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{chexsystems_name}}')">
+                        <code>{{chexsystems_name}}</code>
+                        <span class="desc">ChexSystems</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{chexsystems_address}}')">
+                        <code>{{chexsystems_address}}</code>
+                        <span class="desc">ChexSystems address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{chexsystems_phone}}')">
+                        <code>{{chexsystems_phone}}</code>
+                        <span class="desc">ChexSystems phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_name}}')">
+                        <code>{{lexisnexis_name}}</code>
+                        <span class="desc">LexisNexis</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_address}}')">
+                        <code>{{lexisnexis_address}}</code>
+                        <span class="desc">LexisNexis address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_phone}}')">
+                        <code>{{lexisnexis_phone}}</code>
+                        <span class="desc">LexisNexis phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{clarity_name}}')">
+                        <code>{{clarity_name}}</code>
+                        <span class="desc">Clarity Services</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{clarity_address}}')">
+                        <code>{{clarity_address}}</code>
+                        <span class="desc">Clarity address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{clarity_phone}}')">
+                        <code>{{clarity_phone}}</code>
+                        <span class="desc">Clarity phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{sagestream_name}}')">
+                        <code>{{sagestream_name}}</code>
+                        <span class="desc">SageStream</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{sagestream_address}}')">
+                        <code>{{sagestream_address}}</code>
+                        <span class="desc">SageStream address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{sagestream_phone}}')">
+                        <code>{{sagestream_phone}}</code>
+                        <span class="desc">SageStream phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{nctue_name}}')">
+                        <code>{{nctue_name}}</code>
+                        <span class="desc">NCTUE</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{nctue_address}}')">
+                        <code>{{nctue_address}}</code>
+                        <span class="desc">NCTUE address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{nctue_phone}}')">
+                        <code>{{nctue_phone}}</code>
+                        <span class="desc">NCTUE phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{ars_name}}')">
+                        <code>{{ars_name}}</code>
+                        <span class="desc">ARS/Telecheck</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{ars_address}}')">
+                        <code>{{ars_address}}</code>
+                        <span class="desc">ARS address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{ars_phone}}')">
+                        <code>{{ars_phone}}</code>
+                        <span class="desc">ARS phone</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{corelogic_name}}')">
+                        <code>{{corelogic_name}}</code>
+                        <span class="desc">CoreLogic Credco</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{corelogic_address}}')">
+                        <code>{{corelogic_address}}</code>
+                        <span class="desc">CoreLogic address</span>
+                    </div>
+                    <div class="merge-tag" onclick="copyMergeTag('{{corelogic_phone}}')">
+                        <code>{{corelogic_phone}}</code>
+                        <span class="desc">CoreLogic phone</span>
                     </div>
                 </div>
             </div>
@@ -858,14 +986,44 @@
                     { name: 'Company Name', value: '{{company_name}}' },
                     { name: 'Support Email', value: '{{support_email}}' },
                     { name: 'Equifax Name', value: '{{equifax_name}}' },
-                    { name: 'Equifax Address', value: '{{equifax_address}}' },
+                    { name: 'Equifax Dispute Address', value: '{{equifax_address}}' },
                     { name: 'Equifax Phone', value: '{{equifax_phone}}' },
+                    { name: 'Equifax Freeze Address', value: '{{equifax_freeze_address}}' },
+                    { name: 'Equifax Freeze Phone', value: '{{equifax_freeze_phone}}' },
                     { name: 'Experian Name', value: '{{experian_name}}' },
-                    { name: 'Experian Address', value: '{{experian_address}}' },
+                    { name: 'Experian Dispute Address', value: '{{experian_address}}' },
                     { name: 'Experian Phone', value: '{{experian_phone}}' },
+                    { name: 'Experian Freeze Address', value: '{{experian_freeze_address}}' },
+                    { name: 'Experian Freeze Phone', value: '{{experian_freeze_phone}}' },
                     { name: 'TransUnion Name', value: '{{transunion_name}}' },
-                    { name: 'TransUnion Address', value: '{{transunion_address}}' },
-                    { name: 'TransUnion Phone', value: '{{transunion_phone}}' }
+                    { name: 'TransUnion Dispute Address', value: '{{transunion_address}}' },
+                    { name: 'TransUnion Phone', value: '{{transunion_phone}}' },
+                    { name: 'TransUnion Freeze Address', value: '{{transunion_freeze_address}}' },
+                    { name: 'TransUnion Freeze Phone', value: '{{transunion_freeze_phone}}' },
+                    { name: 'Innovis Name', value: '{{innovis_name}}' },
+                    { name: 'Innovis Address', value: '{{innovis_address}}' },
+                    { name: 'Innovis Phone', value: '{{innovis_phone}}' },
+                    { name: 'ChexSystems Name', value: '{{chexsystems_name}}' },
+                    { name: 'ChexSystems Address', value: '{{chexsystems_address}}' },
+                    { name: 'ChexSystems Phone', value: '{{chexsystems_phone}}' },
+                    { name: 'LexisNexis Name', value: '{{lexisnexis_name}}' },
+                    { name: 'LexisNexis Address', value: '{{lexisnexis_address}}' },
+                    { name: 'LexisNexis Phone', value: '{{lexisnexis_phone}}' },
+                    { name: 'Clarity Name', value: '{{clarity_name}}' },
+                    { name: 'Clarity Address', value: '{{clarity_address}}' },
+                    { name: 'Clarity Phone', value: '{{clarity_phone}}' },
+                    { name: 'SageStream Name', value: '{{sagestream_name}}' },
+                    { name: 'SageStream Address', value: '{{sagestream_address}}' },
+                    { name: 'SageStream Phone', value: '{{sagestream_phone}}' },
+                    { name: 'NCTUE Name', value: '{{nctue_name}}' },
+                    { name: 'NCTUE Address', value: '{{nctue_address}}' },
+                    { name: 'NCTUE Phone', value: '{{nctue_phone}}' },
+                    { name: 'ARS/Telecheck Name', value: '{{ars_name}}' },
+                    { name: 'ARS/Telecheck Address', value: '{{ars_address}}' },
+                    { name: 'ARS/Telecheck Phone', value: '{{ars_phone}}' },
+                    { name: 'CoreLogic Name', value: '{{corelogic_name}}' },
+                    { name: 'CoreLogic Address', value: '{{corelogic_address}}' },
+                    { name: 'CoreLogic Phone', value: '{{corelogic_phone}}' }
                 ]
             });
 

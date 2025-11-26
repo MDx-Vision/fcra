@@ -4104,6 +4104,7 @@ def get_default_subject(template_type):
 
 
 CRA_ADDRESSES = {
+    # Main 3 CRAs - Dispute Addresses
     'equifax_name': 'Equifax Information Services LLC',
     'equifax_address': 'P.O. Box 740256, Atlanta, GA 30374-0256',
     'equifax_phone': '1-800-685-1111',
@@ -4113,6 +4114,50 @@ CRA_ADDRESSES = {
     'transunion_name': 'TransUnion LLC',
     'transunion_address': 'P.O. Box 2000, Chester, PA 19016-2000',
     'transunion_phone': '1-800-916-8800',
+    
+    # Main 3 CRAs - Freeze Addresses
+    'equifax_freeze_address': 'P.O. Box 105788, Atlanta, GA 30348-5788',
+    'equifax_freeze_phone': '1-800-349-9960',
+    'experian_freeze_address': 'P.O. Box 9554, Allen, TX 75013',
+    'experian_freeze_phone': '1-888-397-3742',
+    'transunion_freeze_address': 'P.O. Box 160, Woodlyn, PA 19094',
+    'transunion_freeze_phone': '1-888-909-8872',
+    
+    # Secondary Bureaus
+    'innovis_name': 'Innovis',
+    'innovis_address': 'P.O. Box 1358, Columbus, OH 43216-1358',
+    'innovis_phone': '1-800-540-2505',
+    'innovis_freeze_address': 'P.O. Box 1358, Columbus, OH 43216-1358',
+    
+    'chexsystems_name': 'ChexSystems',
+    'chexsystems_address': 'Attn: Consumer Relations, 7805 Hudson Road, Suite 100, Woodbury, MN 55125',
+    'chexsystems_phone': '1-800-428-9623',
+    'chexsystems_freeze_address': 'P.O. Box 583399, Minneapolis, MN 55458',
+    
+    'lexisnexis_name': 'LexisNexis Consumer Center',
+    'lexisnexis_address': 'P.O. Box 105108, Atlanta, GA 30348-5108',
+    'lexisnexis_phone': '1-888-497-0011',
+    'lexisnexis_freeze_address': 'P.O. Box 105108, Atlanta, GA 30348-5108',
+    
+    'clarity_name': 'Clarity Services (Experian)',
+    'clarity_address': 'P.O. Box 5400, Clearwater, FL 33758',
+    'clarity_phone': '1-866-390-3118',
+    
+    'sagestream_name': 'SageStream',
+    'sagestream_address': 'P.O. Box 503793, San Diego, CA 92150',
+    'sagestream_phone': '1-888-395-0277',
+    
+    'nctue_name': 'NCTUE (National Consumer Telecom & Utilities Exchange)',
+    'nctue_address': 'P.O. Box 105161, Atlanta, GA 30348',
+    'nctue_phone': '1-866-349-5355',
+    
+    'ars_name': 'ARS/Telecheck',
+    'ars_address': 'Attn: Consumer Resolutions, 5251 Westheimer Road, Houston, TX 77056',
+    'ars_phone': '1-800-366-2425',
+    
+    'corelogic_name': 'CoreLogic Credco',
+    'corelogic_address': 'P.O. Box 509124, San Diego, CA 92150',
+    'corelogic_phone': '1-877-532-8778',
 }
 
 
