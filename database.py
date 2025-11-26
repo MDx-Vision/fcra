@@ -1133,6 +1133,63 @@ class ESignatureRequest(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class CreditScoreSnapshot(Base):
+    """Track credit scores over time for improvement analytics"""
+    __tablename__ = 'credit_score_snapshots'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    equifax_score = Column(Integer)
+    experian_score = Column(Integer)
+    transunion_score = Column(Integer)
+    average_score = Column(Integer)
+    
+    equifax_negatives = Column(Integer, default=0)
+    experian_negatives = Column(Integer, default=0)
+    transunion_negatives = Column(Integer, default=0)
+    total_negatives = Column(Integer, default=0)
+    
+    equifax_removed = Column(Integer, default=0)
+    experian_removed = Column(Integer, default=0)
+    transunion_removed = Column(Integer, default=0)
+    total_removed = Column(Integer, default=0)
+    
+    milestone = Column(String(100))
+    dispute_round = Column(Integer, default=0)
+    
+    snapshot_type = Column(String(50), default='manual')
+    
+    notes = Column(Text)
+    
+    source = Column(String(100))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CreditScoreProjection(Base):
+    """Store projected score improvements based on negative removal"""
+    __tablename__ = 'credit_score_projections'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    current_average = Column(Integer)
+    projected_score = Column(Integer)
+    potential_gain = Column(Integer)
+    
+    negatives_to_remove = Column(Integer)
+    estimated_points_per_negative = Column(Integer, default=15)
+    
+    confidence_level = Column(String(20), default='medium')
+    
+    projection_details = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
