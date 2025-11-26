@@ -7643,6 +7643,10 @@ def api_portal_get_uploads(token):
 @app.route('/api/portal/<token>/avatar', methods=['POST'])
 def api_portal_upload_avatar(token):
     """Upload avatar image for client"""
+    MAX_AVATAR_SIZE = 5 * 1024 * 1024
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    ALLOWED_MIMETYPES = {'image/png', 'image/jpeg', 'image/gif', 'image/webp'}
+    
     db = get_db()
     try:
         client = db.query(Client).filter_by(portal_token=token).first()
@@ -7656,30 +7660,38 @@ def api_portal_upload_avatar(token):
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
         
-        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        if file_size > MAX_AVATAR_SIZE:
+            return jsonify({'success': False, 'error': 'Image too large (max 5MB)'}), 400
+        
         ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
-        if ext not in allowed_extensions:
+        if ext not in ALLOWED_EXTENSIONS:
             return jsonify({'success': False, 'error': 'Only image files allowed (png, jpg, jpeg, gif, webp)'}), 400
         
+        if file.mimetype not in ALLOWED_MIMETYPES:
+            return jsonify({'success': False, 'error': 'Invalid image type'}), 400
+        
         if client.avatar_filename:
-            old_path = os.path.join('static', 'avatars', client.avatar_filename)
+            old_path = os.path.join('static', 'avatars', secure_filename(client.avatar_filename))
             if os.path.exists(old_path):
                 os.remove(old_path)
         
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        filename = f"client_{client.id}_{timestamp}.{ext}"
-        avatar_path = os.path.join('static', 'avatars', filename)
+        safe_filename = secure_filename(f"client_{client.id}_{timestamp}.{ext}")
+        avatar_path = os.path.join('static', 'avatars', safe_filename)
         
         os.makedirs(os.path.join('static', 'avatars'), exist_ok=True)
         file.save(avatar_path)
         
-        client.avatar_filename = filename
+        client.avatar_filename = safe_filename
         db.commit()
         
         return jsonify({
             'success': True,
             'message': 'Avatar uploaded successfully',
-            'avatar_url': f'/static/avatars/{filename}'
+            'avatar_url': f'/static/avatars/{safe_filename}'
         })
     except Exception as e:
         db.rollback()
@@ -7717,6 +7729,10 @@ def api_portal_delete_avatar(token):
 @app.route('/api/client/<int:client_id>/avatar', methods=['POST'])
 def api_admin_upload_avatar(client_id):
     """Admin upload avatar for client"""
+    MAX_AVATAR_SIZE = 5 * 1024 * 1024
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    ALLOWED_MIMETYPES = {'image/png', 'image/jpeg', 'image/gif', 'image/webp'}
+    
     db = get_db()
     try:
         client = db.query(Client).filter_by(id=client_id).first()
@@ -7730,30 +7746,38 @@ def api_admin_upload_avatar(client_id):
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
         
-        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+        file.seek(0, os.SEEK_END)
+        file_size = file.tell()
+        file.seek(0)
+        if file_size > MAX_AVATAR_SIZE:
+            return jsonify({'success': False, 'error': 'Image too large (max 5MB)'}), 400
+        
         ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
-        if ext not in allowed_extensions:
+        if ext not in ALLOWED_EXTENSIONS:
             return jsonify({'success': False, 'error': 'Only image files allowed'}), 400
         
+        if file.mimetype not in ALLOWED_MIMETYPES:
+            return jsonify({'success': False, 'error': 'Invalid image type'}), 400
+        
         if client.avatar_filename:
-            old_path = os.path.join('static', 'avatars', client.avatar_filename)
+            old_path = os.path.join('static', 'avatars', secure_filename(client.avatar_filename))
             if os.path.exists(old_path):
                 os.remove(old_path)
         
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        filename = f"client_{client.id}_{timestamp}.{ext}"
-        avatar_path = os.path.join('static', 'avatars', filename)
+        safe_filename = secure_filename(f"client_{client.id}_{timestamp}.{ext}")
+        avatar_path = os.path.join('static', 'avatars', safe_filename)
         
         os.makedirs(os.path.join('static', 'avatars'), exist_ok=True)
         file.save(avatar_path)
         
-        client.avatar_filename = filename
+        client.avatar_filename = safe_filename
         db.commit()
         
         return jsonify({
             'success': True,
             'message': 'Avatar uploaded successfully',
-            'avatar_url': f'/static/avatars/{filename}'
+            'avatar_url': f'/static/avatars/{safe_filename}'
         })
     except Exception as e:
         db.rollback()

@@ -55,6 +55,13 @@ The platform is built on a Flask web framework and employs a two-stage, section-
   - **Score Snapshots**: Track Equifax, Experian, TransUnion scores over time with dispute round correlation
   - **Client Portal Integration**: Score Progress tab shows clients their improvement journey with Chart.js visualizations
   - **API Endpoints**: `/api/credit-score/item-types`, `/api/credit-score/estimate-detailed`, `/api/credit-score/projection/<id>`, `/api/credit-score/history/<id>`
+- **Client Avatar/Photo Feature**: Personalized client experience with profile photos:
+  - **Client Portal Profile Tab**: New "My Profile" tab with avatar upload/remove functionality
+  - **Header Display**: Avatar shown in portal header with initials fallback
+  - **Admin Dashboard Integration**: Client avatars displayed in case lists and client tables
+  - **Security**: File extension validation, MIME type checking, 5MB size limit, secure_filename sanitization
+  - **API Endpoints**: `POST/DELETE /api/portal/<token>/avatar`, `POST /api/client/<id>/avatar`
+  - **Storage**: Avatars stored in `static/avatars/` with timestamped unique filenames
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
