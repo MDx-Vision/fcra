@@ -8101,6 +8101,84 @@ def api_get_payment_codes():
 
 
 # ==============================================================================
+# DEBT VALIDATION LETTERS API
+# ==============================================================================
+
+@app.route('/api/validation-letters/generate', methods=['POST'])
+def api_generate_validation_letters():
+    """Generate debt validation letters for collection accounts"""
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        collections = data.get('collections', [])
+        case_id = data.get('case_id')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id required'}), 400
+        
+        from services.debt_validation_service import generate_validation_letters
+        
+        if collections:
+            result = generate_validation_letters(client_id, collections=collections)
+        elif case_id:
+            result = generate_validation_letters(client_id, case_id=case_id)
+        else:
+            return jsonify({'success': False, 'error': 'Either collections or case_id required'}), 400
+        
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/validation-letters/auto-generate/<int:case_id>', methods=['POST'])
+def api_auto_generate_validation_letters(case_id):
+    """Auto-generate validation letters from case analysis"""
+    try:
+        from services.debt_validation_service import auto_generate_validation_letters_from_analysis
+        result = auto_generate_validation_letters_from_analysis(case_id)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/validation-letters/agencies', methods=['GET'])
+def api_get_collection_agencies():
+    """Get list of common collection agencies with addresses"""
+    try:
+        from services.debt_validation_service import get_common_collection_agencies
+        agencies = get_common_collection_agencies()
+        return jsonify({'success': True, 'agencies': agencies})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/validation-letters/single', methods=['POST'])
+def api_generate_single_validation_letter():
+    """Generate a single debt validation letter"""
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        collection_info = data.get('collection_info', {})
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id required'}), 400
+        if not collection_info.get('creditor_name'):
+            return jsonify({'success': False, 'error': 'creditor_name required in collection_info'}), 400
+        
+        from services.debt_validation_service import generate_validation_letter_single
+        result = generate_validation_letter_single(client_id, collection_info)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==============================================================================
 # PWA MANIFEST AND SERVICE WORKER
 # ==============================================================================
 

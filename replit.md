@@ -53,8 +53,9 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
 
 ## Recent Changes (November 26, 2025)
-- **Automation Tools Dashboard** (`/dashboard/automation-tools`): 5-tab admin interface for automation services
-  - Freeze Letters: Bulk generation for all 12 bureaus (3 CRAs + 9 secondary)
+- **Automation Tools Dashboard** (`/dashboard/automation-tools`): 6-tab admin interface for automation services
+  - Freeze Letters: Bulk generation for all 12 bureaus (3 CRAs + 9 secondary) with auto-populated client PII
+  - Validation Letters: FDCPA-compliant debt validation letters for collection accounts with one-click or auto-generation from case analysis
   - Deadlines: Automated tracking with email reminders for FCRA response deadlines
   - Settlement Calculator: Case value estimation based on violations, willfulness, actual damages
   - Certified Mail: SendCertifiedMail.com integration for proof of delivery

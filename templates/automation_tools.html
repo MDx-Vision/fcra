@@ -596,6 +596,7 @@
 
         <div class="top-nav">
             <button class="top-nav-btn active" data-tab="freeze-letters" onclick="switchTab('freeze-letters')">Freeze Letters</button>
+            <button class="top-nav-btn" data-tab="validation-letters" onclick="switchTab('validation-letters')">Validation Letters</button>
             <button class="top-nav-btn" data-tab="deadlines" onclick="switchTab('deadlines')">Deadlines</button>
             <button class="top-nav-btn" data-tab="settlement-calculator" onclick="switchTab('settlement-calculator')">Settlement Calculator</button>
             <button class="top-nav-btn" data-tab="certified-mail" onclick="switchTab('certified-mail')">Certified Mail</button>
@@ -703,6 +704,102 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-validation-letters" class="tab-content">
+            <div class="content-card">
+                <div class="section-title">Collection Debt Validation Letters (FDCPA)</div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Generate FDCPA-compliant debt validation letters for collection accounts. Letters auto-populate with client PII from the database.
+                </p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client</label>
+                        <select id="validationClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Case (Optional - Auto-detect Collections)</label>
+                        <select id="validationCaseSelect">
+                            <option value="">-- No Case (Manual Entry) --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="manualCollectionEntry" style="margin-top: 20px;">
+                    <div class="section-title">Collection Account Details</div>
+                    <p style="color: #64748b; margin-bottom: 15px; font-size: 12px;">
+                        Or select from common collection agencies:
+                        <select id="commonAgencySelect" onchange="fillCommonAgency()" style="margin-left: 10px; padding: 5px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                            <option value="">-- Common Agencies --</option>
+                        </select>
+                    </p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Collection Agency Name *</label>
+                            <input type="text" id="collectionCreditorName" placeholder="Portfolio Recovery Associates">
+                        </div>
+                        <div class="form-group">
+                            <label>Agency Address</label>
+                            <input type="text" id="collectionAddress" placeholder="123 Collection St">
+                        </div>
+                        <div class="form-group">
+                            <label>City, State ZIP</label>
+                            <input type="text" id="collectionCityStateZip" placeholder="City, ST 12345">
+                        </div>
+                        <div class="form-group">
+                            <label>Original Creditor</label>
+                            <input type="text" id="collectionOriginalCreditor" placeholder="Original bank or creditor name">
+                        </div>
+                        <div class="form-group">
+                            <label>Account Number</label>
+                            <input type="text" id="collectionAccountNumber" placeholder="Account reference number">
+                        </div>
+                        <div class="form-group">
+                            <label>Claimed Balance ($)</label>
+                            <input type="number" id="collectionBalance" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateValidationLetter()" id="generateValidationBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate Validation Letter
+                    </button>
+                    <button class="btn btn-secondary" onclick="autoGenerateFromCase()" id="autoGenerateBtn" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        Auto-Generate from Case Analysis
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="section-title">What These Letters Do</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div style="padding: 15px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
+                        <div style="font-weight: 600; color: #166534; margin-bottom: 5px;">Demand Debt Validation</div>
+                        <div style="font-size: 12px; color: #15803d;">Forces collector to prove the debt is valid under FDCPA Section 809</div>
+                    </div>
+                    <div style="padding: 15px; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                        <div style="font-weight: 600; color: #1e40af; margin-bottom: 5px;">Stop Collection Activity</div>
+                        <div style="font-size: 12px; color: #1d4ed8;">Collector must cease until validation is provided</div>
+                    </div>
+                    <div style="padding: 15px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                        <div style="font-weight: 600; color: #92400e; margin-bottom: 5px;">Request Documentation</div>
+                        <div style="font-size: 12px; color: #b45309;">Original contract, chain of assignment, DOFD, payment history</div>
+                    </div>
+                    <div style="padding: 15px; background: #fee2e2; border-radius: 8px; border-left: 4px solid #ef4444;">
+                        <div style="font-weight: 600; color: #991b1b; margin-bottom: 5px;">Create Legal Record</div>
+                        <div style="font-size: 12px; color: #dc2626;">Documented proof for FDCPA/FCRA violations if ignored</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1013,6 +1110,159 @@
         function downloadFreezePDF(batchId) {
             window.open(`/api/freeze-letters/download/${batchId}`, '_blank');
         }
+
+        let commonAgencies = [];
+        
+        async function loadCommonAgencies() {
+            try {
+                const response = await fetch('/api/validation-letters/agencies');
+                const data = await response.json();
+                if (data.success) {
+                    commonAgencies = data.agencies;
+                    const select = document.getElementById('commonAgencySelect');
+                    commonAgencies.forEach((agency, idx) => {
+                        const option = document.createElement('option');
+                        option.value = idx;
+                        option.textContent = agency.name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading common agencies:', error);
+            }
+        }
+        
+        function fillCommonAgency() {
+            const select = document.getElementById('commonAgencySelect');
+            const idx = select.value;
+            if (idx !== '' && commonAgencies[idx]) {
+                const agency = commonAgencies[idx];
+                document.getElementById('collectionCreditorName').value = agency.name;
+                document.getElementById('collectionAddress').value = agency.address;
+                document.getElementById('collectionCityStateZip').value = agency.city_state_zip;
+            }
+        }
+        
+        document.getElementById('validationClientSelect').addEventListener('change', async function() {
+            const clientId = this.value;
+            const caseSelect = document.getElementById('validationCaseSelect');
+            caseSelect.innerHTML = '<option value="">-- No Case (Manual Entry) --</option>';
+            
+            if (clientId) {
+                try {
+                    const response = await fetch(`/api/cases/client/${clientId}`);
+                    const data = await response.json();
+                    if (data.cases) {
+                        data.cases.forEach(c => {
+                            const option = document.createElement('option');
+                            option.value = c.id;
+                            option.textContent = `Case #${c.id} - ${c.status} (${new Date(c.created_at).toLocaleDateString()})`;
+                            caseSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading cases:', error);
+                }
+            }
+        });
+        
+        document.getElementById('validationCaseSelect').addEventListener('change', function() {
+            const caseId = this.value;
+            const autoBtn = document.getElementById('autoGenerateBtn');
+            autoBtn.disabled = !caseId;
+        });
+        
+        async function generateValidationLetter() {
+            const clientId = document.getElementById('validationClientSelect').value;
+            if (!clientId) {
+                showToast('Please select a client', true);
+                return;
+            }
+            
+            const creditorName = document.getElementById('collectionCreditorName').value.trim();
+            if (!creditorName) {
+                showToast('Collection agency name is required', true);
+                return;
+            }
+            
+            const btn = document.getElementById('generateValidationBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+            
+            try {
+                const response = await fetch('/api/validation-letters/single', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: parseInt(clientId),
+                        collection_info: {
+                            creditor_name: creditorName,
+                            creditor_address: document.getElementById('collectionAddress').value.trim(),
+                            creditor_city_state_zip: document.getElementById('collectionCityStateZip').value.trim(),
+                            original_creditor: document.getElementById('collectionOriginalCreditor').value.trim(),
+                            account_number: document.getElementById('collectionAccountNumber').value.trim(),
+                            balance: parseFloat(document.getElementById('collectionBalance').value) || 0
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Validation letter generated successfully!');
+                    if (data.pdf_path) {
+                        window.open('/' + data.pdf_path, '_blank');
+                    }
+                } else {
+                    showToast(data.error || 'Failed to generate letter', true);
+                }
+            } catch (error) {
+                showToast('Error generating letter: ' + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate Validation Letter';
+            }
+        }
+        
+        async function autoGenerateFromCase() {
+            const caseId = document.getElementById('validationCaseSelect').value;
+            if (!caseId) {
+                showToast('Please select a case first', true);
+                return;
+            }
+            
+            const btn = document.getElementById('autoGenerateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Scanning case...';
+            
+            try {
+                const response = await fetch(`/api/validation-letters/auto-generate/${caseId}`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.letters_generated > 0) {
+                        showToast(`Generated ${data.letters_generated} validation letters!`);
+                        if (data.pdf_path) {
+                            window.open('/' + data.pdf_path, '_blank');
+                        }
+                    } else {
+                        showToast(data.message || 'No collection accounts detected in analysis');
+                    }
+                } else {
+                    showToast(data.error || 'Failed to auto-generate letters', true);
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Auto-Generate from Case Analysis';
+            }
+        }
+        
+        loadCommonAgencies();
 
         async function loadDeadlines() {
             try {
