@@ -192,9 +192,34 @@
             margin-top: 1rem;
         }
         
-        .add-more-prompt i {
-            font-size: 1.5rem;
-            color: var(--teal);
+        .add-more-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 128, 128, 0.3);
+        }
+        
+        .add-more-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 128, 128, 0.4);
+        }
+        
+        .add-more-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .add-more-btn i {
+            font-size: 2rem;
         }
         
         .page-thumbnail:hover .remove-btn {
@@ -482,10 +507,12 @@
                 <div class="page-queue" id="page-queue"></div>
                 
                 <div class="add-more-prompt" id="add-more-prompt" style="display: none;">
-                    <i class="bi bi-plus-circle-dotted"></i>
+                    <button class="add-more-btn" id="add-more-btn" onclick="addMorePages()">
+                        <i class="bi bi-plus-circle-fill"></i>
+                    </button>
                     <p class="mb-1 mt-2"><strong>Page captured!</strong></p>
                     <p class="text-muted mb-0 small">
-                        Tap <strong>Camera</strong> or <strong>Upload</strong> above to add more pages.<br>
+                        Tap the <strong>+</strong> button to add more pages.<br>
                         When done, tap <strong>Process Document</strong> below.
                     </p>
                 </div>
@@ -872,6 +899,19 @@
             document.getElementById('btn-next').disabled = true;
             
             updateStepIndicator();
+        }
+        
+        function addMorePages() {
+            const cameraTab = document.querySelector('[data-bs-target="#tab-camera"]');
+            const uploadTab = document.querySelector('[data-bs-target="#tab-upload"]');
+            
+            if (videoStream) {
+                cameraTab.click();
+                document.getElementById('video-preview').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                uploadTab.click();
+                document.getElementById('file-input').click();
+            }
         }
         
         updateStepIndicator();
