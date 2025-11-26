@@ -679,6 +679,47 @@ class ClientDocument(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ClientUpload(Base):
+    """Unified document uploads from clients"""
+    __tablename__ = 'client_uploads'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    
+    category = Column(String(50), nullable=False)
+    document_type = Column(String(100), nullable=False)
+    
+    bureau = Column(String(50))
+    dispute_round = Column(Integer)
+    response_type = Column(String(50))
+    
+    sender_name = Column(String(200))
+    account_number = Column(String(100))
+    amount_claimed = Column(Float)
+    
+    file_path = Column(String(500))
+    file_name = Column(String(255))
+    file_size = Column(Integer)
+    file_type = Column(String(50))
+    
+    document_date = Column(Date)
+    received_date = Column(Date)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    
+    reviewed = Column(Boolean, default=False)
+    reviewed_by = Column(String(100))
+    reviewed_at = Column(DateTime)
+    notes = Column(Text)
+    
+    requires_action = Column(Boolean, default=False)
+    action_deadline = Column(Date)
+    priority = Column(String(20), default='normal')
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class SignupSettings(Base):
     """Store configurable signup settings as key-value pairs"""
     __tablename__ = 'signup_settings'

@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Center - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+        }
+        .logo {
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #4ade80; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: #4ade80; color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .nav-badge {
+            margin-left: auto;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+            color: #1a1a2e;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.urgent {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-left: 4px solid #ef4444;
+        }
+        .stat-card.action {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid #f59e0b;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            gap: 5px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+        .filter-separator {
+            width: 1px;
+            height: 30px;
+            background: #e2e8f0;
+            margin: 0 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        .client-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .category-cra_response { background: #dbeafe; color: #1e40af; }
+        .category-collection { background: #fef3c7; color: #92400e; }
+        .category-legal { background: #fee2e2; color: #991b1b; }
+        .category-credit_report { background: #dcfce7; color: #166534; }
+        .category-identity { background: #e0e7ff; color: #3730a3; }
+        .category-other { background: #f1f5f9; color: #475569; }
+        .priority-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .priority-urgent { background: #fee2e2; color: #991b1b; }
+        .priority-high { background: #fef3c7; color: #92400e; }
+        .priority-normal { background: #f1f5f9; color: #64748b; }
+        .priority-low { background: #f1f5f9; color: #94a3b8; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-reviewed { background: #dcfce7; color: #166534; }
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            color: #334155;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #4ade80; }
+        .action-btn.primary { background: #4ade80; border-color: #4ade80; color: #1a1a2e; }
+        .action-btn.danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-icon {
+            width: 32px;
+            height: 32px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .file-icon.pdf { background: #fee2e2; color: #991b1b; }
+        .file-icon.jpg, .file-icon.jpeg, .file-icon.png { background: #dbeafe; color: #1e40af; }
+        .file-name {
+            font-size: 13px;
+            color: #334155;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+        .upload-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .upload-modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        .modal-body {
+            padding: 25px;
+        }
+        .upload-steps {
+            margin-bottom: 25px;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+        }
+        .step.active .step-number { background: #4ade80; color: #1a1a2e; }
+        .step.completed .step-number { background: #22c55e; color: white; }
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: #e2e8f0;
+            margin: 0 10px;
+        }
+        .step.completed + .step .step-line { background: #22c55e; }
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .category-btn {
+            padding: 20px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .category-btn:hover { border-color: #4ade80; background: #f0fdf4; }
+        .category-btn.selected { border-color: #4ade80; background: #dcfce7; }
+        .category-btn svg {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 10px;
+            color: #64748b;
+        }
+        .category-btn.selected svg { color: #22c55e; }
+        .category-btn-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .type-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .type-btn {
+            padding: 12px 15px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .type-btn:hover { border-color: #4ade80; }
+        .type-btn.selected { border-color: #4ade80; background: #dcfce7; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .dropzone {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dropzone:hover, .dropzone.dragover { border-color: #4ade80; background: #f0fdf4; }
+        .dropzone svg {
+            width: 48px;
+            height: 48px;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+        .dropzone-text {
+            font-size: 14px;
+            color: #64748b;
+        }
+        .dropzone-text strong { color: #4ade80; }
+        .file-preview {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .file-preview-icon {
+            width: 48px;
+            height: 48px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .file-preview-info {
+            flex: 1;
+        }
+        .file-preview-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .file-preview-size {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .file-preview-remove {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 5px;
+        }
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .step-content { display: none; }
+        .step-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/contacts" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Contact List
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Cases
+            </a>
+            <a href="/dashboard/documents" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Documents
+                {% if pending_count > 0 %}<span class="nav-badge">{{ pending_count }}</span>{% endif %}
+            </a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Tools</div>
+            <a href="/signup" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                New Signup
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>Document Center</h1>
+            <button class="btn btn-primary" onclick="openUploadModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload Document
+            </button>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">{{ pending_count }}</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+            <div class="stat-card urgent">
+                <div class="stat-value">{{ urgent_count }}</div>
+                <div class="stat-label">Urgent Priority</div>
+            </div>
+            <div class="stat-card action">
+                <div class="stat-value">{{ action_count }}</div>
+                <div class="stat-label">Requires Action</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ uploads|length }}</div>
+                <div class="stat-label">Total Shown</div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="filters">
+                <div class="filter-group">
+                    <a href="/dashboard/documents?status=pending&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'pending' else '' }}">Pending Review</a>
+                    <a href="/dashboard/documents?status=reviewed&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'reviewed' else '' }}">Reviewed</a>
+                    <a href="/dashboard/documents?status=urgent&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'urgent' else '' }}">Urgent</a>
+                    <a href="/dashboard/documents?status=action&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'action' else '' }}">Needs Action</a>
+                    <a href="/dashboard/documents?status=all&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'all' else '' }}">All</a>
+                </div>
+                <div class="filter-separator"></div>
+                <div class="filter-group">
+                    <a href="/dashboard/documents?status={{ status_filter }}&category=all" class="filter-btn {{ 'active' if category_filter == 'all' else '' }}">All Types</a>
+                    <a href="/dashboard/documents?status={{ status_filter }}&category=cra_response" class="filter-btn {{ 'active' if category_filter == 'cra_response' else '' }}">CRA Response</a>
+                    <a href="/dashboard/documents?status={{ status_filter }}&category=collection" class="filter-btn {{ 'active' if category_filter == 'collection' else '' }}">Collection</a>
+                    <a href="/dashboard/documents?status={{ status_filter }}&category=legal" class="filter-btn {{ 'active' if category_filter == 'legal' else '' }}">Legal</a>
+                    <a href="/dashboard/documents?status={{ status_filter }}&category=credit_report" class="filter-btn {{ 'active' if category_filter == 'credit_report' else '' }}">Credit Report</a>
+                    <a href="/dashboard/documents?status={{ status_filter }}&category=identity" class="filter-btn {{ 'active' if category_filter == 'identity' else '' }}">Identity</a>
+                </div>
+            </div>
+
+            {% if uploads %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Document</th>
+                        <th>Category</th>
+                        <th>Details</th>
+                        <th>Uploaded</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for upload in uploads %}
+                    <tr>
+                        <td>
+                            <a href="/dashboard/clients" class="client-name">{{ upload.client_name }}</a>
+                        </td>
+                        <td>
+                            <div class="file-info">
+                                <div class="file-icon {{ upload.file_path.split('.')[-1] if upload.file_path else 'doc' }}">
+                                    {{ upload.file_path.split('.')[-1][:3].upper() if upload.file_path else 'DOC' }}
+                                </div>
+                                <span class="file-name">{{ upload.file_name }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="category-badge category-{{ upload.category }}">
+                                {{ upload.category.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if upload.bureau %}
+                                <strong>{{ upload.bureau.title() }}</strong><br>
+                            {% endif %}
+                            {% if upload.sender_name %}
+                                {{ upload.sender_name }}<br>
+                            {% endif %}
+                            <span style="font-size: 12px; color: #64748b;">{{ upload.document_type.replace('_', ' ').title() }}</span>
+                        </td>
+                        <td>
+                            {{ upload.uploaded_at.strftime('%b %d, %Y') if upload.uploaded_at else 'N/A' }}
+                            {% if upload.priority != 'normal' %}
+                            <br><span class="priority-badge priority-{{ upload.priority }}">{{ upload.priority }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if upload.reviewed %}
+                            <span class="status-badge status-reviewed">Reviewed</span>
+                            {% else %}
+                            <span class="status-badge status-pending">Pending</span>
+                            {% endif %}
+                            {% if upload.requires_action %}
+                            <br><span style="font-size: 11px; color: #f59e0b;">⚠️ Action needed</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/{{ upload.file_path }}" target="_blank" class="action-btn">View</a>
+                            {% if not upload.reviewed %}
+                            <button class="action-btn primary" onclick="markReviewed({{ upload.id }})">Review</button>
+                            {% endif %}
+                            <button class="action-btn danger" onclick="deleteUpload({{ upload.id }})">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="12" y1="18" x2="12" y2="12"/>
+                    <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                <h3>No documents found</h3>
+                <p>Upload documents using the button above or adjust your filters.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <div id="uploadModal" class="upload-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload Document</h3>
+                <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="step-indicator">
+                    <div class="step active" id="stepIndicator1">
+                        <span class="step-number">1</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="stepIndicator2">
+                        <span class="step-number">2</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="stepIndicator3">
+                        <span class="step-number">3</span>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="stepIndicator4">
+                        <span class="step-number">4</span>
+                    </div>
+                </div>
+
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <input type="hidden" name="category" id="selectedCategory">
+                    <input type="hidden" name="document_type" id="selectedType">
+
+                    <div class="step-content active" id="step1">
+                        <h4 style="margin-bottom: 20px; color: #1a1a2e;">Select Document Category</h4>
+                        <div class="category-grid">
+                            <button type="button" class="category-btn" data-category="cra_response">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                <div class="category-btn-label">CRA Response</div>
+                            </button>
+                            <button type="button" class="category-btn" data-category="collection">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <div class="category-btn-label">Collection Letter</div>
+                            </button>
+                            <button type="button" class="category-btn" data-category="legal">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <div class="category-btn-label">Legal/Lawsuit</div>
+                            </button>
+                            <button type="button" class="category-btn" data-category="credit_report">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                <div class="category-btn-label">Credit Report</div>
+                            </button>
+                            <button type="button" class="category-btn" data-category="identity">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2"/><path d="M15 12h2"/><path d="M7 16h10"/></svg>
+                                <div class="category-btn-label">ID/Proof</div>
+                            </button>
+                            <button type="button" class="category-btn" data-category="other">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                                <div class="category-btn-label">Other</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="step-content" id="step2">
+                        <h4 style="margin-bottom: 20px; color: #1a1a2e;">Select Document Type</h4>
+                        <div class="type-grid" id="typeGrid"></div>
+                    </div>
+
+                    <div class="step-content" id="step3">
+                        <h4 style="margin-bottom: 20px; color: #1a1a2e;">Additional Details</h4>
+                        <div id="detailsForm"></div>
+                    </div>
+
+                    <div class="step-content" id="step4">
+                        <h4 style="margin-bottom: 20px; color: #1a1a2e;">Upload File</h4>
+                        <div class="form-group">
+                            <label class="form-label">Client</label>
+                            <select name="client_id" id="clientSelect" class="form-select" required>
+                                <option value="">Select a client...</option>
+                            </select>
+                        </div>
+                        <div class="dropzone" id="dropzone">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <div class="dropzone-text"><strong>Click to upload</strong> or drag and drop<br>PDF, JPG, PNG, DOC up to 20MB</div>
+                            <input type="file" name="file" id="fileInput" style="display: none" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt">
+                        </div>
+                        <div id="filePreview" style="display: none;"></div>
+                        <div class="form-row" style="margin-top: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Document Date</label>
+                                <input type="date" name="document_date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date Received</label>
+                                <input type="date" name="received_date" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-textarea" rows="3" placeholder="Any additional notes about this document..."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Priority</label>
+                                <select name="priority" class="form-select">
+                                    <option value="normal">Normal</option>
+                                    <option value="low">Low</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <input type="checkbox" name="requires_action" value="true"> Requires Action
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display: none;">Back</button>
+                <div></div>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let selectedCategory = '';
+        let selectedType = '';
+
+        const typesByCategory = {
+            cra_response: [
+                { value: 'deleted', label: 'Items Deleted' },
+                { value: 'verified', label: 'Items Verified' },
+                { value: 'investigating', label: 'Under Investigation' },
+                { value: 'updated', label: 'Items Updated' },
+                { value: 'frivolous', label: 'Frivolous Response' },
+                { value: 'no_response', label: 'No Response (30+ days)' }
+            ],
+            collection: [
+                { value: 'initial_notice', label: 'Initial Collection Notice' },
+                { value: 'validation_request', label: 'Debt Validation Request' },
+                { value: 'payment_demand', label: 'Payment Demand' },
+                { value: 'settlement_offer', label: 'Settlement Offer' },
+                { value: 'threat_letter', label: 'Threat/Legal Warning' }
+            ],
+            legal: [
+                { value: 'lawsuit_complaint', label: 'Lawsuit Complaint' },
+                { value: 'summons', label: 'Summons' },
+                { value: 'court_order', label: 'Court Order' },
+                { value: 'judgment', label: 'Judgment' },
+                { value: 'garnishment', label: 'Garnishment Notice' },
+                { value: 'subpoena', label: 'Subpoena' },
+                { value: 'attorney_letter', label: 'Attorney Letter' }
+            ],
+            credit_report: [
+                { value: 'full_report', label: 'Full Credit Report (3-Bureau)' },
+                { value: 'updated_report', label: 'Updated Credit Report' },
+                { value: 'single_bureau', label: 'Single Bureau Report' }
+            ],
+            identity: [
+                { value: 'drivers_license', label: "Driver's License" },
+                { value: 'ssn_card', label: 'Social Security Card' },
+                { value: 'utility_bill', label: 'Utility Bill' },
+                { value: 'bank_statement', label: 'Bank Statement' },
+                { value: 'passport', label: 'Passport' }
+            ],
+            other: [
+                { value: 'correspondence', label: 'General Correspondence' },
+                { value: 'notes', label: 'Personal Notes' },
+                { value: 'misc', label: 'Miscellaneous' }
+            ]
+        };
+
+        function openUploadModal() {
+            document.getElementById('uploadModal').classList.add('active');
+            loadClients();
+            resetForm();
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+            resetForm();
+        }
+
+        function resetForm() {
+            currentStep = 1;
+            selectedCategory = '';
+            selectedType = '';
+            document.getElementById('uploadForm').reset();
+            updateStepIndicators();
+            showStep(1);
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
+        }
+
+        function updateStepIndicators() {
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById(`stepIndicator${i}`);
+                indicator.classList.remove('active', 'completed');
+                if (i < currentStep) indicator.classList.add('completed');
+                if (i === currentStep) indicator.classList.add('active');
+            }
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.step-content').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            document.getElementById('prevBtn').style.display = step > 1 ? 'block' : 'none';
+            document.getElementById('nextBtn').textContent = step === 4 ? 'Upload' : 'Next';
+        }
+
+        function nextStep() {
+            if (currentStep === 1 && !selectedCategory) {
+                alert('Please select a document category');
+                return;
+            }
+            if (currentStep === 2 && !selectedType) {
+                alert('Please select a document type');
+                return;
+            }
+            if (currentStep === 4) {
+                submitUpload();
+                return;
+            }
+            currentStep++;
+            if (currentStep === 2) populateTypes();
+            if (currentStep === 3) populateDetails();
+            updateStepIndicators();
+            showStep(currentStep);
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepIndicators();
+                showStep(currentStep);
+            }
+        }
+
+        function populateTypes() {
+            const grid = document.getElementById('typeGrid');
+            const types = typesByCategory[selectedCategory] || [];
+            grid.innerHTML = types.map(t => 
+                `<button type="button" class="type-btn" data-type="${t.value}">${t.label}</button>`
+            ).join('');
+            
+            grid.querySelectorAll('.type-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    grid.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    selectedType = btn.dataset.type;
+                    document.getElementById('selectedType').value = selectedType;
+                });
+            });
+        }
+
+        function populateDetails() {
+            const form = document.getElementById('detailsForm');
+            let html = '';
+            
+            if (selectedCategory === 'cra_response') {
+                html = `
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Credit Bureau</label>
+                            <select name="bureau" class="form-select" required>
+                                <option value="">Select bureau...</option>
+                                <option value="experian">Experian</option>
+                                <option value="transunion">TransUnion</option>
+                                <option value="equifax">Equifax</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dispute Round</label>
+                            <select name="dispute_round" class="form-select">
+                                <option value="1">Round 1</option>
+                                <option value="2">Round 2</option>
+                                <option value="3">Round 3</option>
+                                <option value="4">Round 4</option>
+                                <option value="5">Round 5+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Response Type</label>
+                        <select name="response_type" class="form-select">
+                            <option value="deleted">Items Deleted</option>
+                            <option value="verified">Items Verified</option>
+                            <option value="investigating">Under Investigation</option>
+                            <option value="updated">Items Updated</option>
+                            <option value="frivolous">Frivolous</option>
+                        </select>
+                    </div>
+                `;
+            } else if (selectedCategory === 'collection') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">Collection Agency Name</label>
+                        <input type="text" name="sender_name" class="form-input" placeholder="e.g., Midland Credit Management">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Account Number</label>
+                            <input type="text" name="account_number" class="form-input" placeholder="Account/Reference number">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount Claimed</label>
+                            <input type="number" step="0.01" name="amount_claimed" class="form-input" placeholder="0.00">
+                        </div>
+                    </div>
+                `;
+            } else if (selectedCategory === 'legal') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">Law Firm / Sender Name</label>
+                        <input type="text" name="sender_name" class="form-input" placeholder="e.g., Smith & Associates">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Amount in Dispute</label>
+                            <input type="number" step="0.01" name="amount_claimed" class="form-input" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Response Deadline</label>
+                            <input type="date" name="action_deadline" class="form-input">
+                        </div>
+                    </div>
+                `;
+            } else if (selectedCategory === 'credit_report') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">Bureau (if single bureau report)</label>
+                        <select name="bureau" class="form-select">
+                            <option value="">All bureaus / Multiple</option>
+                            <option value="experian">Experian</option>
+                            <option value="transunion">TransUnion</option>
+                            <option value="equifax">Equifax</option>
+                        </select>
+                    </div>
+                `;
+            } else {
+                html = `<p style="color: #64748b;">No additional details required for this document type.</p>`;
+            }
+            
+            form.innerHTML = html;
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/clients');
+                const data = await response.json();
+                const select = document.getElementById('clientSelect');
+                select.innerHTML = '<option value="">Select a client...</option>';
+                if (data.clients) {
+                    data.clients.forEach(client => {
+                        select.innerHTML += `<option value="${client.id}">${client.name}</option>`;
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+            }
+        }
+
+        async function submitUpload() {
+            const form = document.getElementById('uploadForm');
+            const formData = new FormData(form);
+            formData.set('category', selectedCategory);
+            formData.set('document_type', selectedType);
+
+            if (!formData.get('client_id')) {
+                alert('Please select a client');
+                return;
+            }
+            if (!formData.get('file') || !formData.get('file').name) {
+                alert('Please select a file to upload');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/client/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Document uploaded successfully!');
+                    closeUploadModal();
+                    location.reload();
+                } else {
+                    alert('Upload failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Upload error: ' + error.message);
+            }
+        }
+
+        async function markReviewed(uploadId) {
+            try {
+                const response = await fetch(`/api/upload/${uploadId}/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reviewed_by: 'Admin' })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error marking as reviewed');
+            }
+        }
+
+        async function deleteUpload(uploadId) {
+            if (!confirm('Are you sure you want to delete this document?')) return;
+            
+            try {
+                const response = await fetch(`/api/upload/${uploadId}`, { method: 'DELETE' });
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error deleting document');
+            }
+        }
+
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedCategory = btn.dataset.category;
+                document.getElementById('selectedCategory').value = selectedCategory;
+            });
+        });
+
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                showFilePreview(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                showFilePreview(e.target.files[0]);
+            }
+        });
+
+        function showFilePreview(file) {
+            const preview = document.getElementById('filePreview');
+            const ext = file.name.split('.').pop().toUpperCase();
+            const size = (file.size / 1024 / 1024).toFixed(2);
+            
+            preview.innerHTML = `
+                <div class="file-preview">
+                    <div class="file-preview-icon">${ext}</div>
+                    <div class="file-preview-info">
+                        <div class="file-preview-name">${file.name}</div>
+                        <div class="file-preview-size">${size} MB</div>
+                    </div>
+                    <button type="button" class="file-preview-remove" onclick="removeFile()">✕</button>
+                </div>
+            `;
+            preview.style.display = 'block';
+            dropzone.style.display = 'none';
+        }
+
+        function removeFile() {
+            fileInput.value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            dropzone.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

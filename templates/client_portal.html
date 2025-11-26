@@ -537,6 +537,7 @@
         <a class="nav-tab active" data-tab="summary">Summary</a>
         <a class="nav-tab" data-tab="status">Status</a>
         <a class="nav-tab" data-tab="attachments">Attachments</a>
+        <a class="nav-tab" data-tab="documents">Upload Documents</a>
         <a class="nav-tab" data-tab="contact">Contact Us</a>
         <a class="nav-tab" data-tab="education">Education</a>
         <a class="nav-tab" data-tab="referral">Refer a Friend</a>
@@ -1034,6 +1035,97 @@
             </div>
         </div>
         
+        <!-- Upload Documents Tab -->
+        <div class="tab-content" id="documents">
+            <div class="card">
+                <div class="card-title">Upload Documents</div>
+                <p style="color: #64748b; margin-bottom: 25px;">Upload important documents related to your case. Select the document type first, then provide the details and upload your file.</p>
+                
+                <div id="uploadSteps">
+                    <div id="categoryStep">
+                        <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 1: Select Document Category</h4>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <button type="button" class="doc-category-btn" data-category="cra_response" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 10px; display: block;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                <div style="font-weight: 600;">CRA Response</div>
+                            </button>
+                            <button type="button" class="doc-category-btn" data-category="collection" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 10px; display: block;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <div style="font-weight: 600;">Collection Letter</div>
+                            </button>
+                            <button type="button" class="doc-category-btn" data-category="legal" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 10px; display: block;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                <div style="font-weight: 600;">Legal/Lawsuit</div>
+                            </button>
+                            <button type="button" class="doc-category-btn" data-category="credit_report" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 10px; display: block;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <div style="font-weight: 600;">Credit Report</div>
+                            </button>
+                            <button type="button" class="doc-category-btn" data-category="identity" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 10px; display: block;"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2"/><path d="M15 12h2"/><path d="M7 16h10"/></svg>
+                                <div style="font-weight: 600;">ID/Proof</div>
+                            </button>
+                            <button type="button" class="doc-category-btn" data-category="other" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 10px; display: block;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                                <div style="font-weight: 600;">Other</div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="typeStep" style="display: none;">
+                        <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 2: Select Document Type</h4>
+                        <div id="docTypeGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;"></div>
+                        <button type="button" onclick="showCategoryStep()" style="margin-top: 15px; padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">← Back</button>
+                    </div>
+                    
+                    <div id="detailsStep" style="display: none;">
+                        <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 3: Additional Details</h4>
+                        <div id="docDetailsForm"></div>
+                        <button type="button" onclick="showTypeStep()" style="margin-top: 15px; padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">← Back</button>
+                    </div>
+                    
+                    <div id="uploadStep" style="display: none;">
+                        <h4 style="margin-bottom: 15px; color: #1a1a2e;">Step 4: Upload File</h4>
+                        <form id="docUploadForm" enctype="multipart/form-data">
+                            <input type="hidden" id="docCategory" name="category">
+                            <input type="hidden" id="docType" name="document_type">
+                            <div id="docDropzone" style="border: 2px dashed #e2e8f0; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; margin-bottom: 20px;">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" style="margin-bottom: 15px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                <div style="color: #64748b;"><strong style="color: #4ade80;">Click to upload</strong> or drag and drop<br>PDF, JPG, PNG up to 20MB</div>
+                                <input type="file" id="docFileInput" name="file" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt" style="display: none;">
+                            </div>
+                            <div id="docFilePreview" style="display: none;"></div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                                <div>
+                                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Document Date</label>
+                                    <input type="date" name="document_date" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Date Received</label>
+                                    <input type="date" name="received_date" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Notes</label>
+                                <textarea name="notes" rows="3" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="Any additional notes..."></textarea>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button type="button" onclick="showDetailsStep()" style="padding: 12px 24px; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer;">← Back</button>
+                                <button type="submit" style="flex: 1; padding: 12px 24px; background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%); color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Upload Document</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">My Uploaded Documents</div>
+                <div id="myUploadsTable">
+                    <p style="color: #64748b; text-align: center; padding: 30px;">Loading your documents...</p>
+                </div>
+            </div>
+        </div>
+        
         <!-- Refer a Friend Tab -->
         <div class="tab-content" id="referral">
             <div class="referral-section">
@@ -1247,6 +1339,336 @@
                 console.error('Update error:', error);
                 alert('Connection error. Please try again.');
             }
+        }
+        
+        let docSelectedCategory = '';
+        let docSelectedType = '';
+        const portalToken = '{{ client.portal_token if client else "" }}';
+        
+        const docTypesByCategory = {
+            cra_response: [
+                { value: 'deleted', label: 'Items Deleted' },
+                { value: 'verified', label: 'Items Verified' },
+                { value: 'investigating', label: 'Under Investigation' },
+                { value: 'updated', label: 'Items Updated' },
+                { value: 'frivolous', label: 'Frivolous Response' },
+                { value: 'no_response', label: 'No Response (30+ days)' }
+            ],
+            collection: [
+                { value: 'initial_notice', label: 'Initial Collection Notice' },
+                { value: 'validation_request', label: 'Debt Validation Request' },
+                { value: 'payment_demand', label: 'Payment Demand' },
+                { value: 'settlement_offer', label: 'Settlement Offer' },
+                { value: 'threat_letter', label: 'Threat/Legal Warning' }
+            ],
+            legal: [
+                { value: 'lawsuit_complaint', label: 'Lawsuit Complaint' },
+                { value: 'summons', label: 'Summons' },
+                { value: 'court_order', label: 'Court Order' },
+                { value: 'judgment', label: 'Judgment' },
+                { value: 'garnishment', label: 'Garnishment Notice' },
+                { value: 'subpoena', label: 'Subpoena' },
+                { value: 'attorney_letter', label: 'Attorney Letter' }
+            ],
+            credit_report: [
+                { value: 'full_report', label: 'Full Credit Report (3-Bureau)' },
+                { value: 'updated_report', label: 'Updated Credit Report' },
+                { value: 'single_bureau', label: 'Single Bureau Report' }
+            ],
+            identity: [
+                { value: 'drivers_license', label: "Driver's License" },
+                { value: 'ssn_card', label: 'Social Security Card' },
+                { value: 'utility_bill', label: 'Utility Bill' },
+                { value: 'bank_statement', label: 'Bank Statement' },
+                { value: 'passport', label: 'Passport' }
+            ],
+            other: [
+                { value: 'correspondence', label: 'General Correspondence' },
+                { value: 'notes', label: 'Personal Notes' },
+                { value: 'misc', label: 'Miscellaneous' }
+            ]
+        };
+        
+        function showCategoryStep() {
+            document.getElementById('categoryStep').style.display = 'block';
+            document.getElementById('typeStep').style.display = 'none';
+            document.getElementById('detailsStep').style.display = 'none';
+            document.getElementById('uploadStep').style.display = 'none';
+        }
+        
+        function showTypeStep() {
+            document.getElementById('categoryStep').style.display = 'none';
+            document.getElementById('typeStep').style.display = 'block';
+            document.getElementById('detailsStep').style.display = 'none';
+            document.getElementById('uploadStep').style.display = 'none';
+        }
+        
+        function showDetailsStep() {
+            document.getElementById('categoryStep').style.display = 'none';
+            document.getElementById('typeStep').style.display = 'none';
+            document.getElementById('detailsStep').style.display = 'block';
+            document.getElementById('uploadStep').style.display = 'none';
+        }
+        
+        function showUploadStep() {
+            document.getElementById('categoryStep').style.display = 'none';
+            document.getElementById('typeStep').style.display = 'none';
+            document.getElementById('detailsStep').style.display = 'none';
+            document.getElementById('uploadStep').style.display = 'block';
+        }
+        
+        function populateDocTypes() {
+            const grid = document.getElementById('docTypeGrid');
+            const types = docTypesByCategory[docSelectedCategory] || [];
+            grid.innerHTML = types.map(t => 
+                `<button type="button" class="doc-type-btn" data-type="${t.value}" style="padding: 12px 15px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left;">${t.label}</button>`
+            ).join('');
+            
+            grid.querySelectorAll('.doc-type-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    grid.querySelectorAll('.doc-type-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
+                    btn.style.borderColor = '#4ade80';
+                    btn.style.background = '#dcfce7';
+                    docSelectedType = btn.dataset.type;
+                    document.getElementById('docType').value = docSelectedType;
+                    populateDocDetails();
+                    showDetailsStep();
+                });
+            });
+        }
+        
+        function populateDocDetails() {
+            const form = document.getElementById('docDetailsForm');
+            let html = '';
+            
+            if (docSelectedCategory === 'cra_response') {
+                html = `
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Credit Bureau</label>
+                            <select name="bureau" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <option value="">Select bureau...</option>
+                                <option value="experian">Experian</option>
+                                <option value="transunion">TransUnion</option>
+                                <option value="equifax">Equifax</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Dispute Round</label>
+                            <select name="dispute_round" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                                <option value="1">Round 1</option>
+                                <option value="2">Round 2</option>
+                                <option value="3">Round 3</option>
+                                <option value="4">Round 4</option>
+                                <option value="5">Round 5+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+                `;
+            } else if (docSelectedCategory === 'collection') {
+                html = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Collection Agency Name</label>
+                        <input type="text" name="sender_name" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="e.g., Midland Credit Management">
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Account Number</label>
+                            <input type="text" name="account_number" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="Account/Reference #">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Amount Claimed</label>
+                            <input type="number" step="0.01" name="amount_claimed" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="0.00">
+                        </div>
+                    </div>
+                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+                `;
+            } else if (docSelectedCategory === 'legal') {
+                html = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Law Firm / Sender Name</label>
+                        <input type="text" name="sender_name" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="e.g., Smith & Associates">
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Amount in Dispute</label>
+                            <input type="number" step="0.01" name="amount_claimed" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Response Deadline</label>
+                            <input type="date" name="action_deadline" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                    </div>
+                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+                `;
+            } else if (docSelectedCategory === 'credit_report') {
+                html = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Bureau (if single bureau report)</label>
+                        <select name="bureau" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <option value="">All bureaus / Multiple</option>
+                            <option value="experian">Experian</option>
+                            <option value="transunion">TransUnion</option>
+                            <option value="equifax">Equifax</option>
+                        </select>
+                    </div>
+                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+                `;
+            } else {
+                html = `
+                    <p style="color: #64748b; margin-bottom: 15px;">No additional details required for this document type.</p>
+                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+                `;
+            }
+            form.innerHTML = html;
+        }
+        
+        document.querySelectorAll('.doc-category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.doc-category-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
+                btn.style.borderColor = '#4ade80';
+                btn.style.background = '#dcfce7';
+                docSelectedCategory = btn.dataset.category;
+                document.getElementById('docCategory').value = docSelectedCategory;
+                populateDocTypes();
+                showTypeStep();
+            });
+        });
+        
+        const docDropzone = document.getElementById('docDropzone');
+        const docFileInput = document.getElementById('docFileInput');
+        
+        if (docDropzone) {
+            docDropzone.addEventListener('click', () => docFileInput.click());
+            docDropzone.addEventListener('dragover', (e) => { e.preventDefault(); docDropzone.style.borderColor = '#4ade80'; docDropzone.style.background = '#f0fdf4'; });
+            docDropzone.addEventListener('dragleave', () => { docDropzone.style.borderColor = '#e2e8f0'; docDropzone.style.background = 'transparent'; });
+            docDropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                docDropzone.style.borderColor = '#e2e8f0';
+                if (e.dataTransfer.files.length) {
+                    docFileInput.files = e.dataTransfer.files;
+                    showDocFilePreview(e.dataTransfer.files[0]);
+                }
+            });
+        }
+        
+        if (docFileInput) {
+            docFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    showDocFilePreview(e.target.files[0]);
+                }
+            });
+        }
+        
+        function showDocFilePreview(file) {
+            const preview = document.getElementById('docFilePreview');
+            const ext = file.name.split('.').pop().toUpperCase();
+            const size = (file.size / 1024 / 1024).toFixed(2);
+            preview.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="width: 48px; height: 48px; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600;">${ext}</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${file.name}</div>
+                        <div style="font-size: 12px; color: #64748b;">${size} MB</div>
+                    </div>
+                    <button type="button" onclick="removeDocFile()" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px;">✕</button>
+                </div>
+            `;
+            preview.style.display = 'block';
+            docDropzone.style.display = 'none';
+        }
+        
+        function removeDocFile() {
+            docFileInput.value = '';
+            document.getElementById('docFilePreview').style.display = 'none';
+            docDropzone.style.display = 'block';
+        }
+        
+        document.getElementById('docUploadForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            formData.set('category', docSelectedCategory);
+            formData.set('document_type', docSelectedType);
+            
+            const detailsForm = document.getElementById('docDetailsForm');
+            detailsForm.querySelectorAll('input, select').forEach(input => {
+                if (input.name && input.value) {
+                    formData.set(input.name, input.value);
+                }
+            });
+            
+            if (!formData.get('file') || !formData.get('file').name) {
+                alert('Please select a file to upload');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/portal/' + portalToken + '/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Document uploaded successfully!');
+                    showCategoryStep();
+                    document.querySelectorAll('.doc-category-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
+                    this.reset();
+                    removeDocFile();
+                    loadMyUploads();
+                } else {
+                    alert('Upload failed: ' + data.error);
+                }
+            } catch (error) {
+                alert('Upload error: ' + error.message);
+            }
+        });
+        
+        async function loadMyUploads() {
+            try {
+                const response = await fetch('/api/portal/' + portalToken + '/uploads');
+                const data = await response.json();
+                const container = document.getElementById('myUploadsTable');
+                
+                if (data.success && data.uploads && data.uploads.length > 0) {
+                    container.innerHTML = `
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; color: #64748b;">Document</th>
+                                    <th style="text-align: left; padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; color: #64748b;">Type</th>
+                                    <th style="text-align: left; padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; color: #64748b;">Uploaded</th>
+                                    <th style="text-align: left; padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 12px; color: #64748b;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.uploads.map(u => `
+                                    <tr>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f1f5f9;">${u.file_name}</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f1f5f9;">${u.category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f1f5f9;">${u.uploaded_at || 'N/A'}</td>
+                                        <td style="padding: 12px; border-bottom: 1px solid #f1f5f9;">
+                                            <span style="padding: 4px 10px; border-radius: 20px; font-size: 11px; ${u.reviewed ? 'background: #dcfce7; color: #166534;' : 'background: #fef3c7; color: #92400e;'}">
+                                                ${u.reviewed ? 'Reviewed' : 'Pending Review'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    container.innerHTML = '<p style="color: #64748b; text-align: center; padding: 30px;">No documents uploaded yet.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading uploads:', error);
+            }
+        }
+        
+        if (portalToken) {
+            loadMyUploads();
         }
     </script>
 </body>

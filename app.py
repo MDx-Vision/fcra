@@ -31,7 +31,8 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload
+from werkzeug.utils import secure_filename
 import secrets
 import uuid
 from datetime import timedelta
@@ -70,6 +71,7 @@ section_pdf_gen = SectionPDFGenerator()
 os.makedirs("static/section_pdfs", exist_ok=True)
 os.makedirs("static/generated_letters", exist_ok=True)
 os.makedirs("static/logs", exist_ok=True)
+os.makedirs("static/client_uploads", exist_ok=True)
 
 # Initialize database
 try:
@@ -5792,6 +5794,383 @@ def api_update_client_documents(client_id):
         return jsonify({'success': True, 'message': 'Documents updated'})
     except Exception as e:
         db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# DOCUMENT CENTER - Client Upload Management
+# ============================================================
+
+ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png', 'gif', 'doc', 'docx', 'txt'}
+UPLOAD_FOLDER = 'static/client_uploads'
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/api/client/upload', methods=['POST'])
+def api_client_upload():
+    """Handle document upload from client portal or admin"""
+    db = get_db()
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': 'File type not allowed'}), 400
+        
+        client_id = request.form.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Client ID required'}), 400
+        
+        client = db.query(Client).filter_by(id=int(client_id)).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        category = request.form.get('category', 'other')
+        document_type = request.form.get('document_type', 'misc')
+        
+        filename = secure_filename(file.filename)
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"{client_id}_{timestamp}_{filename}"
+        
+        client_folder = os.path.join(UPLOAD_FOLDER, str(client_id))
+        os.makedirs(client_folder, exist_ok=True)
+        
+        file_path = os.path.join(client_folder, unique_filename)
+        file.save(file_path)
+        file_size = os.path.getsize(file_path)
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'unknown'
+        
+        upload = ClientUpload(
+            client_id=int(client_id),
+            case_id=int(request.form.get('case_id')) if request.form.get('case_id') else None,
+            category=category,
+            document_type=document_type,
+            bureau=request.form.get('bureau'),
+            dispute_round=int(request.form.get('dispute_round')) if request.form.get('dispute_round') else None,
+            response_type=request.form.get('response_type'),
+            sender_name=request.form.get('sender_name'),
+            account_number=request.form.get('account_number'),
+            amount_claimed=float(request.form.get('amount_claimed')) if request.form.get('amount_claimed') else None,
+            file_path=file_path,
+            file_name=filename,
+            file_size=file_size,
+            file_type=file_ext,
+            notes=request.form.get('notes'),
+            priority=request.form.get('priority', 'normal'),
+            requires_action=request.form.get('requires_action') == 'true'
+        )
+        
+        if request.form.get('document_date'):
+            upload.document_date = datetime.strptime(request.form.get('document_date'), '%Y-%m-%d').date()
+        if request.form.get('received_date'):
+            upload.received_date = datetime.strptime(request.form.get('received_date'), '%Y-%m-%d').date()
+        if request.form.get('action_deadline'):
+            upload.action_deadline = datetime.strptime(request.form.get('action_deadline'), '%Y-%m-%d').date()
+        
+        db.add(upload)
+        db.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Document uploaded successfully',
+            'upload_id': upload.id,
+            'file_path': file_path
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client/<int:client_id>/uploads', methods=['GET'])
+def api_get_client_uploads(client_id):
+    """Get all document uploads for a client"""
+    db = get_db()
+    try:
+        category = request.args.get('category')
+        
+        query = db.query(ClientUpload).filter_by(client_id=client_id)
+        if category:
+            query = query.filter_by(category=category)
+        
+        uploads = query.order_by(ClientUpload.uploaded_at.desc()).all()
+        
+        uploads_data = [{
+            'id': u.id,
+            'category': u.category,
+            'document_type': u.document_type,
+            'bureau': u.bureau,
+            'dispute_round': u.dispute_round,
+            'response_type': u.response_type,
+            'sender_name': u.sender_name,
+            'account_number': u.account_number,
+            'amount_claimed': u.amount_claimed,
+            'file_name': u.file_name,
+            'file_size': u.file_size,
+            'file_type': u.file_type,
+            'file_path': u.file_path,
+            'document_date': u.document_date.isoformat() if u.document_date else None,
+            'received_date': u.received_date.isoformat() if u.received_date else None,
+            'uploaded_at': u.uploaded_at.strftime('%Y-%m-%d %H:%M') if u.uploaded_at else None,
+            'reviewed': u.reviewed,
+            'reviewed_by': u.reviewed_by,
+            'reviewed_at': u.reviewed_at.strftime('%Y-%m-%d %H:%M') if u.reviewed_at else None,
+            'notes': u.notes,
+            'requires_action': u.requires_action,
+            'action_deadline': u.action_deadline.isoformat() if u.action_deadline else None,
+            'priority': u.priority
+        } for u in uploads]
+        
+        return jsonify({'success': True, 'uploads': uploads_data})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/upload/<int:upload_id>/review', methods=['POST'])
+def api_review_upload(upload_id):
+    """Mark document as reviewed"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        
+        upload = db.query(ClientUpload).filter_by(id=upload_id).first()
+        if not upload:
+            return jsonify({'success': False, 'error': 'Upload not found'}), 404
+        
+        upload.reviewed = True
+        upload.reviewed_by = data.get('reviewed_by', 'Admin')
+        upload.reviewed_at = datetime.utcnow()
+        
+        if 'notes' in data:
+            upload.notes = data['notes']
+        if 'requires_action' in data:
+            upload.requires_action = data['requires_action']
+        if 'priority' in data:
+            upload.priority = data['priority']
+        if data.get('action_deadline'):
+            upload.action_deadline = datetime.strptime(data['action_deadline'], '%Y-%m-%d').date()
+        
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Document marked as reviewed'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/upload/<int:upload_id>', methods=['DELETE'])
+def api_delete_upload(upload_id):
+    """Delete an uploaded document"""
+    db = get_db()
+    try:
+        upload = db.query(ClientUpload).filter_by(id=upload_id).first()
+        if not upload:
+            return jsonify({'success': False, 'error': 'Upload not found'}), 404
+        
+        if upload.file_path and os.path.exists(upload.file_path):
+            os.remove(upload.file_path)
+        
+        db.delete(upload)
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Document deleted'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/documents')
+def dashboard_documents():
+    """Admin view of all client document uploads"""
+    db = get_db()
+    try:
+        status_filter = request.args.get('status', 'pending')
+        category_filter = request.args.get('category', 'all')
+        
+        query = db.query(ClientUpload, Client).join(Client, ClientUpload.client_id == Client.id)
+        
+        if status_filter == 'pending':
+            query = query.filter(ClientUpload.reviewed == False)
+        elif status_filter == 'reviewed':
+            query = query.filter(ClientUpload.reviewed == True)
+        elif status_filter == 'urgent':
+            query = query.filter(ClientUpload.priority == 'urgent')
+        elif status_filter == 'action':
+            query = query.filter(ClientUpload.requires_action == True)
+        
+        if category_filter != 'all':
+            query = query.filter(ClientUpload.category == category_filter)
+        
+        results = query.order_by(ClientUpload.uploaded_at.desc()).limit(100).all()
+        
+        uploads = [{
+            'id': u.id,
+            'client_id': u.client_id,
+            'client_name': c.name,
+            'category': u.category,
+            'document_type': u.document_type,
+            'bureau': u.bureau,
+            'sender_name': u.sender_name,
+            'file_name': u.file_name,
+            'file_path': u.file_path,
+            'uploaded_at': u.uploaded_at,
+            'reviewed': u.reviewed,
+            'requires_action': u.requires_action,
+            'priority': u.priority,
+            'action_deadline': u.action_deadline
+        } for u, c in results]
+        
+        pending_count = db.query(ClientUpload).filter(ClientUpload.reviewed == False).count()
+        urgent_count = db.query(ClientUpload).filter(ClientUpload.priority == 'urgent').count()
+        action_count = db.query(ClientUpload).filter(ClientUpload.requires_action == True).count()
+        
+        return render_template('documents.html',
+                             uploads=uploads,
+                             status_filter=status_filter,
+                             category_filter=category_filter,
+                             pending_count=pending_count,
+                             urgent_count=urgent_count,
+                             action_count=action_count)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template('documents.html',
+                             uploads=[],
+                             status_filter='pending',
+                             category_filter='all',
+                             pending_count=0,
+                             urgent_count=0,
+                             action_count=0)
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/<token>/upload', methods=['POST'])
+def api_portal_upload(token):
+    """Handle document upload from client portal"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(portal_token=token).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Invalid portal token'}), 404
+        
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': 'File type not allowed'}), 400
+        
+        category = request.form.get('category', 'other')
+        document_type = request.form.get('document_type', 'misc')
+        
+        filename = secure_filename(file.filename)
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"{client.id}_{timestamp}_{filename}"
+        
+        client_folder = os.path.join(UPLOAD_FOLDER, str(client.id))
+        os.makedirs(client_folder, exist_ok=True)
+        
+        file_path = os.path.join(client_folder, unique_filename)
+        file.save(file_path)
+        file_size = os.path.getsize(file_path)
+        file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else 'unknown'
+        
+        upload = ClientUpload(
+            client_id=client.id,
+            category=category,
+            document_type=document_type,
+            bureau=request.form.get('bureau'),
+            dispute_round=int(request.form.get('dispute_round')) if request.form.get('dispute_round') else None,
+            response_type=document_type if category == 'cra_response' else request.form.get('response_type'),
+            sender_name=request.form.get('sender_name'),
+            account_number=request.form.get('account_number'),
+            amount_claimed=float(request.form.get('amount_claimed')) if request.form.get('amount_claimed') else None,
+            file_path=file_path,
+            file_name=filename,
+            file_size=file_size,
+            file_type=file_ext,
+            notes=request.form.get('notes'),
+            priority='high' if category == 'legal' else request.form.get('priority', 'normal'),
+            requires_action=category == 'legal'
+        )
+        
+        if request.form.get('document_date'):
+            upload.document_date = datetime.strptime(request.form.get('document_date'), '%Y-%m-%d').date()
+        if request.form.get('received_date'):
+            upload.received_date = datetime.strptime(request.form.get('received_date'), '%Y-%m-%d').date()
+        if request.form.get('action_deadline'):
+            upload.action_deadline = datetime.strptime(request.form.get('action_deadline'), '%Y-%m-%d').date()
+        
+        db.add(upload)
+        db.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Document uploaded successfully',
+            'upload_id': upload.id
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/<token>/uploads', methods=['GET'])
+def api_portal_get_uploads(token):
+    """Get uploaded documents for client portal"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(portal_token=token).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Invalid portal token'}), 404
+        
+        uploads = db.query(ClientUpload).filter_by(client_id=client.id).order_by(ClientUpload.uploaded_at.desc()).all()
+        
+        uploads_data = [{
+            'id': u.id,
+            'category': u.category,
+            'document_type': u.document_type,
+            'file_name': u.file_name,
+            'file_type': u.file_type,
+            'uploaded_at': u.uploaded_at.strftime('%Y-%m-%d %H:%M') if u.uploaded_at else None,
+            'reviewed': u.reviewed,
+            'notes': u.notes
+        } for u in uploads]
+        
+        return jsonify({'success': True, 'uploads': uploads_data})
+    except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
