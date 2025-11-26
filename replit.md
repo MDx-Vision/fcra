@@ -9,6 +9,7 @@ The Brightpath Ascend FCRA Platform is a production-ready system designed for co
 - Building full litigation platform (not just credit repair)
 - Target: 50 clients waiting, $600K-900K year-1 revenue with 3-tier pricing model
 - Prefers analytical, data-driven decisions with clear case metrics
+- **Always provide testing URLs** when adding new features or suggesting changes so user can view and test
 
 ## System Architecture
 The platform is built on a Flask web framework and employs a two-stage, section-based analysis approach to overcome token limits and enhance analytical depth.
