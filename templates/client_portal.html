@@ -791,6 +791,7 @@
                                 <th style="text-align: left; padding: 10px; color: #64748b;">Status</th>
                                 <th style="text-align: left; padding: 10px; color: #64748b;">Secondary Bureau</th>
                                 <th style="text-align: left; padding: 10px; color: #64748b;">Comments</th>
+                                <th style="text-align: center; padding: 10px; color: #64748b;">📎</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -810,10 +811,17 @@
                                     </td>
                                     <td style="padding: 10px; font-weight: 500;">{{ freeze.bureau_name }}</td>
                                     <td style="padding: 10px;"><input type="text" class="freeze-comment-input" data-id="{{ freeze.id }}" value="{{ freeze.comments or '' }}" placeholder="Add comment" style="width: 100%; padding: 5px; border: 1px solid #e5e7eb; border-radius: 4px;"></td>
+                                    <td style="padding: 10px; text-align: center;">
+                                        <label class="upload-paperclip" style="cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: #f1f5f9; border-radius: 6px; transition: all 0.2s; color: #64748b;" title="Upload freeze letter for {{ freeze.bureau_name }}">
+                                            <input type="file" class="freeze-upload-input" data-id="{{ freeze.id }}" data-bureau="{{ freeze.bureau_name }}" style="display: none;" accept=".pdf,.jpg,.jpeg,.png" onchange="uploadFreezeDoc(this)">
+                                            <span style="font-size: 16px;">📎</span>
+                                        </label>
+                                        <span class="freeze-upload-status" data-id="{{ freeze.id }}" style="display: none; color: #22c55e; font-size: 11px; margin-left: 4px;">✓</span>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
-                                <tr><td colspan="7" style="padding: 20px; text-align: center; color: #64748b;">No secondary bureau freezes tracked</td></tr>
+                                <tr><td colspan="8" style="padding: 20px; text-align: center; color: #64748b;">No secondary bureau freezes tracked</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
@@ -1300,6 +1308,49 @@
             } catch (error) {
                 console.error('Update error:', error);
                 alert('Connection error. Please try again.');
+            }
+        }
+        
+        async function uploadFreezeDoc(input) {
+            const freezeId = input.dataset.id;
+            const bureauName = input.dataset.bureau;
+            const file = input.files[0];
+            
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('freeze_id', freezeId);
+            formData.append('bureau_name', bureauName);
+            formData.append('category', 'cra_response');
+            formData.append('document_type', 'freeze_confirmation');
+            
+            const label = input.parentElement;
+            const statusSpan = document.querySelector(`.freeze-upload-status[data-id="${freezeId}"]`);
+            
+            label.innerHTML = '<span style="font-size: 12px;">⏳</span>';
+            
+            try {
+                const response = await fetch('/api/portal/{{ case.portal_token if case else "" }}/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    label.innerHTML = '<span style="font-size: 16px; color: #22c55e;">✓</span>';
+                    label.style.background = '#dcfce7';
+                    if (statusSpan) {
+                        statusSpan.style.display = 'inline';
+                        statusSpan.textContent = file.name.substring(0, 10) + '...';
+                    }
+                } else {
+                    label.innerHTML = '<span style="font-size: 16px;">📎</span>';
+                    alert('Upload failed: ' + result.error);
+                }
+            } catch (err) {
+                label.innerHTML = '<span style="font-size: 16px;">📎</span>';
+                alert('Upload error: ' + err.message);
             }
         }
         
