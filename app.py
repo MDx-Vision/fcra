@@ -6996,6 +6996,705 @@ def api_portal_get_uploads(token):
         db.close()
 
 
+# ==============================================================================
+# FREEZE LETTER GENERATION API
+# ==============================================================================
+
+@app.route('/api/freeze-letters/generate', methods=['POST'])
+def api_generate_freeze_letters():
+    """Generate freeze letters for all 12 bureaus"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        bureaus = data.get('bureaus')  # Optional: list of specific bureaus
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id required'}), 400
+        
+        client = db.query(Client).filter_by(id=int(client_id)).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        from services.freeze_letter_service import generate_freeze_letters
+        result = generate_freeze_letters(client_id, bureaus)
+        
+        return jsonify({
+            'success': True,
+            'batch_id': result['batch_id'],
+            'pdf_path': result['pdf_path'],
+            'bureaus_included': result['bureaus_included'],
+            'message': f"Generated freeze letters for {len(result['bureaus_included'])} bureaus"
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/freeze-letters/bureaus', methods=['GET'])
+def api_get_freeze_bureaus():
+    """Get list of all 12 bureaus with freeze addresses"""
+    try:
+        from services.freeze_letter_service import get_all_bureau_addresses
+        bureaus = get_all_bureau_addresses()
+        return jsonify({'success': True, 'bureaus': bureaus})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/freeze-letters/client/<int:client_id>', methods=['GET'])
+def api_get_client_freeze_batches(client_id):
+    """Get all freeze letter batches for a client"""
+    db = get_db()
+    try:
+        from database import FreezeLetterBatch
+        batches = db.query(FreezeLetterBatch).filter_by(client_id=client_id).order_by(FreezeLetterBatch.created_at.desc()).all()
+        
+        batches_data = [{
+            'id': b.id,
+            'batch_uuid': b.batch_uuid,
+            'bureaus_included': b.bureaus_included,
+            'total_bureaus': b.total_bureaus,
+            'pdf_path': b.generated_pdf_path,
+            'status': b.status,
+            'mailed_at': b.mailed_at.isoformat() if b.mailed_at else None,
+            'created_at': b.created_at.isoformat() if b.created_at else None
+        } for b in batches]
+        
+        return jsonify({'success': True, 'batches': batches_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ==============================================================================
+# SETTLEMENT CALCULATOR API
+# ==============================================================================
+
+@app.route('/api/settlement/calculate', methods=['POST'])
+def api_calculate_settlement():
+    """Calculate potential settlement for a case"""
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        case_id = data.get('case_id')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id required'}), 400
+        
+        violations_data = {
+            'total_violations': data.get('total_violations', 0),
+            'willful_violations': data.get('willful_violations', 0),
+            'negligent_violations': data.get('negligent_violations', 0),
+            'actual_damages_items': data.get('actual_damages_items', [])
+        }
+        
+        from services.settlement_calculator import calculate_settlement
+        result = calculate_settlement(case_id, client_id, violations_data)
+        
+        return jsonify({
+            'success': True,
+            'estimate_id': result['estimate_id'],
+            'statutory_damages': {
+                'low': result['statutory_damages_low'],
+                'high': result['statutory_damages_high']
+            },
+            'actual_damages': result['actual_damages'],
+            'punitive_damages': {
+                'low': result['punitive_damages_low'],
+                'high': result['punitive_damages_high']
+            },
+            'attorney_fees': result['attorney_fees_estimate'],
+            'total': {
+                'low': result['total_low'],
+                'high': result['total_high']
+            },
+            'settlement_likelihood': result['settlement_likelihood'],
+            'recommended_demand': result['recommended_demand']
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/settlement/client/<int:client_id>', methods=['GET'])
+def api_get_client_settlements(client_id):
+    """Get all settlement estimates for a client"""
+    db = get_db()
+    try:
+        from database import SettlementEstimate
+        estimates = db.query(SettlementEstimate).filter_by(client_id=client_id).order_by(SettlementEstimate.created_at.desc()).all()
+        
+        estimates_data = [{
+            'id': e.id,
+            'case_id': e.case_id,
+            'total_violations': e.total_violations,
+            'willful_violations': e.willful_violations,
+            'total_low': e.total_low,
+            'total_high': e.total_high,
+            'settlement_likelihood': e.settlement_likelihood,
+            'recommended_demand': e.recommended_demand,
+            'created_at': e.created_at.isoformat() if e.created_at else None
+        } for e in estimates]
+        
+        return jsonify({'success': True, 'estimates': estimates_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ==============================================================================
+# DEADLINE TRACKING API
+# ==============================================================================
+
+@app.route('/api/deadlines/create', methods=['POST'])
+def api_create_deadline():
+    """Create a new deadline for tracking"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id required'}), 400
+        
+        deadline_type = data.get('deadline_type', 'cra_response')
+        bureau = data.get('bureau')
+        dispute_round = data.get('dispute_round')
+        start_date = data.get('start_date')
+        days_allowed = data.get('days_allowed', 30)
+        
+        if start_date:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        else:
+            start_date = datetime.utcnow().date()
+        
+        from services.deadline_service import create_deadline
+        deadline = create_deadline(
+            db, client_id, data.get('case_id'), deadline_type,
+            bureau, dispute_round, start_date, days_allowed
+        )
+        
+        return jsonify({
+            'success': True,
+            'deadline_id': deadline.id,
+            'deadline_date': deadline.deadline_date.isoformat(),
+            'message': f'Deadline created for {deadline.deadline_date}'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/client/<int:client_id>', methods=['GET'])
+def api_get_client_deadlines(client_id):
+    """Get all deadlines for a client"""
+    db = get_db()
+    try:
+        include_completed = request.args.get('include_completed', 'false').lower() == 'true'
+        
+        from services.deadline_service import get_client_deadlines
+        deadlines = get_client_deadlines(db, client_id, include_completed)
+        
+        return jsonify({'success': True, 'deadlines': deadlines})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/upcoming', methods=['GET'])
+def api_get_upcoming_deadlines():
+    """Get all upcoming deadlines across all clients"""
+    db = get_db()
+    try:
+        days_ahead = int(request.args.get('days', 7))
+        include_overdue = request.args.get('include_overdue', 'true').lower() == 'true'
+        
+        from services.deadline_service import get_upcoming_deadlines
+        deadlines = get_upcoming_deadlines(db, days_ahead, include_overdue)
+        
+        return jsonify({'success': True, 'deadlines': deadlines})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/<int:deadline_id>/complete', methods=['POST'])
+def api_complete_deadline(deadline_id):
+    """Mark a deadline as completed"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        notes = data.get('notes')
+        
+        from services.deadline_service import complete_deadline
+        result = complete_deadline(db, deadline_id, notes)
+        
+        if result:
+            return jsonify({'success': True, 'message': 'Deadline marked as completed'})
+        else:
+            return jsonify({'success': False, 'error': 'Deadline not found'}), 404
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/<int:deadline_id>/extend', methods=['POST'])
+def api_extend_deadline(deadline_id):
+    """Extend a deadline by adding more days"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        new_days = data.get('days', 30)
+        notes = data.get('notes')
+        
+        from services.deadline_service import extend_deadline
+        result = extend_deadline(db, deadline_id, new_days, notes)
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'new_deadline_date': result.deadline_date.isoformat(),
+                'message': f'Deadline extended to {result.deadline_date}'
+            })
+        else:
+            return jsonify({'success': False, 'error': 'Deadline not found'}), 404
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/deadlines/check-reminders', methods=['POST'])
+def api_check_deadline_reminders():
+    """Check and send deadline reminders (for scheduled task)"""
+    db = get_db()
+    try:
+        from services.deadline_service import check_and_send_reminders
+        stats = check_and_send_reminders(db)
+        
+        return jsonify({
+            'success': True,
+            'reminders_sent': stats.get('reminders_sent', 0),
+            'overdue_notices_sent': stats.get('overdue_notices_sent', 0),
+            'message': 'Deadline reminders checked'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ==============================================================================
+# NOTARIZATION API (Proof.com Integration)
+# ==============================================================================
+
+@app.route('/api/notarization/create', methods=['POST'])
+def api_create_notarization():
+    """Create a new notarization order via Proof.com"""
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        document_path = data.get('document_path')
+        document_name = data.get('document_name', 'Document')
+        signer_email = data.get('signer_email')
+        signer_name = data.get('signer_name')
+        
+        if not all([client_id, document_path, signer_email, signer_name]):
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        from services.notarization_service import create_notarization_order, is_proof_configured
+        
+        if not is_proof_configured():
+            return jsonify({
+                'success': False,
+                'error': 'Proof.com API not configured. Please add PROOF_API_KEY.'
+            }), 400
+        
+        result = create_notarization_order(
+            client_id, document_path, document_name, signer_email, signer_name
+        )
+        
+        return jsonify({
+            'success': True,
+            'order_id': result['order_id'],
+            'session_link': result['session_link'],
+            'message': 'Notarization order created. Client will receive an email to complete the session.'
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/notarization/<int:order_id>/status', methods=['GET'])
+def api_get_notarization_status(order_id):
+    """Check status of a notarization order"""
+    try:
+        from services.notarization_service import get_notarization_status
+        result = get_notarization_status(order_id)
+        
+        if result:
+            return jsonify({'success': True, 'status': result['status'], 'details': result})
+        else:
+            return jsonify({'success': False, 'error': 'Order not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/notarization/client/<int:client_id>', methods=['GET'])
+def api_get_client_notarizations(client_id):
+    """Get all notarization orders for a client"""
+    try:
+        from services.notarization_service import get_orders_by_client
+        orders = get_orders_by_client(client_id)
+        
+        orders_data = [{
+            'id': o['id'],
+            'document_name': o['document_name'],
+            'status': o['status'],
+            'session_link': o['session_link'],
+            'notarized_at': o['notarized_at'],
+            'created_at': o['created_at']
+        } for o in orders]
+        
+        return jsonify({'success': True, 'orders': orders_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/notarization/webhook', methods=['POST'])
+def api_notarization_webhook():
+    """Handle Proof.com webhook callbacks"""
+    try:
+        webhook_data = request.json
+        
+        from services.notarization_service import handle_webhook
+        result = handle_webhook(webhook_data)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==============================================================================
+# CERTIFIED MAIL API (SendCertifiedMail.com Integration)
+# ==============================================================================
+
+@app.route('/api/certified-mail/send', methods=['POST'])
+def api_send_certified_mail():
+    """Send a document via certified mail"""
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        recipient_name = data.get('recipient_name')
+        recipient_address = data.get('recipient_address')
+        document_path = data.get('document_path')
+        letter_type = data.get('letter_type', 'dispute')
+        bureau = data.get('bureau')
+        dispute_round = data.get('dispute_round')
+        
+        if not all([client_id, recipient_name, recipient_address, document_path]):
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+        from services.certified_mail_service import send_certified_letter, is_certified_mail_configured
+        
+        result = send_certified_letter(
+            client_id, recipient_name, recipient_address, document_path,
+            letter_type, bureau, dispute_round
+        )
+        
+        return jsonify({
+            'success': True,
+            'order_id': result['order_id'],
+            'tracking_number': result['tracking_number'],
+            'cost': result['cost'],
+            'mock_mode': not is_certified_mail_configured(),
+            'message': 'Certified mail order created'
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/certified-mail/<int:order_id>/status', methods=['GET'])
+def api_get_certified_mail_status(order_id):
+    """Check status of a certified mail order"""
+    try:
+        from services.certified_mail_service import check_delivery_status
+        result = check_delivery_status(order_id)
+        
+        if result:
+            return jsonify({'success': True, 'status': result['status'], 'details': result})
+        else:
+            return jsonify({'success': False, 'error': 'Order not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/certified-mail/client/<int:client_id>', methods=['GET'])
+def api_get_client_certified_mail(client_id):
+    """Get all certified mail orders for a client"""
+    try:
+        from services.certified_mail_service import get_orders_by_client
+        orders = get_orders_by_client(client_id)
+        
+        return jsonify({'success': True, 'orders': orders})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/certified-mail/cost', methods=['GET'])
+def api_get_certified_mail_cost():
+    """Get estimated cost for certified mail"""
+    try:
+        pages = int(request.args.get('pages', 1))
+        mail_class = request.args.get('class', 'certified')
+        
+        from services.certified_mail_service import get_mailing_cost
+        cost = get_mailing_cost(pages, mail_class)
+        
+        return jsonify({'success': True, 'cost': cost})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/certified-mail/webhook', methods=['POST'])
+def api_certified_mail_webhook():
+    """Handle SendCertifiedMail.com webhook callbacks"""
+    try:
+        webhook_data = request.json
+        
+        from services.certified_mail_service import handle_webhook
+        result = handle_webhook(webhook_data)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ==============================================================================
+# LIMITED POA MANAGEMENT API
+# ==============================================================================
+
+@app.route('/api/poa/generate', methods=['POST'])
+def api_generate_poa():
+    """Generate a Limited Power of Attorney document for a client"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id required'}), 400
+        
+        client = db.query(Client).filter_by(id=int(client_id)).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        from database import LimitedPOA
+        
+        poa = LimitedPOA(
+            client_id=client.id,
+            poa_type=data.get('poa_type', 'credit_dispute'),
+            effective_date=datetime.utcnow().date(),
+            expiration_date=(datetime.utcnow() + timedelta(days=365)).date(),
+            scope=data.get('scope', {
+                'dispute_credit_reports': True,
+                'communicate_with_cras': True,
+                'request_credit_freezes': True,
+                'obtain_credit_reports': True
+            }),
+            status='draft'
+        )
+        
+        db.add(poa)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'poa_id': poa.id,
+            'message': 'Limited POA created. Ready for signature and notarization.'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/poa/client/<int:client_id>', methods=['GET'])
+def api_get_client_poa(client_id):
+    """Get all Limited POA documents for a client"""
+    db = get_db()
+    try:
+        from database import LimitedPOA
+        poas = db.query(LimitedPOA).filter_by(client_id=client_id).order_by(LimitedPOA.created_at.desc()).all()
+        
+        poas_data = [{
+            'id': p.id,
+            'poa_type': p.poa_type,
+            'status': p.status,
+            'signed': p.signed,
+            'signed_at': p.signed_at.isoformat() if p.signed_at else None,
+            'notarized': p.notarized,
+            'notarized_at': p.notarized_at.isoformat() if p.notarized_at else None,
+            'effective_date': p.effective_date.isoformat() if p.effective_date else None,
+            'expiration_date': p.expiration_date.isoformat() if p.expiration_date else None,
+            'scope': p.scope,
+            'created_at': p.created_at.isoformat() if p.created_at else None
+        } for p in poas]
+        
+        return jsonify({'success': True, 'poas': poas_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ==============================================================================
+# ATTORNEY REFERRAL API
+# ==============================================================================
+
+@app.route('/api/attorney-referral/create', methods=['POST'])
+def api_create_attorney_referral():
+    """Create an attorney referral for a high-value case"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        case_id = data.get('case_id')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id required'}), 400
+        
+        from database import AttorneyReferral
+        
+        referral = AttorneyReferral(
+            client_id=client_id,
+            case_id=case_id,
+            attorney_name=data.get('attorney_name'),
+            attorney_firm=data.get('attorney_firm'),
+            attorney_email=data.get('attorney_email'),
+            attorney_phone=data.get('attorney_phone'),
+            referral_reason=data.get('referral_reason'),
+            case_summary=data.get('case_summary'),
+            estimated_value=data.get('estimated_value'),
+            fee_arrangement=data.get('fee_arrangement', 'contingency'),
+            referral_fee_percent=data.get('referral_fee_percent', 25.0),
+            status='pending'
+        )
+        
+        db.add(referral)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'referral_id': referral.id,
+            'message': 'Attorney referral created'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/attorney-referral/<int:referral_id>', methods=['PUT'])
+def api_update_attorney_referral(referral_id):
+    """Update attorney referral status and outcome"""
+    db = get_db()
+    try:
+        data = request.json or {}
+        
+        from database import AttorneyReferral
+        referral = db.query(AttorneyReferral).filter_by(id=referral_id).first()
+        
+        if not referral:
+            return jsonify({'success': False, 'error': 'Referral not found'}), 404
+        
+        if 'status' in data:
+            referral.status = data['status']
+        if 'attorney_accepted' in data:
+            referral.attorney_accepted = data['attorney_accepted']
+            referral.attorney_response_at = datetime.utcnow()
+        if 'outcome' in data:
+            referral.outcome = data['outcome']
+        if 'settlement_amount' in data:
+            referral.settlement_amount = data['settlement_amount']
+        if 'referral_fee_received' in data:
+            referral.referral_fee_received = data['referral_fee_received']
+        
+        referral.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Referral updated'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/attorney-referrals', methods=['GET'])
+def api_list_attorney_referrals():
+    """List all attorney referrals"""
+    db = get_db()
+    try:
+        status_filter = request.args.get('status')
+        
+        from database import AttorneyReferral
+        query = db.query(AttorneyReferral, Client).join(Client, AttorneyReferral.client_id == Client.id)
+        
+        if status_filter:
+            query = query.filter(AttorneyReferral.status == status_filter)
+        
+        results = query.order_by(AttorneyReferral.created_at.desc()).all()
+        
+        referrals_data = [{
+            'id': r.id,
+            'client_id': r.client_id,
+            'client_name': c.name,
+            'attorney_name': r.attorney_name,
+            'attorney_firm': r.attorney_firm,
+            'estimated_value': r.estimated_value,
+            'status': r.status,
+            'attorney_accepted': r.attorney_accepted,
+            'settlement_amount': r.settlement_amount,
+            'created_at': r.created_at.isoformat() if r.created_at else None
+        } for r, c in results]
+        
+        return jsonify({'success': True, 'referrals': referrals_data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
 @app.errorhandler(500)
 def handle_500_error(error):
