@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Score Tracker - {{ client.name }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #1a1a2e; }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.5rem; }
+        .header-links { display: flex; gap: 20px; }
+        .header a { color: white; text-decoration: none; opacity: 0.8; }
+        .header a:hover { opacity: 1; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        .summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .summary-card { background: white; border-radius: 16px; padding: 25px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .summary-card .label { font-size: 0.9rem; color: #666; margin-bottom: 8px; }
+        .summary-card .value { font-size: 2.5rem; font-weight: 700; }
+        .summary-card .sub { font-size: 0.85rem; color: #888; margin-top: 5px; }
+        .summary-card.start .value { color: #dc3545; }
+        .summary-card.current .value { color: #008080; }
+        .summary-card.gain .value { color: #32CD32; }
+        .summary-card.projected .value { color: #17a2b8; }
+        .before-after { display: grid; grid-template-columns: 1fr auto 1fr; gap: 30px; margin-bottom: 30px; align-items: center; }
+        .score-panel { background: white; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .score-panel h3 { margin-bottom: 20px; color: #666; }
+        .big-score { font-size: 4rem; font-weight: 700; margin-bottom: 10px; }
+        .big-score.before { color: #dc3545; }
+        .big-score.after { color: #32CD32; }
+        .score-range { font-size: 1.2rem; color: #666; }
+        .arrow-container { font-size: 3rem; color: #008080; }
+        .chart-section { background: white; border-radius: 16px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .chart-section h2 { margin-bottom: 20px; }
+        .chart-container { height: 300px; position: relative; }
+        .add-score-section { background: white; border-radius: 16px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .add-score-section h2 { margin-bottom: 20px; }
+        .score-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-weight: 600; color: #666; font-size: 0.9rem; }
+        .form-group input, .form-group select { padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #008080; }
+        .btn-save { background: linear-gradient(135deg, #008080, #32CD32); color: white; border: none; padding: 14px 30px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; grid-column: 1 / -1; }
+        .btn-save:hover { transform: translateY(-2px); }
+        .history-section { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .history-section h2 { margin-bottom: 20px; }
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th, .history-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .history-table th { background: #f8f9fa; font-weight: 600; color: #666; }
+        .milestone-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; background: #e8f5f5; color: #008080; }
+        .round-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; background: #fff3cd; color: #856404; }
+        .projection-section { background: linear-gradient(135deg, #e8f5f5, #e8ffe8); border-radius: 16px; padding: 30px; margin-bottom: 30px; }
+        .projection-section h2 { margin-bottom: 20px; color: #1a1a2e; }
+        .projection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .projection-item { background: white; padding: 20px; border-radius: 12px; }
+        .projection-item h4 { color: #666; margin-bottom: 10px; }
+        .projection-item .range { font-size: 1.5rem; font-weight: 600; color: #008080; }
+        .no-data { text-align: center; padding: 40px; color: #666; }
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .before-after { grid-template-columns: 1fr; }
+            .arrow-container { transform: rotate(90deg); justify-self: center; }
+            .big-score { font-size: 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ client.name }} - Credit Score Tracker</h1>
+        <div class="header-links">
+            <a href="/dashboard/credit-tracker">&larr; All Clients</a>
+            <a href="/dashboard/client/{{ client.id }}">Client Details</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="summary-cards" id="summaryCards">
+            <div class="summary-card start">
+                <div class="label">Starting Score</div>
+                <div class="value" id="startScore">--</div>
+                <div class="sub" id="startRange">--</div>
+            </div>
+            <div class="summary-card current">
+                <div class="label">Current Score</div>
+                <div class="value" id="currentScore">--</div>
+                <div class="sub" id="currentRange">--</div>
+            </div>
+            <div class="summary-card gain">
+                <div class="label">Points Gained</div>
+                <div class="value" id="pointsGained">--</div>
+                <div class="sub" id="gainProgress">--</div>
+            </div>
+            <div class="summary-card projected">
+                <div class="label">Projected Score</div>
+                <div class="value" id="projectedScore">--</div>
+                <div class="sub" id="projectedRange">--</div>
+            </div>
+        </div>
+        
+        <div class="before-after" id="beforeAfter">
+            <div class="score-panel">
+                <h3>When You Started</h3>
+                <div class="big-score before" id="bigStartScore">--</div>
+                <div class="score-range" id="bigStartRange">--</div>
+                <div style="margin-top: 15px; color: #666;">
+                    <span id="startNegatives">--</span> negative items
+                </div>
+            </div>
+            <div class="arrow-container">&rarr;</div>
+            <div class="score-panel">
+                <h3>Where You Are Now</h3>
+                <div class="big-score after" id="bigCurrentScore">--</div>
+                <div class="score-range" id="bigCurrentRange">--</div>
+                <div style="margin-top: 15px; color: #666;">
+                    <span id="currentNegatives">--</span> negative items (<span id="removedCount">--</span> removed)
+                </div>
+            </div>
+        </div>
+        
+        <div class="projection-section" id="projectionSection" style="display: none;">
+            <h2>Projected Improvement</h2>
+            <div class="projection-grid">
+                <div class="projection-item">
+                    <h4>Conservative Estimate</h4>
+                    <div class="range" id="projMin">--</div>
+                </div>
+                <div class="projection-item">
+                    <h4>Most Likely</h4>
+                    <div class="range" id="projAvg">--</div>
+                </div>
+                <div class="projection-item">
+                    <h4>Best Case</h4>
+                    <div class="range" id="projMax">--</div>
+                </div>
+                <div class="projection-item">
+                    <h4>Potential Credit Range</h4>
+                    <div class="range" id="projNewRange">--</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <h2>Score Progress Over Time</h2>
+            <div class="chart-container">
+                <canvas id="scoreChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="add-score-section">
+            <h2>Record New Score Snapshot</h2>
+            <div class="score-form">
+                <div class="form-group">
+                    <label>Equifax Score</label>
+                    <input type="number" id="inputEquifax" placeholder="e.g., 620" min="300" max="850">
+                </div>
+                <div class="form-group">
+                    <label>Experian Score</label>
+                    <input type="number" id="inputExperian" placeholder="e.g., 615" min="300" max="850">
+                </div>
+                <div class="form-group">
+                    <label>TransUnion Score</label>
+                    <input type="number" id="inputTransunion" placeholder="e.g., 610" min="300" max="850">
+                </div>
+                <div class="form-group">
+                    <label>Total Negative Items</label>
+                    <input type="number" id="inputNegatives" placeholder="e.g., 12" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Items Removed (Total)</label>
+                    <input type="number" id="inputRemoved" placeholder="e.g., 4" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Dispute Round</label>
+                    <select id="inputRound">
+                        <option value="0">Initial / Intake</option>
+                        <option value="1">Round 1</option>
+                        <option value="2">Round 2</option>
+                        <option value="3">Round 3</option>
+                        <option value="4">Round 4</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Milestone</label>
+                    <select id="inputMilestone">
+                        <option value="">Select milestone...</option>
+                        <option value="initial_pull">Initial Credit Pull</option>
+                        <option value="round_1_sent">Round 1 Disputes Sent</option>
+                        <option value="round_1_response">Round 1 Responses Received</option>
+                        <option value="round_2_sent">Round 2 Disputes Sent</option>
+                        <option value="round_2_response">Round 2 Responses Received</option>
+                        <option value="round_3_sent">Round 3 Disputes Sent</option>
+                        <option value="round_3_response">Round 3 Responses Received</option>
+                        <option value="round_4_sent">Round 4 Disputes Sent</option>
+                        <option value="round_4_response">Round 4 Responses Received</option>
+                        <option value="case_complete">Case Complete</option>
+                        <option value="monthly_update">Monthly Update</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes (Optional)</label>
+                    <input type="text" id="inputNotes" placeholder="Any additional notes...">
+                </div>
+                <button class="btn-save" onclick="saveSnapshot()">Save Score Snapshot</button>
+            </div>
+        </div>
+        
+        <div class="history-section">
+            <h2>Score History</h2>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Equifax</th>
+                        <th>Experian</th>
+                        <th>TransUnion</th>
+                        <th>Average</th>
+                        <th>Negatives</th>
+                        <th>Removed</th>
+                        <th>Milestone</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr><td colspan="8" class="no-data">Loading history...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        const clientId = {{ client.id }};
+        let scoreChart = null;
+        
+        async function loadData() {
+            await Promise.all([
+                loadSummary(),
+                loadProjection(),
+                loadTimeline(),
+                loadHistory()
+            ]);
+        }
+        
+        async function loadSummary() {
+            try {
+                const response = await fetch(`/api/credit-score/summary/${clientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.data.has_data) {
+                    const s = data.data;
+                    document.getElementById('startScore').textContent = s.starting_score || '--';
+                    document.getElementById('startRange').textContent = s.starting_range || '--';
+                    document.getElementById('currentScore').textContent = s.current_score || '--';
+                    document.getElementById('currentRange').textContent = s.current_range || '--';
+                    document.getElementById('pointsGained').textContent = s.points_gained >= 0 ? `+${s.points_gained}` : s.points_gained;
+                    document.getElementById('gainProgress').textContent = `${s.removal_percentage}% items removed`;
+                    
+                    document.getElementById('bigStartScore').textContent = s.starting_score || '--';
+                    document.getElementById('bigStartRange').textContent = s.starting_range || '--';
+                    document.getElementById('bigCurrentScore').textContent = s.current_score || '--';
+                    document.getElementById('bigCurrentRange').textContent = s.current_range || '--';
+                    document.getElementById('startNegatives').textContent = s.starting_negatives || 0;
+                    document.getElementById('currentNegatives').textContent = s.current_negatives || 0;
+                    document.getElementById('removedCount').textContent = s.items_removed || 0;
+                }
+            } catch (error) {
+                console.error('Error loading summary:', error);
+            }
+        }
+        
+        async function loadProjection() {
+            try {
+                const response = await fetch(`/api/credit-score/projection/${clientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    const p = data.data;
+                    document.getElementById('projectedScore').textContent = p.scores?.projected?.avg || '--';
+                    document.getElementById('projectedRange').textContent = p.scores?.projected?.range || '--';
+                    document.getElementById('projMin').textContent = p.scores?.projected?.min || '--';
+                    document.getElementById('projAvg').textContent = p.scores?.projected?.avg || '--';
+                    document.getElementById('projMax').textContent = p.scores?.projected?.max || '--';
+                    document.getElementById('projNewRange').textContent = p.scores?.projected?.range || '--';
+                    document.getElementById('projectionSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading projection:', error);
+            }
+        }
+        
+        async function loadTimeline() {
+            try {
+                const response = await fetch(`/api/credit-score/timeline/${clientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    renderChart(data.data);
+                }
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+            }
+        }
+        
+        async function loadHistory() {
+            try {
+                const response = await fetch(`/api/credit-score/history/${clientId}`);
+                const data = await response.json();
+                
+                const tbody = document.getElementById('historyBody');
+                
+                if (data.success && data.data.length > 0) {
+                    tbody.innerHTML = data.data.map(row => {
+                        const date = row.created_at ? new Date(row.created_at).toLocaleDateString() : '--';
+                        const milestone = row.milestone ? `<span class="milestone-badge">${formatMilestone(row.milestone)}</span>` : '';
+                        const round = row.dispute_round ? `<span class="round-badge">R${row.dispute_round}</span>` : '';
+                        
+                        return `
+                            <tr>
+                                <td>${date}</td>
+                                <td>${row.equifax || '--'}</td>
+                                <td>${row.experian || '--'}</td>
+                                <td>${row.transunion || '--'}</td>
+                                <td><strong>${row.average || '--'}</strong></td>
+                                <td>${row.negatives || 0}</td>
+                                <td>${row.removed || 0}</td>
+                                <td>${round} ${milestone}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="8" class="no-data">No score history yet. Add your first snapshot above.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+        
+        function formatMilestone(milestone) {
+            const labels = {
+                'initial_pull': 'Initial Pull',
+                'round_1_sent': 'R1 Sent',
+                'round_1_response': 'R1 Response',
+                'round_2_sent': 'R2 Sent',
+                'round_2_response': 'R2 Response',
+                'round_3_sent': 'R3 Sent',
+                'round_3_response': 'R3 Response',
+                'round_4_sent': 'R4 Sent',
+                'round_4_response': 'R4 Response',
+                'case_complete': 'Complete',
+                'monthly_update': 'Monthly'
+            };
+            return labels[milestone] || milestone;
+        }
+        
+        function renderChart(timeline) {
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            if (scoreChart) {
+                scoreChart.destroy();
+            }
+            
+            const labels = timeline.map(t => new Date(t.date).toLocaleDateString());
+            
+            scoreChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Average Score',
+                            data: timeline.map(t => t.average),
+                            borderColor: '#008080',
+                            backgroundColor: 'rgba(0, 128, 128, 0.1)',
+                            fill: true,
+                            tension: 0.3,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Equifax',
+                            data: timeline.map(t => t.equifax),
+                            borderColor: '#dc3545',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Experian',
+                            data: timeline.map(t => t.experian),
+                            borderColor: '#007bff',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'TransUnion',
+                            data: timeline.map(t => t.transunion),
+                            borderColor: '#28a745',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 300,
+                            max: 850,
+                            ticks: {
+                                stepSize: 50
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function saveSnapshot() {
+            const equifax = document.getElementById('inputEquifax').value;
+            const experian = document.getElementById('inputExperian').value;
+            const transunion = document.getElementById('inputTransunion').value;
+            const negatives = document.getElementById('inputNegatives').value;
+            const removed = document.getElementById('inputRemoved').value;
+            const round = document.getElementById('inputRound').value;
+            const milestone = document.getElementById('inputMilestone').value;
+            const notes = document.getElementById('inputNotes').value;
+            
+            if (!equifax && !experian && !transunion) {
+                alert('Please enter at least one score');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/credit-score/snapshot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: clientId,
+                        equifax: equifax ? parseInt(equifax) : null,
+                        experian: experian ? parseInt(experian) : null,
+                        transunion: transunion ? parseInt(transunion) : null,
+                        negatives: parseInt(negatives) || 0,
+                        removed: parseInt(removed) || 0,
+                        dispute_round: parseInt(round) || 0,
+                        milestone: milestone || null,
+                        notes: notes || null,
+                        snapshot_type: 'manual',
+                        source: 'admin_dashboard'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Score snapshot saved successfully!');
+                    document.getElementById('inputEquifax').value = '';
+                    document.getElementById('inputExperian').value = '';
+                    document.getElementById('inputTransunion').value = '';
+                    document.getElementById('inputNegatives').value = '';
+                    document.getElementById('inputRemoved').value = '';
+                    document.getElementById('inputRound').value = '0';
+                    document.getElementById('inputMilestone').value = '';
+                    document.getElementById('inputNotes').value = '';
+                    loadData();
+                } else {
+                    alert('Error saving snapshot: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error saving snapshot:', error);
+                alert('Error saving snapshot');
+            }
+        }
+        
+        loadData();
+    </script>
+</body>
+</html>

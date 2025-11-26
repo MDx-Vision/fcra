@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Score Tracker - Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #1a1a2e; }
+        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.5rem; }
+        .header a { color: white; text-decoration: none; opacity: 0.8; }
+        .header a:hover { opacity: 1; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        .quick-estimate { background: white; border-radius: 16px; padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .quick-estimate h2 { margin-bottom: 20px; color: #1a1a2e; }
+        .estimate-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; align-items: end; }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        .form-group label { font-weight: 600; color: #666; font-size: 0.9rem; }
+        .form-group input { padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+        .form-group input:focus { outline: none; border-color: #008080; }
+        .btn-estimate { background: linear-gradient(135deg, #008080, #32CD32); color: white; border: none; padding: 14px 30px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+        .btn-estimate:hover { transform: translateY(-2px); }
+        .estimate-result { margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #e8f5f5, #e8ffe8); border-radius: 12px; display: none; }
+        .estimate-result.show { display: block; }
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; text-align: center; }
+        .result-item { background: white; padding: 20px; border-radius: 12px; }
+        .result-item .label { font-size: 0.85rem; color: #666; margin-bottom: 5px; }
+        .result-item .value { font-size: 1.8rem; font-weight: 700; }
+        .result-item .value.green { color: #32CD32; }
+        .result-item .value.teal { color: #008080; }
+        .clients-section { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .clients-section h2 { margin-bottom: 20px; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 100%; max-width: 400px; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+        .client-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .client-card { background: #f8f9fa; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+        .client-card:hover { border-color: #008080; transform: translateY(-2px); }
+        .client-card h3 { margin-bottom: 15px; color: #1a1a2e; }
+        .score-display { display: flex; gap: 15px; margin-bottom: 15px; }
+        .score-box { flex: 1; text-align: center; padding: 12px; background: white; border-radius: 8px; }
+        .score-box .label { font-size: 0.75rem; color: #666; margin-bottom: 4px; }
+        .score-box .score { font-size: 1.4rem; font-weight: 700; }
+        .score-box .score.poor { color: #dc3545; }
+        .score-box .score.fair { color: #fd7e14; }
+        .score-box .score.good { color: #ffc107; }
+        .score-box .score.very-good { color: #20c997; }
+        .score-box .score.excellent { color: #28a745; }
+        .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #008080, #32CD32); border-radius: 4px; transition: width 0.5s; }
+        .stats-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #666; }
+        .improvement-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .improvement-badge.positive { background: #d4edda; color: #155724; }
+        .improvement-badge.neutral { background: #e2e3e5; color: #383d41; }
+        .no-data { text-align: center; padding: 40px; color: #666; }
+        @media (max-width: 768px) {
+            .container { padding: 15px; }
+            .estimate-form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Credit Score Improvement Tracker</h1>
+        <a href="/dashboard">&larr; Back to Dashboard</a>
+    </div>
+    
+    <div class="container">
+        <div class="quick-estimate">
+            <h2>Quick Score Improvement Estimator</h2>
+            <div class="estimate-form">
+                <div class="form-group">
+                    <label>Current Average Score</label>
+                    <input type="number" id="currentScore" placeholder="e.g., 580" min="300" max="850">
+                </div>
+                <div class="form-group">
+                    <label>Number of Negative Items</label>
+                    <input type="number" id="numNegatives" placeholder="e.g., 8" min="0" max="50">
+                </div>
+                <button class="btn-estimate" onclick="calculateEstimate()">Calculate Estimate</button>
+            </div>
+            <div class="estimate-result" id="estimateResult">
+                <div class="result-grid">
+                    <div class="result-item">
+                        <div class="label">Current Score</div>
+                        <div class="value" id="resCurrentScore">--</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Projected Score</div>
+                        <div class="value teal" id="resProjectedScore">--</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Potential Gain</div>
+                        <div class="value green" id="resPotentialGain">--</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">New Range</div>
+                        <div class="value" id="resNewRange">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="clients-section">
+            <h2>Client Score Progress</h2>
+            <div class="search-box">
+                <input type="text" id="searchClients" placeholder="Search clients..." onkeyup="filterClients()">
+            </div>
+            <div class="client-grid" id="clientGrid">
+                <div class="no-data">Loading clients...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let allClients = [];
+        
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/clients');
+                const data = await response.json();
+                if (data.success) {
+                    allClients = data.clients || [];
+                    await loadClientScores();
+                }
+            } catch (error) {
+                console.error('Error loading clients:', error);
+                document.getElementById('clientGrid').innerHTML = '<div class="no-data">Error loading clients</div>';
+            }
+        }
+        
+        async function loadClientScores() {
+            const grid = document.getElementById('clientGrid');
+            
+            if (allClients.length === 0) {
+                grid.innerHTML = '<div class="no-data">No clients found. Add clients to track their credit scores.</div>';
+                return;
+            }
+            
+            const clientCards = await Promise.all(allClients.slice(0, 20).map(async (client) => {
+                try {
+                    const response = await fetch(`/api/credit-score/summary/${client.id}`);
+                    const data = await response.json();
+                    return { client, summary: data.data };
+                } catch {
+                    return { client, summary: { has_data: false } };
+                }
+            }));
+            
+            grid.innerHTML = clientCards.map(({ client, summary }) => {
+                if (!summary.has_data) {
+                    return `
+                        <div class="client-card" onclick="window.location='/dashboard/credit-tracker/${client.id}'">
+                            <h3>${client.name}</h3>
+                            <div class="no-data" style="padding: 20px 0;">No score data yet</div>
+                            <button class="btn-estimate" style="width: 100%;">Add Score Data</button>
+                        </div>
+                    `;
+                }
+                
+                const scoreClass = getScoreClass(summary.current_score);
+                const progressPct = summary.removal_percentage || 0;
+                const gainText = summary.points_gained >= 0 ? `+${summary.points_gained}` : summary.points_gained;
+                
+                return `
+                    <div class="client-card" onclick="window.location='/dashboard/credit-tracker/${client.id}'">
+                        <h3>${client.name}</h3>
+                        <div class="score-display">
+                            <div class="score-box">
+                                <div class="label">Starting</div>
+                                <div class="score">${summary.starting_score || '--'}</div>
+                            </div>
+                            <div class="score-box">
+                                <div class="label">Current</div>
+                                <div class="score ${scoreClass}">${summary.current_score || '--'}</div>
+                            </div>
+                            <div class="score-box">
+                                <div class="label">Gained</div>
+                                <div class="score ${summary.points_gained > 0 ? 'excellent' : ''}">${gainText}</div>
+                            </div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${progressPct}%"></div>
+                        </div>
+                        <div class="stats-row">
+                            <span>${summary.items_removed || 0} of ${summary.starting_negatives || 0} items removed</span>
+                            <span class="improvement-badge ${summary.points_gained > 0 ? 'positive' : 'neutral'}">${progressPct}%</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function getScoreClass(score) {
+            if (!score) return '';
+            if (score >= 800) return 'excellent';
+            if (score >= 740) return 'very-good';
+            if (score >= 670) return 'good';
+            if (score >= 580) return 'fair';
+            return 'poor';
+        }
+        
+        function filterClients() {
+            const search = document.getElementById('searchClients').value.toLowerCase();
+            const cards = document.querySelectorAll('.client-card');
+            cards.forEach(card => {
+                const name = card.querySelector('h3').textContent.toLowerCase();
+                card.style.display = name.includes(search) ? 'block' : 'none';
+            });
+        }
+        
+        async function calculateEstimate() {
+            const currentScore = parseInt(document.getElementById('currentScore').value) || 550;
+            const numNegatives = parseInt(document.getElementById('numNegatives').value) || 0;
+            
+            try {
+                const response = await fetch('/api/credit-score/estimate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_score: currentScore, num_negatives: numNegatives })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    const result = data.data;
+                    document.getElementById('resCurrentScore').textContent = result.current_score;
+                    document.getElementById('resProjectedScore').textContent = result.projected.avg;
+                    document.getElementById('resPotentialGain').textContent = `+${result.improvement.avg}`;
+                    document.getElementById('resNewRange').textContent = result.projected_range;
+                    document.getElementById('estimateResult').classList.add('show');
+                }
+            } catch (error) {
+                console.error('Error calculating estimate:', error);
+            }
+        }
+        
+        loadClients();
+    </script>
+</body>
+</html>
