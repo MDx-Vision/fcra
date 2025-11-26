@@ -100,7 +100,7 @@ class SectionPDFGenerator:
 class LetterPDFGenerator:
     def __init__(self):
         self.custom_color = HexColor('#1a1a8e')
-        self.use_branding = True
+        self.use_branding = False
         
     def sanitize_text_for_pdf(self, text):
         """Remove or replace Unicode characters that Helvetica doesn't support"""
