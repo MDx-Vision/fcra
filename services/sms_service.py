@@ -1,74 +1,29 @@
 """
 Twilio SMS Service for Replit Integration
-Fetches Twilio credentials from Replit's connector API
+Uses environment variables for Twilio credentials
 """
 import os
-import requests
 from twilio.rest import Client as TwilioClient
 
 
-_connection_settings = None
 _twilio_client = None
 
 
 def get_twilio_credentials():
     """
-    Fetch Twilio credentials from Replit's connector API.
-    Returns dict with account_sid, api_key, api_key_secret, phone_number.
+    Get Twilio credentials from environment variables.
+    Returns dict with account_sid, auth_token, phone_number.
     """
-    global _connection_settings
+    account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+    auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
+    phone_number = os.environ.get('TWILIO_PHONE_NUMBER')
     
-    hostname = os.environ.get('REPLIT_CONNECTORS_HOSTNAME')
-    
-    repl_identity = os.environ.get('REPL_IDENTITY')
-    web_repl_renewal = os.environ.get('WEB_REPL_RENEWAL')
-    
-    if repl_identity:
-        x_replit_token = f'repl {repl_identity}'
-    elif web_repl_renewal:
-        x_replit_token = f'depl {web_repl_renewal}'
-    else:
-        raise ValueError('No REPL_IDENTITY or WEB_REPL_RENEWAL token found')
-    
-    if not hostname:
-        raise ValueError('REPLIT_CONNECTORS_HOSTNAME not found')
-    
-    is_production = os.environ.get('REPLIT_DEPLOYMENT') == '1'
-    target_environment = 'production' if is_production else 'development'
-    
-    url = f'https://{hostname}/api/v2/connection'
-    params = {
-        'include_secrets': 'true',
-        'connector_names': 'twilio',
-        'environment': target_environment
-    }
-    
-    headers = {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': x_replit_token
-    }
-    
-    response = requests.get(url, params=params, headers=headers)
-    data = response.json()
-    
-    _connection_settings = data.get('items', [{}])[0] if data.get('items') else None
-    
-    if not _connection_settings:
-        raise ValueError(f'Twilio {target_environment} connection not found')
-    
-    settings = _connection_settings.get('settings', {})
-    account_sid = settings.get('account_sid')
-    api_key = settings.get('api_key')
-    api_key_secret = settings.get('api_key_secret')
-    phone_number = settings.get('phone_number')
-    
-    if not account_sid or not api_key or not api_key_secret:
-        raise ValueError(f'Twilio {target_environment} credentials incomplete')
+    if not account_sid or not auth_token:
+        raise ValueError('Twilio credentials not configured. Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.')
     
     return {
         'account_sid': account_sid,
-        'api_key': api_key,
-        'api_key_secret': api_key_secret,
+        'auth_token': auth_token,
         'phone_number': phone_number
     }
 
@@ -83,9 +38,8 @@ def get_twilio_client():
     if _twilio_client is None:
         creds = get_twilio_credentials()
         _twilio_client = TwilioClient(
-            creds['api_key'],
-            creds['api_key_secret'],
-            creds['account_sid']
+            creds['account_sid'],
+            creds['auth_token']
         )
     
     return _twilio_client
@@ -93,8 +47,7 @@ def get_twilio_client():
 
 def get_twilio_phone_number():
     """Get the configured Twilio phone number for sending SMS."""
-    creds = get_twilio_credentials()
-    return creds.get('phone_number')
+    return os.environ.get('TWILIO_PHONE_NUMBER')
 
 
 def format_phone_number(phone):
@@ -249,6 +202,6 @@ def is_twilio_configured():
     """
     try:
         creds = get_twilio_credentials()
-        return bool(creds.get('account_sid') and creds.get('api_key') and creds.get('phone_number'))
+        return bool(creds.get('account_sid') and creds.get('auth_token') and creds.get('phone_number'))
     except Exception:
         return False
