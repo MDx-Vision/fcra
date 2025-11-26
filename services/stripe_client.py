@@ -98,12 +98,48 @@ def get_webhook_secret():
 
 
 PRICING_TIERS = {
-    'free': {'name': 'Free Analysis', 'amount': 0, 'display': 'FREE'},
-    'tier1': {'name': 'Basic', 'amount': 30000, 'display': '$300'},
-    'tier2': {'name': 'Standard', 'amount': 60000, 'display': '$600'},
-    'tier3': {'name': 'Premium', 'amount': 90000, 'display': '$900'},
-    'tier4': {'name': 'Advanced', 'amount': 120000, 'display': '$1,200'},
-    'tier5': {'name': 'Elite', 'amount': 150000, 'display': '$1,500'},
+    'free': {
+        'name': 'Basic Analysis', 
+        'amount': 0, 
+        'display': 'FREE',
+        'description': 'Free credit analysis of negatives only',
+        'features': ['Negative item identification', 'Basic violation scan', 'Credit score factors']
+    },
+    'tier1': {
+        'name': 'Starter', 
+        'amount': 30000, 
+        'display': '$300',
+        'description': 'Entry-level credit restoration',
+        'features': ['Full FCRA analysis', 'Round 1 dispute letters', 'Basic support']
+    },
+    'tier2': {
+        'name': 'Standard', 
+        'amount': 60000, 
+        'display': '$600',
+        'description': 'Complete credit restoration package',
+        'features': ['Full FCRA analysis', 'Rounds 1-2 dispute letters', 'Violation documentation', 'Email support']
+    },
+    'tier3': {
+        'name': 'Premium', 
+        'amount': 90000, 
+        'display': '$900',
+        'description': 'Advanced litigation-ready package',
+        'features': ['Full FCRA analysis', 'Rounds 1-3 dispute letters', 'Willfulness assessment', 'Damages calculation', 'Priority support']
+    },
+    'tier4': {
+        'name': 'Professional', 
+        'amount': 120000, 
+        'display': '$1,200',
+        'description': 'Full litigation package',
+        'features': ['Complete forensic analysis', 'All 4 dispute rounds', 'Settlement demand letter', 'Litigation documentation', 'Dedicated support']
+    },
+    'tier5': {
+        'name': 'Elite', 
+        'amount': 150000, 
+        'display': '$1,500',
+        'description': 'Maximum recovery package',
+        'features': ['Everything in Professional', 'Attorney coordination', 'Contingency prep', 'Unlimited revisions', 'VIP support']
+    },
 }
 
 
