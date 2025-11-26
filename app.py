@@ -6869,6 +6869,25 @@ def api_calculate_settlement():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/api/clients')
+def api_get_all_clients():
+    """Get all clients for credit tracker"""
+    db = get_db()
+    try:
+        clients = db.query(Client).order_by(Client.name).all()
+        return jsonify({
+            'success': True,
+            'clients': [{
+                'id': c.id,
+                'name': c.name,
+                'email': c.email,
+                'status': c.status
+            } for c in clients]
+        })
+    finally:
+        db.close()
+
+
 @app.route('/api/clients/<int:client_id>/details', methods=['GET'])
 def api_get_client_details(client_id):
     """Get full client details including documents for modal"""

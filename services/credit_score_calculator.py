@@ -4,7 +4,7 @@ Estimates credit score improvements based on negative item removal
 and tracks progress from beginning to end.
 """
 from datetime import datetime
-from database import get_db, CreditScoreSnapshot, CreditScoreProjection, Client, Violation
+from database import get_db, CreditScoreSnapshot, CreditScoreProjection, Client, Violation, Analysis
 
 
 SCORE_IMPACT_BY_TYPE = {
@@ -158,9 +158,9 @@ def calculate_client_projection(client_id):
         if not client:
             return None
         
-        violations = db.query(Violation).join(
-            Violation.analysis
-        ).filter_by(client_id=client_id).all()
+        analyses = db.query(Analysis).filter_by(client_id=client_id).all()
+        analysis_ids = [a.id for a in analyses]
+        violations = db.query(Violation).filter(Violation.analysis_id.in_(analysis_ids)).all() if analysis_ids else []
         
         snapshots = db.query(CreditScoreSnapshot).filter_by(
             client_id=client_id
@@ -182,7 +182,7 @@ def calculate_client_projection(client_id):
         
         negative_types = []
         for v in violations:
-            neg_type = categorize_violation_type(v.type)
+            neg_type = categorize_violation_type(v.violation_type or v.description or '')
             negative_types.append(neg_type)
         
         projection = estimate_score_improvement(
@@ -256,7 +256,7 @@ def get_violation_breakdown(violations):
     """Break down violations by type for the calculator"""
     breakdown = {}
     for v in violations:
-        neg_type = categorize_violation_type(v.type)
+        neg_type = categorize_violation_type(v.violation_type or getattr(v, 'description', '') or '')
         if neg_type not in breakdown:
             breakdown[neg_type] = {
                 'count': 0,
