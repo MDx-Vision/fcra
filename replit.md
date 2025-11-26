@@ -53,6 +53,21 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - **Stripe**: Payment processing via Replit's Stripe connector (5 tiers: $300-$1,500).
 
 ## Recent Changes (November 26, 2025)
+- **SMS Automation System** (`/dashboard/settings/sms`): Twilio-powered automated messaging
+  - Welcome SMS: Sent when new client signs up
+  - Document Reminder SMS: When docs missing after configurable delay
+  - Case Update SMS: When case status changes
+  - Dispute Sent SMS: When letter mailed to bureau
+  - CRA Response SMS: When bureau response received
+  - Payment Reminder SMS: For pending payments
+  - SMSLog model tracks all sent messages with delivery status
+  - Test SMS functionality for verification
+  - Individual toggles per notification type
+- **LMR-Style Document Indicators** on Contact List
+  - DOCS column with 6 status icons (A, C, D, S, U, P)
+  - Color coding: Green=received, Red=required/missing, Gray=optional/missing
+  - Documents dropdown menu with toggle received status
+  - Shows count (e.g., "3/6 Documents Received")
 - **Document Center** (`/dashboard/documents`): Unified document upload system with type-first selection
   - Categories: CRA Response, Collection Letters, Legal/Lawsuit, Credit Reports, Identity Docs
   - Supports collection agency letters, lawsuit complaints, summons, garnishments
@@ -89,9 +104,11 @@ The platform is built on a Flask web framework and employs a novel two-stage, se
 - `/dashboard/signups` - Signups & payment tracking
 - `/dashboard/case/<id>` - Individual case details
 
+## Configured Integrations
+- **Twilio**: SMS automation for client notifications (welcome, updates, reminders)
+
 ## Future Integrations (Not Yet Configured)
 - **Email Service**: SendGrid for transactional emails (welcome, status updates, notifications)
-- **SMS Service**: Twilio for messaging and funnel automation
 - **Certified Mail**: SendCertifiedMail.com for legal proof of delivery
 - **Physical Mail**: LetterStream for bulk letter automation
 - **Credit Report Pull**: API integration for auto-pulling reports (IdentityIQ, SmartCredit, etc.)
