@@ -517,6 +517,188 @@
             .form-grid { grid-template-columns: 1fr; }
             .form-group.full-width { grid-column: span 1; }
         }
+
+        .doc-icons {
+            display: flex;
+            gap: 2px;
+            align-items: center;
+        }
+        .doc-icon-mini {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: help;
+        }
+        .doc-icon-mini.received {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .doc-icon-mini.missing {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+        .doc-icon-mini.required-missing {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .docs-dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+        .docs-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            min-width: 280px;
+            padding: 12px 0;
+        }
+        .docs-dropdown.show { display: block; }
+        .docs-dropdown-header {
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 8px;
+        }
+        .docs-dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #334155;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .docs-dropdown-item:hover { background: #f8fafc; }
+        .docs-dropdown-item .doc-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .docs-dropdown-item .doc-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+        .docs-dropdown-item .doc-check.yes {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .docs-dropdown-item .doc-check.no {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .docs-dropdown-item .doc-date {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .docs-dropdown-divider {
+            height: 1px;
+            background: #f1f5f9;
+            margin: 8px 0;
+        }
+        .docs-dropdown-link {
+            display: block;
+            padding: 8px 16px;
+            font-size: 12px;
+            color: #3b82f6;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+        .docs-dropdown-link:hover {
+            background: #eff6ff;
+            text-decoration: underline;
+        }
+
+        .doc-summary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .doc-summary-badge.complete {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .doc-summary-badge.partial {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .doc-summary-badge.none {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .doc-toggle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .doc-toggle-item:hover { background: #f1f5f9; }
+        .doc-toggle-item .doc-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .doc-toggle-item .doc-name { font-weight: 500; color: #334155; }
+        .doc-toggle-item .doc-date-small { font-size: 10px; color: #94a3b8; }
+        .doc-toggle-switch {
+            width: 38px;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .doc-toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: left 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        .doc-toggle-switch.on {
+            background: #4ade80;
+        }
+        .doc-toggle-switch.on::after {
+            left: 20px;
+        }
     </style>
 </head>
 <body>
@@ -641,6 +823,7 @@
                         <tr>
                             <th style="width: 40px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
                             <th>Actions</th>
+                            <th>Docs</th>
                             <th>First Name</th>
                             <th>Last Name</th>
                             <th>Company</th>
@@ -667,9 +850,30 @@
                                     <span class="action-icon ai" title="Generate Credit Action Plan" onclick="generatePlan({{ contact.id }})">🤖</span>
                                     <span class="action-icon workflow" title="Workflow Manager" onclick="openWorkflow({{ contact.id }})">⚙️</span>
                                     <span class="action-icon notes" title="Client Notes" onclick="openNotesModal({{ contact.id }})">📝</span>
-                                    <span class="action-icon docs" title="Documents" onclick="openDocsModal({{ contact.id }})">📄</span>
+                                    <div class="docs-dropdown-container">
+                                        <span class="action-icon docs" title="Documents" onclick="toggleDocsDropdown(event, {{ contact.id }})">📄</span>
+                                        <div class="docs-dropdown" id="docsDropdown-{{ contact.id }}">
+                                            <div class="docs-dropdown-header">Document Status</div>
+                                            <div class="docs-dropdown-content" id="docsDropdownContent-{{ contact.id }}">
+                                                <div style="padding: 16px; text-align: center; color: #94a3b8;">Loading...</div>
+                                            </div>
+                                            <div class="docs-dropdown-divider"></div>
+                                            <a href="/dashboard/documents?client={{ contact.id }}" class="docs-dropdown-link">📁 Go to this client's documents</a>
+                                            <a href="#" class="docs-dropdown-link" onclick="openUploadModal({{ contact.id }}); return false;">📤 Upload document for this client</a>
+                                        </div>
+                                    </div>
                                     <span class="action-icon dispute" title="Dispute Center" onclick="openDisputeCenter({{ contact.id }})">⚖️</span>
                                     <span class="action-icon portal" title="Client Portal" onclick="viewPortal('{{ contact.portal_token }}')">🌐</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="doc-icons" id="docIcons-{{ contact.id }}" data-client-id="{{ contact.id }}">
+                                    <span class="doc-icon-mini missing" title="Agreement">A</span>
+                                    <span class="doc-icon-mini missing" title="CR Login">C</span>
+                                    <span class="doc-icon-mini missing" title="Driver's License">D</span>
+                                    <span class="doc-icon-mini missing" title="SSN Card">S</span>
+                                    <span class="doc-icon-mini missing" title="Utility Bill">U</span>
+                                    <span class="doc-icon-mini missing" title="POA">P</span>
                                 </div>
                             </td>
                             <td><span class="client-name" onclick="openContactModal({{ contact.id }})">{{ contact.first_name or '-' }}</span></td>
@@ -876,8 +1080,8 @@
 
                 <div class="form-section">
                     <div class="form-section-title">Document Tracking</div>
-                    <div class="doc-checklist" id="docChecklist">
-                    </div>
+                    <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Click on any document to toggle its received status</p>
+                    <div id="docChecklist"></div>
                 </div>
 
                 <div class="form-section" style="border-bottom: none; margin-bottom: 0;">
@@ -978,12 +1182,14 @@
                 <button class="modal-close" onclick="closeModal('docsModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="doc-checklist" id="docsModalChecklist">
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">Click on any document to toggle its received status. Changes are saved automatically.</p>
+                <div id="docsModalChecklist"></div>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9;">
+                    <a href="#" id="docsModalGoToLink" class="docs-dropdown-link" style="display: block; padding: 10px; background: #f8fafc; border-radius: 6px; text-align: center;">📁 Go to this client's full document center</a>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('docsModal')">Close</button>
-                <button class="btn btn-primary" onclick="saveDocuments()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -993,6 +1199,142 @@
         let currentNotesClientId = null;
         let currentTaskClientId = null;
         let currentDocsClientId = null;
+        let openDropdownId = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllDocumentStatuses();
+        });
+
+        document.addEventListener('click', function(e) {
+            if (openDropdownId && !e.target.closest('.docs-dropdown-container')) {
+                document.getElementById(openDropdownId).classList.remove('show');
+                openDropdownId = null;
+            }
+        });
+
+        async function loadAllDocumentStatuses() {
+            const docIconContainers = document.querySelectorAll('.doc-icons[data-client-id]');
+            for (const container of docIconContainers) {
+                const clientId = container.dataset.clientId;
+                try {
+                    const response = await fetch('/api/clients/' + clientId + '/documents');
+                    const data = await response.json();
+                    if (data.success) {
+                        updateDocIcons(clientId, data.documents);
+                    }
+                } catch (error) {
+                    console.error('Error loading doc status for client', clientId, error);
+                }
+            }
+        }
+
+        function updateDocIcons(clientId, docs) {
+            const container = document.getElementById('docIcons-' + clientId);
+            if (!container) return;
+
+            const docMap = {};
+            docs.forEach(d => { docMap[d.document_type] = d.received; });
+
+            const icons = [
+                { key: 'agreement', letter: 'A', title: 'Agreement', required: true },
+                { key: 'cr_login', letter: 'C', title: 'CR Login', required: true },
+                { key: 'drivers_license', letter: 'D', title: "Driver's License", required: true },
+                { key: 'ssn_card', letter: 'S', title: 'SSN Card', required: false },
+                { key: 'utility_bill', letter: 'U', title: 'Utility Bill', required: false },
+                { key: 'poa', letter: 'P', title: 'POA', required: false }
+            ];
+
+            const html = icons.map(icon => {
+                const received = docMap[icon.key] || false;
+                let statusClass = received ? 'received' : (icon.required ? 'required-missing' : 'missing');
+                const checkmark = received ? '✓' : icon.letter;
+                return `<span class="doc-icon-mini ${statusClass}" title="${icon.title}: ${received ? 'Received' : 'Missing'}">${checkmark}</span>`;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        async function toggleDocsDropdown(event, clientId) {
+            event.stopPropagation();
+            const dropdownId = 'docsDropdown-' + clientId;
+            const dropdown = document.getElementById(dropdownId);
+            
+            if (openDropdownId && openDropdownId !== dropdownId) {
+                document.getElementById(openDropdownId).classList.remove('show');
+            }
+
+            dropdown.classList.toggle('show');
+            openDropdownId = dropdown.classList.contains('show') ? dropdownId : null;
+
+            if (dropdown.classList.contains('show')) {
+                await loadDocsDropdownContent(clientId);
+            }
+        }
+
+        async function loadDocsDropdownContent(clientId) {
+            const contentEl = document.getElementById('docsDropdownContent-' + clientId);
+            try {
+                const response = await fetch('/api/clients/' + clientId + '/documents');
+                const data = await response.json();
+                if (data.success) {
+                    const receivedCount = data.received_count;
+                    const totalCount = data.total_count;
+                    
+                    let html = `<div style="padding: 0 16px 8px; font-size: 11px; color: #64748b;">
+                        This client has received <strong>${receivedCount}/${totalCount}</strong> documents:
+                    </div>`;
+                    
+                    data.documents.forEach(doc => {
+                        const checkClass = doc.received ? 'yes' : 'no';
+                        const checkIcon = doc.received ? '✓' : '✗';
+                        const dateText = doc.received_at ? doc.received_at : '';
+                        html += `<div class="docs-dropdown-item" onclick="toggleDocFromDropdown(${clientId}, '${doc.document_type}', this)">
+                            <div class="doc-label">
+                                <span class="doc-check ${checkClass}">${checkIcon}</span>
+                                <span>${doc.label}</span>
+                            </div>
+                            <span class="doc-date">${dateText}</span>
+                        </div>`;
+                    });
+                    
+                    contentEl.innerHTML = html;
+                } else {
+                    contentEl.innerHTML = '<div style="padding: 16px; color: #ef4444;">Error loading documents</div>';
+                }
+            } catch (error) {
+                contentEl.innerHTML = '<div style="padding: 16px; color: #ef4444;">Error loading documents</div>';
+            }
+        }
+
+        async function toggleDocFromDropdown(clientId, docType, element) {
+            try {
+                const response = await fetch('/api/clients/' + clientId + '/documents/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ document_type: docType })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    await loadDocsDropdownContent(clientId);
+                    
+                    const docsResponse = await fetch('/api/clients/' + clientId + '/documents');
+                    const docsData = await docsResponse.json();
+                    if (docsData.success) {
+                        updateDocIcons(clientId, docsData.documents);
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling document:', error);
+            }
+        }
+
+        function openUploadModal(clientId) {
+            if (openDropdownId) {
+                document.getElementById(openDropdownId).classList.remove('show');
+                openDropdownId = null;
+            }
+            window.location.href = '/dashboard/documents?client=' + clientId + '&action=upload';
+        }
 
         function searchContacts() {
             const query = document.getElementById('searchInput').value.toLowerCase();
@@ -1119,23 +1461,67 @@
 
         function renderDocChecklist(docs) {
             const docTypes = [
-                { key: 'agreement', label: 'Agreement Signed' },
-                { key: 'cr_login', label: 'CR Login Received' },
-                { key: 'drivers_license', label: "Driver's License" },
-                { key: 'ssn_card', label: 'SSN Card' },
-                { key: 'utility_bill', label: 'Utility Bill' },
-                { key: 'poa', label: 'Power of Attorney' }
+                { key: 'agreement', label: 'Agreement Signed', required: true },
+                { key: 'cr_login', label: 'CR Login Received', required: true },
+                { key: 'drivers_license', label: "Driver's License", required: true },
+                { key: 'ssn_card', label: 'SSN Card', required: false },
+                { key: 'utility_bill', label: 'Utility Bill', required: false },
+                { key: 'poa', label: 'Power of Attorney', required: false }
             ];
             const docMap = {};
-            docs.forEach(d => { docMap[d.document_type] = d.received; });
+            docs.forEach(d => { 
+                docMap[d.document_type] = { received: d.received, received_at: d.received_at }; 
+            });
             const html = docTypes.map(dt => {
-                const received = docMap[dt.key] || false;
-                return `<div class="doc-item">
-                    <span class="doc-name">${dt.label}</span>
-                    <span class="doc-status ${received ? 'received' : 'pending'}">${received ? 'Received' : 'Pending'}</span>
+                const docData = docMap[dt.key] || { received: false, received_at: null };
+                const received = docData.received;
+                const dateStr = docData.received_at ? `Received: ${docData.received_at}` : '';
+                return `<div class="doc-toggle-item" onclick="toggleDocInModal('${dt.key}', this)" data-doc-type="${dt.key}">
+                    <div class="doc-info">
+                        <span class="doc-name">${dt.label}${dt.required ? ' *' : ''}</span>
+                        <span class="doc-date-small">${dateStr}</span>
+                    </div>
+                    <div class="doc-toggle-switch ${received ? 'on' : ''}" data-received="${received}"></div>
                 </div>`;
             }).join('');
             document.getElementById('docChecklist').innerHTML = html;
+        }
+
+        async function toggleDocInModal(docType, element) {
+            if (!currentContactId) return;
+            const switchEl = element.querySelector('.doc-toggle-switch');
+            const wasReceived = switchEl.dataset.received === 'true';
+            
+            switchEl.classList.toggle('on');
+            switchEl.dataset.received = !wasReceived;
+            
+            try {
+                const response = await fetch('/api/clients/' + currentContactId + '/documents/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ document_type: docType })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const dateEl = element.querySelector('.doc-date-small');
+                    dateEl.textContent = data.received ? `Received: ${data.received_at}` : '';
+                    
+                    updateDocIcons(currentContactId, await getDocumentsForClient(currentContactId));
+                } else {
+                    switchEl.classList.toggle('on');
+                    switchEl.dataset.received = wasReceived;
+                }
+            } catch (error) {
+                console.error('Error toggling document:', error);
+                switchEl.classList.toggle('on');
+                switchEl.dataset.received = wasReceived;
+            }
+        }
+
+        async function getDocumentsForClient(clientId) {
+            const response = await fetch('/api/clients/' + clientId + '/documents');
+            const data = await response.json();
+            return data.success ? data.documents : [];
         }
 
         async function saveContact() {
@@ -1305,66 +1691,97 @@
         async function openDocsModal(id) {
             currentDocsClientId = id;
             document.getElementById('docsModal').classList.add('active');
+            document.getElementById('docsModalGoToLink').href = '/dashboard/documents?client=' + id;
+            
             try {
-                const response = await fetch('/api/clients/' + id + '/details');
+                const response = await fetch('/api/clients/' + id + '/documents');
                 const data = await response.json();
                 if (data.success) {
                     const docs = data.documents || [];
                     const docTypes = [
-                        { key: 'agreement', label: 'Agreement Signed' },
-                        { key: 'cr_login', label: 'CR Login Received' },
-                        { key: 'drivers_license', label: "Driver's License" },
-                        { key: 'ssn_card', label: 'SSN Card' },
-                        { key: 'utility_bill', label: 'Utility Bill' },
-                        { key: 'poa', label: 'Power of Attorney' }
+                        { key: 'agreement', label: 'Agreement Signed', required: true },
+                        { key: 'cr_login', label: 'CR Login Received', required: true },
+                        { key: 'drivers_license', label: "Driver's License", required: true },
+                        { key: 'ssn_card', label: 'SSN Card', required: false },
+                        { key: 'utility_bill', label: 'Utility Bill', required: false },
+                        { key: 'poa', label: 'Power of Attorney', required: false }
                     ];
                     const docMap = {};
-                    docs.forEach(d => { docMap[d.document_type] = d.received; });
-                    const html = docTypes.map(dt => {
-                        const received = docMap[dt.key] || false;
-                        return `<div class="doc-item" style="cursor: pointer;" onclick="toggleDoc(this, '${dt.key}')">
-                            <span class="doc-name">${dt.label}</span>
-                            <span class="doc-status ${received ? 'received' : 'pending'}" data-type="${dt.key}">${received ? 'Received' : 'Pending'}</span>
+                    docs.forEach(d => { 
+                        docMap[d.document_type] = { received: d.received, received_at: d.received_at }; 
+                    });
+                    
+                    const receivedCount = docs.filter(d => d.received).length;
+                    const totalCount = docTypes.length;
+                    
+                    let statusClass = 'none';
+                    if (receivedCount === totalCount) statusClass = 'complete';
+                    else if (receivedCount > 0) statusClass = 'partial';
+                    
+                    let html = `<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                        <span class="doc-summary-badge ${statusClass}">${receivedCount}/${totalCount} Documents Received</span>
+                    </div>`;
+                    
+                    html += docTypes.map(dt => {
+                        const docData = docMap[dt.key] || { received: false, received_at: null };
+                        const received = docData.received;
+                        const dateStr = docData.received_at ? `Received: ${docData.received_at}` : '';
+                        return `<div class="doc-toggle-item" onclick="toggleDocInDocsModal('${dt.key}', ${id}, this)" data-doc-type="${dt.key}">
+                            <div class="doc-info">
+                                <span class="doc-name">${dt.label}${dt.required ? ' *' : ''}</span>
+                                <span class="doc-date-small">${dateStr}</span>
+                            </div>
+                            <div class="doc-toggle-switch ${received ? 'on' : ''}" data-received="${received}"></div>
                         </div>`;
                     }).join('');
+                    
                     document.getElementById('docsModalChecklist').innerHTML = html;
                 }
             } catch (error) {
                 console.error('Error loading documents:', error);
+                document.getElementById('docsModalChecklist').innerHTML = '<div style="color: #ef4444; padding: 16px;">Error loading documents</div>';
             }
         }
 
-        function toggleDoc(el, docType) {
-            const statusEl = el.querySelector('.doc-status');
-            const isReceived = statusEl.classList.contains('received');
-            statusEl.classList.toggle('received', !isReceived);
-            statusEl.classList.toggle('pending', isReceived);
-            statusEl.textContent = isReceived ? 'Pending' : 'Received';
-        }
-
-        async function saveDocuments() {
-            const updates = [];
-            document.querySelectorAll('#docsModalChecklist .doc-status').forEach(el => {
-                updates.push({
-                    document_type: el.dataset.type,
-                    received: el.classList.contains('received')
-                });
-            });
+        async function toggleDocInDocsModal(docType, clientId, element) {
+            const switchEl = element.querySelector('.doc-toggle-switch');
+            const wasReceived = switchEl.dataset.received === 'true';
+            
+            switchEl.classList.toggle('on');
+            switchEl.dataset.received = !wasReceived;
+            
             try {
-                const response = await fetch('/api/clients/' + currentDocsClientId + '/documents', {
+                const response = await fetch('/api/clients/' + clientId + '/documents/toggle', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ documents: updates })
+                    body: JSON.stringify({ document_type: docType })
                 });
-                const result = await response.json();
-                if (result.success) {
-                    closeModal('docsModal');
-                    alert('Documents updated!');
+                const data = await response.json();
+                if (data.success) {
+                    const dateEl = element.querySelector('.doc-date-small');
+                    dateEl.textContent = data.received ? `Received: ${data.received_at}` : '';
+                    
+                    const docsResponse = await fetch('/api/clients/' + clientId + '/documents');
+                    const docsData = await docsResponse.json();
+                    if (docsData.success) {
+                        updateDocIcons(clientId, docsData.documents);
+                        
+                        const badge = document.querySelector('#docsModalChecklist .doc-summary-badge');
+                        if (badge) {
+                            const receivedCount = docsData.documents.filter(d => d.received).length;
+                            const totalCount = docsData.documents.length;
+                            badge.textContent = `${receivedCount}/${totalCount} Documents Received`;
+                            badge.className = 'doc-summary-badge ' + (receivedCount === totalCount ? 'complete' : (receivedCount > 0 ? 'partial' : 'none'));
+                        }
+                    }
                 } else {
-                    alert('Error updating documents: ' + result.error);
+                    switchEl.classList.toggle('on');
+                    switchEl.dataset.received = wasReceived;
                 }
             } catch (error) {
-                alert('Error updating documents: ' + error.message);
+                console.error('Error toggling document:', error);
+                switchEl.classList.toggle('on');
+                switchEl.dataset.received = wasReceived;
             }
         }
 

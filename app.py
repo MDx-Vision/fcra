@@ -5801,6 +5801,99 @@ def api_update_client_documents(client_id):
         db.close()
 
 
+@app.route('/api/clients/<int:client_id>/documents', methods=['GET'])
+def api_get_client_documents(client_id):
+    """Get document receipt status for a client (LMR-style document tracking)"""
+    db = get_db()
+    try:
+        documents = db.query(ClientDocument).filter_by(client_id=client_id).all()
+        
+        doc_types = ['agreement', 'cr_login', 'drivers_license', 'ssn_card', 'utility_bill', 'poa']
+        doc_labels = {
+            'agreement': 'Agreement Document',
+            'cr_login': 'Credit Report Login',
+            'drivers_license': "Driver's License",
+            'ssn_card': 'Social Security Card',
+            'utility_bill': 'Utility Bill',
+            'poa': 'Power of Attorney'
+        }
+        
+        doc_map = {d.document_type: d for d in documents}
+        
+        docs_data = []
+        for doc_type in doc_types:
+            doc = doc_map.get(doc_type)
+            docs_data.append({
+                'document_type': doc_type,
+                'label': doc_labels.get(doc_type, doc_type),
+                'received': doc.received if doc else False,
+                'received_at': doc.received_at.strftime('%Y-%m-%d') if doc and doc.received_at else None
+            })
+        
+        received_count = sum(1 for d in docs_data if d['received'])
+        total_count = len(docs_data)
+        
+        return jsonify({
+            'success': True, 
+            'documents': docs_data,
+            'received_count': received_count,
+            'total_count': total_count,
+            'all_received': received_count == total_count
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/documents/toggle', methods=['POST'])
+def api_toggle_client_document(client_id):
+    """Quick toggle a single document received status"""
+    db = get_db()
+    try:
+        data = request.json
+        doc_type = data.get('document_type')
+        
+        if not doc_type:
+            return jsonify({'success': False, 'error': 'document_type required'}), 400
+        
+        existing = db.query(ClientDocument).filter_by(
+            client_id=client_id, 
+            document_type=doc_type
+        ).first()
+        
+        if existing:
+            existing.received = not existing.received
+            existing.received_at = datetime.utcnow() if existing.received else None
+            existing.updated_at = datetime.utcnow()
+            new_status = existing.received
+        else:
+            new_doc = ClientDocument(
+                client_id=client_id,
+                document_type=doc_type,
+                received=True,
+                received_at=datetime.utcnow()
+            )
+            db.add(new_doc)
+            new_status = True
+        
+        db.commit()
+        return jsonify({
+            'success': True, 
+            'received': new_status,
+            'received_at': datetime.utcnow().strftime('%Y-%m-%d') if new_status else None
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 # ============================================================
 # DOCUMENT CENTER - Client Upload Management
 # ============================================================
