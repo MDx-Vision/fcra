@@ -6647,6 +6647,77 @@ def api_download_scanned_file():
     return jsonify({'success': False, 'error': 'File not found'}), 404
 
 
+@app.route('/api/scanner/scanned-documents', methods=['GET'])
+def api_list_scanned_documents():
+    """List all scanned documents in the output folder"""
+    import glob
+    from datetime import datetime
+    
+    scan_folder = 'generated_documents/scanned_pdfs'
+    documents = []
+    
+    pdf_files = glob.glob(os.path.join(scan_folder, '*.pdf'))
+    
+    for pdf_path in sorted(pdf_files, key=os.path.getmtime, reverse=True):
+        filename = os.path.basename(pdf_path)
+        text_path = pdf_path.replace('.pdf', '_text.txt')
+        
+        parts = filename.replace('.pdf', '').split('_')
+        client_name = parts[0] if parts else 'Unknown'
+        doc_type = parts[1] if len(parts) > 1 else 'unknown'
+        
+        doc_type_labels = {
+            'cra-response-r1': 'CRA Response R1',
+            'cra-response-r2': 'CRA Response R2',
+            'cra-response-r3': 'CRA Response R3',
+            'cra-response-r4': 'CRA Response R4',
+            'cra-response': 'CRA Response',
+            'collection-letter': 'Collection Letter',
+            'creditor-response': 'Creditor Response',
+            'court-document': 'Court Document',
+            'id-document': 'ID Document',
+            'proof-of-address': 'Proof of Address',
+            'other': 'Other'
+        }
+        
+        stat = os.stat(pdf_path)
+        
+        text_preview = ''
+        word_count = 0
+        if os.path.exists(text_path):
+            with open(text_path, 'r', encoding='utf-8') as f:
+                full_text = f.read()
+                word_count = len(full_text.split())
+                text_preview = full_text[:500] + ('...' if len(full_text) > 500 else '')
+        
+        documents.append({
+            'filename': filename,
+            'pdf_path': pdf_path,
+            'text_path': text_path if os.path.exists(text_path) else None,
+            'client_name': client_name,
+            'document_type': doc_type_labels.get(doc_type, doc_type.replace('-', ' ').title()),
+            'document_type_key': doc_type,
+            'file_size': stat.st_size,
+            'file_size_formatted': f"{stat.st_size / 1024:.1f} KB",
+            'created_at': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            'created_at_formatted': datetime.fromtimestamp(stat.st_mtime).strftime('%b %d, %Y %I:%M %p'),
+            'word_count': word_count,
+            'text_preview': text_preview
+        })
+    
+    return jsonify({
+        'success': True,
+        'count': len(documents),
+        'documents': documents
+    })
+
+
+@app.route('/dashboard/scanned-documents')
+def dashboard_scanned_documents():
+    """Admin view of scanned documents"""
+    return render_template('scanned_documents.html')
+
+
 @app.route('/api/deadlines/upcoming', methods=['GET'])
 def api_get_upcoming_deadlines():
     """Get upcoming deadlines with urgency indicators"""
