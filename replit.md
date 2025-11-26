@@ -17,7 +17,7 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Admin Dashboard**: Professional case management interface at `/dashboard` for pipeline visualization, client lists, and case details.
 - **Client Portal**: Branded client-facing portal at `/portal/<token>` for case status.
 - **Review Checkpoints**: Dedicated interfaces (`/analysis/<id>/review`) for manual review and editing of AI-extracted data.
-- **PDF Generation**: Documents are generated with specific formatting (e.g., blue text for manual review encouragement) and Brightpath Ascend branding.
+- **PDF Generation**: Client-facing documents (action plans, case summaries) use Brightpath Ascend branding with teal-to-lime gradient headers. External correspondence (freeze letters, validation letters to bureaus/creditors) remain unbranded for professional consumer letters.
 
 ### Technical Implementations
 - **Two-Stage Analysis**:

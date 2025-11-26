@@ -14,20 +14,6 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from database import get_db, Client, Case, Violation
 
-try:
-    from fpdf.pattern import LinearGradient
-    HAS_GRADIENTS = True
-except ImportError:
-    HAS_GRADIENTS = False
-
-TEAL = (0, 128, 128)
-TEAL_HEX = "#008080"
-LIME_HEX = "#32CD32"
-WHITE = (255, 255, 255)
-DARK_GRAY = (51, 51, 51)
-MEDIUM_GRAY = (102, 102, 102)
-
-
 COLLECTION_AGENCY_TEMPLATE = {
     'generic': {
         'name': '[COLLECTION AGENCY NAME]',
@@ -38,60 +24,20 @@ COLLECTION_AGENCY_TEMPLATE = {
 
 
 class DebtValidationPDF(FPDF):
-    """Custom PDF class for debt validation letters with Brightpath Ascend branding"""
+    """Custom PDF class for debt validation letters - clean format for creditor correspondence"""
     
     def __init__(self):
         super().__init__()
         self.set_auto_page_break(auto=True, margin=25)
-        self.set_margins(left=20, top=20, right=20)
     
     def header(self):
-        header_height = 30
-        
-        if HAS_GRADIENTS:
-            try:
-                gradient = LinearGradient(
-                    self,
-                    from_x=0, from_y=0,
-                    to_x=self.w, to_y=0,
-                    colors=[TEAL_HEX, LIME_HEX]
-                )
-                with self.use_pattern(gradient):
-                    self.rect(0, 0, self.w, header_height, style="F")
-            except Exception:
-                self.set_fill_color(*TEAL)
-                self.rect(0, 0, self.w, header_height, style="F")
-        else:
-            self.set_fill_color(*TEAL)
-            self.rect(0, 0, self.w, header_height, style="F")
-        
-        self.set_y(7)
-        self.set_font('Helvetica', 'B', 16)
-        self.set_text_color(*WHITE)
-        self.cell(0, 8, "BRIGHTPATH ASCEND GROUP", align='C', new_x="LMARGIN", new_y="NEXT")
-        
-        self.set_font('Helvetica', '', 8)
-        self.cell(0, 5, "Consumer Protection & FCRA Litigation Specialists", align='C')
-        
-        self.set_text_color(0, 0, 0)
-        self.set_y(header_height + 5)
+        pass
     
     def footer(self):
-        self.set_y(-18)
-        
-        self.set_draw_color(*TEAL)
-        self.set_line_width(0.5)
-        self.line(20, self.get_y(), self.w - 20, self.get_y())
-        
-        self.set_y(-13)
-        self.set_font('Helvetica', '', 8)
-        self.set_text_color(*MEDIUM_GRAY)
-        self.cell(0, 5, f'Page {self.page_no()}', align='C', new_x="LMARGIN", new_y="NEXT")
-        self.set_font('Helvetica', 'I', 7)
-        self.cell(0, 4, "Brightpath Ascend Group | www.brightpathascend.com", align='C')
-        
-        self.set_text_color(0, 0, 0)
-        self.set_line_width(0.2)
+        self.set_y(-20)
+        self.set_font('Arial', 'I', 8)
+        self.set_text_color(128, 128, 128)
+        self.cell(0, 10, f'Page {self.page_no()}', align='C')
 
 
 def get_client_pii(client):
