@@ -6507,6 +6507,29 @@ def scanner_page():
     return render_template('document_scanner.html')
 
 
+@app.route('/portal/<token>/scanner')
+def portal_scanner(token):
+    """Client portal scanner - automatically links documents to client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(portal_token=token).first()
+        if not client:
+            case = db.query(Case).filter_by(portal_token=token).first()
+            if case:
+                client = db.query(Client).filter_by(id=case.client_id).first()
+        
+        if not client:
+            return "Invalid or expired access link", 404
+        
+        return render_template('document_scanner.html', 
+                             client_id=client.id,
+                             client_name=client.name,
+                             portal_token=token,
+                             is_portal=True)
+    finally:
+        db.close()
+
+
 @app.route('/api/scanner/document-types', methods=['GET'])
 def api_get_document_types():
     """Get supported document types for scanning"""

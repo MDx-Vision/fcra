@@ -1048,9 +1048,25 @@
         
         <!-- Upload Documents Tab -->
         <div class="tab-content" id="documents">
+            <div class="card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #84cc16; margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h4 style="margin: 0 0 5px 0; color: #1a1a2e;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                            Scan Documents with Your Phone
+                        </h4>
+                        <p style="margin: 0; color: #64748b; font-size: 14px;">Use your phone's camera to scan CRA responses, collection letters, and more. Documents are automatically linked to your case.</p>
+                    </div>
+                    <a href="/portal/{{ token }}/scanner" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #008080, #32CD32); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; white-space: nowrap;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        Open Scanner
+                    </a>
+                </div>
+            </div>
+            
             <div class="card">
                 <div class="card-title">Upload Documents</div>
-                <p style="color: #64748b; margin-bottom: 25px;">Upload important documents related to your case. Select the document type first, then provide the details and upload your file.</p>
+                <p style="color: #64748b; margin-bottom: 25px;">Or upload files directly from your device. Select the document type first, then provide the details and upload your file.</p>
                 
                 <div id="uploadSteps">
                     <div id="categoryStep">

@@ -37,6 +37,8 @@ The platform is built on a Flask web framework and employs a two-stage, section-
   - CRA Response round selection (R1, R2, R3, R4) for dispute tracking
   - Document types: CRA Responses, Collection Letters, Creditor Responses, Court Documents, ID, Proof of Address
   - Note: Credit reports pulled via API integrations, not scanned
+  - **Client Portal Integration**: Scanner accessible at `/portal/<token>/scanner` - documents automatically linked to client
+  - **Admin Review Dashboard**: `/dashboard/scanned-documents` shows all scanned docs with OCR text preview
 - **E-Signature System**: Client-facing signature capture for various legal documents.
 - **Metro2 Violation Detection API**: Detects 10 types of Metro2 format violations with auto-generated dispute language and damage calculation.
 - **PWA Support**: Progressive Web App manifest and service worker for offline caching and push notifications.
