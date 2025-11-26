@@ -29,6 +29,12 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Rapid Legal Protection Protocol (RLPP)**: A strategy for tactical bundling of violations and escalation of dispute rounds.
 - **Automation Tools Dashboard**: A 6-tab admin interface for services like Freeze Letters, Validation Letters, Deadlines, Settlement Calculator, Certified Mail, and Notarization.
 - **Action Plan Generator**: Creates branded action plan PDFs with case overviews, deadlines, task checklists, and cost estimates.
+- **Mobile Document Scanner** (`/scanner`): Multi-page document scanning with:
+  - Camera capture or file upload
+  - Multi-page queue with reordering
+  - Automatic PDF generation from images
+  - Claude Vision OCR text extraction
+  - Support for credit reports, CRA responses, collection letters, court documents
 - **E-Signature System**: Client-facing signature capture for various legal documents.
 - **Metro2 Violation Detection API**: Detects 10 types of Metro2 format violations with auto-generated dispute language and damage calculation.
 - **PWA Support**: Progressive Web App manifest and service worker for offline caching and push notifications.

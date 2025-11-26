@@ -6501,6 +6501,152 @@ def api_download_action_plan(filename):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@app.route('/scanner')
+def scanner_page():
+    """Mobile document scanner page"""
+    return render_template('document_scanner.html')
+
+
+@app.route('/api/scanner/document-types', methods=['GET'])
+def api_get_document_types():
+    """Get supported document types for scanning"""
+    from services.document_scanner_service import get_document_types
+    return jsonify({'success': True, 'document_types': get_document_types()})
+
+
+@app.route('/api/scanner/session/start', methods=['POST'])
+def api_start_scan_session():
+    """Start a new document scanning session"""
+    from services.document_scanner_service import create_scan_session
+    data = request.json or {}
+    result = create_scan_session(
+        client_id=data.get('client_id'),
+        client_name=data.get('client_name'),
+        document_type=data.get('document_type', 'credit_report')
+    )
+    return jsonify(result)
+
+
+@app.route('/api/scanner/session/add-image', methods=['POST'])
+def api_add_scan_image():
+    """Add an image to an existing scan session"""
+    from services.document_scanner_service import get_scan_session
+    
+    session_id = request.form.get('session_id')
+    if not session_id:
+        return jsonify({'success': False, 'error': 'session_id required'}), 400
+    
+    session = get_scan_session(session_id)
+    if not session:
+        return jsonify({'success': False, 'error': 'Session not found'}), 404
+    
+    if 'image' not in request.files:
+        return jsonify({'success': False, 'error': 'No image provided'}), 400
+    
+    image_file = request.files['image']
+    image_data = image_file.read()
+    filename = image_file.filename or 'upload.jpg'
+    
+    result = session.add_image(image_data, filename)
+    return jsonify(result)
+
+
+@app.route('/api/scanner/session/remove-image', methods=['POST'])
+def api_remove_scan_image():
+    """Remove an image from a scan session"""
+    from services.document_scanner_service import get_scan_session
+    
+    data = request.json or {}
+    session_id = data.get('session_id')
+    page_number = data.get('page_number')
+    
+    if not session_id or not page_number:
+        return jsonify({'success': False, 'error': 'session_id and page_number required'}), 400
+    
+    session = get_scan_session(session_id)
+    if not session:
+        return jsonify({'success': False, 'error': 'Session not found'}), 404
+    
+    success = session.remove_image(page_number)
+    return jsonify({'success': success})
+
+
+@app.route('/api/scanner/session/status', methods=['GET'])
+def api_scan_session_status():
+    """Get status of a scan session"""
+    from services.document_scanner_service import get_scan_session
+    
+    session_id = request.args.get('session_id')
+    if not session_id:
+        return jsonify({'success': False, 'error': 'session_id required'}), 400
+    
+    session = get_scan_session(session_id)
+    if not session:
+        return jsonify({'success': False, 'error': 'Session not found'}), 404
+    
+    return jsonify({'success': True, **session.get_status()})
+
+
+@app.route('/api/scanner/session/finalize', methods=['POST'])
+def api_finalize_scan_session():
+    """Finalize scan session - create PDF and run OCR"""
+    from services.document_scanner_service import get_scan_session
+    
+    data = request.json or {}
+    session_id = data.get('session_id')
+    run_ocr = data.get('run_ocr', True)
+    
+    if not session_id:
+        return jsonify({'success': False, 'error': 'session_id required'}), 400
+    
+    session = get_scan_session(session_id)
+    if not session:
+        return jsonify({'success': False, 'error': 'Session not found'}), 404
+    
+    result = session.finalize(run_ocr=run_ocr)
+    return jsonify(result)
+
+
+@app.route('/api/scanner/session/cancel', methods=['POST'])
+def api_cancel_scan_session():
+    """Cancel a scan session and cleanup"""
+    from services.document_scanner_service import get_scan_session, scan_sessions
+    
+    data = request.json or {}
+    session_id = data.get('session_id')
+    
+    if not session_id:
+        return jsonify({'success': False, 'error': 'session_id required'}), 400
+    
+    session = get_scan_session(session_id)
+    if not session:
+        return jsonify({'success': False, 'error': 'Session not found'}), 404
+    
+    removed = session.cancel()
+    if session_id in scan_sessions:
+        del scan_sessions[session_id]
+    
+    return jsonify({'success': True, 'images_removed': removed})
+
+
+@app.route('/api/scanner/download')
+def api_download_scanned_file():
+    """Download a scanned PDF or text file"""
+    filepath = request.args.get('path')
+    if not filepath:
+        return jsonify({'success': False, 'error': 'path required'}), 400
+    
+    allowed_dirs = ['generated_documents/scanned_pdfs', 'uploads/scans']
+    is_allowed = any(allowed_dir in filepath for allowed_dir in allowed_dirs)
+    
+    if not is_allowed:
+        return jsonify({'success': False, 'error': 'Invalid path'}), 403
+    
+    if os.path.exists(filepath):
+        return send_file(filepath, as_attachment=True)
+    return jsonify({'success': False, 'error': 'File not found'}), 404
+
+
 @app.route('/api/deadlines/upcoming', methods=['GET'])
 def api_get_upcoming_deadlines():
     """Get upcoming deadlines with urgency indicators"""
