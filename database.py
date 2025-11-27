@@ -86,6 +86,8 @@ class Client(Base):
     # Client portal access
     portal_token = Column(String(100), unique=True, index=True)
     portal_password_hash = Column(String(255))  # For client login
+    password_reset_token = Column(String(100), unique=True, index=True)
+    password_reset_expires = Column(DateTime)
     
     # Status
     status = Column(String(50), default='signup')  # signup, active, paused, complete, cancelled

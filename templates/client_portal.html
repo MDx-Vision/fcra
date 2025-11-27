@@ -647,6 +647,7 @@
                     <div class="date-display">As of: {{ now.strftime('%m/%d/%Y') if now else '' }}</div>
                 </div>
             </div>
+            <a href="/portal/logout" style="margin-left: 15px; padding: 8px 16px; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 500; transition: all 0.2s;">Logout</a>
         </div>
     </header>
     
@@ -1136,6 +1137,48 @@
             </div>
             
             <div class="card">
+                <div class="card-title">Password & Security</div>
+                <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">
+                    {% if client and client.portal_password_hash %}
+                    You have a password set for your account. You can update it below or use your access link as a fallback.
+                    {% else %}
+                    Set up a password to log in with your email and password instead of using the access link.
+                    {% endif %}
+                </p>
+                
+                <div id="passwordSetupForm">
+                    {% if client and client.portal_password_hash %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Current Password</label>
+                        <input type="password" id="currentPassword" placeholder="Enter current password" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                    </div>
+                    {% endif %}
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">{{ 'New Password' if client and client.portal_password_hash else 'Password' }}</label>
+                        <input type="password" id="newPassword" placeholder="At least 8 characters" minlength="8" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px;">Confirm Password</label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm your password" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                    </div>
+                    
+                    <div id="passwordMessage" style="display: none; padding: 12px 16px; border-radius: 8px; margin-bottom: 15px; max-width: 350px;"></div>
+                    
+                    <button type="button" onclick="setPassword()" style="padding: 12px 24px; background: linear-gradient(135deg, #84cc16, #22c55e); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                        {{ 'Update Password' if client and client.portal_password_hash else 'Set Password' }}
+                    </button>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                    <p style="color: #64748b; font-size: 13px;">
+                        <strong>Login URL:</strong> <a href="/portal/login" style="color: #3b82f6;">/portal/login</a>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card">
                 <div class="card-title">Account Status</div>
                 <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 200px; padding: 15px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #22c55e;">
@@ -1431,6 +1474,77 @@
             alert('Message sent! We will get back to you soon.');
             this.reset();
         });
+        
+        // Password Setup Function
+        async function setPassword() {
+            const currentPasswordEl = document.getElementById('currentPassword');
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const messageDiv = document.getElementById('passwordMessage');
+            
+            messageDiv.style.display = 'none';
+            
+            if (!newPassword || newPassword.length < 8) {
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = '#fef2f2';
+                messageDiv.style.color = '#991b1b';
+                messageDiv.textContent = 'Password must be at least 8 characters.';
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = '#fef2f2';
+                messageDiv.style.color = '#991b1b';
+                messageDiv.textContent = 'Passwords do not match.';
+                return;
+            }
+            
+            const payload = {
+                token: portalToken,
+                password: newPassword
+            };
+            
+            if (currentPasswordEl) {
+                payload.current_password = currentPasswordEl.value;
+                if (!currentPasswordEl.value) {
+                    messageDiv.style.display = 'block';
+                    messageDiv.style.background = '#fef2f2';
+                    messageDiv.style.color = '#991b1b';
+                    messageDiv.textContent = 'Please enter your current password.';
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch('/api/portal/set-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                messageDiv.style.display = 'block';
+                if (data.success) {
+                    messageDiv.style.background = '#f0fdf4';
+                    messageDiv.style.color = '#166534';
+                    messageDiv.textContent = data.message || 'Password set successfully!';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                    if (currentPasswordEl) currentPasswordEl.value = '';
+                } else {
+                    messageDiv.style.background = '#fef2f2';
+                    messageDiv.style.color = '#991b1b';
+                    messageDiv.textContent = data.error || 'Failed to set password.';
+                }
+            } catch (error) {
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = '#fef2f2';
+                messageDiv.style.color = '#991b1b';
+                messageDiv.textContent = 'Connection error. Please try again.';
+            }
+        }
         
         // Avatar Upload Handling
         const portalToken = '{{ token }}';

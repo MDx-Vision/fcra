@@ -27,12 +27,13 @@ except Exception as e:
     print(f"❌ Failed to initialize Anthropic client: {e}")
     # Still create a dummy client to prevent crashes
     client = None
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template, send_file, session, redirect, url_for
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
 import uuid
 from datetime import timedelta
@@ -44,18 +45,30 @@ import json
 
 app = Flask(__name__)
 
+# Secret key for session management (use environment variable or generate secure key)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
+
+# Session configuration for secure cookies
+app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JS access
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session expiry
+
 # Allow Replit frontend + WordPress frontend + any admin UIs
 CORS(app, resources={
     r"/*": {
         "origins": ["*"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type"],
-        "supports_credentials": False
+        "supports_credentials": True
     }
 })
 
 # Allow large credit report uploads (up to 20MB)
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
+# Simple in-memory rate limiting for login attempts
+login_attempts = {}  # {email: {'count': int, 'last_attempt': datetime}}
 
 # Store received credit reports
 credit_reports = []
@@ -3104,6 +3117,200 @@ def dashboard():
         db.close()
 
 
+@app.route('/dashboard/analytics')
+def dashboard_analytics():
+    """Analytics and Reporting Dashboard - Business Intelligence Metrics"""
+    db = get_db()
+    try:
+        from datetime import timedelta
+        from sqlalchemy import func, extract
+        
+        now = datetime.utcnow()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_of_last_month = (start_of_month - timedelta(days=1)).replace(day=1)
+        thirty_days_ago = now - timedelta(days=30)
+        
+        # ========== CLIENT STATS ==========
+        total_clients = db.query(Client).count()
+        new_this_month = db.query(Client).filter(Client.created_at >= start_of_month).count()
+        
+        # Client status breakdown
+        active_clients = db.query(Client).filter(Client.status == 'active').count()
+        paused_clients = db.query(Client).filter(Client.status == 'paused').count()
+        complete_clients = db.query(Client).filter(Client.status == 'complete').count()
+        signup_clients = db.query(Client).filter(Client.status == 'signup').count()
+        
+        client_stats = {
+            'total': total_clients,
+            'new_this_month': new_this_month,
+            'active': active_clients,
+            'paused': paused_clients,
+            'complete': complete_clients,
+            'signup': signup_clients
+        }
+        
+        # ========== REVENUE STATS ==========
+        # Total revenue collected (from signup_amount where payment_status = 'paid')
+        total_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
+            Client.payment_status == 'paid',
+            Client.signup_amount.isnot(None)
+        ).scalar() or 0
+        total_revenue = total_revenue_cents / 100  # Convert cents to dollars
+        
+        # Revenue this month
+        this_month_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
+            Client.payment_status == 'paid',
+            Client.signup_amount.isnot(None),
+            Client.payment_received_at >= start_of_month
+        ).scalar() or 0
+        this_month_revenue = this_month_revenue_cents / 100
+        
+        # Revenue last month
+        last_month_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
+            Client.payment_status == 'paid',
+            Client.signup_amount.isnot(None),
+            Client.payment_received_at >= start_of_last_month,
+            Client.payment_received_at < start_of_month
+        ).scalar() or 0
+        last_month_revenue = last_month_revenue_cents / 100
+        
+        # Revenue by tier
+        tier_revenue = {}
+        for tier in ['tier1', 'tier2', 'tier3', 'tier4', 'tier5', 'free']:
+            tier_cents = db.query(func.sum(Client.signup_amount)).filter(
+                Client.payment_status == 'paid',
+                Client.signup_plan == tier,
+                Client.signup_amount.isnot(None)
+            ).scalar() or 0
+            tier_revenue[tier] = tier_cents / 100
+        
+        revenue_stats = {
+            'total': total_revenue,
+            'this_month': this_month_revenue,
+            'last_month': last_month_revenue,
+            'by_tier': tier_revenue,
+            'month_change': this_month_revenue - last_month_revenue
+        }
+        
+        # ========== CASE STATS ==========
+        total_analyses = db.query(Analysis).count()
+        
+        # Analyses by dispute round
+        round_counts = {}
+        for round_num in [1, 2, 3, 4]:
+            count = db.query(Analysis).filter(Analysis.dispute_round == round_num).count()
+            round_counts[f'round_{round_num}'] = count
+        
+        # Average case score
+        all_scores = db.query(CaseScore.total_score).filter(CaseScore.total_score.isnot(None)).all()
+        avg_case_score = sum(s[0] for s in all_scores) / len(all_scores) if all_scores else 0
+        
+        # Case score distribution
+        high_score = len([s for s in all_scores if s[0] >= 8])
+        medium_score = len([s for s in all_scores if 5 <= s[0] < 8])
+        low_score = len([s for s in all_scores if s[0] < 5])
+        
+        case_stats = {
+            'total_analyses': total_analyses,
+            'by_round': round_counts,
+            'avg_score': round(avg_case_score, 1),
+            'high_score': high_score,
+            'medium_score': medium_score,
+            'low_score': low_score
+        }
+        
+        # ========== DISPUTE PROGRESS ==========
+        total_items = db.query(DisputeItem).count()
+        items_deleted = db.query(DisputeItem).filter(DisputeItem.status == 'deleted').count()
+        items_updated = db.query(DisputeItem).filter(DisputeItem.status == 'updated').count()
+        items_verified = db.query(DisputeItem).filter(DisputeItem.status == 'verified').count()
+        items_sent = db.query(DisputeItem).filter(DisputeItem.status == 'sent').count()
+        items_in_progress = db.query(DisputeItem).filter(DisputeItem.status == 'in_progress').count()
+        items_no_change = db.query(DisputeItem).filter(DisputeItem.status == 'no_change').count()
+        
+        # Success rate = deleted / (deleted + verified + no_change) if any completed
+        completed_items = items_deleted + items_verified + items_no_change
+        success_rate = (items_deleted / completed_items * 100) if completed_items > 0 else 0
+        
+        dispute_stats = {
+            'total_items': total_items,
+            'deleted': items_deleted,
+            'updated': items_updated,
+            'verified': items_verified,
+            'sent': items_sent,
+            'in_progress': items_in_progress,
+            'no_change': items_no_change,
+            'success_rate': round(success_rate, 1)
+        }
+        
+        # ========== CRA RESPONSE STATS ==========
+        total_responses = db.query(CRAResponse).count()
+        response_types = {}
+        for rtype in ['verified', 'deleted', 'updated', 'investigating', 'no_response', 'frivolous']:
+            count = db.query(CRAResponse).filter(CRAResponse.response_type == rtype).count()
+            response_types[rtype] = count
+        
+        cra_stats = {
+            'total_responses': total_responses,
+            'by_type': response_types
+        }
+        
+        # ========== TIMELINE DATA (Last 30 days) ==========
+        # Daily signups for the last 30 days
+        signup_data = []
+        revenue_data = []
+        
+        for i in range(30, -1, -1):
+            day = now - timedelta(days=i)
+            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+            
+            # Count signups on this day
+            day_signups = db.query(Client).filter(
+                Client.created_at >= day_start,
+                Client.created_at < day_end
+            ).count()
+            signup_data.append({
+                'date': day_start.strftime('%Y-%m-%d'),
+                'label': day_start.strftime('%b %d'),
+                'count': day_signups
+            })
+            
+            # Revenue on this day
+            day_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
+                Client.payment_status == 'paid',
+                Client.payment_received_at >= day_start,
+                Client.payment_received_at < day_end,
+                Client.signup_amount.isnot(None)
+            ).scalar() or 0
+            revenue_data.append({
+                'date': day_start.strftime('%Y-%m-%d'),
+                'label': day_start.strftime('%b %d'),
+                'amount': day_revenue_cents / 100
+            })
+        
+        timeline_data = {
+            'signups': signup_data,
+            'revenue': revenue_data
+        }
+        
+        return render_template('analytics.html',
+            client_stats=client_stats,
+            revenue_stats=revenue_stats,
+            case_stats=case_stats,
+            dispute_stats=dispute_stats,
+            cra_stats=cra_stats,
+            timeline_data=timeline_data
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Analytics error: {str(e)}", 500
+    finally:
+        db.close()
+
+
 @app.route('/api/intake', methods=['POST'])
 def api_intake():
     """New client intake endpoint"""
@@ -4324,6 +4531,302 @@ def client_portal(token):
         )
     except Exception as e:
         return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# CLIENT PORTAL AUTHENTICATION ROUTES
+# ============================================================
+
+def check_rate_limit(email):
+    """Check if login attempts are rate limited. Returns (allowed, wait_seconds)"""
+    now = datetime.utcnow()
+    if email in login_attempts:
+        attempts = login_attempts[email]
+        time_diff = (now - attempts['last_attempt']).total_seconds()
+        
+        if time_diff > 900:
+            login_attempts[email] = {'count': 0, 'last_attempt': now}
+            return True, 0
+        
+        if attempts['count'] >= 5:
+            wait_time = 900 - int(time_diff)
+            return False, max(0, wait_time)
+    
+    return True, 0
+
+
+def record_login_attempt(email, success=False):
+    """Record a login attempt"""
+    now = datetime.utcnow()
+    if success:
+        if email in login_attempts:
+            del login_attempts[email]
+    else:
+        if email not in login_attempts:
+            login_attempts[email] = {'count': 0, 'last_attempt': now}
+        login_attempts[email]['count'] += 1
+        login_attempts[email]['last_attempt'] = now
+
+
+@app.route('/portal/login', methods=['GET', 'POST'])
+def portal_login():
+    """Client portal login page"""
+    if request.method == 'GET':
+        if 'client_id' in session:
+            return redirect('/portal/dashboard')
+        return render_template('portal_login.html')
+    
+    db = get_db()
+    try:
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        
+        if not email or not password:
+            return render_template('portal_login.html', error='Email and password are required')
+        
+        allowed, wait_time = check_rate_limit(email)
+        if not allowed:
+            minutes = wait_time // 60
+            return render_template('portal_login.html', 
+                error=f'Too many login attempts. Please wait {minutes} minutes before trying again.')
+        
+        client = db.query(Client).filter(Client.email.ilike(email)).first()
+        
+        if not client:
+            record_login_attempt(email, success=False)
+            return render_template('portal_login.html', error='Invalid email or password')
+        
+        if not client.portal_password_hash:
+            record_login_attempt(email, success=False)
+            return render_template('portal_login.html', 
+                error='No password set. Please use your portal access link or contact support.')
+        
+        if not check_password_hash(client.portal_password_hash, password):
+            record_login_attempt(email, success=False)
+            return render_template('portal_login.html', error='Invalid email or password')
+        
+        record_login_attempt(email, success=True)
+        
+        session.permanent = True
+        session['client_id'] = client.id
+        session['client_email'] = client.email
+        session['client_name'] = client.name
+        
+        if client.portal_token:
+            return redirect(f'/portal/{client.portal_token}')
+        else:
+            portal_token = secrets.token_urlsafe(32)
+            client.portal_token = portal_token
+            db.commit()
+            return redirect(f'/portal/{portal_token}')
+            
+    except Exception as e:
+        print(f"Login error: {e}")
+        return render_template('portal_login.html', error='An error occurred. Please try again.')
+    finally:
+        db.close()
+
+
+@app.route('/portal/dashboard')
+def portal_dashboard():
+    """Redirect authenticated clients to their portal"""
+    if 'client_id' not in session:
+        return redirect('/portal/login')
+    
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=session['client_id']).first()
+        if client and client.portal_token:
+            return redirect(f'/portal/{client.portal_token}')
+        return redirect('/portal/login')
+    finally:
+        db.close()
+
+
+@app.route('/portal/logout')
+def portal_logout():
+    """Log out client and clear session"""
+    session.pop('client_id', None)
+    session.pop('client_email', None)
+    session.pop('client_name', None)
+    return redirect('/portal/login')
+
+
+@app.route('/api/portal/set-password', methods=['POST'])
+def api_portal_set_password():
+    """Set or update password for a client (from portal)"""
+    db = get_db()
+    try:
+        data = request.json
+        token = data.get('token', '')
+        password = data.get('password', '')
+        current_password = data.get('current_password', '')
+        
+        if not token:
+            return jsonify({'success': False, 'error': 'Portal token required'}), 400
+        
+        if not password or len(password) < 8:
+            return jsonify({'success': False, 'error': 'Password must be at least 8 characters'}), 400
+        
+        client = db.query(Client).filter_by(portal_token=token).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Invalid portal token'}), 404
+        
+        if client.portal_password_hash:
+            if not current_password:
+                return jsonify({'success': False, 'error': 'Current password required'}), 400
+            if not check_password_hash(client.portal_password_hash, current_password):
+                return jsonify({'success': False, 'error': 'Current password is incorrect'}), 400
+        
+        client.portal_password_hash = generate_password_hash(password)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Password set successfully. You can now log in with your email and password.'
+        })
+        
+    except Exception as e:
+        print(f"Set password error: {e}")
+        db.rollback()
+        return jsonify({'success': False, 'error': 'Failed to set password'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/forgot-password', methods=['POST'])
+def api_portal_forgot_password():
+    """Send password reset email"""
+    db = get_db()
+    try:
+        data = request.json
+        email = data.get('email', '').strip().lower()
+        
+        if not email:
+            return jsonify({'success': False, 'error': 'Email is required'}), 400
+        
+        client = db.query(Client).filter(Client.email.ilike(email)).first()
+        
+        if not client:
+            return jsonify({
+                'success': True,
+                'message': 'If an account exists with that email, a password reset link has been sent.'
+            })
+        
+        reset_token = secrets.token_urlsafe(32)
+        client.password_reset_token = reset_token
+        client.password_reset_expires = datetime.utcnow() + timedelta(hours=24)
+        db.commit()
+        
+        try:
+            from services.email_service import send_email, is_sendgrid_configured
+            
+            if is_sendgrid_configured():
+                reset_url = f"{request.host_url}portal/login?token={reset_token}"
+                
+                html_content = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #1a1a2e;">Brightpath Ascend Group</h1>
+                    </div>
+                    
+                    <h2 style="color: #333;">Password Reset Request</h2>
+                    
+                    <p>Hello {client.first_name or client.name},</p>
+                    
+                    <p>We received a request to reset your password for your Client Portal account.</p>
+                    
+                    <p>Click the button below to reset your password:</p>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_url}" style="background: linear-gradient(135deg, #84cc16, #22c55e); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Reset Password</a>
+                    </div>
+                    
+                    <p>Or copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; color: #3b82f6;">{reset_url}</p>
+                    
+                    <p><strong>This link will expire in 24 hours.</strong></p>
+                    
+                    <p>If you didn't request this password reset, you can safely ignore this email.</p>
+                    
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+                    
+                    <p style="color: #64748b; font-size: 12px;">
+                        Brightpath Ascend Group<br>
+                        Credit Repair & FCRA Litigation Services
+                    </p>
+                </div>
+                """
+                
+                result = send_email(
+                    to_email=client.email,
+                    subject='Reset Your Password - Brightpath Ascend Client Portal',
+                    html_content=html_content
+                )
+                
+                if not result['success']:
+                    print(f"Failed to send reset email: {result.get('error')}")
+            else:
+                print(f"SendGrid not configured. Reset token for {email}: {reset_token}")
+                
+        except Exception as email_error:
+            print(f"Email sending error: {email_error}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'If an account exists with that email, a password reset link has been sent.'
+        })
+        
+    except Exception as e:
+        print(f"Forgot password error: {e}")
+        db.rollback()
+        return jsonify({'success': False, 'error': 'Failed to process request'}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/reset-password', methods=['POST'])
+def api_portal_reset_password():
+    """Reset password using token from email"""
+    db = get_db()
+    try:
+        data = request.json
+        token = data.get('token', '').strip()
+        password = data.get('password', '')
+        
+        if not token:
+            return jsonify({'success': False, 'error': 'Reset token is required'}), 400
+        
+        if not password or len(password) < 8:
+            return jsonify({'success': False, 'error': 'Password must be at least 8 characters'}), 400
+        
+        client = db.query(Client).filter_by(password_reset_token=token).first()
+        
+        if not client:
+            return jsonify({'success': False, 'error': 'Invalid or expired reset link'}), 400
+        
+        if client.password_reset_expires and client.password_reset_expires < datetime.utcnow():
+            client.password_reset_token = None
+            client.password_reset_expires = None
+            db.commit()
+            return jsonify({'success': False, 'error': 'Reset link has expired. Please request a new one.'}), 400
+        
+        client.portal_password_hash = generate_password_hash(password)
+        client.password_reset_token = None
+        client.password_reset_expires = None
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Password has been reset successfully. You can now log in.'
+        })
+        
+    except Exception as e:
+        print(f"Reset password error: {e}")
+        db.rollback()
+        return jsonify({'success': False, 'error': 'Failed to reset password'}), 500
     finally:
         db.close()
 
@@ -9027,6 +9530,150 @@ def credit_tracker_client(client_id):
         if not client:
             return "Client not found", 404
         return render_template('credit_tracker_client.html', client=client)
+    finally:
+        db.close()
+
+
+# =============================================================
+# CALENDAR VIEW FOR DEADLINES
+# =============================================================
+
+@app.route('/dashboard/calendar')
+def calendar_dashboard():
+    """Calendar view showing all case deadlines"""
+    return render_template('calendar.html')
+
+
+@app.route('/api/calendar/events')
+def get_calendar_events():
+    """
+    API endpoint returning deadlines in FullCalendar format.
+    Supports filtering by client_name, bureau, deadline_type.
+    """
+    from datetime import date, timedelta
+    
+    db = get_db()
+    try:
+        client_filter = request.args.get('client', '').strip()
+        bureau_filter = request.args.get('bureau', '').strip()
+        type_filter = request.args.get('type', '').strip()
+        
+        query = db.query(CaseDeadline, Client).join(
+            Client, CaseDeadline.client_id == Client.id
+        )
+        
+        if client_filter:
+            query = query.filter(Client.name.ilike(f'%{client_filter}%'))
+        
+        if bureau_filter:
+            query = query.filter(CaseDeadline.bureau == bureau_filter)
+        
+        if type_filter:
+            query = query.filter(CaseDeadline.deadline_type == type_filter)
+        
+        results = query.all()
+        
+        color_map = {
+            'cra_response': '#3498db',
+            'reinvestigation': '#f39c12',
+            'data_furnisher': '#27ae60',
+            'client_action': '#f1c40f',
+            'legal_filing': '#e74c3c'
+        }
+        
+        type_labels = {
+            'cra_response': 'CRA Response',
+            'reinvestigation': 'Reinvestigation',
+            'data_furnisher': 'Data Furnisher',
+            'client_action': 'Client Action',
+            'legal_filing': 'Legal Filing'
+        }
+        
+        events = []
+        today = date.today()
+        
+        for deadline, client in results:
+            is_overdue = deadline.deadline_date < today and deadline.status == 'active'
+            base_color = color_map.get(deadline.deadline_type, '#95a5a6')
+            event_color = '#e74c3c' if is_overdue else base_color
+            
+            type_label = type_labels.get(deadline.deadline_type, deadline.deadline_type.replace('_', ' ').title())
+            bureau_suffix = f" ({deadline.bureau})" if deadline.bureau else ""
+            
+            events.append({
+                'id': deadline.id,
+                'title': f"{type_label} - {client.name}{bureau_suffix}",
+                'start': deadline.deadline_date.isoformat(),
+                'color': event_color,
+                'textColor': '#ffffff',
+                'extendedProps': {
+                    'client_id': client.id,
+                    'client_name': client.name,
+                    'client_email': client.email or '',
+                    'deadline_type': deadline.deadline_type,
+                    'deadline_type_label': type_label,
+                    'bureau': deadline.bureau or 'N/A',
+                    'dispute_round': deadline.dispute_round or 1,
+                    'start_date': deadline.start_date.isoformat() if deadline.start_date else '',
+                    'days_allowed': deadline.days_allowed or 30,
+                    'status': deadline.status,
+                    'is_overdue': is_overdue,
+                    'notes': deadline.notes or ''
+                }
+            })
+        
+        return jsonify(events)
+        
+    except Exception as e:
+        print(f"Error fetching calendar events: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/calendar/stats')
+def get_calendar_stats():
+    """
+    Get calendar statistics: upcoming this week, overdue count.
+    """
+    from datetime import date, timedelta
+    
+    db = get_db()
+    try:
+        today = date.today()
+        week_from_now = today + timedelta(days=7)
+        
+        upcoming_this_week = db.query(CaseDeadline).filter(
+            CaseDeadline.status == 'active',
+            CaseDeadline.deadline_date >= today,
+            CaseDeadline.deadline_date <= week_from_now
+        ).count()
+        
+        overdue_count = db.query(CaseDeadline).filter(
+            CaseDeadline.status == 'active',
+            CaseDeadline.deadline_date < today
+        ).count()
+        
+        total_active = db.query(CaseDeadline).filter(
+            CaseDeadline.status == 'active'
+        ).count()
+        
+        completed_this_month = db.query(CaseDeadline).filter(
+            CaseDeadline.status == 'completed',
+            CaseDeadline.completed_at >= today.replace(day=1)
+        ).count()
+        
+        return jsonify({
+            'success': True,
+            'upcoming_this_week': upcoming_this_week,
+            'overdue_count': overdue_count,
+            'total_active': total_active,
+            'completed_this_month': completed_this_month
+        })
+        
+    except Exception as e:
+        print(f"Error fetching calendar stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
 

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        
+        .nav-section {
+            margin-bottom: 25px;
+        }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        
+        /* Key Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .metric-card.success {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: white;
+        }
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        .metric-card .metric-icon { background: rgba(49, 151, 149, 0.1); }
+        .metric-card.highlight .metric-icon { background: rgba(255,255,255,0.1); }
+        .metric-card.success .metric-icon { background: rgba(255,255,255,0.2); }
+        
+        .metric-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .metric-card.highlight .metric-label,
+        .metric-card.success .metric-label { color: rgba(255,255,255,0.8); }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .metric-card.highlight .metric-value { color: #84cc16; }
+        .metric-card.success .metric-value { color: white; }
+        
+        .metric-change {
+            font-size: 12px;
+            color: #84cc16;
+            font-weight: 500;
+        }
+        .metric-change.negative { color: #ef4444; }
+        .metric-card.highlight .metric-change { color: #84cc16; }
+        .metric-card.success .metric-change { color: rgba(255,255,255,0.9); }
+        
+        /* Sections */
+        .dashboard-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        .stat-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-box-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+        .stat-box-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        /* Status Breakdown */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .status-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border-left: 4px solid;
+        }
+        .status-item.active { border-color: #84cc16; }
+        .status-item.paused { border-color: #f59e0b; }
+        .status-item.complete { border-color: #319795; }
+        .status-item.signup { border-color: #3b82f6; }
+        .status-item .count {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .status-item .label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        
+        /* Dispute Progress */
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+        .progress-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .progress-item .icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .progress-item .count {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .progress-item .label {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+        
+        /* Revenue by Tier */
+        .tier-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .tier-item {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+        }
+        .tier-item .name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .tier-item .amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        
+        /* Round Stats */
+        .round-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+        .round-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        .round-item .round-num {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+        }
+        .round-item .count {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .round-item .label {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        
+        /* Success Rate Circle */
+        .success-rate-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+        }
+        .success-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #84cc16 0deg calc(var(--rate) * 3.6deg),
+                #e2e8f0 calc(var(--rate) * 3.6deg) 360deg
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .success-circle::after {
+            content: '';
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .success-rate-value {
+            position: relative;
+            z-index: 1;
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .success-rate-label {
+            text-align: center;
+        }
+        .success-rate-label h3 {
+            font-size: 16px;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+        .success-rate-label p {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        @media (max-width: 1400px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .status-grid { grid-template-columns: repeat(2, 1fr); }
+            .progress-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .metrics-grid { grid-template-columns: 1fr; }
+            .tier-grid { grid-template-columns: 1fr; }
+            .round-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/analytics" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Analytics
+            </a>
+            <a href="/dashboard/contacts" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Contact List
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Cases
+            </a>
+            <a href="/dashboard/signups" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Signups & Payments
+            </a>
+            <a href="/dashboard/queue" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                Processing Queue
+            </a>
+            <a href="/dashboard/documents" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Documents
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Cases</div>
+            <a href="/dashboard/cases?status=stage1_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Pending Review
+            </a>
+            <a href="/dashboard/cases?status=stage2_complete" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                Ready to Deliver
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Settlements
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Tools</div>
+            <a href="/dashboard/reports" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Reports
+            </a>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Analytics Dashboard</h1>
+                <p class="header-subtitle">Business intelligence and performance metrics</p>
+            </div>
+            <a href="/dashboard" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Dashboard
+            </a>
+        </div>
+        
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card highlight">
+                <div class="metric-icon">👥</div>
+                <div class="metric-label">Total Clients</div>
+                <div class="metric-value">{{ client_stats.total }}</div>
+                <div class="metric-change">+{{ client_stats.new_this_month }} this month</div>
+            </div>
+            <div class="metric-card success">
+                <div class="metric-icon">💰</div>
+                <div class="metric-label">Total Revenue</div>
+                <div class="metric-value">${{ "{:,.2f}".format(revenue_stats.total) }}</div>
+                <div class="metric-change {% if revenue_stats.month_change < 0 %}negative{% endif %}">
+                    {% if revenue_stats.month_change >= 0 %}+{% endif %}${{ "{:,.2f}".format(revenue_stats.month_change) }} vs last month
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">📊</div>
+                <div class="metric-label">Total Analyses</div>
+                <div class="metric-value">{{ case_stats.total_analyses }}</div>
+                <div class="metric-change">Avg Score: {{ case_stats.avg_score }}/10</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-icon">✅</div>
+                <div class="metric-label">Dispute Success Rate</div>
+                <div class="metric-value">{{ dispute_stats.success_rate }}%</div>
+                <div class="metric-change">{{ dispute_stats.deleted }} items deleted</div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">📈 New Signups (Last 30 Days)</div>
+                <div class="chart-wrapper">
+                    <canvas id="signupsChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">📊 Client Status Breakdown</div>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">💵 Revenue Trend (Last 30 Days)</div>
+                <div class="chart-wrapper">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">🎯 Case Score Distribution</div>
+                <div class="chart-wrapper">
+                    <canvas id="scoreChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Client Stats Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">👥 Client Status Overview</h2>
+            </div>
+            <div class="status-grid">
+                <div class="status-item active">
+                    <div class="count">{{ client_stats.active }}</div>
+                    <div class="label">Active Clients</div>
+                </div>
+                <div class="status-item signup">
+                    <div class="count">{{ client_stats.signup }}</div>
+                    <div class="label">In Signup</div>
+                </div>
+                <div class="status-item paused">
+                    <div class="count">{{ client_stats.paused }}</div>
+                    <div class="label">Paused</div>
+                </div>
+                <div class="status-item complete">
+                    <div class="count">{{ client_stats.complete }}</div>
+                    <div class="label">Complete</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Revenue Stats Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">💰 Revenue by Pricing Tier</h2>
+            </div>
+            <div class="stats-grid" style="margin-bottom: 20px;">
+                <div class="stat-box">
+                    <div class="stat-box-value">${{ "{:,.2f}".format(revenue_stats.this_month) }}</div>
+                    <div class="stat-box-label">This Month</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">${{ "{:,.2f}".format(revenue_stats.last_month) }}</div>
+                    <div class="stat-box-label">Last Month</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">${{ "{:,.2f}".format(revenue_stats.total) }}</div>
+                    <div class="stat-box-label">All Time</div>
+                </div>
+            </div>
+            <div class="tier-grid">
+                {% for tier, amount in revenue_stats.by_tier.items() %}
+                <div class="tier-item">
+                    <div class="name">{{ tier }}</div>
+                    <div class="amount">${{ "{:,.2f}".format(amount) }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Case Stats Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">📋 Cases by Dispute Round</h2>
+            </div>
+            <div class="round-grid">
+                <div class="round-item">
+                    <div class="round-num">1</div>
+                    <div class="count">{{ case_stats.by_round.round_1 }}</div>
+                    <div class="label">Initial Disputes</div>
+                </div>
+                <div class="round-item">
+                    <div class="round-num">2</div>
+                    <div class="count">{{ case_stats.by_round.round_2 }}</div>
+                    <div class="label">MOV Requests</div>
+                </div>
+                <div class="round-item">
+                    <div class="round-num">3</div>
+                    <div class="count">{{ case_stats.by_round.round_3 }}</div>
+                    <div class="label">Pre-Litigation</div>
+                </div>
+                <div class="round-item">
+                    <div class="round-num">4</div>
+                    <div class="count">{{ case_stats.by_round.round_4 }}</div>
+                    <div class="label">Final Demand</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dispute Progress Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">🎯 Dispute Progress Tracking</h2>
+            </div>
+            <div class="success-rate-container">
+                <div class="success-circle" style="--rate: {{ dispute_stats.success_rate }};">
+                    <span class="success-rate-value">{{ dispute_stats.success_rate }}%</span>
+                </div>
+                <div class="success-rate-label">
+                    <h3>Item Deletion Success Rate</h3>
+                    <p>{{ dispute_stats.deleted }} deleted out of {{ dispute_stats.deleted + dispute_stats.verified + dispute_stats.no_change }} completed items</p>
+                </div>
+            </div>
+            <div class="progress-grid">
+                <div class="progress-item">
+                    <div class="icon">📤</div>
+                    <div class="count">{{ dispute_stats.sent }}</div>
+                    <div class="label">Sent</div>
+                </div>
+                <div class="progress-item">
+                    <div class="icon">⏳</div>
+                    <div class="count">{{ dispute_stats.in_progress }}</div>
+                    <div class="label">In Progress</div>
+                </div>
+                <div class="progress-item">
+                    <div class="icon">✅</div>
+                    <div class="count">{{ dispute_stats.deleted }}</div>
+                    <div class="label">Deleted</div>
+                </div>
+                <div class="progress-item">
+                    <div class="icon">🔄</div>
+                    <div class="count">{{ dispute_stats.updated }}</div>
+                    <div class="label">Updated</div>
+                </div>
+                <div class="progress-item">
+                    <div class="icon">❌</div>
+                    <div class="count">{{ dispute_stats.no_change }}</div>
+                    <div class="label">No Change</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- CRA Response Stats -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">📬 CRA Response Summary</h2>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-box-value">{{ cra_stats.total_responses }}</div>
+                    <div class="stat-box-label">Total Responses</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">{{ cra_stats.by_type.deleted }}</div>
+                    <div class="stat-box-label">Deleted</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value">{{ cra_stats.by_type.verified }}</div>
+                    <div class="stat-box-label">Verified</div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // Timeline Data from Backend
+        const signupData = {{ timeline_data.signups | tojson }};
+        const revenueData = {{ timeline_data.revenue | tojson }};
+        
+        // Client Status Data
+        const clientStats = {
+            active: {{ client_stats.active }},
+            signup: {{ client_stats.signup }},
+            paused: {{ client_stats.paused }},
+            complete: {{ client_stats.complete }}
+        };
+        
+        // Case Score Data
+        const scoreStats = {
+            high: {{ case_stats.high_score }},
+            medium: {{ case_stats.medium_score }},
+            low: {{ case_stats.low_score }}
+        };
+        
+        // Chart Colors
+        const tealGreen = 'rgba(49, 151, 149, 1)';
+        const limeGreen = 'rgba(132, 204, 22, 1)';
+        const tealGreenLight = 'rgba(49, 151, 149, 0.2)';
+        
+        // Signups Chart (Line)
+        const signupsCtx = document.getElementById('signupsChart').getContext('2d');
+        new Chart(signupsCtx, {
+            type: 'line',
+            data: {
+                labels: signupData.map(d => d.label),
+                datasets: [{
+                    label: 'New Signups',
+                    data: signupData.map(d => d.count),
+                    borderColor: tealGreen,
+                    backgroundColor: tealGreenLight,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                }
+            }
+        });
+        
+        // Revenue Chart (Bar)
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: revenueData.map(d => d.label),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: revenueData.map(d => d.amount),
+                    backgroundColor: limeGreen,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Client Status Chart (Doughnut)
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Signup', 'Paused', 'Complete'],
+                datasets: [{
+                    data: [clientStats.active, clientStats.signup, clientStats.paused, clientStats.complete],
+                    backgroundColor: ['#84cc16', '#3b82f6', '#f59e0b', '#319795'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+        
+        // Case Score Distribution (Doughnut)
+        const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+        new Chart(scoreCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['High (8-10)', 'Medium (5-7)', 'Low (0-4)'],
+                datasets: [{
+                    data: [scoreStats.high, scoreStats.medium, scoreStats.low],
+                    backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    </script>
+</body>
+</html>
