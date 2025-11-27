@@ -63,6 +63,44 @@ The platform is built on a Flask web framework and employs a two-stage, section-
   - **Security**: File extension validation, MIME type checking, 5MB size limit, secure_filename sanitization
   - **API Endpoints**: `POST/DELETE /api/portal/<token>/avatar`, `POST /api/client/<id>/avatar`
   - **Storage**: Avatars stored in `static/avatars/` with timestamped unique filenames
+- **Client Password Login System** (`/portal/login`): Secure authentication for client portal:
+  - **Login Page**: Email + password authentication at `/portal/login`
+  - **Password Setup**: Clients can set/change password in My Profile tab
+  - **Forgot Password**: Email-based password reset flow via SendGrid
+  - **Session Management**: 7-day secure sessions with HttpOnly cookies
+  - **Rate Limiting**: 5 login attempts per 15 minutes per email
+  - **Token Fallback**: Direct link access (`/portal/<token>`) still works
+  - **API Endpoints**: `/portal/login`, `/portal/logout`, `/api/portal/set-password`, `/api/portal/forgot-password`, `/api/portal/reset-password`
+- **Analytics Dashboard** (`/dashboard/analytics`): Business intelligence metrics:
+  - **Client Stats**: Total clients, new this month, by status (active/paused/complete)
+  - **Revenue Tracking**: Total collected, by tier, month-over-month comparison
+  - **Case Stats**: Total analyses, by dispute round, average case score
+  - **Dispute Progress**: Items disputed/deleted/verified, success rate percentage
+  - **Timeline Charts**: Chart.js visualizations for signups and revenue trends (30 days)
+- **Calendar View** (`/dashboard/calendar`): Visual deadline management:
+  - **FullCalendar Integration**: Monthly/weekly/list views with navigation
+  - **Color-Coded Events**: CRA Response (blue), Reinvestigation (orange), Data Furnisher (green), Client Action (yellow), Legal Filing (red)
+  - **Interactive Events**: Click to view details, filter by client/bureau/type
+  - **Stats Panel**: Overdue count, due this week, active/completed deadlines
+- **Dispute Round Automation**: Automated dispute progression:
+  - **Auto-Advance Rounds**: `/api/dispute/advance-round` updates client round and creates 30-day deadlines for all 3 bureaus
+  - **Round Completion Check**: `/api/dispute/check-round-complete` detects when all bureaus have responded
+  - **Item Status Updates**: CRA responses auto-update DisputeItem statuses
+  - **Admin Notifications**: Alert when round is complete and ready to advance
+  - **Automation Tools Tab**: "Dispute Rounds" tab shows clients ready to advance with quick action buttons
+- **Visual CRA Response Timeline**: Per-client dispute journey visualization:
+  - **Client Portal Tab**: "Dispute Timeline" tab shows complete history
+  - **Admin Case Detail**: Timeline section with expanded details
+  - **Event Types**: Disputes sent (blue), items deleted (green), responses received (orange), overdue (red), milestones (gray)
+  - **Summary Stats**: Letters sent, responses, items deleted, overdue count
+  - **API Endpoint**: `/api/client/<id>/timeline` aggregates all dispute events
+- **Credit Report PDF Parser** (`services/pdf_parser_service.py`): Enhanced PDF extraction:
+  - **Multi-Library Support**: PyPDF2, pdfplumber, pypdf with fallback chain
+  - **Bureau Detection**: Auto-identifies Experian, TransUnion, Equifax
+  - **Structured Extraction**: Personal info, accounts, inquiries, collections, public records
+  - **Confidence Scoring**: 0-100% quality assessment of parsed data
+  - **Admin UI Integration**: Toggle between "Paste HTML" and "Upload PDF" in analysis form
+  - **API Endpoints**: `/api/credit-report/parse-pdf`, `/api/credit-report/parse-and-analyze`
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
