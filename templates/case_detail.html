@@ -245,6 +245,25 @@
                 </div>
             </div>
             
+            <div class="card full-width" id="escalationSection">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px;">⚡</span>
+                        Smart Escalation
+                    </span>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="generateEscalationRecommendations()" style="padding: 6px 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Generate Recommendations</button>
+                        <a href="/dashboard/escalation" style="font-size: 12px; color: #319795; text-decoration: none; padding: 6px 12px;">View All →</a>
+                    </div>
+                </div>
+                <div id="escalationContent">
+                    <div style="text-align: center; padding: 30px; color: #64748b;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">⚡</div>
+                        <div>Loading escalation recommendations...</div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="card full-width">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>Violations ({{ violations|length }})</span>
@@ -732,6 +751,149 @@
         }
         
         document.addEventListener('DOMContentLoaded', loadSettlementData);
+        
+        const actionTypeNames = {
+            'standard_redispute': 'Standard Re-dispute',
+            'mov_demand': 'Method of Verification Demand',
+            'direct_furnisher': 'Direct Furnisher Dispute',
+            'regulatory_complaint': 'Regulatory Complaint',
+            'intent_to_sue': 'Intent to Sue Notice',
+            'settlement_demand': 'Settlement Demand',
+            'media_pressure': 'Media Pressure',
+            'wait_response': 'Wait for Response',
+            'follow_up': 'Send Follow-up',
+            'gather_evidence': 'Gather Evidence',
+            'request_disclosures': 'Request Disclosures',
+            'prepare_litigation': 'Prepare for Litigation'
+        };
+        
+        async function loadEscalationRecommendations() {
+            if (!clientId) return;
+            
+            const container = document.getElementById('escalationContent');
+            try {
+                const response = await fetch(`/api/escalation/recommendations/${clientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.recommendations.length > 0) {
+                    let html = '<div style="display: grid; gap: 15px;">';
+                    
+                    data.recommendations.slice(0, 5).forEach(rec => {
+                        const confidenceClass = rec.confidence_score >= 0.8 ? 'high' : rec.confidence_score >= 0.5 ? 'medium' : 'low';
+                        const confidenceColors = { high: '#166534', medium: '#92400e', low: '#991b1b' };
+                        const confidenceBg = { high: '#dcfce7', medium: '#fef3c7', low: '#fee2e2' };
+                        
+                        html += `
+                            <div style="background: #f8fafc; border-radius: 12px; padding: 15px; border-left: 4px solid ${rec.applied ? '#84cc16' : '#319795'};">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                                    <div>
+                                        <div style="font-weight: 600; color: #1a1a2e; font-size: 14px;">
+                                            ${actionTypeNames[rec.recommended_action] || rec.recommended_action}
+                                            ${rec.applied ? '<span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px;">Applied</span>' : ''}
+                                        </div>
+                                        <div style="font-size: 12px; color: #64748b; margin-top: 2px;">${rec.creditor_name || 'Unknown'} | ${rec.bureau || 'All Bureaus'} | Round ${rec.dispute_round}</div>
+                                    </div>
+                                    <span style="background: ${confidenceBg[confidenceClass]}; color: ${confidenceColors[confidenceClass]}; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;">
+                                        ${Math.round(rec.confidence_score * 100)}% confidence
+                                    </span>
+                                </div>
+                                <div style="font-size: 13px; color: #334155; margin-bottom: 10px; line-height: 1.5;">${rec.reasoning || 'No reasoning provided'}</div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div style="font-size: 12px; color: #94a3b8;">
+                                        Expected: ${rec.expected_outcome || 'N/A'} | Success: ${Math.round((rec.success_probability || 0.5) * 100)}%
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        ${!rec.applied ? `<button onclick="applyRecommendation(${rec.id})" style="padding: 5px 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 11px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Apply</button>` : ''}
+                                        ${rec.applied && !rec.outcome_actual ? `<button onclick="recordOutcome(${rec.id})" style="padding: 5px 12px; background: #1a1a2e; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; color: white; font-weight: 500;">Record Outcome</button>` : ''}
+                                        ${rec.outcome_actual ? `<span style="font-size: 11px; color: #84cc16;">Outcome: ${rec.outcome_actual}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: #64748b;">
+                            <div style="font-size: 24px; margin-bottom: 10px;">⚡</div>
+                            <div style="margin-bottom: 10px;">No recommendations yet</div>
+                            <button onclick="generateEscalationRecommendations()" style="padding: 8px 16px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Generate Recommendations</button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading escalation recommendations:', error);
+                container.innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">Error loading recommendations</div>`;
+            }
+        }
+        
+        async function generateEscalationRecommendations() {
+            if (!clientId) return;
+            
+            const container = document.getElementById('escalationContent');
+            container.innerHTML = '<div style="text-align: center; padding: 30px; color: #64748b;">Generating recommendations...</div>';
+            
+            try {
+                const response = await fetch(`/api/escalation/recommend/${clientId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ save: true })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadEscalationRecommendations();
+                } else {
+                    container.innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">Error: ${data.error || 'Failed to generate'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error generating recommendations:', error);
+                container.innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">Error generating recommendations</div>`;
+            }
+        }
+        
+        async function applyRecommendation(recId) {
+            if (!confirm('Mark this recommendation as applied?')) return;
+            
+            try {
+                const response = await fetch(`/api/escalation/${recId}/apply`, { method: 'PUT' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadEscalationRecommendations();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to apply'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        async function recordOutcome(recId) {
+            const outcome = prompt('Enter the actual outcome (e.g., deleted, verified, updated, settled):');
+            if (!outcome) return;
+            
+            try {
+                const response = await fetch(`/api/escalation/${recId}/outcome`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ outcome: outcome })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    loadEscalationRecommendations();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to record outcome'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadEscalationRecommendations);
         
         async function loadSolStatus() {
             if (!clientId) return;

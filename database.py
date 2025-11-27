@@ -1454,6 +1454,117 @@ class FurnisherStats(Base):
     furnisher = relationship("Furnisher", back_populates="stats")
 
 
+class EscalationRecommendation(Base):
+    """AI-powered escalation recommendations for dispute strategy"""
+    __tablename__ = 'escalation_recommendations'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
+    
+    dispute_round = Column(Integer, default=1)
+    bureau = Column(String(50))
+    creditor_name = Column(String(255))
+    current_status = Column(String(50))
+    
+    recommended_action = Column(String(100), nullable=False)
+    confidence_score = Column(Float, default=0.5)
+    reasoning = Column(Text)
+    
+    supporting_factors = Column(JSON)
+    alternative_actions = Column(JSON)
+    
+    expected_outcome = Column(String(100))
+    success_probability = Column(Float, default=0.5)
+    
+    applied = Column(Boolean, default=False)
+    applied_at = Column(DateTime)
+    outcome_actual = Column(String(100))
+    outcome_recorded_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'analysis_id': self.analysis_id,
+            'dispute_round': self.dispute_round,
+            'bureau': self.bureau,
+            'creditor_name': self.creditor_name,
+            'current_status': self.current_status,
+            'recommended_action': self.recommended_action,
+            'confidence_score': self.confidence_score,
+            'reasoning': self.reasoning,
+            'supporting_factors': self.supporting_factors or {},
+            'alternative_actions': self.alternative_actions or [],
+            'expected_outcome': self.expected_outcome,
+            'success_probability': self.success_probability,
+            'applied': self.applied,
+            'applied_at': self.applied_at.isoformat() if self.applied_at else None,
+            'outcome_actual': self.outcome_actual,
+            'outcome_recorded_at': self.outcome_recorded_at.isoformat() if self.outcome_recorded_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class CaseLawCitation(Base):
+    """FCRA case law citations for legal reference and letter insertion"""
+    __tablename__ = 'case_law_citations'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    case_name = Column(String(500), nullable=False, index=True)
+    citation = Column(String(255), nullable=False)
+    court = Column(String(100))
+    year = Column(Integer, index=True)
+    fcra_sections = Column(JSON)
+    violation_types = Column(JSON)
+    key_holding = Column(Text)
+    full_summary = Column(Text)
+    quote_snippets = Column(JSON)
+    damages_awarded = Column(Float, nullable=True)
+    plaintiff_won = Column(Boolean, nullable=True)
+    relevance_score = Column(Integer, default=3)
+    tags = Column(JSON)
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'case_name': self.case_name,
+            'citation': self.citation,
+            'court': self.court,
+            'year': self.year,
+            'fcra_sections': self.fcra_sections or [],
+            'violation_types': self.violation_types or [],
+            'key_holding': self.key_holding,
+            'full_summary': self.full_summary,
+            'quote_snippets': self.quote_snippets or [],
+            'damages_awarded': self.damages_awarded,
+            'plaintiff_won': self.plaintiff_won,
+            'relevance_score': self.relevance_score,
+            'tags': self.tags or [],
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def format_citation(self, format_type='short'):
+        """Format citation for letter insertion"""
+        if format_type == 'short':
+            return f"{self.case_name}, {self.citation}"
+        elif format_type == 'full':
+            return f"{self.case_name}, {self.citation} ({self.court}, {self.year})"
+        elif format_type == 'with_holding':
+            return f"{self.case_name}, {self.citation} (\"{self.key_holding}\")"
+        return f"{self.case_name}, {self.citation}"
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -1580,6 +1691,43 @@ def init_db():
         ("case_triage", "notes", "TEXT"),
         ("case_triage", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("case_triage", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("case_law_citations", "id", "SERIAL PRIMARY KEY"),
+        ("case_law_citations", "case_name", "VARCHAR(500) NOT NULL"),
+        ("case_law_citations", "citation", "VARCHAR(255) NOT NULL"),
+        ("case_law_citations", "court", "VARCHAR(100)"),
+        ("case_law_citations", "year", "INTEGER"),
+        ("case_law_citations", "fcra_sections", "JSON"),
+        ("case_law_citations", "violation_types", "JSON"),
+        ("case_law_citations", "key_holding", "TEXT"),
+        ("case_law_citations", "full_summary", "TEXT"),
+        ("case_law_citations", "quote_snippets", "JSON"),
+        ("case_law_citations", "damages_awarded", "FLOAT"),
+        ("case_law_citations", "plaintiff_won", "BOOLEAN"),
+        ("case_law_citations", "relevance_score", "INTEGER DEFAULT 3"),
+        ("case_law_citations", "tags", "JSON"),
+        ("case_law_citations", "notes", "TEXT"),
+        ("case_law_citations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("case_law_citations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("escalation_recommendations", "id", "SERIAL PRIMARY KEY"),
+        ("escalation_recommendations", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("escalation_recommendations", "analysis_id", "INTEGER REFERENCES analyses(id)"),
+        ("escalation_recommendations", "dispute_round", "INTEGER DEFAULT 1"),
+        ("escalation_recommendations", "bureau", "VARCHAR(50)"),
+        ("escalation_recommendations", "creditor_name", "VARCHAR(255)"),
+        ("escalation_recommendations", "current_status", "VARCHAR(50)"),
+        ("escalation_recommendations", "recommended_action", "VARCHAR(100) NOT NULL"),
+        ("escalation_recommendations", "confidence_score", "FLOAT DEFAULT 0.5"),
+        ("escalation_recommendations", "reasoning", "TEXT"),
+        ("escalation_recommendations", "supporting_factors", "JSON"),
+        ("escalation_recommendations", "alternative_actions", "JSON"),
+        ("escalation_recommendations", "expected_outcome", "VARCHAR(100)"),
+        ("escalation_recommendations", "success_probability", "FLOAT DEFAULT 0.5"),
+        ("escalation_recommendations", "applied", "BOOLEAN DEFAULT FALSE"),
+        ("escalation_recommendations", "applied_at", "TIMESTAMP"),
+        ("escalation_recommendations", "outcome_actual", "VARCHAR(100)"),
+        ("escalation_recommendations", "outcome_recorded_at", "TIMESTAMP"),
+        ("escalation_recommendations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("escalation_recommendations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     conn = engine.connect()

@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -44,6 +44,8 @@ from jwt_utils import require_jwt, create_token
 from services.encryption import encrypt_value, decrypt_value, migrate_plaintext_to_encrypted, is_encrypted
 from services import affiliate_service
 from services import triage_service
+from services import case_law_service
+from services import escalation_service
 import json
 
 app = Flask(__name__)
@@ -14054,6 +14056,365 @@ def triage_dashboard():
         review_needed=review_needed,
         hold=hold
     )
+
+
+@app.route('/api/escalation/recommend/<int:client_id>', methods=['POST'])
+@require_staff()
+def api_escalation_recommend(client_id):
+    """Generate AI-powered escalation recommendations for a client"""
+    data = request.json or {}
+    item_id = data.get('item_id')
+    bureau = data.get('bureau')
+    
+    result = escalation_service.recommend_escalation(
+        client_id=client_id,
+        item_id=item_id,
+        bureau=bureau
+    )
+    
+    if result.get('error'):
+        return jsonify({'success': False, 'error': result['error']}), 404
+    
+    if data.get('save', True):
+        for rec in result.get('recommendations', []):
+            rec_id = escalation_service.save_recommendation(rec)
+            rec['id'] = rec_id
+    
+    return jsonify(result)
+
+
+@app.route('/api/escalation/recommendations/<int:client_id>', methods=['GET'])
+@require_staff()
+def api_escalation_list(client_id):
+    """List all escalation recommendations for a client"""
+    db = get_db()
+    try:
+        recommendations = db.query(EscalationRecommendation).filter_by(
+            client_id=client_id
+        ).order_by(EscalationRecommendation.created_at.desc()).all()
+        
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'recommendations': [r.to_dict() for r in recommendations],
+            'total': len(recommendations)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/escalation/<int:recommendation_id>', methods=['GET'])
+@require_staff()
+def api_escalation_get(recommendation_id):
+    """Get details of a specific recommendation"""
+    db = get_db()
+    try:
+        rec = db.query(EscalationRecommendation).filter_by(id=recommendation_id).first()
+        if not rec:
+            return jsonify({'success': False, 'error': 'Recommendation not found'}), 404
+        
+        action_info = escalation_service.DISPUTE_ACTIONS.get(rec.recommended_action, {})
+        
+        return jsonify({
+            'success': True,
+            'recommendation': rec.to_dict(),
+            'action_info': action_info
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/escalation/<int:recommendation_id>/apply', methods=['PUT'])
+@require_staff()
+def api_escalation_apply(recommendation_id):
+    """Mark a recommendation as applied"""
+    result = escalation_service.apply_recommendation(recommendation_id)
+    
+    if result.get('error'):
+        return jsonify({'success': False, 'error': result['error']}), 404
+    
+    return jsonify(result)
+
+
+@app.route('/api/escalation/<int:recommendation_id>/outcome', methods=['PUT'])
+@require_staff()
+def api_escalation_outcome(recommendation_id):
+    """Record the actual outcome of an applied recommendation"""
+    data = request.json or {}
+    outcome = data.get('outcome')
+    
+    if not outcome:
+        return jsonify({'success': False, 'error': 'Outcome is required'}), 400
+    
+    result = escalation_service.record_outcome(recommendation_id, outcome)
+    
+    if result.get('error'):
+        return jsonify({'success': False, 'error': result['error']}), 404
+    
+    return jsonify(result)
+
+
+@app.route('/api/escalation/stats', methods=['GET'])
+@require_staff()
+def api_escalation_stats():
+    """Get escalation success rate statistics"""
+    stats = escalation_service.get_escalation_stats()
+    return jsonify(stats)
+
+
+@app.route('/api/escalation/timeline/<int:client_id>', methods=['GET'])
+@require_staff()
+def api_escalation_timeline(client_id):
+    """Get action timeline for a client"""
+    result = escalation_service.get_escalation_timeline(client_id)
+    
+    if result.get('error'):
+        return jsonify({'success': False, 'error': result['error']}), 404
+    
+    return jsonify(result)
+
+
+@app.route('/api/escalation/needs-review', methods=['GET'])
+@require_staff()
+def api_escalation_needs_review():
+    """Get cases needing escalation review"""
+    cases = escalation_service.get_cases_needing_escalation_review()
+    return jsonify({
+        'success': True,
+        'cases': cases,
+        'total': len(cases)
+    })
+
+
+@app.route('/api/escalation/actions', methods=['GET'])
+@require_staff()
+def api_escalation_actions():
+    """Get all available escalation action types"""
+    return jsonify({
+        'success': True,
+        'dispute_actions': escalation_service.DISPUTE_ACTIONS,
+        'timing_actions': escalation_service.TIMING_ACTIONS,
+        'documentation_actions': escalation_service.DOCUMENTATION_ACTIONS
+    })
+
+
+@app.route('/dashboard/escalation')
+@require_staff()
+def escalation_dashboard():
+    """Smart escalation dashboard view"""
+    stats = escalation_service.get_escalation_stats()
+    cases_needing_review = escalation_service.get_cases_needing_escalation_review()
+    
+    db = get_db()
+    try:
+        recent_recommendations = db.query(EscalationRecommendation).order_by(
+            EscalationRecommendation.created_at.desc()
+        ).limit(20).all()
+        
+        applied_recommendations = db.query(EscalationRecommendation).filter_by(
+            applied=True
+        ).order_by(EscalationRecommendation.applied_at.desc()).limit(10).all()
+        
+        return render_template('escalation_dashboard.html',
+            stats=stats,
+            cases_needing_review=cases_needing_review,
+            recent_recommendations=[r.to_dict() for r in recent_recommendations],
+            applied_recommendations=[r.to_dict() for r in applied_recommendations],
+            action_types=escalation_service.DISPUTE_ACTIONS
+        )
+    except Exception as e:
+        print(f"Escalation dashboard error: {e}")
+        return render_template('escalation_dashboard.html',
+            stats={},
+            cases_needing_review=[],
+            recent_recommendations=[],
+            applied_recommendations=[],
+            action_types=escalation_service.DISPUTE_ACTIONS,
+            error=str(e)
+        )
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/case-law')
+@require_staff()
+def case_law_dashboard():
+    """Case law citation database dashboard"""
+    db = get_db()
+    try:
+        cases = case_law_service.get_all_cases(db=db)
+        
+        courts = set()
+        violation_types = set()
+        fcra_sections = set()
+        for case in cases:
+            if case.get('court'):
+                courts.add(case['court'])
+            for vt in (case.get('violation_types') or []):
+                violation_types.add(vt)
+            for section in (case.get('fcra_sections') or []):
+                fcra_sections.add(section)
+        
+        return render_template('case_law.html',
+            cases=cases,
+            courts=sorted(courts),
+            violation_types=sorted(violation_types),
+            fcra_sections=sorted(fcra_sections),
+            total_cases=len(cases)
+        )
+    except Exception as e:
+        print(f"Case law dashboard error: {e}")
+        return render_template('case_law.html',
+            cases=[],
+            courts=[],
+            violation_types=[],
+            fcra_sections=[],
+            total_cases=0,
+            error=str(e)
+        )
+    finally:
+        db.close()
+
+
+@app.route('/api/case-law', methods=['GET'])
+@require_staff()
+def api_get_case_law():
+    """List all cases with optional filters"""
+    filters = {
+        'court': request.args.get('court'),
+        'section': request.args.get('section'),
+        'violation_type': request.args.get('violation_type'),
+        'year': request.args.get('year'),
+        'plaintiff_won': request.args.get('plaintiff_won')
+    }
+    filters = {k: v for k, v in filters.items() if v is not None}
+    
+    if 'plaintiff_won' in filters:
+        filters['plaintiff_won'] = filters['plaintiff_won'].lower() == 'true'
+    
+    cases = case_law_service.get_all_cases(filters=filters if filters else None)
+    return jsonify({'success': True, 'cases': cases, 'count': len(cases)})
+
+
+@app.route('/api/case-law/<int:case_id>', methods=['GET'])
+@require_staff()
+def api_get_case_law_detail(case_id):
+    """Get case details by ID"""
+    case = case_law_service.get_case_by_id(case_id)
+    if not case:
+        return jsonify({'success': False, 'error': 'Case not found'}), 404
+    return jsonify({'success': True, 'case': case})
+
+
+@app.route('/api/case-law', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_create_case_law():
+    """Create a new case law citation (admin only)"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    required = ['case_name', 'citation']
+    for field in required:
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
+    
+    try:
+        case = case_law_service.create_case(data)
+        return jsonify({'success': True, 'case': case})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/case-law/<int:case_id>', methods=['PUT'])
+@require_staff(roles=['admin'])
+def api_update_case_law(case_id):
+    """Update an existing case (admin only)"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    try:
+        case = case_law_service.update_case(case_id, data)
+        if not case:
+            return jsonify({'success': False, 'error': 'Case not found'}), 404
+        return jsonify({'success': True, 'case': case})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/case-law/<int:case_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_delete_case_law(case_id):
+    """Delete a case (admin only)"""
+    try:
+        success = case_law_service.delete_case(case_id)
+        if not success:
+            return jsonify({'success': False, 'error': 'Case not found'}), 404
+        return jsonify({'success': True, 'message': 'Case deleted'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/case-law/search', methods=['GET'])
+@require_staff()
+def api_search_case_law():
+    """Full-text search by keywords"""
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({'success': False, 'error': 'Query parameter q is required'}), 400
+    
+    results = case_law_service.search_cases(query)
+    return jsonify({'success': True, 'results': results, 'count': len(results)})
+
+
+@app.route('/api/case-law/suggest/<violation_type>', methods=['GET'])
+@require_staff()
+def api_suggest_case_law(violation_type):
+    """Get suggested citations for a violation type"""
+    cases = case_law_service.get_citations_for_violation(violation_type)
+    return jsonify({'success': True, 'cases': cases, 'count': len(cases)})
+
+
+@app.route('/api/case-law/by-section/<section>', methods=['GET'])
+@require_staff()
+def api_case_law_by_section(section):
+    """Get cases for a specific FCRA section"""
+    cases = case_law_service.get_citations_for_fcra_section(section)
+    return jsonify({'success': True, 'cases': cases, 'count': len(cases)})
+
+
+@app.route('/api/case-law/format/<int:case_id>', methods=['GET'])
+@require_staff()
+def api_format_citation(case_id):
+    """Format a citation for letter insertion"""
+    format_type = request.args.get('format', 'short')
+    formatted = case_law_service.format_citation_for_letter(case_id, format_type)
+    if not formatted:
+        return jsonify({'success': False, 'error': 'Case not found'}), 404
+    return jsonify({'success': True, 'formatted_citation': formatted})
+
+
+@app.route('/api/case-law/suggest-for-analysis/<int:analysis_id>', methods=['GET'])
+@require_staff()
+def api_suggest_for_analysis(analysis_id):
+    """Suggest citations based on analysis violations"""
+    suggestions = case_law_service.suggest_citations_for_analysis(analysis_id)
+    return jsonify({'success': True, 'suggestions': suggestions, 'count': len(suggestions)})
+
+
+@app.route('/api/case-law/populate', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_populate_case_law():
+    """Populate database with default FCRA cases (admin only)"""
+    result = case_law_service.populate_default_cases()
+    if result['status'] == 'error':
+        return jsonify({'success': False, 'error': result['message']}), 500
+    return jsonify({'success': True, **result})
 
 
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
