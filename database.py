@@ -266,6 +266,12 @@ class Violation(Base):
     is_willful = Column(Boolean, default=False)
     willfulness_notes = Column(Text)
     
+    # Statute of Limitations (SOL) tracking - FCRA § 1681p
+    violation_date = Column(Date)
+    discovery_date = Column(Date)
+    sol_expiration_date = Column(Date)
+    sol_warning_sent = Column(Boolean, default=False)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Standing(Base):
@@ -1263,6 +1269,37 @@ class CreditScoreProjection(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class CFPBComplaint(Base):
+    """Track CFPB complaints filed against CRAs and furnishers"""
+    __tablename__ = 'cfpb_complaints'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    case_id = Column(Integer, ForeignKey('cases.id'), nullable=True)
+    
+    target_company = Column(String(255), nullable=False)
+    target_type = Column(String(50), nullable=False)
+    
+    product_type = Column(String(100), nullable=False)
+    issue_type = Column(String(100), nullable=False)
+    sub_issue_type = Column(String(100))
+    
+    narrative = Column(Text)
+    desired_resolution = Column(Text)
+    
+    status = Column(String(50), default='draft')
+    cfpb_complaint_id = Column(String(100))
+    
+    submitted_at = Column(DateTime)
+    response_received_at = Column(DateTime)
+    company_response = Column(Text)
+    
+    file_path = Column(String(500))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class Furnisher(Base):
     """Track creditors/furnishers that report to credit bureaus for strategic intelligence"""
     __tablename__ = 'furnishers'
@@ -1396,6 +1433,10 @@ def init_db():
         ("clients", "payment_method", "VARCHAR(50) DEFAULT 'pending'"),
         ("clients", "payment_pending", "BOOLEAN DEFAULT FALSE"),
         ("clients", "avatar_filename", "VARCHAR(255)"),
+        ("violations", "violation_date", "DATE"),
+        ("violations", "discovery_date", "DATE"),
+        ("violations", "sol_expiration_date", "DATE"),
+        ("violations", "sol_warning_sent", "BOOLEAN DEFAULT FALSE"),
     ]
     
     conn = engine.connect()

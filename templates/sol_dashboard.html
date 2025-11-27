@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOL Tracker - FCRA Litigation Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+        .stat-card.critical::before { background: #ef4444; }
+        .stat-card.warning::before { background: #f97316; }
+        .stat-card.caution::before { background: #eab308; }
+        .stat-card.ok::before { background: #22c55e; }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        .stat-card.critical .stat-number { color: #ef4444; }
+        .stat-card.warning .stat-number { color: #f97316; }
+        .stat-card.caution .stat-number { color: #eab308; }
+        .stat-card.ok .stat-number { color: #22c55e; }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .violation-list {
+            list-style: none;
+        }
+        
+        .violation-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            border-left: 4px solid;
+            transition: all 0.2s;
+        }
+        .violation-item:hover {
+            background: #f1f5f9;
+        }
+        .violation-item.critical { border-left-color: #ef4444; }
+        .violation-item.warning { border-left-color: #f97316; }
+        .violation-item.caution { border-left-color: #eab308; }
+        .violation-item.ok { border-left-color: #22c55e; }
+        .violation-item.expired { border-left-color: #6b7280; background: #fef2f2; }
+        
+        .violation-info {
+            flex: 1;
+        }
+        .violation-client {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        .violation-details {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .violation-status {
+            text-align: right;
+        }
+        .days-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .days-badge.critical { background: #fee2e2; color: #ef4444; }
+        .days-badge.warning { background: #ffedd5; color: #ea580c; }
+        .days-badge.caution { background: #fef9c3; color: #ca8a04; }
+        .days-badge.ok { background: #dcfce7; color: #16a34a; }
+        .days-badge.expired { background: #e5e7eb; color: #4b5563; }
+        
+        .expiration-date {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #e2e8f0;
+            color: #475569;
+            margin-left: 12px;
+            text-decoration: none;
+        }
+        .action-btn:hover {
+            background: #cbd5e1;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            background: #e2e8f0;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .tab:hover:not(.active) {
+            background: #cbd5e1;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        .legal-note {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 30px;
+        }
+        .legal-note-title {
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legal-note-text {
+            font-size: 13px;
+            color: #1e40af;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend">
+            <span>Brightpath Ascend</span>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Clients
+            </a>
+            <a href="/dashboard/analytics" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Analytics
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Legal Tools</div>
+            <a href="/dashboard/sol" class="nav-item active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                SOL Tracker
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Settlements
+            </a>
+            <a href="/dashboard/furnishers" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                Furnishers
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Statute of Limitations Tracker</h1>
+                <p class="header-subtitle">FCRA § 1681p - Track approaching claim deadlines</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="checkDeadlines()">
+                    <svg style="width:16px;height:16px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Check Deadlines
+                </button>
+                <a href="/dashboard/analytics" class="btn btn-secondary">Back to Analytics</a>
+            </div>
+        </div>
+        
+        <div class="legal-note">
+            <div class="legal-note-title">
+                <svg style="width:18px;height:18px" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                FCRA Statute of Limitations (§ 1681p)
+            </div>
+            <div class="legal-note-text">
+                Claims must be brought within the <strong>earlier</strong> of: (1) <strong>2 years</strong> from the date the consumer discovers the violation, or (2) <strong>5 years</strong> from the date the violation occurred. This applies to both willful and negligent violations. Federal law applies nationwide.
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card critical">
+                <div class="stat-number">{{ stats.expiring_30_days }}</div>
+                <div class="stat-label">Expiring in 30 Days</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-number">{{ stats.expiring_60_days - stats.expiring_30_days }}</div>
+                <div class="stat-label">Expiring in 31-60 Days</div>
+            </div>
+            <div class="stat-card caution">
+                <div class="stat-number">{{ stats.expiring_90_days - stats.expiring_60_days }}</div>
+                <div class="stat-label">Expiring in 61-90 Days</div>
+            </div>
+            <div class="stat-card ok">
+                <div class="stat-number">{{ stats.total - stats.expiring_90_days - stats.expired }}</div>
+                <div class="stat-label">Safe (90+ Days)</div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('critical')">Critical (30 Days)</button>
+            <button class="tab" onclick="showTab('warning')">Warning (60 Days)</button>
+            <button class="tab" onclick="showTab('all')">All Upcoming (90 Days)</button>
+            <button class="tab" onclick="showTab('expired')">Expired</button>
+        </div>
+        
+        <div id="critical-tab" class="tab-content active">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Critical - Expiring Within 30 Days</div>
+                </div>
+                {% if upcoming_30 %}
+                <ul class="violation-list">
+                    {% for v in upcoming_30 %}
+                    <li class="violation-item {{ v.warning_level }}">
+                        <div class="violation-info">
+                            <div class="violation-client">{{ v.client_name }}</div>
+                            <div class="violation-details">
+                                {{ v.bureau }} | {{ v.violation_type or v.fcra_section }}
+                                {% if v.account_name %} - {{ v.account_name }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="violation-status">
+                            <span class="days-badge {{ v.warning_level }}">{{ v.remaining_text }}</span>
+                            <div class="expiration-date">Expires: {{ v.expiration_date_formatted }}</div>
+                        </div>
+                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p>No critical deadlines. All claims have more than 30 days remaining.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div id="warning-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Warning - Expiring Within 60 Days</div>
+                </div>
+                {% if upcoming_60 %}
+                <ul class="violation-list">
+                    {% for v in upcoming_60 %}
+                    <li class="violation-item {{ v.warning_level }}">
+                        <div class="violation-info">
+                            <div class="violation-client">{{ v.client_name }}</div>
+                            <div class="violation-details">
+                                {{ v.bureau }} | {{ v.violation_type or v.fcra_section }}
+                                {% if v.account_name %} - {{ v.account_name }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="violation-status">
+                            <span class="days-badge {{ v.warning_level }}">{{ v.remaining_text }}</span>
+                            <div class="expiration-date">Expires: {{ v.expiration_date_formatted }}</div>
+                        </div>
+                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p>No warnings. All claims have more than 60 days remaining.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div id="all-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">All Upcoming - Expiring Within 90 Days</div>
+                </div>
+                {% if upcoming_90 %}
+                <ul class="violation-list">
+                    {% for v in upcoming_90 %}
+                    <li class="violation-item {{ v.warning_level }}">
+                        <div class="violation-info">
+                            <div class="violation-client">{{ v.client_name }}</div>
+                            <div class="violation-details">
+                                {{ v.bureau }} | {{ v.violation_type or v.fcra_section }}
+                                {% if v.account_name %} - {{ v.account_name }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="violation-status">
+                            <span class="days-badge {{ v.warning_level }}">{{ v.remaining_text }}</span>
+                            <div class="expiration-date">Expires: {{ v.expiration_date_formatted }}</div>
+                        </div>
+                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p>No upcoming expirations. All claims have more than 90 days remaining.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div id="expired-tab" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">Expired Claims</div>
+                </div>
+                {% if expired %}
+                <ul class="violation-list">
+                    {% for v in expired %}
+                    <li class="violation-item expired">
+                        <div class="violation-info">
+                            <div class="violation-client">{{ v.client_name }}</div>
+                            <div class="violation-details">
+                                {{ v.bureau }} | {{ v.violation_type or v.fcra_section }}
+                                {% if v.account_name %} - {{ v.account_name }}{% endif %}
+                            </div>
+                        </div>
+                        <div class="violation-status">
+                            <span class="days-badge expired">{{ v.remaining_text }}</span>
+                            <div class="expiration-date">Expired: {{ v.expiration_date_formatted }}</div>
+                        </div>
+                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p>No expired claims found.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function checkDeadlines() {
+            try {
+                const response = await fetch('/api/sol/check-deadlines', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Deadline check complete!\n\nViolations checked: ${data.violations_checked}\nAlerts created: ${data.alerts_created}\nAlerts skipped: ${data.alerts_skipped}`);
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Error checking deadlines: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

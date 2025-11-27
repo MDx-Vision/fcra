@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12570,6 +12570,1047 @@ def dashboard_furnisher_detail(furnisher_id):
         import traceback
         traceback.print_exc()
         return f"Error loading furnisher: {e}", 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# STATUTE OF LIMITATIONS (SOL) CALCULATOR API
+# FCRA § 1681p: Earlier of 2 years from discovery or 5 years from occurrence
+# ============================================================
+
+from services.sol_calculator import (
+    calculate_sol, get_remaining_days, is_expired, get_sol_warning_level,
+    get_violations_with_sol_status, get_upcoming_expirations, get_expired_claims,
+    get_sol_statistics, check_sol_deadlines, update_violation_sol_dates, format_sol_for_display
+)
+
+
+@app.route('/api/sol/calculate', methods=['POST'])
+@require_staff()
+def api_sol_calculate():
+    """Calculate SOL for given violation/discovery dates"""
+    data = request.get_json() or {}
+    
+    violation_date_str = data.get('violation_date')
+    discovery_date_str = data.get('discovery_date')
+    
+    if not violation_date_str:
+        return jsonify({
+            'success': False,
+            'error': 'violation_date is required'
+        }), 400
+    
+    try:
+        violation_date = datetime.fromisoformat(violation_date_str.replace('Z', '+00:00')).date()
+        discovery_date = None
+        if discovery_date_str:
+            discovery_date = datetime.fromisoformat(discovery_date_str.replace('Z', '+00:00')).date()
+        
+        sol_info = calculate_sol(violation_date, discovery_date)
+        formatted = format_sol_for_display(sol_info)
+        
+        return jsonify({
+            'success': True,
+            **formatted
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 400
+
+
+@app.route('/api/sol/client/<int:client_id>', methods=['GET'])
+@require_staff()
+def api_sol_client(client_id):
+    """Get SOL status for all violations belonging to a client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({
+                'success': False,
+                'error': 'Client not found'
+            }), 404
+        
+        violations = get_violations_with_sol_status(db, client_id)
+        
+        formatted_violations = [format_sol_for_display(v) for v in violations]
+        
+        critical_count = sum(1 for v in violations if v.get('warning_level') == 'critical')
+        warning_count = sum(1 for v in violations if v.get('warning_level') == 'warning')
+        expired_count = sum(1 for v in violations if v.get('is_expired', False))
+        
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'client_name': client.name,
+            'violations': formatted_violations,
+            'summary': {
+                'total': len(violations),
+                'critical': critical_count,
+                'warning': warning_count,
+                'expired': expired_count
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sol/upcoming', methods=['GET'])
+@require_staff()
+def api_sol_upcoming():
+    """Get all violations with SOL expiring within the specified days"""
+    days = request.args.get('days', 90, type=int)
+    
+    db = get_db()
+    try:
+        upcoming = get_upcoming_expirations(db, days)
+        formatted = [format_sol_for_display(v) for v in upcoming]
+        
+        stats = get_sol_statistics(db)
+        
+        return jsonify({
+            'success': True,
+            'days': days,
+            'violations': formatted,
+            'stats': stats
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sol/statistics', methods=['GET'])
+@require_staff()
+def api_sol_statistics():
+    """Get overall SOL statistics"""
+    db = get_db()
+    try:
+        stats = get_sol_statistics(db)
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sol/violation/<int:violation_id>/update', methods=['POST'])
+@require_staff()
+def api_sol_violation_update(violation_id):
+    """Update SOL dates for a specific violation"""
+    data = request.get_json() or {}
+    
+    violation_date_str = data.get('violation_date')
+    discovery_date_str = data.get('discovery_date')
+    
+    db = get_db()
+    try:
+        violation_date = None
+        discovery_date = None
+        
+        if violation_date_str:
+            violation_date = datetime.fromisoformat(violation_date_str.replace('Z', '+00:00')).date()
+        if discovery_date_str:
+            discovery_date = datetime.fromisoformat(discovery_date_str.replace('Z', '+00:00')).date()
+        
+        result = update_violation_sol_dates(db, violation_id, violation_date, discovery_date)
+        
+        if result.get('error'):
+            return jsonify({
+                'success': False,
+                'error': result['error']
+            }), 400
+        
+        return jsonify({
+            'success': True,
+            **format_sol_for_display(result)
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sol/check-deadlines', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_sol_check_deadlines():
+    """Manually trigger SOL deadline check (creates alerts)"""
+    db = get_db()
+    try:
+        result = check_sol_deadlines(db)
+        
+        return jsonify({
+            'success': True,
+            **result
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/sol')
+@require_staff()
+def dashboard_sol():
+    """SOL Tracker Dashboard"""
+    db = get_db()
+    try:
+        stats = get_sol_statistics(db)
+        
+        upcoming_30 = get_upcoming_expirations(db, 30)
+        upcoming_60 = get_upcoming_expirations(db, 60)
+        upcoming_90 = get_upcoming_expirations(db, 90)
+        expired = get_expired_claims(db)
+        
+        formatted_30 = [format_sol_for_display(v) for v in upcoming_30]
+        formatted_60 = [format_sol_for_display(v) for v in upcoming_60]
+        formatted_90 = [format_sol_for_display(v) for v in upcoming_90]
+        formatted_expired = [format_sol_for_display(v) for v in expired[:20]]
+        
+        return render_template('sol_dashboard.html',
+            stats=stats,
+            upcoming_30=formatted_30,
+            upcoming_60=formatted_60,
+            upcoming_90=formatted_90,
+            expired=formatted_expired
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error loading SOL dashboard: {e}", 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# CFPB COMPLAINT GENERATOR
+# ============================================================
+
+CFPB_TEMPLATES = {
+    'credit_reporting': {
+        'product_type': 'Credit reporting, credit repair services, or other personal consumer reports',
+        'issues': {
+            'incorrect_info': {
+                'label': 'Incorrect information on your report',
+                'sub_issues': [
+                    'Information belongs to someone else',
+                    'Account status incorrect',
+                    'Account information incorrect',
+                    'Personal information incorrect',
+                    'Public record information inaccurate',
+                    'Information is outdated',
+                    'Information is missing that should be on the report'
+                ]
+            },
+            'investigation': {
+                'label': 'Problem with a credit reporting company\'s investigation into an existing problem',
+                'sub_issues': [
+                    'Their investigation did not fix an error on your report',
+                    'Investigation took more than 30 days',
+                    'Was not notified of investigation status or results',
+                    'Difficulty submitting a dispute or getting information about a dispute over the phone'
+                ]
+            },
+            'improper_use': {
+                'label': 'Improper use of your report',
+                'sub_issues': [
+                    'Report provided to employer without your written authorization',
+                    'Credit inquiries on your report that you don\'t recognize',
+                    'Received unsolicited financial product or insurance offers after opting out'
+                ]
+            },
+            'fraud_alerts': {
+                'label': 'Problem with a credit reporting company\'s fraud alerts or security freeze',
+                'sub_issues': [
+                    'Unable to place fraud alert',
+                    'Unable to place security freeze',
+                    'Unable to lift security freeze'
+                ]
+            },
+            'credit_monitoring': {
+                'label': 'Problem with credit report or credit score',
+                'sub_issues': [
+                    'Problem getting free annual credit report',
+                    'Problem with credit score or credit report'
+                ]
+            }
+        }
+    },
+    'debt_collection': {
+        'product_type': 'Debt collection',
+        'issues': {
+            'not_owed': {
+                'label': 'Attempts to collect debt not owed',
+                'sub_issues': [
+                    'Debt is not yours',
+                    'Debt was paid',
+                    'Debt was discharged in bankruptcy',
+                    'Debt is result of identity theft'
+                ]
+            },
+            'communication': {
+                'label': 'Communication tactics',
+                'sub_issues': [
+                    'Frequent or repeated calls',
+                    'Called after asked to stop',
+                    'Used obscene, profane, or abusive language',
+                    'Threatened arrest or jail if debt not paid'
+                ]
+            },
+            'false_statements': {
+                'label': 'False statements or representation',
+                'sub_issues': [
+                    'Attempted to collect wrong amount',
+                    'Impersonated attorney, law enforcement, or government official',
+                    'Indicated you committed crime by not paying debt',
+                    'Indicated you would be arrested if debt not paid'
+                ]
+            },
+            'threats': {
+                'label': 'Threatened to take an action we can\'t legally take',
+                'sub_issues': [
+                    'Threatened to sue on debt older than the statute of limitations',
+                    'Threatened to seize or garnish without court approval',
+                    'Threatened to report incorrect debt info to credit bureaus'
+                ]
+            }
+        }
+    }
+}
+
+CRA_COMPANIES = {
+    'equifax': {
+        'name': 'Equifax Information Services LLC',
+        'address': 'P.O. Box 740256, Atlanta, GA 30374'
+    },
+    'experian': {
+        'name': 'Experian Information Solutions, Inc.',
+        'address': 'P.O. Box 4500, Allen, TX 75013'
+    },
+    'transunion': {
+        'name': 'TransUnion LLC',
+        'address': 'P.O. Box 2000, Chester, PA 19016'
+    }
+}
+
+os.makedirs("static/cfpb_complaints", exist_ok=True)
+
+
+@app.route('/api/cfpb/templates', methods=['GET'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_templates():
+    """Get available CFPB complaint templates"""
+    return jsonify({
+        'success': True,
+        'templates': CFPB_TEMPLATES,
+        'cra_companies': CRA_COMPANIES
+    })
+
+
+@app.route('/api/cfpb/generate', methods=['POST'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_generate():
+    """Generate a CFPB complaint with AI-powered narrative"""
+    data = request.get_json() or {}
+    
+    client_id = data.get('client_id')
+    case_id = data.get('case_id')
+    target_company = data.get('target_company')
+    target_type = data.get('target_type')
+    product_type = data.get('product_type')
+    issue_type = data.get('issue_type')
+    sub_issue_type = data.get('sub_issue_type')
+    
+    if not client_id or not target_company or not target_type or not product_type or not issue_type:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+    
+    db = get_db()
+    try:
+        client_record = db.query(Client).filter_by(id=client_id).first()
+        if not client_record:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        violations_data = []
+        standing_data = None
+        dispute_history = []
+        
+        if case_id:
+            case = db.query(Case).filter_by(id=case_id).first()
+            if case and case.analysis_id:
+                violations = db.query(Violation).filter_by(analysis_id=case.analysis_id).all()
+                violations_data = [{
+                    'bureau': v.bureau,
+                    'account_name': v.account_name,
+                    'fcra_section': v.fcra_section,
+                    'violation_type': v.violation_type,
+                    'description': v.description,
+                    'is_willful': v.is_willful
+                } for v in violations]
+                
+                standing = db.query(Standing).filter_by(analysis_id=case.analysis_id).first()
+                if standing:
+                    standing_data = {
+                        'concrete_harm_type': standing.concrete_harm_type,
+                        'concrete_harm_details': standing.concrete_harm_details,
+                        'dissemination_details': standing.dissemination_details
+                    }
+        
+        cra_responses = db.query(CRAResponse).filter_by(client_id=client_id).all()
+        for resp in cra_responses:
+            dispute_history.append({
+                'bureau': resp.bureau,
+                'round': resp.dispute_round,
+                'response_type': resp.response_type,
+                'date': resp.response_date.isoformat() if resp.response_date else None
+            })
+        
+        narrative = generate_cfpb_narrative(
+            client_record,
+            target_company,
+            target_type,
+            product_type,
+            issue_type,
+            sub_issue_type,
+            violations_data,
+            standing_data,
+            dispute_history
+        )
+        
+        desired_resolution = generate_desired_resolution(target_type, issue_type)
+        
+        complaint = CFPBComplaint(
+            client_id=client_id,
+            case_id=case_id,
+            target_company=target_company,
+            target_type=target_type,
+            product_type=product_type,
+            issue_type=issue_type,
+            sub_issue_type=sub_issue_type,
+            narrative=narrative,
+            desired_resolution=desired_resolution,
+            status='draft'
+        )
+        db.add(complaint)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'complaint': {
+                'id': complaint.id,
+                'client_id': complaint.client_id,
+                'case_id': complaint.case_id,
+                'target_company': complaint.target_company,
+                'target_type': complaint.target_type,
+                'product_type': complaint.product_type,
+                'issue_type': complaint.issue_type,
+                'sub_issue_type': complaint.sub_issue_type,
+                'narrative': complaint.narrative,
+                'desired_resolution': complaint.desired_resolution,
+                'status': complaint.status,
+                'created_at': complaint.created_at.isoformat()
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+def generate_cfpb_narrative(client, target_company, target_type, product_type, issue_type, sub_issue_type, violations, standing, dispute_history):
+    """Generate a compelling CFPB complaint narrative using Claude"""
+    
+    client_name = client.name
+    client_address = f"{client.address_street or ''}, {client.address_city or ''}, {client.address_state or ''} {client.address_zip or ''}".strip(', ')
+    
+    violations_text = ""
+    if violations:
+        violations_text = "VIOLATIONS IDENTIFIED:\n"
+        for v in violations:
+            violations_text += f"- {v.get('account_name', 'Unknown Account')}: {v.get('description', 'No description')} (FCRA § {v.get('fcra_section', 'N/A')})\n"
+    
+    standing_text = ""
+    if standing:
+        standing_text = f"HARM SUFFERED:\n- Type: {standing.get('concrete_harm_type', 'Not specified')}\n- Details: {standing.get('concrete_harm_details', 'Not specified')}\n"
+    
+    dispute_text = ""
+    if dispute_history:
+        dispute_text = "DISPUTE HISTORY:\n"
+        for d in dispute_history:
+            dispute_text += f"- {d.get('bureau', 'Unknown')}: Round {d.get('round', 'N/A')} - {d.get('response_type', 'Unknown')} ({d.get('date', 'Unknown date')})\n"
+    
+    prompt = f"""Generate a professional, compelling CFPB complaint narrative for the following situation. The narrative should be written in first person from the consumer's perspective and follow CFPB guidelines.
+
+CONSUMER INFORMATION:
+- Name: {client_name}
+- Address: {client_address}
+
+COMPLAINT DETAILS:
+- Target Company: {target_company}
+- Company Type: {target_type}
+- Product/Service: {product_type}
+- Issue Type: {issue_type}
+- Sub-Issue: {sub_issue_type or 'Not specified'}
+
+{violations_text}
+{standing_text}
+{dispute_text}
+
+Write a detailed narrative (400-600 words) that:
+1. Clearly describes the problem in chronological order
+2. Includes specific dates, account numbers (partially redacted), and amounts where applicable
+3. Explains what attempts were made to resolve the issue directly with the company
+4. Describes the impact on the consumer (financial harm, stress, denied credit, etc.)
+5. References any relevant FCRA violations
+6. Maintains a professional, factual tone
+
+Output ONLY the narrative text, no additional formatting or explanations."""
+
+    try:
+        if client is None or 'invalid' in ANTHROPIC_API_KEY.lower():
+            return f"""I am writing to file a formal complaint against {target_company} regarding {issue_type}.
+
+On [DATE], I discovered that {target_company} has been reporting inaccurate information on my credit report. Despite my attempts to resolve this matter directly, the company has failed to correct these errors.
+
+I have disputed this information through proper channels, but the issues remain unresolved. This has caused me significant financial harm and emotional distress.
+
+I am requesting immediate investigation and correction of this matter.
+
+[Note: This is a template narrative. Enable Claude API for AI-generated personalized narratives.]"""
+        
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=1500,
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        return response.content[0].text.strip()
+    
+    except Exception as e:
+        print(f"Error generating narrative with Claude: {e}")
+        return f"""I am writing to file a formal complaint against {target_company} regarding {issue_type}.
+
+I have identified serious issues with how {target_company} has been handling my credit reporting information. Despite multiple attempts to resolve this matter directly with the company, the problems persist.
+
+The specific issue involves {sub_issue_type or issue_type}. This has caused me financial harm and significant stress.
+
+I have attempted to dispute this information through proper channels, sending written disputes and following up multiple times. However, {target_company} has failed to adequately investigate or correct the inaccurate information.
+
+I am requesting that the CFPB investigate this matter and help me obtain a resolution.
+
+[Detailed timeline and specific information would be included based on case documentation.]"""
+
+
+def generate_desired_resolution(target_type, issue_type):
+    """Generate appropriate desired resolution text"""
+    if target_type == 'cra':
+        return """I request the following resolution:
+
+1. Conduct a thorough investigation of my dispute within 30 days as required by the FCRA
+2. Correct or delete all inaccurate information from my credit report
+3. Provide me with written confirmation of the investigation results
+4. Provide a free updated copy of my credit report showing the corrections
+5. Notify all parties who received my report in the past 6 months of the corrections
+6. Implement procedures to prevent this error from recurring
+7. Provide monetary compensation for the harm I have suffered"""
+    else:
+        return """I request the following resolution:
+
+1. Cease all collection activities on this disputed account
+2. Provide complete verification of the alleged debt including original creditor documentation
+3. Remove all negative credit reporting related to this disputed account
+4. Confirm deletion in writing to me and all credit reporting agencies
+5. Cease all communication regarding this matter if debt cannot be verified
+6. Provide monetary compensation for the harm caused by these practices"""
+
+
+@app.route('/api/cfpb/complaints', methods=['GET'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_complaints_list():
+    """List all CFPB complaints"""
+    status = request.args.get('status')
+    client_id = request.args.get('client_id')
+    
+    db = get_db()
+    try:
+        query = db.query(CFPBComplaint)
+        
+        if status:
+            query = query.filter(CFPBComplaint.status == status)
+        if client_id:
+            query = query.filter(CFPBComplaint.client_id == int(client_id))
+        
+        complaints = query.order_by(CFPBComplaint.created_at.desc()).all()
+        
+        result = []
+        for c in complaints:
+            client_record = db.query(Client).filter_by(id=c.client_id).first()
+            result.append({
+                'id': c.id,
+                'client_id': c.client_id,
+                'client_name': client_record.name if client_record else 'Unknown',
+                'case_id': c.case_id,
+                'target_company': c.target_company,
+                'target_type': c.target_type,
+                'product_type': c.product_type,
+                'issue_type': c.issue_type,
+                'status': c.status,
+                'cfpb_complaint_id': c.cfpb_complaint_id,
+                'submitted_at': c.submitted_at.isoformat() if c.submitted_at else None,
+                'file_path': c.file_path,
+                'created_at': c.created_at.isoformat()
+            })
+        
+        return jsonify({
+            'success': True,
+            'complaints': result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cfpb/complaints/<int:complaint_id>', methods=['GET'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_complaint_detail(complaint_id):
+    """Get CFPB complaint details"""
+    db = get_db()
+    try:
+        complaint = db.query(CFPBComplaint).filter_by(id=complaint_id).first()
+        if not complaint:
+            return jsonify({'success': False, 'error': 'Complaint not found'}), 404
+        
+        client_record = db.query(Client).filter_by(id=complaint.client_id).first()
+        
+        return jsonify({
+            'success': True,
+            'complaint': {
+                'id': complaint.id,
+                'client_id': complaint.client_id,
+                'client_name': client_record.name if client_record else 'Unknown',
+                'client_email': client_record.email if client_record else None,
+                'client_phone': client_record.phone if client_record else None,
+                'client_address': f"{client_record.address_street or ''}, {client_record.address_city or ''}, {client_record.address_state or ''} {client_record.address_zip or ''}" if client_record else '',
+                'case_id': complaint.case_id,
+                'target_company': complaint.target_company,
+                'target_type': complaint.target_type,
+                'product_type': complaint.product_type,
+                'issue_type': complaint.issue_type,
+                'sub_issue_type': complaint.sub_issue_type,
+                'narrative': complaint.narrative,
+                'desired_resolution': complaint.desired_resolution,
+                'status': complaint.status,
+                'cfpb_complaint_id': complaint.cfpb_complaint_id,
+                'submitted_at': complaint.submitted_at.isoformat() if complaint.submitted_at else None,
+                'response_received_at': complaint.response_received_at.isoformat() if complaint.response_received_at else None,
+                'company_response': complaint.company_response,
+                'file_path': complaint.file_path,
+                'created_at': complaint.created_at.isoformat(),
+                'updated_at': complaint.updated_at.isoformat() if complaint.updated_at else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cfpb/complaints/<int:complaint_id>', methods=['PUT'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_complaint_update(complaint_id):
+    """Update CFPB complaint"""
+    data = request.get_json() or {}
+    
+    db = get_db()
+    try:
+        complaint = db.query(CFPBComplaint).filter_by(id=complaint_id).first()
+        if not complaint:
+            return jsonify({'success': False, 'error': 'Complaint not found'}), 404
+        
+        if 'narrative' in data:
+            complaint.narrative = data['narrative']
+        if 'desired_resolution' in data:
+            complaint.desired_resolution = data['desired_resolution']
+        if 'status' in data:
+            complaint.status = data['status']
+        if 'cfpb_complaint_id' in data:
+            complaint.cfpb_complaint_id = data['cfpb_complaint_id']
+        if 'company_response' in data:
+            complaint.company_response = data['company_response']
+        if 'target_company' in data:
+            complaint.target_company = data['target_company']
+        if 'issue_type' in data:
+            complaint.issue_type = data['issue_type']
+        if 'sub_issue_type' in data:
+            complaint.sub_issue_type = data['sub_issue_type']
+        
+        complaint.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Complaint updated successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cfpb/complaints/<int:complaint_id>/pdf', methods=['POST'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_complaint_pdf(complaint_id):
+    """Generate PDF for CFPB complaint"""
+    db = get_db()
+    try:
+        complaint = db.query(CFPBComplaint).filter_by(id=complaint_id).first()
+        if not complaint:
+            return jsonify({'success': False, 'error': 'Complaint not found'}), 404
+        
+        client_record = db.query(Client).filter_by(id=complaint.client_id).first()
+        if not client_record:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        pdf_path = generate_cfpb_pdf(complaint, client_record)
+        
+        complaint.file_path = pdf_path
+        complaint.status = 'ready' if complaint.status == 'draft' else complaint.status
+        complaint.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'file_path': pdf_path,
+            'message': 'PDF generated successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+def generate_cfpb_pdf(complaint, client_record):
+    """Generate CFPB complaint PDF"""
+    from fpdf import FPDF
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_name = re.sub(r'[^\w\s-]', '', client_record.name).replace(' ', '_')
+    filename = f"CFPB_Complaint_{safe_name}_{timestamp}.pdf"
+    output_path = f"static/cfpb_complaints/{filename}"
+    
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    if os.path.exists(BRIGHTPATH_LOGO_PATH):
+        try:
+            pdf.image(BRIGHTPATH_LOGO_PATH, 10, 8, 25)
+        except:
+            pass
+    
+    pdf.set_font("Arial", "B", 16)
+    pdf.set_xy(40, 10)
+    pdf.cell(0, 10, "CFPB COMPLAINT", ln=True, align='C')
+    
+    pdf.set_font("Arial", "", 10)
+    pdf.set_xy(40, 20)
+    pdf.cell(0, 5, "Consumer Financial Protection Bureau", ln=True, align='C')
+    pdf.cell(0, 5, f"Generated: {datetime.now().strftime('%B %d, %Y')}", ln=True, align='C')
+    
+    pdf.ln(10)
+    pdf.set_draw_color(49, 151, 149)
+    pdf.set_line_width(0.5)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "CONSUMER INFORMATION", ln=True)
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(0, 6, f"Name: {client_record.name}", ln=True)
+    address = f"{client_record.address_street or ''}, {client_record.address_city or ''}, {client_record.address_state or ''} {client_record.address_zip or ''}"
+    pdf.cell(0, 6, f"Address: {address.strip(', ')}", ln=True)
+    pdf.cell(0, 6, f"Phone: {client_record.phone or 'Not provided'}", ln=True)
+    pdf.cell(0, 6, f"Email: {client_record.email or 'Not provided'}", ln=True)
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "COMPANY BEING COMPLAINED ABOUT", ln=True)
+    pdf.set_font("Arial", "", 10)
+    pdf.cell(0, 6, f"Company Name: {complaint.target_company}", ln=True)
+    pdf.cell(0, 6, f"Company Type: {complaint.target_type.upper()}", ln=True)
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "PRODUCT/SERVICE & ISSUE", ln=True)
+    pdf.set_font("Arial", "", 10)
+    pdf.multi_cell(0, 6, f"Product/Service: {complaint.product_type}")
+    pdf.cell(0, 6, f"Issue Type: {complaint.issue_type}", ln=True)
+    if complaint.sub_issue_type:
+        pdf.cell(0, 6, f"Sub-Issue: {complaint.sub_issue_type}", ln=True)
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "WHAT HAPPENED (NARRATIVE)", ln=True)
+    pdf.set_font("Arial", "", 10)
+    
+    narrative = complaint.narrative or "No narrative provided."
+    narrative = narrative.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 6, narrative)
+    
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 8, "DESIRED RESOLUTION", ln=True)
+    pdf.set_font("Arial", "", 10)
+    
+    resolution = complaint.desired_resolution or "No resolution specified."
+    resolution = resolution.encode('latin-1', 'replace').decode('latin-1')
+    pdf.multi_cell(0, 6, resolution)
+    
+    pdf.ln(10)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", "B", 10)
+    pdf.cell(0, 6, "CONSUMER CERTIFICATION", ln=True)
+    pdf.set_font("Arial", "", 9)
+    pdf.multi_cell(0, 5, "I certify that the information provided above is true and correct to the best of my knowledge. I authorize the Consumer Financial Protection Bureau to share this complaint with the company identified above for resolution purposes.")
+    
+    pdf.ln(10)
+    pdf.cell(0, 6, "_____________________________", ln=True)
+    pdf.cell(0, 6, f"{client_record.name}", ln=True)
+    pdf.cell(0, 6, f"Date: {datetime.now().strftime('%B %d, %Y')}", ln=True)
+    
+    pdf.ln(10)
+    pdf.set_font("Arial", "I", 8)
+    pdf.set_text_color(128, 128, 128)
+    pdf.multi_cell(0, 4, "This complaint was prepared using the Brightpath Ascend FCRA Litigation Platform. For more information, visit consumerfinance.gov/complaint to file directly with the CFPB.")
+    
+    pdf.output(output_path)
+    return output_path
+
+
+@app.route('/api/cfpb/complaints/<int:complaint_id>/submit', methods=['POST'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_complaint_submit(complaint_id):
+    """Mark CFPB complaint as submitted"""
+    data = request.get_json() or {}
+    cfpb_complaint_id = data.get('cfpb_complaint_id')
+    
+    db = get_db()
+    try:
+        complaint = db.query(CFPBComplaint).filter_by(id=complaint_id).first()
+        if not complaint:
+            return jsonify({'success': False, 'error': 'Complaint not found'}), 404
+        
+        complaint.status = 'submitted'
+        complaint.submitted_at = datetime.utcnow()
+        if cfpb_complaint_id:
+            complaint.cfpb_complaint_id = cfpb_complaint_id
+        complaint.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Complaint marked as submitted'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cfpb/complaints/<int:complaint_id>/response', methods=['POST'])
+@require_staff(['admin', 'attorney', 'paralegal'])
+def api_cfpb_complaint_response(complaint_id):
+    """Record company response to CFPB complaint"""
+    data = request.get_json() or {}
+    company_response = data.get('company_response')
+    
+    if not company_response:
+        return jsonify({'success': False, 'error': 'Company response required'}), 400
+    
+    db = get_db()
+    try:
+        complaint = db.query(CFPBComplaint).filter_by(id=complaint_id).first()
+        if not complaint:
+            return jsonify({'success': False, 'error': 'Complaint not found'}), 404
+        
+        complaint.status = 'response_received'
+        complaint.response_received_at = datetime.utcnow()
+        complaint.company_response = company_response
+        complaint.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Response recorded successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/cfpb')
+@require_staff(['admin', 'attorney', 'paralegal'])
+def dashboard_cfpb():
+    """CFPB Complaints Dashboard"""
+    db = get_db()
+    try:
+        complaints = db.query(CFPBComplaint).order_by(CFPBComplaint.created_at.desc()).all()
+        
+        complaint_list = []
+        for c in complaints:
+            client_record = db.query(Client).filter_by(id=c.client_id).first()
+            complaint_list.append({
+                'id': c.id,
+                'client_id': c.client_id,
+                'client_name': client_record.name if client_record else 'Unknown',
+                'target_company': c.target_company,
+                'target_type': c.target_type,
+                'issue_type': c.issue_type,
+                'status': c.status,
+                'cfpb_complaint_id': c.cfpb_complaint_id,
+                'submitted_at': c.submitted_at,
+                'file_path': c.file_path,
+                'created_at': c.created_at
+            })
+        
+        stats = {
+            'total': len(complaints),
+            'draft': sum(1 for c in complaints if c.status == 'draft'),
+            'ready': sum(1 for c in complaints if c.status == 'ready'),
+            'submitted': sum(1 for c in complaints if c.status == 'submitted'),
+            'response_received': sum(1 for c in complaints if c.status == 'response_received')
+        }
+        
+        clients = db.query(Client).filter(Client.status.in_(['active', 'signup'])).order_by(Client.name).all()
+        client_list = [{'id': c.id, 'name': c.name} for c in clients]
+        
+        return render_template('cfpb_complaints.html',
+            complaints=complaint_list,
+            stats=stats,
+            clients=client_list,
+            templates=CFPB_TEMPLATES,
+            cra_companies=CRA_COMPANIES
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error loading CFPB dashboard: {e}", 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/cfpb/generator')
+@require_staff(['admin', 'attorney', 'paralegal'])
+def dashboard_cfpb_generator():
+    """CFPB Complaint Generator Wizard"""
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(Client.status.in_(['active', 'signup'])).order_by(Client.name).all()
+        client_list = [{'id': c.id, 'name': c.name, 'email': c.email} for c in clients]
+        
+        return render_template('cfpb_generator.html',
+            clients=client_list,
+            templates=CFPB_TEMPLATES,
+            cra_companies=CRA_COMPANIES
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error loading CFPB generator: {e}", 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/cfpb/complaint/<int:complaint_id>')
+@require_staff(['admin', 'attorney', 'paralegal'])
+def dashboard_cfpb_detail(complaint_id):
+    """View/Edit CFPB Complaint"""
+    db = get_db()
+    try:
+        complaint = db.query(CFPBComplaint).filter_by(id=complaint_id).first()
+        if not complaint:
+            return "Complaint not found", 404
+        
+        client_record = db.query(Client).filter_by(id=complaint.client_id).first()
+        
+        complaint_data = {
+            'id': complaint.id,
+            'client_id': complaint.client_id,
+            'client_name': client_record.name if client_record else 'Unknown',
+            'client_email': client_record.email if client_record else None,
+            'client_address': f"{client_record.address_street or ''}, {client_record.address_city or ''}, {client_record.address_state or ''} {client_record.address_zip or ''}" if client_record else '',
+            'case_id': complaint.case_id,
+            'target_company': complaint.target_company,
+            'target_type': complaint.target_type,
+            'product_type': complaint.product_type,
+            'issue_type': complaint.issue_type,
+            'sub_issue_type': complaint.sub_issue_type,
+            'narrative': complaint.narrative,
+            'desired_resolution': complaint.desired_resolution,
+            'status': complaint.status,
+            'cfpb_complaint_id': complaint.cfpb_complaint_id,
+            'submitted_at': complaint.submitted_at,
+            'response_received_at': complaint.response_received_at,
+            'company_response': complaint.company_response,
+            'file_path': complaint.file_path,
+            'created_at': complaint.created_at
+        }
+        
+        return render_template('cfpb_generator.html',
+            complaint=complaint_data,
+            clients=[{'id': client_record.id, 'name': client_record.name}] if client_record else [],
+            templates=CFPB_TEMPLATES,
+            cra_companies=CRA_COMPANIES,
+            edit_mode=True
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error loading complaint: {e}", 500
     finally:
         db.close()
 

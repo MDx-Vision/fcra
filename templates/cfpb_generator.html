@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if edit_mode %}Edit{% else %}New{% endif %} CFPB Complaint - FCRA Litigation Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            max-width: 1200px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .btn-danger:hover { background: #fecaca; }
+        
+        .wizard-steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .wizard-step {
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+        }
+        .wizard-step:not(:last-child)::after {
+            content: '';
+            width: 60px;
+            height: 2px;
+            background: #e2e8f0;
+            margin-left: 30px;
+        }
+        .wizard-step.active::after,
+        .wizard-step.completed::after {
+            background: #84cc16;
+        }
+        
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 12px;
+            transition: all 0.3s;
+        }
+        .wizard-step.active .step-number {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: white;
+        }
+        .wizard-step.completed .step-number {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .wizard-step.active .step-label { color: #1a1a2e; font-weight: 600; }
+        .wizard-step.completed .step-label { color: #22c55e; }
+        
+        .wizard-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .step-panel {
+            display: none;
+        }
+        .step-panel.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .form-sublabel {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 400;
+            margin-left: 4px;
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #319795;
+            box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+        }
+        .form-textarea {
+            min-height: 200px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .target-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .target-option {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .target-option:hover {
+            border-color: #84cc16;
+        }
+        .target-option.selected {
+            border-color: #319795;
+            background: #f0fdfa;
+        }
+        .target-option input {
+            display: none;
+        }
+        .target-option-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 5px;
+        }
+        .target-option-desc {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .cra-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .cra-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            color: #1a1a2e;
+            transition: all 0.2s;
+        }
+        .cra-btn:hover { border-color: #84cc16; }
+        .cra-btn.selected { border-color: #319795; background: #f0fdfa; }
+        
+        .issue-group {
+            margin-bottom: 20px;
+        }
+        .issue-category {
+            font-weight: 600;
+            color: #1a1a2e;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .issue-category:hover { background: #f1f5f9; }
+        
+        .issue-list {
+            padding-left: 20px;
+            display: none;
+        }
+        .issue-list.expanded { display: block; }
+        
+        .issue-item {
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .issue-item:hover { background: #f8fafc; }
+        .issue-item.selected { background: #f0fdfa; color: #0d9488; font-weight: 500; }
+        .issue-item input { display: none; }
+        
+        .narrative-section {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .narrative-header {
+            background: #f8fafc;
+            padding: 15px 20px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .narrative-title {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .narrative-body {
+            padding: 20px;
+        }
+        
+        .preview-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .preview-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .preview-value {
+            font-size: 15px;
+            color: #1a1a2e;
+            line-height: 1.6;
+        }
+        
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 30px;
+        }
+        
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .loading-overlay.active { display: flex; }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #319795;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #64748b;
+        }
+        
+        .status-banner {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .status-banner.draft { background: #f1f5f9; border: 1px solid #cbd5e1; }
+        .status-banner.ready { background: #dbeafe; border: 1px solid #93c5fd; }
+        .status-banner.submitted { background: #dcfce7; border: 1px solid #86efac; }
+        .status-banner.response_received { background: #f3e8ff; border: 1px solid #d8b4fe; }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .alert.success { background: #dcfce7; color: #166534; display: block; }
+        .alert.error { background: #fee2e2; color: #dc2626; display: block; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend">
+            <span>Brightpath Ascend</span>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Clients
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Regulatory</div>
+            <a href="/dashboard/cfpb" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                CFPB Complaints
+            </a>
+            <a href="/dashboard/sol" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                SOL Tracker
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>{% if edit_mode %}Edit CFPB Complaint{% else %}Generate CFPB Complaint{% endif %}</h1>
+                <p class="header-subtitle">{% if edit_mode %}Review and update complaint details{% else %}Create a new complaint for the Consumer Financial Protection Bureau{% endif %}</p>
+            </div>
+            <a href="/dashboard/cfpb" class="btn btn-secondary">Back to Complaints</a>
+        </div>
+        
+        <div id="alertBox" class="alert"></div>
+        
+        {% if edit_mode and complaint %}
+        <div class="status-banner {{ complaint.status }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>Status: <strong>{{ complaint.status.replace('_', ' ').title() }}</strong></span>
+            {% if complaint.cfpb_complaint_id %}
+            <span style="margin-left: 20px;">CFPB ID: <strong>{{ complaint.cfpb_complaint_id }}</strong></span>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if not edit_mode %}
+        <div class="wizard-steps">
+            <div class="wizard-step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Client & Target</div>
+            </div>
+            <div class="wizard-step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Issue Type</div>
+            </div>
+            <div class="wizard-step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Narrative</div>
+            </div>
+            <div class="wizard-step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-label">Review & Generate</div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="wizard-content">
+            {% if edit_mode and complaint %}
+            <form id="editComplaintForm">
+                <input type="hidden" id="complaintId" value="{{ complaint.id }}">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Client</label>
+                        <input type="text" class="form-input" value="{{ complaint.client_name }}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Target Company</label>
+                        <input type="text" class="form-input" id="editTargetCompany" value="{{ complaint.target_company }}">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Product Type</label>
+                        <input type="text" class="form-input" value="{{ complaint.product_type }}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Issue Type</label>
+                        <input type="text" class="form-input" id="editIssueType" value="{{ complaint.issue_type }}">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Complaint Narrative</label>
+                    <textarea class="form-textarea" id="editNarrative" rows="12">{{ complaint.narrative }}</textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Desired Resolution</label>
+                    <textarea class="form-textarea" id="editResolution" rows="6">{{ complaint.desired_resolution }}</textarea>
+                </div>
+                
+                {% if complaint.status == 'submitted' or complaint.status == 'response_received' %}
+                <div class="form-group">
+                    <label class="form-label">CFPB Complaint ID</label>
+                    <input type="text" class="form-input" id="editCfpbId" value="{{ complaint.cfpb_complaint_id or '' }}" placeholder="Enter CFPB complaint number">
+                </div>
+                {% endif %}
+                
+                {% if complaint.status == 'response_received' %}
+                <div class="form-group">
+                    <label class="form-label">Company Response</label>
+                    <textarea class="form-textarea" id="editCompanyResponse" rows="6">{{ complaint.company_response or '' }}</textarea>
+                </div>
+                {% endif %}
+                
+                <div class="wizard-actions">
+                    <div>
+                        {% if complaint.status == 'draft' %}
+                        <button type="button" class="btn btn-primary" onclick="generatePDF()">Generate PDF</button>
+                        {% elif complaint.status == 'ready' %}
+                        <button type="button" class="btn btn-primary" onclick="markSubmitted()">Mark as Submitted</button>
+                        <button type="button" class="btn btn-secondary" onclick="generatePDF()">Regenerate PDF</button>
+                        {% elif complaint.status == 'submitted' %}
+                        <button type="button" class="btn btn-primary" onclick="recordResponse()">Record Response</button>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" onclick="saveChanges()">Save Changes</button>
+                        {% if complaint.file_path %}
+                        <a href="/{{ complaint.file_path }}" target="_blank" class="btn btn-secondary">Download PDF</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+            {% else %}
+            <div class="step-panel active" data-step="1">
+                <h2 style="margin-bottom: 25px; color: #1a1a2e;">Select Client and Target</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Client <span class="form-sublabel">(Who is filing the complaint)</span></label>
+                    <select class="form-select" id="clientSelect" onchange="loadClientCases()">
+                        <option value="">Select a client...</option>
+                        {% for c in clients %}
+                        <option value="{{ c.id }}">{{ c.name }}{% if c.email %} ({{ c.email }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group" id="caseSelectGroup" style="display: none;">
+                    <label class="form-label">Associated Case <span class="form-sublabel">(Optional - pulls violation data)</span></label>
+                    <select class="form-select" id="caseSelect">
+                        <option value="">No case (create new complaint)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Target Type <span class="form-sublabel">(Who complaint is against)</span></label>
+                    <div class="target-options">
+                        <label class="target-option" onclick="selectTargetType('cra')">
+                            <input type="radio" name="targetType" value="cra">
+                            <div class="target-option-title">Credit Reporting Agency (CRA)</div>
+                            <div class="target-option-desc">Equifax, Experian, TransUnion</div>
+                        </label>
+                        <label class="target-option" onclick="selectTargetType('furnisher')">
+                            <input type="radio" name="targetType" value="furnisher">
+                            <div class="target-option-title">Furnisher / Creditor</div>
+                            <div class="target-option-desc">Banks, collection agencies, etc.</div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="craSelection" style="display: none;">
+                    <label class="form-label">Select Credit Bureau</label>
+                    <div class="cra-buttons">
+                        <button type="button" class="cra-btn" onclick="selectCRA('equifax')">Equifax</button>
+                        <button type="button" class="cra-btn" onclick="selectCRA('experian')">Experian</button>
+                        <button type="button" class="cra-btn" onclick="selectCRA('transunion')">TransUnion</button>
+                    </div>
+                </div>
+                
+                <div id="furnisherSelection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Furnisher/Creditor Name</label>
+                        <input type="text" class="form-input" id="furnisherName" placeholder="Enter company name...">
+                    </div>
+                </div>
+                
+                <div class="wizard-actions">
+                    <div></div>
+                    <button type="button" class="btn btn-primary" onclick="nextStep()">Continue</button>
+                </div>
+            </div>
+            
+            <div class="step-panel" data-step="2">
+                <h2 style="margin-bottom: 25px; color: #1a1a2e;">Select Issue Type</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Product Category</label>
+                    <select class="form-select" id="productSelect" onchange="updateIssueTypes()">
+                        <option value="">Select product type...</option>
+                        <option value="credit_reporting">Credit Reporting</option>
+                        <option value="debt_collection">Debt Collection</option>
+                    </select>
+                </div>
+                
+                <div id="issueContainer" style="display: none;">
+                    <label class="form-label">Issue Type</label>
+                    <div id="issueList"></div>
+                </div>
+                
+                <div id="subIssueContainer" style="display: none;">
+                    <label class="form-label">Sub-Issue</label>
+                    <select class="form-select" id="subIssueSelect">
+                        <option value="">Select sub-issue (optional)...</option>
+                    </select>
+                </div>
+                
+                <div class="wizard-actions">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep()">Continue</button>
+                </div>
+            </div>
+            
+            <div class="step-panel" data-step="3">
+                <h2 style="margin-bottom: 25px; color: #1a1a2e;">Review & Edit Narrative</h2>
+                
+                <div class="narrative-section">
+                    <div class="narrative-header">
+                        <span class="narrative-title">Complaint Narrative</span>
+                        <button type="button" class="btn btn-secondary" onclick="regenerateNarrative()" style="padding: 8px 16px; font-size: 12px;">Regenerate with AI</button>
+                    </div>
+                    <div class="narrative-body">
+                        <textarea class="form-textarea" id="narrativeText" placeholder="Your complaint narrative will be generated automatically based on case data..." style="border: none; padding: 0; min-height: 300px;"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 25px;">
+                    <label class="form-label">Desired Resolution</label>
+                    <textarea class="form-textarea" id="resolutionText" style="min-height: 150px;"></textarea>
+                </div>
+                
+                <div class="wizard-actions">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep()">Continue</button>
+                </div>
+            </div>
+            
+            <div class="step-panel" data-step="4">
+                <h2 style="margin-bottom: 25px; color: #1a1a2e;">Review & Generate Complaint</h2>
+                
+                <div class="preview-section">
+                    <div class="preview-label">Client</div>
+                    <div class="preview-value" id="previewClient">-</div>
+                </div>
+                
+                <div class="preview-section">
+                    <div class="preview-label">Target Company</div>
+                    <div class="preview-value" id="previewTarget">-</div>
+                </div>
+                
+                <div class="preview-section">
+                    <div class="preview-label">Product & Issue</div>
+                    <div class="preview-value" id="previewIssue">-</div>
+                </div>
+                
+                <div class="preview-section">
+                    <div class="preview-label">Narrative Preview</div>
+                    <div class="preview-value" id="previewNarrative" style="white-space: pre-wrap;">-</div>
+                </div>
+                
+                <div class="wizard-actions">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+                    <button type="button" class="btn btn-primary" onclick="createComplaint()">Create Complaint</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Generating complaint...</div>
+    </div>
+    
+    <script>
+        const templates = {{ templates | tojson | safe }};
+        const craCompanies = {{ cra_companies | tojson | safe }};
+        
+        let currentStep = 1;
+        let selectedData = {
+            clientId: null,
+            clientName: '',
+            caseId: null,
+            targetType: null,
+            targetCompany: '',
+            productType: '',
+            productLabel: '',
+            issueType: '',
+            issueLabel: '',
+            subIssue: '',
+            narrative: '',
+            resolution: ''
+        };
+        
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text || 'Processing...';
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+        
+        function showAlert(message, type) {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.textContent = message;
+            alertBox.className = 'alert ' + type;
+            setTimeout(() => { alertBox.className = 'alert'; }, 5000);
+        }
+        
+        function selectTargetType(type) {
+            selectedData.targetType = type;
+            document.querySelectorAll('.target-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector(`.target-option input[value="${type}"]`).parentElement.classList.add('selected');
+            
+            document.getElementById('craSelection').style.display = type === 'cra' ? 'block' : 'none';
+            document.getElementById('furnisherSelection').style.display = type === 'furnisher' ? 'block' : 'none';
+        }
+        
+        function selectCRA(cra) {
+            document.querySelectorAll('.cra-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            selectedData.targetCompany = craCompanies[cra].name;
+        }
+        
+        function loadClientCases() {
+            const clientId = document.getElementById('clientSelect').value;
+            if (clientId) {
+                selectedData.clientId = clientId;
+                selectedData.clientName = document.getElementById('clientSelect').options[document.getElementById('clientSelect').selectedIndex].text;
+                document.getElementById('caseSelectGroup').style.display = 'block';
+                
+                fetch(`/api/cases?client_id=${clientId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const select = document.getElementById('caseSelect');
+                        select.innerHTML = '<option value="">No case (create new complaint)</option>';
+                        if (data.cases) {
+                            data.cases.forEach(c => {
+                                select.innerHTML += `<option value="${c.id}">${c.id} - ${c.status}</option>`;
+                            });
+                        }
+                    });
+            }
+        }
+        
+        function updateIssueTypes() {
+            const product = document.getElementById('productSelect').value;
+            if (!product) return;
+            
+            selectedData.productType = product;
+            selectedData.productLabel = templates[product].product_type;
+            
+            const container = document.getElementById('issueContainer');
+            const issueList = document.getElementById('issueList');
+            issueList.innerHTML = '';
+            
+            const issues = templates[product].issues;
+            for (const [key, issue] of Object.entries(issues)) {
+                const div = document.createElement('div');
+                div.className = 'issue-group';
+                div.innerHTML = `
+                    <div class="issue-category" onclick="toggleIssue('${key}')">
+                        ${issue.label}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="issue-list" id="issueList_${key}">
+                        ${issue.sub_issues.map(sub => `
+                            <div class="issue-item" onclick="selectIssue('${key}', '${issue.label}', '${sub}')">
+                                <input type="radio" name="issue">
+                                <span>${sub}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                issueList.appendChild(div);
+            }
+            
+            container.style.display = 'block';
+        }
+        
+        function toggleIssue(key) {
+            const list = document.getElementById('issueList_' + key);
+            list.classList.toggle('expanded');
+        }
+        
+        function selectIssue(key, label, subIssue) {
+            document.querySelectorAll('.issue-item').forEach(item => item.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            selectedData.issueType = key;
+            selectedData.issueLabel = label;
+            selectedData.subIssue = subIssue;
+        }
+        
+        function updateStep(step) {
+            document.querySelectorAll('.wizard-step').forEach((el, i) => {
+                el.classList.remove('active', 'completed');
+                if (i + 1 < step) el.classList.add('completed');
+                if (i + 1 === step) el.classList.add('active');
+            });
+            
+            document.querySelectorAll('.step-panel').forEach((el, i) => {
+                el.classList.remove('active');
+                if (i + 1 === step) el.classList.add('active');
+            });
+            
+            currentStep = step;
+        }
+        
+        function nextStep() {
+            if (currentStep === 1) {
+                if (!selectedData.clientId) {
+                    showAlert('Please select a client', 'error');
+                    return;
+                }
+                if (!selectedData.targetType) {
+                    showAlert('Please select a target type', 'error');
+                    return;
+                }
+                if (selectedData.targetType === 'cra' && !selectedData.targetCompany) {
+                    showAlert('Please select a credit bureau', 'error');
+                    return;
+                }
+                if (selectedData.targetType === 'furnisher') {
+                    selectedData.targetCompany = document.getElementById('furnisherName').value;
+                    if (!selectedData.targetCompany) {
+                        showAlert('Please enter the furnisher name', 'error');
+                        return;
+                    }
+                }
+                selectedData.caseId = document.getElementById('caseSelect').value || null;
+            }
+            
+            if (currentStep === 2) {
+                if (!selectedData.productType || !selectedData.issueLabel) {
+                    showAlert('Please select a product and issue type', 'error');
+                    return;
+                }
+                generateNarrative();
+            }
+            
+            if (currentStep === 3) {
+                selectedData.narrative = document.getElementById('narrativeText').value;
+                selectedData.resolution = document.getElementById('resolutionText').value;
+                updatePreview();
+            }
+            
+            updateStep(currentStep + 1);
+        }
+        
+        function prevStep() {
+            updateStep(currentStep - 1);
+        }
+        
+        function generateNarrative() {
+            showLoading('Generating AI-powered narrative...');
+            
+            fetch('/api/cfpb/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: selectedData.clientId,
+                    case_id: selectedData.caseId,
+                    target_company: selectedData.targetCompany,
+                    target_type: selectedData.targetType,
+                    product_type: selectedData.productLabel,
+                    issue_type: selectedData.issueLabel,
+                    sub_issue_type: selectedData.subIssue
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    selectedData.complaintId = data.complaint.id;
+                    document.getElementById('narrativeText').value = data.complaint.narrative;
+                    document.getElementById('resolutionText').value = data.complaint.desired_resolution;
+                    selectedData.narrative = data.complaint.narrative;
+                    selectedData.resolution = data.complaint.desired_resolution;
+                } else {
+                    showAlert('Error generating narrative: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showAlert('Error: ' + err.message, 'error');
+            });
+        }
+        
+        function regenerateNarrative() {
+            generateNarrative();
+        }
+        
+        function updatePreview() {
+            document.getElementById('previewClient').textContent = selectedData.clientName;
+            document.getElementById('previewTarget').textContent = `${selectedData.targetCompany} (${selectedData.targetType.toUpperCase()})`;
+            document.getElementById('previewIssue').textContent = `${selectedData.productLabel}\n${selectedData.issueLabel}${selectedData.subIssue ? '\n' + selectedData.subIssue : ''}`;
+            document.getElementById('previewNarrative').textContent = selectedData.narrative.substring(0, 500) + (selectedData.narrative.length > 500 ? '...' : '');
+        }
+        
+        function createComplaint() {
+            if (!selectedData.complaintId) {
+                showAlert('Please generate the narrative first', 'error');
+                return;
+            }
+            
+            showLoading('Saving complaint...');
+            
+            fetch(`/api/cfpb/complaints/${selectedData.complaintId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    narrative: selectedData.narrative,
+                    desired_resolution: selectedData.resolution
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    window.location.href = `/dashboard/cfpb/complaint/${selectedData.complaintId}`;
+                } else {
+                    showAlert('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showAlert('Error: ' + err.message, 'error');
+            });
+        }
+        
+        {% if edit_mode and complaint %}
+        function saveChanges() {
+            showLoading('Saving changes...');
+            
+            const data = {
+                narrative: document.getElementById('editNarrative').value,
+                desired_resolution: document.getElementById('editResolution').value,
+                target_company: document.getElementById('editTargetCompany').value,
+                issue_type: document.getElementById('editIssueType').value
+            };
+            
+            const cfpbIdEl = document.getElementById('editCfpbId');
+            if (cfpbIdEl) data.cfpb_complaint_id = cfpbIdEl.value;
+            
+            const responseEl = document.getElementById('editCompanyResponse');
+            if (responseEl) data.company_response = responseEl.value;
+            
+            fetch(`/api/cfpb/complaints/{{ complaint.id }}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showAlert('Changes saved successfully', 'success');
+                } else {
+                    showAlert('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showAlert('Error: ' + err.message, 'error');
+            });
+        }
+        
+        function generatePDF() {
+            showLoading('Generating PDF...');
+            
+            fetch(`/api/cfpb/complaints/{{ complaint.id }}/pdf`, {
+                method: 'POST'
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showAlert('PDF generated successfully', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showAlert('Error: ' + err.message, 'error');
+            });
+        }
+        
+        function markSubmitted() {
+            const cfpbId = prompt('Enter the CFPB complaint ID (optional):');
+            
+            showLoading('Updating status...');
+            
+            fetch(`/api/cfpb/complaints/{{ complaint.id }}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cfpb_complaint_id: cfpbId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showAlert('Complaint marked as submitted', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showAlert('Error: ' + err.message, 'error');
+            });
+        }
+        
+        function recordResponse() {
+            showLoading('Recording response...');
+            
+            const response = document.getElementById('editCompanyResponse').value;
+            if (!response) {
+                hideLoading();
+                showAlert('Please enter the company response', 'error');
+                return;
+            }
+            
+            fetch(`/api/cfpb/complaints/{{ complaint.id }}/response`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ company_response: response })
+            })
+            .then(r => r.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showAlert('Response recorded successfully', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                hideLoading();
+                showAlert('Error: ' + err.message, 'error');
+            });
+        }
+        {% endif %}
+    </script>
+</body>
+</html>

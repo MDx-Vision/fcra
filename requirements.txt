@@ -21,3 +21,4 @@ PyPDF2
 pdfplumber
 pdfplumber
 PyPDF2
+python-dateutil

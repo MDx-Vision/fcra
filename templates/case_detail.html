@@ -198,6 +198,40 @@
                 {% endif %}
             </div>
             
+            <div class="card full-width" id="solStatusSection">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Statute of Limitations Status</span>
+                    <a href="/dashboard/sol" style="font-size: 12px; color: #319795; text-decoration: none;">View All SOL Deadlines →</a>
+                </div>
+                <div id="solAlertBanner" style="display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px;">⚠️</span>
+                        <div>
+                            <div style="font-weight: 600; color: #991b1b;" id="solAlertTitle">SOL Deadline Approaching</div>
+                            <div style="font-size: 12px; color: #dc2626;" id="solAlertText">One or more claims have approaching statute of limitations deadlines.</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="solStatusContent" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                    <div style="background: #dcfce7; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #166534;" id="solSafeCount">-</div>
+                        <div style="font-size: 11px; color: #22c55e;">Safe (90+ days)</div>
+                    </div>
+                    <div style="background: #fef9c3; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #ca8a04;" id="solCautionCount">-</div>
+                        <div style="font-size: 11px; color: #eab308;">Caution (60-90 days)</div>
+                    </div>
+                    <div style="background: #ffedd5; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #ea580c;" id="solWarningCount">-</div>
+                        <div style="font-size: 11px; color: #f97316;">Warning (30-60 days)</div>
+                    </div>
+                    <div style="background: #fee2e2; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #dc2626;" id="solCriticalCount">-</div>
+                        <div style="font-size: 11px; color: #ef4444;">Critical (&lt;30 days)</div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="card full-width" id="settlementSection">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>Settlement Tracking</span>
@@ -212,10 +246,13 @@
             </div>
             
             <div class="card full-width">
-                <div class="card-title">Violations ({{ violations|length }})</div>
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Violations ({{ violations|length }})</span>
+                    <button onclick="openSolCalculator()" style="padding: 6px 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Calculate SOL</button>
+                </div>
                 {% if violations %}
                 {% for v in violations %}
-                <div class="violation-item">
+                <div class="violation-item" id="violation-{{ v.id }}">
                     <div class="violation-header">
                         <span class="violation-bureau">{{ v.bureau }}</span>
                         <span class="violation-section">{{ v.fcra_section }}</span>
@@ -225,6 +262,10 @@
                     <div style="margin-top: 8px; font-size: 12px; color: #84cc16;">
                         Damages: ${{ "{:,.0f}".format(v.statutory_damages_min) }} - ${{ "{:,.0f}".format(v.statutory_damages_max) }}
                         {% if v.is_willful %}<span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 10px; margin-left: 10px;">Willful</span>{% endif %}
+                    </div>
+                    <div class="sol-status" id="sol-{{ v.id }}" style="margin-top: 8px; padding: 8px; background: #f8fafc; border-radius: 6px; font-size: 12px;">
+                        <span style="color: #64748b;">SOL Status: </span>
+                        <span class="sol-badge" style="padding: 2px 8px; border-radius: 10px; font-weight: 500;">Loading...</span>
                     </div>
                 </div>
                 {% endfor %}
@@ -691,6 +732,144 @@
         }
         
         document.addEventListener('DOMContentLoaded', loadSettlementData);
+        
+        async function loadSolStatus() {
+            if (!clientId) return;
+            
+            try {
+                const response = await fetch(`/api/sol/client/${clientId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    let safe = 0, caution = 0, warning = 0, critical = 0, expired = 0;
+                    
+                    data.violations.forEach(v => {
+                        const level = v.warning_level;
+                        if (level === 'expired') expired++;
+                        else if (level === 'critical') critical++;
+                        else if (level === 'warning') warning++;
+                        else if (level === 'caution') caution++;
+                        else safe++;
+                        
+                        const solEl = document.getElementById(`sol-${v.violation_id}`);
+                        if (solEl) {
+                            const badge = solEl.querySelector('.sol-badge');
+                            if (badge) {
+                                badge.textContent = v.remaining_text;
+                                badge.style.background = v.color + '20';
+                                badge.style.color = v.color;
+                            }
+                        }
+                    });
+                    
+                    document.getElementById('solSafeCount').textContent = safe;
+                    document.getElementById('solCautionCount').textContent = caution;
+                    document.getElementById('solWarningCount').textContent = warning;
+                    document.getElementById('solCriticalCount').textContent = critical;
+                    
+                    if (critical > 0 || warning > 0) {
+                        const banner = document.getElementById('solAlertBanner');
+                        banner.style.display = 'block';
+                        
+                        if (critical > 0) {
+                            document.getElementById('solAlertTitle').textContent = `CRITICAL: ${critical} claim(s) expiring in less than 30 days!`;
+                            banner.style.background = '#fef2f2';
+                            banner.style.borderColor = '#fecaca';
+                        } else if (warning > 0) {
+                            document.getElementById('solAlertTitle').textContent = `WARNING: ${warning} claim(s) expiring in 30-60 days`;
+                            document.getElementById('solAlertTitle').style.color = '#ea580c';
+                            banner.style.background = '#fff7ed';
+                            banner.style.borderColor = '#fed7aa';
+                        }
+                        document.getElementById('solAlertText').textContent = 'Take action now to preserve these claims before the statute of limitations expires.';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading SOL status:', error);
+            }
+        }
+        
+        function openSolCalculator() {
+            const modal = document.createElement('div');
+            modal.id = 'solCalculatorModal';
+            modal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                    <div style="background: white; border-radius: 16px; padding: 30px; width: 450px; max-width: 90vw;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; font-size: 18px;">Calculate Statute of Limitations</h3>
+                            <button onclick="document.getElementById('solCalculatorModal').remove()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 5px;">Violation Date *</label>
+                            <input type="date" id="solViolationDate" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 5px;">Discovery Date (optional)</label>
+                            <input type="date" id="solDiscoveryDate" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <p style="font-size: 11px; color: #94a3b8; margin-top: 5px;">If unknown, defaults to violation date</p>
+                        </div>
+                        <button onclick="calculateSol()" class="btn btn-primary" style="width: 100%;">Calculate</button>
+                        <div id="solCalculatorResult" style="margin-top: 20px; display: none;"></div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        async function calculateSol() {
+            const violationDate = document.getElementById('solViolationDate').value;
+            const discoveryDate = document.getElementById('solDiscoveryDate').value;
+            
+            if (!violationDate) {
+                alert('Violation date is required');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/sol/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        violation_date: violationDate,
+                        discovery_date: discoveryDate || null
+                    })
+                });
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('solCalculatorResult');
+                resultDiv.style.display = 'block';
+                
+                if (data.success) {
+                    const levelColors = {
+                        'expired': '#ef4444',
+                        'critical': '#ef4444',
+                        'warning': '#f97316',
+                        'caution': '#eab308',
+                        'ok': '#22c55e'
+                    };
+                    
+                    resultDiv.innerHTML = `
+                        <div style="background: ${data.color}15; border: 1px solid ${data.color}40; border-radius: 12px; padding: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: 600;">SOL Status</span>
+                                <span style="background: ${data.color}20; color: ${data.color}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${data.level_label}</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: ${data.color}; margin-bottom: 10px;">${data.remaining_text}</div>
+                            <div style="font-size: 13px; color: #64748b;">
+                                <div style="margin-bottom: 5px;">Expiration Date: <strong>${data.expiration_date_formatted}</strong></div>
+                                <div>Based on: ${data.limiting_factor === 'discovery' ? '2-year discovery rule' : '5-year occurrence rule'}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div style="color: #ef4444;">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('solCalculatorResult').innerHTML = `<div style="color: #ef4444;">Error calculating SOL: ${error.message}</div>`;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadSolStatus);
     </script>
 </body>
 </html>
