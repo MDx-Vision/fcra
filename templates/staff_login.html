@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Login - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo img {
+            height: 60px;
+            margin-bottom: 15px;
+        }
+        .logo h1 {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .logo span {
+            color: #84cc16;
+        }
+        .logo p {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .login-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-card h2 {
+            color: #1a1a2e;
+            font-size: 22px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .login-card .subtitle {
+            color: #64748b;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #319795;
+            box-shadow: 0 0 0 4px rgba(49, 151, 149, 0.1);
+        }
+        .form-group input::placeholder {
+            color: #9ca3af;
+        }
+        .password-toggle {
+            position: relative;
+        }
+        .password-toggle input {
+            padding-right: 50px;
+        }
+        .toggle-btn {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(49, 151, 149, 0.3);
+        }
+        .login-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .alert {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .alert-warning {
+            background: #fefce8;
+            color: #854d0e;
+            border: 1px solid #fef08a;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .staff-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 auto 20px;
+        }
+        .client-portal-link {
+            display: block;
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .client-portal-link a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .client-portal-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend Group">
+            <h1>Brightpath <span>Ascend</span> Group</h1>
+            <p>FCRA Litigation Platform</p>
+        </div>
+        
+        <div class="login-card">
+            <div class="staff-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Staff Portal
+            </div>
+            
+            {% if error %}
+            <div class="alert alert-error">
+                <span>⚠️</span> {{ error }}
+            </div>
+            {% endif %}
+            
+            {% if success %}
+            <div class="alert alert-success">
+                <span>✓</span> {{ success }}
+            </div>
+            {% endif %}
+            
+            {% if force_change %}
+            <div class="alert alert-warning">
+                <span>🔐</span> Please change your temporary password
+            </div>
+            {% endif %}
+            
+            <h2>{% if force_change %}Change Password{% else %}Staff Login{% endif %}</h2>
+            <p class="subtitle">{% if force_change %}Create a new secure password{% else %}Sign in to access the admin dashboard{% endif %}</p>
+            
+            {% if force_change %}
+            <form id="changePasswordForm" method="POST" action="/staff/change-password">
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <div class="password-toggle">
+                        <input type="password" id="new_password" name="new_password" placeholder="At least 8 characters" required minlength="8">
+                        <button type="button" class="toggle-btn" onclick="togglePassword('new_password')">👁</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                </div>
+                
+                <button type="submit" class="login-btn" id="changeBtn">Change Password</button>
+            </form>
+            {% else %}
+            <form id="loginForm" method="POST" action="/staff/login">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email" value="{{ email or '' }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-toggle">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                        <button type="button" class="toggle-btn" onclick="togglePassword('password')">👁</button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+            {% endif %}
+            
+            <p class="client-portal-link">
+                Looking for client portal? <a href="/portal/login">Client Login</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+        
+        document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Signing in...';
+        });
+        
+        document.getElementById('changePasswordForm')?.addEventListener('submit', function(e) {
+            const newPass = document.getElementById('new_password').value;
+            const confirmPass = document.getElementById('confirm_password').value;
+            
+            if (newPass !== confirmPass) {
+                e.preventDefault();
+                alert('Passwords do not match');
+                return;
+            }
+            
+            if (newPass.length < 8) {
+                e.preventDefault();
+                alert('Password must be at least 8 characters');
+                return;
+            }
+            
+            const btn = document.getElementById('changeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Updating...';
+        });
+    </script>
+</body>
+</html>

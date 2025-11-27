@@ -31,7 +31,8 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission
+from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import secrets
@@ -102,6 +103,386 @@ try:
         print(f"⚠️  Password migration check: {me}")
 except Exception as e:
     print(f"⚠️  Database initialization error: {e}")
+
+def create_initial_admin():
+    """Create initial admin account if no staff exists"""
+    db = get_db()
+    try:
+        staff_count = db.query(Staff).count()
+        if staff_count == 0:
+            initial_password = 'ChangeMe123!'
+            admin = Staff(
+                email='admin@brightpathascend.com',
+                password_hash=generate_password_hash(initial_password),
+                first_name='Admin',
+                last_name='User',
+                role='admin',
+                is_active=True,
+                force_password_change=True
+            )
+            db.add(admin)
+            db.commit()
+            print("\n" + "="*60)
+            print("🔐 INITIAL ADMIN ACCOUNT CREATED")
+            print("="*60)
+            print(f"   Email:    admin@brightpathascend.com")
+            print(f"   Password: {initial_password}")
+            print("   ⚠️  Please change this password immediately!")
+            print("="*60 + "\n")
+    except Exception as e:
+        print(f"⚠️  Admin account setup: {e}")
+    finally:
+        db.close()
+
+try:
+    create_initial_admin()
+except Exception as e:
+    print(f"⚠️  Initial admin setup: {e}")
+
+def require_staff(roles=None):
+    """Decorator to require staff authentication and optional role check"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'staff_id' not in session:
+                if request.is_json:
+                    return jsonify({'error': 'Authentication required'}), 401
+                return redirect('/staff/login')
+            
+            if roles and session.get('staff_role') not in roles:
+                if 'admin' not in roles and session.get('staff_role') != 'admin':
+                    if request.is_json:
+                        return jsonify({'error': 'Insufficient permissions'}), 403
+                    return render_template('error.html', 
+                        error='Access Denied', 
+                        message='You do not have permission to access this page.'), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+@app.route('/staff/login', methods=['GET', 'POST'])
+def staff_login():
+    """Staff login page"""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        
+        if not email or not password:
+            return render_template('staff_login.html', error='Please enter email and password')
+        
+        db = get_db()
+        try:
+            staff = db.query(Staff).filter_by(email=email).first()
+            
+            if not staff:
+                return render_template('staff_login.html', error='Invalid email or password', email=email)
+            
+            if not staff.is_active:
+                return render_template('staff_login.html', error='Account is disabled. Contact administrator.', email=email)
+            
+            if not check_password_hash(staff.password_hash, password):
+                return render_template('staff_login.html', error='Invalid email or password', email=email)
+            
+            staff.last_login = datetime.utcnow()
+            db.commit()
+            
+            session.permanent = True
+            session['staff_id'] = staff.id
+            session['staff_role'] = staff.role
+            session['staff_name'] = staff.full_name
+            session['staff_email'] = staff.email
+            session['staff_initials'] = staff.initials
+            
+            if staff.force_password_change:
+                return render_template('staff_login.html', force_change=True)
+            
+            return redirect('/dashboard')
+            
+        except Exception as e:
+            print(f"Login error: {e}")
+            return render_template('staff_login.html', error='Login error. Please try again.')
+        finally:
+            db.close()
+    
+    if 'staff_id' in session:
+        return redirect('/dashboard')
+    
+    return render_template('staff_login.html')
+
+
+@app.route('/staff/change-password', methods=['POST'])
+def staff_change_password():
+    """Handle forced password change"""
+    if 'staff_id' not in session:
+        return redirect('/staff/login')
+    
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+    
+    if len(new_password) < 8:
+        return render_template('staff_login.html', force_change=True, error='Password must be at least 8 characters')
+    
+    if new_password != confirm_password:
+        return render_template('staff_login.html', force_change=True, error='Passwords do not match')
+    
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session['staff_id']).first()
+        if staff:
+            staff.password_hash = generate_password_hash(new_password)
+            staff.force_password_change = False
+            staff.updated_at = datetime.utcnow()
+            db.commit()
+            return redirect('/dashboard')
+    except Exception as e:
+        print(f"Password change error: {e}")
+        return render_template('staff_login.html', force_change=True, error='Error updating password')
+    finally:
+        db.close()
+    
+    return redirect('/staff/login')
+
+
+@app.route('/staff/logout')
+def staff_logout():
+    """Staff logout"""
+    session.pop('staff_id', None)
+    session.pop('staff_role', None)
+    session.pop('staff_name', None)
+    session.pop('staff_email', None)
+    session.pop('staff_initials', None)
+    return redirect('/staff/login')
+
+
+@app.route('/api/staff/login', methods=['POST'])
+def api_staff_login():
+    """API endpoint for staff login"""
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    password = data.get('password', '')
+    
+    if not email or not password:
+        return jsonify({'success': False, 'error': 'Email and password required'}), 400
+    
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(email=email).first()
+        
+        if not staff or not check_password_hash(staff.password_hash, password):
+            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+        
+        if not staff.is_active:
+            return jsonify({'success': False, 'error': 'Account disabled'}), 403
+        
+        staff.last_login = datetime.utcnow()
+        db.commit()
+        
+        session.permanent = True
+        session['staff_id'] = staff.id
+        session['staff_role'] = staff.role
+        session['staff_name'] = staff.full_name
+        session['staff_email'] = staff.email
+        session['staff_initials'] = staff.initials
+        
+        return jsonify({
+            'success': True,
+            'staff': {
+                'id': staff.id,
+                'name': staff.full_name,
+                'email': staff.email,
+                'role': staff.role
+            },
+            'force_password_change': staff.force_password_change
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/staff')
+@require_staff(roles=['admin'])
+def dashboard_staff():
+    """Staff management page - admin only"""
+    db = get_db()
+    try:
+        staff_members = db.query(Staff).order_by(Staff.created_at.desc()).all()
+        
+        stats = {
+            'total': len(staff_members),
+            'admins': sum(1 for s in staff_members if s.role == 'admin'),
+            'attorneys': sum(1 for s in staff_members if s.role == 'attorney'),
+            'paralegals': sum(1 for s in staff_members if s.role == 'paralegal'),
+            'viewers': sum(1 for s in staff_members if s.role == 'viewer')
+        }
+        
+        message = request.args.get('message')
+        error = request.args.get('error')
+        
+        return render_template('staff_management.html', 
+            staff_members=staff_members,
+            stats=stats,
+            message=message,
+            error=error
+        )
+    except Exception as e:
+        return f"Error loading staff: {e}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/staff/add', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_staff_add():
+    """Add a new staff member"""
+    email = request.form.get('email', '').strip().lower()
+    first_name = request.form.get('first_name', '').strip()
+    last_name = request.form.get('last_name', '').strip()
+    role = request.form.get('role', 'viewer')
+    password = request.form.get('password', '')
+    
+    if not email or not password:
+        return redirect('/dashboard/staff?error=Email and password are required')
+    
+    if role not in STAFF_ROLES:
+        return redirect('/dashboard/staff?error=Invalid role selected')
+    
+    db = get_db()
+    try:
+        existing = db.query(Staff).filter_by(email=email).first()
+        if existing:
+            return redirect('/dashboard/staff?error=Email already exists')
+        
+        new_staff = Staff(
+            email=email,
+            password_hash=generate_password_hash(password),
+            first_name=first_name,
+            last_name=last_name,
+            role=role,
+            is_active=True,
+            force_password_change=True,
+            created_by_id=session.get('staff_id')
+        )
+        db.add(new_staff)
+        db.commit()
+        
+        return redirect(f'/dashboard/staff?message=Staff member {first_name} {last_name} added successfully')
+    except Exception as e:
+        db.rollback()
+        return redirect(f'/dashboard/staff?error=Error adding staff: {str(e)}')
+    finally:
+        db.close()
+
+
+@app.route('/api/staff/update', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_staff_update():
+    """Update a staff member"""
+    staff_id = request.form.get('staff_id')
+    email = request.form.get('email', '').strip().lower()
+    first_name = request.form.get('first_name', '').strip()
+    last_name = request.form.get('last_name', '').strip()
+    role = request.form.get('role', 'viewer')
+    is_active = request.form.get('is_active', 'true') == 'true'
+    
+    if not staff_id or not email:
+        return redirect('/dashboard/staff?error=Missing required fields')
+    
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=int(staff_id)).first()
+        if not staff:
+            return redirect('/dashboard/staff?error=Staff member not found')
+        
+        existing = db.query(Staff).filter(Staff.email == email, Staff.id != int(staff_id)).first()
+        if existing:
+            return redirect('/dashboard/staff?error=Email already in use')
+        
+        staff.email = email
+        staff.first_name = first_name
+        staff.last_name = last_name
+        staff.role = role
+        staff.is_active = is_active
+        staff.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return redirect(f'/dashboard/staff?message=Staff member updated successfully')
+    except Exception as e:
+        db.rollback()
+        return redirect(f'/dashboard/staff?error=Error updating staff: {str(e)}')
+    finally:
+        db.close()
+
+
+@app.route('/api/staff/reset-password', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_staff_reset_password():
+    """Reset a staff member's password"""
+    data = request.get_json() or {}
+    staff_id = data.get('staff_id')
+    
+    if not staff_id:
+        return jsonify({'success': False, 'error': 'Staff ID required'}), 400
+    
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=int(staff_id)).first()
+        if not staff:
+            return jsonify({'success': False, 'error': 'Staff member not found'}), 404
+        
+        temp_password = secrets.token_urlsafe(12)
+        staff.password_hash = generate_password_hash(temp_password)
+        staff.force_password_change = True
+        staff.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'temp_password': temp_password,
+            'message': 'Password reset successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/staff/toggle-status', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_staff_toggle_status():
+    """Toggle a staff member's active status"""
+    data = request.get_json() or {}
+    staff_id = data.get('staff_id')
+    
+    if not staff_id:
+        return jsonify({'success': False, 'error': 'Staff ID required'}), 400
+    
+    if int(staff_id) == session.get('staff_id'):
+        return jsonify({'success': False, 'error': 'Cannot disable your own account'}), 400
+    
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=int(staff_id)).first()
+        if not staff:
+            return jsonify({'success': False, 'error': 'Staff member not found'}), 404
+        
+        staff.is_active = not staff.is_active
+        staff.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'is_active': staff.is_active,
+            'message': f'Staff member {"enabled" if staff.is_active else "disabled"}'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
 
 
 @app.route('/')
@@ -3247,6 +3628,7 @@ def get_status_label(status):
 
 
 @app.route('/dashboard')
+@require_staff()
 def dashboard():
     """Main admin dashboard"""
     db = get_db()
@@ -3352,6 +3734,7 @@ def dashboard():
 
 
 @app.route('/dashboard/analytics')
+@require_staff()
 def dashboard_analytics():
     """Analytics and Reporting Dashboard - Business Intelligence Metrics"""
     db = get_db()
@@ -3641,6 +4024,7 @@ def api_intake():
 
 
 @app.route('/dashboard/clients')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
 def dashboard_clients():
     """Client list page"""
     db = get_db()
@@ -3691,6 +4075,7 @@ def dashboard_clients():
 
 
 @app.route('/dashboard/signups')
+@require_staff(roles=['admin', 'paralegal'])
 def dashboard_signups():
     """Admin view for signups and payment status"""
     db = get_db()
@@ -3841,6 +4226,7 @@ def api_mark_contacted():
 
 
 @app.route('/dashboard/settings')
+@require_staff(roles=['admin'])
 def dashboard_settings():
     """Admin settings page for signup configuration"""
     db = get_db()
@@ -3956,6 +4342,7 @@ def api_get_settings():
 
 
 @app.route('/dashboard/settings/sms')
+@require_staff(roles=['admin'])
 def dashboard_sms_settings():
     """SMS Settings page for configuring Twilio SMS automation"""
     db = get_db()
@@ -4151,6 +4538,7 @@ def api_get_sms_logs():
 # ============================================================
 
 @app.route('/dashboard/settings/email')
+@require_staff(roles=['admin'])
 def dashboard_email_settings():
     """Email Settings page for configuring SendGrid email automation"""
     db = get_db()
@@ -4653,6 +5041,7 @@ def api_confirm_payment():
 
 
 @app.route('/dashboard/case/<int:case_id>')
+@require_staff(roles=['admin', 'paralegal', 'attorney', 'viewer'])
 def dashboard_case_detail(case_id):
     """Single case detail page"""
     db = get_db()
@@ -6369,6 +6758,7 @@ def api_client_round_history(client_id):
 
 
 @app.route('/dashboard/import')
+@require_staff(roles=['admin', 'paralegal'])
 def dashboard_import():
     """Admin page for importing existing clients"""
     return render_template('client_import.html')
@@ -7311,6 +7701,7 @@ def api_batch_update_secondary_freezes():
 # ============================================================
 
 @app.route('/dashboard/contacts')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
 def dashboard_contacts():
     """Enhanced contact list page with CRM features"""
     db = get_db()
@@ -7380,6 +7771,7 @@ def dashboard_contacts():
 
 
 @app.route('/dashboard/automation-tools')
+@require_staff(roles=['admin', 'paralegal'])
 def dashboard_automation_tools():
     """Automation tools dashboard page"""
     db = get_db()
@@ -7869,6 +8261,7 @@ def api_list_scanned_documents():
 
 
 @app.route('/dashboard/scanned-documents')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
 def dashboard_scanned_documents():
     """Admin view of scanned documents"""
     return render_template('scanned_documents.html')
@@ -8588,6 +8981,7 @@ def api_delete_upload(upload_id):
 
 
 @app.route('/dashboard/documents')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
 def dashboard_documents():
     """Admin view of all client document uploads"""
     db = get_db()
@@ -10376,12 +10770,14 @@ def get_credit_score_history(client_id):
 
 
 @app.route('/dashboard/credit-tracker')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
 def credit_tracker_dashboard():
     """Credit score improvement tracker dashboard page"""
     return render_template('credit_tracker.html')
 
 
 @app.route('/dashboard/credit-tracker/<int:client_id>')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
 def credit_tracker_client(client_id):
     """Credit score tracker for specific client"""
     db = get_db()
@@ -10399,6 +10795,7 @@ def credit_tracker_client(client_id):
 # =============================================================
 
 @app.route('/dashboard/calendar')
+@require_staff()
 def calendar_dashboard():
     """Calendar view showing all case deadlines"""
     return render_template('calendar.html')

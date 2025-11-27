@@ -41,6 +41,74 @@ def set_timeouts(dbapi_conn, connection_record):
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+STAFF_ROLES = {
+    'admin': {
+        'name': 'Administrator',
+        'description': 'Full access to everything including staff management',
+        'permissions': ['*']
+    },
+    'attorney': {
+        'name': 'Attorney',
+        'description': 'View cases, approve analyses, view documents, edit legal documents',
+        'permissions': ['view_dashboard', 'view_cases', 'view_clients', 'approve_analyses', 'view_documents', 'edit_legal_documents', 'view_analytics', 'view_settlements']
+    },
+    'paralegal': {
+        'name': 'Paralegal',
+        'description': 'Manage clients, upload documents, send letters, manage deadlines',
+        'permissions': ['view_dashboard', 'view_cases', 'manage_clients', 'upload_documents', 'send_letters', 'manage_deadlines', 'view_analytics', 'manage_signups']
+    },
+    'viewer': {
+        'name': 'Viewer',
+        'description': 'Read-only access to dashboard and reports',
+        'permissions': ['view_dashboard', 'view_cases', 'view_clients', 'view_analytics', 'view_documents']
+    }
+}
+
+def check_staff_permission(role, permission):
+    """Check if a role has a specific permission"""
+    if role not in STAFF_ROLES:
+        return False
+    role_perms = STAFF_ROLES[role]['permissions']
+    return '*' in role_perms or permission in role_perms
+
+
+class Staff(Base):
+    """Staff/team member accounts for platform access"""
+    __tablename__ = 'staff'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    first_name = Column(String(100))
+    last_name = Column(String(100))
+    role = Column(String(50), default='viewer')
+    is_active = Column(Boolean, default=True)
+    last_login = Column(DateTime)
+    password_reset_token = Column(String(100), unique=True, index=True)
+    password_reset_expires = Column(DateTime)
+    force_password_change = Column(Boolean, default=False)
+    created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    @property
+    def full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        return self.email.split('@')[0]
+    
+    @property
+    def initials(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name[0]}{self.last_name[0]}".upper()
+        return self.email[0].upper()
+    
+    def has_permission(self, permission):
+        return check_staff_permission(self.role, permission)
+
+
 class Client(Base):
     __tablename__ = 'clients'
     
@@ -1200,6 +1268,20 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     
     migrate_columns = [
+        ("staff", "id", "SERIAL PRIMARY KEY"),
+        ("staff", "email", "VARCHAR(255) UNIQUE NOT NULL"),
+        ("staff", "password_hash", "VARCHAR(255) NOT NULL"),
+        ("staff", "first_name", "VARCHAR(100)"),
+        ("staff", "last_name", "VARCHAR(100)"),
+        ("staff", "role", "VARCHAR(50) DEFAULT 'viewer'"),
+        ("staff", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("staff", "last_login", "TIMESTAMP"),
+        ("staff", "password_reset_token", "VARCHAR(100)"),
+        ("staff", "password_reset_expires", "TIMESTAMP"),
+        ("staff", "force_password_change", "BOOLEAN DEFAULT FALSE"),
+        ("staff", "created_by_id", "INTEGER REFERENCES staff(id)"),
+        ("staff", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("staff", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("clients", "first_name", "VARCHAR(100)"),
         ("clients", "last_name", "VARCHAR(100)"),
         ("clients", "address_street", "VARCHAR(255)"),
