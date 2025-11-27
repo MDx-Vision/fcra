@@ -219,7 +219,152 @@
                 <p style="color: #94a3b8;">No violations found</p>
                 {% endif %}
             </div>
+            
+            <div class="card full-width">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div class="card-title" style="margin: 0; border: none; padding: 0;">Dispute Timeline</div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;"><span style="width: 10px; height: 10px; background: #3b82f6; border-radius: 50%;"></span>Sent</span>
+                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;"><span style="width: 10px; height: 10px; background: #f97316; border-radius: 50%;"></span>Response</span>
+                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;"><span style="width: 10px; height: 10px; background: #22c55e; border-radius: 50%;"></span>Resolved</span>
+                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;"><span style="width: 10px; height: 10px; background: #ef4444; border-radius: 50%;"></span>Overdue</span>
+                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;"><span style="width: 10px; height: 10px; background: #6b7280; border-radius: 50%;"></span>Milestone</span>
+                    </div>
+                </div>
+                
+                <div id="adminTimelineSummary" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #dbeafe; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #1e40af;" id="adminLettersSent">-</div>
+                        <div style="font-size: 11px; color: #3b82f6;">Letters Sent</div>
+                    </div>
+                    <div style="background: #fed7aa; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #9a3412;" id="adminResponses">-</div>
+                        <div style="font-size: 11px; color: #f97316;">Responses</div>
+                    </div>
+                    <div style="background: #dcfce7; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #166534;" id="adminDeleted">-</div>
+                        <div style="font-size: 11px; color: #22c55e;">Items Deleted</div>
+                    </div>
+                    <div style="background: #e0e7ff; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #3730a3;" id="adminUpdated">-</div>
+                        <div style="font-size: 11px; color: #6366f1;">Items Updated</div>
+                    </div>
+                    <div style="background: #fecaca; padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 20px; font-weight: 700; color: #991b1b;" id="adminOverdue">-</div>
+                        <div style="font-size: 11px; color: #ef4444;">Overdue</div>
+                    </div>
+                </div>
+                
+                <div id="adminTimelineContainer" style="position: relative; padding-left: 30px; max-height: 500px; overflow-y: auto;">
+                    <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #e5e7eb 0%, #e5e7eb 100%);"></div>
+                    <div style="text-align: center; padding: 40px; color: #64748b;">
+                        <div style="font-size: 18px;">Loading timeline...</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
+    
+    <script>
+        const clientId = {{ client.id if client else 0 }};
+        
+        function getTimelineColor(color) {
+            const colors = {
+                'blue': '#3b82f6',
+                'green': '#22c55e',
+                'orange': '#f97316',
+                'red': '#ef4444',
+                'gray': '#6b7280'
+            };
+            return colors[color] || colors.gray;
+        }
+        
+        async function loadAdminTimeline() {
+            if (!clientId) {
+                document.getElementById('adminTimelineContainer').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #64748b;">No client associated</div>
+                `;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/client/${clientId}/timeline`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('adminLettersSent').textContent = data.summary.letters_sent;
+                    document.getElementById('adminResponses').textContent = data.summary.responses_received;
+                    document.getElementById('adminDeleted').textContent = data.summary.items_deleted;
+                    document.getElementById('adminUpdated').textContent = data.summary.items_updated;
+                    document.getElementById('adminOverdue').textContent = data.summary.overdue_deadlines;
+                    
+                    renderAdminTimeline(data.events);
+                } else {
+                    document.getElementById('adminTimelineContainer').innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #64748b;">
+                            <div style="font-size: 18px;">Unable to load timeline</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+                document.getElementById('adminTimelineContainer').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #64748b;">
+                        <div style="font-size: 18px;">Error loading timeline</div>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderAdminTimeline(events) {
+            const container = document.getElementById('adminTimelineContainer');
+            
+            if (!events || events.length === 0) {
+                container.innerHTML = `
+                    <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e5e7eb;"></div>
+                    <div style="text-align: center; padding: 40px; color: #64748b;">
+                        <div style="font-size: 18px; margin-bottom: 10px;">No timeline events yet</div>
+                        <div style="font-size: 14px;">Dispute activity will appear here as the case progresses.</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #3b82f6 0%, #22c55e 50%, #6b7280 100%);"></div>';
+            
+            events.forEach((event, index) => {
+                const color = getTimelineColor(event.color);
+                
+                html += `
+                    <div class="timeline-event" style="position: relative; margin-bottom: 20px; padding-left: 25px;">
+                        <div style="position: absolute; left: 0; top: 5px; width: 20px; height: 20px; background: ${color}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; font-size: 10px;">${event.icon || ''}</div>
+                        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid ${color}; border-radius: 8px; padding: 12px; cursor: pointer;" onclick="this.querySelector('.timeline-details').style.display = this.querySelector('.timeline-details').style.display === 'none' ? 'block' : 'none'">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                                <div>
+                                    <div style="font-weight: 600; color: #1a1a2e; margin-bottom: 4px; font-size: 14px;">${event.description}</div>
+                                    ${event.bureau ? `<span style="display: inline-block; background: white; border: 1px solid #e5e7eb; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #64748b; margin-right: 8px;">${event.bureau}</span>` : ''}
+                                    ${event.round ? `<span style="display: inline-block; background: #dbeafe; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #1e40af;">Round ${event.round}</span>` : ''}
+                                    <span style="display: inline-block; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-size: 11px; color: #64748b; margin-left: 5px;">${event.event_type}</span>
+                                </div>
+                                <div style="font-size: 11px; color: #94a3b8; white-space: nowrap;">${event.date_display}</div>
+                            </div>
+                            <div class="timeline-details" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #64748b;">
+                                ${event.details}
+                                ${event.creditor ? `<div style="margin-top: 5px;"><strong>Creditor:</strong> ${event.creditor}</div>` : ''}
+                                ${event.response_type ? `<div style="margin-top: 5px;"><strong>Response Type:</strong> ${event.response_type}</div>` : ''}
+                                ${event.days_overdue ? `<div style="margin-top: 5px; color: #ef4444; font-weight: 500;">⚠️ ${event.days_overdue} days overdue</div>` : ''}
+                                ${event.days_until !== undefined ? `<div style="margin-top: 5px; color: #f97316; font-weight: 500;">⏰ Due in ${event.days_until} days</div>` : ''}
+                                ${event.file_path ? `<div style="margin-top: 8px;"><a href="/static/generated_letters/${event.file_path.replace('static/generated_letters/', '')}" target="_blank" style="color: #3b82f6; text-decoration: underline; font-size: 11px;">View Letter</a></div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadAdminTimeline);
+    </script>
 </body>
 </html>

@@ -12,7 +12,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 700px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; }
         .card {
             background: white;
             border-radius: 12px;
@@ -21,6 +21,8 @@
             margin-bottom: 20px;
         }
         h1 { color: #319795; margin-bottom: 10px; font-size: 28px; }
+        h2 { color: #319795; margin-bottom: 15px; font-size: 20px; }
+        h3 { color: #555; margin-bottom: 10px; font-size: 16px; }
         .subtitle { color: #666; margin-bottom: 30px; font-size: 15px; }
         label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; margin-top: 15px; }
         label:first-of-type { margin-top: 0; }
@@ -49,8 +51,13 @@
             background: linear-gradient(135deg, #319795, #84cc16);
             color: white;
         }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(49,151,149,0.4); }
-        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(108,117,125,0.4); }
+        .btn-primary:disabled, .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         #status {
             margin-top: 20px;
             padding: 15px;
@@ -62,6 +69,7 @@
         .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .loading { background: #e7f3ff; color: #004085; border: 1px solid #b8daff; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
         .spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #319795;
@@ -76,12 +84,171 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         a { color: #319795; text-decoration: none; }
         a:hover { text-decoration: underline; }
+        
+        .input-type-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .toggle-btn:hover {
+            border-color: #319795;
+        }
+        .toggle-btn.active {
+            border-color: #319795;
+            background: #f0fdfa;
+            color: #319795;
+        }
+        .toggle-btn .icon {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .pdf-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        .pdf-upload-area:hover {
+            border-color: #319795;
+            background: #f0fdfa;
+        }
+        .pdf-upload-area.dragover {
+            border-color: #84cc16;
+            background: #f0fdf4;
+        }
+        .pdf-upload-area .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .pdf-upload-area input[type="file"] {
+            display: none;
+        }
+        .pdf-file-info {
+            display: none;
+            padding: 15px;
+            background: #f0fdfa;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .pdf-file-info.show {
+            display: block;
+        }
+        .pdf-file-info .file-name {
+            font-weight: 600;
+            color: #319795;
+        }
+        .pdf-file-info .remove-file {
+            color: #dc3545;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .parsed-preview {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .parsed-preview.show {
+            display: block;
+        }
+        .parsed-preview h3 {
+            margin-bottom: 15px;
+            color: #319795;
+        }
+        .preview-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .preview-section h4 {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .preview-item {
+            font-size: 13px;
+            color: #333;
+            margin: 5px 0;
+        }
+        .preview-item strong {
+            color: #555;
+        }
+        .confidence-bar {
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .confidence-bar .fill {
+            height: 100%;
+            background: linear-gradient(135deg, #319795, #84cc16);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-info { background: #cce5ff; color: #004085; }
+        
+        .hidden { display: none !important; }
+        
+        .account-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .account-item {
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        .account-item .status {
+            float: right;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .status-open { background: #d4edda; color: #155724; }
+        .status-closed { background: #e2e3e5; color: #383d41; }
+        .status-delinquent { background: #f8d7da; color: #721c24; }
+        .status-collection { background: #f5c6cb; color: #721c24; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="card">
-        <h1>🚀 FCRA Automation Admin</h1>
+        <h1>FCRA Automation Admin</h1>
         <p class="subtitle">Upload credit report for AI-powered FCRA analysis and dispute letter generation</p>
         
         <form id="analysisForm">
@@ -99,8 +266,86 @@
                 <option>MyFreeScoreNow.com</option>
             </select>
             
-            <label for="report">Credit Report HTML *</label>
-            <textarea id="report" placeholder="Paste full HTML from credit report..." required></textarea>
+            <label>Credit Report Input Method *</label>
+            <div class="input-type-toggle">
+                <div class="toggle-btn active" data-type="html" onclick="setInputType('html')">
+                    <span class="icon">📝</span>
+                    <span>Paste HTML</span>
+                </div>
+                <div class="toggle-btn" data-type="pdf" onclick="setInputType('pdf')">
+                    <span class="icon">📄</span>
+                    <span>Upload PDF</span>
+                </div>
+            </div>
+            
+            <div id="htmlInputSection">
+                <label for="report">Credit Report HTML *</label>
+                <textarea id="report" placeholder="Paste full HTML from credit report..."></textarea>
+            </div>
+            
+            <div id="pdfInputSection" class="hidden">
+                <label>Credit Report PDF *</label>
+                <div class="pdf-upload-area" id="pdfDropZone">
+                    <span class="icon">📤</span>
+                    <p>Click to select or drag & drop a PDF file</p>
+                    <p style="font-size: 12px; color: #999; margin-top: 10px;">Supports Experian, TransUnion, and Equifax credit reports</p>
+                    <input type="file" id="pdfFile" accept=".pdf">
+                </div>
+                <div class="pdf-file-info" id="pdfFileInfo">
+                    <span class="file-name" id="pdfFileName"></span>
+                    <span class="remove-file" onclick="removePdfFile()">✕ Remove</span>
+                </div>
+                
+                <div class="button-group" style="margin-top: 15px;">
+                    <button type="button" class="btn-secondary" id="parseBtn" onclick="parsePdf()">
+                        📊 Parse PDF Preview
+                    </button>
+                </div>
+                
+                <div class="parsed-preview" id="parsedPreview">
+                    <h3>📋 Parsed Credit Report Preview</h3>
+                    
+                    <div class="preview-section">
+                        <h4>Bureau Detected</h4>
+                        <div class="preview-item" id="previewBureau">-</div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <h4>Personal Information</h4>
+                        <div id="previewPersonalInfo">-</div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <h4>Accounts Summary</h4>
+                        <div id="previewAccounts">-</div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <h4>Collections</h4>
+                        <div id="previewCollections">-</div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <h4>Inquiries</h4>
+                        <div id="previewInquiries">-</div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <h4>Public Records</h4>
+                        <div id="previewPublicRecords">-</div>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <h4>Parsing Confidence</h4>
+                        <div class="confidence-bar">
+                            <div class="fill" id="confidenceBar" style="width: 0%"></div>
+                        </div>
+                        <div class="preview-item" id="confidenceText" style="margin-top: 5px">-</div>
+                    </div>
+                    
+                    <input type="hidden" id="parsedText" value="">
+                </div>
+            </div>
             
             <label for="round">Dispute Round</label>
             <select id="round">
@@ -117,7 +362,7 @@
             </select>
             
             <div class="button-group">
-                <button type="submit" class="btn-primary">🔍 Generate Analysis</button>
+                <button type="submit" class="btn-primary" id="submitBtn">🔍 Generate Analysis</button>
             </div>
         </form>
         
@@ -129,6 +374,13 @@
 (function() {
     const form = document.getElementById('analysisForm');
     const statusEl = document.getElementById('status');
+    const pdfDropZone = document.getElementById('pdfDropZone');
+    const pdfFileInput = document.getElementById('pdfFile');
+    const pdfFileInfo = document.getElementById('pdfFileInfo');
+    const pdfFileName = document.getElementById('pdfFileName');
+    const parsedPreview = document.getElementById('parsedPreview');
+    let currentInputType = 'html';
+    let parsedData = null;
     
     if (!form) {
         console.error('Form not found');
@@ -136,6 +388,201 @@
     }
     
     console.log('Admin form initialized');
+    
+    window.setInputType = function(type) {
+        currentInputType = type;
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.type === type);
+        });
+        document.getElementById('htmlInputSection').classList.toggle('hidden', type !== 'html');
+        document.getElementById('pdfInputSection').classList.toggle('hidden', type !== 'pdf');
+        parsedPreview.classList.remove('show');
+        parsedData = null;
+    };
+    
+    pdfDropZone.addEventListener('click', () => pdfFileInput.click());
+    
+    pdfDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        pdfDropZone.classList.add('dragover');
+    });
+    
+    pdfDropZone.addEventListener('dragleave', () => {
+        pdfDropZone.classList.remove('dragover');
+    });
+    
+    pdfDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        pdfDropZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length && files[0].type === 'application/pdf') {
+            handleFileSelect(files[0]);
+        } else {
+            showStatus('Please drop a PDF file', 'error');
+        }
+    });
+    
+    pdfFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+    
+    function handleFileSelect(file) {
+        pdfFileName.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+        pdfFileInfo.classList.add('show');
+        pdfDropZone.style.display = 'none';
+        parsedPreview.classList.remove('show');
+        parsedData = null;
+    }
+    
+    window.removePdfFile = function() {
+        pdfFileInput.value = '';
+        pdfFileInfo.classList.remove('show');
+        pdfDropZone.style.display = 'block';
+        parsedPreview.classList.remove('show');
+        parsedData = null;
+    };
+    
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+    
+    window.parsePdf = async function() {
+        const file = pdfFileInput.files[0];
+        if (!file) {
+            showStatus('Please select a PDF file first', 'error');
+            return;
+        }
+        
+        const parseBtn = document.getElementById('parseBtn');
+        parseBtn.disabled = true;
+        parseBtn.innerHTML = '<span class="spinner"></span> Parsing...';
+        showStatus('<span class="spinner"></span> Parsing PDF...', 'loading');
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch('/api/credit-report/parse-pdf', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                parsedData = data;
+                displayParsedPreview(data);
+                showStatus('✅ PDF parsed successfully! Review the preview below.', 'success');
+            } else {
+                let errorMsg = data.error || 'Failed to parse PDF';
+                if (data.is_password_protected) {
+                    errorMsg += '<br><br>💡 Tip: Please provide an unprotected version of the PDF.';
+                } else if (data.is_image_based) {
+                    errorMsg += '<br><br>💡 Tip: <a href="/dashboard/documents/scanner">Use the OCR Scanner</a> for image-based PDFs.';
+                }
+                showStatus('❌ ' + errorMsg, 'error');
+            }
+        } catch (err) {
+            console.error(err);
+            showStatus('❌ Error: ' + err.message, 'error');
+        } finally {
+            parseBtn.disabled = false;
+            parseBtn.innerHTML = '📊 Parse PDF Preview';
+        }
+    };
+    
+    function displayParsedPreview(data) {
+        document.getElementById('previewBureau').innerHTML = 
+            '<strong>' + data.bureau + '</strong>' + 
+            (data.bureau !== 'Unknown' ? ' <span class="badge badge-success">Detected</span>' : ' <span class="badge badge-warning">Not detected</span>');
+        
+        const pi = data.personal_info || {};
+        let personalHtml = '';
+        if (pi.name) personalHtml += '<div class="preview-item"><strong>Name:</strong> ' + pi.name + '</div>';
+        if (pi.address) personalHtml += '<div class="preview-item"><strong>Address:</strong> ' + pi.address + '</div>';
+        if (pi.ssn_last_4) personalHtml += '<div class="preview-item"><strong>SSN Last 4:</strong> ***-**-' + pi.ssn_last_4 + '</div>';
+        if (pi.date_of_birth) personalHtml += '<div class="preview-item"><strong>DOB:</strong> ' + pi.date_of_birth + '</div>';
+        document.getElementById('previewPersonalInfo').innerHTML = personalHtml || '<em>No personal information extracted</em>';
+        
+        const accounts = data.accounts || [];
+        if (accounts.length > 0) {
+            let accountsHtml = '<div class="preview-item"><strong>' + accounts.length + ' account(s) found</strong></div><div class="account-list">';
+            accounts.slice(0, 10).forEach(acc => {
+                const statusClass = 'status-' + (acc.status || 'unknown').toLowerCase().replace(' ', '-');
+                accountsHtml += '<div class="account-item">' +
+                    '<span>' + (acc.name || 'Unknown') + '</span>' +
+                    (acc.balance !== null ? ' - $' + acc.balance.toLocaleString() : '') +
+                    '<span class="status ' + statusClass + '">' + (acc.status || 'Unknown') + '</span>' +
+                    '</div>';
+            });
+            if (accounts.length > 10) {
+                accountsHtml += '<div class="preview-item"><em>... and ' + (accounts.length - 10) + ' more</em></div>';
+            }
+            accountsHtml += '</div>';
+            document.getElementById('previewAccounts').innerHTML = accountsHtml;
+        } else {
+            document.getElementById('previewAccounts').innerHTML = '<em>No accounts extracted</em>';
+        }
+        
+        const collections = data.collections || [];
+        if (collections.length > 0) {
+            let collectionsHtml = '<div class="preview-item"><strong>' + collections.length + ' collection(s) found</strong></div>';
+            collections.forEach(col => {
+                collectionsHtml += '<div class="account-item">' +
+                    (col.agency || 'Unknown Agency') +
+                    (col.creditor ? ' (Original: ' + col.creditor + ')' : '') +
+                    (col.amount !== null ? ' - $' + col.amount.toLocaleString() : '') +
+                    '</div>';
+            });
+            document.getElementById('previewCollections').innerHTML = collectionsHtml;
+        } else {
+            document.getElementById('previewCollections').innerHTML = '<em>No collections found</em>';
+        }
+        
+        const inquiries = data.inquiries || [];
+        if (inquiries.length > 0) {
+            let inquiriesHtml = '<div class="preview-item"><strong>' + inquiries.length + ' inquiry(ies) found</strong></div>';
+            inquiries.slice(0, 5).forEach(inq => {
+                inquiriesHtml += '<div class="preview-item">' + (inq.date || 'Unknown date') + ' - ' + (inq.company || 'Unknown') + '</div>';
+            });
+            if (inquiries.length > 5) {
+                inquiriesHtml += '<div class="preview-item"><em>... and ' + (inquiries.length - 5) + ' more</em></div>';
+            }
+            document.getElementById('previewInquiries').innerHTML = inquiriesHtml;
+        } else {
+            document.getElementById('previewInquiries').innerHTML = '<em>No inquiries found</em>';
+        }
+        
+        const publicRecords = data.public_records || [];
+        if (publicRecords.length > 0) {
+            let prHtml = '<div class="preview-item"><strong>' + publicRecords.length + ' record(s) found</strong></div>';
+            publicRecords.forEach(rec => {
+                prHtml += '<div class="preview-item">' + (rec.type || 'Unknown') +
+                    (rec.date_filed ? ' (' + rec.date_filed + ')' : '') +
+                    (rec.amount !== null ? ' - $' + rec.amount.toLocaleString() : '') +
+                    '</div>';
+            });
+            document.getElementById('previewPublicRecords').innerHTML = prHtml;
+        } else {
+            document.getElementById('previewPublicRecords').innerHTML = '<em>No public records found</em>';
+        }
+        
+        const confidence = (data.parsing_confidence || 0) * 100;
+        document.getElementById('confidenceBar').style.width = confidence + '%';
+        let confText = confidence.toFixed(0) + '% confidence';
+        if (confidence >= 70) confText += ' <span class="badge badge-success">Good</span>';
+        else if (confidence >= 40) confText += ' <span class="badge badge-warning">Fair</span>';
+        else confText += ' <span class="badge badge-info">Low</span>';
+        document.getElementById('confidenceText').innerHTML = confText;
+        
+        document.getElementById('parsedText').value = data.formatted_text || '';
+        
+        parsedPreview.classList.add('show');
+    }
     
     function showStatus(msg, type) {
         statusEl.innerHTML = msg;
@@ -148,16 +595,38 @@
         const name = document.getElementById('name').value.trim();
         const email = document.getElementById('email').value.trim();
         const provider = document.getElementById('provider').value;
-        const report = document.getElementById('report').value.trim();
         const round = parseInt(document.getElementById('round').value);
         const mode = document.getElementById('mode').value;
         
-        if (!name || !report) {
-            showStatus('❌ Client name and report are required', 'error');
-            return;
+        let report = '';
+        
+        if (currentInputType === 'html') {
+            report = document.getElementById('report').value.trim();
+            if (!name || !report) {
+                showStatus('❌ Client name and report are required', 'error');
+                return;
+            }
+        } else {
+            if (parsedData && parsedData.formatted_text) {
+                report = parsedData.formatted_text;
+            } else if (pdfFileInput.files[0]) {
+                showStatus('❌ Please click "Parse PDF Preview" first to extract the credit report data', 'error');
+                return;
+            } else {
+                showStatus('❌ Please upload and parse a PDF file first', 'error');
+                return;
+            }
+            
+            if (!name) {
+                showStatus('❌ Client name is required', 'error');
+                return;
+            }
         }
         
-        showStatus('⏳ Analyzing credit report...', 'loading');
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner"></span> Analyzing...';
+        showStatus('<span class="spinner"></span> Analyzing credit report...', 'loading');
         
         try {
             const response = await fetch('/api/analyze', {
@@ -166,7 +635,7 @@
                 body: JSON.stringify({
                     clientName: name,
                     clientEmail: email,
-                    creditProvider: provider,
+                    creditProvider: parsedData?.bureau && parsedData.bureau !== 'Unknown' ? parsedData.bureau : provider,
                     creditReportHTML: report,
                     disputeRound: round,
                     analysisMode: mode
@@ -187,6 +656,7 @@
                 statusEl.appendChild(viewBtn);
                 statusEl.className = 'show success';
                 form.reset();
+                setInputType('html');
                 document.getElementById('name').focus();
             } else {
                 showStatus('❌ ' + (data.error || 'Analysis failed'), 'error');
@@ -194,6 +664,9 @@
         } catch (err) {
             console.error(err);
             showStatus('❌ Error: ' + err.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '🔍 Generate Analysis';
         }
     });
 })();

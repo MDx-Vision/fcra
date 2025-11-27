@@ -598,6 +598,7 @@
             <button class="top-nav-btn active" data-tab="freeze-letters" onclick="switchTab('freeze-letters')">Freeze Letters</button>
             <button class="top-nav-btn" data-tab="validation-letters" onclick="switchTab('validation-letters')">Validation Letters</button>
             <button class="top-nav-btn" data-tab="deadlines" onclick="switchTab('deadlines')">Deadlines</button>
+            <button class="top-nav-btn" data-tab="dispute-rounds" onclick="switchTab('dispute-rounds')">Dispute Rounds</button>
             <button class="top-nav-btn" data-tab="settlement-calculator" onclick="switchTab('settlement-calculator')">Settlement Calculator</button>
             <button class="top-nav-btn" data-tab="certified-mail" onclick="switchTab('certified-mail')">Certified Mail</button>
             <button class="top-nav-btn" data-tab="notarization" onclick="switchTab('notarization')">Notarization</button>
@@ -857,6 +858,124 @@
             </div>
         </div>
 
+        <div id="tab-dispute-rounds" class="tab-content">
+            <div class="deadline-stats">
+                <div class="deadline-stat" style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border: 1px solid #86efac;">
+                    <div class="count" id="readyToAdvanceCount">0</div>
+                    <div class="label">Ready to Advance</div>
+                </div>
+                <div class="deadline-stat" style="background: linear-gradient(135deg, #fef9c3 0%, #fef08a 100%); border: 1px solid #fde047;">
+                    <div class="count" id="incompleteRoundsCount">0</div>
+                    <div class="label">Incomplete Rounds</div>
+                </div>
+                <div class="deadline-stat" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border: 1px solid #a5b4fc;">
+                    <div class="count" id="activeDeadlinesCount">0</div>
+                    <div class="label">Active Deadlines</div>
+                </div>
+                <div class="deadline-stat" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 1px solid #fca5a5;">
+                    <div class="count" id="overdueDeadlinesCount">0</div>
+                    <div class="label">Overdue Responses</div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="section-title">
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Clients Ready to Advance Round
+                    </span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="readyToAdvanceTable">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Current Round</th>
+                                <th>Bureaus Responded</th>
+                                <th>Items Deleted</th>
+                                <th>Success Rate</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="readyToAdvanceBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <p>Loading data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="section-title">
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        Clients with Incomplete Rounds (Waiting for Bureau Responses)
+                    </span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="incompleteRoundsTable">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Current Round</th>
+                                <th>Bureaus Responded</th>
+                                <th>Bureaus Pending</th>
+                                <th>Round Started</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="incompleteRoundsBody">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <p>Loading data...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="section-title">Manual Round Advancement</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client</label>
+                        <select id="advanceRoundClientSelect">
+                            <option value="">-- Select a Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>New Round</label>
+                        <select id="newRoundSelect">
+                            <option value="1">Round 1 - Initial Dispute</option>
+                            <option value="2">Round 2 - MOV Request</option>
+                            <option value="3">Round 3 - Pre-Litigation</option>
+                            <option value="4">Round 4 - Final Demand</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="advanceRoundManual()" id="advanceRoundBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="13 17 18 12 13 7"/>
+                        <polyline points="6 17 11 12 6 7"/>
+                    </svg>
+                    Advance to Selected Round
+                </button>
+            </div>
+        </div>
+
         <div id="tab-settlement-calculator" class="tab-content">
             <div class="content-card">
                 <div class="section-title">Calculate Settlement Value</div>
@@ -1006,6 +1125,265 @@
             if (tabId === 'deadlines') {
                 loadDeadlines();
             }
+            if (tabId === 'dispute-rounds') {
+                loadDisputeRoundSummary();
+            }
+        }
+
+        async function loadDisputeRoundSummary() {
+            try {
+                const response = await fetch('/api/dispute/round-summary');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('readyToAdvanceCount').textContent = data.stats.ready_count || 0;
+                    document.getElementById('incompleteRoundsCount').textContent = data.stats.incomplete_count || 0;
+                    document.getElementById('activeDeadlinesCount').textContent = data.stats.active_deadlines || 0;
+                    document.getElementById('overdueDeadlinesCount').textContent = data.stats.overdue_deadlines || 0;
+                    
+                    renderReadyToAdvanceTable(data.ready_to_advance);
+                    renderIncompleteRoundsTable(data.incomplete_rounds);
+                }
+            } catch (error) {
+                console.error('Error loading dispute round summary:', error);
+                showToast('Error loading dispute rounds data', true);
+            }
+        }
+
+        function getRoundLabel(roundNum) {
+            const labels = {
+                1: 'Round 1 - Initial Dispute',
+                2: 'Round 2 - MOV Request',
+                3: 'Round 3 - Pre-Litigation',
+                4: 'Round 4 - Final Demand'
+            };
+            return labels[roundNum] || `Round ${roundNum}`;
+        }
+
+        function getBureauBadges(bureaus) {
+            return bureaus.map(b => {
+                const colors = {
+                    'Experian': '#0066cc',
+                    'TransUnion': '#1a9d49',
+                    'Equifax': '#b71c1c'
+                };
+                const color = colors[b] || '#64748b';
+                return `<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;background:${color}15;color:${color};border:1px solid ${color}40;margin-right:4px;">${b}</span>`;
+            }).join('');
+        }
+
+        function renderReadyToAdvanceTable(clients) {
+            const tbody = document.getElementById('readyToAdvanceBody');
+            
+            if (!clients || clients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><h3>No clients ready to advance</h3><p>Clients will appear here when all 3 bureaus respond</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = clients.map(client => {
+                const nextRound = (client.current_round || 1) + 1;
+                const canAdvance = nextRound <= 4;
+                
+                return `
+                    <tr>
+                        <td><strong>${client.name}</strong></td>
+                        <td>${getRoundLabel(client.current_round)}</td>
+                        <td>${getBureauBadges(client.bureaus_responded)}</td>
+                        <td><span style="color:#16a34a;font-weight:600;">${client.total_deleted}</span></td>
+                        <td>
+                            <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;${client.success_rate >= 50 ? 'background:#dcfce7;color:#166534;' : 'background:#fef3c7;color:#92400e;'}">
+                                ${client.success_rate.toFixed(1)}%
+                            </span>
+                        </td>
+                        <td>
+                            ${canAdvance ? 
+                                `<button class="btn btn-primary btn-sm" onclick="advanceClientRound(${client.id}, ${nextRound})">
+                                    Advance to Round ${nextRound}
+                                </button>` : 
+                                `<span class="status-badge status-completed">Final Round Complete</span>`
+                            }
+                            <button class="btn btn-secondary btn-sm" onclick="viewRoundHistory(${client.id})" style="margin-left:5px;">
+                                History
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderIncompleteRoundsTable(clients) {
+            const tbody = document.getElementById('incompleteRoundsBody');
+            
+            if (!clients || clients.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><h3>No incomplete rounds</h3><p>All active clients have complete rounds</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = clients.map(client => {
+                const roundStarted = client.round_started_at ? new Date(client.round_started_at).toLocaleDateString() : 'N/A';
+                
+                return `
+                    <tr>
+                        <td><strong>${client.name}</strong></td>
+                        <td>${getRoundLabel(client.current_round)}</td>
+                        <td>${getBureauBadges(client.bureaus_responded)}</td>
+                        <td>${getBureauBadges(client.bureaus_missing)}</td>
+                        <td>${roundStarted}</td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm" onclick="viewRoundHistory(${client.id})">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function advanceClientRound(clientId, newRound) {
+            if (!confirm(`Are you sure you want to advance this client to Round ${newRound}? This will create new 30-day deadlines for all bureaus.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/dispute/advance-round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: clientId,
+                        new_round: newRound
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`Successfully advanced to Round ${newRound}! ${data.deadlines_created.length} deadlines created.`);
+                    loadDisputeRoundSummary();
+                } else {
+                    showToast(data.error || 'Failed to advance round', true);
+                }
+            } catch (error) {
+                showToast('Error advancing round: ' + error.message, true);
+            }
+        }
+
+        async function advanceRoundManual() {
+            const clientId = document.getElementById('advanceRoundClientSelect').value;
+            const newRound = parseInt(document.getElementById('newRoundSelect').value);
+
+            if (!clientId) {
+                showToast('Please select a client', true);
+                return;
+            }
+
+            if (!confirm(`Advance this client to ${getRoundLabel(newRound)}?`)) {
+                return;
+            }
+
+            const btn = document.getElementById('advanceRoundBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Advancing...';
+
+            try {
+                const response = await fetch('/api/dispute/advance-round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: parseInt(clientId),
+                        new_round: newRound
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast(`Successfully advanced to Round ${newRound}! ${data.deadlines_created.length} deadlines created.`);
+                    loadDisputeRoundSummary();
+                } else {
+                    showToast(data.error || 'Failed to advance round', true);
+                }
+            } catch (error) {
+                showToast('Error advancing round: ' + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg> Advance to Selected Round';
+            }
+        }
+
+        async function viewRoundHistory(clientId) {
+            try {
+                const response = await fetch(`/api/dispute/client/${clientId}/round-history`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showRoundHistoryModal(data);
+                } else {
+                    showToast(data.error || 'Failed to load round history', true);
+                }
+            } catch (error) {
+                showToast('Error loading round history: ' + error.message, true);
+            }
+        }
+
+        function showRoundHistoryModal(data) {
+            const existingModal = document.getElementById('roundHistoryModal');
+            if (existingModal) existingModal.remove();
+
+            let historyHtml = '';
+            if (data.round_history && data.round_history.length > 0) {
+                historyHtml = data.round_history.map(round => {
+                    const bureauRows = Object.entries(round.bureaus).map(([bureau, info]) => `
+                        <div style="display:flex;justify-content:space-between;padding:8px;background:#f8fafc;border-radius:6px;margin-bottom:5px;">
+                            <span><strong>${bureau}</strong></span>
+                            <span style="color:${info.response_type === 'deleted' ? '#16a34a' : '#64748b'}">
+                                ${info.response_type} (Deleted: ${info.items_deleted}, Verified: ${info.items_verified})
+                            </span>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div style="margin-bottom:20px;padding:15px;border:1px solid #e2e8f0;border-radius:8px;">
+                            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                                <h4 style="margin:0;">Round ${round.round}</h4>
+                                <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;${round.is_complete ? 'background:#dcfce7;color:#166534;' : 'background:#fef3c7;color:#92400e;'}">
+                                    ${round.is_complete ? 'Complete' : 'In Progress'}
+                                </span>
+                            </div>
+                            ${bureauRows}
+                            <div style="margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;gap:20px;">
+                                <span>Success Rate: <strong style="color:#16a34a;">${round.success_rate.toFixed(1)}%</strong></span>
+                                <span>Deleted: <strong>${round.total_deleted}</strong></span>
+                                <span>Verified: <strong>${round.total_verified}</strong></span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                historyHtml = '<p style="color:#64748b;text-align:center;">No round history available</p>';
+            }
+
+            const modal = document.createElement('div');
+            modal.id = 'roundHistoryModal';
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;';
+            
+            modal.innerHTML = `
+                <div style="background:white;padding:30px;border-radius:12px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="margin:0;">Round History - ${data.client_name}</h3>
+                        <button onclick="document.getElementById('roundHistoryModal').remove();" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748b;">&times;</button>
+                    </div>
+                    <div style="margin-bottom:15px;padding:10px;background:#f1f5f9;border-radius:6px;">
+                        <strong>Current Status:</strong> Round ${data.current_round} - ${data.dispute_status}
+                    </div>
+                    ${historyHtml}
+                </div>
+            `;
+            
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) modal.remove();
+            });
+            
+            document.body.appendChild(modal);
         }
 
         function selectAllPrimary() {

@@ -17,3 +17,7 @@ stripe
 twilio
 sendgrid
 pypdf
+PyPDF2
+pdfplumber
+pdfplumber
+PyPDF2

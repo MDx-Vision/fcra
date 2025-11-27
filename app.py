@@ -1722,6 +1722,240 @@ def admin_dashboard():
     return render_template('admin.html')
 
 
+# ============================================================
+# PDF CREDIT REPORT PARSING ENDPOINTS
+# ============================================================
+
+@app.route('/api/credit-report/parse-pdf', methods=['POST'])
+def parse_credit_report_pdf():
+    """Parse a PDF credit report and extract structured data."""
+    import tempfile
+    from services.pdf_parser_service import parse_credit_report_pdf as parse_pdf, get_parsed_text_for_analysis
+    
+    if 'file' not in request.files:
+        return jsonify({
+            'success': False,
+            'error': 'No file uploaded. Please select a PDF file.'
+        }), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({
+            'success': False,
+            'error': 'No file selected. Please choose a PDF file.'
+        }), 400
+    
+    if not file.filename.lower().endswith('.pdf'):
+        return jsonify({
+            'success': False,
+            'error': 'Invalid file type. Please upload a PDF file.'
+        }), 400
+    
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            file.save(temp_file.name)
+            temp_path = temp_file.name
+        
+        result = parse_pdf(temp_path)
+        
+        if not result.get('success'):
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Failed to parse PDF'),
+                'is_password_protected': 'password' in (result.get('error', '')).lower(),
+                'is_image_based': 'image' in (result.get('error', '')).lower() or 'ocr' in (result.get('error', '')).lower()
+            }), 400
+        
+        formatted_text = get_parsed_text_for_analysis(result)
+        
+        return jsonify({
+            'success': True,
+            'bureau': result.get('bureau', 'Unknown'),
+            'personal_info': result.get('personal_info', {}),
+            'accounts': result.get('accounts', []),
+            'inquiries': result.get('inquiries', []),
+            'collections': result.get('collections', []),
+            'public_records': result.get('public_records', []),
+            'parsing_confidence': result.get('parsing_confidence', 0.0),
+            'text_length': result.get('text_length', 0),
+            'formatted_text': formatted_text,
+            'raw_text': result.get('raw_text', '')[:50000]
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Error processing PDF: {str(e)}'
+        }), 500
+    finally:
+        if temp_path:
+            try:
+                import os
+                os.unlink(temp_path)
+            except:
+                pass
+
+
+@app.route('/api/credit-report/parse-and-analyze', methods=['POST'])
+def parse_and_analyze_credit_report():
+    """Parse a PDF credit report and immediately run FCRA analysis."""
+    import tempfile
+    from services.pdf_parser_service import parse_credit_report_pdf as parse_pdf, get_parsed_text_for_analysis
+    
+    db = get_db()
+    temp_path = None
+    
+    try:
+        if 'file' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No file uploaded. Please select a PDF file.'
+            }), 400
+        
+        file = request.files['file']
+        client_name = request.form.get('clientName', '')
+        client_email = request.form.get('clientEmail', '')
+        credit_provider = request.form.get('creditProvider', 'Unknown')
+        dispute_round = int(request.form.get('disputeRound', 1))
+        
+        if not client_name:
+            return jsonify({
+                'success': False,
+                'error': 'Client name is required'
+            }), 400
+        
+        if file.filename == '' or not file.filename.lower().endswith('.pdf'):
+            return jsonify({
+                'success': False,
+                'error': 'Please upload a valid PDF file.'
+            }), 400
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            file.save(temp_file.name)
+            temp_path = temp_file.name
+        
+        parse_result = parse_pdf(temp_path)
+        
+        if not parse_result.get('success'):
+            return jsonify({
+                'success': False,
+                'error': parse_result.get('error', 'Failed to parse PDF'),
+                'is_password_protected': 'password' in (parse_result.get('error', '')).lower(),
+                'is_image_based': 'image' in (parse_result.get('error', '')).lower()
+            }), 400
+        
+        formatted_text = get_parsed_text_for_analysis(parse_result)
+        
+        if parse_result.get('bureau') and parse_result.get('bureau') != 'Unknown':
+            credit_provider = parse_result.get('bureau')
+        
+        client = db.query(Client).filter_by(name=client_name).first()
+        if not client:
+            client = Client(name=client_name, email=client_email)
+            db.add(client)
+            db.commit()
+            db.refresh(client)
+        
+        credit_report_record = CreditReport(
+            client_id=client.id,
+            client_name=client_name,
+            credit_provider=credit_provider,
+            report_html=formatted_text,
+            report_date=datetime.now()
+        )
+        db.add(credit_report_record)
+        db.commit()
+        db.refresh(credit_report_record)
+        
+        section_analysis = run_stage1_for_all_sections(
+            client_name=client_name,
+            cmm_id=request.form.get('cmmContactId', ''),
+            provider=credit_provider,
+            credit_report_text=formatted_text,
+            analysis_mode='manual',
+            dispute_round=dispute_round,
+            previous_letters='',
+            bureau_responses='',
+            dispute_timeline=''
+        )
+        
+        if not section_analysis.get('success'):
+            return jsonify({
+                'success': False,
+                'error': section_analysis.get('error', 'Analysis failed'),
+                'parsed_data': {
+                    'bureau': parse_result.get('bureau'),
+                    'accounts_count': len(parse_result.get('accounts', [])),
+                    'inquiries_count': len(parse_result.get('inquiries', [])),
+                    'collections_count': len(parse_result.get('collections', []))
+                }
+            }), 500
+        
+        merged_litigation_data = section_analysis.get('litigation_data', {})
+        
+        analysis_record = Analysis(
+            credit_report_id=credit_report_record.id,
+            client_id=client.id,
+            client_name=client_name,
+            dispute_round=dispute_round,
+            analysis_mode='manual',
+            stage=1,
+            stage_1_analysis=str(merged_litigation_data),
+            cost=section_analysis.get('cost', 0),
+            tokens_used=section_analysis.get('tokens_used', 0),
+            cache_read=section_analysis.get('cache_read', False)
+        )
+        db.add(analysis_record)
+        db.commit()
+        db.refresh(analysis_record)
+        
+        if merged_litigation_data and merged_litigation_data.get('violations'):
+            auto_populate_litigation_database(
+                analysis_id=analysis_record.id,
+                client_id=client.id,
+                litigation_data=merged_litigation_data,
+                db=db
+            )
+        
+        return jsonify({
+            'success': True,
+            'analysis_id': analysis_record.id,
+            'client_id': client.id,
+            'parsed_data': {
+                'bureau': parse_result.get('bureau'),
+                'personal_info': parse_result.get('personal_info', {}),
+                'accounts_count': len(parse_result.get('accounts', [])),
+                'inquiries_count': len(parse_result.get('inquiries', [])),
+                'collections_count': len(parse_result.get('collections', [])),
+                'public_records_count': len(parse_result.get('public_records', [])),
+                'parsing_confidence': parse_result.get('parsing_confidence', 0.0)
+            },
+            'violations_found': len(merged_litigation_data.get('violations', [])),
+            'review_url': f'/analysis/{analysis_record.id}/review'
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Error: {str(e)}'
+        }), 500
+    finally:
+        db.close()
+        if temp_path:
+            try:
+                import os
+                os.unlink(temp_path)
+            except:
+                pass
+
+
 @app.route('/api/analyze', methods=['POST'])
 def analyze_and_generate_letters():
     """Process credit report, run AI analysis, generate PDF letters"""
@@ -5633,7 +5867,7 @@ def api_client_import():
 
 @app.route('/api/cra-response/upload', methods=['POST'])
 def api_cra_response_upload():
-    """Upload CRA response letter"""
+    """Upload CRA response letter with automated dispute round handling"""
     db = get_db()
     try:
         client_id = request.form.get('clientId')
@@ -5641,6 +5875,9 @@ def api_cra_response_upload():
         bureau = request.form.get('bureau')
         dispute_round = int(request.form.get('disputeRound', 1))
         response_type = request.form.get('responseType', 'unknown')
+        items_deleted = int(request.form.get('itemsDeleted', 0))
+        items_verified = int(request.form.get('itemsVerified', 0))
+        items_updated = int(request.form.get('itemsUpdated', 0))
         
         if not client_id or not bureau:
             return jsonify({'success': False, 'error': 'Client ID and bureau are required'}), 400
@@ -5675,6 +5912,9 @@ def api_cra_response_upload():
             file_name=file.filename,
             file_size=os.path.getsize(file_path),
             uploaded_by_admin=True,
+            items_deleted=items_deleted,
+            items_verified=items_verified,
+            items_updated=items_updated,
             requires_follow_up=(response_type in ['verified', 'investigating'])
         )
         
@@ -5690,9 +5930,68 @@ def api_cra_response_upload():
             if response_type in ['verified', 'investigating']:
                 client.dispute_status = 'waiting_response'
             elif response_type == 'deleted':
-                pass
+                client.dispute_status = 'active'
+        
+        if response_type == 'deleted' or items_deleted > 0:
+            dispute_items = db.query(DisputeItem).filter(
+                DisputeItem.client_id == int(client_id),
+                DisputeItem.bureau == bureau,
+                DisputeItem.dispute_round == dispute_round,
+                DisputeItem.status.in_(['sent', 'in_progress', 'to_do'])
+            ).all()
+            
+            items_to_mark = min(items_deleted, len(dispute_items)) if items_deleted > 0 else len(dispute_items)
+            for i, item in enumerate(dispute_items):
+                if i < items_to_mark:
+                    item.status = 'deleted'
+                    item.response_date = date.today()
+            
+            print(f"📋 Marked {items_to_mark} DisputeItems as 'deleted' for client {client_id}, bureau {bureau}")
+        
+        from services.deadline_service import complete_deadline
+        active_deadlines = db.query(CaseDeadline).filter(
+            CaseDeadline.client_id == int(client_id),
+            CaseDeadline.bureau == bureau,
+            CaseDeadline.dispute_round == dispute_round,
+            CaseDeadline.deadline_type == 'cra_response',
+            CaseDeadline.status == 'active'
+        ).all()
+        
+        for deadline in active_deadlines:
+            deadline.status = 'completed'
+            deadline.completed_at = datetime.utcnow()
+            deadline.notes = (deadline.notes or '') + f"\n[Auto-completed] Response received: {response_type}"
+        
+        case_event = CaseEvent(
+            case_id=int(case_id) if case_id else None,
+            event_type='cra_response_received',
+            description=f'{bureau} response received for round {dispute_round}: {response_type}',
+            event_data=json.dumps({
+                'client_id': int(client_id),
+                'bureau': bureau,
+                'dispute_round': dispute_round,
+                'response_type': response_type,
+                'items_deleted': items_deleted,
+                'items_verified': items_verified,
+                'items_updated': items_updated
+            })
+        )
+        db.add(case_event)
         
         db.commit()
+        
+        round_status = check_round_complete_internal(db, int(client_id), dispute_round)
+        
+        if round_status.get('round_complete'):
+            print(f"🎯 Round {dispute_round} complete for client {client_id}! All bureaus responded.")
+            try:
+                from services.email_automation import send_admin_notification
+                send_admin_notification(
+                    subject=f"Dispute Round {dispute_round} Complete - Client #{client_id}",
+                    message=f"All 3 bureaus have responded for client #{client_id} in round {dispute_round}.\n\nSuccess Rate: {round_status.get('success_rate', 0):.1f}%\nDeleted: {round_status.get('total_deleted', 0)}\n\nConsider advancing to the next round."
+                )
+            except Exception as email_err:
+                print(f"⚠️  Admin notification error (non-fatal): {email_err}")
         
         try:
             from services.sms_automation import trigger_cra_response
@@ -5705,7 +6004,8 @@ def api_cra_response_upload():
         return jsonify({
             'success': True,
             'responseId': cra_response.id,
-            'message': f'{bureau} response uploaded successfully'
+            'message': f'{bureau} response uploaded successfully',
+            'roundStatus': round_status
         }), 201
         
     except Exception as e:
@@ -5715,6 +6015,55 @@ def api_cra_response_upload():
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
+
+
+def check_round_complete_internal(db, client_id, dispute_round):
+    """Internal helper to check if a dispute round is complete"""
+    bureaus = ['Experian', 'TransUnion', 'Equifax']
+    responses = db.query(CRAResponse).filter(
+        CRAResponse.client_id == client_id,
+        CRAResponse.dispute_round == dispute_round
+    ).all()
+    
+    bureaus_responded = set()
+    total_deleted = 0
+    total_verified = 0
+    total_updated = 0
+    
+    for resp in responses:
+        if resp.bureau in bureaus:
+            bureaus_responded.add(resp.bureau)
+        total_deleted += resp.items_deleted or 0
+        total_verified += resp.items_verified or 0
+        total_updated += resp.items_updated or 0
+    
+    bureaus_missing = [b for b in bureaus if b not in bureaus_responded]
+    round_complete = len(bureaus_missing) == 0
+    
+    total_items = total_deleted + total_verified + total_updated
+    success_rate = (total_deleted / total_items * 100) if total_items > 0 else 0
+    
+    client = db.query(Client).filter_by(id=client_id).first()
+    
+    next_action = None
+    if round_complete:
+        if dispute_round < 4:
+            next_action = 'advance_round'
+        else:
+            next_action = 'complete_or_litigation'
+    
+    return {
+        'round_complete': round_complete,
+        'bureaus_responded': list(bureaus_responded),
+        'bureaus_missing': bureaus_missing,
+        'total_deleted': total_deleted,
+        'total_verified': total_verified,
+        'total_updated': total_updated,
+        'success_rate': success_rate,
+        'current_round': dispute_round,
+        'client_dispute_round': client.current_dispute_round if client else None,
+        'next_action': next_action
+    }
 
 
 @app.route('/api/client/<int:client_id>/responses')
@@ -5745,6 +6094,275 @@ def api_client_responses(client_id):
         }), 200
         
     except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# DISPUTE ROUND AUTOMATION ENDPOINTS
+# ============================================================
+
+@app.route('/api/dispute/advance-round', methods=['POST'])
+def api_advance_dispute_round():
+    """
+    Advance a client to the next dispute round.
+    Creates CRA response deadlines for each bureau.
+    """
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get('client_id')
+        new_round = int(data.get('new_round', 1))
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Client ID is required'}), 400
+        
+        if new_round < 1 or new_round > 4:
+            return jsonify({'success': False, 'error': 'Round must be between 1 and 4'}), 400
+        
+        client = db.query(Client).filter_by(id=int(client_id)).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        old_round = client.current_dispute_round or 0
+        client.current_dispute_round = new_round
+        client.round_started_at = datetime.utcnow()
+        client.dispute_status = 'active'
+        
+        from services.deadline_service import create_deadline
+        from datetime import date
+        bureaus = ['Experian', 'TransUnion', 'Equifax']
+        created_deadlines = []
+        
+        for bureau in bureaus:
+            try:
+                deadline = create_deadline(
+                    db=db,
+                    client_id=int(client_id),
+                    case_id=None,
+                    deadline_type='cra_response',
+                    bureau=bureau,
+                    dispute_round=new_round,
+                    start_date=date.today(),
+                    days_allowed=30
+                )
+                created_deadlines.append({
+                    'id': deadline.id,
+                    'bureau': bureau,
+                    'deadline_date': deadline.deadline_date.isoformat()
+                })
+            except Exception as dl_err:
+                print(f"⚠️  Failed to create deadline for {bureau}: {dl_err}")
+        
+        case = db.query(Case).filter_by(client_id=int(client_id)).first()
+        if case:
+            event = CaseEvent(
+                case_id=case.id,
+                event_type='round_advanced',
+                description=f'Dispute round advanced from {old_round} to {new_round}',
+                event_data=json.dumps({
+                    'client_id': int(client_id),
+                    'old_round': old_round,
+                    'new_round': new_round,
+                    'deadlines_created': len(created_deadlines)
+                })
+            )
+            db.add(event)
+        
+        db.commit()
+        
+        print(f"✅ Client {client_id} advanced to round {new_round}. Created {len(created_deadlines)} deadlines.")
+        
+        return jsonify({
+            'success': True,
+            'client_id': int(client_id),
+            'old_round': old_round,
+            'new_round': new_round,
+            'deadlines_created': created_deadlines,
+            'message': f'Successfully advanced to Round {new_round}'
+        }), 200
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/dispute/check-round-complete', methods=['GET', 'POST'])
+def api_check_round_complete():
+    """
+    Check if a dispute round is complete (all 3 bureaus responded).
+    Returns completion status and recommended next action.
+    """
+    db = get_db()
+    try:
+        if request.method == 'POST':
+            data = request.json
+            client_id = data.get('client_id')
+            dispute_round = data.get('dispute_round')
+        else:
+            client_id = request.args.get('client_id')
+            dispute_round = request.args.get('dispute_round')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Client ID is required'}), 400
+        
+        client = db.query(Client).filter_by(id=int(client_id)).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        if not dispute_round:
+            dispute_round = client.current_dispute_round or 1
+        else:
+            dispute_round = int(dispute_round)
+        
+        result = check_round_complete_internal(db, int(client_id), dispute_round)
+        result['success'] = True
+        result['client_name'] = client.name
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/dispute/round-summary')
+def api_dispute_round_summary():
+    """
+    Get summary of all clients' dispute round status for the dashboard.
+    Shows clients ready to advance and clients with incomplete rounds.
+    """
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(
+            Client.current_dispute_round > 0,
+            Client.dispute_status.in_(['active', 'waiting_response'])
+        ).all()
+        
+        clients_ready_to_advance = []
+        clients_incomplete_rounds = []
+        
+        for client in clients:
+            dispute_round = client.current_dispute_round
+            round_status = check_round_complete_internal(db, client.id, dispute_round)
+            
+            client_info = {
+                'id': client.id,
+                'name': client.name,
+                'email': client.email,
+                'current_round': dispute_round,
+                'dispute_status': client.dispute_status,
+                'round_started_at': client.round_started_at.isoformat() if client.round_started_at else None,
+                'bureaus_responded': round_status.get('bureaus_responded', []),
+                'bureaus_missing': round_status.get('bureaus_missing', []),
+                'total_deleted': round_status.get('total_deleted', 0),
+                'total_verified': round_status.get('total_verified', 0),
+                'success_rate': round_status.get('success_rate', 0),
+                'round_complete': round_status.get('round_complete', False),
+                'next_action': round_status.get('next_action')
+            }
+            
+            if round_status.get('round_complete'):
+                clients_ready_to_advance.append(client_info)
+            else:
+                clients_incomplete_rounds.append(client_info)
+        
+        from datetime import date
+        active_deadlines = db.query(CaseDeadline).filter(
+            CaseDeadline.status == 'active',
+            CaseDeadline.deadline_type == 'cra_response'
+        ).count()
+        
+        overdue_deadlines = db.query(CaseDeadline).filter(
+            CaseDeadline.status == 'active',
+            CaseDeadline.deadline_type == 'cra_response',
+            CaseDeadline.deadline_date < date.today()
+        ).count()
+        
+        return jsonify({
+            'success': True,
+            'ready_to_advance': clients_ready_to_advance,
+            'incomplete_rounds': clients_incomplete_rounds,
+            'stats': {
+                'total_active_clients': len(clients),
+                'ready_count': len(clients_ready_to_advance),
+                'incomplete_count': len(clients_incomplete_rounds),
+                'active_deadlines': active_deadlines,
+                'overdue_deadlines': overdue_deadlines
+            }
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/dispute/client/<int:client_id>/round-history')
+def api_client_round_history(client_id):
+    """Get dispute round history for a specific client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        round_history = []
+        for round_num in range(1, 5):
+            responses = db.query(CRAResponse).filter(
+                CRAResponse.client_id == client_id,
+                CRAResponse.dispute_round == round_num
+            ).all()
+            
+            if responses:
+                round_data = {
+                    'round': round_num,
+                    'bureaus': {},
+                    'total_deleted': 0,
+                    'total_verified': 0,
+                    'total_updated': 0
+                }
+                
+                for resp in responses:
+                    round_data['bureaus'][resp.bureau] = {
+                        'response_type': resp.response_type,
+                        'response_date': resp.response_date.isoformat() if resp.response_date else None,
+                        'items_deleted': resp.items_deleted or 0,
+                        'items_verified': resp.items_verified or 0,
+                        'items_updated': resp.items_updated or 0
+                    }
+                    round_data['total_deleted'] += resp.items_deleted or 0
+                    round_data['total_verified'] += resp.items_verified or 0
+                    round_data['total_updated'] += resp.items_updated or 0
+                
+                total_items = round_data['total_deleted'] + round_data['total_verified'] + round_data['total_updated']
+                round_data['success_rate'] = (round_data['total_deleted'] / total_items * 100) if total_items > 0 else 0
+                round_data['is_complete'] = len(round_data['bureaus']) >= 3
+                
+                round_history.append(round_data)
+        
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'client_name': client.name,
+            'current_round': client.current_dispute_round,
+            'dispute_status': client.dispute_status,
+            'round_history': round_history
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
@@ -8311,6 +8929,248 @@ def api_get_client_settlements(client_id):
         
         return jsonify({'success': True, 'estimates': estimates_data})
     except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ==============================================================================
+# CLIENT DISPUTE TIMELINE API
+# ==============================================================================
+
+@app.route('/api/client/<int:client_id>/timeline', methods=['GET'])
+def api_client_timeline(client_id):
+    """Get complete dispute timeline for a client - merges data from multiple sources"""
+    db = get_db()
+    try:
+        from datetime import date as date_type
+        
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        events = []
+        
+        # 1. Client creation / round started events
+        if client.created_at:
+            events.append({
+                'type': 'milestone',
+                'event_type': 'client_created',
+                'date': client.created_at.isoformat(),
+                'date_display': client.created_at.strftime('%b %d, %Y'),
+                'bureau': None,
+                'description': 'Case opened',
+                'details': f'Client {client.name} enrolled in credit repair program',
+                'round': 0,
+                'icon': '🎯',
+                'color': 'gray'
+            })
+        
+        if client.round_started_at:
+            events.append({
+                'type': 'milestone',
+                'event_type': 'round_started',
+                'date': client.round_started_at.isoformat(),
+                'date_display': client.round_started_at.strftime('%b %d, %Y'),
+                'bureau': None,
+                'description': f'Round {client.current_dispute_round or 1} started',
+                'details': 'Dispute round initiated',
+                'round': client.current_dispute_round or 1,
+                'icon': '🔄',
+                'color': 'gray'
+            })
+        
+        # 2. Dispute Letters sent
+        letters = db.query(DisputeLetter).filter_by(client_id=client_id).all()
+        for letter in letters:
+            letter_date = letter.sent_at or letter.created_at
+            if letter_date:
+                events.append({
+                    'type': 'dispute_sent',
+                    'event_type': 'letter_sent',
+                    'date': letter_date.isoformat(),
+                    'date_display': letter_date.strftime('%b %d, %Y'),
+                    'bureau': letter.bureau,
+                    'description': f'Dispute letter sent to {letter.bureau}',
+                    'details': f'Round {letter.round_number} dispute letter generated and sent',
+                    'round': letter.round_number or 1,
+                    'icon': '📤',
+                    'color': 'blue',
+                    'file_path': letter.file_path
+                })
+        
+        # 3. CRA Responses received
+        responses = db.query(CRAResponse).filter_by(client_id=client_id).all()
+        for resp in responses:
+            resp_date = resp.received_date or resp.response_date or resp.created_at
+            if resp_date:
+                if isinstance(resp_date, date_type) and not isinstance(resp_date, datetime):
+                    resp_date = datetime.combine(resp_date, datetime.min.time())
+                
+                response_desc = f'{resp.bureau} responded'
+                if resp.response_type:
+                    response_desc = f'{resp.bureau}: {resp.response_type.replace("_", " ").title()}'
+                
+                details_parts = []
+                if resp.items_verified:
+                    details_parts.append(f'{resp.items_verified} items verified')
+                if resp.items_deleted:
+                    details_parts.append(f'{resp.items_deleted} items deleted')
+                if resp.items_updated:
+                    details_parts.append(f'{resp.items_updated} items updated')
+                
+                events.append({
+                    'type': 'response_received',
+                    'event_type': 'cra_response',
+                    'date': resp_date.isoformat(),
+                    'date_display': resp_date.strftime('%b %d, %Y'),
+                    'bureau': resp.bureau,
+                    'description': response_desc,
+                    'details': ', '.join(details_parts) if details_parts else f'Response from {resp.bureau}',
+                    'round': resp.dispute_round or 1,
+                    'icon': '📬',
+                    'color': 'orange',
+                    'response_type': resp.response_type
+                })
+        
+        # 4. Dispute Items with status changes (deleted/updated items)
+        items = db.query(DisputeItem).filter_by(client_id=client_id).all()
+        for item in items:
+            if item.status in ['deleted', 'updated', 'positive']:
+                item_date = item.response_date or item.updated_at or item.created_at
+                if item_date:
+                    if isinstance(item_date, date_type) and not isinstance(item_date, datetime):
+                        item_date = datetime.combine(item_date, datetime.min.time())
+                    
+                    if item.status == 'deleted':
+                        events.append({
+                            'type': 'item_resolved',
+                            'event_type': 'item_deleted',
+                            'date': item_date.isoformat(),
+                            'date_display': item_date.strftime('%b %d, %Y'),
+                            'bureau': item.bureau,
+                            'description': f'Item deleted from {item.bureau}',
+                            'details': f'{item.creditor_name or "Account"} ({item.item_type or "item"}) removed',
+                            'round': item.dispute_round or 1,
+                            'icon': '✅',
+                            'color': 'green',
+                            'creditor': item.creditor_name
+                        })
+                    elif item.status == 'updated':
+                        events.append({
+                            'type': 'item_updated',
+                            'event_type': 'item_updated',
+                            'date': item_date.isoformat(),
+                            'date_display': item_date.strftime('%b %d, %Y'),
+                            'bureau': item.bureau,
+                            'description': f'Item updated on {item.bureau}',
+                            'details': f'{item.creditor_name or "Account"} information corrected',
+                            'round': item.dispute_round or 1,
+                            'icon': '📝',
+                            'color': 'green',
+                            'creditor': item.creditor_name
+                        })
+            
+            # Track when items were sent for dispute
+            if item.sent_date:
+                sent_date = item.sent_date
+                if isinstance(sent_date, date_type) and not isinstance(sent_date, datetime):
+                    sent_date = datetime.combine(sent_date, datetime.min.time())
+                
+                events.append({
+                    'type': 'dispute_sent',
+                    'event_type': 'item_disputed',
+                    'date': sent_date.isoformat(),
+                    'date_display': sent_date.strftime('%b %d, %Y'),
+                    'bureau': item.bureau,
+                    'description': f'Item disputed with {item.bureau}',
+                    'details': f'{item.creditor_name or "Account"} ({item.item_type or "item"}) disputed',
+                    'round': item.dispute_round or 1,
+                    'icon': '📋',
+                    'color': 'blue',
+                    'creditor': item.creditor_name
+                })
+        
+        # 5. Deadlines (due and overdue)
+        deadlines = db.query(CaseDeadline).filter_by(client_id=client_id).all()
+        today = datetime.utcnow().date()
+        for deadline in deadlines:
+            if deadline.deadline_date:
+                deadline_dt = deadline.deadline_date
+                if isinstance(deadline_dt, date_type) and not isinstance(deadline_dt, datetime):
+                    deadline_dt = datetime.combine(deadline_dt, datetime.min.time())
+                
+                is_overdue = deadline.deadline_date < today and deadline.status != 'completed'
+                
+                if is_overdue:
+                    events.append({
+                        'type': 'overdue',
+                        'event_type': 'deadline_overdue',
+                        'date': deadline_dt.isoformat(),
+                        'date_display': deadline_dt.strftime('%b %d, %Y'),
+                        'bureau': deadline.bureau,
+                        'description': f'OVERDUE: {deadline.deadline_type.replace("_", " ").title()}',
+                        'details': f'{deadline.bureau or "Bureau"} response deadline passed',
+                        'round': deadline.dispute_round or 1,
+                        'icon': '⚠️',
+                        'color': 'red',
+                        'days_overdue': (today - deadline.deadline_date).days
+                    })
+                elif deadline.status == 'completed':
+                    events.append({
+                        'type': 'milestone',
+                        'event_type': 'deadline_met',
+                        'date': deadline_dt.isoformat(),
+                        'date_display': deadline_dt.strftime('%b %d, %Y'),
+                        'bureau': deadline.bureau,
+                        'description': f'Deadline met: {deadline.deadline_type.replace("_", " ").title()}',
+                        'details': 'Response received within required timeframe',
+                        'round': deadline.dispute_round or 1,
+                        'icon': '✓',
+                        'color': 'gray'
+                    })
+                else:
+                    # Upcoming deadline
+                    days_until = (deadline.deadline_date - today).days
+                    if days_until <= 7:
+                        events.append({
+                            'type': 'deadline_upcoming',
+                            'event_type': 'deadline_upcoming',
+                            'date': deadline_dt.isoformat(),
+                            'date_display': deadline_dt.strftime('%b %d, %Y'),
+                            'bureau': deadline.bureau,
+                            'description': f'Deadline in {days_until} days: {deadline.deadline_type.replace("_", " ").title()}',
+                            'details': f'{deadline.bureau or "Bureau"} must respond by this date',
+                            'round': deadline.dispute_round or 1,
+                            'icon': '⏰',
+                            'color': 'orange',
+                            'days_until': days_until
+                        })
+        
+        # Sort events by date (newest first for display, but we'll return both orders)
+        events.sort(key=lambda x: x['date'], reverse=True)
+        
+        # Calculate summary stats
+        summary = {
+            'total_events': len(events),
+            'letters_sent': len([e for e in events if e['event_type'] == 'letter_sent']),
+            'responses_received': len([e for e in events if e['event_type'] == 'cra_response']),
+            'items_deleted': len([e for e in events if e['event_type'] == 'item_deleted']),
+            'items_updated': len([e for e in events if e['event_type'] == 'item_updated']),
+            'overdue_deadlines': len([e for e in events if e['event_type'] == 'deadline_overdue']),
+            'current_round': client.current_dispute_round or 1
+        }
+        
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'client_name': client.name,
+            'events': events,
+            'summary': summary
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
