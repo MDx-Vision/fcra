@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11797,6 +11797,779 @@ def api_get_case_settlement(case_id):
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# FURNISHER INTELLIGENCE DATABASE API
+# ============================================================
+
+@app.route('/api/furnishers', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_list_furnishers():
+    """List all furnishers with optional filters"""
+    db = get_db()
+    try:
+        query = db.query(Furnisher)
+        
+        industry = request.args.get('industry')
+        if industry:
+            query = query.filter(Furnisher.industry == industry)
+        
+        search = request.args.get('search', '').strip()
+        if search:
+            query = query.filter(Furnisher.name.ilike(f'%{search}%'))
+        
+        furnishers = query.order_by(Furnisher.name).all()
+        
+        result = []
+        for f in furnishers:
+            stats = f.stats
+            result.append({
+                'id': f.id,
+                'name': f.name,
+                'industry': f.industry,
+                'parent_company': f.parent_company,
+                'total_disputes': stats.total_disputes if stats else 0,
+                'round_1_delete_rate': round((stats.round_1_deleted / stats.total_disputes * 100) if stats and stats.total_disputes > 0 else 0, 1),
+                'round_2_delete_rate': round((stats.round_2_deleted / (stats.round_1_verified or 1) * 100) if stats and stats.round_1_verified > 0 else 0, 1),
+                'avg_response_days': round(stats.avg_response_days, 1) if stats else 0,
+                'settlement_count': stats.settlement_count if stats else 0,
+                'settlement_avg': round(stats.settlement_avg, 2) if stats else 0,
+                'created_at': f.created_at.isoformat() if f.created_at else None
+            })
+        
+        return jsonify({'success': True, 'furnishers': result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_create_furnisher():
+    """Create a new furnisher"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        
+        name = data.get('name', '').strip()
+        if not name:
+            return jsonify({'success': False, 'error': 'Furnisher name is required'}), 400
+        
+        existing = db.query(Furnisher).filter(Furnisher.name.ilike(name)).first()
+        if existing:
+            return jsonify({'success': False, 'error': 'Furnisher with this name already exists', 'existing_id': existing.id}), 400
+        
+        furnisher = Furnisher(
+            name=name,
+            alternate_names=data.get('alternate_names', []),
+            industry=data.get('industry'),
+            parent_company=data.get('parent_company'),
+            address=data.get('address'),
+            phone=data.get('phone'),
+            fax=data.get('fax'),
+            email=data.get('email'),
+            website=data.get('website'),
+            dispute_address=data.get('dispute_address'),
+            notes=data.get('notes')
+        )
+        db.add(furnisher)
+        db.flush()
+        
+        stats = FurnisherStats(furnisher_id=furnisher.id)
+        db.add(stats)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'furnisher': {
+                'id': furnisher.id,
+                'name': furnisher.name,
+                'industry': furnisher.industry
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers/<int:furnisher_id>', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_get_furnisher(furnisher_id):
+    """Get furnisher details with stats"""
+    db = get_db()
+    try:
+        furnisher = db.query(Furnisher).filter_by(id=furnisher_id).first()
+        if not furnisher:
+            return jsonify({'success': False, 'error': 'Furnisher not found'}), 404
+        
+        stats = furnisher.stats
+        
+        related_items = db.query(DisputeItem).filter(
+            DisputeItem.creditor_name.ilike(f'%{furnisher.name}%')
+        ).order_by(DisputeItem.created_at.desc()).limit(20).all()
+        
+        related_clients = []
+        seen_clients = set()
+        for item in related_items:
+            if item.client_id not in seen_clients:
+                client = db.query(Client).filter_by(id=item.client_id).first()
+                if client:
+                    related_clients.append({
+                        'id': client.id,
+                        'name': client.name,
+                        'status': item.status,
+                        'dispute_round': item.dispute_round
+                    })
+                    seen_clients.add(item.client_id)
+        
+        return jsonify({
+            'success': True,
+            'furnisher': {
+                'id': furnisher.id,
+                'name': furnisher.name,
+                'alternate_names': furnisher.alternate_names or [],
+                'industry': furnisher.industry,
+                'parent_company': furnisher.parent_company,
+                'address': furnisher.address,
+                'phone': furnisher.phone,
+                'fax': furnisher.fax,
+                'email': furnisher.email,
+                'website': furnisher.website,
+                'dispute_address': furnisher.dispute_address,
+                'notes': furnisher.notes,
+                'created_at': furnisher.created_at.isoformat() if furnisher.created_at else None,
+                'updated_at': furnisher.updated_at.isoformat() if furnisher.updated_at else None
+            },
+            'stats': {
+                'total_disputes': stats.total_disputes if stats else 0,
+                'round_1': {
+                    'verified': stats.round_1_verified if stats else 0,
+                    'deleted': stats.round_1_deleted if stats else 0,
+                    'updated': stats.round_1_updated if stats else 0,
+                    'delete_rate': round((stats.round_1_deleted / stats.total_disputes * 100) if stats and stats.total_disputes > 0 else 0, 1)
+                },
+                'round_2': {
+                    'verified': stats.round_2_verified if stats else 0,
+                    'deleted': stats.round_2_deleted if stats else 0,
+                    'updated': stats.round_2_updated if stats else 0,
+                    'delete_rate': round((stats.round_2_deleted / (stats.round_1_verified or 1) * 100) if stats and stats.round_1_verified > 0 else 0, 1)
+                },
+                'round_3': {
+                    'verified': stats.round_3_verified if stats else 0,
+                    'deleted': stats.round_3_deleted if stats else 0,
+                    'updated': stats.round_3_updated if stats else 0,
+                    'delete_rate': round((stats.round_3_deleted / (stats.round_2_verified or 1) * 100) if stats and stats.round_2_verified > 0 else 0, 1)
+                },
+                'mov': {
+                    'requests_sent': stats.mov_requests_sent if stats else 0,
+                    'provided': stats.mov_provided if stats else 0,
+                    'failed': stats.mov_failed if stats else 0,
+                    'failure_rate': round((stats.mov_failed / (stats.mov_requests_sent or 1) * 100) if stats and stats.mov_requests_sent > 0 else 0, 1)
+                },
+                'avg_response_days': round(stats.avg_response_days, 1) if stats else 0,
+                'settlement': {
+                    'count': stats.settlement_count if stats else 0,
+                    'total': stats.settlement_total if stats else 0,
+                    'avg': round(stats.settlement_avg, 2) if stats else 0
+                },
+                'violation_count': stats.violation_count if stats else 0,
+                'reinsertion_count': stats.reinsertion_count if stats else 0
+            },
+            'related_clients': related_clients[:10]
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers/<int:furnisher_id>', methods=['PUT'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_update_furnisher(furnisher_id):
+    """Update furnisher info"""
+    db = get_db()
+    try:
+        furnisher = db.query(Furnisher).filter_by(id=furnisher_id).first()
+        if not furnisher:
+            return jsonify({'success': False, 'error': 'Furnisher not found'}), 404
+        
+        data = request.get_json() or {}
+        
+        if 'name' in data:
+            name = data['name'].strip()
+            existing = db.query(Furnisher).filter(Furnisher.name.ilike(name), Furnisher.id != furnisher_id).first()
+            if existing:
+                return jsonify({'success': False, 'error': 'Furnisher with this name already exists'}), 400
+            furnisher.name = name
+        
+        if 'alternate_names' in data:
+            furnisher.alternate_names = data['alternate_names']
+        if 'industry' in data:
+            furnisher.industry = data['industry']
+        if 'parent_company' in data:
+            furnisher.parent_company = data['parent_company']
+        if 'address' in data:
+            furnisher.address = data['address']
+        if 'phone' in data:
+            furnisher.phone = data['phone']
+        if 'fax' in data:
+            furnisher.fax = data['fax']
+        if 'email' in data:
+            furnisher.email = data['email']
+        if 'website' in data:
+            furnisher.website = data['website']
+        if 'dispute_address' in data:
+            furnisher.dispute_address = data['dispute_address']
+        if 'notes' in data:
+            furnisher.notes = data['notes']
+        
+        furnisher.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Furnisher updated'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers/<int:furnisher_id>/stats', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_get_furnisher_stats(furnisher_id):
+    """Get detailed stats for a furnisher"""
+    db = get_db()
+    try:
+        furnisher = db.query(Furnisher).filter_by(id=furnisher_id).first()
+        if not furnisher:
+            return jsonify({'success': False, 'error': 'Furnisher not found'}), 404
+        
+        stats = furnisher.stats
+        if not stats:
+            return jsonify({
+                'success': True,
+                'stats': None,
+                'message': 'No stats available for this furnisher'
+            })
+        
+        total = stats.total_disputes or 1
+        r1_total = stats.round_1_verified + stats.round_1_deleted + stats.round_1_updated
+        r2_total = stats.round_2_verified + stats.round_2_deleted + stats.round_2_updated
+        r3_total = stats.round_3_verified + stats.round_3_deleted + stats.round_3_updated
+        
+        overall_delete_rate = 0
+        if total > 0:
+            total_deleted = stats.round_1_deleted + stats.round_2_deleted + stats.round_3_deleted
+            overall_delete_rate = round(total_deleted / total * 100, 1)
+        
+        strategy = "Standard dispute approach"
+        if stats.round_1_deleted > stats.round_1_verified and overall_delete_rate > 30:
+            strategy = "High success rate - Strong first-round dispute recommended"
+        elif stats.mov_failed > stats.mov_provided:
+            strategy = "Focus on MOV demands - This furnisher often fails to provide verification"
+        elif stats.round_2_deleted > stats.round_1_deleted:
+            strategy = "Push to Round 2 - Better success after initial dispute"
+        elif stats.settlement_count > 0:
+            strategy = f"Settlement possible - Average ${stats.settlement_avg:,.0f}"
+        elif stats.violation_count > 0:
+            strategy = "Document violations - History of FCRA violations detected"
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_disputes': stats.total_disputes,
+                'round_1': {
+                    'verified': stats.round_1_verified,
+                    'deleted': stats.round_1_deleted,
+                    'updated': stats.round_1_updated,
+                    'total': r1_total,
+                    'delete_rate': round((stats.round_1_deleted / r1_total * 100) if r1_total > 0 else 0, 1)
+                },
+                'round_2': {
+                    'verified': stats.round_2_verified,
+                    'deleted': stats.round_2_deleted,
+                    'updated': stats.round_2_updated,
+                    'total': r2_total,
+                    'delete_rate': round((stats.round_2_deleted / r2_total * 100) if r2_total > 0 else 0, 1)
+                },
+                'round_3': {
+                    'verified': stats.round_3_verified,
+                    'deleted': stats.round_3_deleted,
+                    'updated': stats.round_3_updated,
+                    'total': r3_total,
+                    'delete_rate': round((stats.round_3_deleted / r3_total * 100) if r3_total > 0 else 0, 1)
+                },
+                'mov': {
+                    'requests_sent': stats.mov_requests_sent,
+                    'provided': stats.mov_provided,
+                    'failed': stats.mov_failed,
+                    'failure_rate': round((stats.mov_failed / (stats.mov_requests_sent or 1) * 100) if stats.mov_requests_sent > 0 else 0, 1)
+                },
+                'avg_response_days': round(stats.avg_response_days, 1),
+                'settlement': {
+                    'count': stats.settlement_count,
+                    'total': stats.settlement_total,
+                    'avg': round(stats.settlement_avg, 2)
+                },
+                'violation_count': stats.violation_count,
+                'reinsertion_count': stats.reinsertion_count,
+                'overall_delete_rate': overall_delete_rate,
+                'recommended_strategy': strategy
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers/<int:furnisher_id>/record-outcome', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_record_furnisher_outcome(furnisher_id):
+    """Record a dispute outcome and update furnisher stats"""
+    db = get_db()
+    try:
+        furnisher = db.query(Furnisher).filter_by(id=furnisher_id).first()
+        if not furnisher:
+            return jsonify({'success': False, 'error': 'Furnisher not found'}), 404
+        
+        data = request.get_json() or {}
+        outcome_type = data.get('outcome_type')
+        dispute_round = data.get('dispute_round', 1)
+        response_days = data.get('response_days')
+        settlement_amount = data.get('settlement_amount')
+        is_violation = data.get('is_violation', False)
+        is_reinsertion = data.get('is_reinsertion', False)
+        is_mov_request = data.get('is_mov_request', False)
+        mov_provided = data.get('mov_provided')
+        
+        if not outcome_type:
+            return jsonify({'success': False, 'error': 'outcome_type is required'}), 400
+        
+        stats = furnisher.stats
+        if not stats:
+            stats = FurnisherStats(furnisher_id=furnisher.id)
+            db.add(stats)
+        
+        stats.total_disputes = (stats.total_disputes or 0) + 1
+        
+        if dispute_round == 1:
+            if outcome_type == 'verified':
+                stats.round_1_verified = (stats.round_1_verified or 0) + 1
+            elif outcome_type == 'deleted':
+                stats.round_1_deleted = (stats.round_1_deleted or 0) + 1
+            elif outcome_type == 'updated':
+                stats.round_1_updated = (stats.round_1_updated or 0) + 1
+        elif dispute_round == 2:
+            if outcome_type == 'verified':
+                stats.round_2_verified = (stats.round_2_verified or 0) + 1
+            elif outcome_type == 'deleted':
+                stats.round_2_deleted = (stats.round_2_deleted or 0) + 1
+            elif outcome_type == 'updated':
+                stats.round_2_updated = (stats.round_2_updated or 0) + 1
+        elif dispute_round >= 3:
+            if outcome_type == 'verified':
+                stats.round_3_verified = (stats.round_3_verified or 0) + 1
+            elif outcome_type == 'deleted':
+                stats.round_3_deleted = (stats.round_3_deleted or 0) + 1
+            elif outcome_type == 'updated':
+                stats.round_3_updated = (stats.round_3_updated or 0) + 1
+        
+        if response_days is not None:
+            current_avg = stats.avg_response_days or 0
+            current_count = stats.total_disputes - 1
+            if current_count > 0:
+                stats.avg_response_days = (current_avg * current_count + response_days) / stats.total_disputes
+            else:
+                stats.avg_response_days = response_days
+        
+        if is_mov_request:
+            stats.mov_requests_sent = (stats.mov_requests_sent or 0) + 1
+            if mov_provided is True:
+                stats.mov_provided = (stats.mov_provided or 0) + 1
+            elif mov_provided is False:
+                stats.mov_failed = (stats.mov_failed or 0) + 1
+        
+        if settlement_amount and settlement_amount > 0:
+            stats.settlement_count = (stats.settlement_count or 0) + 1
+            stats.settlement_total = (stats.settlement_total or 0) + settlement_amount
+            stats.settlement_avg = stats.settlement_total / stats.settlement_count
+        
+        if is_violation:
+            stats.violation_count = (stats.violation_count or 0) + 1
+        
+        if is_reinsertion:
+            stats.reinsertion_count = (stats.reinsertion_count or 0) + 1
+        
+        stats.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Outcome recorded',
+            'stats': {
+                'total_disputes': stats.total_disputes,
+                'round_1_deleted': stats.round_1_deleted,
+                'round_2_deleted': stats.round_2_deleted,
+                'round_3_deleted': stats.round_3_deleted
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers/leaderboard', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_furnisher_leaderboard():
+    """Get furnisher leaderboard - top/bottom performers"""
+    db = get_db()
+    try:
+        metric = request.args.get('metric', 'deletion_rate')
+        limit = int(request.args.get('limit', 10))
+        order = request.args.get('order', 'desc')
+        
+        furnishers = db.query(Furnisher).join(FurnisherStats).filter(FurnisherStats.total_disputes >= 1).all()
+        
+        results = []
+        for f in furnishers:
+            stats = f.stats
+            if not stats:
+                continue
+            
+            total = stats.total_disputes or 1
+            total_deleted = (stats.round_1_deleted or 0) + (stats.round_2_deleted or 0) + (stats.round_3_deleted or 0)
+            deletion_rate = total_deleted / total * 100
+            
+            r1_total = (stats.round_1_verified or 0) + (stats.round_1_deleted or 0) + (stats.round_1_updated or 0)
+            r1_delete_rate = (stats.round_1_deleted / r1_total * 100) if r1_total > 0 else 0
+            
+            mov_failure_rate = (stats.mov_failed / (stats.mov_requests_sent or 1) * 100) if (stats.mov_requests_sent or 0) > 0 else 0
+            
+            results.append({
+                'id': f.id,
+                'name': f.name,
+                'industry': f.industry,
+                'total_disputes': stats.total_disputes,
+                'deletion_rate': round(deletion_rate, 1),
+                'r1_delete_rate': round(r1_delete_rate, 1),
+                'avg_response_days': round(stats.avg_response_days or 0, 1),
+                'settlement_avg': round(stats.settlement_avg or 0, 2),
+                'settlement_count': stats.settlement_count or 0,
+                'mov_failure_rate': round(mov_failure_rate, 1),
+                'violation_count': stats.violation_count or 0
+            })
+        
+        sort_key = {
+            'deletion_rate': lambda x: x['deletion_rate'],
+            'r1_delete_rate': lambda x: x['r1_delete_rate'],
+            'response_time': lambda x: x['avg_response_days'],
+            'settlement_avg': lambda x: x['settlement_avg'],
+            'total_disputes': lambda x: x['total_disputes'],
+            'mov_failure_rate': lambda x: x['mov_failure_rate'],
+            'violations': lambda x: x['violation_count']
+        }.get(metric, lambda x: x['deletion_rate'])
+        
+        reverse_order = order == 'desc' if metric != 'response_time' else order == 'asc'
+        results.sort(key=sort_key, reverse=reverse_order)
+        
+        return jsonify({
+            'success': True,
+            'leaderboard': results[:limit],
+            'metric': metric,
+            'order': order,
+            'total_furnishers': len(results)
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers/populate', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_populate_furnishers():
+    """Populate furnisher database from existing dispute items"""
+    db = get_db()
+    try:
+        from sqlalchemy import func
+        
+        creditor_counts = db.query(
+            DisputeItem.creditor_name,
+            func.count(DisputeItem.id).label('count')
+        ).filter(
+            DisputeItem.creditor_name != None,
+            DisputeItem.creditor_name != ''
+        ).group_by(DisputeItem.creditor_name).all()
+        
+        created = 0
+        updated = 0
+        
+        for creditor_name, count in creditor_counts:
+            if not creditor_name or len(creditor_name.strip()) < 2:
+                continue
+            
+            name = creditor_name.strip()
+            
+            existing = db.query(Furnisher).filter(Furnisher.name.ilike(name)).first()
+            
+            if not existing:
+                furnisher = Furnisher(name=name)
+                db.add(furnisher)
+                db.flush()
+                
+                stats = FurnisherStats(furnisher_id=furnisher.id)
+                db.add(stats)
+                created += 1
+            else:
+                furnisher = existing
+                stats = furnisher.stats
+                if not stats:
+                    stats = FurnisherStats(furnisher_id=furnisher.id)
+                    db.add(stats)
+                updated += 1
+            
+            items = db.query(DisputeItem).filter(
+                DisputeItem.creditor_name.ilike(name)
+            ).all()
+            
+            stats.total_disputes = len(items)
+            
+            for item in items:
+                round_num = item.dispute_round or 1
+                status = item.status or ''
+                
+                if round_num == 1:
+                    if status == 'deleted':
+                        stats.round_1_deleted = (stats.round_1_deleted or 0) + 1
+                    elif status == 'updated':
+                        stats.round_1_updated = (stats.round_1_updated or 0) + 1
+                    elif status in ['sent', 'no_change', 'no_answer']:
+                        stats.round_1_verified = (stats.round_1_verified or 0) + 1
+                elif round_num == 2:
+                    if status == 'deleted':
+                        stats.round_2_deleted = (stats.round_2_deleted or 0) + 1
+                    elif status == 'updated':
+                        stats.round_2_updated = (stats.round_2_updated or 0) + 1
+                    elif status in ['sent', 'no_change', 'no_answer']:
+                        stats.round_2_verified = (stats.round_2_verified or 0) + 1
+                elif round_num >= 3:
+                    if status == 'deleted':
+                        stats.round_3_deleted = (stats.round_3_deleted or 0) + 1
+                    elif status == 'updated':
+                        stats.round_3_updated = (stats.round_3_updated or 0) + 1
+                    elif status in ['sent', 'no_change', 'no_answer']:
+                        stats.round_3_verified = (stats.round_3_verified or 0) + 1
+            
+            stats.updated_at = datetime.utcnow()
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Populated furnisher database',
+            'created': created,
+            'updated': updated,
+            'total': created + updated
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/furnishers/match', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_match_furnisher():
+    """Match a creditor name to an existing furnisher"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        creditor_name = data.get('creditor_name', '').strip()
+        
+        if not creditor_name:
+            return jsonify({'success': False, 'error': 'creditor_name is required'}), 400
+        
+        exact = db.query(Furnisher).filter(Furnisher.name.ilike(creditor_name)).first()
+        if exact:
+            return jsonify({
+                'success': True,
+                'match_type': 'exact',
+                'furnisher': {
+                    'id': exact.id,
+                    'name': exact.name,
+                    'industry': exact.industry
+                }
+            })
+        
+        partial = db.query(Furnisher).filter(
+            Furnisher.name.ilike(f'%{creditor_name}%')
+        ).limit(5).all()
+        
+        if partial:
+            return jsonify({
+                'success': True,
+                'match_type': 'partial',
+                'matches': [{'id': f.id, 'name': f.name, 'industry': f.industry} for f in partial]
+            })
+        
+        return jsonify({
+            'success': True,
+            'match_type': 'none',
+            'message': 'No matching furnisher found. Consider creating a new one.'
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/furnishers')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def dashboard_furnishers():
+    """Furnisher intelligence database dashboard"""
+    db = get_db()
+    try:
+        furnishers = db.query(Furnisher).order_by(Furnisher.name).all()
+        
+        total_furnishers = len(furnishers)
+        total_disputes = 0
+        best_deletion = None
+        best_deletion_rate = 0
+        worst_response = None
+        worst_response_days = 0
+        most_common = None
+        most_common_count = 0
+        
+        for f in furnishers:
+            stats = f.stats
+            if stats:
+                total_disputes += stats.total_disputes or 0
+                
+                if stats.total_disputes and stats.total_disputes > most_common_count:
+                    most_common = f.name
+                    most_common_count = stats.total_disputes
+                
+                if stats.total_disputes and stats.total_disputes > 0:
+                    del_rate = (stats.round_1_deleted or 0) / stats.total_disputes * 100
+                    if del_rate > best_deletion_rate:
+                        best_deletion = f.name
+                        best_deletion_rate = del_rate
+                
+                if (stats.avg_response_days or 0) > worst_response_days:
+                    worst_response = f.name
+                    worst_response_days = stats.avg_response_days or 0
+        
+        industries = ['bank', 'collection_agency', 'credit_card', 'auto_loan', 'mortgage', 'medical', 'utility', 'student_loan', 'other']
+        
+        return render_template('furnishers.html',
+            furnishers=furnishers,
+            total_furnishers=total_furnishers,
+            total_disputes=total_disputes,
+            best_deletion=best_deletion,
+            best_deletion_rate=round(best_deletion_rate, 1),
+            worst_response=worst_response,
+            worst_response_days=round(worst_response_days, 1),
+            most_common=most_common,
+            most_common_count=most_common_count,
+            industries=industries
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error loading furnishers: {e}", 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/furnisher/<int:furnisher_id>')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def dashboard_furnisher_detail(furnisher_id):
+    """Furnisher profile page"""
+    db = get_db()
+    try:
+        furnisher = db.query(Furnisher).filter_by(id=furnisher_id).first()
+        if not furnisher:
+            return render_template('error.html', error='Not Found', message='Furnisher not found'), 404
+        
+        stats = furnisher.stats
+        
+        related_items = db.query(DisputeItem).filter(
+            DisputeItem.creditor_name.ilike(f'%{furnisher.name}%')
+        ).order_by(DisputeItem.created_at.desc()).limit(50).all()
+        
+        related_clients = []
+        seen_clients = set()
+        for item in related_items:
+            if item.client_id not in seen_clients:
+                client = db.query(Client).filter_by(id=item.client_id).first()
+                if client:
+                    related_clients.append({
+                        'id': client.id,
+                        'name': client.name,
+                        'status': item.status,
+                        'dispute_round': item.dispute_round,
+                        'created_at': item.created_at
+                    })
+                    seen_clients.add(item.client_id)
+        
+        strategy = "Standard dispute approach"
+        if stats:
+            total = stats.total_disputes or 1
+            total_deleted = (stats.round_1_deleted or 0) + (stats.round_2_deleted or 0) + (stats.round_3_deleted or 0)
+            overall_delete_rate = total_deleted / total * 100
+            
+            if stats.round_1_deleted and stats.round_1_deleted > (stats.round_1_verified or 0) and overall_delete_rate > 30:
+                strategy = "High success rate - Strong first-round dispute recommended"
+            elif (stats.mov_failed or 0) > (stats.mov_provided or 0):
+                strategy = "Focus on MOV demands - This furnisher often fails to provide verification"
+            elif (stats.round_2_deleted or 0) > (stats.round_1_deleted or 0):
+                strategy = "Push to Round 2 - Better success after initial dispute"
+            elif stats.settlement_count and stats.settlement_count > 0:
+                strategy = f"Settlement possible - Average ${stats.settlement_avg:,.0f}"
+            elif stats.violation_count and stats.violation_count > 0:
+                strategy = "Document violations - History of FCRA violations detected"
+        
+        industries = ['bank', 'collection_agency', 'credit_card', 'auto_loan', 'mortgage', 'medical', 'utility', 'student_loan', 'other']
+        
+        return render_template('furnisher_detail.html',
+            furnisher=furnisher,
+            stats=stats,
+            related_clients=related_clients[:20],
+            strategy=strategy,
+            industries=industries
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error loading furnisher: {e}", 500
     finally:
         db.close()
 

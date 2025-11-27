@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Furnisher Intelligence Database - FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .logo { display: flex; align-items: center; color: white; font-size: 20px; font-weight: 700; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; padding: 0 15px; margin-bottom: 10px; }
+        .nav-item {
+            display: flex; align-items: center; padding: 12px 15px; color: #94a3b8;
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px; transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .main-content { margin-left: 260px; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .header-subtitle { color: #64748b; font-size: 14px; margin-top: 5px; }
+        .btn {
+            padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; display: inline-flex; align-items: center;
+            gap: 8px; text-decoration: none; transition: all 0.2s;
+        }
+        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; }
+        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card {
+            background: white; border-radius: 16px; padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .stat-detail { font-size: 13px; color: #64748b; margin-top: 5px; }
+        .stat-card.highlight { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); }
+        .stat-card.highlight .stat-label, .stat-card.highlight .stat-value, .stat-card.highlight .stat-detail { color: #1a1a2e; }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+        .card-title { font-size: 18px; font-weight: 600; color: #1a1a2e; }
+        .filters { display: flex; gap: 15px; }
+        .filter-input {
+            padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-size: 14px; background: white; min-width: 200px;
+        }
+        .filter-input:focus { outline: none; border-color: #84cc16; }
+        .filter-select {
+            padding: 10px 15px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-size: 14px; background: white; cursor: pointer;
+        }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th {
+            text-align: left; padding: 12px 15px; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .data-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .data-table tr:hover { background: #f8fafc; }
+        .data-table tr { cursor: pointer; }
+        .furnisher-name { font-weight: 600; color: #1a1a2e; }
+        .industry-badge {
+            display: inline-block; padding: 4px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 500; text-transform: capitalize;
+        }
+        .industry-bank { background: #dbeafe; color: #1e40af; }
+        .industry-collection_agency { background: #fee2e2; color: #991b1b; }
+        .industry-credit_card { background: #dcfce7; color: #166534; }
+        .industry-auto_loan { background: #fef3c7; color: #92400e; }
+        .industry-mortgage { background: #f3e8ff; color: #7c3aed; }
+        .industry-medical { background: #fce7f3; color: #be185d; }
+        .industry-utility { background: #e0e7ff; color: #3730a3; }
+        .industry-student_loan { background: #cffafe; color: #0e7490; }
+        .industry-other { background: #f1f5f9; color: #475569; }
+        .rate-good { color: #16a34a; font-weight: 600; }
+        .rate-medium { color: #eab308; font-weight: 600; }
+        .rate-bad { color: #ef4444; font-weight: 600; }
+        .empty-state { text-align: center; padding: 60px 20px; color: #64748b; }
+        .empty-state svg { width: 64px; height: 64px; margin-bottom: 20px; color: #94a3b8; }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 16px; width: 600px; max-width: 90vw;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header { padding: 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { font-size: 20px; font-weight: 600; color: #1a1a2e; }
+        .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; }
+        .modal-body { padding: 24px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: #1a1a2e; margin-bottom: 8px; }
+        .form-input {
+            width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-input:focus { outline: none; border-color: #84cc16; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .modal-footer { padding: 20px 24px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; }
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Cases
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Settlements
+            </a>
+        </div>
+        <div class="nav-section">
+            <div class="nav-section-title">Intelligence</div>
+            <a href="/dashboard/furnishers" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/></svg>
+                Furnisher Database
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Furnisher Intelligence Database</h1>
+                <p class="header-subtitle">Track creditor behavior patterns for strategic dispute advantage</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="populateFromExisting()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    Sync from Cases
+                </button>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Furnisher
+                </button>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Total Furnishers</div>
+                <div class="stat-value">{{ total_furnishers }}</div>
+                <div class="stat-detail">{{ total_disputes }} total disputes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Most Common</div>
+                <div class="stat-value" style="font-size: 18px;">{{ most_common or 'N/A' }}</div>
+                <div class="stat-detail">{{ most_common_count }} disputes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Best Deletion Rate</div>
+                <div class="stat-value" style="font-size: 18px;">{{ best_deletion or 'N/A' }}</div>
+                <div class="stat-detail">{{ best_deletion_rate }}% R1 deletion</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Slowest Response</div>
+                <div class="stat-value" style="font-size: 18px;">{{ worst_response or 'N/A' }}</div>
+                <div class="stat-detail">{{ worst_response_days }} avg days</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">All Furnishers</div>
+                <div class="filters">
+                    <input type="text" id="searchInput" class="filter-input" placeholder="Search furnishers..." oninput="filterTable()">
+                    <select id="industryFilter" class="filter-select" onchange="filterTable()">
+                        <option value="">All Industries</option>
+                        {% for ind in industries %}
+                        <option value="{{ ind }}">{{ ind.replace('_', ' ').title() }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            {% if furnishers %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Furnisher Name</th>
+                        <th>Industry</th>
+                        <th>Disputes</th>
+                        <th>R1 Delete%</th>
+                        <th>R2 Delete%</th>
+                        <th>Avg Response</th>
+                        <th>Settlements</th>
+                    </tr>
+                </thead>
+                <tbody id="furnisherTable">
+                    {% for f in furnishers %}
+                    <tr onclick="viewFurnisher({{ f.id }})" data-name="{{ f.name|lower }}" data-industry="{{ f.industry or '' }}">
+                        <td>
+                            <div class="furnisher-name">{{ f.name }}</div>
+                            {% if f.parent_company %}<div style="font-size: 12px; color: #64748b;">{{ f.parent_company }}</div>{% endif %}
+                        </td>
+                        <td>
+                            {% if f.industry %}
+                            <span class="industry-badge industry-{{ f.industry }}">{{ f.industry.replace('_', ' ') }}</span>
+                            {% else %}
+                            <span style="color: #94a3b8;">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ f.stats.total_disputes if f.stats else 0 }}</td>
+                        <td>
+                            {% set r1_rate = ((f.stats.round_1_deleted / f.stats.total_disputes * 100) if f.stats and f.stats.total_disputes > 0 else 0)|round(1) %}
+                            <span class="{% if r1_rate >= 30 %}rate-good{% elif r1_rate >= 15 %}rate-medium{% else %}rate-bad{% endif %}">{{ r1_rate }}%</span>
+                        </td>
+                        <td>
+                            {% set r2_rate = ((f.stats.round_2_deleted / (f.stats.round_1_verified or 1) * 100) if f.stats and f.stats.round_1_verified > 0 else 0)|round(1) %}
+                            <span class="{% if r2_rate >= 30 %}rate-good{% elif r2_rate >= 15 %}rate-medium{% else %}rate-bad{% endif %}">{{ r2_rate }}%</span>
+                        </td>
+                        <td>{{ (f.stats.avg_response_days|round(1)) if f.stats and f.stats.avg_response_days else '—' }} days</td>
+                        <td>
+                            {% if f.stats and f.stats.settlement_count %}
+                            {{ f.stats.settlement_count }} (${{ "{:,.0f}".format(f.stats.settlement_avg) }} avg)
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/></svg>
+                <h3>No Furnishers Yet</h3>
+                <p style="margin-top: 10px;">Click "Sync from Cases" to auto-populate from existing dispute data,<br>or add furnishers manually.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add New Furnisher</h2>
+                <button class="modal-close" onclick="closeAddModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Company Name *</label>
+                    <input type="text" id="furnisherName" class="form-input" placeholder="e.g., Capital One">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Industry</label>
+                        <select id="furnisherIndustry" class="form-input">
+                            <option value="">Select...</option>
+                            {% for ind in industries %}
+                            <option value="{{ ind }}">{{ ind.replace('_', ' ').title() }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Parent Company</label>
+                        <input type="text" id="furnisherParent" class="form-input" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Mailing Address</label>
+                    <textarea id="furnisherAddress" class="form-input" rows="2" placeholder="Dispute mailing address"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" id="furnisherPhone" class="form-input" placeholder="(000) 000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fax</label>
+                        <input type="text" id="furnisherFax" class="form-input" placeholder="(000) 000-0000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="furnisherEmail" class="form-input" placeholder="disputes@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Website</label>
+                        <input type="text" id="furnisherWebsite" class="form-input" placeholder="www.company.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea id="furnisherNotes" class="form-input" rows="3" placeholder="Special notes about this furnisher..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveFurnisher()">Save Furnisher</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function viewFurnisher(id) {
+            window.location.href = `/dashboard/furnisher/${id}`;
+        }
+        
+        function filterTable() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const industry = document.getElementById('industryFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#furnisherTable tr');
+            
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                const rowIndustry = row.dataset.industry || '';
+                
+                const matchesSearch = name.includes(search);
+                const matchesIndustry = !industry || rowIndustry === industry;
+                
+                row.style.display = matchesSearch && matchesIndustry ? '' : 'none';
+            });
+        }
+        
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+        }
+        
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+            document.getElementById('furnisherName').value = '';
+            document.getElementById('furnisherIndustry').value = '';
+            document.getElementById('furnisherParent').value = '';
+            document.getElementById('furnisherAddress').value = '';
+            document.getElementById('furnisherPhone').value = '';
+            document.getElementById('furnisherFax').value = '';
+            document.getElementById('furnisherEmail').value = '';
+            document.getElementById('furnisherWebsite').value = '';
+            document.getElementById('furnisherNotes').value = '';
+        }
+        
+        async function saveFurnisher() {
+            const name = document.getElementById('furnisherName').value.trim();
+            if (!name) {
+                alert('Furnisher name is required');
+                return;
+            }
+            
+            const data = {
+                name: name,
+                industry: document.getElementById('furnisherIndustry').value,
+                parent_company: document.getElementById('furnisherParent').value,
+                address: document.getElementById('furnisherAddress').value,
+                phone: document.getElementById('furnisherPhone').value,
+                fax: document.getElementById('furnisherFax').value,
+                email: document.getElementById('furnisherEmail').value,
+                website: document.getElementById('furnisherWebsite').value,
+                notes: document.getElementById('furnisherNotes').value
+            };
+            
+            try {
+                const response = await fetch('/api/furnishers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert(result.error || 'Failed to create furnisher');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to create furnisher');
+            }
+        }
+        
+        async function populateFromExisting() {
+            if (!confirm('This will scan all existing dispute items and create furnisher entries for each unique creditor. Continue?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/furnishers/populate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Populated ${result.created} new furnishers, updated ${result.updated} existing.`);
+                    window.location.reload();
+                } else {
+                    alert(result.error || 'Failed to populate furnishers');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to populate furnishers');
+            }
+        }
+    </script>
+</body>
+</html>

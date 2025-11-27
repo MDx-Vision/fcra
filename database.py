@@ -1263,6 +1263,69 @@ class CreditScoreProjection(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class Furnisher(Base):
+    """Track creditors/furnishers that report to credit bureaus for strategic intelligence"""
+    __tablename__ = 'furnishers'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), unique=True, nullable=False, index=True)
+    alternate_names = Column(JSON)
+    industry = Column(String(100))
+    parent_company = Column(String(255))
+    address = Column(Text)
+    phone = Column(String(50))
+    fax = Column(String(50))
+    email = Column(String(255))
+    website = Column(String(255))
+    dispute_address = Column(Text)
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    stats = relationship("FurnisherStats", back_populates="furnisher", uselist=False)
+
+
+class FurnisherStats(Base):
+    """Track furnisher behavior patterns across disputes"""
+    __tablename__ = 'furnisher_stats'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    furnisher_id = Column(Integer, ForeignKey('furnishers.id'), nullable=False, unique=True)
+    
+    total_disputes = Column(Integer, default=0)
+    
+    round_1_verified = Column(Integer, default=0)
+    round_1_deleted = Column(Integer, default=0)
+    round_1_updated = Column(Integer, default=0)
+    
+    round_2_verified = Column(Integer, default=0)
+    round_2_deleted = Column(Integer, default=0)
+    round_2_updated = Column(Integer, default=0)
+    
+    round_3_verified = Column(Integer, default=0)
+    round_3_deleted = Column(Integer, default=0)
+    round_3_updated = Column(Integer, default=0)
+    
+    mov_requests_sent = Column(Integer, default=0)
+    mov_provided = Column(Integer, default=0)
+    mov_failed = Column(Integer, default=0)
+    
+    avg_response_days = Column(Float, default=0)
+    
+    settlement_count = Column(Integer, default=0)
+    settlement_total = Column(Float, default=0)
+    settlement_avg = Column(Float, default=0)
+    
+    violation_count = Column(Integer, default=0)
+    reinsertion_count = Column(Integer, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    furnisher = relationship("Furnisher", back_populates="stats")
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
