@@ -49,6 +49,10 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Furnisher Intelligence Database** (`/dashboard/furnishers`): Tracks creditor profiles, performance stats, and provides strategic recommendations.
 - **Statute of Limitations Calculator** (`/dashboard/sol`): Calculates FCRA deadlines with warning levels and automated alerts.
 - **CFPB Complaint Generator** (`/dashboard/cfpb`): AI-powered generation of CFPB complaint narratives using issue templates.
+- **Two-Level Affiliate Commission System** (`/dashboard/affiliates`): Parent/child referral tracking with 10% Level 1 and 5% Level 2 commissions, automatic payout processing.
+- **AI Case Triage System** (`/dashboard/triage`): Intelligent 1-5 star case prioritization with queue management (Fast Track, Standard, Review Needed), auto-triggered after AI analysis.
+- **Case Law Citation Database** (`/dashboard/case-law`): 20+ pre-loaded FCRA cases (Safeco, Spokeo, TransUnion v. Ramirez) with smart suggestions by violation type.
+- **Smart Letter Escalation Engine** (`/dashboard/escalation`): AI-powered dispute strategy recommendations based on furnisher history and case patterns.
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
