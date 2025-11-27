@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -42,6 +42,8 @@ from pdf_generator import LetterPDFGenerator, SectionPDFGenerator, CreditAnalysi
 from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
 from jwt_utils import require_jwt, create_token
 from services.encryption import encrypt_value, decrypt_value, migrate_plaintext_to_encrypted, is_encrypted
+from services import affiliate_service
+from services import triage_service
 import json
 
 app = Flask(__name__)
@@ -2987,6 +2989,16 @@ def approve_analysis_stage_1(analysis_id):
 
         print(f"✅ Stage 2 complete! Analysis {analysis_id} ready for delivery")
 
+        # AUTO-TRIGGER: Run triage after Stage 2 completion
+        try:
+            triage_result = triage_service.triage_case(analysis_id)
+            if triage_result.get('success'):
+                print(f"✅ Auto-triage complete! Priority: {triage_result.get('priority_score')}/5, Queue: {triage_result.get('recommended_queue')}")
+            else:
+                print(f"⚠️ Auto-triage failed: {triage_result.get('error', 'Unknown error')}")
+        except Exception as triage_error:
+            print(f"⚠️ Auto-triage error (non-blocking): {triage_error}")
+
         return jsonify({
             'success': True,
             'analysis_id': analysis_id,
@@ -2994,7 +3006,8 @@ def approve_analysis_stage_1(analysis_id):
             'message': 'Client documents generated successfully',
             'cost': result.get('cost', 0),
             'tokens': result.get('tokens_used', 0),
-            'letters': letters_generated
+            'letters': letters_generated,
+            'triage': triage_result if 'triage_result' in dir() and triage_result.get('success') else None
         }), 200
 
     except Exception as e:
@@ -5751,6 +5764,15 @@ def api_complete_free_signup():
         except Exception as email_error:
             print(f"⚠️  Email trigger error (non-fatal): {email_error}")
         
+        try:
+            affiliate_ref_code = form_data.get('referralCode', '').strip()
+            if affiliate_ref_code:
+                ref_result = affiliate_service.process_referral(client.id, affiliate_ref_code)
+                if ref_result.get('success'):
+                    print(f"🤝 Client {client.id} linked to affiliate {ref_result.get('affiliate_name')}")
+        except Exception as affiliate_error:
+            print(f"⚠️  Affiliate processing error (non-fatal): {affiliate_error}")
+        
         return jsonify({
             'success': True,
             'clientId': client.id,
@@ -5831,6 +5853,15 @@ def api_complete_manual_signup():
                 print(f"📧 Welcome email sent to client {client.id}")
         except Exception as email_error:
             print(f"⚠️  Email trigger error (non-fatal): {email_error}")
+        
+        try:
+            affiliate_ref_code = form_data.get('referralCode', '').strip()
+            if affiliate_ref_code:
+                ref_result = affiliate_service.process_referral(client.id, affiliate_ref_code)
+                if ref_result.get('success'):
+                    print(f"🤝 Client {client.id} linked to affiliate {ref_result.get('affiliate_name')}")
+        except Exception as affiliate_error:
+            print(f"⚠️  Affiliate processing error (non-fatal): {affiliate_error}")
         
         return jsonify({
             'success': True,
@@ -13613,6 +13644,416 @@ def dashboard_cfpb_detail(complaint_id):
         return f"Error loading complaint: {e}", 500
     finally:
         db.close()
+
+
+# ================================
+# AFFILIATE MANAGEMENT ENDPOINTS
+# ================================
+
+@app.route('/dashboard/affiliates')
+@require_staff(roles=['admin'])
+def dashboard_affiliates():
+    """Affiliate management dashboard"""
+    stats = affiliate_service.get_dashboard_stats()
+    affiliates = affiliate_service.get_all_affiliates()
+    
+    return render_template('affiliates.html',
+        stats=stats,
+        affiliates=affiliates
+    )
+
+
+@app.route('/dashboard/affiliate/<int:affiliate_id>')
+@require_staff(roles=['admin'])
+def dashboard_affiliate_detail(affiliate_id):
+    """Individual affiliate profile page"""
+    affiliate = affiliate_service.get_affiliate_by_id(affiliate_id)
+    if not affiliate:
+        return "Affiliate not found", 404
+    
+    stats = affiliate_service.get_affiliate_stats(affiliate_id)
+    commissions = affiliate_service.get_commission_history(affiliate_id)
+    tree = affiliate_service.get_referral_tree(affiliate_id)
+    
+    db = get_db()
+    try:
+        referred_clients = db.query(Client).filter(
+            Client.referred_by_affiliate_id == affiliate_id
+        ).all()
+        
+        clients_data = [{
+            'id': c.id,
+            'name': c.name,
+            'email': c.email,
+            'status': c.status,
+            'payment_status': c.payment_status,
+            'created_at': c.created_at.isoformat() if c.created_at else None
+        } for c in referred_clients]
+    finally:
+        db.close()
+    
+    return render_template('affiliate_detail.html',
+        affiliate=affiliate,
+        stats=stats,
+        commissions=commissions,
+        tree=tree.get('tree', {}),
+        referred_clients=clients_data
+    )
+
+
+@app.route('/api/affiliates', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_list_affiliates():
+    """List all affiliates with stats"""
+    status = request.args.get('status')
+    affiliates = affiliate_service.get_all_affiliates(status=status)
+    stats = affiliate_service.get_dashboard_stats()
+    
+    return jsonify({
+        'success': True,
+        'affiliates': affiliates,
+        'stats': stats
+    })
+
+
+@app.route('/api/affiliates', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_create_affiliate():
+    """Create a new affiliate"""
+    data = request.json
+    
+    if not data.get('name') or not data.get('email'):
+        return jsonify({'success': False, 'error': 'Name and email are required'}), 400
+    
+    result = affiliate_service.create_affiliate(
+        name=data.get('name'),
+        email=data.get('email'),
+        phone=data.get('phone'),
+        company_name=data.get('company_name'),
+        parent_affiliate_id=data.get('parent_affiliate_id'),
+        commission_rate_1=float(data.get('commission_rate_1', 0.10)),
+        commission_rate_2=float(data.get('commission_rate_2', 0.05)),
+        payout_method=data.get('payout_method'),
+        payout_details=data.get('payout_details'),
+        status=data.get('status', 'active')
+    )
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route('/api/affiliates/<int:affiliate_id>', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_get_affiliate(affiliate_id):
+    """Get affiliate details"""
+    affiliate = affiliate_service.get_affiliate_by_id(affiliate_id)
+    if not affiliate:
+        return jsonify({'success': False, 'error': 'Affiliate not found'}), 404
+    
+    stats = affiliate_service.get_affiliate_stats(affiliate_id)
+    
+    return jsonify({
+        'success': True,
+        'affiliate': affiliate,
+        'stats': stats
+    })
+
+
+@app.route('/api/affiliates/<int:affiliate_id>', methods=['PUT'])
+@require_staff(roles=['admin'])
+def api_update_affiliate(affiliate_id):
+    """Update affiliate information"""
+    data = request.json
+    
+    result = affiliate_service.update_affiliate(
+        affiliate_id=affiliate_id,
+        name=data.get('name'),
+        email=data.get('email'),
+        phone=data.get('phone'),
+        company_name=data.get('company_name'),
+        parent_affiliate_id=data.get('parent_affiliate_id'),
+        commission_rate_1=float(data.get('commission_rate_1')) if data.get('commission_rate_1') else None,
+        commission_rate_2=float(data.get('commission_rate_2')) if data.get('commission_rate_2') else None,
+        status=data.get('status'),
+        payout_method=data.get('payout_method'),
+        payout_details=data.get('payout_details')
+    )
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route('/api/affiliates/<int:affiliate_id>/commissions', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_get_affiliate_commissions(affiliate_id):
+    """Get commission history for an affiliate"""
+    limit = request.args.get('limit', 50, type=int)
+    commissions = affiliate_service.get_commission_history(affiliate_id, limit=limit)
+    
+    return jsonify({
+        'success': True,
+        'commissions': commissions
+    })
+
+
+@app.route('/api/affiliates/<int:affiliate_id>/payout', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_process_payout(affiliate_id):
+    """Process a payout for an affiliate"""
+    data = request.json
+    
+    amount = data.get('amount')
+    if not amount or float(amount) <= 0:
+        return jsonify({'success': False, 'error': 'Valid payout amount is required'}), 400
+    
+    result = affiliate_service.process_payout(
+        affiliate_id=affiliate_id,
+        amount=float(amount),
+        payout_method=data.get('payout_method'),
+        notes=data.get('notes')
+    )
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route('/api/affiliates/<int:affiliate_id>/tree', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_get_affiliate_tree(affiliate_id):
+    """Get referral tree for an affiliate"""
+    result = affiliate_service.get_referral_tree(affiliate_id)
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 404
+
+
+@app.route('/api/affiliate/validate/<code>', methods=['GET'])
+def api_validate_affiliate_code(code):
+    """Public endpoint to validate an affiliate code during signup"""
+    result = affiliate_service.validate_affiliate_code(code)
+    return jsonify(result)
+
+
+@app.route('/api/affiliate/apply', methods=['POST'])
+def api_apply_affiliate():
+    """Public endpoint to apply to become an affiliate"""
+    data = request.json
+    
+    if not data.get('name') or not data.get('email'):
+        return jsonify({'success': False, 'error': 'Name and email are required'}), 400
+    
+    result = affiliate_service.apply_for_affiliate(
+        name=data.get('name'),
+        email=data.get('email'),
+        phone=data.get('phone'),
+        company_name=data.get('company_name'),
+        payout_method=data.get('payout_method'),
+        payout_details=data.get('payout_details'),
+        referrer_code=data.get('referrer_code')
+    )
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route('/api/affiliate/calculate-commission', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_calculate_commission():
+    """Manually trigger commission calculation for a client"""
+    data = request.json
+    
+    client_id = data.get('client_id')
+    trigger_type = data.get('trigger_type')
+    amount = data.get('amount')
+    
+    if not all([client_id, trigger_type, amount]):
+        return jsonify({'success': False, 'error': 'client_id, trigger_type, and amount are required'}), 400
+    
+    result = affiliate_service.calculate_commission(
+        client_id=int(client_id),
+        trigger_type=trigger_type,
+        amount=float(amount)
+    )
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route('/api/affiliate/process-referral', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_process_referral():
+    """Link a client to an affiliate"""
+    data = request.json
+    
+    client_id = data.get('client_id')
+    affiliate_code = data.get('affiliate_code')
+    
+    if not client_id or not affiliate_code:
+        return jsonify({'success': False, 'error': 'client_id and affiliate_code are required'}), 400
+    
+    result = affiliate_service.process_referral(
+        client_id=int(client_id),
+        affiliate_code=affiliate_code
+    )
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+# ==========================================
+# TRIAGE API ENDPOINTS
+# ==========================================
+
+@app.route('/api/triage/analyze/<int:analysis_id>', methods=['POST'])
+@require_staff()
+def api_triage_analyze(analysis_id):
+    """Trigger triage for a specific analysis"""
+    result = triage_service.triage_case(analysis_id)
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route('/api/triage/queue', methods=['GET'])
+@require_staff()
+def api_triage_queue_all():
+    """Get all cases by queue"""
+    limit = request.args.get('limit', 50, type=int)
+    cases = triage_service.get_queue_cases(queue_name=None, limit=limit)
+    
+    return jsonify({
+        'success': True,
+        'cases': cases,
+        'count': len(cases)
+    })
+
+
+@app.route('/api/triage/queue/<queue_name>', methods=['GET'])
+@require_staff()
+def api_triage_queue_filter(queue_name):
+    """Get cases filtered by specific queue"""
+    valid_queues = ['fast_track', 'standard', 'review_needed', 'hold']
+    if queue_name not in valid_queues:
+        return jsonify({
+            'success': False, 
+            'error': f'Invalid queue name. Valid options: {valid_queues}'
+        }), 400
+    
+    limit = request.args.get('limit', 50, type=int)
+    cases = triage_service.get_queue_cases(queue_name=queue_name, limit=limit)
+    
+    return jsonify({
+        'success': True,
+        'queue': queue_name,
+        'cases': cases,
+        'count': len(cases)
+    })
+
+
+@app.route('/api/triage/<int:triage_id>', methods=['GET'])
+@require_staff()
+def api_triage_get(triage_id):
+    """Get triage details by ID"""
+    triage = triage_service.get_triage_by_id(triage_id)
+    
+    if triage:
+        return jsonify({
+            'success': True,
+            'triage': triage
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': 'Triage record not found'
+        }), 404
+
+
+@app.route('/api/triage/analysis/<int:analysis_id>', methods=['GET'])
+@require_staff()
+def api_triage_by_analysis(analysis_id):
+    """Get triage record for an analysis"""
+    triage = triage_service.get_triage_by_analysis(analysis_id)
+    
+    if triage:
+        return jsonify({
+            'success': True,
+            'triage': triage
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': 'No triage record found for this analysis'
+        }), 404
+
+
+@app.route('/api/triage/<int:triage_id>/review', methods=['PUT'])
+@require_staff()
+def api_triage_review(triage_id):
+    """Submit human review/override for triage"""
+    data = request.json
+    
+    staff_email = session.get('staff_email', 'unknown')
+    final_priority = data.get('final_priority')
+    notes = data.get('notes')
+    
+    result = triage_service.update_triage_review(
+        triage_id=triage_id,
+        reviewed_by=staff_email,
+        final_priority=final_priority,
+        notes=notes
+    )
+    
+    if result.get('success'):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route('/api/triage/stats', methods=['GET'])
+@require_staff()
+def api_triage_stats():
+    """Get triage queue statistics"""
+    stats = triage_service.get_triage_stats()
+    
+    return jsonify({
+        'success': True,
+        'stats': stats
+    })
+
+
+@app.route('/dashboard/triage')
+@require_staff()
+def triage_dashboard():
+    """Triage dashboard view"""
+    stats = triage_service.get_triage_stats()
+    fast_track = triage_service.get_queue_cases('fast_track', limit=10)
+    standard = triage_service.get_queue_cases('standard', limit=10)
+    review_needed = triage_service.get_queue_cases('review_needed', limit=10)
+    hold = triage_service.get_queue_cases('hold', limit=10)
+    
+    return render_template('triage_dashboard.html',
+        stats=stats,
+        fast_track=fast_track,
+        standard=standard,
+        review_needed=review_needed,
+        hold=hold
+    )
 
 
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML

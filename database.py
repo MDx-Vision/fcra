@@ -149,6 +149,7 @@ class Client(Base):
     
     # Referral tracking
     referred_by_client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    referred_by_affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=True)
     referral_code = Column(String(50), unique=True)
     
     # Client portal access
@@ -674,6 +675,66 @@ class ClientReferral(Base):
     reward_paid_at = Column(DateTime)
     
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Affiliate(Base):
+    """Affiliate partners for two-level commission tracking"""
+    __tablename__ = 'affiliates'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    phone = Column(String(50))
+    company_name = Column(String(255))
+    
+    affiliate_code = Column(String(50), unique=True, nullable=False, index=True)
+    parent_affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=True)
+    
+    commission_rate_1 = Column(Float, default=0.10)
+    commission_rate_2 = Column(Float, default=0.05)
+    
+    status = Column(String(50), default='pending')
+    
+    payout_method = Column(String(50))
+    payout_details = Column(JSON)
+    
+    total_referrals = Column(Integer, default=0)
+    total_earnings = Column(Float, default=0.0)
+    pending_earnings = Column(Float, default=0.0)
+    paid_out = Column(Float, default=0.0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    parent = relationship("Affiliate", remote_side=[id], backref="sub_affiliates")
+
+
+class Commission(Base):
+    """Commission records for affiliate referrals"""
+    __tablename__ = 'commissions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=False)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    
+    level = Column(Integer, default=1)
+    
+    trigger_type = Column(String(50), nullable=False)
+    trigger_amount = Column(Float, default=0.0)
+    commission_rate = Column(Float, default=0.0)
+    commission_amount = Column(Float, default=0.0)
+    
+    status = Column(String(50), default='pending')
+    
+    paid_at = Column(DateTime)
+    payout_id = Column(Integer)
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    affiliate = relationship("Affiliate", backref="commissions")
 
 
 class SignupDraft(Base):
@@ -1212,6 +1273,36 @@ class ESignatureRequest(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class CaseTriage(Base):
+    """AI-powered case triage for priority scoring and queue assignment"""
+    __tablename__ = 'case_triage'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    analysis_id = Column(Integer, ForeignKey('analyses.id'), nullable=True)
+    
+    priority_score = Column(Integer, default=3)
+    estimated_value = Column(Float, default=0)
+    complexity_level = Column(String(50), default='moderate')
+    recommended_queue = Column(String(50), default='standard')
+    
+    key_violations = Column(JSON)
+    risk_factors = Column(JSON)
+    strengths = Column(JSON)
+    
+    triage_summary = Column(Text)
+    ai_confidence = Column(Float, default=0.5)
+    
+    reviewed = Column(Boolean, default=False)
+    reviewed_by = Column(String(100))
+    reviewed_at = Column(DateTime)
+    final_priority = Column(Integer)
+    notes = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class CreditScoreSnapshot(Base):
     """Track credit scores over time for improvement analytics"""
     __tablename__ = 'credit_score_snapshots'
@@ -1433,10 +1524,62 @@ def init_db():
         ("clients", "payment_method", "VARCHAR(50) DEFAULT 'pending'"),
         ("clients", "payment_pending", "BOOLEAN DEFAULT FALSE"),
         ("clients", "avatar_filename", "VARCHAR(255)"),
+        ("clients", "referred_by_affiliate_id", "INTEGER"),
         ("violations", "violation_date", "DATE"),
         ("violations", "discovery_date", "DATE"),
         ("violations", "sol_expiration_date", "DATE"),
         ("violations", "sol_warning_sent", "BOOLEAN DEFAULT FALSE"),
+        ("affiliates", "id", "SERIAL PRIMARY KEY"),
+        ("affiliates", "user_id", "INTEGER"),
+        ("affiliates", "name", "VARCHAR(255) NOT NULL"),
+        ("affiliates", "email", "VARCHAR(255) UNIQUE NOT NULL"),
+        ("affiliates", "phone", "VARCHAR(50)"),
+        ("affiliates", "company_name", "VARCHAR(255)"),
+        ("affiliates", "affiliate_code", "VARCHAR(50) UNIQUE NOT NULL"),
+        ("affiliates", "parent_affiliate_id", "INTEGER"),
+        ("affiliates", "commission_rate_1", "FLOAT DEFAULT 0.10"),
+        ("affiliates", "commission_rate_2", "FLOAT DEFAULT 0.05"),
+        ("affiliates", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("affiliates", "payout_method", "VARCHAR(50)"),
+        ("affiliates", "payout_details", "JSON"),
+        ("affiliates", "total_referrals", "INTEGER DEFAULT 0"),
+        ("affiliates", "total_earnings", "FLOAT DEFAULT 0.0"),
+        ("affiliates", "pending_earnings", "FLOAT DEFAULT 0.0"),
+        ("affiliates", "paid_out", "FLOAT DEFAULT 0.0"),
+        ("affiliates", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("affiliates", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("commissions", "id", "SERIAL PRIMARY KEY"),
+        ("commissions", "affiliate_id", "INTEGER NOT NULL"),
+        ("commissions", "client_id", "INTEGER NOT NULL"),
+        ("commissions", "level", "INTEGER DEFAULT 1"),
+        ("commissions", "trigger_type", "VARCHAR(50) NOT NULL"),
+        ("commissions", "trigger_amount", "FLOAT DEFAULT 0.0"),
+        ("commissions", "commission_rate", "FLOAT DEFAULT 0.0"),
+        ("commissions", "commission_amount", "FLOAT DEFAULT 0.0"),
+        ("commissions", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("commissions", "paid_at", "TIMESTAMP"),
+        ("commissions", "payout_id", "INTEGER"),
+        ("commissions", "notes", "TEXT"),
+        ("commissions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("case_triage", "id", "SERIAL PRIMARY KEY"),
+        ("case_triage", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("case_triage", "analysis_id", "INTEGER REFERENCES analyses(id)"),
+        ("case_triage", "priority_score", "INTEGER DEFAULT 3"),
+        ("case_triage", "estimated_value", "FLOAT DEFAULT 0"),
+        ("case_triage", "complexity_level", "VARCHAR(50) DEFAULT 'moderate'"),
+        ("case_triage", "recommended_queue", "VARCHAR(50) DEFAULT 'standard'"),
+        ("case_triage", "key_violations", "JSON"),
+        ("case_triage", "risk_factors", "JSON"),
+        ("case_triage", "strengths", "JSON"),
+        ("case_triage", "triage_summary", "TEXT"),
+        ("case_triage", "ai_confidence", "FLOAT DEFAULT 0.5"),
+        ("case_triage", "reviewed", "BOOLEAN DEFAULT FALSE"),
+        ("case_triage", "reviewed_by", "VARCHAR(100)"),
+        ("case_triage", "reviewed_at", "TIMESTAMP"),
+        ("case_triage", "final_priority", "INTEGER"),
+        ("case_triage", "notes", "TEXT"),
+        ("case_triage", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("case_triage", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     conn = engine.connect()

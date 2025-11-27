@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affiliate Management - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #84cc16; }
+        
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-actions { display: flex; gap: 15px; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-card.highlight .stat-label { color: #94a3b8; }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .stat-card.highlight .stat-value { color: #84cc16; }
+        .stat-change {
+            font-size: 12px;
+            color: #84cc16;
+            font-weight: 500;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            max-width: 400px;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-box svg { color: #94a3b8; margin-right: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        
+        .affiliate-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .affiliate-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #319795, #84cc16);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .affiliate-info { flex: 1; }
+        .affiliate-name { font-weight: 600; color: #1a1a2e; }
+        .affiliate-email { font-size: 12px; color: #94a3b8; }
+        
+        .code-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #f0fdf4;
+            color: #166534;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: monospace;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-suspended { background: #fee2e2; color: #991b1b; }
+        .status-inactive { background: #f1f5f9; color: #64748b; }
+        
+        .earnings-col {
+            display: flex;
+            flex-direction: column;
+        }
+        .earnings-pending { color: #f59e0b; font-weight: 600; }
+        .earnings-paid { color: #10b981; font-size: 12px; }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.3; }
+        .empty-state h3 { font-size: 18px; color: #1a1a2e; margin-bottom: 10px; }
+        .empty-state p { font-size: 14px; margin-bottom: 20px; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 { font-size: 18px; font-weight: 600; color: #1a1a2e; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #1a1a2e;
+            margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus,
+        .form-group select:focus { border-color: #84cc16; }
+        
+        .user-card {
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .user-name { color: white; font-weight: 600; font-size: 14px; }
+        .user-role { color: #84cc16; font-size: 12px; text-transform: capitalize; }
+        .logout-btn {
+            display: block;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #94a3b8;
+            font-size: 12px;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: relative; }
+            .main-content { margin-left: 0; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Bright<span>path</span> Ascend</div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                All Clients
+            </a>
+            <a href="/dashboard/settlements" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Settlements
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Revenue</div>
+            <a href="/dashboard/affiliates" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Affiliates
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Tools</div>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+            {% if session.get('staff_role') == 'admin' %}
+            <a href="/dashboard/staff" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Staff Management
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="user-card" style="margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div class="user-info">
+                <div class="user-avatar">{{ session.get('staff_initials', 'U') }}</div>
+                <div>
+                    <div class="user-name">{{ session.get('staff_name', 'User') }}</div>
+                    <div class="user-role">{{ session.get('staff_role', 'staff') }}</div>
+                </div>
+            </div>
+            <a href="/staff/logout" class="logout-btn">Sign Out</a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>Affiliate Management</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Affiliate
+                </button>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Total Pending Payouts</div>
+                <div class="stat-value">${{ "{:,.2f}".format(stats.total_pending_payouts or 0) }}</div>
+                <div class="stat-change">{{ stats.pending_commissions or 0 }} commissions pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Affiliates</div>
+                <div class="stat-value">{{ stats.total_affiliates or 0 }}</div>
+                <div class="stat-change">{{ stats.active_affiliates or 0 }} active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Referrals</div>
+                <div class="stat-value">{{ stats.total_referrals or 0 }}</div>
+                <div class="stat-change">Clients from affiliates</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Paid Out</div>
+                <div class="stat-value">${{ "{:,.2f}".format(stats.total_paid or 0) }}</div>
+                <div class="stat-change">${{ "{:,.2f}".format(stats.total_earnings or 0) }} total earned</div>
+            </div>
+        </div>
+        
+        <div class="content-card">
+            <div class="section-header">
+                <div class="section-title">All Affiliates</div>
+            </div>
+            
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterAffiliates('all')">All</button>
+                <button class="filter-btn" onclick="filterAffiliates('active')">Active</button>
+                <button class="filter-btn" onclick="filterAffiliates('pending')">Pending</button>
+                <button class="filter-btn" onclick="filterAffiliates('suspended')">Suspended</button>
+            </div>
+            
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" placeholder="Search affiliates..." id="searchInput" onkeyup="searchAffiliates()">
+            </div>
+            
+            {% if affiliates %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Affiliate</th>
+                        <th>Code</th>
+                        <th>Referrals</th>
+                        <th>Earnings</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="affiliateTableBody">
+                    {% for affiliate in affiliates %}
+                    <tr data-status="{{ affiliate.status }}" data-name="{{ affiliate.name|lower }}">
+                        <td>
+                            <div class="affiliate-cell">
+                                <div class="affiliate-avatar">{{ affiliate.name[0]|upper if affiliate.name else 'A' }}</div>
+                                <div class="affiliate-info">
+                                    <div class="affiliate-name">{{ affiliate.name }}</div>
+                                    <div class="affiliate-email">{{ affiliate.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="code-badge">{{ affiliate.affiliate_code }}</span></td>
+                        <td>{{ affiliate.actual_referrals or 0 }}</td>
+                        <td>
+                            <div class="earnings-col">
+                                <span class="earnings-pending">${{ "{:,.2f}".format(affiliate.pending_earnings or 0) }} pending</span>
+                                <span class="earnings-paid">${{ "{:,.2f}".format(affiliate.paid_out or 0) }} paid</span>
+                            </div>
+                        </td>
+                        <td><span class="status-badge status-{{ affiliate.status }}">{{ affiliate.status|title }}</span></td>
+                        <td>
+                            <button class="action-btn primary" onclick="viewAffiliate({{ affiliate.id }})">View</button>
+                            <button class="action-btn" onclick="editAffiliate({{ affiliate.id }})">Edit</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <h3>No affiliates yet</h3>
+                <p>Add your first affiliate partner to start tracking commissions</p>
+                <button class="btn btn-primary" onclick="openAddModal()">Add Affiliate</button>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    
+    <div class="modal-overlay" id="addAffiliateModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add New Affiliate</h2>
+                <button class="modal-close" onclick="closeModal('addAffiliateModal')">&times;</button>
+            </div>
+            <form id="addAffiliateForm" onsubmit="submitAddAffiliate(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label>Company Name</label>
+                            <input type="text" name="company_name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Level 1 Commission Rate (%)</label>
+                            <input type="number" name="commission_rate_1" value="10" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label>Level 2 Commission Rate (%)</label>
+                            <input type="number" name="commission_rate_2" value="5" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Parent Affiliate (Optional)</label>
+                            <select name="parent_affiliate_id">
+                                <option value="">No Parent (Top Level)</option>
+                                {% for affiliate in affiliates %}
+                                {% if affiliate.status == 'active' %}
+                                <option value="{{ affiliate.id }}">{{ affiliate.name }} ({{ affiliate.affiliate_code }})</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select name="status">
+                                <option value="active">Active</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Payout Method</label>
+                            <select name="payout_method">
+                                <option value="">Select Method</option>
+                                <option value="check">Check</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="bank_transfer">Bank Transfer</option>
+                                <option value="crypto">Crypto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Payout Details</label>
+                            <input type="text" name="payout_email" placeholder="PayPal email or bank details">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addAffiliateModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Affiliate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        function openAddModal() {
+            document.getElementById('addAffiliateModal').classList.add('active');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        function viewAffiliate(id) {
+            window.location.href = '/dashboard/affiliate/' + id;
+        }
+        
+        function editAffiliate(id) {
+            window.location.href = '/dashboard/affiliate/' + id + '?edit=true';
+        }
+        
+        function filterAffiliates(status) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            const rows = document.querySelectorAll('#affiliateTableBody tr');
+            rows.forEach(row => {
+                if (status === 'all' || row.dataset.status === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        function searchAffiliates() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#affiliateTableBody tr');
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                row.style.display = name.includes(query) ? '' : 'none';
+            });
+        }
+        
+        async function submitAddAffiliate(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone') || null,
+                company_name: formData.get('company_name') || null,
+                parent_affiliate_id: formData.get('parent_affiliate_id') ? parseInt(formData.get('parent_affiliate_id')) : null,
+                commission_rate_1: parseFloat(formData.get('commission_rate_1') || 10) / 100,
+                commission_rate_2: parseFloat(formData.get('commission_rate_2') || 5) / 100,
+                status: formData.get('status') || 'active',
+                payout_method: formData.get('payout_method') || null,
+                payout_details: formData.get('payout_email') ? { email: formData.get('payout_email') } : null
+            };
+            
+            try {
+                const response = await fetch('/api/affiliates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Affiliate created successfully! Code: ' + result.affiliate_code);
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (result.error || result.message));
+                }
+            } catch (err) {
+                alert('Error creating affiliate: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
