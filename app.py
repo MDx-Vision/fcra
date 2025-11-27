@@ -6267,6 +6267,7 @@ def api_cra_response_upload():
         items_deleted = int(request.form.get('itemsDeleted', 0))
         items_verified = int(request.form.get('itemsVerified', 0))
         items_updated = int(request.form.get('itemsUpdated', 0))
+        auto_analyze = request.form.get('autoAnalyze', 'false').lower() == 'true'
         
         if not client_id or not bureau:
             return jsonify({'success': False, 'error': 'Client ID and bureau are required'}), 400
@@ -6390,12 +6391,30 @@ def api_cra_response_upload():
         except Exception as sms_error:
             print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
         
-        return jsonify({
+        analysis_result = None
+        if auto_analyze:
+            try:
+                from services.ocr_service import analyze_cra_response
+                analysis_result = analyze_cra_response(cra_response.id)
+                if analysis_result.get('success'):
+                    print(f"🤖 Auto-analyzed CRA response {cra_response.id}: {analysis_result.get('summary', {})}")
+                else:
+                    print(f"⚠️  Auto-analyze failed: {analysis_result.get('error')}")
+            except Exception as analyze_error:
+                print(f"⚠️  Auto-analyze error (non-fatal): {analyze_error}")
+                analysis_result = {'success': False, 'error': str(analyze_error)}
+        
+        response_data = {
             'success': True,
             'responseId': cra_response.id,
             'message': f'{bureau} response uploaded successfully',
             'roundStatus': round_status
-        }), 201
+        }
+        
+        if auto_analyze and analysis_result:
+            response_data['analysis'] = analysis_result
+        
+        return jsonify(response_data), 201
         
     except Exception as e:
         db.rollback()
@@ -6483,6 +6502,220 @@ def api_client_responses(client_id):
         }), 200
         
     except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# CRA RESPONSE ANALYSIS ENDPOINTS (AI-Powered)
+# ============================================================
+
+@app.route('/api/cra-response/<int:response_id>/analyze', methods=['POST'])
+def api_analyze_cra_response(response_id):
+    """
+    Analyze a CRA response document using Claude AI.
+    Extracts items, matches to existing DisputeItems, and detects reinsertion violations.
+    
+    Returns analysis results for staff review before applying changes.
+    """
+    db = get_db()
+    try:
+        cra_response = db.query(CRAResponse).filter_by(id=response_id).first()
+        if not cra_response:
+            return jsonify({'success': False, 'error': 'CRA Response not found'}), 404
+        
+        if not cra_response.file_path:
+            return jsonify({'success': False, 'error': 'No file attached to this CRA response'}), 400
+        
+        from services.ocr_service import analyze_cra_response
+        result = analyze_cra_response(response_id)
+        
+        if result.get('success'):
+            event = CaseEvent(
+                case_id=cra_response.case_id,
+                event_type='cra_response_analyzed',
+                description=f'AI analyzed {cra_response.bureau} response for round {cra_response.dispute_round}',
+                event_data=json.dumps({
+                    'cra_response_id': response_id,
+                    'ocr_record_id': result.get('ocr_record_id'),
+                    'items_found': result.get('summary', {}).get('total_items_found', 0),
+                    'items_matched': result.get('summary', {}).get('items_matched', 0),
+                    'reinsertion_violations': result.get('summary', {}).get('reinsertion_violations', 0),
+                    'tokens_used': result.get('tokens_used', 0)
+                })
+            )
+            db.add(event)
+            db.commit()
+            
+            print(f"✅ CRA Response {response_id} analyzed: {result.get('summary', {})}")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cra-response/<int:response_id>/analysis')
+def api_get_cra_response_analysis(response_id):
+    """Get the analysis results for a CRA response (for review)."""
+    db = get_db()
+    try:
+        from database import CRAResponseOCR
+        
+        ocr_records = db.query(CRAResponseOCR).filter(
+            CRAResponseOCR.client_id == db.query(CRAResponse.client_id).filter_by(id=response_id).scalar()
+        ).order_by(CRAResponseOCR.created_at.desc()).all()
+        
+        if not ocr_records:
+            return jsonify({'success': False, 'error': 'No analysis found for this response'}), 404
+        
+        latest = ocr_records[0]
+        
+        from services.ocr_service import get_analysis_for_review
+        result = get_analysis_for_review(latest.id)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cra-response/<int:response_id>/apply-analysis', methods=['POST'])
+def api_apply_cra_response_analysis(response_id):
+    """
+    Apply the reviewed analysis to update DisputeItem statuses.
+    Accepts optional edits to the matched items before applying.
+    """
+    db = get_db()
+    try:
+        data = request.json or {}
+        ocr_record_id = data.get('ocr_record_id')
+        reviewed_items = data.get('reviewed_items')
+        create_violations = data.get('create_violations', True)
+        
+        staff_user = session.get('staff_email') or session.get('staff_name') or 'unknown'
+        
+        if not ocr_record_id:
+            from database import CRAResponseOCR
+            cra_response = db.query(CRAResponse).filter_by(id=response_id).first()
+            if not cra_response:
+                return jsonify({'success': False, 'error': 'CRA Response not found'}), 404
+            
+            ocr_record = db.query(CRAResponseOCR).filter(
+                CRAResponseOCR.client_id == cra_response.client_id,
+                CRAResponseOCR.bureau == cra_response.bureau
+            ).order_by(CRAResponseOCR.created_at.desc()).first()
+            
+            if not ocr_record:
+                return jsonify({'success': False, 'error': 'No analysis found. Run analyze first.'}), 400
+            
+            ocr_record_id = ocr_record.id
+        
+        from services.ocr_service import apply_analysis_updates
+        result = apply_analysis_updates(
+            ocr_record_id=ocr_record_id,
+            reviewed_items=reviewed_items,
+            create_violations=create_violations,
+            staff_user=staff_user
+        )
+        
+        if result.get('success'):
+            cra_response = db.query(CRAResponse).filter_by(id=response_id).first()
+            
+            updates_made = result.get('updates_made', [])
+            deleted_count = len([u for u in updates_made if u.get('new_status') == 'deleted'])
+            verified_count = len([u for u in updates_made if u.get('new_status') == 'verified'])
+            updated_count = len([u for u in updates_made if u.get('new_status') == 'updated'])
+            
+            if cra_response:
+                cra_response.items_deleted = (cra_response.items_deleted or 0) + deleted_count
+                cra_response.items_verified = (cra_response.items_verified or 0) + verified_count
+                cra_response.items_updated = (cra_response.items_updated or 0) + updated_count
+            
+            event = CaseEvent(
+                case_id=cra_response.case_id if cra_response else None,
+                event_type='analysis_applied',
+                description=f'Applied AI analysis: {len(updates_made)} items updated',
+                event_data=json.dumps({
+                    'cra_response_id': response_id,
+                    'ocr_record_id': ocr_record_id,
+                    'updates_applied': result.get('updates_applied', 0),
+                    'violations_created': result.get('violations_created', 0),
+                    'applied_by': staff_user
+                })
+            )
+            db.add(event)
+            db.commit()
+            
+            print(f"✅ Analysis applied for response {response_id}: {result.get('updates_applied', 0)} updates")
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/cra-response/list')
+def api_list_cra_responses():
+    """Get all CRA responses with analysis status for dashboard."""
+    db = get_db()
+    try:
+        from database import CRAResponseOCR
+        
+        responses = db.query(CRAResponse).order_by(CRAResponse.created_at.desc()).limit(100).all()
+        
+        response_list = []
+        for r in responses:
+            ocr_record = db.query(CRAResponseOCR).filter(
+                CRAResponseOCR.client_id == r.client_id,
+                CRAResponseOCR.bureau == r.bureau
+            ).order_by(CRAResponseOCR.created_at.desc()).first()
+            
+            client = db.query(Client).filter_by(id=r.client_id).first()
+            
+            response_list.append({
+                'id': r.id,
+                'clientId': r.client_id,
+                'clientName': client.name if client else 'Unknown',
+                'bureau': r.bureau,
+                'disputeRound': r.dispute_round,
+                'responseType': r.response_type,
+                'responseDate': r.response_date.isoformat() if r.response_date else None,
+                'fileName': r.file_name,
+                'filePath': r.file_path,
+                'itemsVerified': r.items_verified,
+                'itemsDeleted': r.items_deleted,
+                'itemsUpdated': r.items_updated,
+                'hasAnalysis': ocr_record is not None,
+                'analysisReviewed': ocr_record.reviewed if ocr_record else False,
+                'ocrRecordId': ocr_record.id if ocr_record else None,
+                'confidenceScore': ocr_record.ocr_confidence if ocr_record else None,
+                'createdAt': r.created_at.isoformat()
+            })
+        
+        return jsonify({
+            'success': True,
+            'responses': response_list
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()

@@ -1,16 +1,17 @@
 """
 OCR Service for extracting data from CRA response documents and collection letters.
 Uses Claude (Anthropic API) for document analysis and data extraction.
+Includes CRA response analysis and reinsertion violation detection.
 """
 import os
 import json
 import base64
 import logging
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, List, Optional, Any, Union
 
 from anthropic import Anthropic
-from database import SessionLocal, ClientUpload
+from database import SessionLocal, ClientUpload, CRAResponse, CRAResponseOCR, DisputeItem, Violation, Client
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,12 @@ Analyze this document and extract the following information in JSON format.
 
 IMPORTANT: Return ONLY valid JSON, no additional text or explanation.
 
+This is a response from a credit bureau after a dispute was submitted. Common document types include:
+- "Results of Investigation" letters
+- "Reinvestigation Results" 
+- Account status update notices
+- Frivolous dispute notifications
+
 Extract:
 {
     "bureau_name": "Equifax" | "Experian" | "TransUnion" | null,
@@ -128,23 +135,48 @@ Extract:
     "response_type_detail": "detailed description of the response type",
     "response_date": "YYYY-MM-DD format or null",
     "acdv_reference_number": "reference number if present or null",
-    "account_details": [
+    "confirmation_number": "dispute confirmation/reference number if present",
+    "consumer_name": "name of the consumer if visible",
+    "items": [
         {
-            "creditor_name": "name",
-            "account_number": "masked account number",
-            "status": "verified" | "deleted" | "updated" | "disputed",
-            "changes_made": "description of changes if any"
+            "creditor_name": "exact name of the creditor/furnisher as shown",
+            "account_number": "masked/partial account number (e.g., XXXX1234)",
+            "account_type": "credit card" | "auto loan" | "mortgage" | "collection" | "student loan" | "personal loan" | "other",
+            "result": "deleted" | "verified" | "updated" | "investigating" | "remains",
+            "result_detail": "specific outcome description (e.g., 'Account deleted per your request')",
+            "reason": "reason given by bureau for the result",
+            "original_dispute_reason": "what was originally disputed if mentioned",
+            "changes_made": "specific changes if the item was updated (null if not updated)",
+            "balance": "balance amount if shown",
+            "date_opened": "account open date if shown",
+            "status_before": "account status before dispute if shown",
+            "status_after": "account status after dispute if shown"
         }
     ],
-    "items_disputed": ["list of disputed items"],
-    "items_verified": ["list of verified items - no changes"],
-    "items_updated": ["list of items that were updated/corrected"],
-    "items_deleted": ["list of deleted items"],
+    "summary_counts": {
+        "total_items_disputed": 0,
+        "items_deleted": 0,
+        "items_verified": 0,
+        "items_updated": 0,
+        "items_investigating": 0
+    },
     "investigation_summary": "brief summary of the investigation results",
+    "frivolous_warning": true | false,
+    "frivolous_reason": "reason if frivolous warning present",
+    "next_dispute_allowed_date": "date consumer can submit next dispute if mentioned",
     "next_steps_recommended": ["recommended actions based on this response"],
-    "raw_text_extracted": "key text from the document",
+    "raw_text_extracted": "all key text from the document for reference",
     "confidence_score": 0.0 to 1.0
 }
+
+IMPORTANT EXTRACTION RULES:
+1. For each account/item mentioned, extract the EXACT creditor name as shown
+2. Include partial account numbers to help match with existing records
+3. The "result" field must be one of: deleted, verified, updated, investigating, remains
+4. If an item says "information verified as accurate" or "verified", result = "verified"
+5. If an item says "deleted", "removed", or "will no longer appear", result = "deleted"
+6. If an item shows changes were made but not deleted, result = "updated"
+7. Extract ALL items mentioned, even if outcome is unclear
 
 If the bureau name is provided separately, use: {bureau_hint}
 
@@ -777,3 +809,448 @@ def batch_process_uploads(
             results["failed"] += 1
     
     return results
+
+
+def analyze_cra_response(
+    cra_response_id: int
+) -> Dict[str, Any]:
+    """
+    Analyze a CRA response document using Claude Vision.
+    Extracts items, matches to existing DisputeItems, and detects reinsertion violations.
+    
+    Args:
+        cra_response_id: ID of the CRAResponse record
+    
+    Returns:
+        Dictionary with analysis results including matched items and reinsertion flags
+    """
+    session = SessionLocal()
+    try:
+        cra_response = session.query(CRAResponse).filter(
+            CRAResponse.id == cra_response_id
+        ).first()
+        
+        if not cra_response:
+            return {
+                "success": False,
+                "error": f"CRA Response {cra_response_id} not found"
+            }
+        
+        if not cra_response.file_path or not os.path.exists(cra_response.file_path):
+            return {
+                "success": False,
+                "error": f"File not found: {cra_response.file_path}"
+            }
+        
+        file_type = cra_response.file_path.split('.')[-1].lower()
+        
+        extraction_result = extract_cra_response_data(
+            file_path=cra_response.file_path,
+            file_type=file_type,
+            bureau=cra_response.bureau
+        )
+        
+        if not extraction_result.get("success"):
+            return {
+                "success": False,
+                "error": extraction_result.get("error", "Extraction failed")
+            }
+        
+        extracted_data = extraction_result.get("data", {})
+        extracted_items = extracted_data.get("items", [])
+        
+        dispute_items = session.query(DisputeItem).filter(
+            DisputeItem.client_id == cra_response.client_id,
+            DisputeItem.bureau == cra_response.bureau
+        ).all()
+        
+        matched_items = []
+        reinsertion_violations = []
+        
+        for ext_item in extracted_items:
+            creditor_name = ext_item.get("creditor_name", "").lower().strip()
+            account_number = ext_item.get("account_number", "").strip()
+            result = ext_item.get("result", "").lower()
+            
+            best_match = None
+            best_score = 0
+            
+            for di in dispute_items:
+                score = _calculate_match_score(
+                    ext_item, 
+                    di.creditor_name or "", 
+                    di.account_id or ""
+                )
+                if score > best_score and score >= 0.5:
+                    best_score = score
+                    best_match = di
+            
+            status_map = {
+                "deleted": "deleted",
+                "verified": "verified",
+                "updated": "updated",
+                "investigating": "investigating",
+                "remains": "verified"
+            }
+            new_status = status_map.get(result, None)
+            
+            match_info = {
+                "extracted_creditor": ext_item.get("creditor_name"),
+                "extracted_account": account_number,
+                "extracted_result": result,
+                "extracted_reason": ext_item.get("reason"),
+                "extracted_changes": ext_item.get("changes_made"),
+                "match_score": best_score,
+                "new_status": new_status
+            }
+            
+            if best_match:
+                match_info["dispute_item_id"] = best_match.id
+                match_info["current_status"] = best_match.status
+                match_info["matched_creditor"] = best_match.creditor_name
+                match_info["matched_account"] = best_match.account_id
+                
+                if new_status == "verified" and best_match.status == "deleted":
+                    reinsertion = _check_reinsertion_violation(
+                        session, 
+                        cra_response.client_id,
+                        best_match.creditor_name,
+                        cra_response.bureau,
+                        cra_response.dispute_round
+                    )
+                    if reinsertion.get("is_reinsertion"):
+                        reinsertion_violations.append({
+                            "dispute_item_id": best_match.id,
+                            "creditor_name": best_match.creditor_name,
+                            "deleted_in_round": reinsertion.get("deleted_round"),
+                            "reappeared_in_round": cra_response.dispute_round,
+                            "fcra_section": "611(a)(5)",
+                            "violation_type": "reinsertion"
+                        })
+                        match_info["reinsertion_detected"] = True
+            else:
+                match_info["dispute_item_id"] = None
+                match_info["current_status"] = None
+                match_info["match_warning"] = "No matching dispute item found"
+            
+            matched_items.append(match_info)
+        
+        summary_counts = extracted_data.get("summary_counts", {})
+        
+        ocr_record = CRAResponseOCR(
+            client_id=cra_response.client_id,
+            case_id=cra_response.case_id,
+            bureau=cra_response.bureau,
+            document_type="cra_response",
+            document_date=_parse_date(extracted_data.get("response_date")),
+            response_date=_parse_date(extracted_data.get("response_date")),
+            raw_text=extracted_data.get("raw_text_extracted", ""),
+            structured_data={
+                "extracted_data": extracted_data,
+                "matched_items": matched_items,
+                "reinsertion_violations": reinsertion_violations
+            },
+            items_verified=[m for m in matched_items if m.get("extracted_result") == "verified"],
+            items_deleted=[m for m in matched_items if m.get("extracted_result") == "deleted"],
+            items_updated=[m for m in matched_items if m.get("extracted_result") == "updated"],
+            items_reinvestigated=[m for m in matched_items if m.get("extracted_result") == "investigating"],
+            new_violations_detected=reinsertion_violations if reinsertion_violations else None,
+            reinvestigation_complete=(extracted_data.get("response_type") == "Results of Investigation"),
+            frivolous_claim=extracted_data.get("frivolous_warning", False),
+            ocr_confidence=extracted_data.get("confidence_score", 0.7),
+            extraction_method="claude_vision",
+            processed_at=datetime.utcnow()
+        )
+        
+        session.add(ocr_record)
+        session.commit()
+        
+        return {
+            "success": True,
+            "cra_response_id": cra_response_id,
+            "ocr_record_id": ocr_record.id,
+            "bureau": cra_response.bureau,
+            "response_date": extracted_data.get("response_date"),
+            "confidence_score": extracted_data.get("confidence_score", 0.7),
+            "summary": {
+                "total_items_found": len(extracted_items),
+                "items_matched": len([m for m in matched_items if m.get("dispute_item_id")]),
+                "items_unmatched": len([m for m in matched_items if not m.get("dispute_item_id")]),
+                "items_deleted": summary_counts.get("items_deleted", 0),
+                "items_verified": summary_counts.get("items_verified", 0),
+                "items_updated": summary_counts.get("items_updated", 0),
+                "reinsertion_violations": len(reinsertion_violations)
+            },
+            "matched_items": matched_items,
+            "reinsertion_violations": reinsertion_violations,
+            "frivolous_warning": extracted_data.get("frivolous_warning", False),
+            "investigation_summary": extracted_data.get("investigation_summary"),
+            "tokens_used": extraction_result.get("tokens_used", 0)
+        }
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error analyzing CRA response: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+    finally:
+        session.close()
+
+
+def _calculate_match_score(
+    extracted_item: Dict[str, Any],
+    db_creditor: str,
+    db_account: str
+) -> float:
+    """Calculate similarity score between extracted item and database record."""
+    score = 0.0
+    
+    ext_creditor = (extracted_item.get("creditor_name") or "").lower().strip()
+    ext_account = (extracted_item.get("account_number") or "").strip()
+    db_creditor_lower = db_creditor.lower().strip()
+    db_account_clean = db_account.strip()
+    
+    if ext_creditor and db_creditor_lower:
+        ext_words = set(ext_creditor.replace(",", " ").replace(".", " ").split())
+        db_words = set(db_creditor_lower.replace(",", " ").replace(".", " ").split())
+        
+        if ext_creditor == db_creditor_lower:
+            score += 0.6
+        elif ext_words & db_words:
+            overlap = len(ext_words & db_words) / max(len(ext_words), len(db_words))
+            score += 0.4 * overlap
+        elif ext_creditor in db_creditor_lower or db_creditor_lower in ext_creditor:
+            score += 0.5
+    
+    if ext_account and db_account_clean:
+        ext_digits = ''.join(filter(str.isdigit, ext_account))[-4:]
+        db_digits = ''.join(filter(str.isdigit, db_account_clean))[-4:]
+        
+        if ext_digits and db_digits and ext_digits == db_digits:
+            score += 0.4
+        elif ext_digits and db_digits:
+            matching = sum(a == b for a, b in zip(ext_digits, db_digits))
+            score += 0.2 * (matching / max(len(ext_digits), len(db_digits)))
+    
+    return min(score, 1.0)
+
+
+def _check_reinsertion_violation(
+    session,
+    client_id: int,
+    creditor_name: str,
+    bureau: str,
+    current_round: int
+) -> Dict[str, Any]:
+    """Check if an item was previously deleted and is now reappearing (reinsertion)."""
+    prior_deleted_items = session.query(DisputeItem).filter(
+        DisputeItem.client_id == client_id,
+        DisputeItem.bureau == bureau,
+        DisputeItem.status == "deleted",
+        DisputeItem.dispute_round < current_round
+    ).all()
+    
+    creditor_lower = creditor_name.lower().strip() if creditor_name else ""
+    
+    for item in prior_deleted_items:
+        item_creditor = (item.creditor_name or "").lower().strip()
+        if item_creditor == creditor_lower or creditor_lower in item_creditor or item_creditor in creditor_lower:
+            return {
+                "is_reinsertion": True,
+                "deleted_round": item.dispute_round,
+                "deleted_item_id": item.id,
+                "deleted_creditor": item.creditor_name
+            }
+    
+    return {"is_reinsertion": False}
+
+
+def _parse_date(date_str: Optional[str]) -> Optional[date]:
+    """Parse date string to date object."""
+    if not date_str:
+        return None
+    try:
+        return date.fromisoformat(date_str)
+    except:
+        try:
+            for fmt in ["%m/%d/%Y", "%m-%d-%Y", "%Y/%m/%d", "%B %d, %Y", "%b %d, %Y"]:
+                try:
+                    return datetime.strptime(date_str, fmt).date()
+                except:
+                    continue
+        except:
+            pass
+    return None
+
+
+def apply_analysis_updates(
+    ocr_record_id: int,
+    reviewed_items: Optional[List[Dict[str, Any]]] = None,
+    create_violations: bool = True,
+    staff_user: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Apply the analysis results to update DisputeItem statuses.
+    
+    Args:
+        ocr_record_id: ID of the CRAResponseOCR record
+        reviewed_items: Optional list of reviewed/edited items (if None, uses stored data)
+        create_violations: Whether to create Violation records for reinsertion
+        staff_user: Name/email of the staff member applying changes
+    
+    Returns:
+        Dictionary with update results
+    """
+    session = SessionLocal()
+    try:
+        ocr_record = session.query(CRAResponseOCR).filter(
+            CRAResponseOCR.id == ocr_record_id
+        ).first()
+        
+        if not ocr_record:
+            return {
+                "success": False,
+                "error": f"OCR record {ocr_record_id} not found"
+            }
+        
+        structured_data = ocr_record.structured_data or {}
+        items_to_update = reviewed_items or structured_data.get("matched_items", [])
+        reinsertion_violations = structured_data.get("reinsertion_violations", [])
+        
+        updates_made = []
+        violations_created = []
+        
+        for item in items_to_update:
+            dispute_item_id = item.get("dispute_item_id")
+            new_status = item.get("new_status")
+            
+            if not dispute_item_id or not new_status:
+                continue
+            
+            dispute_item = session.query(DisputeItem).filter(
+                DisputeItem.id == dispute_item_id
+            ).first()
+            
+            if dispute_item:
+                old_status = dispute_item.status
+                dispute_item.status = new_status
+                dispute_item.response_date = date.today()
+                dispute_item.response_notes = f"Auto-updated from CRA response analysis. Previous: {old_status}"
+                
+                updates_made.append({
+                    "dispute_item_id": dispute_item_id,
+                    "creditor_name": dispute_item.creditor_name,
+                    "old_status": old_status,
+                    "new_status": new_status
+                })
+        
+        if create_violations and reinsertion_violations:
+            for rv in reinsertion_violations:
+                violation = Violation(
+                    analysis_id=None,
+                    client_id=ocr_record.client_id,
+                    bureau=ocr_record.bureau,
+                    account_name=rv.get("creditor_name"),
+                    fcra_section="611(a)(5)",
+                    violation_type="reinsertion",
+                    description=f"Item previously deleted in round {rv.get('deleted_in_round')} reappeared in round {rv.get('reappeared_in_round')}. Under FCRA 611(a)(5), credit bureaus must follow reasonable procedures to prevent reinsertion of previously deleted information.",
+                    statutory_damages_min=100,
+                    statutory_damages_max=1000,
+                    is_willful=True,
+                    willfulness_notes="Reinsertion of deleted information indicates failure to implement proper procedures"
+                )
+                session.add(violation)
+                violations_created.append({
+                    "creditor_name": rv.get("creditor_name"),
+                    "fcra_section": "611(a)(5)",
+                    "violation_type": "reinsertion"
+                })
+        
+        ocr_record.reviewed = True
+        ocr_record.reviewed_by = staff_user
+        ocr_record.reviewed_at = datetime.utcnow()
+        ocr_record.notes = (ocr_record.notes or "") + f"\nApplied {len(updates_made)} updates on {datetime.utcnow().isoformat()}"
+        
+        session.commit()
+        
+        return {
+            "success": True,
+            "ocr_record_id": ocr_record_id,
+            "updates_applied": len(updates_made),
+            "updates_made": updates_made,
+            "violations_created": len(violations_created),
+            "violations": violations_created,
+            "reviewed_by": staff_user,
+            "reviewed_at": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error applying analysis updates: {e}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "success": False,
+            "error": str(e)
+        }
+    finally:
+        session.close()
+
+
+def get_analysis_for_review(ocr_record_id: int) -> Dict[str, Any]:
+    """
+    Get analysis data formatted for staff review.
+    
+    Args:
+        ocr_record_id: ID of the CRAResponseOCR record
+    
+    Returns:
+        Dictionary with analysis data ready for review
+    """
+    session = SessionLocal()
+    try:
+        ocr_record = session.query(CRAResponseOCR).filter(
+            CRAResponseOCR.id == ocr_record_id
+        ).first()
+        
+        if not ocr_record:
+            return {
+                "success": False,
+                "error": f"OCR record {ocr_record_id} not found"
+            }
+        
+        structured_data = ocr_record.structured_data or {}
+        extracted_data = structured_data.get("extracted_data", {})
+        matched_items = structured_data.get("matched_items", [])
+        reinsertion_violations = structured_data.get("reinsertion_violations", [])
+        
+        return {
+            "success": True,
+            "ocr_record_id": ocr_record_id,
+            "client_id": ocr_record.client_id,
+            "bureau": ocr_record.bureau,
+            "response_date": ocr_record.response_date.isoformat() if ocr_record.response_date else None,
+            "confidence_score": ocr_record.ocr_confidence,
+            "reviewed": ocr_record.reviewed,
+            "reviewed_by": ocr_record.reviewed_by,
+            "reviewed_at": ocr_record.reviewed_at.isoformat() if ocr_record.reviewed_at else None,
+            "frivolous_claim": ocr_record.frivolous_claim,
+            "investigation_summary": extracted_data.get("investigation_summary"),
+            "matched_items": matched_items,
+            "reinsertion_violations": reinsertion_violations,
+            "summary_counts": extracted_data.get("summary_counts", {}),
+            "raw_text": ocr_record.raw_text[:2000] if ocr_record.raw_text else None
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting analysis for review: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+    finally:
+        session.close()
