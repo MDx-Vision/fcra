@@ -198,6 +198,19 @@
                 {% endif %}
             </div>
             
+            <div class="card full-width" id="settlementSection">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Settlement Tracking</span>
+                    <div id="settlementActions"></div>
+                </div>
+                <div id="settlementContent">
+                    <div style="text-align: center; padding: 30px; color: #64748b;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">💰</div>
+                        <div>Loading settlement data...</div>
+                    </div>
+                </div>
+            </div>
+            
             <div class="card full-width">
                 <div class="card-title">Violations ({{ violations|length }})</div>
                 {% if violations %}
@@ -365,6 +378,319 @@
         }
         
         document.addEventListener('DOMContentLoaded', loadAdminTimeline);
+        
+        const caseId = {{ analysis.id if analysis else 0 }};
+        const analysisId = {{ analysis.id if analysis else 0 }};
+        
+        async function loadSettlementData() {
+            if (!caseId) {
+                document.getElementById('settlementContent').innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: #64748b;">No case data available</div>
+                `;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/case/${caseId}/settlement`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.exists) {
+                        renderExistingSettlement(data.settlement);
+                    } else {
+                        renderCreateSettlement(data.can_create, data.suggested_target, data.suggested_minimum);
+                    }
+                } else {
+                    document.getElementById('settlementContent').innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: #ef4444;">Error loading settlement data</div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading settlement:', error);
+                document.getElementById('settlementContent').innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: #ef4444;">Error loading settlement data</div>
+                `;
+            }
+        }
+        
+        function renderCreateSettlement(canCreate, suggestedTarget, suggestedMinimum) {
+            const actionsHtml = canCreate ? `
+                <button class="btn btn-primary" onclick="showCreateSettlementForm()">
+                    Create Settlement Demand
+                </button>
+            ` : '';
+            
+            document.getElementById('settlementActions').innerHTML = actionsHtml;
+            
+            if (canCreate) {
+                document.getElementById('settlementContent').innerHTML = `
+                    <div id="createSettlementForm" style="display: none; padding: 20px; background: #f8fafc; border-radius: 12px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 5px;">Target Amount</label>
+                                <input type="number" id="settlementTarget" value="${suggestedTarget || 0}" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 5px;">Minimum Acceptable</label>
+                                <input type="number" id="settlementMinimum" value="${suggestedMinimum || 0}" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 5px;">Initial Demand (optional)</label>
+                            <input type="number" id="settlementDemand" placeholder="Leave blank to use target amount" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 5px;">Notes</label>
+                            <textarea id="settlementNotes" rows="2" placeholder="Settlement notes..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;"></textarea>
+                        </div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+                            <button class="btn btn-secondary" onclick="hideCreateSettlementForm()">Cancel</button>
+                            <button class="btn btn-primary" onclick="createSettlement()">Create Settlement</button>
+                        </div>
+                    </div>
+                    <div id="noSettlementMsg" style="text-align: center; padding: 30px;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">💼</div>
+                        <div style="color: #1a1a2e; font-weight: 500; margin-bottom: 5px;">No Settlement Created Yet</div>
+                        <div style="color: #64748b; font-size: 13px;">Case qualifies for settlement. Click "Create Settlement Demand" to begin negotiations.</div>
+                        <div style="margin-top: 15px;">
+                            <span style="background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;">Suggested Target: $${parseFloat(suggestedTarget || 0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('settlementContent').innerHTML = `
+                    <div style="text-align: center; padding: 30px;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+                        <div style="color: #1a1a2e; font-weight: 500; margin-bottom: 5px;">Case Not Ready for Settlement</div>
+                        <div style="color: #64748b; font-size: 13px;">Case score must be 6 or higher to create a settlement demand.</div>
+                    </div>
+                `;
+            }
+        }
+        
+        function showCreateSettlementForm() {
+            document.getElementById('createSettlementForm').style.display = 'block';
+            document.getElementById('noSettlementMsg').style.display = 'none';
+        }
+        
+        function hideCreateSettlementForm() {
+            document.getElementById('createSettlementForm').style.display = 'none';
+            document.getElementById('noSettlementMsg').style.display = 'block';
+        }
+        
+        async function createSettlement() {
+            const target = parseFloat(document.getElementById('settlementTarget').value) || 0;
+            const minimum = parseFloat(document.getElementById('settlementMinimum').value) || 0;
+            const demand = parseFloat(document.getElementById('settlementDemand').value) || target;
+            const notes = document.getElementById('settlementNotes').value;
+            
+            try {
+                const response = await fetch('/api/settlements', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        case_id: caseId,
+                        target_amount: target,
+                        minimum_acceptable: minimum,
+                        initial_demand: demand,
+                        notes: notes
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert('Settlement created successfully!');
+                    loadSettlementData();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to create settlement'));
+                }
+            } catch (error) {
+                console.error('Error creating settlement:', error);
+                alert('Error creating settlement');
+            }
+        }
+        
+        function renderExistingSettlement(settlement) {
+            const statusColors = {
+                'pending': '#f1f5f9',
+                'demand_sent': '#dbeafe',
+                'negotiating': '#fef3c7',
+                'accepted': '#dcfce7',
+                'rejected': '#fee2e2',
+                'litigated': '#ede9fe'
+            };
+            
+            const statusTextColors = {
+                'pending': '#64748b',
+                'demand_sent': '#1e40af',
+                'negotiating': '#92400e',
+                'accepted': '#166534',
+                'rejected': '#991b1b',
+                'litigated': '#5b21b6'
+            };
+            
+            const s = settlement;
+            const statusBg = statusColors[s.status] || statusColors.pending;
+            const statusText = statusTextColors[s.status] || statusTextColors.pending;
+            
+            document.getElementById('settlementActions').innerHTML = `
+                <a href="/dashboard/settlements" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;">View All Settlements</a>
+            `;
+            
+            let offersHtml = '';
+            if (s.initial_demand) {
+                offersHtml += `
+                    <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; margin-right: 15px;"></div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 12px; color: #64748b;">Initial Demand</div>
+                            <div style="font-weight: 600;">$${parseFloat(s.initial_demand).toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            if (s.counter_offer_1) {
+                offersHtml += `
+                    <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; margin-right: 15px;"></div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 12px; color: #64748b;">Counter Offer #1</div>
+                            <div style="font-weight: 600;">$${parseFloat(s.counter_offer_1).toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            if (s.counter_offer_2) {
+                offersHtml += `
+                    <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f1f5f9;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; margin-right: 15px;"></div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 12px; color: #64748b;">Counter Offer #2</div>
+                            <div style="font-weight: 600;">$${parseFloat(s.counter_offer_2).toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            if (s.final_amount) {
+                offersHtml += `
+                    <div style="display: flex; align-items: center; padding: 10px 0;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: #22c55e; margin-right: 15px;"></div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 12px; color: #64748b;">Final Settlement</div>
+                            <div style="font-weight: 600; color: #22c55e;">$${parseFloat(s.final_amount).toLocaleString()}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('settlementContent').innerHTML = `
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                    <div>
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <div style="flex: 1; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                                <div style="font-size: 12px; color: #64748b;">Target Amount</div>
+                                <div style="font-size: 20px; font-weight: 700; color: #1a1a2e;">$${parseFloat(s.target_amount || 0).toLocaleString()}</div>
+                            </div>
+                            <div style="flex: 1; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                                <div style="font-size: 12px; color: #64748b;">Status</div>
+                                <div style="margin-top: 5px;">
+                                    <span style="background: ${statusBg}; color: ${statusText}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">${s.status.replace('_', ' ').toUpperCase()}</span>
+                                </div>
+                            </div>
+                            ${s.contingency_earned ? `
+                            <div style="flex: 1; padding: 15px; background: linear-gradient(135deg, #319795, #84cc16); border-radius: 10px; color: white;">
+                                <div style="font-size: 12px; opacity: 0.9;">Contingency Earned</div>
+                                <div style="font-size: 20px; font-weight: 700;">$${parseFloat(s.contingency_earned).toLocaleString()}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div style="background: #f8fafc; border-radius: 10px; padding: 15px;">
+                            <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 10px;">Offers Timeline</div>
+                            ${offersHtml || '<div style="color: #64748b; font-size: 13px;">No offers recorded yet</div>'}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #f8fafc; border-radius: 10px; padding: 15px;">
+                        <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 15px;">Quick Actions</div>
+                        ${s.status !== 'accepted' && s.status !== 'rejected' && s.status !== 'litigated' ? `
+                            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="quickAddOffer(${s.id})">Add Counter-Offer</button>
+                            <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="quickMarkSettled(${s.id})">Mark as Settled</button>
+                        ` : ''}
+                        ${s.status === 'accepted' && !s.payment_received ? `
+                            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="quickRecordPayment(${s.id})">Record Payment</button>
+                        ` : ''}
+                        ${s.payment_received ? `
+                            <div style="text-align: center; padding: 10px; background: #dcfce7; border-radius: 8px; color: #166534; font-weight: 500;">
+                                ✓ Payment Received
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function quickAddOffer(settlementId) {
+            const amount = prompt('Enter counter-offer amount:');
+            if (!amount) return;
+            
+            fetch(`/api/settlements/${settlementId}/offer`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount: parseFloat(amount) })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Counter-offer recorded!');
+                    loadSettlementData();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to add offer'));
+                }
+            });
+        }
+        
+        function quickMarkSettled(settlementId) {
+            const amount = prompt('Enter final settlement amount:');
+            if (!amount) return;
+            
+            fetch(`/api/settlements/${settlementId}/settle`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ final_amount: parseFloat(amount) })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Settlement confirmed! Contingency: $${parseFloat(data.contingency_earned || 0).toLocaleString()}`);
+                    loadSettlementData();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to settle'));
+                }
+            });
+        }
+        
+        function quickRecordPayment(settlementId) {
+            const amount = prompt('Enter payment amount received:');
+            if (!amount) return;
+            
+            fetch(`/api/settlements/${settlementId}/payment`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ amount: parseFloat(amount) })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Payment recorded!');
+                    loadSettlementData();
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to record payment'));
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadSettlementData);
     </script>
 </body>
 </html>

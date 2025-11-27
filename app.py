@@ -10935,6 +10935,639 @@ def get_calendar_stats():
         db.close()
 
 
+# ==============================================================================
+# SETTLEMENT TRACKING MODULE
+# ==============================================================================
+
+@app.route('/dashboard/settlements')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def dashboard_settlements():
+    """Settlement tracking dashboard with pipeline view"""
+    db = get_db()
+    try:
+        settlements = db.query(Settlement).order_by(Settlement.created_at.desc()).all()
+        
+        status_counts = {
+            'pending': 0,
+            'demand_sent': 0,
+            'negotiating': 0,
+            'accepted': 0,
+            'rejected': 0,
+            'litigated': 0
+        }
+        
+        total_settled = 0
+        total_pending_value = 0
+        total_contingency = 0
+        settlement_amounts = []
+        
+        settlement_list = []
+        for s in settlements:
+            case = db.query(Case).filter_by(id=s.case_id).first()
+            client = None
+            if case:
+                client = db.query(Client).filter_by(id=case.client_id).first()
+            
+            status = s.status or 'pending'
+            if status in status_counts:
+                status_counts[status] += 1
+            
+            if status == 'accepted' and s.final_amount:
+                total_settled += s.final_amount
+                settlement_amounts.append(s.final_amount)
+            elif status in ['pending', 'demand_sent', 'negotiating']:
+                total_pending_value += s.target_amount or 0
+            
+            if s.contingency_earned:
+                total_contingency += s.contingency_earned
+            
+            settlement_list.append({
+                'id': s.id,
+                'case_id': s.case_id,
+                'client_name': client.name if client else 'Unknown',
+                'client_id': client.id if client else None,
+                'target_amount': s.target_amount or 0,
+                'minimum_acceptable': s.minimum_acceptable or 0,
+                'initial_demand': s.initial_demand or 0,
+                'counter_offer_1': s.counter_offer_1,
+                'counter_offer_2': s.counter_offer_2,
+                'final_amount': s.final_amount,
+                'status': status,
+                'settled_at': s.settled_at,
+                'payment_received': s.payment_received,
+                'payment_amount': s.payment_amount,
+                'contingency_earned': s.contingency_earned,
+                'created_at': s.created_at
+            })
+        
+        avg_settlement = sum(settlement_amounts) / len(settlement_amounts) if settlement_amounts else 0
+        
+        stats = {
+            'total_settled': total_settled,
+            'total_pending_value': total_pending_value,
+            'avg_settlement': avg_settlement,
+            'total_contingency': total_contingency,
+            'count_settled': len(settlement_amounts),
+            'count_pending': status_counts['pending'] + status_counts['demand_sent'] + status_counts['negotiating']
+        }
+        
+        return render_template('settlements.html',
+            settlements=settlement_list,
+            status_counts=status_counts,
+            stats=stats
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_list_settlements():
+    """List all settlements with optional filters"""
+    db = get_db()
+    try:
+        query = db.query(Settlement)
+        
+        status = request.args.get('status')
+        if status:
+            query = query.filter(Settlement.status == status)
+        
+        client_id = request.args.get('client_id')
+        if client_id:
+            case_ids = [c.id for c in db.query(Case).filter_by(client_id=client_id).all()]
+            query = query.filter(Settlement.case_id.in_(case_ids))
+        
+        date_from = request.args.get('date_from')
+        if date_from:
+            query = query.filter(Settlement.created_at >= datetime.strptime(date_from, '%Y-%m-%d'))
+        
+        date_to = request.args.get('date_to')
+        if date_to:
+            query = query.filter(Settlement.created_at <= datetime.strptime(date_to, '%Y-%m-%d'))
+        
+        settlements = query.order_by(Settlement.created_at.desc()).all()
+        
+        result = []
+        for s in settlements:
+            case = db.query(Case).filter_by(id=s.case_id).first()
+            client = None
+            if case:
+                client = db.query(Client).filter_by(id=case.client_id).first()
+            
+            result.append({
+                'id': s.id,
+                'case_id': s.case_id,
+                'client_name': client.name if client else 'Unknown',
+                'client_id': client.id if client else None,
+                'target_amount': s.target_amount,
+                'minimum_acceptable': s.minimum_acceptable,
+                'initial_demand': s.initial_demand,
+                'initial_demand_date': s.initial_demand_date.isoformat() if s.initial_demand_date else None,
+                'counter_offer_1': s.counter_offer_1,
+                'counter_offer_1_date': s.counter_offer_1_date.isoformat() if s.counter_offer_1_date else None,
+                'counter_offer_2': s.counter_offer_2,
+                'counter_offer_2_date': s.counter_offer_2_date.isoformat() if s.counter_offer_2_date else None,
+                'final_amount': s.final_amount,
+                'status': s.status,
+                'settled_at': s.settled_at.isoformat() if s.settled_at else None,
+                'settlement_notes': s.settlement_notes,
+                'payment_received': s.payment_received,
+                'payment_amount': s.payment_amount,
+                'payment_date': s.payment_date.isoformat() if s.payment_date else None,
+                'contingency_earned': s.contingency_earned,
+                'transunion_target': s.transunion_target,
+                'experian_target': s.experian_target,
+                'equifax_target': s.equifax_target,
+                'created_at': s.created_at.isoformat() if s.created_at else None
+            })
+        
+        return jsonify({'success': True, 'settlements': result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_create_settlement():
+    """Create a new settlement from a case"""
+    db = get_db()
+    try:
+        data = request.json
+        case_id = data.get('case_id')
+        
+        if not case_id:
+            return jsonify({'success': False, 'error': 'case_id is required'}), 400
+        
+        case = db.query(Case).filter_by(id=case_id).first()
+        if not case:
+            return jsonify({'success': False, 'error': 'Case not found'}), 404
+        
+        existing = db.query(Settlement).filter_by(case_id=case_id).first()
+        if existing:
+            return jsonify({'success': False, 'error': 'Settlement already exists for this case', 'settlement_id': existing.id}), 400
+        
+        damages = None
+        if case.analysis_id:
+            damages = db.query(Damages).filter_by(analysis_id=case.analysis_id).first()
+        
+        target_amount = data.get('target_amount') or (damages.settlement_target if damages else 0)
+        minimum_acceptable = data.get('minimum_acceptable') or (damages.minimum_acceptable if damages else 0)
+        
+        settlement = Settlement(
+            case_id=case_id,
+            target_amount=target_amount,
+            minimum_acceptable=minimum_acceptable,
+            transunion_target=data.get('transunion_target', 0),
+            experian_target=data.get('experian_target', 0),
+            equifax_target=data.get('equifax_target', 0),
+            status='pending',
+            initial_demand=data.get('initial_demand', target_amount),
+            initial_demand_date=datetime.utcnow() if data.get('initial_demand') else None,
+            settlement_notes=data.get('notes')
+        )
+        
+        db.add(settlement)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'settlement_id': settlement.id,
+            'message': 'Settlement created successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements/<int:settlement_id>', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_get_settlement(settlement_id):
+    """Get settlement details"""
+    db = get_db()
+    try:
+        s = db.query(Settlement).filter_by(id=settlement_id).first()
+        if not s:
+            return jsonify({'success': False, 'error': 'Settlement not found'}), 404
+        
+        case = db.query(Case).filter_by(id=s.case_id).first()
+        client = None
+        analysis = None
+        damages = None
+        score = None
+        
+        if case:
+            client = db.query(Client).filter_by(id=case.client_id).first()
+            if case.analysis_id:
+                analysis = db.query(Analysis).filter_by(id=case.analysis_id).first()
+                damages = db.query(Damages).filter_by(analysis_id=case.analysis_id).first()
+                score = db.query(CaseScore).filter_by(analysis_id=case.analysis_id).first()
+        
+        return jsonify({
+            'success': True,
+            'settlement': {
+                'id': s.id,
+                'case_id': s.case_id,
+                'client_name': client.name if client else 'Unknown',
+                'client_id': client.id if client else None,
+                'target_amount': s.target_amount,
+                'minimum_acceptable': s.minimum_acceptable,
+                'initial_demand': s.initial_demand,
+                'initial_demand_date': s.initial_demand_date.isoformat() if s.initial_demand_date else None,
+                'counter_offer_1': s.counter_offer_1,
+                'counter_offer_1_date': s.counter_offer_1_date.isoformat() if s.counter_offer_1_date else None,
+                'counter_offer_2': s.counter_offer_2,
+                'counter_offer_2_date': s.counter_offer_2_date.isoformat() if s.counter_offer_2_date else None,
+                'final_amount': s.final_amount,
+                'status': s.status,
+                'settled_at': s.settled_at.isoformat() if s.settled_at else None,
+                'settlement_notes': s.settlement_notes,
+                'payment_received': s.payment_received,
+                'payment_amount': s.payment_amount,
+                'payment_date': s.payment_date.isoformat() if s.payment_date else None,
+                'contingency_earned': s.contingency_earned,
+                'transunion_target': s.transunion_target,
+                'experian_target': s.experian_target,
+                'equifax_target': s.equifax_target,
+                'created_at': s.created_at.isoformat() if s.created_at else None,
+                'updated_at': s.updated_at.isoformat() if s.updated_at else None
+            },
+            'case': {
+                'id': case.id if case else None,
+                'case_number': case.case_number if case else None,
+                'contingency_percent': case.contingency_percent if case else 0
+            } if case else None,
+            'damages': {
+                'total_exposure': damages.total_exposure if damages else 0,
+                'settlement_target': damages.settlement_target if damages else 0,
+                'minimum_acceptable': damages.minimum_acceptable if damages else 0
+            } if damages else None,
+            'score': {
+                'total_score': score.total_score if score else 0,
+                'case_strength': score.case_strength if score else None,
+                'settlement_probability': score.settlement_probability if score else 0
+            } if score else None
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements/<int:settlement_id>', methods=['PUT'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_update_settlement(settlement_id):
+    """Update settlement details"""
+    db = get_db()
+    try:
+        s = db.query(Settlement).filter_by(id=settlement_id).first()
+        if not s:
+            return jsonify({'success': False, 'error': 'Settlement not found'}), 404
+        
+        data = request.json
+        
+        updatable = ['target_amount', 'minimum_acceptable', 'initial_demand', 'status',
+                     'settlement_notes', 'transunion_target', 'experian_target', 'equifax_target']
+        
+        for field in updatable:
+            if field in data:
+                setattr(s, field, data[field])
+        
+        if 'initial_demand' in data and data['initial_demand'] and not s.initial_demand_date:
+            s.initial_demand_date = datetime.utcnow()
+        
+        if 'status' in data and data['status'] == 'demand_sent' and not s.initial_demand_date:
+            s.initial_demand_date = datetime.utcnow()
+        
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Settlement updated'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements/<int:settlement_id>/offer', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_add_counter_offer(settlement_id):
+    """Add a counter-offer to settlement"""
+    db = get_db()
+    try:
+        s = db.query(Settlement).filter_by(id=settlement_id).first()
+        if not s:
+            return jsonify({'success': False, 'error': 'Settlement not found'}), 404
+        
+        data = request.json
+        amount = data.get('amount')
+        
+        if not amount:
+            return jsonify({'success': False, 'error': 'Offer amount is required'}), 400
+        
+        if not s.counter_offer_1:
+            s.counter_offer_1 = amount
+            s.counter_offer_1_date = datetime.utcnow()
+            s.status = 'negotiating'
+            offer_num = 1
+        elif not s.counter_offer_2:
+            s.counter_offer_2 = amount
+            s.counter_offer_2_date = datetime.utcnow()
+            offer_num = 2
+        else:
+            return jsonify({'success': False, 'error': 'Maximum of 2 counter-offers allowed. Use settle endpoint to finalize.'}), 400
+        
+        if data.get('notes'):
+            current_notes = s.settlement_notes or ''
+            s.settlement_notes = f"[Counter-Offer {offer_num}: ${amount:,.2f}] {data.get('notes')}\n{current_notes}"
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Counter-offer {offer_num} recorded',
+            'offer_number': offer_num,
+            'amount': amount
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements/<int:settlement_id>/settle', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_mark_settled(settlement_id):
+    """Mark settlement as accepted/settled with final amount"""
+    db = get_db()
+    try:
+        s = db.query(Settlement).filter_by(id=settlement_id).first()
+        if not s:
+            return jsonify({'success': False, 'error': 'Settlement not found'}), 404
+        
+        data = request.json
+        final_amount = data.get('final_amount')
+        
+        if not final_amount:
+            return jsonify({'success': False, 'error': 'Final settlement amount is required'}), 400
+        
+        s.final_amount = final_amount
+        s.status = 'accepted'
+        s.settled_at = datetime.utcnow()
+        
+        if data.get('notes'):
+            current_notes = s.settlement_notes or ''
+            s.settlement_notes = f"[SETTLED ${final_amount:,.2f}] {data.get('notes')}\n{current_notes}"
+        
+        case = db.query(Case).filter_by(id=s.case_id).first()
+        if case:
+            contingency_percent = case.contingency_percent or 0
+            s.contingency_earned = final_amount * (contingency_percent / 100)
+            case.status = 'settled'
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Settlement marked as accepted',
+            'final_amount': final_amount,
+            'contingency_earned': s.contingency_earned
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements/<int:settlement_id>/reject', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_mark_rejected(settlement_id):
+    """Mark settlement as rejected"""
+    db = get_db()
+    try:
+        s = db.query(Settlement).filter_by(id=settlement_id).first()
+        if not s:
+            return jsonify({'success': False, 'error': 'Settlement not found'}), 404
+        
+        data = request.json
+        
+        s.status = 'rejected'
+        
+        if data.get('notes'):
+            current_notes = s.settlement_notes or ''
+            s.settlement_notes = f"[REJECTED] {data.get('notes')}\n{current_notes}"
+        
+        if data.get('move_to_litigation'):
+            s.status = 'litigated'
+        
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Settlement marked as rejected'})
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements/<int:settlement_id>/payment', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_record_payment(settlement_id):
+    """Record payment received for settlement"""
+    db = get_db()
+    try:
+        s = db.query(Settlement).filter_by(id=settlement_id).first()
+        if not s:
+            return jsonify({'success': False, 'error': 'Settlement not found'}), 404
+        
+        data = request.json
+        payment_amount = data.get('amount')
+        
+        if not payment_amount:
+            return jsonify({'success': False, 'error': 'Payment amount is required'}), 400
+        
+        s.payment_received = True
+        s.payment_amount = payment_amount
+        s.payment_date = datetime.utcnow()
+        
+        case = db.query(Case).filter_by(id=s.case_id).first()
+        if case:
+            contingency_percent = case.contingency_percent or 0
+            s.contingency_earned = payment_amount * (contingency_percent / 100)
+        
+        if data.get('notes'):
+            current_notes = s.settlement_notes or ''
+            s.settlement_notes = f"[PAYMENT RECEIVED ${payment_amount:,.2f}] {data.get('notes')}\n{current_notes}"
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Payment recorded',
+            'payment_amount': payment_amount,
+            'contingency_earned': s.contingency_earned
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/settlements/stats', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_settlement_stats():
+    """Get settlement statistics for analytics"""
+    db = get_db()
+    try:
+        from datetime import date, timedelta
+        from sqlalchemy import func
+        
+        today = date.today()
+        first_of_month = today.replace(day=1)
+        first_of_last_month = (first_of_month - timedelta(days=1)).replace(day=1)
+        
+        all_settlements = db.query(Settlement).all()
+        
+        total_settled = 0
+        total_pending = 0
+        total_contingency = 0
+        settled_amounts = []
+        this_month_settled = 0
+        last_month_settled = 0
+        
+        status_counts = {
+            'pending': 0,
+            'demand_sent': 0,
+            'negotiating': 0,
+            'accepted': 0,
+            'rejected': 0,
+            'litigated': 0
+        }
+        
+        for s in all_settlements:
+            status = s.status or 'pending'
+            if status in status_counts:
+                status_counts[status] += 1
+            
+            if status == 'accepted':
+                if s.final_amount:
+                    total_settled += s.final_amount
+                    settled_amounts.append(s.final_amount)
+                    
+                    if s.settled_at and s.settled_at.date() >= first_of_month:
+                        this_month_settled += s.final_amount
+                    elif s.settled_at and s.settled_at.date() >= first_of_last_month and s.settled_at.date() < first_of_month:
+                        last_month_settled += s.final_amount
+            else:
+                total_pending += s.target_amount or 0
+            
+            if s.contingency_earned:
+                total_contingency += s.contingency_earned
+        
+        total_count = len(all_settlements)
+        accepted_count = status_counts['accepted']
+        success_rate = (accepted_count / total_count * 100) if total_count > 0 else 0
+        avg_settlement = sum(settled_amounts) / len(settled_amounts) if settled_amounts else 0
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total_settled': total_settled,
+                'total_pending_value': total_pending,
+                'total_contingency': total_contingency,
+                'avg_settlement': avg_settlement,
+                'success_rate': round(success_rate, 1),
+                'total_count': total_count,
+                'accepted_count': accepted_count,
+                'status_counts': status_counts,
+                'this_month_settled': this_month_settled,
+                'last_month_settled': last_month_settled,
+                'month_change': this_month_settled - last_month_settled
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/case/<int:case_id>/settlement', methods=['GET'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_get_case_settlement(case_id):
+    """Get settlement for a specific case"""
+    db = get_db()
+    try:
+        settlement = db.query(Settlement).filter_by(case_id=case_id).first()
+        
+        if not settlement:
+            case = db.query(Case).filter_by(id=case_id).first()
+            damages = None
+            score = None
+            
+            if case and case.analysis_id:
+                damages = db.query(Damages).filter_by(analysis_id=case.analysis_id).first()
+                score = db.query(CaseScore).filter_by(analysis_id=case.analysis_id).first()
+            
+            return jsonify({
+                'success': True,
+                'exists': False,
+                'can_create': score.total_score >= 6 if score else False,
+                'suggested_target': damages.settlement_target if damages else 0,
+                'suggested_minimum': damages.minimum_acceptable if damages else 0
+            })
+        
+        return jsonify({
+            'success': True,
+            'exists': True,
+            'settlement': {
+                'id': settlement.id,
+                'status': settlement.status,
+                'target_amount': settlement.target_amount,
+                'initial_demand': settlement.initial_demand,
+                'counter_offer_1': settlement.counter_offer_1,
+                'counter_offer_2': settlement.counter_offer_2,
+                'final_amount': settlement.final_amount,
+                'settled_at': settlement.settled_at.isoformat() if settlement.settled_at else None,
+                'payment_received': settlement.payment_received,
+                'contingency_earned': settlement.contingency_earned
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
 @app.errorhandler(500)
 def handle_500_error(error):

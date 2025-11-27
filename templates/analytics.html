@@ -710,6 +710,86 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Settlement Analytics -->
+        <div class="dashboard-section" id="settlementAnalytics">
+            <div class="section-header">
+                <h2 class="section-title">💰 Settlement Analytics</h2>
+                <a href="/dashboard/settlements" style="color: #84cc16; text-decoration: none; font-size: 14px; font-weight: 500;">View All Settlements →</a>
+            </div>
+            <div class="stats-grid" id="settlementStatsGrid">
+                <div class="stat-box" style="background: linear-gradient(135deg, #319795, #84cc16); color: white;">
+                    <div class="stat-box-value" id="statTotalSettled" style="color: white;">$0</div>
+                    <div class="stat-box-label" style="color: rgba(255,255,255,0.8);">Total Settled</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value" id="statAvgSettlement">$0</div>
+                    <div class="stat-box-label">Avg Settlement</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value" id="statContingency">$0</div>
+                    <div class="stat-box-label">Contingency Earned</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-top: 20px;" id="settlementPipeline">
+                <div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countPending">0</div>
+                    <div style="font-size: 11px; color: #64748b;">Pending</div>
+                </div>
+                <div style="background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countDemandSent">0</div>
+                    <div style="font-size: 11px; color: #3b82f6;">Demand Sent</div>
+                </div>
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countNegotiating">0</div>
+                    <div style="font-size: 11px; color: #f59e0b;">Negotiating</div>
+                </div>
+                <div style="background: #dcfce7; border-left: 4px solid #22c55e; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countAccepted">0</div>
+                    <div style="font-size: 11px; color: #22c55e;">Accepted</div>
+                </div>
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countRejected">0</div>
+                    <div style="font-size: 11px; color: #ef4444;">Rejected</div>
+                </div>
+                <div style="background: #ede9fe; border-left: 4px solid #8b5cf6; border-radius: 10px; padding: 15px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countLitigated">0</div>
+                    <div style="font-size: 11px; color: #8b5cf6;">Litigated</div>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div style="background: #f8fafc; border-radius: 12px; padding: 20px;">
+                    <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 15px;">Settlement Metrics</div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b;">Success Rate</span>
+                        <span style="font-weight: 600; color: #22c55e;" id="statSuccessRate">0%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b;">Total Cases</span>
+                        <span style="font-weight: 600;" id="statTotalCount">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+                        <span style="color: #64748b;">Pipeline Value</span>
+                        <span style="font-weight: 600;" id="statPipelineValue">$0</span>
+                    </div>
+                </div>
+                <div style="background: #f8fafc; border-radius: 12px; padding: 20px;">
+                    <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 15px;">Month-over-Month</div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b;">This Month</span>
+                        <span style="font-weight: 600;" id="statThisMonth">$0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+                        <span style="color: #64748b;">Last Month</span>
+                        <span style="font-weight: 600;" id="statLastMonth">$0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding: 10px 0;">
+                        <span style="color: #64748b;">Change</span>
+                        <span style="font-weight: 600;" id="statMonthChange">$0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     
     <script>
@@ -848,6 +928,44 @@
                 cutout: '60%'
             }
         });
+        
+        async function loadSettlementAnalytics() {
+            try {
+                const response = await fetch('/api/settlements/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    
+                    document.getElementById('statTotalSettled').textContent = '$' + parseFloat(stats.total_settled || 0).toLocaleString();
+                    document.getElementById('statAvgSettlement').textContent = '$' + parseFloat(stats.avg_settlement || 0).toLocaleString();
+                    document.getElementById('statContingency').textContent = '$' + parseFloat(stats.total_contingency || 0).toLocaleString();
+                    
+                    document.getElementById('countPending').textContent = stats.status_counts.pending || 0;
+                    document.getElementById('countDemandSent').textContent = stats.status_counts.demand_sent || 0;
+                    document.getElementById('countNegotiating').textContent = stats.status_counts.negotiating || 0;
+                    document.getElementById('countAccepted').textContent = stats.status_counts.accepted || 0;
+                    document.getElementById('countRejected').textContent = stats.status_counts.rejected || 0;
+                    document.getElementById('countLitigated').textContent = stats.status_counts.litigated || 0;
+                    
+                    document.getElementById('statSuccessRate').textContent = stats.success_rate + '%';
+                    document.getElementById('statTotalCount').textContent = stats.total_count || 0;
+                    document.getElementById('statPipelineValue').textContent = '$' + parseFloat(stats.total_pending_value || 0).toLocaleString();
+                    
+                    document.getElementById('statThisMonth').textContent = '$' + parseFloat(stats.this_month_settled || 0).toLocaleString();
+                    document.getElementById('statLastMonth').textContent = '$' + parseFloat(stats.last_month_settled || 0).toLocaleString();
+                    
+                    const monthChange = stats.month_change || 0;
+                    const changeElement = document.getElementById('statMonthChange');
+                    changeElement.textContent = (monthChange >= 0 ? '+' : '') + '$' + parseFloat(monthChange).toLocaleString();
+                    changeElement.style.color = monthChange >= 0 ? '#22c55e' : '#ef4444';
+                }
+            } catch (error) {
+                console.error('Error loading settlement analytics:', error);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadSettlementAnalytics);
     </script>
 </body>
 </html>
