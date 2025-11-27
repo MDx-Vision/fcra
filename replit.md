@@ -9,98 +9,46 @@ The Brightpath Ascend FCRA Platform is a production-ready system designed for co
 - Building full litigation platform (not just credit repair)
 - Target: 50 clients waiting, $600K-900K year-1 revenue with 3-tier pricing model
 - Prefers analytical, data-driven decisions with clear case metrics
-- **Always provide testing URLs** when adding new features or suggesting changes so user can view and test
+- Always provide testing URLs when adding new features or suggesting changes so user can view and test
 
 ## System Architecture
 The platform is built on a Flask web framework and employs a two-stage, section-based analysis approach to overcome token limits and enhance analytical depth.
 
 ### UI/UX Decisions
 - **Admin Dashboard**: Professional case management interface at `/dashboard` for pipeline visualization, client lists, and case details.
-- **Client Portal**: Branded client-facing portal at `/portal/<token>` for case status.
+- **Client Portal**: Branded client-facing portal at `/portal/<token>` for case status and self-service features.
 - **Review Checkpoints**: Dedicated interfaces (`/analysis/<id>/review`) for manual review and editing of AI-extracted data.
-- **PDF Generation**: Client-facing documents (action plans, case summaries) use Brightpath Ascend branding with teal-to-lime gradient headers. External correspondence (freeze letters, validation letters to bureaus/creditors) remain unbranded for professional consumer letters.
+- **PDF Generation**: Client-facing documents use Brightpath Ascend branding; external correspondence remains unbranded.
 
 ### Technical Implementations
-- **Two-Stage Analysis**:
-    - **Stage 1 (Section-Based Analysis)**: Credit reports are split into sections. Anthropic Claude analyzes each section, extracting violations, assessing standing, and calculating damages. Results are intelligently merged.
-    - **Stage 2 (Comprehensive Document Generation)**: Claude generates a forensic litigation package, including standing analysis, violation analysis, willfulness assessment, settlement analysis, and dispute letters.
-- **Automated Data Extraction**: Claude outputs structured JSON data, which is automatically parsed to populate the database.
-- **PDF Generation**: Modular PDF generators create detailed reports and letters.
-- **Security**: Password encryption using Fernet symmetric encryption.
-- **Rapid Legal Protection Protocol (RLPP)**: A strategy for tactical bundling of violations and escalation of dispute rounds.
-- **Automation Tools Dashboard**: A 6-tab admin interface for services like Freeze Letters, Validation Letters, Deadlines, Settlement Calculator, Certified Mail, and Notarization.
-- **Action Plan Generator**: Creates branded action plan PDFs with case overviews, deadlines, task checklists, and cost estimates.
-- **Mobile Document Scanner** (`/scanner`): Multi-page document scanning with:
-  - Camera capture or file upload
-  - Multi-page queue with visual "Add More Pages" prompt
-  - Automatic PDF generation from images
-  - Claude Vision OCR text extraction (~$0.01-0.03/page)
-  - CRA Response round selection (R1, R2, R3, R4) for dispute tracking
-  - Document types: CRA Responses, Collection Letters, Creditor Responses, Court Documents, ID, Proof of Address
-  - Note: Credit reports pulled via API integrations, not scanned
-  - **Client Portal Integration**: Scanner accessible at `/portal/<token>/scanner` - documents automatically linked to client
-  - **Admin Review Dashboard**: `/dashboard/scanned-documents` shows all scanned docs with OCR text preview
-- **E-Signature System**: Client-facing signature capture for various legal documents.
-- **Metro2 Violation Detection API**: Detects 10 types of Metro2 format violations with auto-generated dispute language and damage calculation.
-- **PWA Support**: Progressive Web App manifest and service worker for offline caching and push notifications.
-- **Email/SMS Automation**: SendGrid and Twilio-powered systems for automated client communications with configurable templates and merge tags.
-- **Document Center**: Unified document upload system with type-first selection and admin review workflow.
-- **Flexible Signup System**: Configurable fields and multi-payment options (Stripe, PayPal, etc.).
-- **Credit Score Improvement Tracker** (`/dashboard/credit-tracker`): Comprehensive score tracking and projection system with:
-  - **Quick Estimator**: Simple current score + negative count for rough projections
-  - **Detailed Calculator**: 35+ specific negative item types with accurate impact ranges based on industry research
-  - **Item Categories**: Payment History, Derogatory Marks, Public Records, Credit Utilization, Credit Inquiries, Reporting Errors, Fraud/Identity Theft, Account Status
-  - **Severity Levels**: Low, Moderate, High, Severe, Critical - each with color coding and accurate impact ranges
-  - **Per-Item Impact Data**: Different items have different score impacts (e.g., hard inquiry +5-15 pts vs collection +50-110 pts vs bankruptcy +130-240 pts)
-  - **Client Progress Tracking**: Before/after scores, items removed, timeline visualization
-  - **Score Snapshots**: Track Equifax, Experian, TransUnion scores over time with dispute round correlation
-  - **Client Portal Integration**: Score Progress tab shows clients their improvement journey with Chart.js visualizations
-  - **API Endpoints**: `/api/credit-score/item-types`, `/api/credit-score/estimate-detailed`, `/api/credit-score/projection/<id>`, `/api/credit-score/history/<id>`
-- **Client Avatar/Photo Feature**: Personalized client experience with profile photos:
-  - **Client Portal Profile Tab**: New "My Profile" tab with avatar upload/remove functionality
-  - **Header Display**: Avatar shown in portal header with initials fallback
-  - **Admin Dashboard Integration**: Client avatars displayed in case lists and client tables
-  - **Security**: File extension validation, MIME type checking, 5MB size limit, secure_filename sanitization
-  - **API Endpoints**: `POST/DELETE /api/portal/<token>/avatar`, `POST /api/client/<id>/avatar`
-  - **Storage**: Avatars stored in `static/avatars/` with timestamped unique filenames
-- **Client Password Login System** (`/portal/login`): Secure authentication for client portal:
-  - **Login Page**: Email + password authentication at `/portal/login`
-  - **Password Setup**: Clients can set/change password in My Profile tab
-  - **Forgot Password**: Email-based password reset flow via SendGrid
-  - **Session Management**: 7-day secure sessions with HttpOnly cookies
-  - **Rate Limiting**: 5 login attempts per 15 minutes per email
-  - **Token Fallback**: Direct link access (`/portal/<token>`) still works
-  - **API Endpoints**: `/portal/login`, `/portal/logout`, `/api/portal/set-password`, `/api/portal/forgot-password`, `/api/portal/reset-password`
-- **Analytics Dashboard** (`/dashboard/analytics`): Business intelligence metrics:
-  - **Client Stats**: Total clients, new this month, by status (active/paused/complete)
-  - **Revenue Tracking**: Total collected, by tier, month-over-month comparison
-  - **Case Stats**: Total analyses, by dispute round, average case score
-  - **Dispute Progress**: Items disputed/deleted/verified, success rate percentage
-  - **Timeline Charts**: Chart.js visualizations for signups and revenue trends (30 days)
-- **Calendar View** (`/dashboard/calendar`): Visual deadline management:
-  - **FullCalendar Integration**: Monthly/weekly/list views with navigation
-  - **Color-Coded Events**: CRA Response (blue), Reinvestigation (orange), Data Furnisher (green), Client Action (yellow), Legal Filing (red)
-  - **Interactive Events**: Click to view details, filter by client/bureau/type
-  - **Stats Panel**: Overdue count, due this week, active/completed deadlines
-- **Dispute Round Automation**: Automated dispute progression:
-  - **Auto-Advance Rounds**: `/api/dispute/advance-round` updates client round and creates 30-day deadlines for all 3 bureaus
-  - **Round Completion Check**: `/api/dispute/check-round-complete` detects when all bureaus have responded
-  - **Item Status Updates**: CRA responses auto-update DisputeItem statuses
-  - **Admin Notifications**: Alert when round is complete and ready to advance
-  - **Automation Tools Tab**: "Dispute Rounds" tab shows clients ready to advance with quick action buttons
-- **Visual CRA Response Timeline**: Per-client dispute journey visualization:
-  - **Client Portal Tab**: "Dispute Timeline" tab shows complete history
-  - **Admin Case Detail**: Timeline section with expanded details
-  - **Event Types**: Disputes sent (blue), items deleted (green), responses received (orange), overdue (red), milestones (gray)
-  - **Summary Stats**: Letters sent, responses, items deleted, overdue count
-  - **API Endpoint**: `/api/client/<id>/timeline` aggregates all dispute events
-- **Credit Report PDF Parser** (`services/pdf_parser_service.py`): Enhanced PDF extraction:
-  - **Multi-Library Support**: PyPDF2, pdfplumber, pypdf with fallback chain
-  - **Bureau Detection**: Auto-identifies Experian, TransUnion, Equifax
-  - **Structured Extraction**: Personal info, accounts, inquiries, collections, public records
-  - **Confidence Scoring**: 0-100% quality assessment of parsed data
-  - **Admin UI Integration**: Toggle between "Paste HTML" and "Upload PDF" in analysis form
-  - **API Endpoints**: `/api/credit-report/parse-pdf`, `/api/credit-report/parse-and-analyze`
+- **Two-Stage Analysis**: Credit reports are analyzed section-by-section (Stage 1) for violations, standing, and damages, then merged for comprehensive document generation (Stage 2).
+- **Automated Data Extraction**: Claude outputs structured JSON for database population.
+- **PDF Generation**: Modular generators for reports and letters.
+- **Security**: Password encryption using Fernet.
+- **Rapid Legal Protection Protocol (RLPP)**: Strategy for bundling violations and escalating disputes.
+- **Automation Tools Dashboard**: 6-tab interface for services like Freeze Letters, Validation Letters, and a Settlement Calculator.
+- **Action Plan Generator**: Creates branded action plan PDFs.
+- **Mobile Document Scanner** (`/scanner`): Multi-page scanning with OCR via Claude Vision, automatically linking to client cases.
+- **E-Signature System**: Client-facing signature capture.
+- **Metro2 Violation Detection API**: Identifies 10 types of Metro2 violations with auto-generated dispute language.
+- **PWA Support**: For offline caching and push notifications.
+- **Email/SMS Automation**: SendGrid and Twilio for automated client communications.
+- **Document Center**: Unified upload system with admin review.
+- **Flexible Signup System**: Configurable fields and multi-payment options.
+- **Credit Score Improvement Tracker** (`/dashboard/credit-tracker`): Comprehensive score tracking with detailed impact calculations for 35+ negative item types, client progress visualization, and API endpoints.
+- **Client Avatar/Photo Feature**: Personalized client profiles with upload/display functionality in portal and admin dashboard.
+- **Client Password Login System** (`/portal/login`): Secure email+password authentication for the client portal with password reset and rate limiting.
+- **Analytics Dashboard** (`/dashboard/analytics`): Business intelligence for client stats, revenue, case metrics, and dispute progress.
+- **Calendar View** (`/dashboard/calendar`): FullCalendar integration for visual deadline management with color-coded events.
+- **Dispute Round Automation**: Automated progression of dispute rounds, status updates, and admin notifications.
+- **Visual CRA Response Timeline**: Per-client dispute history visualization in client portal and admin dashboard.
+- **Credit Report PDF Parser**: Enhanced PDF extraction using multiple libraries, bureau detection, and structured data output with confidence scoring.
+- **Multi-User Staff Roles System** (`/staff/login`): Enterprise authentication with configurable roles (Admin, Attorney, Paralegal, Viewer) and permission-based access control.
+- **Settlement Tracking Module** (`/dashboard/settlements`): Manages case outcomes through various stages, tracks revenue, and integrates with case records.
+- **Automated CRA Response Analysis**: AI-powered processing of bureau response documents via Claude Vision OCR, item matching, and auto-status updates, including reinsertion detection.
+- **Furnisher Intelligence Database** (`/dashboard/furnishers`): Tracks creditor profiles, performance stats, and provides strategic recommendations.
+- **Statute of Limitations Calculator** (`/dashboard/sol`): Calculates FCRA deadlines with warning levels and automated alerts.
+- **CFPB Complaint Generator** (`/dashboard/cfpb`): AI-powered generation of CFPB complaint narratives using issue templates.
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
@@ -110,7 +58,7 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - Cost tracking for token usage and cache savings.
 
 ### System Design Choices
-- **Scalability**: Section-based analysis ensures scalability for credit report sizes and large client bases.
+- **Scalability**: Section-based analysis supports large credit report sizes and client bases.
 - **Cost Efficiency**: Prompt caching reduces API costs.
 - **Data Integrity**: Intelligent sectioning and analysis prevent data loss.
 - **Workflow Optimization**: Verification checkpoints ensure accuracy and control.
