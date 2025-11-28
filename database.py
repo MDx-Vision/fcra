@@ -88,6 +88,7 @@ class Staff(Base):
     password_reset_expires = Column(DateTime)
     force_password_change = Column(Boolean, default=False)
     created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    organization_id = Column(Integer, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -196,6 +197,8 @@ class Client(Base):
     groups = Column(String(500))  # Comma-separated tags
     mark_1 = Column(Boolean, default=False)  # Color marking flag 1
     mark_2 = Column(Boolean, default=False)  # Color marking flag 2
+    
+    organization_id = Column(Integer, nullable=True, index=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -2090,6 +2093,873 @@ class WorkflowExecution(Base):
         }
 
 
+class WhiteLabelTenant(Base):
+    """White-label tenant for partner law firms"""
+    __tablename__ = 'white_label_tenants'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(100), unique=True, nullable=False, index=True)
+    domain = Column(String(255), unique=True, nullable=True, index=True)
+    
+    logo_url = Column(String(500))
+    favicon_url = Column(String(500))
+    primary_color = Column(String(7), default='#319795')
+    secondary_color = Column(String(7), default='#1a1a2e')
+    accent_color = Column(String(7), default='#84cc16')
+    
+    company_name = Column(String(255))
+    company_address = Column(Text)
+    company_phone = Column(String(50))
+    company_email = Column(String(255))
+    support_email = Column(String(255))
+    
+    terms_url = Column(String(500))
+    privacy_url = Column(String(500))
+    
+    custom_css = Column(Text)
+    custom_js = Column(Text)
+    
+    is_active = Column(Boolean, default=True, index=True)
+    subscription_tier = Column(String(50), default='basic')
+    max_users = Column(Integer, default=5)
+    max_clients = Column(Integer, default=100)
+    features_enabled = Column(JSON, default=dict)
+    
+    api_key = Column(String(100), unique=True, index=True)
+    webhook_url = Column(String(500))
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    users = relationship("TenantUser", back_populates="tenant", cascade="all, delete-orphan")
+    clients = relationship("TenantClient", back_populates="tenant", cascade="all, delete-orphan")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'slug': self.slug,
+            'domain': self.domain,
+            'logo_url': self.logo_url,
+            'favicon_url': self.favicon_url,
+            'primary_color': self.primary_color,
+            'secondary_color': self.secondary_color,
+            'accent_color': self.accent_color,
+            'company_name': self.company_name,
+            'company_address': self.company_address,
+            'company_phone': self.company_phone,
+            'company_email': self.company_email,
+            'support_email': self.support_email,
+            'terms_url': self.terms_url,
+            'privacy_url': self.privacy_url,
+            'custom_css': self.custom_css,
+            'custom_js': self.custom_js,
+            'is_active': self.is_active,
+            'subscription_tier': self.subscription_tier,
+            'max_users': self.max_users,
+            'max_clients': self.max_clients,
+            'features_enabled': self.features_enabled or {},
+            'api_key': self.api_key,
+            'webhook_url': self.webhook_url,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def get_branding_config(self):
+        """Return CSS variables and branding configuration"""
+        return {
+            'primary_color': self.primary_color or '#319795',
+            'secondary_color': self.secondary_color or '#1a1a2e',
+            'accent_color': self.accent_color or '#84cc16',
+            'logo_url': self.logo_url,
+            'favicon_url': self.favicon_url,
+            'company_name': self.company_name or self.name,
+            'company_address': self.company_address,
+            'company_phone': self.company_phone,
+            'company_email': self.company_email,
+            'support_email': self.support_email or self.company_email,
+            'terms_url': self.terms_url,
+            'privacy_url': self.privacy_url,
+            'custom_css': self.custom_css,
+            'custom_js': self.custom_js
+        }
+
+
+class TenantUser(Base):
+    """Staff/user assignment to a tenant"""
+    __tablename__ = 'tenant_users'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey('white_label_tenants.id', ondelete='CASCADE'), nullable=False, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id', ondelete='CASCADE'), nullable=False, index=True)
+    role = Column(String(50), default='user')
+    is_primary_admin = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    tenant = relationship("WhiteLabelTenant", back_populates="users")
+    staff = relationship("Staff")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tenant_id': self.tenant_id,
+            'staff_id': self.staff_id,
+            'role': self.role,
+            'is_primary_admin': self.is_primary_admin,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'staff': {
+                'id': self.staff.id,
+                'email': self.staff.email,
+                'full_name': self.staff.full_name,
+                'role': self.staff.role
+            } if self.staff else None
+        }
+
+
+class TenantClient(Base):
+    """Client assignment to a tenant"""
+    __tablename__ = 'tenant_clients'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey('white_label_tenants.id', ondelete='CASCADE'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    tenant = relationship("WhiteLabelTenant", back_populates="clients")
+    client = relationship("Client")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tenant_id': self.tenant_id,
+            'client_id': self.client_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'client': {
+                'id': self.client.id,
+                'name': self.client.name,
+                'email': self.client.email,
+                'status': self.client.status
+            } if self.client else None
+        }
+
+
+# ============================================================
+# FRANCHISE MODE SYSTEM - Multi-Office Management
+# ============================================================
+
+FRANCHISE_ORG_TYPES = {
+    'headquarters': {
+        'name': 'Headquarters',
+        'description': 'Main corporate office with full oversight',
+        'level': 0
+    },
+    'regional': {
+        'name': 'Regional Office',
+        'description': 'Regional management office overseeing branches',
+        'level': 1
+    },
+    'branch': {
+        'name': 'Branch Office',
+        'description': 'Local branch office',
+        'level': 2
+    }
+}
+
+FRANCHISE_MEMBER_ROLES = {
+    'owner': {
+        'name': 'Owner',
+        'description': 'Full ownership and control of the organization',
+        'permissions': ['*']
+    },
+    'manager': {
+        'name': 'Manager',
+        'description': 'Manages organization operations and staff',
+        'permissions': ['view_org', 'edit_org', 'manage_members', 'manage_clients', 'view_revenue', 'approve_transfers']
+    },
+    'staff': {
+        'name': 'Staff',
+        'description': 'Standard staff member',
+        'permissions': ['view_org', 'view_clients', 'manage_assigned_clients']
+    }
+}
+
+
+class FranchiseOrganization(Base):
+    """Franchise organization for multi-office law firm management"""
+    __tablename__ = 'franchise_organizations'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(100), unique=True, nullable=False, index=True)
+    parent_org_id = Column(Integer, ForeignKey('franchise_organizations.id'), nullable=True, index=True)
+    org_type = Column(String(50), default='branch', index=True)
+    
+    address = Column(String(500))
+    city = Column(String(100))
+    state = Column(String(50))
+    zip_code = Column(String(20))
+    phone = Column(String(50))
+    email = Column(String(255))
+    contact_name = Column(String(255))
+    
+    license_number = Column(String(100))
+    max_users = Column(Integer, default=10)
+    max_clients = Column(Integer, default=100)
+    subscription_tier = Column(String(50), default='basic')
+    billing_contact_email = Column(String(255))
+    
+    manager_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    is_active = Column(Boolean, default=True, index=True)
+    settings = Column(JSON, default=dict)
+    revenue_share_percent = Column(Float, default=0.0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    parent = relationship("FranchiseOrganization", remote_side=[id], backref="children")
+    manager = relationship("Staff", foreign_keys=[manager_staff_id])
+    members = relationship("OrganizationMembership", back_populates="organization", cascade="all, delete-orphan")
+    clients = relationship("OrganizationClient", back_populates="organization", cascade="all, delete-orphan")
+    
+    def to_dict(self, include_children=False):
+        result = {
+            'id': self.id,
+            'name': self.name,
+            'slug': self.slug,
+            'parent_org_id': self.parent_org_id,
+            'org_type': self.org_type,
+            'org_type_name': FRANCHISE_ORG_TYPES.get(self.org_type, {}).get('name', self.org_type),
+            'address': self.address,
+            'city': self.city,
+            'state': self.state,
+            'zip_code': self.zip_code,
+            'full_address': f"{self.address}, {self.city}, {self.state} {self.zip_code}" if self.address else None,
+            'phone': self.phone,
+            'email': self.email,
+            'contact_name': self.contact_name,
+            'license_number': self.license_number,
+            'max_users': self.max_users,
+            'max_clients': self.max_clients,
+            'subscription_tier': self.subscription_tier,
+            'billing_contact_email': self.billing_contact_email,
+            'manager_staff_id': self.manager_staff_id,
+            'manager_name': self.manager.full_name if self.manager else None,
+            'is_active': self.is_active,
+            'settings': self.settings or {},
+            'revenue_share_percent': self.revenue_share_percent,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+        if include_children and self.children:
+            result['children'] = [child.to_dict(include_children=True) for child in self.children]
+        return result
+    
+    def get_full_hierarchy_path(self):
+        """Get full path from root to this organization"""
+        path = [self]
+        current = self
+        while current.parent:
+            path.insert(0, current.parent)
+            current = current.parent
+        return path
+
+
+class OrganizationMembership(Base):
+    """Staff membership in a franchise organization"""
+    __tablename__ = 'organization_memberships'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey('franchise_organizations.id', ondelete='CASCADE'), nullable=False, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id', ondelete='CASCADE'), nullable=False, index=True)
+    role = Column(String(50), default='staff', index=True)
+    permissions = Column(JSON, default=list)
+    is_primary = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    organization = relationship("FranchiseOrganization", back_populates="members")
+    staff = relationship("Staff")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'organization_id': self.organization_id,
+            'organization_name': self.organization.name if self.organization else None,
+            'staff_id': self.staff_id,
+            'staff_name': self.staff.full_name if self.staff else None,
+            'staff_email': self.staff.email if self.staff else None,
+            'role': self.role,
+            'role_name': FRANCHISE_MEMBER_ROLES.get(self.role, {}).get('name', self.role),
+            'permissions': self.permissions or [],
+            'is_primary': self.is_primary,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    def has_permission(self, permission):
+        """Check if member has a specific permission"""
+        role_config = FRANCHISE_MEMBER_ROLES.get(self.role, {})
+        role_perms = role_config.get('permissions', [])
+        if '*' in role_perms:
+            return True
+        custom_perms = self.permissions or []
+        return permission in role_perms or permission in custom_perms
+
+
+class OrganizationClient(Base):
+    """Client assignment to a franchise organization"""
+    __tablename__ = 'organization_clients'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey('franchise_organizations.id', ondelete='CASCADE'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False, index=True)
+    assigned_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    organization = relationship("FranchiseOrganization", back_populates="clients")
+    client = relationship("Client")
+    assigned_by = relationship("Staff")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'organization_id': self.organization_id,
+            'organization_name': self.organization.name if self.organization else None,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'client_email': self.client.email if self.client else None,
+            'client_status': self.client.status if self.client else None,
+            'assigned_by_staff_id': self.assigned_by_staff_id,
+            'assigned_by_name': self.assigned_by.full_name if self.assigned_by else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class InterOrgTransfer(Base):
+    """Client transfer between franchise organizations"""
+    __tablename__ = 'inter_org_transfers'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    from_org_id = Column(Integer, ForeignKey('franchise_organizations.id'), nullable=False, index=True)
+    to_org_id = Column(Integer, ForeignKey('franchise_organizations.id'), nullable=False, index=True)
+    transfer_type = Column(String(50), default='referral', index=True)
+    reason = Column(Text)
+    transferred_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=False)
+    approved_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    status = Column(String(50), default='pending', index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime)
+    
+    client = relationship("Client")
+    from_org = relationship("FranchiseOrganization", foreign_keys=[from_org_id])
+    to_org = relationship("FranchiseOrganization", foreign_keys=[to_org_id])
+    transferred_by = relationship("Staff", foreign_keys=[transferred_by_staff_id])
+    approved_by = relationship("Staff", foreign_keys=[approved_by_staff_id])
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'from_org_id': self.from_org_id,
+            'from_org_name': self.from_org.name if self.from_org else None,
+            'to_org_id': self.to_org_id,
+            'to_org_name': self.to_org.name if self.to_org else None,
+            'transfer_type': self.transfer_type,
+            'reason': self.reason,
+            'transferred_by_staff_id': self.transferred_by_staff_id,
+            'transferred_by_name': self.transferred_by.full_name if self.transferred_by else None,
+            'approved_by_staff_id': self.approved_by_staff_id,
+            'approved_by_name': self.approved_by.full_name if self.approved_by else None,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
+
+
+# ============================================================
+# WHITE-LABEL CONFIG - Partner Law Firm Branding System
+# ============================================================
+
+FONT_FAMILIES = {
+    'inter': "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+    'roboto': "'Roboto', Arial, sans-serif",
+    'open-sans': "'Open Sans', Arial, sans-serif",
+    'lato': "'Lato', Arial, sans-serif",
+    'poppins': "'Poppins', Arial, sans-serif",
+    'montserrat': "'Montserrat', Arial, sans-serif",
+    'source-sans': "'Source Sans Pro', Arial, sans-serif",
+    'nunito': "'Nunito', Arial, sans-serif",
+    'raleway': "'Raleway', Arial, sans-serif",
+    'system': "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+}
+
+
+class WhiteLabelConfig(Base):
+    """White-label configuration for partner law firms/organizations"""
+    __tablename__ = 'white_label_configs'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    organization_id = Column(Integer, ForeignKey('franchise_organizations.id', ondelete='SET NULL'), nullable=True, index=True)
+    organization_name = Column(String(255), nullable=False)
+    
+    subdomain = Column(String(100), unique=True, nullable=False, index=True)
+    custom_domain = Column(String(255), unique=True, nullable=True, index=True)
+    
+    logo_url = Column(String(500))
+    favicon_url = Column(String(500))
+    
+    primary_color = Column(String(7), default='#319795')
+    secondary_color = Column(String(7), default='#1a1a2e')
+    accent_color = Column(String(7), default='#84cc16')
+    header_bg_color = Column(String(7), default='#1a1a2e')
+    sidebar_bg_color = Column(String(7), default='#1a1a2e')
+    
+    font_family = Column(String(50), default='inter')
+    custom_css = Column(Text)
+    
+    email_from_name = Column(String(255))
+    email_from_address = Column(String(255))
+    email_from_address_encrypted = Column(Text)
+    
+    company_address = Column(Text)
+    company_phone = Column(String(50))
+    company_email = Column(String(255))
+    
+    footer_text = Column(Text)
+    terms_url = Column(String(500))
+    privacy_url = Column(String(500))
+    
+    is_active = Column(Boolean, default=True, index=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    organization = relationship("FranchiseOrganization", foreign_keys=[organization_id])
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'organization_id': self.organization_id,
+            'organization_name': self.organization_name,
+            'subdomain': self.subdomain,
+            'custom_domain': self.custom_domain,
+            'logo_url': self.logo_url,
+            'favicon_url': self.favicon_url,
+            'primary_color': self.primary_color,
+            'secondary_color': self.secondary_color,
+            'accent_color': self.accent_color,
+            'header_bg_color': self.header_bg_color,
+            'sidebar_bg_color': self.sidebar_bg_color,
+            'font_family': self.font_family,
+            'custom_css': self.custom_css,
+            'email_from_name': self.email_from_name,
+            'email_from_address': self.email_from_address,
+            'company_address': self.company_address,
+            'company_phone': self.company_phone,
+            'company_email': self.company_email,
+            'footer_text': self.footer_text,
+            'terms_url': self.terms_url,
+            'privacy_url': self.privacy_url,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def get_branding_dict(self):
+        """Return branding configuration for templates"""
+        font_css = FONT_FAMILIES.get(self.font_family, FONT_FAMILIES['inter'])
+        return {
+            'organization_name': self.organization_name,
+            'subdomain': self.subdomain,
+            'custom_domain': self.custom_domain,
+            'logo_url': self.logo_url or '/static/images/logo.png',
+            'favicon_url': self.favicon_url,
+            'primary_color': self.primary_color or '#319795',
+            'secondary_color': self.secondary_color or '#1a1a2e',
+            'accent_color': self.accent_color or '#84cc16',
+            'header_bg_color': self.header_bg_color or '#1a1a2e',
+            'sidebar_bg_color': self.sidebar_bg_color or '#1a1a2e',
+            'font_family': font_css,
+            'font_family_key': self.font_family or 'inter',
+            'custom_css': self.custom_css,
+            'email_from_name': self.email_from_name,
+            'email_from_address': self.email_from_address,
+            'company_address': self.company_address,
+            'company_phone': self.company_phone,
+            'company_email': self.company_email,
+            'footer_text': self.footer_text,
+            'terms_url': self.terms_url,
+            'privacy_url': self.privacy_url,
+            'is_active': self.is_active
+        }
+
+
+API_SCOPES = {
+    'read:clients': 'Read client information',
+    'write:clients': 'Create and update clients',
+    'read:cases': 'Read case information',
+    'write:cases': 'Create and update cases',
+    'read:disputes': 'Read dispute information',
+    'write:disputes': 'Create and manage disputes',
+    'analyze:reports': 'Submit credit reports for analysis',
+    'manage:webhooks': 'Create and manage webhooks'
+}
+
+
+class APIKey(Base):
+    """API keys for third-party integrations"""
+    __tablename__ = 'api_keys'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    key_hash = Column(String(255), nullable=False, index=True)
+    key_prefix = Column(String(8), nullable=False, index=True)
+    tenant_id = Column(Integer, ForeignKey('white_label_tenants.id', ondelete='SET NULL'), nullable=True, index=True)
+    organization_id = Column(Integer, nullable=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+    scopes = Column(JSON, default=[])
+    rate_limit_per_minute = Column(Integer, default=60)
+    rate_limit_per_day = Column(Integer, default=10000)
+    is_active = Column(Boolean, default=True, index=True)
+    last_used_at = Column(DateTime)
+    last_used_ip = Column(String(45))
+    usage_count = Column(Integer, default=0)
+    expires_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    tenant = relationship("WhiteLabelTenant")
+    staff = relationship("Staff")
+    requests = relationship("APIRequest", back_populates="api_key", cascade="all, delete-orphan")
+    
+    def to_dict(self, include_prefix=True):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'key_prefix': self.key_prefix if include_prefix else '********',
+            'tenant_id': self.tenant_id,
+            'tenant_name': self.tenant.name if self.tenant else None,
+            'organization_id': self.organization_id,
+            'staff_id': self.staff_id,
+            'staff_name': self.staff.full_name if self.staff else None,
+            'scopes': self.scopes or [],
+            'rate_limit_per_minute': self.rate_limit_per_minute,
+            'rate_limit_per_day': self.rate_limit_per_day,
+            'is_active': self.is_active,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None,
+            'last_used_ip': self.last_used_ip,
+            'usage_count': self.usage_count or 0,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+    
+    def has_scope(self, scope):
+        """Check if API key has a specific scope"""
+        if not self.scopes:
+            return False
+        if '*' in self.scopes:
+            return True
+        return scope in self.scopes
+    
+    def has_any_scope(self, scopes):
+        """Check if API key has any of the given scopes"""
+        return any(self.has_scope(s) for s in scopes)
+
+
+class APIRequest(Base):
+    """Log of API requests for analytics and rate limiting"""
+    __tablename__ = 'api_requests'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    api_key_id = Column(Integer, ForeignKey('api_keys.id', ondelete='CASCADE'), nullable=False, index=True)
+    endpoint = Column(String(500), nullable=False, index=True)
+    method = Column(String(10), nullable=False)
+    request_ip = Column(String(45), index=True)
+    request_headers = Column(JSON)
+    request_body = Column(JSON)
+    response_status = Column(Integer, index=True)
+    response_time_ms = Column(Integer)
+    error_message = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    api_key = relationship("APIKey", back_populates="requests")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'api_key_id': self.api_key_id,
+            'endpoint': self.endpoint,
+            'method': self.method,
+            'request_ip': self.request_ip,
+            'response_status': self.response_status,
+            'response_time_ms': self.response_time_ms,
+            'error_message': self.error_message,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class APIWebhook(Base):
+    """Webhooks for event notifications"""
+    __tablename__ = 'api_webhooks'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey('white_label_tenants.id', ondelete='SET NULL'), nullable=True, index=True)
+    name = Column(String(255), nullable=False)
+    url = Column(String(500), nullable=False)
+    secret = Column(String(100), nullable=False)
+    events = Column(JSON, default=[])
+    is_active = Column(Boolean, default=True, index=True)
+    last_triggered = Column(DateTime)
+    failure_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    tenant = relationship("WhiteLabelTenant")
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'tenant_id': self.tenant_id,
+            'tenant_name': self.tenant.name if self.tenant else None,
+            'name': self.name,
+            'url': self.url,
+            'events': self.events or [],
+            'is_active': self.is_active,
+            'last_triggered': self.last_triggered.isoformat() if self.last_triggered else None,
+            'failure_count': self.failure_count,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+WEBHOOK_EVENTS = [
+    'client.created',
+    'client.updated',
+    'case.created',
+    'case.status_changed',
+    'dispute.created',
+    'dispute.status_changed',
+    'analysis.completed',
+    'document.generated',
+    'settlement.updated'
+]
+
+
+AUDIT_EVENT_TYPES = [
+    'login', 'logout', 'login_failed',
+    'create', 'read', 'update', 'delete',
+    'export', 'import', 'api_call',
+    'document_upload', 'document_download', 'document_view',
+    'credit_report_access', 'phi_access',
+    'settings_change', 'permission_change',
+    'password_change', 'password_reset',
+    'session_start', 'session_end'
+]
+
+AUDIT_RESOURCE_TYPES = [
+    'client', 'dispute', 'document', 'case', 'staff', 'settings',
+    'credit_report', 'analysis', 'settlement', 'letter',
+    'cra_response', 'violation', 'affiliate', 'commission',
+    'api_key', 'webhook', 'tenant', 'organization'
+]
+
+AUDIT_SEVERITY_LEVELS = ['info', 'warning', 'critical']
+
+
+class AuditLog(Base):
+    """Comprehensive audit log for SOC 2 and HIPAA compliance"""
+    __tablename__ = 'audit_logs'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    
+    event_type = Column(String(50), nullable=False, index=True)
+    resource_type = Column(String(50), nullable=False, index=True)
+    resource_id = Column(String(100), index=True)
+    
+    user_id = Column(Integer, index=True)
+    user_type = Column(String(20), nullable=False, index=True)
+    user_email = Column(String(255))
+    user_name = Column(String(255))
+    
+    user_ip = Column(String(45), index=True)
+    user_agent = Column(Text)
+    
+    action = Column(String(255), nullable=False)
+    details = Column(JSON)
+    
+    old_values = Column(JSON)
+    new_values = Column(JSON)
+    
+    severity = Column(String(20), default='info', index=True)
+    
+    session_id = Column(String(100), index=True)
+    request_id = Column(String(100), index=True)
+    
+    duration_ms = Column(Integer)
+    
+    endpoint = Column(String(500))
+    http_method = Column(String(10))
+    http_status = Column(Integer)
+    
+    organization_id = Column(Integer, index=True)
+    tenant_id = Column(Integer, index=True)
+    
+    is_phi_access = Column(Boolean, default=False, index=True)
+    phi_fields_accessed = Column(JSON)
+    
+    compliance_flags = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'event_type': self.event_type,
+            'resource_type': self.resource_type,
+            'resource_id': self.resource_id,
+            'user_id': self.user_id,
+            'user_type': self.user_type,
+            'user_email': self.user_email,
+            'user_name': self.user_name,
+            'user_ip': self.user_ip,
+            'user_agent': self.user_agent,
+            'action': self.action,
+            'details': self.details,
+            'old_values': self.old_values,
+            'new_values': self.new_values,
+            'severity': self.severity,
+            'session_id': self.session_id,
+            'request_id': self.request_id,
+            'duration_ms': self.duration_ms,
+            'endpoint': self.endpoint,
+            'http_method': self.http_method,
+            'http_status': self.http_status,
+            'organization_id': self.organization_id,
+            'tenant_id': self.tenant_id,
+            'is_phi_access': self.is_phi_access,
+            'phi_fields_accessed': self.phi_fields_accessed,
+            'compliance_flags': self.compliance_flags,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+    
+    @classmethod
+    def get_severity_for_event(cls, event_type):
+        """Determine severity level based on event type"""
+        critical_events = ['login_failed', 'permission_change', 'password_reset', 'settings_change', 'delete']
+        warning_events = ['export', 'phi_access', 'credit_report_access', 'password_change']
+        
+        if event_type in critical_events:
+            return 'critical'
+        elif event_type in warning_events:
+            return 'warning'
+        return 'info'
+
+
+SUBSCRIPTION_TIERS = {
+    'basic': {
+        'name': 'Basic',
+        'max_users': 5,
+        'max_clients': 100,
+        'features': ['branding', 'client_portal']
+    },
+    'professional': {
+        'name': 'Professional',
+        'max_users': 20,
+        'max_clients': 500,
+        'features': ['branding', 'client_portal', 'api_access', 'custom_domain']
+    },
+    'enterprise': {
+        'name': 'Enterprise',
+        'max_users': 100,
+        'max_clients': 5000,
+        'features': ['branding', 'client_portal', 'api_access', 'custom_domain', 'webhooks', 'white_label_emails', 'custom_css_js']
+    }
+}
+
+
+class PerformanceMetric(Base):
+    """Track aggregated performance metrics per endpoint"""
+    __tablename__ = 'performance_metrics'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    endpoint = Column(String(500), nullable=False, index=True)
+    method = Column(String(10), nullable=False)
+    
+    avg_response_time_ms = Column(Float, default=0)
+    p50_time = Column(Float, default=0)
+    p95_time = Column(Float, default=0)
+    p99_time = Column(Float, default=0)
+    min_response_time_ms = Column(Float, default=0)
+    max_response_time_ms = Column(Float, default=0)
+    
+    request_count = Column(Integer, default=0)
+    error_count = Column(Integer, default=0)
+    cache_hit_count = Column(Integer, default=0)
+    cache_hit_rate = Column(Float, default=0)
+    
+    period_start = Column(DateTime, nullable=False, index=True)
+    period_end = Column(DateTime, nullable=False)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'endpoint': self.endpoint,
+            'method': self.method,
+            'avg_response_time_ms': self.avg_response_time_ms,
+            'p50_time': self.p50_time,
+            'p95_time': self.p95_time,
+            'p99_time': self.p99_time,
+            'min_response_time_ms': self.min_response_time_ms,
+            'max_response_time_ms': self.max_response_time_ms,
+            'request_count': self.request_count,
+            'error_count': self.error_count,
+            'cache_hit_count': self.cache_hit_count,
+            'cache_hit_rate': self.cache_hit_rate,
+            'period_start': self.period_start.isoformat() if self.period_start else None,
+            'period_end': self.period_end.isoformat() if self.period_end else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class CacheEntry(Base):
+    """Track persistent cache entries for analysis"""
+    __tablename__ = 'cache_entries'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    cache_key = Column(String(255), nullable=False, unique=True, index=True)
+    cache_value = Column(JSON)
+    
+    ttl_seconds = Column(Integer, default=300)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, index=True)
+    last_accessed = Column(DateTime)
+    hit_count = Column(Integer, default=0)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'cache_key': self.cache_key,
+            'ttl_seconds': self.ttl_seconds,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'last_accessed': self.last_accessed.isoformat() if self.last_accessed else None,
+            'hit_count': self.hit_count,
+            'is_expired': self.expires_at and datetime.utcnow() > self.expires_at if self.expires_at else False
+        }
+    
+    @property
+    def is_expired(self):
+        if not self.expires_at:
+            return False
+        return datetime.utcnow() > self.expires_at
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -2487,6 +3357,200 @@ def init_db():
         ("workflow_executions", "error_message", "TEXT"),
         ("workflow_executions", "execution_time_ms", "INTEGER"),
         ("workflow_executions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("white_label_tenants", "id", "SERIAL PRIMARY KEY"),
+        ("white_label_tenants", "name", "VARCHAR(255) NOT NULL"),
+        ("white_label_tenants", "slug", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("white_label_tenants", "domain", "VARCHAR(255) UNIQUE"),
+        ("white_label_tenants", "logo_url", "VARCHAR(500)"),
+        ("white_label_tenants", "favicon_url", "VARCHAR(500)"),
+        ("white_label_tenants", "primary_color", "VARCHAR(7) DEFAULT '#319795'"),
+        ("white_label_tenants", "secondary_color", "VARCHAR(7) DEFAULT '#1a1a2e'"),
+        ("white_label_tenants", "accent_color", "VARCHAR(7) DEFAULT '#84cc16'"),
+        ("white_label_tenants", "company_name", "VARCHAR(255)"),
+        ("white_label_tenants", "company_address", "TEXT"),
+        ("white_label_tenants", "company_phone", "VARCHAR(50)"),
+        ("white_label_tenants", "company_email", "VARCHAR(255)"),
+        ("white_label_tenants", "support_email", "VARCHAR(255)"),
+        ("white_label_tenants", "terms_url", "VARCHAR(500)"),
+        ("white_label_tenants", "privacy_url", "VARCHAR(500)"),
+        ("white_label_tenants", "custom_css", "TEXT"),
+        ("white_label_tenants", "custom_js", "TEXT"),
+        ("white_label_tenants", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("white_label_tenants", "subscription_tier", "VARCHAR(50) DEFAULT 'basic'"),
+        ("white_label_tenants", "max_users", "INTEGER DEFAULT 5"),
+        ("white_label_tenants", "max_clients", "INTEGER DEFAULT 100"),
+        ("white_label_tenants", "features_enabled", "JSON"),
+        ("white_label_tenants", "api_key", "VARCHAR(100) UNIQUE"),
+        ("white_label_tenants", "webhook_url", "VARCHAR(500)"),
+        ("white_label_tenants", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("white_label_tenants", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("tenant_users", "id", "SERIAL PRIMARY KEY"),
+        ("tenant_users", "tenant_id", "INTEGER NOT NULL REFERENCES white_label_tenants(id) ON DELETE CASCADE"),
+        ("tenant_users", "staff_id", "INTEGER NOT NULL REFERENCES staff(id) ON DELETE CASCADE"),
+        ("tenant_users", "role", "VARCHAR(50) DEFAULT 'user'"),
+        ("tenant_users", "is_primary_admin", "BOOLEAN DEFAULT FALSE"),
+        ("tenant_users", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("tenant_clients", "id", "SERIAL PRIMARY KEY"),
+        ("tenant_clients", "tenant_id", "INTEGER NOT NULL REFERENCES white_label_tenants(id) ON DELETE CASCADE"),
+        ("tenant_clients", "client_id", "INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE"),
+        ("tenant_clients", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("franchise_organizations", "id", "SERIAL PRIMARY KEY"),
+        ("franchise_organizations", "name", "VARCHAR(255) NOT NULL"),
+        ("franchise_organizations", "slug", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("franchise_organizations", "parent_org_id", "INTEGER REFERENCES franchise_organizations(id)"),
+        ("franchise_organizations", "org_type", "VARCHAR(50) DEFAULT 'branch'"),
+        ("franchise_organizations", "address", "VARCHAR(500)"),
+        ("franchise_organizations", "city", "VARCHAR(100)"),
+        ("franchise_organizations", "state", "VARCHAR(50)"),
+        ("franchise_organizations", "zip_code", "VARCHAR(20)"),
+        ("franchise_organizations", "phone", "VARCHAR(50)"),
+        ("franchise_organizations", "email", "VARCHAR(255)"),
+        ("franchise_organizations", "manager_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("franchise_organizations", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("franchise_organizations", "settings", "JSON"),
+        ("franchise_organizations", "revenue_share_percent", "FLOAT DEFAULT 0.0"),
+        ("franchise_organizations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("franchise_organizations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("organization_memberships", "id", "SERIAL PRIMARY KEY"),
+        ("organization_memberships", "organization_id", "INTEGER NOT NULL REFERENCES franchise_organizations(id) ON DELETE CASCADE"),
+        ("organization_memberships", "staff_id", "INTEGER NOT NULL REFERENCES staff(id) ON DELETE CASCADE"),
+        ("organization_memberships", "role", "VARCHAR(50) DEFAULT 'staff'"),
+        ("organization_memberships", "permissions", "JSON"),
+        ("organization_memberships", "is_primary", "BOOLEAN DEFAULT FALSE"),
+        ("organization_memberships", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("organization_clients", "id", "SERIAL PRIMARY KEY"),
+        ("organization_clients", "organization_id", "INTEGER NOT NULL REFERENCES franchise_organizations(id) ON DELETE CASCADE"),
+        ("organization_clients", "client_id", "INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE"),
+        ("organization_clients", "assigned_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("organization_clients", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("inter_org_transfers", "id", "SERIAL PRIMARY KEY"),
+        ("inter_org_transfers", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("inter_org_transfers", "from_org_id", "INTEGER NOT NULL REFERENCES franchise_organizations(id)"),
+        ("inter_org_transfers", "to_org_id", "INTEGER NOT NULL REFERENCES franchise_organizations(id)"),
+        ("inter_org_transfers", "transfer_type", "VARCHAR(50) DEFAULT 'referral'"),
+        ("inter_org_transfers", "reason", "TEXT"),
+        ("inter_org_transfers", "transferred_by_staff_id", "INTEGER NOT NULL REFERENCES staff(id)"),
+        ("inter_org_transfers", "approved_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("inter_org_transfers", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("inter_org_transfers", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("inter_org_transfers", "completed_at", "TIMESTAMP"),
+        ("api_keys", "id", "SERIAL PRIMARY KEY"),
+        ("api_keys", "name", "VARCHAR(255) NOT NULL"),
+        ("api_keys", "key_hash", "VARCHAR(255) NOT NULL"),
+        ("api_keys", "key_prefix", "VARCHAR(8) NOT NULL"),
+        ("api_keys", "tenant_id", "INTEGER REFERENCES white_label_tenants(id) ON DELETE SET NULL"),
+        ("api_keys", "organization_id", "INTEGER"),
+        ("api_keys", "staff_id", "INTEGER NOT NULL REFERENCES staff(id)"),
+        ("api_keys", "scopes", "JSON"),
+        ("api_keys", "rate_limit_per_minute", "INTEGER DEFAULT 60"),
+        ("api_keys", "rate_limit_per_day", "INTEGER DEFAULT 10000"),
+        ("api_keys", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("api_keys", "last_used_at", "TIMESTAMP"),
+        ("api_keys", "last_used_ip", "VARCHAR(45)"),
+        ("api_keys", "usage_count", "INTEGER DEFAULT 0"),
+        ("api_keys", "expires_at", "TIMESTAMP"),
+        ("api_keys", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("api_keys", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("api_requests", "id", "SERIAL PRIMARY KEY"),
+        ("api_requests", "api_key_id", "INTEGER NOT NULL REFERENCES api_keys(id) ON DELETE CASCADE"),
+        ("api_requests", "endpoint", "VARCHAR(500) NOT NULL"),
+        ("api_requests", "method", "VARCHAR(10) NOT NULL"),
+        ("api_requests", "request_ip", "VARCHAR(45)"),
+        ("api_requests", "request_headers", "JSON"),
+        ("api_requests", "request_body", "JSON"),
+        ("api_requests", "response_status", "INTEGER"),
+        ("api_requests", "response_time_ms", "INTEGER"),
+        ("api_requests", "error_message", "TEXT"),
+        ("api_requests", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("api_webhooks", "id", "SERIAL PRIMARY KEY"),
+        ("api_webhooks", "tenant_id", "INTEGER REFERENCES white_label_tenants(id) ON DELETE SET NULL"),
+        ("api_webhooks", "name", "VARCHAR(255) NOT NULL"),
+        ("api_webhooks", "url", "VARCHAR(500) NOT NULL"),
+        ("api_webhooks", "secret", "VARCHAR(100) NOT NULL"),
+        ("api_webhooks", "events", "JSON"),
+        ("api_webhooks", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("api_webhooks", "last_triggered", "TIMESTAMP"),
+        ("api_webhooks", "failure_count", "INTEGER DEFAULT 0"),
+        ("api_webhooks", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("api_webhooks", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("white_label_configs", "id", "SERIAL PRIMARY KEY"),
+        ("white_label_configs", "organization_id", "INTEGER REFERENCES franchise_organizations(id) ON DELETE SET NULL"),
+        ("white_label_configs", "organization_name", "VARCHAR(255) NOT NULL"),
+        ("white_label_configs", "subdomain", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("white_label_configs", "custom_domain", "VARCHAR(255) UNIQUE"),
+        ("white_label_configs", "logo_url", "VARCHAR(500)"),
+        ("white_label_configs", "favicon_url", "VARCHAR(500)"),
+        ("white_label_configs", "primary_color", "VARCHAR(7) DEFAULT '#319795'"),
+        ("white_label_configs", "secondary_color", "VARCHAR(7) DEFAULT '#1a1a2e'"),
+        ("white_label_configs", "accent_color", "VARCHAR(7) DEFAULT '#84cc16'"),
+        ("white_label_configs", "header_bg_color", "VARCHAR(7) DEFAULT '#1a1a2e'"),
+        ("white_label_configs", "sidebar_bg_color", "VARCHAR(7) DEFAULT '#1a1a2e'"),
+        ("white_label_configs", "font_family", "VARCHAR(50) DEFAULT 'inter'"),
+        ("white_label_configs", "custom_css", "TEXT"),
+        ("white_label_configs", "email_from_name", "VARCHAR(255)"),
+        ("white_label_configs", "email_from_address", "VARCHAR(255)"),
+        ("white_label_configs", "email_from_address_encrypted", "TEXT"),
+        ("white_label_configs", "company_address", "TEXT"),
+        ("white_label_configs", "company_phone", "VARCHAR(50)"),
+        ("white_label_configs", "company_email", "VARCHAR(255)"),
+        ("white_label_configs", "footer_text", "TEXT"),
+        ("white_label_configs", "terms_url", "VARCHAR(500)"),
+        ("white_label_configs", "privacy_url", "VARCHAR(500)"),
+        ("white_label_configs", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("white_label_configs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("white_label_configs", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("audit_logs", "id", "SERIAL PRIMARY KEY"),
+        ("audit_logs", "timestamp", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+        ("audit_logs", "event_type", "VARCHAR(50) NOT NULL"),
+        ("audit_logs", "resource_type", "VARCHAR(50) NOT NULL"),
+        ("audit_logs", "resource_id", "VARCHAR(100)"),
+        ("audit_logs", "user_id", "INTEGER"),
+        ("audit_logs", "user_type", "VARCHAR(20) NOT NULL"),
+        ("audit_logs", "user_email", "VARCHAR(255)"),
+        ("audit_logs", "user_name", "VARCHAR(255)"),
+        ("audit_logs", "user_ip", "VARCHAR(45)"),
+        ("audit_logs", "user_agent", "TEXT"),
+        ("audit_logs", "action", "VARCHAR(255) NOT NULL"),
+        ("audit_logs", "details", "JSON"),
+        ("audit_logs", "old_values", "JSON"),
+        ("audit_logs", "new_values", "JSON"),
+        ("audit_logs", "severity", "VARCHAR(20) DEFAULT 'info'"),
+        ("audit_logs", "session_id", "VARCHAR(100)"),
+        ("audit_logs", "request_id", "VARCHAR(100)"),
+        ("audit_logs", "duration_ms", "INTEGER"),
+        ("audit_logs", "endpoint", "VARCHAR(500)"),
+        ("audit_logs", "http_method", "VARCHAR(10)"),
+        ("audit_logs", "http_status", "INTEGER"),
+        ("audit_logs", "organization_id", "INTEGER"),
+        ("audit_logs", "tenant_id", "INTEGER"),
+        ("audit_logs", "is_phi_access", "BOOLEAN DEFAULT FALSE"),
+        ("audit_logs", "phi_fields_accessed", "JSON"),
+        ("audit_logs", "compliance_flags", "JSON"),
+        ("audit_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("performance_metrics", "id", "SERIAL PRIMARY KEY"),
+        ("performance_metrics", "endpoint", "VARCHAR(500) NOT NULL"),
+        ("performance_metrics", "method", "VARCHAR(10) NOT NULL"),
+        ("performance_metrics", "avg_response_time_ms", "FLOAT DEFAULT 0"),
+        ("performance_metrics", "p50_time", "FLOAT DEFAULT 0"),
+        ("performance_metrics", "p95_time", "FLOAT DEFAULT 0"),
+        ("performance_metrics", "p99_time", "FLOAT DEFAULT 0"),
+        ("performance_metrics", "min_response_time_ms", "FLOAT DEFAULT 0"),
+        ("performance_metrics", "max_response_time_ms", "FLOAT DEFAULT 0"),
+        ("performance_metrics", "request_count", "INTEGER DEFAULT 0"),
+        ("performance_metrics", "error_count", "INTEGER DEFAULT 0"),
+        ("performance_metrics", "cache_hit_count", "INTEGER DEFAULT 0"),
+        ("performance_metrics", "cache_hit_rate", "FLOAT DEFAULT 0"),
+        ("performance_metrics", "period_start", "TIMESTAMP NOT NULL"),
+        ("performance_metrics", "period_end", "TIMESTAMP NOT NULL"),
+        ("performance_metrics", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("cache_entries", "id", "SERIAL PRIMARY KEY"),
+        ("cache_entries", "cache_key", "VARCHAR(255) UNIQUE NOT NULL"),
+        ("cache_entries", "cache_value", "JSON"),
+        ("cache_entries", "ttl_seconds", "INTEGER DEFAULT 300"),
+        ("cache_entries", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("cache_entries", "expires_at", "TIMESTAMP"),
+        ("cache_entries", "last_accessed", "TIMESTAMP"),
+        ("cache_entries", "hit_count", "INTEGER DEFAULT 0"),
     ]
     
     conn = engine.connect()
@@ -2500,6 +3564,47 @@ def init_db():
                 pass
     except Exception as e:
         print(f"Migration warning: {e}")
+    finally:
+        conn.close()
+    
+    create_performance_indices()
+
+def create_performance_indices():
+    """Create indices for common query patterns to optimize performance"""
+    indices = [
+        ("idx_clients_email", "clients", "email"),
+        ("idx_clients_phone", "clients", "phone"),
+        ("idx_dispute_items_status", "dispute_items", "status"),
+        ("idx_audit_logs_timestamp", "audit_logs", "timestamp"),
+        ("idx_cases_attorney_id", "cases", "attorney_id"),
+        ("idx_cases_status", "cases", "status"),
+        ("idx_analyses_client_id", "analyses", "client_id"),
+        ("idx_credit_reports_client_id", "credit_reports", "client_id"),
+        ("idx_performance_metrics_endpoint", "performance_metrics", "endpoint"),
+        ("idx_performance_metrics_period", "performance_metrics", "period_start"),
+        ("idx_cache_entries_key", "cache_entries", "cache_key"),
+        ("idx_cache_entries_expires", "cache_entries", "expires_at"),
+    ]
+    
+    conn = engine.connect()
+    try:
+        for idx_name, table, column in indices:
+            try:
+                check_sql = text(f"""
+                    SELECT 1 FROM pg_indexes 
+                    WHERE indexname = :idx_name
+                """)
+                result = conn.execute(check_sql, {"idx_name": idx_name}).fetchone()
+                
+                if not result:
+                    create_sql = text(f"CREATE INDEX {idx_name} ON {table}({column})")
+                    conn.execute(create_sql)
+                    conn.commit()
+                    print(f"✅ Created index {idx_name}")
+            except Exception as e:
+                pass
+    except Exception as e:
+        print(f"Index creation warning: {e}")
     finally:
         conn.close()
 

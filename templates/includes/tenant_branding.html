@@ -1,0 +1,159 @@
+{# Tenant Branding Include - Add this to templates for dynamic branding #}
+{# Usage: {% include 'includes/tenant_branding.html' %} #}
+
+{% if tenant_branding %}
+<style id="tenant-branding-styles">
+    :root {
+        --tenant-primary: {{ tenant_branding.primary_color or '#319795' }};
+        --tenant-secondary: {{ tenant_branding.secondary_color or '#1a1a2e' }};
+        --tenant-accent: {{ tenant_branding.accent_color or '#84cc16' }};
+    }
+    
+    .sidebar {
+        background: linear-gradient(180deg, var(--tenant-secondary) 0%, color-mix(in srgb, var(--tenant-secondary), black 10%) 100%) !important;
+    }
+    
+    .logo span {
+        color: var(--tenant-accent) !important;
+    }
+    
+    .nav-item.active {
+        background: linear-gradient(135deg, var(--tenant-primary) 0%, var(--tenant-accent) 100%) !important;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--tenant-primary) 0%, var(--tenant-accent) 100%) !important;
+    }
+    
+    .btn-primary:hover {
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--tenant-primary), transparent 60%) !important;
+    }
+    
+    .stat-card.highlight {
+        background: linear-gradient(135deg, var(--tenant-secondary) 0%, color-mix(in srgb, var(--tenant-secondary), black 10%) 100%) !important;
+    }
+    
+    .stat-card.highlight .stat-value {
+        color: var(--tenant-accent) !important;
+    }
+    
+    .status-badge.active {
+        background: color-mix(in srgb, var(--tenant-accent), white 80%) !important;
+        color: color-mix(in srgb, var(--tenant-accent), black 40%) !important;
+    }
+    
+    a:hover {
+        color: var(--tenant-primary) !important;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: var(--tenant-primary) !important;
+    }
+    
+    .tab.active {
+        color: var(--tenant-primary) !important;
+        border-bottom-color: var(--tenant-primary) !important;
+    }
+    
+    .feature-toggle input[type="checkbox"]:checked {
+        accent-color: var(--tenant-primary) !important;
+    }
+    
+    {% if tenant_branding.custom_css %}
+    {{ tenant_branding.custom_css|safe }}
+    {% endif %}
+</style>
+
+{% if tenant_branding.favicon_url %}
+<link rel="icon" type="image/x-icon" href="{{ tenant_branding.favicon_url }}">
+<link rel="shortcut icon" href="{{ tenant_branding.favicon_url }}">
+{% endif %}
+
+{% if tenant %}
+<script>
+    window.tenantConfig = {
+        id: {{ tenant.id }},
+        name: "{{ tenant.name|e }}",
+        slug: "{{ tenant.slug|e }}",
+        companyName: "{{ tenant_branding.company_name|default('', true)|e }}",
+        logoUrl: "{{ tenant_branding.logo_url|default('', true)|e }}",
+        supportEmail: "{{ tenant_branding.support_email|default('', true)|e }}",
+        companyPhone: "{{ tenant_branding.company_phone|default('', true)|e }}",
+        termsUrl: "{{ tenant_branding.terms_url|default('', true)|e }}",
+        privacyUrl: "{{ tenant_branding.privacy_url|default('', true)|e }}"
+    };
+</script>
+{% endif %}
+
+{% if tenant_branding.custom_js %}
+<script>
+    {{ tenant_branding.custom_js|safe }}
+</script>
+{% endif %}
+
+{% endif %}
+
+{# Footer customization component #}
+{% macro tenant_footer() %}
+<footer class="tenant-footer" style="padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; margin-top: 40px;">
+    {% if tenant_branding %}
+    <div class="footer-content">
+        {% if tenant_branding.company_name %}
+        <p style="margin-bottom: 8px;">&copy; {{ now().year if now is defined else '2024' }} {{ tenant_branding.company_name }}</p>
+        {% endif %}
+        
+        {% if tenant_branding.company_address %}
+        <p style="margin-bottom: 8px;">{{ tenant_branding.company_address }}</p>
+        {% endif %}
+        
+        <div class="footer-links" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            {% if tenant_branding.company_phone %}
+            <a href="tel:{{ tenant_branding.company_phone }}" style="color: inherit; text-decoration: none;">{{ tenant_branding.company_phone }}</a>
+            {% endif %}
+            
+            {% if tenant_branding.support_email %}
+            <a href="mailto:{{ tenant_branding.support_email }}" style="color: inherit; text-decoration: none;">{{ tenant_branding.support_email }}</a>
+            {% endif %}
+            
+            {% if tenant_branding.terms_url %}
+            <a href="{{ tenant_branding.terms_url }}" target="_blank" style="color: inherit; text-decoration: none;">Terms of Service</a>
+            {% endif %}
+            
+            {% if tenant_branding.privacy_url %}
+            <a href="{{ tenant_branding.privacy_url }}" target="_blank" style="color: inherit; text-decoration: none;">Privacy Policy</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>&copy; {{ now().year if now is defined else '2024' }} Brightpath Ascend. All rights reserved.</p>
+    {% endif %}
+</footer>
+{% endmacro %}
+
+{# Logo component that uses tenant branding #}
+{% macro tenant_logo(height='40px') %}
+{% if tenant_branding and tenant_branding.logo_url %}
+<img src="{{ tenant_branding.logo_url }}" alt="{{ tenant_branding.company_name or 'Logo' }}" style="height: {{ height }}; object-fit: contain;">
+{% else %}
+<span class="default-logo" style="font-size: 20px; font-weight: 700; color: white;">
+    <span style="color: {{ tenant_branding.accent_color if tenant_branding else '#84cc16' }};">Brightpath</span>&nbsp;Ascend
+</span>
+{% endif %}
+{% endmacro %}
+
+{# Header component for branded pages #}
+{% macro tenant_header() %}
+<header class="tenant-header" style="background: linear-gradient(180deg, {{ tenant_branding.secondary_color if tenant_branding else '#1a1a2e' }} 0%, {{ tenant_branding.secondary_color if tenant_branding else '#16213e' }}ee 100%); padding: 15px 30px; display: flex; align-items: center; justify-content: space-between;">
+    <div class="header-logo">
+        {{ tenant_logo() }}
+    </div>
+    
+    {% if tenant_branding and tenant_branding.company_name %}
+    <div class="header-company" style="color: white; font-weight: 500;">
+        {{ tenant_branding.company_name }}
+    </div>
+    {% endif %}
+</header>
+{% endmacro %}

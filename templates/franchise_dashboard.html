@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Franchise Management - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-actions { display: flex; gap: 15px; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-card.highlight .stat-label { color: #94a3b8; }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .stat-card.highlight .stat-value { color: #84cc16; }
+        
+        .content-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        
+        /* Organization Tree */
+        .org-tree { padding: 10px 0; }
+        .org-tree-item {
+            margin-bottom: 10px;
+        }
+        .org-tree-node {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+        .org-tree-node:hover { background: #f1f5f9; }
+        .org-tree-node.headquarters { border-left-color: #8b5cf6; }
+        .org-tree-node.regional { border-left-color: #3b82f6; }
+        .org-tree-node.branch { border-left-color: #22c55e; }
+        .org-tree-node.selected { background: #e0f2fe; border-left-color: #0ea5e9; }
+        
+        .org-tree-toggle {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            color: #64748b;
+            transition: transform 0.2s;
+        }
+        .org-tree-toggle.expanded { transform: rotate(90deg); }
+        
+        .org-tree-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        .org-tree-icon.headquarters { background: #ede9fe; color: #8b5cf6; }
+        .org-tree-icon.regional { background: #dbeafe; color: #3b82f6; }
+        .org-tree-icon.branch { background: #dcfce7; color: #22c55e; }
+        
+        .org-tree-info { flex: 1; }
+        .org-tree-name { font-weight: 600; color: #1a1a2e; margin-bottom: 2px; }
+        .org-tree-meta { font-size: 12px; color: #64748b; }
+        
+        .org-tree-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .org-tree-stat { display: flex; align-items: center; gap: 4px; }
+        
+        .org-tree-children {
+            margin-left: 40px;
+            padding-left: 20px;
+            border-left: 2px dashed #e2e8f0;
+        }
+        .org-tree-children.hidden { display: none; }
+        
+        /* Organization Cards */
+        .org-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        .org-card:hover { border-color: #84cc16; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .org-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        .org-card-type {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .org-card-type.headquarters { background: #ede9fe; color: #8b5cf6; }
+        .org-card-type.regional { background: #dbeafe; color: #3b82f6; }
+        .org-card-type.branch { background: #dcfce7; color: #22c55e; }
+        
+        .org-card-name { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+        .org-card-location { font-size: 13px; color: #64748b; }
+        
+        .org-card-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 16px 0;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+        .org-card-stat-label { font-size: 11px; color: #64748b; }
+        .org-card-stat-value { font-size: 20px; font-weight: 700; color: #1a1a2e; }
+        
+        .org-card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #1a1a2e;
+        }
+        .data-table tr:hover td { background: #f8fafc; }
+        
+        /* Transfer Status Badges */
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge.pending { background: #fef3c7; color: #d97706; }
+        .status-badge.approved { background: #dcfce7; color: #16a34a; }
+        .status-badge.rejected { background: #fee2e2; color: #dc2626; }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal { transform: translateY(0); }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .modal-title { font-size: 20px; font-weight: 600; color: #1a1a2e; }
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #319795;
+        }
+        .form-textarea { resize: vertical; min-height: 100px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: #1a1a2e; }
+        .tab.active { color: #319795; border-bottom-color: #319795; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Revenue Section */
+        .revenue-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .revenue-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .revenue-card-label { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+        .revenue-card-value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .revenue-card-value.positive { color: #22c55e; }
+        
+        /* Alerts */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .alert-success { background: #dcfce7; color: #166534; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        .alert-info { background: #dbeafe; color: #1e40af; }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state-title { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
+        
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <span>Brightpath</span>&nbsp;Ascend
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Clients
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Management</div>
+            <a href="/dashboard/franchise" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Franchise
+            </a>
+            <a href="/dashboard/white-label" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                White-Label
+            </a>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings
+            </a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        {% if message %}
+        <div class="alert alert-success">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            {{ message }}
+        </div>
+        {% endif %}
+        {% if error %}
+        <div class="alert alert-error">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="header">
+            <h1>Franchise Management</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal('createOrgModal')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Organization
+                </button>
+            </div>
+        </div>
+        
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Total Organizations</div>
+                <div class="stat-value">{{ organizations|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Clients</div>
+                <div class="stat-value">
+                    {% set total_clients = namespace(count=0) %}
+                    {% for org in organizations %}
+                        {% set total_clients.count = total_clients.count + (org_stats.get(org.id, {}).get('total_clients', 0)) %}
+                    {% endfor %}
+                    {{ total_clients.count }}
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending Transfers</div>
+                <div class="stat-value">{{ pending_transfers|length }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value">
+                    {% set total_revenue = namespace(amount=0) %}
+                    {% for org in organizations %}
+                        {% set total_revenue.amount = total_revenue.amount + (org_stats.get(org.id, {}).get('total_revenue', 0)) %}
+                    {% endfor %}
+                    ${{ "{:,.0f}".format(total_revenue.amount) }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" data-tab="hierarchy">Organization Hierarchy</div>
+            <div class="tab" data-tab="list">All Organizations</div>
+            <div class="tab" data-tab="transfers">Transfers {% if pending_transfers %}<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:6px;">{{ pending_transfers|length }}</span>{% endif %}</div>
+            <div class="tab" data-tab="revenue">Revenue</div>
+        </div>
+        
+        <!-- Hierarchy Tab -->
+        <div class="tab-content active" id="tab-hierarchy">
+            <div class="content-section">
+                <div class="section-header">
+                    <div class="section-title">Organization Hierarchy</div>
+                </div>
+                
+                {% if hierarchy %}
+                <div class="org-tree">
+                    {% for org in hierarchy %}
+                    {{ render_org_tree(org) }}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏢</div>
+                    <div class="empty-state-title">No Organizations Yet</div>
+                    <p>Create your first organization to get started.</p>
+                    <button class="btn btn-primary" style="margin-top: 20px;" onclick="openModal('createOrgModal')">Create Organization</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- List Tab -->
+        <div class="tab-content" id="tab-list">
+            <div class="grid-3">
+                {% for org in organizations %}
+                <div class="org-card" data-org-id="{{ org.id }}">
+                    <div class="org-card-header">
+                        <div>
+                            <div class="org-card-name">{{ org.name }}</div>
+                            <div class="org-card-location">{{ org.city or '' }}{% if org.city and org.state %}, {% endif %}{{ org.state or '' }}</div>
+                        </div>
+                        <span class="org-card-type {{ org.org_type }}">{{ org.org_type }}</span>
+                    </div>
+                    <div class="org-card-stats">
+                        <div>
+                            <div class="org-card-stat-label">Clients</div>
+                            <div class="org-card-stat-value">{{ org_stats.get(org.id, {}).get('total_clients', 0) }}</div>
+                        </div>
+                        <div>
+                            <div class="org-card-stat-label">Cases</div>
+                            <div class="org-card-stat-value">{{ org_stats.get(org.id, {}).get('total_cases', 0) }}</div>
+                        </div>
+                        <div>
+                            <div class="org-card-stat-label">Revenue</div>
+                            <div class="org-card-stat-value">${{ "{:,.0f}".format(org_stats.get(org.id, {}).get('total_revenue', 0)) }}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; font-size: 11px;">
+                        {% if org.subscription_tier %}
+                        <span style="background: {% if org.subscription_tier == 'enterprise' %}#fef3c7{% elif org.subscription_tier == 'professional' %}#dbeafe{% elif org.subscription_tier == 'standard' %}#dcfce7{% else %}#f1f5f9{% endif %}; color: {% if org.subscription_tier == 'enterprise' %}#92400e{% elif org.subscription_tier == 'professional' %}#1e40af{% elif org.subscription_tier == 'standard' %}#166534{% else %}#475569{% endif %}; padding: 2px 6px; border-radius: 4px; font-weight: 500; text-transform: capitalize;">{{ org.subscription_tier }}</span>
+                        {% endif %}
+                        {% if org.license_number %}
+                        <span style="color: #64748b;">📋 {{ org.license_number }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="org-card-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="viewOrganization({{ org.id }})">View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="editOrganization({{ org.id }})">Edit</button>
+                        <button class="btn btn-secondary btn-sm" onclick="manageMembers({{ org.id }})">Members</button>
+                        <button class="btn btn-secondary btn-sm" onclick="viewConsolidatedReport({{ org.id }})" title="Consolidated Report">📊</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Transfers Tab -->
+        <div class="tab-content" id="tab-transfers">
+            <div class="content-section">
+                <div class="section-header">
+                    <div class="section-title">Pending Transfer Requests</div>
+                    <button class="btn btn-primary btn-sm" onclick="openModal('transferModal')">New Transfer</button>
+                </div>
+                
+                {% if pending_transfers %}
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Type</th>
+                            <th>Requested By</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transfer in pending_transfers %}
+                        <tr>
+                            <td>{{ transfer.client.name if transfer.client else 'N/A' }}</td>
+                            <td>{{ transfer.from_org.name if transfer.from_org else 'N/A' }}</td>
+                            <td>{{ transfer.to_org.name if transfer.to_org else 'N/A' }}</td>
+                            <td><span class="status-badge pending">{{ transfer.transfer_type }}</span></td>
+                            <td>{{ transfer.transferred_by.full_name if transfer.transferred_by else 'N/A' }}</td>
+                            <td>{{ transfer.created_at.strftime('%Y-%m-%d') if transfer.created_at else 'N/A' }}</td>
+                            <td>
+                                <button class="btn btn-success btn-sm" onclick="approveTransfer({{ transfer.id }}, true)">Approve</button>
+                                <button class="btn btn-danger btn-sm" onclick="approveTransfer({{ transfer.id }}, false)">Reject</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-title">No Pending Transfers</div>
+                    <p>All transfer requests have been processed.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Revenue Tab -->
+        <div class="tab-content" id="tab-revenue">
+            <div class="content-section">
+                <div class="section-header">
+                    <div class="section-title">Revenue Overview</div>
+                    <select class="form-select" style="width: auto;" onchange="loadRevenueReport(this.value)">
+                        <option value="month">Last 30 Days</option>
+                        <option value="quarter">Last Quarter</option>
+                        <option value="year">Last Year</option>
+                    </select>
+                </div>
+                
+                <div class="revenue-summary">
+                    <div class="revenue-card">
+                        <div class="revenue-card-label">Total Revenue</div>
+                        <div class="revenue-card-value" id="totalRevenue">
+                            {% set total_revenue = namespace(amount=0) %}
+                            {% for org in organizations %}
+                                {% set total_revenue.amount = total_revenue.amount + (org_stats.get(org.id, {}).get('total_revenue', 0)) %}
+                            {% endfor %}
+                            ${{ "{:,.0f}".format(total_revenue.amount) }}
+                        </div>
+                    </div>
+                    <div class="revenue-card">
+                        <div class="revenue-card-label">Revenue Share (to Parent)</div>
+                        <div class="revenue-card-value">$0</div>
+                    </div>
+                    <div class="revenue-card">
+                        <div class="revenue-card-label">Net Revenue</div>
+                        <div class="revenue-card-value positive">
+                            ${{ "{:,.0f}".format(total_revenue.amount) }}
+                        </div>
+                    </div>
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Type</th>
+                            <th>Clients</th>
+                            <th>Revenue</th>
+                            <th>Share %</th>
+                            <th>Net</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for org in organizations %}
+                        <tr>
+                            <td>{{ org.name }}</td>
+                            <td><span class="org-card-type {{ org.org_type }}">{{ org.org_type }}</span></td>
+                            <td>{{ org_stats.get(org.id, {}).get('total_clients', 0) }}</td>
+                            <td>${{ "{:,.0f}".format(org_stats.get(org.id, {}).get('total_revenue', 0)) }}</td>
+                            <td>{{ org.revenue_share_percent or 0 }}%</td>
+                            <td>${{ "{:,.0f}".format(org_stats.get(org.id, {}).get('total_revenue', 0) * (1 - (org.revenue_share_percent or 0) / 100)) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Organization Modal -->
+    <div class="modal-overlay" id="createOrgModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Create Organization</div>
+                <button class="modal-close" onclick="closeModal('createOrgModal')">&times;</button>
+            </div>
+            <form id="createOrgForm" onsubmit="createOrganization(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Organization Name *</label>
+                        <input type="text" name="name" class="form-input" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Organization Type</label>
+                            <select name="org_type" class="form-select">
+                                {% for key, value in org_types.items() %}
+                                <option value="{{ key }}">{{ value.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Parent Organization</label>
+                            <select name="parent_org_id" class="form-select">
+                                <option value="">None (Top Level)</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            <input type="text" name="state" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Zip Code</label>
+                            <input type="text" name="zip_code" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Manager</label>
+                            <select name="manager_staff_id" class="form-select">
+                                <option value="">Select Manager</option>
+                                {% for staff in staff_members %}
+                                <option value="{{ staff.id }}">{{ staff.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Revenue Share %</label>
+                            <input type="number" name="revenue_share_percent" class="form-input" value="0" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; margin: 15px 0; padding-top: 15px;">
+                        <div style="font-weight: 600; margin-bottom: 12px; color: #1a1a2e;">License & Subscription</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Contact Name</label>
+                            <input type="text" name="contact_name" class="form-input" placeholder="Primary contact person">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">License Number</label>
+                            <input type="text" name="license_number" class="form-input" placeholder="e.g., BAR-12345">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Subscription Tier</label>
+                            <select name="subscription_tier" class="form-select">
+                                <option value="basic">Basic</option>
+                                <option value="standard">Standard</option>
+                                <option value="professional">Professional</option>
+                                <option value="enterprise">Enterprise</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Billing Contact Email</label>
+                            <input type="email" name="billing_contact_email" class="form-input" placeholder="billing@example.com">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Max Users</label>
+                            <input type="number" name="max_users" class="form-input" value="10" min="1" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Clients</label>
+                            <input type="number" name="max_clients" class="form-input" value="100" min="1" max="10000">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createOrgModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Organization</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit Organization Modal -->
+    <div class="modal-overlay" id="editOrgModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Edit Organization</div>
+                <button class="modal-close" onclick="closeModal('editOrgModal')">&times;</button>
+            </div>
+            <form id="editOrgForm" onsubmit="updateOrganization(event)">
+                <input type="hidden" name="org_id" id="editOrgId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Organization Name *</label>
+                        <input type="text" name="name" id="editOrgName" class="form-input" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Organization Type</label>
+                            <select name="org_type" id="editOrgType" class="form-select">
+                                {% for key, value in org_types.items() %}
+                                <option value="{{ key }}">{{ value.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Revenue Share %</label>
+                            <input type="number" name="revenue_share_percent" id="editOrgRevShare" class="form-input" value="0" min="0" max="100" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" id="editOrgAddress" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" id="editOrgCity" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            <input type="text" name="state" id="editOrgState" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" id="editOrgPhone" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" id="editOrgEmail" class="form-input">
+                        </div>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; margin: 15px 0; padding-top: 15px;">
+                        <div style="font-weight: 600; margin-bottom: 12px; color: #1a1a2e;">License & Subscription</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Contact Name</label>
+                            <input type="text" name="contact_name" id="editOrgContactName" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">License Number</label>
+                            <input type="text" name="license_number" id="editOrgLicense" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Subscription Tier</label>
+                            <select name="subscription_tier" id="editOrgTier" class="form-select">
+                                <option value="basic">Basic</option>
+                                <option value="standard">Standard</option>
+                                <option value="professional">Professional</option>
+                                <option value="enterprise">Enterprise</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Billing Contact Email</label>
+                            <input type="email" name="billing_contact_email" id="editOrgBillingEmail" class="form-input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Max Users</label>
+                            <input type="number" name="max_users" id="editOrgMaxUsers" class="form-input" min="1" max="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Clients</label>
+                            <input type="number" name="max_clients" id="editOrgMaxClients" class="form-input" min="1" max="10000">
+                        </div>
+                    </div>
+                    <div id="editOrgLimitsInfo" style="background: #f8fafc; border-radius: 8px; padding: 12px; margin-top: 10px;">
+                        <div style="font-weight: 500; color: #64748b; font-size: 12px; margin-bottom: 8px;">Current Usage</div>
+                        <div style="display: flex; gap: 20px;">
+                            <div>
+                                <span style="color: #64748b; font-size: 12px;">Users:</span>
+                                <span id="editOrgCurrentUsers" style="font-weight: 600;">-</span> / <span id="editOrgLimitUsers">-</span>
+                            </div>
+                            <div>
+                                <span style="color: #64748b; font-size: 12px;">Clients:</span>
+                                <span id="editOrgCurrentClients" style="font-weight: 600;">-</span> / <span id="editOrgLimitClients">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editOrgModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Members Modal -->
+    <div class="modal-overlay" id="membersModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <div class="modal-title">Manage Members - <span id="membersOrgName"></span></div>
+                <button class="modal-close" onclick="closeModal('membersModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="section-header" style="margin-bottom: 15px;">
+                    <div class="section-title" style="font-size: 14px;">Add New Member</div>
+                </div>
+                <form id="addMemberForm" onsubmit="addMember(event)" style="display:flex;gap:12px;margin-bottom:20px;">
+                    <input type="hidden" name="org_id" id="membersOrgId">
+                    <select name="staff_id" class="form-select" style="flex:1;" required>
+                        <option value="">Select Staff Member</option>
+                        {% for staff in staff_members %}
+                        <option value="{{ staff.id }}">{{ staff.full_name }} ({{ staff.email }})</option>
+                        {% endfor %}
+                    </select>
+                    <select name="role" class="form-select" style="width:150px;" required>
+                        {% for key, value in member_roles.items() %}
+                        <option value="{{ key }}">{{ value.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+                </form>
+                
+                <table class="data-table" id="membersTable">
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Role</th>
+                            <th>Primary</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersList"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('membersModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Consolidated Report Modal -->
+    <div class="modal-overlay" id="consolidatedReportModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <div class="modal-title">Consolidated Report - <span id="consolidatedReportOrgName"></span></div>
+                <button class="modal-close" onclick="closeModal('consolidatedReportModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; padding: 12px; background: #f8fafc; border-radius: 8px;">
+                    <div style="font-size: 12px; color: #64748b;">Generated: <span id="consolidatedReportDate" style="font-weight: 500;">-</span></div>
+                    <div style="font-size: 12px; color: #64748b;">Organizations Included: <span id="consolidatedOrgCount" style="font-weight: 600; color: #1a1a2e;">-</span></div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px;">
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Total Clients</div>
+                        <div id="consolidatedTotalClients" style="font-size: 24px; font-weight: 700; color: #1a1a2e;">-</div>
+                        <div style="font-size: 11px; color: #64748b;"><span id="consolidatedActiveClients">-</span> active</div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Total Cases</div>
+                        <div id="consolidatedTotalCases" style="font-size: 24px; font-weight: 700; color: #1a1a2e;">-</div>
+                        <div style="font-size: 11px; color: #64748b;"><span id="consolidatedActiveCases">-</span> active</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #94a3b8; margin-bottom: 5px;">Total Revenue</div>
+                        <div id="consolidatedTotalRevenue" style="font-size: 24px; font-weight: 700; color: #84cc16;">-</div>
+                        <div style="font-size: 11px; color: #94a3b8;"><span id="consolidatedSettlements">-</span> settlements</div>
+                    </div>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 12px; color: #64748b; margin-bottom: 5px;">Avg Settlement</div>
+                        <div id="consolidatedAvgSettlement" style="font-size: 24px; font-weight: 700; color: #1a1a2e;">-</div>
+                        <div style="font-size: 11px; color: #64748b;"><span id="consolidatedTotalStaff">-</span> staff</div>
+                    </div>
+                </div>
+                
+                <div style="font-weight: 600; margin-bottom: 12px; color: #1a1a2e;">Organization Breakdown</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Type</th>
+                            <th>Clients</th>
+                            <th>Cases</th>
+                            <th>Revenue</th>
+                            <th>Staff</th>
+                        </tr>
+                    </thead>
+                    <tbody id="consolidatedBreakdown">
+                        <tr><td colspan="6" style="text-align: center; color: #64748b;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('consolidatedReportModal')">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Transfer Modal -->
+    <div class="modal-overlay" id="transferModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Request Client Transfer</div>
+                <button class="modal-close" onclick="closeModal('transferModal')">&times;</button>
+            </div>
+            <form id="transferForm" onsubmit="createTransfer(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Client *</label>
+                        <select name="client_id" class="form-select" required>
+                            <option value="">Select Client</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.name }} ({{ client.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">From Organization *</label>
+                            <select name="from_org_id" class="form-select" required>
+                                <option value="">Select Source</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">To Organization *</label>
+                            <select name="to_org_id" class="form-select" required>
+                                <option value="">Select Destination</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Transfer Type</label>
+                        <select name="transfer_type" class="form-select">
+                            <option value="referral">Referral</option>
+                            <option value="escalation">Escalation</option>
+                            <option value="reassignment">Reassignment</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reason</label>
+                        <textarea name="reason" class="form-textarea" placeholder="Explain the reason for this transfer..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('transferModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Transfer Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Organization Tree Macro -->
+    {% macro render_org_tree(org) %}
+    <div class="org-tree-item">
+        <div class="org-tree-node {{ org.org_type }}" data-org-id="{{ org.id }}">
+            {% if org.children %}
+            <div class="org-tree-toggle expanded" onclick="toggleOrgChildren(this)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            {% else %}
+            <div class="org-tree-toggle" style="opacity:0;"></div>
+            {% endif %}
+            <div class="org-tree-icon {{ org.org_type }}">
+                {% if org.org_type == 'headquarters' %}🏛️{% elif org.org_type == 'regional' %}🏢{% else %}🏠{% endif %}
+            </div>
+            <div class="org-tree-info">
+                <div class="org-tree-name">{{ org.name }}</div>
+                <div class="org-tree-meta">{{ org.org_type_name or org.org_type | title }} {% if org.city %} • {{ org.city }}, {{ org.state }}{% endif %}</div>
+            </div>
+            <div class="org-tree-stats">
+                <div class="org-tree-stat">👥 {{ org.member_count or 0 }}</div>
+                <div class="org-tree-stat">📋 {{ org.client_count or 0 }}</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" style="margin-left:16px;" onclick="event.stopPropagation();viewOrganization({{ org.id }})">View</button>
+        </div>
+        {% if org.children %}
+        <div class="org-tree-children">
+            {% for child in org.children %}
+            {{ render_org_tree(child) }}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endmacro %}
+    
+    <script>
+        // Tab Switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Modal Functions
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        // Toggle org tree children
+        function toggleOrgChildren(toggle) {
+            toggle.classList.toggle('expanded');
+            const children = toggle.closest('.org-tree-item').querySelector('.org-tree-children');
+            if (children) {
+                children.classList.toggle('hidden');
+            }
+        }
+        
+        // Create Organization
+        async function createOrganization(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/organizations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/dashboard/franchise?message=' + encodeURIComponent(result.message);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error creating organization: ' + err.message);
+            }
+        }
+        
+        // View Organization
+        async function viewOrganization(orgId) {
+            try {
+                const response = await fetch(`/api/organizations/${orgId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Organization:', result);
+                    editOrganization(orgId);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+        
+        // Edit Organization
+        async function editOrganization(orgId) {
+            try {
+                const response = await fetch(`/api/franchise/organizations/${orgId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const org = result.organization;
+                    const limits = result.limits || {};
+                    
+                    document.getElementById('editOrgId').value = org.id;
+                    document.getElementById('editOrgName').value = org.name || '';
+                    document.getElementById('editOrgType').value = org.org_type || 'branch';
+                    document.getElementById('editOrgAddress').value = org.address || '';
+                    document.getElementById('editOrgCity').value = org.city || '';
+                    document.getElementById('editOrgState').value = org.state || '';
+                    document.getElementById('editOrgPhone').value = org.phone || '';
+                    document.getElementById('editOrgEmail').value = org.email || '';
+                    document.getElementById('editOrgRevShare').value = org.revenue_share_percent || 0;
+                    
+                    document.getElementById('editOrgContactName').value = org.contact_name || '';
+                    document.getElementById('editOrgLicense').value = org.license_number || '';
+                    document.getElementById('editOrgTier').value = org.subscription_tier || 'basic';
+                    document.getElementById('editOrgBillingEmail').value = org.billing_contact_email || '';
+                    document.getElementById('editOrgMaxUsers').value = org.max_users || 10;
+                    document.getElementById('editOrgMaxClients').value = org.max_clients || 100;
+                    
+                    if (limits.users) {
+                        document.getElementById('editOrgCurrentUsers').textContent = limits.users.current || 0;
+                        document.getElementById('editOrgLimitUsers').textContent = limits.users.max || '-';
+                        document.getElementById('editOrgCurrentClients').textContent = limits.clients.current || 0;
+                        document.getElementById('editOrgLimitClients').textContent = limits.clients.max || '-';
+                    }
+                    
+                    openModal('editOrgModal');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+        
+        // Update Organization
+        async function updateOrganization(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const orgId = formData.get('org_id');
+            const data = Object.fromEntries(formData.entries());
+            delete data.org_id;
+            
+            try {
+                const response = await fetch(`/api/organizations/${orgId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/dashboard/franchise?message=' + encodeURIComponent('Organization updated successfully');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error updating organization: ' + err.message);
+            }
+        }
+        
+        // Manage Members
+        async function manageMembers(orgId) {
+            try {
+                const [orgResponse, membersResponse] = await Promise.all([
+                    fetch(`/api/organizations/${orgId}`),
+                    fetch(`/api/organizations/${orgId}/members`)
+                ]);
+                const orgResult = await orgResponse.json();
+                const membersResult = await membersResponse.json();
+                
+                if (orgResult.success && membersResult.success) {
+                    document.getElementById('membersOrgId').value = orgId;
+                    document.getElementById('membersOrgName').textContent = orgResult.organization.name;
+                    
+                    const tbody = document.getElementById('membersList');
+                    tbody.innerHTML = '';
+                    
+                    membersResult.members.forEach(member => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${member.staff_name || 'Unknown'} <span style="color:#64748b;">(${member.staff_email || ''})</span></td>
+                            <td><span class="status-badge" style="background:#e0f2fe;color:#0369a1;">${member.role_name || member.role}</span></td>
+                            <td>${member.is_primary ? '✓ Primary' : ''}</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="removeMember(${orgId}, ${member.staff_id})">Remove</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                    
+                    if (membersResult.members.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#64748b;">No members yet</td></tr>';
+                    }
+                    
+                    openModal('membersModal');
+                } else {
+                    alert('Error loading members');
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+        
+        // Add Member
+        async function addMember(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const orgId = formData.get('org_id');
+            const data = Object.fromEntries(formData.entries());
+            delete data.org_id;
+            
+            try {
+                const response = await fetch(`/api/organizations/${orgId}/members`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    manageMembers(orgId);
+                    form.reset();
+                    document.getElementById('membersOrgId').value = orgId;
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error adding member: ' + err.message);
+            }
+        }
+        
+        // Remove Member
+        async function removeMember(orgId, staffId) {
+            if (!confirm('Are you sure you want to remove this member?')) return;
+            
+            try {
+                const response = await fetch(`/api/organizations/${orgId}/members/${staffId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    manageMembers(orgId);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error removing member: ' + err.message);
+            }
+        }
+        
+        // Create Transfer
+        async function createTransfer(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/transfers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/dashboard/franchise?message=' + encodeURIComponent(result.message);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error creating transfer: ' + err.message);
+            }
+        }
+        
+        // Approve/Reject Transfer
+        async function approveTransfer(transferId, approve) {
+            const action = approve ? 'approve' : 'reject';
+            if (!confirm(`Are you sure you want to ${action} this transfer?`)) return;
+            
+            try {
+                const response = await fetch(`/api/transfers/${transferId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approve: approve })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/dashboard/franchise?message=' + encodeURIComponent(result.message);
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+        
+        // Load Revenue Report
+        async function loadRevenueReport(period) {
+            console.log('Loading revenue report for period:', period);
+        }
+        
+        // View Consolidated Report
+        async function viewConsolidatedReport(orgId) {
+            try {
+                const response = await fetch(`/api/franchise/organizations/${orgId}/consolidated-report`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const report = result.report;
+                    const summary = report.summary || {};
+                    const breakdown = report.organization_breakdown || [];
+                    
+                    document.getElementById('consolidatedReportOrgName').textContent = report.organization_name || '';
+                    document.getElementById('consolidatedReportDate').textContent = new Date(report.generated_at).toLocaleString();
+                    document.getElementById('consolidatedOrgCount').textContent = report.included_organization_count || 0;
+                    
+                    document.getElementById('consolidatedTotalClients').textContent = summary.total_clients || 0;
+                    document.getElementById('consolidatedActiveClients').textContent = summary.active_clients || 0;
+                    document.getElementById('consolidatedTotalCases').textContent = summary.total_cases || 0;
+                    document.getElementById('consolidatedActiveCases').textContent = summary.active_cases || 0;
+                    document.getElementById('consolidatedTotalRevenue').textContent = '$' + (summary.total_revenue || 0).toLocaleString();
+                    document.getElementById('consolidatedSettlements').textContent = summary.total_settlements || 0;
+                    document.getElementById('consolidatedAvgSettlement').textContent = '$' + (summary.avg_settlement_amount || 0).toLocaleString(undefined, {maximumFractionDigits: 2});
+                    document.getElementById('consolidatedTotalStaff').textContent = summary.total_staff || 0;
+                    
+                    const breakdownHtml = breakdown.map(org => `
+                        <tr>
+                            <td>${org.organization_name}</td>
+                            <td><span class="org-card-type ${org.org_type}">${org.org_type}</span></td>
+                            <td>${org.total_clients || 0}</td>
+                            <td>${org.total_cases || 0}</td>
+                            <td>$${(org.total_revenue || 0).toLocaleString()}</td>
+                            <td>${org.member_count || 0}</td>
+                        </tr>
+                    `).join('');
+                    document.getElementById('consolidatedBreakdown').innerHTML = breakdownHtml || '<tr><td colspan="6">No data available</td></tr>';
+                    
+                    openModal('consolidatedReportModal');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                alert('Error loading report: ' + err.message);
+            }
+        }
+        
+        // Close modal when clicking overlay
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+{# White-Label Branding Include - For partner law firm branding #}
+{# Usage: {% include 'includes/whitelabel_branding.html' %} #}
+
+{% if whitelabel_branding %}
+<style id="whitelabel-branding-styles">
+    :root {
+        --wl-primary: {{ whitelabel_branding.primary_color or '#319795' }};
+        --wl-secondary: {{ whitelabel_branding.secondary_color or '#1a1a2e' }};
+        --wl-accent: {{ whitelabel_branding.accent_color or '#84cc16' }};
+        --wl-header-bg: {{ whitelabel_branding.header_bg_color or '#1a1a2e' }};
+        --wl-sidebar-bg: {{ whitelabel_branding.sidebar_bg_color or '#1a1a2e' }};
+        --wl-font-family: {{ whitelabel_branding.font_family or "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }};
+    }
+    
+    body {
+        font-family: var(--wl-font-family);
+    }
+    
+    .header, .portal-header {
+        background: linear-gradient(180deg, var(--wl-header-bg) 0%, color-mix(in srgb, var(--wl-header-bg), black 10%) 100%) !important;
+    }
+    
+    .sidebar {
+        background: linear-gradient(180deg, var(--wl-sidebar-bg) 0%, color-mix(in srgb, var(--wl-sidebar-bg), black 10%) 100%) !important;
+    }
+    
+    .logo span {
+        color: var(--wl-accent) !important;
+    }
+    
+    .nav-item.active {
+        background: linear-gradient(135deg, var(--wl-primary) 0%, var(--wl-accent) 100%) !important;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--wl-primary) 0%, var(--wl-accent) 100%) !important;
+    }
+    
+    .btn-primary:hover {
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--wl-primary), transparent 60%) !important;
+    }
+    
+    .stat-card.highlight {
+        background: linear-gradient(135deg, var(--wl-secondary) 0%, color-mix(in srgb, var(--wl-secondary), black 10%) 100%) !important;
+    }
+    
+    .stat-card.highlight .stat-value {
+        color: var(--wl-accent) !important;
+    }
+    
+    .status-badge.active {
+        background: color-mix(in srgb, var(--wl-accent), white 80%) !important;
+        color: color-mix(in srgb, var(--wl-accent), black 40%) !important;
+    }
+    
+    a:hover {
+        color: var(--wl-primary) !important;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        border-color: var(--wl-primary) !important;
+    }
+    
+    .tab.active {
+        color: var(--wl-primary) !important;
+        border-bottom-color: var(--wl-primary) !important;
+    }
+    
+    .feature-toggle input[type="checkbox"]:checked {
+        accent-color: var(--wl-primary) !important;
+    }
+    
+    .greeting strong {
+        color: var(--wl-accent) !important;
+    }
+    
+    .avatar {
+        background: linear-gradient(135deg, var(--wl-accent), color-mix(in srgb, var(--wl-accent), black 20%)) !important;
+    }
+    
+    .timeline-item::before {
+        background: var(--wl-primary) !important;
+    }
+    
+    .document-icon {
+        background: color-mix(in srgb, var(--wl-primary), white 80%) !important;
+        color: var(--wl-primary) !important;
+    }
+    
+    {% if whitelabel_branding.custom_css %}
+    {{ whitelabel_branding.custom_css|safe }}
+    {% endif %}
+</style>
+
+{% if whitelabel_branding.favicon_url %}
+<link rel="icon" type="image/x-icon" href="{{ whitelabel_branding.favicon_url }}">
+<link rel="shortcut icon" href="{{ whitelabel_branding.favicon_url }}">
+{% endif %}
+
+{% if whitelabel_config %}
+<script>
+    window.whitelabelConfig = {
+        id: {{ whitelabel_config.id if whitelabel_config.id else 'null' }},
+        name: "{{ whitelabel_branding.organization_name|default('Brightpath Ascend', true)|e }}",
+        subdomain: "{{ whitelabel_branding.subdomain|default('', true)|e }}",
+        customDomain: "{{ whitelabel_branding.custom_domain|default('', true)|e }}",
+        logoUrl: "{{ whitelabel_branding.logo_url|default('', true)|e }}",
+        companyEmail: "{{ whitelabel_branding.company_email|default('', true)|e }}",
+        companyPhone: "{{ whitelabel_branding.company_phone|default('', true)|e }}",
+        companyAddress: "{{ whitelabel_branding.company_address|default('', true)|e }}",
+        termsUrl: "{{ whitelabel_branding.terms_url|default('', true)|e }}",
+        privacyUrl: "{{ whitelabel_branding.privacy_url|default('', true)|e }}",
+        footerText: "{{ whitelabel_branding.footer_text|default('', true)|e }}"
+    };
+</script>
+{% endif %}
+
+{% endif %}
+
+{# White-label footer component #}
+{% macro whitelabel_footer() %}
+<footer class="whitelabel-footer" style="padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; margin-top: 40px;">
+    {% if whitelabel_branding %}
+    <div class="footer-content">
+        {% if whitelabel_branding.footer_text %}
+        <p style="margin-bottom: 8px;">{{ whitelabel_branding.footer_text }}</p>
+        {% else %}
+        <p style="margin-bottom: 8px;">&copy; {{ now().year if now is defined else '2024' }} {{ whitelabel_branding.organization_name|default('Brightpath Ascend', true) }}. All rights reserved.</p>
+        {% endif %}
+        
+        {% if whitelabel_branding.company_address %}
+        <p style="margin-bottom: 8px;">{{ whitelabel_branding.company_address }}</p>
+        {% endif %}
+        
+        <div class="footer-links" style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            {% if whitelabel_branding.company_phone %}
+            <a href="tel:{{ whitelabel_branding.company_phone }}" style="color: inherit; text-decoration: none;">{{ whitelabel_branding.company_phone }}</a>
+            {% endif %}
+            
+            {% if whitelabel_branding.company_email %}
+            <a href="mailto:{{ whitelabel_branding.company_email }}" style="color: inherit; text-decoration: none;">{{ whitelabel_branding.company_email }}</a>
+            {% endif %}
+            
+            {% if whitelabel_branding.terms_url %}
+            <a href="{{ whitelabel_branding.terms_url }}" target="_blank" style="color: inherit; text-decoration: none;">Terms of Service</a>
+            {% endif %}
+            
+            {% if whitelabel_branding.privacy_url %}
+            <a href="{{ whitelabel_branding.privacy_url }}" target="_blank" style="color: inherit; text-decoration: none;">Privacy Policy</a>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p>&copy; 2024 Brightpath Ascend. All rights reserved.</p>
+    {% endif %}
+</footer>
+{% endmacro %}
+
+{# Logo component with white-label support #}
+{% macro whitelabel_logo(size='normal') %}
+{% set logo_height = '45px' if size == 'normal' else '32px' if size == 'small' else '60px' %}
+<div class="logo" style="display: flex; align-items: center;">
+    {% if whitelabel_branding and whitelabel_branding.logo_url %}
+    <img src="{{ whitelabel_branding.logo_url }}" alt="{{ whitelabel_branding.organization_name|default('Logo', true) }}" style="height: {{ logo_height }}; margin-right: 12px;" onerror="this.style.display='none'">
+    {% else %}
+    <img src="/static/images/logo.png" alt="Brightpath Ascend" style="height: {{ logo_height }}; margin-right: 12px;" onerror="this.style.display='none'">
+    {% endif %}
+    
+    {% if whitelabel_branding and whitelabel_branding.organization_name %}
+    {% set name_parts = whitelabel_branding.organization_name.split(' ') %}
+    {% if name_parts|length > 1 %}
+    <span style="color: white; font-weight: 700; font-size: 20px;">{{ name_parts[:-1]|join(' ') }} <span style="color: {{ whitelabel_branding.accent_color or '#84cc16' }};">{{ name_parts[-1] }}</span></span>
+    {% else %}
+    <span style="color: white; font-weight: 700; font-size: 20px;">{{ whitelabel_branding.organization_name }}</span>
+    {% endif %}
+    {% else %}
+    <span style="color: white; font-weight: 700; font-size: 20px;">Brightpath <span style="color: #84cc16;">Ascend</span></span>
+    {% endif %}
+</div>
+{% endmacro %}

@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Dashboard - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #84cc16; }
+        
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover { background: #dc2626; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        .stat-card.highlight .stat-label,
+        .stat-card.highlight .stat-value { color: white; }
+        .stat-card.good { border-left: 4px solid #22c55e; }
+        .stat-card.warning { border-left: 4px solid #f59e0b; }
+        .stat-card.danger { border-left: 4px solid #ef4444; }
+        
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-unit {
+            font-size: 14px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        .stat-change {
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .stat-change.positive { color: #22c55e; }
+        .stat-change.negative { color: #ef4444; }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+        
+        @media (max-width: 1024px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        .table tr:hover { background: #f8fafc; }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success { background: #dcfce7; color: #166534; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #dc2626; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        .progress-fill.success { background: linear-gradient(90deg, #22c55e, #84cc16); }
+        .progress-fill.warning { background: linear-gradient(90deg, #f59e0b, #eab308); }
+        .progress-fill.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+        }
+        .alert-danger {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+        }
+        .alert-success {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+        
+        .db-pool-status {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .pool-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .pool-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .pool-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .recommendation {
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid #319795;
+        }
+        .recommendation-title {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        .recommendation-text {
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .refresh-indicator.active { color: #22c55e; }
+        
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #319795;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title { font-size: 20px; font-weight: 600; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #319795;
+        }
+        
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .metric-icon.speed { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .metric-icon.cache { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .metric-icon.requests { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .metric-icon.errors { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .metric-icon svg { width: 24px; height: 24px; color: white; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            Bright<span>path</span>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Dashboard
+            </a>
+            <a href="/clients" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Clients
+            </a>
+            <a href="/cases" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Cases
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">System</div>
+            <a href="/dashboard/performance" class="nav-item active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                Performance
+            </a>
+            <a href="/dashboard/audit" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                Audit Logs
+            </a>
+            <a href="/dashboard/api" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                API Access
+            </a>
+            <a href="/admin/settings" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Settings
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>⚡ Performance Monitoring</h1>
+            <div class="header-actions">
+                <div class="refresh-indicator" id="refreshIndicator">
+                    <div class="spinner" id="spinner" style="display: none;"></div>
+                    <span id="lastUpdate">Last updated: Never</span>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshData()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Refresh
+                </button>
+                <button class="btn btn-danger" onclick="showClearCacheModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Clear Cache
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card" id="avgResponseCard">
+                <div class="metric-icon speed">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <div class="stat-label">Avg Response Time</div>
+                <div class="stat-value">
+                    <span id="avgResponseTime">{{ "%.1f"|format(summary.avg_response_time_ms or 0) }}</span>
+                    <span class="stat-unit">ms</span>
+                </div>
+            </div>
+            
+            <div class="stat-card" id="cacheHitCard">
+                <div class="metric-icon cache">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                </div>
+                <div class="stat-label">Cache Hit Rate</div>
+                <div class="stat-value">
+                    <span id="cacheHitRate">{{ "%.1f"|format(cache_stats.hit_rate or 0) }}</span>
+                    <span class="stat-unit">%</span>
+                </div>
+            </div>
+            
+            <div class="stat-card" id="requestCountCard">
+                <div class="metric-icon requests">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                </div>
+                <div class="stat-label">Total Requests (1h)</div>
+                <div class="stat-value">
+                    <span id="totalRequests">{{ summary.total_requests or 0 }}</span>
+                </div>
+            </div>
+            
+            <div class="stat-card" id="errorRateCard">
+                <div class="metric-icon errors">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
+                <div class="stat-label">Error Rate</div>
+                <div class="stat-value">
+                    <span id="errorRate">{{ "%.2f"|format(summary.error_rate or 0) }}</span>
+                    <span class="stat-unit">%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Section -->
+        <div id="alertsSection">
+            {% if slow_endpoints and slow_endpoints|length > 0 %}
+            <div class="alert alert-warning">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <div>
+                    <strong>Slow Endpoints Detected!</strong>
+                    <p>{{ slow_endpoints|length }} endpoint(s) are responding slower than 100ms. Review recommendations below.</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if cache_stats.hit_rate is defined and cache_stats.hit_rate < 50 %}
+            <div class="alert alert-info">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div>
+                    <strong>Cache Performance</strong>
+                    <p>Cache hit rate is below 50%. Consider caching more frequently accessed data.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Response Time Distribution</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="responseTimeChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Cache Performance</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="cacheChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slow Endpoints Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Slow Endpoints (>100ms)</h3>
+                <span class="badge badge-warning" id="slowEndpointCount">{{ slow_endpoints|length if slow_endpoints else 0 }} endpoints</span>
+            </div>
+            
+            <table class="table" id="slowEndpointsTable">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Avg Time</th>
+                        <th>P95 Time</th>
+                        <th>Requests</th>
+                        <th>Status</th>
+                        <th>Recommendation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if slow_endpoints %}
+                    {% for endpoint in slow_endpoints %}
+                    <tr>
+                        <td><code>{{ endpoint.endpoint }}</code></td>
+                        <td><span class="badge badge-info">{{ endpoint.method }}</span></td>
+                        <td>{{ "%.1f"|format(endpoint.avg_time) }}ms</td>
+                        <td>{{ "%.1f"|format(endpoint.p95_time) }}ms</td>
+                        <td>{{ endpoint.request_count }}</td>
+                        <td>
+                            {% if endpoint.avg_time > 500 %}
+                            <span class="badge badge-danger">Critical</span>
+                            {% elif endpoint.avg_time > 200 %}
+                            <span class="badge badge-warning">Slow</span>
+                            {% else %}
+                            <span class="badge badge-success">OK</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ endpoint.recommendation or 'Review endpoint logic' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 40px;">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 12px; display: block; color: #22c55e;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            All endpoints performing within acceptable limits
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Database & Cache Stats -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Database Connection Pool</h3>
+                </div>
+                <div class="db-pool-status">
+                    <div class="pool-item">
+                        <div class="pool-value" id="poolSize">{{ db_stats.pool_size or 'N/A' }}</div>
+                        <div class="pool-label">Pool Size</div>
+                    </div>
+                    <div class="pool-item">
+                        <div class="pool-value" id="checkedIn">{{ db_stats.checked_in or 'N/A' }}</div>
+                        <div class="pool-label">Checked In</div>
+                    </div>
+                    <div class="pool-item">
+                        <div class="pool-value" id="checkedOut">{{ db_stats.checked_out or 'N/A' }}</div>
+                        <div class="pool-label">Checked Out</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <div class="stat-label">Pool Utilization</div>
+                    <div class="progress-bar" style="margin-top: 8px;">
+                        <div class="progress-fill success" id="poolUtilization" style="width: {{ ((db_stats.checked_out or 0) / (db_stats.pool_size or 1) * 100)|int }}%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Cache Statistics</h3>
+                </div>
+                <div class="db-pool-status">
+                    <div class="pool-item">
+                        <div class="pool-value" id="cacheEntries">{{ cache_stats.total_entries or 0 }}</div>
+                        <div class="pool-label">Total Entries</div>
+                    </div>
+                    <div class="pool-item">
+                        <div class="pool-value" id="cacheHits">{{ cache_stats.hits or 0 }}</div>
+                        <div class="pool-label">Cache Hits</div>
+                    </div>
+                    <div class="pool-item">
+                        <div class="pool-value" id="cacheMisses">{{ cache_stats.misses or 0 }}</div>
+                        <div class="pool-label">Cache Misses</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <div class="stat-label">Cache Hit Rate</div>
+                    <div class="progress-bar" style="margin-top: 8px;">
+                        <div class="progress-fill {% if cache_stats.hit_rate|default(0) >= 70 %}success{% elif cache_stats.hit_rate|default(0) >= 40 %}warning{% else %}danger{% endif %}" id="cacheHitProgress" style="width: {{ cache_stats.hit_rate|default(0) }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Index Recommendations -->
+        {% if index_recommendations %}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Index Recommendations</h3>
+            </div>
+            {% for rec in index_recommendations %}
+            <div class="recommendation">
+                <div class="recommendation-title">{{ rec.table }}.{{ rec.column }}</div>
+                <div class="recommendation-text">{{ rec.reason }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Clear Cache Modal -->
+    <div class="modal" id="clearCacheModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Clear Cache</h3>
+                <button class="modal-close" onclick="hideClearCacheModal()">&times;</button>
+            </div>
+            <form onsubmit="clearCache(event)">
+                <div class="form-group">
+                    <label class="form-label">Pattern (optional)</label>
+                    <input type="text" class="form-input" id="cachePattern" placeholder="e.g., clients_* or leave empty for all">
+                    <small style="color: #64748b; margin-top: 8px; display: block;">
+                        Use * as wildcard. Leave empty to clear all cache entries.
+                    </small>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="hideClearCacheModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Clear Cache</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let responseTimeChart, cacheChart;
+        let autoRefreshInterval;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            startAutoRefresh();
+        });
+
+        function initCharts() {
+            const responseTimeCtx = document.getElementById('responseTimeChart').getContext('2d');
+            responseTimeChart = new Chart(responseTimeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['P50', 'P95', 'P99', 'Avg', 'Max'],
+                    datasets: [{
+                        label: 'Response Time (ms)',
+                        data: [
+                            {{ summary.p50_time or 0 }},
+                            {{ summary.p95_time or 0 }},
+                            {{ summary.p99_time or 0 }},
+                            {{ summary.avg_response_time_ms or 0 }},
+                            {{ summary.max_response_time_ms or 0 }}
+                        ],
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(249, 115, 22, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(34, 197, 94)',
+                            'rgb(59, 130, 246)',
+                            'rgb(249, 115, 22)',
+                            'rgb(139, 92, 246)',
+                            'rgb(239, 68, 68)'
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Time (ms)' }
+                        }
+                    }
+                }
+            });
+
+            const cacheCtx = document.getElementById('cacheChart').getContext('2d');
+            cacheChart = new Chart(cacheCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Cache Hits', 'Cache Misses'],
+                    datasets: [{
+                        data: [{{ cache_stats.hits or 0 }}, {{ cache_stats.misses or 0 }}],
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(34, 197, 94)',
+                            'rgb(239, 68, 68)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function startAutoRefresh() {
+            autoRefreshInterval = setInterval(refreshData, 30000);
+        }
+
+        async function refreshData() {
+            document.getElementById('spinner').style.display = 'block';
+            
+            try {
+                const [metricsRes, cacheRes, slowRes] = await Promise.all([
+                    fetch('/api/performance/metrics?period=60'),
+                    fetch('/api/performance/cache-stats'),
+                    fetch('/api/performance/slow-endpoints?threshold=100')
+                ]);
+
+                const [metrics, cache, slow] = await Promise.all([
+                    metricsRes.json(),
+                    cacheRes.json(),
+                    slowRes.json()
+                ]);
+
+                if (metrics.success) {
+                    updateMetrics(metrics.summary);
+                }
+                if (cache.success) {
+                    updateCacheStats(cache.cache_stats);
+                }
+                if (slow.success) {
+                    updateSlowEndpoints(slow.slow_endpoints);
+                }
+
+                document.getElementById('lastUpdate').textContent = 
+                    'Last updated: ' + new Date().toLocaleTimeString();
+                document.getElementById('refreshIndicator').classList.add('active');
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            } finally {
+                document.getElementById('spinner').style.display = 'none';
+            }
+        }
+
+        function updateMetrics(summary) {
+            document.getElementById('avgResponseTime').textContent = 
+                (summary.avg_response_time_ms || 0).toFixed(1);
+            document.getElementById('totalRequests').textContent = 
+                summary.total_requests || 0;
+            document.getElementById('errorRate').textContent = 
+                (summary.error_rate || 0).toFixed(2);
+
+            if (responseTimeChart) {
+                responseTimeChart.data.datasets[0].data = [
+                    summary.p50_time || 0,
+                    summary.p95_time || 0,
+                    summary.p99_time || 0,
+                    summary.avg_response_time_ms || 0,
+                    summary.max_response_time_ms || 0
+                ];
+                responseTimeChart.update();
+            }
+        }
+
+        function updateCacheStats(stats) {
+            document.getElementById('cacheHitRate').textContent = 
+                (stats.hit_rate || 0).toFixed(1);
+            document.getElementById('cacheEntries').textContent = 
+                stats.total_entries || 0;
+            document.getElementById('cacheHits').textContent = 
+                stats.hits || 0;
+            document.getElementById('cacheMisses').textContent = 
+                stats.misses || 0;
+            
+            document.getElementById('cacheHitProgress').style.width = 
+                (stats.hit_rate || 0) + '%';
+
+            if (cacheChart) {
+                cacheChart.data.datasets[0].data = [stats.hits || 0, stats.misses || 0];
+                cacheChart.update();
+            }
+        }
+
+        function updateSlowEndpoints(endpoints) {
+            const tbody = document.querySelector('#slowEndpointsTable tbody');
+            const count = document.getElementById('slowEndpointCount');
+            count.textContent = endpoints.length + ' endpoints';
+
+            if (endpoints.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 40px;">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 12px; display: block; color: #22c55e;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            All endpoints performing within acceptable limits
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = endpoints.map(ep => {
+                const statusClass = ep.avg_time > 500 ? 'danger' : ep.avg_time > 200 ? 'warning' : 'success';
+                const statusText = ep.avg_time > 500 ? 'Critical' : ep.avg_time > 200 ? 'Slow' : 'OK';
+                
+                return `
+                    <tr>
+                        <td><code>${ep.endpoint}</code></td>
+                        <td><span class="badge badge-info">${ep.method}</span></td>
+                        <td>${ep.avg_time.toFixed(1)}ms</td>
+                        <td>${ep.p95_time.toFixed(1)}ms</td>
+                        <td>${ep.request_count}</td>
+                        <td><span class="badge badge-${statusClass}">${statusText}</span></td>
+                        <td>${ep.recommendation || 'Review endpoint logic'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function showClearCacheModal() {
+            document.getElementById('clearCacheModal').classList.add('active');
+        }
+
+        function hideClearCacheModal() {
+            document.getElementById('clearCacheModal').classList.remove('active');
+            document.getElementById('cachePattern').value = '';
+        }
+
+        async function clearCache(event) {
+            event.preventDefault();
+            const pattern = document.getElementById('cachePattern').value.trim();
+            
+            try {
+                const response = await fetch('/api/performance/cache/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pattern: pattern || null })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Cache cleared successfully! Cleared ${result.result.cleared} entries.`);
+                    hideClearCacheModal();
+                    refreshData();
+                } else {
+                    alert('Error clearing cache: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error clearing cache: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

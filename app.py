@@ -27,11 +27,11 @@ except Exception as e:
     print(f"❌ Failed to initialize Anthropic client: {e}")
     # Still create a dummy client to prevent crashes
     client = None
-from flask import Flask, request, jsonify, render_template, send_file, session, redirect, url_for
+from flask import Flask, request, jsonify, render_template, send_file, session, redirect, url_for, g
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -52,6 +52,16 @@ from services.scheduler_service import SchedulerService, CronParser, COMMON_CRON
 from services.workflow_triggers_service import WorkflowTriggersService, TRIGGER_TYPES, ACTION_TYPES
 from services.predictive_analytics_service import predictive_analytics_service
 from services.attorney_analytics_service import attorney_analytics_service
+from services.white_label_service import WhiteLabelService, get_white_label_service
+from services.whitelabel_service import WhiteLabelConfigService, get_whitelabel_config_service
+from services.franchise_service import FranchiseService, get_org_filter, get_clients_for_org
+from services.api_access_service import APIAccessService, get_api_access_service
+from services.audit_service import AuditService, get_audit_service
+from services.performance_service import (
+    PerformanceService, get_performance_service, request_timing_middleware,
+    app_cache, cached, invalidate_cache
+)
+from database import APIKey, APIRequest, APIWebhook, API_SCOPES, WEBHOOK_EVENTS, AuditLog, AUDIT_EVENT_TYPES, AUDIT_RESOURCE_TYPES, PerformanceMetric, CacheEntry
 import json
 
 app = Flask(__name__)
@@ -69,14 +79,18 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session expiry
 CORS(app, resources={
     r"/*": {
         "origins": ["*"],
-        "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-API-Key"],
         "supports_credentials": True
     }
 })
 
 # Allow large credit report uploads (up to 20MB)
 app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
+
+# Initialize performance monitoring middleware
+request_timing_middleware(app)
+print("✅ Performance monitoring middleware initialized")
 
 # Simple in-memory rate limiting for login attempts
 login_attempts = {}  # {email: {'count': int, 'last_attempt': datetime}}
@@ -172,12 +186,286 @@ def require_staff(roles=None):
     return decorator
 
 
+def require_api_key(scopes=None):
+    """Decorator to require API key authentication for public API endpoints"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            start_time = time.time()
+            
+            auth_header = request.headers.get('Authorization', '')
+            if not auth_header:
+                return jsonify({
+                    'success': False,
+                    'error': 'API key required. Use Authorization: Bearer <your-api-key>'
+                }), 401
+            
+            service = get_api_access_service()
+            api_key, error = service.validate_api_key(auth_header)
+            
+            if error:
+                return jsonify({'success': False, 'error': error}), 401
+            
+            if scopes:
+                missing_scopes = [s for s in scopes if not api_key.has_scope(s)]
+                if missing_scopes:
+                    response_time = int((time.time() - start_time) * 1000)
+                    service.log_request(
+                        key_id=api_key.id,
+                        endpoint=request.path,
+                        method=request.method,
+                        request_ip=request.remote_addr,
+                        response_status=403,
+                        response_time_ms=response_time,
+                        error_message=f"Missing scopes: {missing_scopes}"
+                    )
+                    return jsonify({
+                        'success': False,
+                        'error': f'Insufficient permissions. Required scopes: {scopes}'
+                    }), 403
+            
+            allowed, rate_info = service.check_rate_limit(
+                api_key.id,
+                api_key.rate_limit_per_minute,
+                api_key.rate_limit_per_day
+            )
+            
+            if not allowed:
+                response_time = int((time.time() - start_time) * 1000)
+                service.log_request(
+                    key_id=api_key.id,
+                    endpoint=request.path,
+                    method=request.method,
+                    request_ip=request.remote_addr,
+                    response_status=429,
+                    response_time_ms=response_time,
+                    error_message=rate_info.get('error', 'Rate limit exceeded')
+                )
+                return jsonify({
+                    'success': False,
+                    'error': rate_info.get('error', 'Rate limit exceeded'),
+                    'rate_limit': rate_info
+                }), 429
+            
+            g.api_key = api_key
+            g.api_key_id = api_key.id
+            g.rate_limit_info = rate_info
+            
+            try:
+                response = f(*args, **kwargs)
+                response_time = int((time.time() - start_time) * 1000)
+                
+                status_code = response[1] if isinstance(response, tuple) else 200
+                
+                service.log_request(
+                    key_id=api_key.id,
+                    endpoint=request.path,
+                    method=request.method,
+                    request_ip=request.remote_addr,
+                    response_status=status_code,
+                    response_time_ms=response_time
+                )
+                
+                return response
+            except Exception as e:
+                response_time = int((time.time() - start_time) * 1000)
+                service.log_request(
+                    key_id=api_key.id,
+                    endpoint=request.path,
+                    method=request.method,
+                    request_ip=request.remote_addr,
+                    response_status=500,
+                    response_time_ms=response_time,
+                    error_message=str(e)
+                )
+                raise
+        
+        return decorated_function
+    return decorator
+
+
+_whitelabel_config_cache = {}
+_whitelabel_cache_timestamps = {}
+_WHITELABEL_CACHE_TTL = 300
+
+def with_branding(f):
+    """
+    Decorator that injects white-label branding into template context.
+    Detects subdomain/domain from request and loads appropriate config.
+    Falls back to default Brightpath Ascend branding if no config found.
+    Caches config lookups for performance.
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        branding = None
+        config = None
+        
+        try:
+            host = request.host
+            if host:
+                host = host.lower().split(':')[0]
+                
+                cache_key = f"wl_host:{host}"
+                cached_config = _get_whitelabel_cache(cache_key)
+                
+                if cached_config is not None:
+                    if cached_config == 'default':
+                        branding = _get_default_whitelabel_branding()
+                    else:
+                        branding = cached_config.get_branding_dict() if hasattr(cached_config, 'get_branding_dict') else cached_config
+                        config = cached_config
+                else:
+                    db = get_db()
+                    try:
+                        service = get_whitelabel_config_service(db)
+                        config = service.detect_config_from_host(host)
+                        
+                        if config and config.is_active:
+                            branding = config.get_branding_dict()
+                            _set_whitelabel_cache(cache_key, config)
+                        else:
+                            branding = _get_default_whitelabel_branding()
+                            _set_whitelabel_cache(cache_key, 'default')
+                    finally:
+                        db.close()
+        except Exception as e:
+            print(f"Branding lookup error: {e}")
+            branding = _get_default_whitelabel_branding()
+        
+        if branding is None:
+            branding = _get_default_whitelabel_branding()
+        
+        g.whitelabel_config = config
+        g.whitelabel_branding = branding
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def _get_whitelabel_cache(key):
+    """Get value from white-label cache if not expired"""
+    if key not in _whitelabel_config_cache:
+        return None
+    
+    timestamp = _whitelabel_cache_timestamps.get(key)
+    if timestamp and (datetime.utcnow() - timestamp).total_seconds() > _WHITELABEL_CACHE_TTL:
+        del _whitelabel_config_cache[key]
+        del _whitelabel_cache_timestamps[key]
+        return None
+    
+    return _whitelabel_config_cache.get(key)
+
+
+def _set_whitelabel_cache(key, value):
+    """Set value in white-label cache"""
+    _whitelabel_config_cache[key] = value
+    _whitelabel_cache_timestamps[key] = datetime.utcnow()
+
+
+def _get_default_whitelabel_branding():
+    """Return default Brightpath Ascend branding"""
+    return {
+        'organization_name': 'Brightpath Ascend',
+        'subdomain': None,
+        'custom_domain': None,
+        'logo_url': '/static/images/logo.png',
+        'favicon_url': None,
+        'primary_color': '#319795',
+        'secondary_color': '#1a1a2e',
+        'accent_color': '#84cc16',
+        'header_bg_color': '#1a1a2e',
+        'sidebar_bg_color': '#1a1a2e',
+        'font_family': "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        'font_family_key': 'inter',
+        'custom_css': None,
+        'email_from_name': 'Brightpath Ascend',
+        'email_from_address': None,
+        'company_address': None,
+        'company_phone': None,
+        'company_email': None,
+        'footer_text': '© 2024 Brightpath Ascend. All rights reserved.',
+        'terms_url': None,
+        'privacy_url': None,
+        'is_active': True
+    }
+
+
+@app.context_processor
+def inject_whitelabel_branding():
+    """Inject white-label branding into all templates"""
+    return {
+        'whitelabel_config': getattr(g, 'whitelabel_config', None),
+        'whitelabel_branding': getattr(g, 'whitelabel_branding', _get_default_whitelabel_branding())
+    }
+
+
+@app.before_request
+def detect_tenant():
+    """Middleware to detect tenant from subdomain or custom domain"""
+    g.tenant = None
+    g.tenant_branding = None
+    
+    try:
+        host = request.host
+        if not host:
+            return
+        
+        db = get_db()
+        try:
+            service = get_white_label_service(db)
+            tenant = service.detect_tenant_from_host(host)
+            
+            if tenant and tenant.is_active:
+                g.tenant = tenant
+                g.tenant_branding = tenant.get_branding_config()
+            else:
+                g.tenant_branding = service.get_default_branding()
+        except Exception as e:
+            print(f"Tenant detection error: {e}")
+            g.tenant_branding = {
+                'primary_color': '#319795',
+                'secondary_color': '#1a1a2e',
+                'accent_color': '#84cc16',
+                'logo_url': '/static/images/logo.png',
+                'favicon_url': None,
+                'company_name': 'Brightpath Ascend',
+                'company_address': None,
+                'company_phone': None,
+                'company_email': None,
+                'support_email': None,
+                'terms_url': None,
+                'privacy_url': None,
+                'custom_css': None,
+                'custom_js': None
+            }
+        finally:
+            db.close()
+    except Exception as e:
+        pass
+
+
+@app.context_processor
+def inject_tenant_branding():
+    """Inject tenant branding into all templates"""
+    return {
+        'tenant': getattr(g, 'tenant', None),
+        'tenant_branding': getattr(g, 'tenant_branding', {
+            'primary_color': '#319795',
+            'secondary_color': '#1a1a2e',
+            'accent_color': '#84cc16',
+            'logo_url': '/static/images/logo.png',
+            'company_name': 'Brightpath Ascend'
+        })
+    }
+
+
 @app.route('/staff/login', methods=['GET', 'POST'])
 def staff_login():
     """Staff login page"""
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
+        user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         
         if not email or not password:
             return render_template('staff_login.html', error='Please enter email and password')
@@ -185,14 +473,27 @@ def staff_login():
         db = get_db()
         try:
             staff = db.query(Staff).filter_by(email=email).first()
+            audit_service = get_audit_service(db)
             
             if not staff:
+                audit_service.log_login(
+                    user_id=None, user_type='staff', success=False, ip=user_ip,
+                    email=email, failure_reason='User not found'
+                )
                 return render_template('staff_login.html', error='Invalid email or password', email=email)
             
             if not staff.is_active:
+                audit_service.log_login(
+                    user_id=staff.id, user_type='staff', success=False, ip=user_ip,
+                    email=email, name=staff.full_name, failure_reason='Account disabled'
+                )
                 return render_template('staff_login.html', error='Account is disabled. Contact administrator.', email=email)
             
             if not check_password_hash(staff.password_hash, password):
+                audit_service.log_login(
+                    user_id=staff.id, user_type='staff', success=False, ip=user_ip,
+                    email=email, name=staff.full_name, failure_reason='Invalid password'
+                )
                 return render_template('staff_login.html', error='Invalid email or password', email=email)
             
             staff.last_login = datetime.utcnow()
@@ -204,6 +505,11 @@ def staff_login():
             session['staff_name'] = staff.full_name
             session['staff_email'] = staff.email
             session['staff_initials'] = staff.initials
+            
+            audit_service.log_login(
+                user_id=staff.id, user_type='staff', success=True, ip=user_ip,
+                email=staff.email, name=staff.full_name
+            )
             
             if staff.force_password_change:
                 return render_template('staff_login.html', force_change=True)
@@ -258,6 +564,20 @@ def staff_change_password():
 @app.route('/staff/logout')
 def staff_logout():
     """Staff logout"""
+    staff_id = session.get('staff_id')
+    staff_email = session.get('staff_email')
+    staff_name = session.get('staff_name')
+    
+    if staff_id:
+        try:
+            audit_service = get_audit_service()
+            audit_service.log_logout(
+                user_id=staff_id, user_type='staff',
+                email=staff_email, name=staff_name
+            )
+        except Exception as e:
+            print(f"Logout audit error: {e}")
+    
     session.pop('staff_id', None)
     session.pop('staff_role', None)
     session.pop('staff_name', None)
@@ -17064,6 +17384,3464 @@ def api_ml_refresh_patterns():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# WHITE-LABEL MANAGEMENT ROUTES
+# ============================================================
+
+@app.route('/dashboard/white-label')
+@require_staff(roles=['admin'])
+def dashboard_white_label():
+    """White-label management dashboard - admin only"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        tenants = service.get_all_tenants(include_inactive=True)
+        
+        tenant_stats = []
+        for tenant in tenants:
+            stats = service.get_tenant_usage_stats(tenant.id)
+            tenant_stats.append({
+                'tenant': tenant.to_dict(),
+                'stats': stats
+            })
+        
+        staff_members = db.query(Staff).filter_by(is_active=True).order_by(Staff.first_name).all()
+        
+        return render_template('white_label_dashboard.html',
+            tenants=tenants,
+            tenant_stats=tenant_stats,
+            staff_members=staff_members,
+            subscription_tiers=SUBSCRIPTION_TIERS,
+            message=request.args.get('message'),
+            error=request.args.get('error')
+        )
+    except Exception as e:
+        print(f"White-label dashboard error: {e}")
+        return render_template('error.html', 
+            error='Dashboard Error', 
+            message=str(e)), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_tenants_list():
+    """List all tenants"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
+        tenants = service.get_all_tenants(include_inactive=include_inactive)
+        
+        return jsonify({
+            'success': True,
+            'tenants': [t.to_dict() for t in tenants],
+            'count': len(tenants)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_tenants_create():
+    """Create a new tenant"""
+    db = get_db()
+    try:
+        data = request.get_json() or request.form.to_dict()
+        
+        name = data.get('name')
+        slug = data.get('slug')
+        
+        if not name or not slug:
+            return jsonify({'success': False, 'error': 'Name and slug are required'}), 400
+        
+        import re
+        if not re.match(r'^[a-z0-9-]+$', slug):
+            return jsonify({'success': False, 'error': 'Slug must contain only lowercase letters, numbers, and hyphens'}), 400
+        
+        settings = {
+            'domain': data.get('domain'),
+            'logo_url': data.get('logo_url'),
+            'favicon_url': data.get('favicon_url'),
+            'primary_color': data.get('primary_color', '#319795'),
+            'secondary_color': data.get('secondary_color', '#1a1a2e'),
+            'accent_color': data.get('accent_color', '#84cc16'),
+            'company_name': data.get('company_name', name),
+            'company_address': data.get('company_address'),
+            'company_phone': data.get('company_phone'),
+            'company_email': data.get('company_email'),
+            'support_email': data.get('support_email'),
+            'terms_url': data.get('terms_url'),
+            'privacy_url': data.get('privacy_url'),
+            'custom_css': data.get('custom_css'),
+            'custom_js': data.get('custom_js'),
+            'is_active': data.get('is_active', True),
+            'subscription_tier': data.get('subscription_tier', 'basic'),
+            'max_users': int(data.get('max_users', 5)),
+            'max_clients': int(data.get('max_clients', 100)),
+            'webhook_url': data.get('webhook_url')
+        }
+        
+        if data.get('features_enabled'):
+            if isinstance(data['features_enabled'], str):
+                settings['features_enabled'] = json.loads(data['features_enabled'])
+            else:
+                settings['features_enabled'] = data['features_enabled']
+        
+        service = get_white_label_service(db)
+        tenant = service.create_tenant(name, slug, settings)
+        
+        return jsonify({
+            'success': True,
+            'tenant': tenant.to_dict(),
+            'message': f'Tenant "{name}" created successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_tenants_get(tenant_id):
+    """Get a specific tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        tenant = service.get_tenant_by_id(tenant_id)
+        
+        if not tenant:
+            return jsonify({'success': False, 'error': 'Tenant not found'}), 404
+        
+        stats = service.get_tenant_usage_stats(tenant_id)
+        users = [tu.to_dict() for tu in service.get_tenant_users(tenant_id)]
+        
+        return jsonify({
+            'success': True,
+            'tenant': tenant.to_dict(),
+            'stats': stats,
+            'users': users
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>', methods=['PUT'])
+@require_staff(roles=['admin'])
+def api_tenants_update(tenant_id):
+    """Update a tenant"""
+    db = get_db()
+    try:
+        data = request.get_json() or request.form.to_dict()
+        
+        if 'slug' in data:
+            import re
+            if not re.match(r'^[a-z0-9-]+$', data['slug']):
+                return jsonify({'success': False, 'error': 'Slug must contain only lowercase letters, numbers, and hyphens'}), 400
+        
+        if 'features_enabled' in data and isinstance(data['features_enabled'], str):
+            data['features_enabled'] = json.loads(data['features_enabled'])
+        
+        if 'max_users' in data:
+            data['max_users'] = int(data['max_users'])
+        if 'max_clients' in data:
+            data['max_clients'] = int(data['max_clients'])
+        if 'is_active' in data and isinstance(data['is_active'], str):
+            data['is_active'] = data['is_active'].lower() == 'true'
+        
+        service = get_white_label_service(db)
+        tenant = service.update_tenant(tenant_id, **data)
+        
+        if not tenant:
+            return jsonify({'success': False, 'error': 'Tenant not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'tenant': tenant.to_dict(),
+            'message': 'Tenant updated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_tenants_delete(tenant_id):
+    """Delete a tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        success = service.delete_tenant(tenant_id)
+        
+        if not success:
+            return jsonify({'success': False, 'error': 'Tenant not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Tenant deleted successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/users', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_tenant_users_list(tenant_id):
+    """Get users assigned to a tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        users = service.get_tenant_users(tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'users': [u.to_dict() for u in users],
+            'count': len(users)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/users', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_tenant_users_add(tenant_id):
+    """Assign a user to a tenant"""
+    db = get_db()
+    try:
+        data = request.get_json() or request.form.to_dict()
+        
+        staff_id = data.get('staff_id')
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Staff ID is required'}), 400
+        
+        role = data.get('role', 'user')
+        is_primary_admin = data.get('is_primary_admin', False)
+        if isinstance(is_primary_admin, str):
+            is_primary_admin = is_primary_admin.lower() == 'true'
+        
+        service = get_white_label_service(db)
+        tenant_user = service.assign_user_to_tenant(
+            staff_id=int(staff_id),
+            tenant_id=tenant_id,
+            role=role,
+            is_primary_admin=is_primary_admin
+        )
+        
+        return jsonify({
+            'success': True,
+            'tenant_user': tenant_user.to_dict(),
+            'message': 'User assigned to tenant successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/users/<int:staff_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_tenant_users_remove(tenant_id, staff_id):
+    """Remove a user from a tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        success = service.remove_user_from_tenant(staff_id, tenant_id)
+        
+        if not success:
+            return jsonify({'success': False, 'error': 'User not found in tenant'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'User removed from tenant successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/clients', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_tenant_clients_list(tenant_id):
+    """Get clients assigned to a tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        clients = service.get_tenant_clients(tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'clients': [c.to_dict() for c in clients],
+            'count': len(clients)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/clients', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_tenant_clients_add(tenant_id):
+    """Assign a client to a tenant"""
+    db = get_db()
+    try:
+        data = request.get_json() or request.form.to_dict()
+        
+        client_id = data.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Client ID is required'}), 400
+        
+        service = get_white_label_service(db)
+        tenant_client = service.assign_client_to_tenant(
+            client_id=int(client_id),
+            tenant_id=tenant_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'tenant_client': tenant_client.to_dict(),
+            'message': 'Client assigned to tenant successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/clients/<int:client_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_tenant_clients_remove(tenant_id, client_id):
+    """Remove a client from a tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        success = service.remove_client_from_tenant(client_id, tenant_id)
+        
+        if not success:
+            return jsonify({'success': False, 'error': 'Client not found in tenant'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Client removed from tenant successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/regenerate-api-key', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_tenant_regenerate_api_key(tenant_id):
+    """Regenerate API key for a tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        new_api_key = service.generate_tenant_api_key(tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'api_key': new_api_key,
+            'message': 'API key regenerated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 404
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tenants/<int:tenant_id>/stats', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_tenant_stats(tenant_id):
+    """Get usage statistics for a tenant"""
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        stats = service.get_tenant_usage_stats(tenant_id)
+        
+        if not stats:
+            return jsonify({'success': False, 'error': 'Tenant not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/branding', methods=['GET'])
+def api_branding():
+    """Get current tenant branding (for frontend)"""
+    branding = getattr(g, 'tenant_branding', None)
+    tenant = getattr(g, 'tenant', None)
+    
+    if not branding:
+        branding = {
+            'primary_color': '#319795',
+            'secondary_color': '#1a1a2e',
+            'accent_color': '#84cc16',
+            'logo_url': '/static/images/logo.png',
+            'favicon_url': None,
+            'company_name': 'Brightpath Ascend',
+            'company_address': None,
+            'company_phone': None,
+            'company_email': None,
+            'support_email': None,
+            'terms_url': None,
+            'privacy_url': None,
+            'custom_css': None,
+            'custom_js': None
+        }
+    
+    return jsonify({
+        'success': True,
+        'is_tenant': tenant is not None,
+        'tenant_name': tenant.name if tenant else None,
+        'tenant_slug': tenant.slug if tenant else None,
+        'branding': branding
+    })
+
+
+# ============================================================
+# WHITE-LABEL CONFIG ROUTES (Partner Law Firm Branding)
+# ============================================================
+
+@app.route('/dashboard/whitelabel')
+@require_staff(roles=['admin'])
+def dashboard_whitelabel():
+    """White-label configuration management dashboard - admin only"""
+    db = get_db()
+    try:
+        service = get_whitelabel_config_service(db)
+        configs = service.get_all_configs(include_inactive=True)
+        
+        organizations = db.query(FranchiseOrganization).filter_by(is_active=True).order_by(FranchiseOrganization.name).all()
+        
+        return render_template('whitelabel_admin.html',
+            configs=configs,
+            organizations=organizations,
+            font_families=FONT_FAMILIES,
+            message=request.args.get('message'),
+            error=request.args.get('error')
+        )
+    except Exception as e:
+        print(f"Whitelabel dashboard error: {e}")
+        return render_template('error.html', 
+            error='Dashboard Error', 
+            message=str(e)), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_whitelabel_list():
+    """List all white-label configurations"""
+    db = get_db()
+    try:
+        service = get_whitelabel_config_service(db)
+        include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
+        configs = service.get_all_configs(include_inactive=include_inactive)
+        
+        return jsonify({
+            'success': True,
+            'configs': [c.to_dict() for c in configs],
+            'count': len(configs)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_whitelabel_create():
+    """Create a new white-label configuration"""
+    db = get_db()
+    try:
+        data = request.get_json() or request.form.to_dict()
+        
+        org_id = data.get('organization_id')
+        if org_id:
+            org_id = int(org_id)
+        
+        required_fields = ['organization_name', 'subdomain']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'error': f'{field} is required'}), 400
+        
+        service = get_whitelabel_config_service(db)
+        config = service.create_config(org_id, data)
+        
+        return jsonify({
+            'success': True,
+            'config': config.to_dict(),
+            'message': f'White-label configuration for "{config.organization_name}" created successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel/<int:config_id>', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_whitelabel_get(config_id):
+    """Get a specific white-label configuration"""
+    db = get_db()
+    try:
+        service = get_whitelabel_config_service(db)
+        config = service.get_config_by_id(config_id)
+        
+        if not config:
+            return jsonify({'success': False, 'error': 'Configuration not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'config': config.to_dict(),
+            'branding': config.get_branding_dict(),
+            'css': service.generate_css(config)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel/<int:config_id>', methods=['PUT'])
+@require_staff(roles=['admin'])
+def api_whitelabel_update(config_id):
+    """Update a white-label configuration"""
+    db = get_db()
+    try:
+        data = request.get_json() or request.form.to_dict()
+        
+        if 'organization_id' in data and data['organization_id']:
+            data['organization_id'] = int(data['organization_id'])
+        
+        if 'is_active' in data and isinstance(data['is_active'], str):
+            data['is_active'] = data['is_active'].lower() == 'true'
+        
+        service = get_whitelabel_config_service(db)
+        config = service.update_config(config_id, **data)
+        
+        if not config:
+            return jsonify({'success': False, 'error': 'Configuration not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'config': config.to_dict(),
+            'message': 'Configuration updated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel/<int:config_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_whitelabel_delete(config_id):
+    """Delete a white-label configuration"""
+    db = get_db()
+    try:
+        service = get_whitelabel_config_service(db)
+        success = service.delete_config(config_id)
+        
+        if not success:
+            return jsonify({'success': False, 'error': 'Configuration not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Configuration deleted successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel/<int:config_id>/preview', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_whitelabel_preview(config_id):
+    """Preview branding for a white-label configuration"""
+    db = get_db()
+    try:
+        service = get_whitelabel_config_service(db)
+        config = service.get_config_by_id(config_id)
+        
+        if not config:
+            return jsonify({'success': False, 'error': 'Configuration not found'}), 404
+        
+        preview_data = request.get_json() or {}
+        
+        branding = config.get_branding_dict()
+        
+        for key, value in preview_data.items():
+            if key in branding and value is not None:
+                branding[key] = value
+        
+        css = service.generate_css(config)
+        
+        if preview_data.get('custom_css'):
+            css += f"\n/* Preview Custom CSS */\n{preview_data['custom_css']}"
+        
+        return jsonify({
+            'success': True,
+            'branding': branding,
+            'css': css,
+            'config_id': config_id
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel/validate-domain', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_whitelabel_validate_domain():
+    """Check if a domain/subdomain is available"""
+    domain = request.args.get('domain', '').strip()
+    exclude_id = request.args.get('exclude_id')
+    
+    if not domain:
+        return jsonify({'success': False, 'error': 'Domain is required'}), 400
+    
+    db = get_db()
+    try:
+        service = get_whitelabel_config_service(db)
+        result = service.validate_domain(domain, int(exclude_id) if exclude_id else None)
+        
+        return jsonify({
+            'success': True,
+            **result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/whitelabel/current', methods=['GET'])
+def api_whitelabel_current():
+    """Get current white-label branding based on request host"""
+    branding = getattr(g, 'whitelabel_branding', None)
+    config = getattr(g, 'whitelabel_config', None)
+    
+    if not branding:
+        branding = _get_default_whitelabel_branding()
+    
+    return jsonify({
+        'success': True,
+        'is_whitelabel': config is not None,
+        'organization_name': branding.get('organization_name'),
+        'subdomain': branding.get('subdomain'),
+        'branding': branding
+    })
+
+
+@app.route('/api/tenants/<int:tenant_id>/validate-feature', methods=['GET'])
+@require_staff()
+def api_tenant_validate_feature(tenant_id):
+    """Check if a tenant has access to a specific feature"""
+    feature_name = request.args.get('feature')
+    if not feature_name:
+        return jsonify({'success': False, 'error': 'Feature name is required'}), 400
+    
+    db = get_db()
+    try:
+        service = get_white_label_service(db)
+        has_feature = service.validate_tenant_features(tenant_id, feature_name)
+        
+        return jsonify({
+            'success': True,
+            'feature': feature_name,
+            'has_access': has_feature
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# FRANCHISE MODE MANAGEMENT ROUTES
+# ============================================================
+
+def get_franchise_service(db):
+    """Get franchise service instance"""
+    return FranchiseService(db)
+
+
+@app.route('/dashboard/franchise')
+@require_staff()
+def dashboard_franchise():
+    """Franchise management dashboard"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role == 'admin':
+            organizations = service.get_all_organizations(include_inactive=True)
+            hierarchy = service.get_organization_hierarchy()
+        else:
+            organizations = service.get_accessible_organizations(staff_user.id)
+            hierarchy = []
+            for org in organizations:
+                if not org.parent_org_id:
+                    hierarchy.extend(service.get_organization_hierarchy(org.id))
+        
+        pending_transfers = []
+        for org in organizations:
+            pending_transfers.extend(service.get_pending_transfers(org.id, direction='incoming'))
+        
+        org_stats = {}
+        for org in organizations:
+            org_stats[org.id] = service.get_org_stats(org.id)
+        
+        staff_members = db.query(Staff).filter_by(is_active=True).order_by(Staff.first_name).all()
+        clients = db.query(Client).filter_by(status='active').order_by(Client.name).limit(500).all()
+        
+        return render_template('franchise_dashboard.html',
+            organizations=organizations,
+            hierarchy=hierarchy,
+            org_stats=org_stats,
+            pending_transfers=pending_transfers,
+            staff_members=staff_members,
+            clients=clients,
+            org_types=FRANCHISE_ORG_TYPES,
+            member_roles=FRANCHISE_MEMBER_ROLES,
+            message=request.args.get('message'),
+            error=request.args.get('error')
+        )
+    except Exception as e:
+        print(f"Franchise dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template('error.html',
+            error='Dashboard Error',
+            message=str(e)), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations', methods=['GET'])
+@require_staff()
+def api_organizations_list():
+    """List organizations accessible to the current user"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
+        
+        if staff_user.role == 'admin':
+            orgs = service.get_all_organizations(include_inactive=include_inactive)
+        else:
+            orgs = service.get_accessible_organizations(staff_user.id)
+            if not include_inactive:
+                orgs = [o for o in orgs if o.is_active]
+        
+        return jsonify({
+            'success': True,
+            'organizations': [o.to_dict() for o in orgs],
+            'count': len(orgs)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'manager'])
+def api_organizations_create():
+    """Create a new organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        data = request.get_json() or request.form.to_dict()
+        
+        name = data.get('name')
+        org_type = data.get('org_type', 'branch')
+        parent_org_id = data.get('parent_org_id')
+        
+        if not name:
+            return jsonify({'success': False, 'error': 'Organization name is required'}), 400
+        
+        if parent_org_id:
+            parent_org_id = int(parent_org_id)
+            if staff_user.role != 'admin':
+                if not service.check_org_permission(staff_user.id, parent_org_id, 'manage_members'):
+                    return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        org = service.create_organization(
+            name=name,
+            org_type=org_type,
+            parent_org_id=parent_org_id,
+            address=data.get('address'),
+            city=data.get('city'),
+            state=data.get('state'),
+            zip_code=data.get('zip_code'),
+            phone=data.get('phone'),
+            email=data.get('email'),
+            manager_staff_id=data.get('manager_staff_id'),
+            revenue_share_percent=float(data.get('revenue_share_percent', 0)),
+            settings=json.loads(data.get('settings', '{}')) if isinstance(data.get('settings'), str) else data.get('settings', {})
+        )
+        
+        return jsonify({
+            'success': True,
+            'organization': org.to_dict(),
+            'message': f'Organization "{name}" created successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>', methods=['GET'])
+@require_staff()
+def api_organizations_get(org_id):
+    """Get a specific organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        org = service.get_organization_by_id(org_id)
+        if not org:
+            return jsonify({'success': False, 'error': 'Organization not found'}), 404
+        
+        if staff_user.role != 'admin':
+            accessible = service.get_accessible_organizations(staff_user.id)
+            if org not in accessible:
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        stats = service.get_org_stats(org_id)
+        members = [m.to_dict() for m in service.get_organization_members(org_id)]
+        
+        return jsonify({
+            'success': True,
+            'organization': org.to_dict(),
+            'stats': stats,
+            'members': members
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>', methods=['PUT'])
+@require_staff()
+def api_organizations_update(org_id):
+    """Update an organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'edit_org'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        data = request.get_json() or request.form.to_dict()
+        
+        if 'settings' in data and isinstance(data['settings'], str):
+            data['settings'] = json.loads(data['settings'])
+        if 'revenue_share_percent' in data:
+            data['revenue_share_percent'] = float(data['revenue_share_percent'])
+        
+        org = service.update_organization(org_id, **data)
+        if not org:
+            return jsonify({'success': False, 'error': 'Organization not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'organization': org.to_dict(),
+            'message': 'Organization updated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_organizations_delete(org_id):
+    """Delete (deactivate) an organization"""
+    db = get_db()
+    try:
+        service = get_franchise_service(db)
+        
+        success = service.delete_organization(org_id)
+        if not success:
+            return jsonify({'success': False, 'error': 'Organization not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Organization deactivated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/hierarchy', methods=['GET'])
+@require_staff()
+def api_organizations_hierarchy(org_id):
+    """Get organization hierarchy tree"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            accessible = service.get_accessible_organizations(staff_user.id)
+            if not any(o.id == org_id for o in accessible):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        hierarchy = service.get_organization_hierarchy(org_id)
+        
+        return jsonify({
+            'success': True,
+            'hierarchy': hierarchy
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/members', methods=['GET'])
+@require_staff()
+def api_organizations_members_list(org_id):
+    """List organization members"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'view_org'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        members = service.get_organization_members(org_id)
+        
+        return jsonify({
+            'success': True,
+            'members': [m.to_dict() for m in members],
+            'count': len(members)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/members', methods=['POST'])
+@require_staff()
+def api_organizations_members_add(org_id):
+    """Add a member to an organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'manage_members'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        data = request.get_json() or request.form.to_dict()
+        staff_id = data.get('staff_id')
+        role = data.get('role', 'staff')
+        permissions = data.get('permissions', [])
+        is_primary = data.get('is_primary', False)
+        
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Staff ID is required'}), 400
+        
+        if isinstance(permissions, str):
+            permissions = json.loads(permissions)
+        
+        membership = service.add_member(
+            org_id=org_id,
+            staff_id=int(staff_id),
+            role=role,
+            permissions=permissions,
+            is_primary=bool(is_primary)
+        )
+        
+        return jsonify({
+            'success': True,
+            'membership': membership.to_dict(),
+            'message': 'Member added successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/members/<int:staff_id>', methods=['PUT'])
+@require_staff()
+def api_organizations_members_update(org_id, staff_id):
+    """Update a member's role/permissions"""
+    db = get_db()
+    try:
+        current_staff = g.staff_user
+        service = get_franchise_service(db)
+        
+        if current_staff.role != 'admin':
+            if not service.check_org_permission(current_staff.id, org_id, 'manage_members'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        data = request.get_json() or request.form.to_dict()
+        
+        if 'permissions' in data and isinstance(data['permissions'], str):
+            data['permissions'] = json.loads(data['permissions'])
+        
+        membership = service.update_member(org_id, staff_id, **data)
+        if not membership:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'membership': membership.to_dict(),
+            'message': 'Member updated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/members/<int:staff_id>', methods=['DELETE'])
+@require_staff()
+def api_organizations_members_remove(org_id, staff_id):
+    """Remove a member from an organization"""
+    db = get_db()
+    try:
+        current_staff = g.staff_user
+        service = get_franchise_service(db)
+        
+        if current_staff.role != 'admin':
+            if not service.check_org_permission(current_staff.id, org_id, 'manage_members'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        success = service.remove_member(org_id, staff_id)
+        if not success:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Member removed successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/clients', methods=['GET'])
+@require_staff()
+def api_organizations_clients_list(org_id):
+    """List clients assigned to an organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'view_clients'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        include_children = request.args.get('include_children', 'false').lower() == 'true'
+        clients = service.get_organization_clients(org_id, include_child_orgs=include_children)
+        
+        return jsonify({
+            'success': True,
+            'clients': [c.to_dict() for c in clients],
+            'count': len(clients)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/clients', methods=['POST'])
+@require_staff()
+def api_organizations_clients_assign(org_id):
+    """Assign a client to an organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'manage_clients'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        data = request.get_json() or request.form.to_dict()
+        client_id = data.get('client_id')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Client ID is required'}), 400
+        
+        assignment = service.assign_client_to_org(
+            client_id=int(client_id),
+            org_id=org_id,
+            assigned_by_staff_id=staff_user.id
+        )
+        
+        return jsonify({
+            'success': True,
+            'assignment': assignment.to_dict(),
+            'message': 'Client assigned successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/clients/<int:client_id>', methods=['DELETE'])
+@require_staff()
+def api_organizations_clients_unassign(org_id, client_id):
+    """Remove a client assignment from an organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'manage_clients'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        success = service.unassign_client_from_org(client_id, org_id)
+        if not success:
+            return jsonify({'success': False, 'error': 'Client assignment not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Client unassigned successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/transfers', methods=['GET'])
+@require_staff()
+def api_transfers_list():
+    """List client transfers"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        org_id = request.args.get('org_id', type=int)
+        status = request.args.get('status')
+        direction = request.args.get('direction', 'both')
+        
+        if status == 'pending':
+            transfers = service.get_pending_transfers(org_id, direction)
+        else:
+            transfers = service.get_transfer_history(org_id)
+        
+        if staff_user.role != 'admin':
+            accessible = service.get_accessible_organizations(staff_user.id)
+            accessible_ids = [o.id for o in accessible]
+            transfers = [t for t in transfers if t.from_org_id in accessible_ids or t.to_org_id in accessible_ids]
+        
+        return jsonify({
+            'success': True,
+            'transfers': [t.to_dict() for t in transfers],
+            'count': len(transfers)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/transfers', methods=['POST'])
+@require_staff()
+def api_transfers_create():
+    """Initiate a client transfer"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        data = request.get_json() or request.form.to_dict()
+        
+        client_id = data.get('client_id')
+        from_org_id = data.get('from_org_id')
+        to_org_id = data.get('to_org_id')
+        reason = data.get('reason', '')
+        transfer_type = data.get('transfer_type', 'referral')
+        
+        if not all([client_id, from_org_id, to_org_id]):
+            return jsonify({'success': False, 'error': 'Client ID, from_org_id, and to_org_id are required'}), 400
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, int(from_org_id), 'manage_clients'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        transfer = service.transfer_client(
+            client_id=int(client_id),
+            from_org_id=int(from_org_id),
+            to_org_id=int(to_org_id),
+            reason=reason,
+            transferred_by_staff_id=staff_user.id,
+            transfer_type=transfer_type
+        )
+        
+        return jsonify({
+            'success': True,
+            'transfer': transfer.to_dict(),
+            'message': 'Transfer request created successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/transfers/<int:transfer_id>/approve', methods=['POST'])
+@require_staff()
+def api_transfers_approve(transfer_id):
+    """Approve or reject a transfer"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        data = request.get_json() or request.form.to_dict()
+        
+        approve = data.get('approve', True)
+        if isinstance(approve, str):
+            approve = approve.lower() in ['true', '1', 'yes']
+        
+        transfer = db.query(InterOrgTransfer).filter_by(id=transfer_id).first()
+        if not transfer:
+            return jsonify({'success': False, 'error': 'Transfer not found'}), 404
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, transfer.to_org_id, 'approve_transfers'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        transfer = service.approve_transfer(
+            transfer_id=transfer_id,
+            approved_by_staff_id=staff_user.id,
+            approve=approve
+        )
+        
+        action = 'approved' if approve else 'rejected'
+        return jsonify({
+            'success': True,
+            'transfer': transfer.to_dict(),
+            'message': f'Transfer {action} successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/revenue', methods=['GET'])
+@require_staff()
+def api_organizations_revenue(org_id):
+    """Get revenue report for an organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'view_revenue'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        period = request.args.get('period', 'month')
+        include_children = request.args.get('include_children', 'true').lower() == 'true'
+        
+        report = service.get_org_revenue_report(org_id, period, include_children)
+        revenue_share = service.calculate_revenue_share(org_id, period)
+        
+        return jsonify({
+            'success': True,
+            'revenue_report': report,
+            'revenue_share': revenue_share
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/organizations/<int:org_id>/stats', methods=['GET'])
+@require_staff()
+def api_organizations_stats(org_id):
+    """Get statistics for an organization"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'view_org'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        include_children = request.args.get('include_children', 'false').lower() == 'true'
+        stats = service.get_org_stats(org_id, include_children)
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/user/organizations', methods=['GET'])
+@require_staff()
+def api_user_organizations():
+    """Get organizations the current user belongs to"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        organizations = service.get_user_organizations(staff_user.id)
+        
+        return jsonify({
+            'success': True,
+            'organizations': organizations,
+            'count': len(organizations)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# FRANCHISE MODE API ROUTES (Aliases with /api/franchise prefix)
+# ============================================================
+
+@app.route('/api/franchise/organizations', methods=['GET'])
+@require_staff()
+def api_franchise_organizations_list():
+    """List all organizations accessible to user - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        include_inactive = request.args.get('include_inactive', 'false').lower() == 'true'
+        
+        if staff_user.role == 'admin':
+            orgs = service.get_all_organizations(include_inactive=include_inactive)
+        else:
+            orgs = service.get_accessible_organizations(staff_user.id)
+            if not include_inactive:
+                orgs = [o for o in orgs if o.is_active]
+        
+        return jsonify({
+            'success': True,
+            'organizations': [o.to_dict() for o in orgs],
+            'count': len(orgs)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'manager'])
+def api_franchise_organizations_create():
+    """Create new organization - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        data = request.get_json() or request.form.to_dict()
+        
+        name = data.get('name')
+        org_type = data.get('org_type', data.get('type', 'branch'))
+        parent_org_id = data.get('parent_org_id', data.get('parent_id'))
+        
+        if not name:
+            return jsonify({'success': False, 'error': 'Organization name is required'}), 400
+        
+        if parent_org_id:
+            parent_org_id = int(parent_org_id)
+            if staff_user.role != 'admin':
+                if not service.check_org_permission(staff_user.id, parent_org_id, 'manage_members'):
+                    return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        org = service.create_organization(
+            name=name,
+            org_type=org_type,
+            parent_org_id=parent_org_id,
+            address=data.get('address'),
+            city=data.get('city'),
+            state=data.get('state'),
+            zip_code=data.get('zip_code'),
+            phone=data.get('phone'),
+            email=data.get('email'),
+            contact_name=data.get('contact_name'),
+            license_number=data.get('license_number'),
+            max_users=int(data.get('max_users', 10)) if data.get('max_users') else 10,
+            max_clients=int(data.get('max_clients', 100)) if data.get('max_clients') else 100,
+            subscription_tier=data.get('subscription_tier', 'basic'),
+            billing_contact_email=data.get('billing_contact_email'),
+            manager_staff_id=data.get('manager_staff_id'),
+            revenue_share_percent=float(data.get('revenue_share_percent', 0)),
+            settings=json.loads(data.get('settings', '{}')) if isinstance(data.get('settings'), str) else data.get('settings', {})
+        )
+        
+        return jsonify({
+            'success': True,
+            'organization': org.to_dict(),
+            'message': f'Organization "{name}" created successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>', methods=['GET'])
+@require_staff()
+def api_franchise_organizations_get(org_id):
+    """Get organization details - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        org = service.get_organization_by_id(org_id)
+        if not org:
+            return jsonify({'success': False, 'error': 'Organization not found'}), 404
+        
+        if staff_user.role != 'admin':
+            accessible = service.get_accessible_organizations(staff_user.id)
+            if org not in accessible:
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        stats = service.get_org_stats(org_id)
+        members = [m.to_dict() for m in service.get_organization_members(org_id)]
+        limits = service.check_org_limits(org_id)
+        
+        return jsonify({
+            'success': True,
+            'organization': org.to_dict(),
+            'stats': stats,
+            'members': members,
+            'limits': limits
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>', methods=['PUT'])
+@require_staff()
+def api_franchise_organizations_update(org_id):
+    """Update organization - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'edit_org'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        data = request.get_json() or request.form.to_dict()
+        
+        if 'settings' in data and isinstance(data['settings'], str):
+            data['settings'] = json.loads(data['settings'])
+        if 'revenue_share_percent' in data:
+            data['revenue_share_percent'] = float(data['revenue_share_percent'])
+        if 'max_users' in data:
+            data['max_users'] = int(data['max_users'])
+        if 'max_clients' in data:
+            data['max_clients'] = int(data['max_clients'])
+        
+        org = service.update_organization(org_id, **data)
+        if not org:
+            return jsonify({'success': False, 'error': 'Organization not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'organization': org.to_dict(),
+            'message': 'Organization updated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_franchise_organizations_delete(org_id):
+    """Delete (deactivate) organization - franchise API endpoint"""
+    db = get_db()
+    try:
+        service = get_franchise_service(db)
+        
+        success = service.delete_organization(org_id)
+        if not success:
+            return jsonify({'success': False, 'error': 'Organization not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Organization deactivated successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>/tree', methods=['GET'])
+@require_staff()
+def api_franchise_organizations_tree(org_id):
+    """Get organization hierarchy tree - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            accessible = service.get_accessible_organizations(staff_user.id)
+            if not any(o.id == org_id for o in accessible):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        hierarchy = service.get_organization_hierarchy(org_id)
+        children = service.get_child_organizations(org_id, recursive=True)
+        
+        return jsonify({
+            'success': True,
+            'hierarchy': hierarchy,
+            'children': [c.to_dict() for c in children],
+            'children_count': len(children)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>/stats', methods=['GET'])
+@require_staff()
+def api_franchise_organizations_stats(org_id):
+    """Get organization statistics - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'view_org'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        include_children = request.args.get('include_children', 'false').lower() == 'true'
+        stats = service.get_org_stats(org_id, include_children)
+        limits = service.check_org_limits(org_id)
+        
+        return jsonify({
+            'success': True,
+            'stats': stats,
+            'limits': limits
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>/members', methods=['POST'])
+@require_staff()
+def api_franchise_organizations_members_add(org_id):
+    """Add member to organization - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'manage_members'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        limits = service.check_org_limits(org_id)
+        if not limits.get('can_add_users', True):
+            return jsonify({
+                'success': False, 
+                'error': f'Organization has reached maximum user limit ({limits["users"]["max"]})'
+            }), 400
+        
+        data = request.get_json() or request.form.to_dict()
+        staff_id = data.get('staff_id')
+        role = data.get('role', 'staff')
+        permissions = data.get('permissions', [])
+        is_primary = data.get('is_primary', False)
+        
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Staff ID is required'}), 400
+        
+        if isinstance(permissions, str):
+            permissions = json.loads(permissions)
+        
+        membership = service.add_member(
+            org_id=org_id,
+            staff_id=int(staff_id),
+            role=role,
+            permissions=permissions,
+            is_primary=bool(is_primary)
+        )
+        
+        return jsonify({
+            'success': True,
+            'membership': membership.to_dict(),
+            'message': 'Member added successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>/members/<int:staff_id>', methods=['DELETE'])
+@require_staff()
+def api_franchise_organizations_members_remove(org_id, staff_id):
+    """Remove member from organization - franchise API endpoint"""
+    db = get_db()
+    try:
+        current_staff = g.staff_user
+        service = get_franchise_service(db)
+        
+        if current_staff.role != 'admin':
+            if not service.check_org_permission(current_staff.id, org_id, 'manage_members'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        success = service.remove_member(org_id, staff_id)
+        if not success:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'message': 'Member removed successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/clients/transfer', methods=['POST'])
+@require_staff()
+def api_franchise_clients_transfer():
+    """Transfer client between organizations - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        data = request.get_json() or request.form.to_dict()
+        
+        client_id = data.get('client_id')
+        from_org_id = data.get('from_org_id', data.get('from_org'))
+        to_org_id = data.get('to_org_id', data.get('to_org'))
+        reason = data.get('reason', '')
+        transfer_type = data.get('transfer_type', 'referral')
+        
+        if not all([client_id, from_org_id, to_org_id]):
+            return jsonify({'success': False, 'error': 'client_id, from_org_id, and to_org_id are required'}), 400
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, int(from_org_id), 'manage_clients'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        to_limits = service.check_org_limits(int(to_org_id))
+        if not to_limits.get('can_add_clients', True):
+            return jsonify({
+                'success': False, 
+                'error': f'Target organization has reached maximum client limit ({to_limits["clients"]["max"]})'
+            }), 400
+        
+        transfer = service.transfer_client(
+            client_id=int(client_id),
+            from_org_id=int(from_org_id),
+            to_org_id=int(to_org_id),
+            reason=reason,
+            transferred_by_staff_id=staff_user.id,
+            transfer_type=transfer_type
+        )
+        
+        return jsonify({
+            'success': True,
+            'transfer': transfer.to_dict(),
+            'message': 'Transfer request created successfully'
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>/consolidated-report', methods=['GET'])
+@require_staff()
+def api_franchise_organizations_consolidated_report(org_id):
+    """Get consolidated report for organization and children - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'view_revenue'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        report = service.get_consolidated_report(org_id)
+        
+        return jsonify({
+            'success': True,
+            'report': report
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/franchise/organizations/<int:org_id>/limits', methods=['GET'])
+@require_staff()
+def api_franchise_organizations_limits(org_id):
+    """Check organization user/client limits - franchise API endpoint"""
+    db = get_db()
+    try:
+        staff_user = g.staff_user
+        service = get_franchise_service(db)
+        
+        if staff_user.role != 'admin':
+            if not service.check_org_permission(staff_user.id, org_id, 'view_org'):
+                return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        limits = service.check_org_limits(org_id)
+        
+        return jsonify({
+            'success': True,
+            'limits': limits
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# PUBLIC API v1 ROUTES
+# ============================================================
+
+@app.route('/api/v1/auth/validate', methods=['POST'])
+@require_api_key()
+def api_v1_auth_validate():
+    """Validate API key and return key information"""
+    api_key = g.api_key
+    return jsonify({
+        'success': True,
+        'valid': True,
+        'key_name': api_key.name,
+        'key_prefix': api_key.key_prefix,
+        'scopes': api_key.scopes or [],
+        'rate_limits': {
+            'per_minute': api_key.rate_limit_per_minute,
+            'per_day': api_key.rate_limit_per_day
+        },
+        'expires_at': api_key.expires_at.isoformat() if api_key.expires_at else None,
+        'rate_limit_info': g.rate_limit_info
+    })
+
+
+@app.route('/api/v1/clients', methods=['GET'])
+@require_api_key(scopes=['read:clients'])
+def api_v1_clients_list():
+    """List clients (paginated)"""
+    db = get_db()
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)
+        status = request.args.get('status')
+        
+        query = db.query(Client)
+        
+        if status:
+            query = query.filter(Client.status == status)
+        
+        if g.api_key.tenant_id:
+            tenant_clients = db.query(TenantClient.client_id).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id
+            )
+            query = query.filter(Client.id.in_(tenant_clients))
+        
+        total = query.count()
+        clients = query.order_by(Client.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+        
+        return jsonify({
+            'success': True,
+            'clients': [{
+                'id': c.id,
+                'name': c.name,
+                'first_name': c.first_name,
+                'last_name': c.last_name,
+                'email': c.email,
+                'phone': c.phone,
+                'status': c.status,
+                'current_dispute_round': c.current_dispute_round,
+                'dispute_status': c.dispute_status,
+                'created_at': c.created_at.isoformat() if c.created_at else None
+            } for c in clients],
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/clients/<int:client_id>', methods=['GET'])
+@require_api_key(scopes=['read:clients'])
+def api_v1_clients_get(client_id):
+    """Get client details"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'client': {
+                'id': client.id,
+                'name': client.name,
+                'first_name': client.first_name,
+                'last_name': client.last_name,
+                'email': client.email,
+                'phone': client.phone,
+                'address': {
+                    'street': client.address_street,
+                    'city': client.address_city,
+                    'state': client.address_state,
+                    'zip': client.address_zip
+                },
+                'status': client.status,
+                'current_dispute_round': client.current_dispute_round,
+                'dispute_status': client.dispute_status,
+                'round_started_at': client.round_started_at.isoformat() if client.round_started_at else None,
+                'created_at': client.created_at.isoformat() if client.created_at else None,
+                'updated_at': client.updated_at.isoformat() if client.updated_at else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/clients', methods=['POST'])
+@require_api_key(scopes=['write:clients'])
+def api_v1_clients_create():
+    """Create a new client"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        
+        if not data.get('name') and not (data.get('first_name') and data.get('last_name')):
+            return jsonify({'success': False, 'error': 'Name is required'}), 400
+        
+        name = data.get('name') or f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
+        
+        client = Client(
+            name=name,
+            first_name=data.get('first_name'),
+            last_name=data.get('last_name'),
+            email=data.get('email'),
+            phone=data.get('phone'),
+            address_street=data.get('address_street'),
+            address_city=data.get('address_city'),
+            address_state=data.get('address_state'),
+            address_zip=data.get('address_zip'),
+            status='signup'
+        )
+        
+        db.add(client)
+        db.flush()
+        
+        if g.api_key.tenant_id:
+            tenant_client = TenantClient(
+                tenant_id=g.api_key.tenant_id,
+                client_id=client.id
+            )
+            db.add(tenant_client)
+        
+        db.commit()
+        
+        service = get_api_access_service(db)
+        service.trigger_webhook('client.created', {
+            'client_id': client.id,
+            'name': client.name,
+            'email': client.email
+        }, g.api_key.tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'client': {
+                'id': client.id,
+                'name': client.name,
+                'status': client.status
+            }
+        }), 201
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/clients/<int:client_id>', methods=['PUT'])
+@require_api_key(scopes=['write:clients'])
+def api_v1_clients_update(client_id):
+    """Update client information"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        data = request.get_json() or {}
+        
+        updatable_fields = ['first_name', 'last_name', 'email', 'phone', 
+                          'address_street', 'address_city', 'address_state', 'address_zip',
+                          'status', 'admin_notes']
+        
+        for field in updatable_fields:
+            if field in data:
+                setattr(client, field, data[field])
+        
+        if 'first_name' in data or 'last_name' in data:
+            client.name = f"{client.first_name or ''} {client.last_name or ''}".strip()
+        
+        client.updated_at = datetime.utcnow()
+        db.commit()
+        
+        service = get_api_access_service(db)
+        service.trigger_webhook('client.updated', {
+            'client_id': client.id,
+            'name': client.name
+        }, g.api_key.tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'client': {
+                'id': client.id,
+                'name': client.name,
+                'status': client.status
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/cases', methods=['GET'])
+@require_api_key(scopes=['read:cases'])
+def api_v1_cases_list():
+    """List cases (paginated)"""
+    db = get_db()
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)
+        status = request.args.get('status')
+        client_id = request.args.get('client_id', type=int)
+        
+        query = db.query(Case)
+        
+        if status:
+            query = query.filter(Case.status == status)
+        if client_id:
+            query = query.filter(Case.client_id == client_id)
+        
+        if g.api_key.tenant_id:
+            tenant_clients = db.query(TenantClient.client_id).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id
+            )
+            query = query.filter(Case.client_id.in_(tenant_clients))
+        
+        total = query.count()
+        cases = query.order_by(Case.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+        
+        return jsonify({
+            'success': True,
+            'cases': [{
+                'id': c.id,
+                'client_id': c.client_id,
+                'case_number': c.case_number,
+                'status': c.status,
+                'pricing_tier': c.pricing_tier,
+                'created_at': c.created_at.isoformat() if c.created_at else None
+            } for c in cases],
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/cases/<int:case_id>', methods=['GET'])
+@require_api_key(scopes=['read:cases'])
+def api_v1_cases_get(case_id):
+    """Get case details"""
+    db = get_db()
+    try:
+        case = db.query(Case).filter(Case.id == case_id).first()
+        if not case:
+            return jsonify({'success': False, 'error': 'Case not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == case.client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Case not found'}), 404
+        
+        client = db.query(Client).filter(Client.id == case.client_id).first()
+        
+        return jsonify({
+            'success': True,
+            'case': {
+                'id': case.id,
+                'client_id': case.client_id,
+                'client_name': client.name if client else None,
+                'case_number': case.case_number,
+                'status': case.status,
+                'pricing_tier': case.pricing_tier,
+                'base_fee': case.base_fee,
+                'contingency_percent': case.contingency_percent,
+                'intake_at': case.intake_at.isoformat() if case.intake_at else None,
+                'stage1_completed_at': case.stage1_completed_at.isoformat() if case.stage1_completed_at else None,
+                'stage2_completed_at': case.stage2_completed_at.isoformat() if case.stage2_completed_at else None,
+                'delivered_at': case.delivered_at.isoformat() if case.delivered_at else None,
+                'created_at': case.created_at.isoformat() if case.created_at else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/cases/<int:case_id>/violations', methods=['GET'])
+@require_api_key(scopes=['read:cases'])
+def api_v1_cases_violations(case_id):
+    """Get violations for a case"""
+    db = get_db()
+    try:
+        case = db.query(Case).filter(Case.id == case_id).first()
+        if not case:
+            return jsonify({'success': False, 'error': 'Case not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == case.client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Case not found'}), 404
+        
+        violations = db.query(Violation).filter(Violation.client_id == case.client_id).all()
+        
+        return jsonify({
+            'success': True,
+            'violations': [{
+                'id': v.id,
+                'bureau': v.bureau,
+                'account_name': v.account_name,
+                'fcra_section': v.fcra_section,
+                'violation_type': v.violation_type,
+                'description': v.description,
+                'is_willful': v.is_willful,
+                'statutory_damages_min': v.statutory_damages_min,
+                'statutory_damages_max': v.statutory_damages_max,
+                'created_at': v.created_at.isoformat() if v.created_at else None
+            } for v in violations],
+            'count': len(violations)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/cases/<int:case_id>/disputes', methods=['GET'])
+@require_api_key(scopes=['read:disputes'])
+def api_v1_cases_disputes(case_id):
+    """Get disputes for a case"""
+    db = get_db()
+    try:
+        case = db.query(Case).filter(Case.id == case_id).first()
+        if not case:
+            return jsonify({'success': False, 'error': 'Case not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == case.client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Case not found'}), 404
+        
+        disputes = db.query(DisputeItem).filter(DisputeItem.client_id == case.client_id).all()
+        
+        return jsonify({
+            'success': True,
+            'disputes': [{
+                'id': d.id,
+                'account_name': d.account_name,
+                'bureau': d.bureau,
+                'status': d.status,
+                'dispute_round': d.dispute_round,
+                'dispute_reason': d.dispute_reason,
+                'created_at': d.created_at.isoformat() if d.created_at else None
+            } for d in disputes],
+            'count': len(disputes)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/disputes', methods=['GET'])
+@require_api_key(scopes=['read:disputes'])
+def api_v1_disputes_list():
+    """List disputes (paginated)"""
+    db = get_db()
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)
+        client_id = request.args.get('client_id', type=int)
+        status = request.args.get('status')
+        bureau = request.args.get('bureau')
+        
+        query = db.query(DisputeItem)
+        
+        if client_id:
+            query = query.filter(DisputeItem.client_id == client_id)
+        if status:
+            query = query.filter(DisputeItem.status == status)
+        if bureau:
+            query = query.filter(DisputeItem.bureau == bureau)
+        
+        if g.api_key.tenant_id:
+            tenant_clients = db.query(TenantClient.client_id).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id
+            )
+            query = query.filter(DisputeItem.client_id.in_(tenant_clients))
+        
+        total = query.count()
+        disputes = query.order_by(DisputeItem.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+        
+        return jsonify({
+            'success': True,
+            'disputes': [{
+                'id': d.id,
+                'client_id': d.client_id,
+                'account_name': d.account_name,
+                'bureau': d.bureau,
+                'status': d.status,
+                'dispute_round': d.dispute_round,
+                'dispute_reason': d.dispute_reason,
+                'response_type': d.response_type,
+                'created_at': d.created_at.isoformat() if d.created_at else None
+            } for d in disputes],
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/violations', methods=['GET'])
+@require_api_key(scopes=['read:cases'])
+def api_v1_violations_list():
+    """List violations (paginated)"""
+    db = get_db()
+    try:
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)
+        client_id = request.args.get('client_id', type=int)
+        bureau = request.args.get('bureau')
+        is_willful = request.args.get('is_willful')
+        
+        query = db.query(Violation)
+        
+        if client_id:
+            query = query.filter(Violation.client_id == client_id)
+        if bureau:
+            query = query.filter(Violation.bureau == bureau)
+        if is_willful is not None:
+            query = query.filter(Violation.is_willful == (is_willful.lower() == 'true'))
+        
+        if g.api_key.tenant_id:
+            tenant_clients = db.query(TenantClient.client_id).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id
+            )
+            query = query.filter(Violation.client_id.in_(tenant_clients))
+        
+        total = query.count()
+        violations = query.order_by(Violation.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+        
+        return jsonify({
+            'success': True,
+            'violations': [{
+                'id': v.id,
+                'client_id': v.client_id,
+                'analysis_id': v.analysis_id,
+                'bureau': v.bureau,
+                'account_name': v.account_name,
+                'fcra_section': v.fcra_section,
+                'violation_type': v.violation_type,
+                'description': v.description,
+                'is_willful': v.is_willful,
+                'statutory_damages_min': v.statutory_damages_min,
+                'statutory_damages_max': v.statutory_damages_max,
+                'violation_date': v.violation_date.isoformat() if v.violation_date else None,
+                'created_at': v.created_at.isoformat() if v.created_at else None
+            } for v in violations],
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/disputes', methods=['POST'])
+@require_api_key(scopes=['write:disputes'])
+def api_v1_disputes_create():
+    """Create a new dispute"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        
+        required_fields = ['client_id', 'account_name', 'bureau']
+        missing = [f for f in required_fields if not data.get(f)]
+        if missing:
+            return jsonify({'success': False, 'error': f'Missing required fields: {missing}'}), 400
+        
+        client_id = data.get('client_id')
+        
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        dispute = DisputeItem(
+            client_id=client_id,
+            account_name=data.get('account_name'),
+            bureau=data.get('bureau'),
+            account_number_partial=data.get('account_number'),
+            status='pending',
+            dispute_round=client.current_dispute_round or 1,
+            dispute_reason=data.get('dispute_reason', 'Inaccurate information')
+        )
+        
+        db.add(dispute)
+        db.commit()
+        
+        service = get_api_access_service(db)
+        service.trigger_webhook('dispute.created', {
+            'dispute_id': dispute.id,
+            'client_id': client_id,
+            'account_name': dispute.account_name,
+            'bureau': dispute.bureau
+        }, g.api_key.tenant_id)
+        
+        return jsonify({
+            'success': True,
+            'dispute': {
+                'id': dispute.id,
+                'client_id': dispute.client_id,
+                'account_name': dispute.account_name,
+                'bureau': dispute.bureau,
+                'status': dispute.status
+            }
+        }), 201
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/disputes/<int:dispute_id>/status', methods=['GET'])
+@require_api_key(scopes=['read:disputes'])
+def api_v1_disputes_status(dispute_id):
+    """Get dispute status"""
+    db = get_db()
+    try:
+        dispute = db.query(DisputeItem).filter(DisputeItem.id == dispute_id).first()
+        if not dispute:
+            return jsonify({'success': False, 'error': 'Dispute not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == dispute.client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Dispute not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'dispute': {
+                'id': dispute.id,
+                'account_name': dispute.account_name,
+                'bureau': dispute.bureau,
+                'status': dispute.status,
+                'dispute_round': dispute.dispute_round,
+                'dispute_reason': dispute.dispute_reason,
+                'response_type': dispute.response_type,
+                'response_date': dispute.response_date.isoformat() if dispute.response_date else None,
+                'created_at': dispute.created_at.isoformat() if dispute.created_at else None,
+                'updated_at': dispute.updated_at.isoformat() if dispute.updated_at else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/analyze', methods=['POST'])
+@require_api_key(scopes=['analyze:reports'])
+def api_v1_analyze():
+    """Submit credit report for analysis"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        
+        if not data.get('client_id'):
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+        
+        if not data.get('credit_report_html'):
+            return jsonify({'success': False, 'error': 'credit_report_html is required'}), 400
+        
+        client_id = data.get('client_id')
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        queue_item = AnalysisQueue(
+            client_id=client_id,
+            credit_provider=data.get('credit_provider', 'Unknown'),
+            dispute_round=data.get('dispute_round', 1),
+            credit_report_html=data.get('credit_report_html'),
+            status='queued',
+            priority=data.get('priority', 5)
+        )
+        
+        db.add(queue_item)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Analysis queued successfully',
+            'queue_id': queue_item.id,
+            'status': 'queued'
+        }), 202
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/analysis/<int:analysis_id>', methods=['GET'])
+@require_api_key(scopes=['analyze:reports'])
+def api_v1_analysis_get(analysis_id):
+    """Get analysis results"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+        
+        if g.api_key.tenant_id:
+            tenant_link = db.query(TenantClient).filter(
+                TenantClient.tenant_id == g.api_key.tenant_id,
+                TenantClient.client_id == analysis.client_id
+            ).first()
+            if not tenant_link:
+                return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+        
+        violations = db.query(Violation).filter(Violation.analysis_id == analysis_id).all()
+        
+        return jsonify({
+            'success': True,
+            'analysis': {
+                'id': analysis.id,
+                'client_id': analysis.client_id,
+                'dispute_round': analysis.dispute_round,
+                'stage': analysis.stage,
+                'created_at': analysis.created_at.isoformat() if analysis.created_at else None,
+                'approved_at': analysis.approved_at.isoformat() if analysis.approved_at else None
+            },
+            'violations': [{
+                'id': v.id,
+                'bureau': v.bureau,
+                'account_name': v.account_name,
+                'fcra_section': v.fcra_section,
+                'violation_type': v.violation_type,
+                'is_willful': v.is_willful
+            } for v in violations],
+            'violation_count': len(violations)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/webhooks', methods=['GET'])
+@require_api_key(scopes=['manage:webhooks'])
+def api_v1_webhooks_list():
+    """List webhooks"""
+    service = get_api_access_service()
+    webhooks = service.list_webhooks(g.api_key.tenant_id)
+    
+    return jsonify({
+        'success': True,
+        'webhooks': webhooks,
+        'count': len(webhooks)
+    })
+
+
+@app.route('/api/v1/webhooks', methods=['POST'])
+@require_api_key(scopes=['manage:webhooks'])
+def api_v1_webhooks_create():
+    """Create a new webhook"""
+    data = request.get_json() or {}
+    
+    required_fields = ['name', 'url', 'events']
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return jsonify({'success': False, 'error': f'Missing required fields: {missing}'}), 400
+    
+    service = get_api_access_service()
+    result = service.create_webhook(
+        name=data.get('name'),
+        url=data.get('url'),
+        events=data.get('events'),
+        tenant_id=g.api_key.tenant_id
+    )
+    
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route('/api/v1/webhooks/<int:webhook_id>', methods=['DELETE'])
+@require_api_key(scopes=['manage:webhooks'])
+def api_v1_webhooks_delete(webhook_id):
+    """Delete a webhook"""
+    db = get_db()
+    try:
+        webhook = db.query(APIWebhook).filter(APIWebhook.id == webhook_id).first()
+        if not webhook:
+            return jsonify({'success': False, 'error': 'Webhook not found'}), 404
+        
+        if g.api_key.tenant_id and webhook.tenant_id != g.api_key.tenant_id:
+            return jsonify({'success': False, 'error': 'Webhook not found'}), 404
+        
+        service = get_api_access_service(db)
+        result = service.delete_webhook(webhook_id)
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/v1/docs', methods=['GET'])
+def api_v1_docs():
+    """Get API documentation (OpenAPI spec)"""
+    service = get_api_access_service()
+    spec = service.get_api_documentation()
+    return jsonify(spec)
+
+
+# ============================================================
+# API KEY MANAGEMENT ROUTES (Staff Dashboard)
+# ============================================================
+
+@app.route('/dashboard/api-keys')
+@require_staff()
+def dashboard_api_keys():
+    """API key management dashboard"""
+    db = get_db()
+    try:
+        staff_user = db.query(Staff).filter_by(id=session['staff_id']).first()
+        
+        if staff_user.role == 'admin':
+            api_keys = db.query(APIKey).order_by(APIKey.created_at.desc()).all()
+            webhooks = db.query(APIWebhook).order_by(APIWebhook.created_at.desc()).all()
+        else:
+            api_keys = db.query(APIKey).filter(APIKey.staff_id == session['staff_id']).order_by(APIKey.created_at.desc()).all()
+            webhooks = []
+        
+        stats = {
+            'total_keys': len(api_keys),
+            'active_keys': sum(1 for k in api_keys if k.is_active),
+            'total_webhooks': len(webhooks),
+            'active_webhooks': sum(1 for w in webhooks if w.is_active)
+        }
+        
+        return render_template('api_management.html',
+            api_keys=api_keys,
+            webhooks=webhooks,
+            stats=stats,
+            scopes=API_SCOPES,
+            webhook_events=WEBHOOK_EVENTS
+        )
+    except Exception as e:
+        return f"Error: {e}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/keys', methods=['GET'])
+@require_staff()
+def api_keys_list():
+    """List API keys (masked)"""
+    db = get_db()
+    try:
+        staff_user = db.query(Staff).filter_by(id=session['staff_id']).first()
+        
+        if staff_user.role == 'admin':
+            keys = db.query(APIKey).order_by(APIKey.created_at.desc()).all()
+        else:
+            keys = db.query(APIKey).filter(APIKey.staff_id == session['staff_id']).order_by(APIKey.created_at.desc()).all()
+        
+        return jsonify({
+            'success': True,
+            'api_keys': [k.to_dict() for k in keys],
+            'count': len(keys)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/keys', methods=['POST'])
+@require_staff()
+def api_keys_create():
+    """Generate new API key"""
+    data = request.get_json() or request.form.to_dict()
+    
+    name = data.get('name')
+    if not name:
+        return jsonify({'success': False, 'error': 'Key name is required'}), 400
+    
+    scopes = data.get('scopes', [])
+    if isinstance(scopes, str):
+        scopes = [s.strip() for s in scopes.split(',') if s.strip()]
+    
+    rate_limit_per_minute = int(data.get('rate_limit_per_minute', 60))
+    rate_limit_per_day = int(data.get('rate_limit_per_day', 10000))
+    tenant_id = data.get('tenant_id', type=int)
+    expires_in_days = data.get('expires_in_days', type=int)
+    
+    service = get_api_access_service()
+    result = service.generate_api_key(
+        name=name,
+        staff_id=session['staff_id'],
+        scopes=scopes,
+        rate_limit_per_minute=rate_limit_per_minute,
+        rate_limit_per_day=rate_limit_per_day,
+        tenant_id=tenant_id,
+        expires_in_days=expires_in_days
+    )
+    
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route('/api/keys/<int:key_id>', methods=['DELETE'])
+@require_staff()
+def api_keys_revoke(key_id):
+    """Revoke an API key"""
+    db = get_db()
+    try:
+        staff_user = db.query(Staff).filter_by(id=session['staff_id']).first()
+        api_key = db.query(APIKey).filter(APIKey.id == key_id).first()
+        
+        if not api_key:
+            return jsonify({'success': False, 'error': 'API key not found'}), 404
+        
+        if staff_user.role != 'admin' and api_key.staff_id != session['staff_id']:
+            return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        service = get_api_access_service(db)
+        result = service.revoke_api_key(key_id)
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/keys/<int:key_id>/usage', methods=['GET'])
+@require_staff()
+def api_keys_usage(key_id):
+    """Get API key usage statistics"""
+    db = get_db()
+    try:
+        staff_user = db.query(Staff).filter_by(id=session['staff_id']).first()
+        api_key = db.query(APIKey).filter(APIKey.id == key_id).first()
+        
+        if not api_key:
+            return jsonify({'success': False, 'error': 'API key not found'}), 404
+        
+        if staff_user.role != 'admin' and api_key.staff_id != session['staff_id']:
+            return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        days = request.args.get('days', 30, type=int)
+        
+        service = get_api_access_service(db)
+        result = service.get_key_usage_stats(key_id, days)
+        
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/keys/<int:key_id>/rotate', methods=['POST'])
+@require_staff()
+def api_keys_rotate(key_id):
+    """Rotate an API key - generates new key, invalidates old"""
+    db = get_db()
+    try:
+        staff_user = db.query(Staff).filter_by(id=session['staff_id']).first()
+        api_key = db.query(APIKey).filter(APIKey.id == key_id).first()
+        
+        if not api_key:
+            return jsonify({'success': False, 'error': 'API key not found'}), 404
+        
+        if staff_user.role != 'admin' and api_key.staff_id != session['staff_id']:
+            return jsonify({'success': False, 'error': 'Permission denied'}), 403
+        
+        service = get_api_access_service(db)
+        result = service.rotate_api_key(key_id, session['staff_id'])
+        
+        if result.get('success'):
+            return jsonify(result)
+        return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# WEBHOOK MANAGEMENT ROUTES (Staff Dashboard)
+# ============================================================
+
+@app.route('/api/webhooks', methods=['GET'])
+@require_staff(roles=['admin'])
+def admin_webhooks_list():
+    """List all webhooks (admin only)"""
+    service = get_api_access_service()
+    webhooks = service.list_webhooks()
+    
+    return jsonify({
+        'success': True,
+        'webhooks': webhooks,
+        'count': len(webhooks)
+    })
+
+
+@app.route('/api/webhooks', methods=['POST'])
+@require_staff(roles=['admin'])
+def admin_webhooks_create():
+    """Create a webhook (admin only)"""
+    data = request.get_json() or request.form.to_dict()
+    
+    required_fields = ['name', 'url', 'events']
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return jsonify({'success': False, 'error': f'Missing required fields: {missing}'}), 400
+    
+    events = data.get('events', [])
+    if isinstance(events, str):
+        events = [e.strip() for e in events.split(',') if e.strip()]
+    
+    tenant_id = data.get('tenant_id', type=int)
+    
+    service = get_api_access_service()
+    result = service.create_webhook(
+        name=data.get('name'),
+        url=data.get('url'),
+        events=events,
+        tenant_id=tenant_id
+    )
+    
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route('/api/webhooks/<int:webhook_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def admin_webhooks_delete(webhook_id):
+    """Delete a webhook (admin only)"""
+    service = get_api_access_service()
+    result = service.delete_webhook(webhook_id)
+    
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 404
+
+
+# ============================================================
+# AUDIT LOGGING ROUTES
+# ============================================================
+
+@app.route('/dashboard/audit')
+@require_staff(roles=['admin'])
+def dashboard_audit():
+    """Audit log dashboard - admin only"""
+    db = get_db()
+    try:
+        audit_service = get_audit_service(db)
+        stats = audit_service.get_statistics(days=30)
+        
+        return render_template('audit_dashboard.html',
+            stats=stats,
+            event_types=AUDIT_EVENT_TYPES,
+            resource_types=AUDIT_RESOURCE_TYPES
+        )
+    except Exception as e:
+        print(f"Audit dashboard error: {e}")
+        return f"Error loading audit dashboard: {e}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/audit/logs', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_audit_logs():
+    """Get filtered audit logs with pagination"""
+    try:
+        event_type = request.args.get('event_type')
+        resource_type = request.args.get('resource_type')
+        user_type = request.args.get('user_type')
+        severity = request.args.get('severity')
+        search = request.args.get('search')
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        
+        start_date = None
+        end_date = None
+        
+        if request.args.get('start_date'):
+            try:
+                start_date = datetime.fromisoformat(request.args.get('start_date').replace('Z', '+00:00'))
+            except:
+                start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d')
+        
+        if request.args.get('end_date'):
+            try:
+                end_date = datetime.fromisoformat(request.args.get('end_date').replace('Z', '+00:00'))
+            except:
+                end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d')
+                end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        audit_service = get_audit_service()
+        logs, total = audit_service.get_logs(
+            event_type=event_type,
+            resource_type=resource_type,
+            user_type=user_type,
+            severity=severity,
+            start_date=start_date,
+            end_date=end_date,
+            search_query=search,
+            page=page,
+            per_page=per_page
+        )
+        
+        return jsonify({
+            'success': True,
+            'logs': logs,
+            'total': total,
+            'page': page,
+            'per_page': per_page,
+            'pages': (total + per_page - 1) // per_page
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/user/<int:user_id>/activity', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_audit_user_activity(user_id):
+    """Get activity report for a specific user"""
+    try:
+        user_type = request.args.get('user_type')
+        days = request.args.get('days', 30, type=int)
+        
+        start_date = datetime.utcnow() - timedelta(days=days)
+        end_date = datetime.utcnow()
+        
+        if request.args.get('start_date'):
+            try:
+                start_date = datetime.fromisoformat(request.args.get('start_date').replace('Z', '+00:00'))
+            except:
+                start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d')
+        
+        if request.args.get('end_date'):
+            try:
+                end_date = datetime.fromisoformat(request.args.get('end_date').replace('Z', '+00:00'))
+            except:
+                end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d')
+        
+        audit_service = get_audit_service()
+        activity = audit_service.get_user_activity(
+            user_id=user_id,
+            user_type=user_type,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        return jsonify({
+            'success': True,
+            'user_id': user_id,
+            'activity': activity,
+            'count': len(activity),
+            'period': {
+                'start': start_date.isoformat(),
+                'end': end_date.isoformat()
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/resource/<resource_type>/<resource_id>/trail', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_audit_resource_trail(resource_type, resource_id):
+    """Get audit trail for a specific resource"""
+    try:
+        limit = request.args.get('limit', 100, type=int)
+        
+        audit_service = get_audit_service()
+        trail = audit_service.get_audit_trail(
+            resource_type=resource_type,
+            resource_id=resource_id,
+            limit=limit
+        )
+        
+        return jsonify({
+            'success': True,
+            'resource_type': resource_type,
+            'resource_id': resource_id,
+            'trail': trail,
+            'count': len(trail)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/security', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_audit_security():
+    """Get security events report"""
+    try:
+        days = request.args.get('days', 7, type=int)
+        severity = request.args.get('severity')
+        
+        start_date = datetime.utcnow() - timedelta(days=days)
+        end_date = datetime.utcnow()
+        
+        if request.args.get('start_date'):
+            try:
+                start_date = datetime.fromisoformat(request.args.get('start_date').replace('Z', '+00:00'))
+            except:
+                start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d')
+        
+        if request.args.get('end_date'):
+            try:
+                end_date = datetime.fromisoformat(request.args.get('end_date').replace('Z', '+00:00'))
+            except:
+                end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d')
+        
+        audit_service = get_audit_service()
+        events = audit_service.get_security_events(
+            start_date=start_date,
+            end_date=end_date,
+            severity=severity
+        )
+        
+        return jsonify({
+            'success': True,
+            'events': events,
+            'count': len(events),
+            'period': {
+                'start': start_date.isoformat(),
+                'end': end_date.isoformat()
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/phi', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_audit_phi():
+    """Get PHI access logs for HIPAA compliance"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        user_id = request.args.get('user_id', type=int)
+        
+        start_date = datetime.utcnow() - timedelta(days=days)
+        end_date = datetime.utcnow()
+        
+        audit_service = get_audit_service()
+        logs = audit_service.get_phi_access_logs(
+            start_date=start_date,
+            end_date=end_date,
+            user_id=user_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'phi_access_logs': logs,
+            'count': len(logs),
+            'period': {
+                'start': start_date.isoformat(),
+                'end': end_date.isoformat()
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/compliance/<report_type>', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_audit_compliance(report_type):
+    """Generate compliance report (SOC 2 or HIPAA)"""
+    if report_type not in ['soc2', 'hipaa']:
+        return jsonify({'success': False, 'error': 'Invalid report type. Use soc2 or hipaa'}), 400
+    
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        start_date = datetime.utcnow() - timedelta(days=days)
+        end_date = datetime.utcnow()
+        
+        if request.args.get('start_date'):
+            try:
+                start_date = datetime.fromisoformat(request.args.get('start_date').replace('Z', '+00:00'))
+            except:
+                start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d')
+        
+        if request.args.get('end_date'):
+            try:
+                end_date = datetime.fromisoformat(request.args.get('end_date').replace('Z', '+00:00'))
+            except:
+                end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d')
+        
+        audit_service = get_audit_service()
+        report = audit_service.generate_compliance_report(
+            report_type=report_type,
+            start_date=start_date,
+            end_date=end_date
+        )
+        
+        audit_service.log_event(
+            event_type='export',
+            resource_type='audit_logs',
+            action=f"Generated {report_type.upper()} compliance report",
+            details={
+                'report_type': report_type,
+                'period_start': start_date.isoformat(),
+                'period_end': end_date.isoformat()
+            }
+        )
+        
+        return jsonify({
+            'success': True,
+            'report': report
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/export', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_audit_export():
+    """Export audit logs to CSV or JSON"""
+    data = request.get_json() or {}
+    
+    export_format = data.get('format', 'csv').lower()
+    if export_format not in ['csv', 'json']:
+        return jsonify({'success': False, 'error': 'Format must be csv or json'}), 400
+    
+    try:
+        start_date = None
+        end_date = None
+        
+        if data.get('start_date'):
+            try:
+                start_date = datetime.fromisoformat(data.get('start_date').replace('Z', '+00:00'))
+            except:
+                start_date = datetime.strptime(data.get('start_date'), '%Y-%m-%d')
+        
+        if data.get('end_date'):
+            try:
+                end_date = datetime.fromisoformat(data.get('end_date').replace('Z', '+00:00'))
+            except:
+                end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d')
+        
+        audit_service = get_audit_service()
+        content, filename = audit_service.export_logs(
+            format=export_format,
+            start_date=start_date,
+            end_date=end_date,
+            event_type=data.get('event_type'),
+            resource_type=data.get('resource_type')
+        )
+        
+        if export_format == 'csv':
+            output = io.BytesIO(content.encode('utf-8'))
+            return send_file(
+                output,
+                mimetype='text/csv',
+                as_attachment=True,
+                download_name=filename
+            )
+        else:
+            output = io.BytesIO(content.encode('utf-8'))
+            return send_file(
+                output,
+                mimetype='application/json',
+                as_attachment=True,
+                download_name=filename
+            )
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/statistics', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_audit_statistics():
+    """Get audit log statistics for dashboard"""
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        audit_service = get_audit_service()
+        stats = audit_service.get_statistics(days=days)
+        
+        return jsonify({
+            'success': True,
+            'statistics': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/audit/cleanup', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_audit_cleanup():
+    """Clean up old audit logs (GDPR retention compliance)"""
+    data = request.get_json() or {}
+    
+    retention_days = data.get('retention_days', 365)
+    if retention_days < 90:
+        return jsonify({'success': False, 'error': 'Minimum retention period is 90 days for compliance'}), 400
+    
+    try:
+        audit_service = get_audit_service()
+        deleted_count = audit_service.cleanup_old_logs(retention_days=retention_days)
+        
+        return jsonify({
+            'success': True,
+            'deleted_count': deleted_count,
+            'retention_days': retention_days
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# PERFORMANCE MONITORING ROUTES
+# ============================================================
+
+@app.route('/dashboard/performance')
+@require_staff(roles=['admin'])
+@with_branding
+def performance_dashboard():
+    """Performance monitoring dashboard (admin only)"""
+    db = get_db()
+    try:
+        perf_service = get_performance_service(db)
+        
+        summary = perf_service.get_performance_summary(period_minutes=60)
+        slow_endpoints = perf_service.get_slow_endpoints(threshold_ms=100)
+        cache_stats = perf_service.get_cache_stats()
+        db_stats = perf_service.get_database_stats()
+        index_recommendations = perf_service.get_index_recommendations()
+        
+        return render_template('performance_dashboard.html',
+            summary=summary,
+            slow_endpoints=slow_endpoints,
+            cache_stats=cache_stats,
+            db_stats=db_stats,
+            index_recommendations=index_recommendations,
+            branding=getattr(g, 'whitelabel_branding', None)
+        )
+    except Exception as e:
+        print(f"Performance dashboard error: {e}")
+        return render_template('error.html', 
+            error='Dashboard Error', 
+            message=str(e)), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/performance/metrics', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_performance_metrics():
+    """Get current performance metrics for all endpoints"""
+    try:
+        period = request.args.get('period', 60, type=int)
+        endpoint = request.args.get('endpoint')
+        method = request.args.get('method')
+        
+        db = get_db()
+        try:
+            perf_service = get_performance_service(db)
+            
+            if endpoint and method:
+                metrics = perf_service.get_endpoint_metrics(endpoint, method)
+            else:
+                metrics = perf_service.get_endpoint_metrics()
+            
+            summary = perf_service.get_performance_summary(period_minutes=period)
+            
+            return jsonify({
+                'success': True,
+                'metrics': metrics,
+                'summary': summary,
+                'period_minutes': period
+            })
+        finally:
+            db.close()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/performance/slow-endpoints', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_slow_endpoints():
+    """Identify slow endpoints with recommendations"""
+    try:
+        threshold_ms = request.args.get('threshold', 100, type=float)
+        
+        db = get_db()
+        try:
+            perf_service = get_performance_service(db)
+            slow_endpoints = perf_service.get_slow_endpoints(threshold_ms=threshold_ms)
+            
+            return jsonify({
+                'success': True,
+                'slow_endpoints': slow_endpoints,
+                'threshold_ms': threshold_ms,
+                'count': len(slow_endpoints)
+            })
+        finally:
+            db.close()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/performance/cache-stats', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_cache_stats():
+    """Get cache statistics"""
+    try:
+        perf_service = get_performance_service()
+        cache_stats = perf_service.get_cache_stats()
+        
+        return jsonify({
+            'success': True,
+            'cache_stats': cache_stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/performance/cache/clear', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_clear_cache():
+    """Clear cache entries matching pattern"""
+    data = request.get_json() or {}
+    pattern = data.get('pattern')
+    
+    try:
+        perf_service = get_performance_service()
+        result = perf_service.clear_cache(pattern=pattern)
+        
+        return jsonify({
+            'success': True,
+            'result': result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/performance/db-stats', methods=['GET'])
+@require_staff(roles=['admin'])
+def api_db_stats():
+    """Get database connection pool and performance stats"""
+    try:
+        db = get_db()
+        try:
+            perf_service = get_performance_service(db)
+            db_stats = perf_service.get_database_stats()
+            index_recommendations = perf_service.get_index_recommendations()
+            
+            return jsonify({
+                'success': True,
+                'db_stats': db_stats,
+                'index_recommendations': index_recommendations
+            })
+        finally:
+            db.close()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/performance/query/analyze', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_analyze_query():
+    """Analyze a SQL query for optimization opportunities"""
+    data = request.get_json() or {}
+    query = data.get('query', '')
+    
+    if not query:
+        return jsonify({'success': False, 'error': 'Query required'}), 400
+    
+    try:
+        perf_service = get_performance_service()
+        analysis = perf_service.optimize_query(query)
+        
+        return jsonify({
+            'success': True,
+            'analysis': analysis
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/performance/cleanup', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_performance_cleanup():
+    """Clean up old performance metrics and expired cache entries"""
+    data = request.get_json() or {}
+    max_age_minutes = data.get('max_age_minutes', 60)
+    
+    try:
+        perf_service = get_performance_service()
+        
+        metrics_cleared = perf_service.clear_old_metrics(max_age_minutes=max_age_minutes)
+        cache_expired = app_cache.cleanup_expired()
+        
+        return jsonify({
+            'success': True,
+            'metrics_cleared': metrics_cleared,
+            'cache_entries_expired': cache_expired
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# END PERFORMANCE MONITORING ROUTES
+# ============================================================
 
 
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML

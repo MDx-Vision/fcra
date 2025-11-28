@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client Login - Brightpath Ascend Group</title>
+    <title>Client Login - {{ whitelabel_branding.organization_name if whitelabel_branding and whitelabel_branding.organization_name else 'Brightpath Ascend Group' }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    {% include 'includes/whitelabel_branding.html' ignore missing %}
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -234,8 +237,21 @@
 <body>
     <div class="login-container">
         <div class="logo">
-            <img src="/static/images/logo.png" alt="Brightpath Ascend Group">
+            {% if whitelabel_branding and whitelabel_branding.logo_url %}
+            <img src="{{ whitelabel_branding.logo_url }}" alt="{{ whitelabel_branding.organization_name|default('Logo', true) }}" onerror="this.style.display='none'">
+            {% else %}
+            <img src="/static/images/logo.png" alt="Brightpath Ascend Group" onerror="this.style.display='none'">
+            {% endif %}
+            {% if whitelabel_branding and whitelabel_branding.organization_name %}
+            {% set name_parts = whitelabel_branding.organization_name.split(' ') %}
+            {% if name_parts|length > 1 %}
+            <h1>{{ name_parts[:-1]|join(' ') }} <span style="color: {{ whitelabel_branding.accent_color or '#84cc16' }}">{{ name_parts[-1] }}</span></h1>
+            {% else %}
+            <h1>{{ whitelabel_branding.organization_name }}</h1>
+            {% endif %}
+            {% else %}
             <h1>Brightpath <span>Ascend</span> Group</h1>
+            {% endif %}
             <p>Client Portal</p>
         </div>
         
