@@ -53,6 +53,9 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **AI Case Triage System** (`/dashboard/triage`): Intelligent 1-5 star case prioritization with queue management (Fast Track, Standard, Review Needed), auto-triggered after AI analysis.
 - **Case Law Citation Database** (`/dashboard/case-law`): 20+ pre-loaded FCRA cases (Safeco, Spokeo, TransUnion v. Ramirez) with smart suggestions by violation type.
 - **Smart Letter Escalation Engine** (`/dashboard/escalation`): AI-powered dispute strategy recommendations based on furnisher history and case patterns.
+- **Instant Violation Preview** (`/preview`): Public landing page with 60-second AI analysis for lead conversion, featuring rate limiting (10 requests/10 minutes), robust numeric sanitization for AI outputs ($1k, $1,000 formats), and defensive error handling.
+- **AI Settlement Demand Letter Generator** (`/dashboard/demand-generator`): One-click professional demand letter generation with damages breakdown, legal citations, PDF export, and comprehensive null handling.
+- **Enhanced Client ROI Dashboard** (`/api/client/<id>/roi-summary`): Visual financial projections with settlement probability, case value breakdown, timeline estimates, and bulletproof null coalescing for all financial calculations.
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.

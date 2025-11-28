@@ -14427,12 +14427,31 @@ def instant_preview_page():
     return render_template('instant_preview.html')
 
 
+PREVIEW_RATE_LIMIT = {}  # Simple IP-based rate limit: {ip: (count, first_request_time)}
+PREVIEW_RATE_MAX = 10  # Max 10 requests per 10 minutes per IP
+PREVIEW_RATE_WINDOW = 600  # 10 minutes
+
 @app.route('/api/instant-preview', methods=['POST'])
 def api_instant_preview():
     """
     Fast AI-powered credit report preview - designed for lead conversion.
     Returns violation count, estimated value, and top violations in 60 seconds.
     """
+    import time
+    client_ip = request.headers.get('X-Forwarded-For', request.remote_addr) or 'unknown'
+    current_time = time.time()
+    
+    if client_ip in PREVIEW_RATE_LIMIT:
+        count, first_time = PREVIEW_RATE_LIMIT[client_ip]
+        if current_time - first_time < PREVIEW_RATE_WINDOW:
+            if count >= PREVIEW_RATE_MAX:
+                return jsonify({'success': False, 'error': 'Rate limit exceeded. Please try again later.'}), 429
+            PREVIEW_RATE_LIMIT[client_ip] = (count + 1, first_time)
+        else:
+            PREVIEW_RATE_LIMIT[client_ip] = (1, current_time)
+    else:
+        PREVIEW_RATE_LIMIT[client_ip] = (1, current_time)
+    
     try:
         if 'file' not in request.files:
             return jsonify({'success': False, 'error': 'No file uploaded'}), 400
@@ -14546,24 +14565,35 @@ CREDIT REPORT TO ANALYZE:
                     "violations": []
                 }
         
+        def sanitize_numeric(val, default=0):
+            """Sanitize AI-derived numeric fields - handles $1k, $1,000, etc."""
+            if val is None:
+                return default
+            if isinstance(val, (int, float)):
+                return int(val)
+            try:
+                s = str(val).strip().lower()
+                s = s.replace('$', '').replace(',', '').replace(' ', '')
+                if 'k' in s:
+                    s = s.replace('k', '')
+                    return int(float(s) * 1000)
+                if 'm' in s:
+                    s = s.replace('m', '')
+                    return int(float(s) * 1000000)
+                import re
+                digits = re.sub(r'[^\d.]', '', s)
+                return int(float(digits)) if digits else default
+            except (ValueError, TypeError):
+                return default
+        
         if not isinstance(result.get('violations'), list):
             result['violations'] = []
         if not isinstance(result.get('violation_count'), (int, float)):
             result['violation_count'] = len(result.get('violations', []))
         
-        try:
-            val_low = int(result.get('estimated_value_low', 0) or 0)
-            val_high = int(result.get('estimated_value_high', 0) or 0)
-        except (ValueError, TypeError):
-            val_low = 0
-            val_high = 0
+        val_low = sanitize_numeric(result.get('estimated_value_low'), 0)
+        val_high = sanitize_numeric(result.get('estimated_value_high'), 0)
         estimated_avg = (val_low + val_high) // 2
-        
-        def safe_int(val, default):
-            try:
-                return int(val) if val else default
-            except (ValueError, TypeError):
-                return default
         
         safe_violations = []
         for v in result.get('violations', [])[:10]:
@@ -14573,8 +14603,8 @@ CREDIT REPORT TO ANALYZE:
                     'bureau': str(v.get('bureau', 'Unknown'))[:50],
                     'fcra_section': str(v.get('fcra_section', 'N/A'))[:20],
                     'severity': str(v.get('severity', 'medium'))[:10],
-                    'value_min': safe_int(v.get('value_min'), 100),
-                    'value_max': safe_int(v.get('value_max'), 1000),
+                    'value_min': sanitize_numeric(v.get('value_min'), 100),
+                    'value_max': sanitize_numeric(v.get('value_max'), 1000),
                     'brief_description': str(v.get('brief_description', ''))[:200]
                 })
         
@@ -14782,27 +14812,39 @@ def api_client_roi_summary(client_id):
         
         avg_fcra_settlement = 7500
         
-        total_exposure = 0
-        if damages and damages.total_exposure:
-            total_exposure = damages.total_exposure
-        elif violations:
-            total_exposure = sum((v.statutory_damages_max or 500) for v in violations)
-        else:
+        try:
+            total_exposure = 0
+            if damages and damages.total_exposure is not None:
+                total_exposure = int(damages.total_exposure) if damages.total_exposure else 5000
+            elif violations:
+                total_exposure = sum((int(v.statutory_damages_max or 500)) for v in violations)
+            else:
+                total_exposure = 5000
+            total_exposure = max(total_exposure, 1000)  # Minimum floor
+            
+            if damages and damages.settlement_target is not None:
+                settlement_target = int(damages.settlement_target) if damages.settlement_target else 3000
+            else:
+                settlement_target = max(int(total_exposure * 0.6), 1000)
+            settlement_target = max(settlement_target, 500)  # Minimum floor
+            
+            conservative_estimate = max(int(settlement_target * 0.4), 500)
+            aggressive_estimate = max(int(total_exposure * 1.2), 1000)
+        except (ValueError, TypeError):
             total_exposure = 5000
+            settlement_target = 3000
+            conservative_estimate = 1200
+            aggressive_estimate = 6000
         
-        if damages and damages.settlement_target:
-            settlement_target = damages.settlement_target
-        else:
-            settlement_target = max(int(total_exposure * 0.6), 1000)
-        
-        conservative_estimate = max(int(settlement_target * 0.4), 500)
-        aggressive_estimate = int(total_exposure * 1.2)
-        
-        if case_score and case_score.settlement_probability is not None:
-            settlement_probability = case_score.settlement_probability
-            if settlement_probability > 1:
-                settlement_probability = settlement_probability / 100
-        else:
+        try:
+            if case_score and case_score.settlement_probability is not None:
+                settlement_probability = float(case_score.settlement_probability)
+                if settlement_probability > 1:
+                    settlement_probability = settlement_probability / 100
+                settlement_probability = max(0.0, min(1.0, settlement_probability))  # Clamp 0-1
+            else:
+                settlement_probability = 0.6
+        except (ValueError, TypeError):
             settlement_probability = 0.6
         
         expected_value = max(int(settlement_target * settlement_probability), 500)
