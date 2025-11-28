@@ -57,6 +57,13 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Dispute Escalation Pathway Tracker**: Full workflow tracking for disputes through §611 → §623 → §621 → §§616-617 stages, with method of verification tracking, furnisher dispute dates, CFPB complaint IDs, and attorney referral status.
 - **Advanced Dispute Letter Templates**: 7 new letter types (RESPA QWR, Reg Z Payment Dispute, FDCPA Validation, §605B ID Theft Block, §623 Direct Furnisher, Reinsertion Challenge, Method of Verification Request) with proper legal citations.
 - **DOFD/Obsolescence Calculator** (`/api/obsolescence/calculate`): Calculates 7-year reporting periods from Date of First Delinquency with recommendations for obsolete items.
+- **Smart Letter Queue Automation** (`/dashboard/letter-queue`): Intelligent letter suggestion system that auto-queues appropriate advanced letters based on trigger conditions. Features include:
+  - **Trigger Detection**: Monitors CRA responses and escalation changes to suggest letters
+  - **7 Letter Types**: MOV Request, FDCPA Validation, RESPA QWR, Reg Z Dispute, §605B Block, §623 Direct, Reinsertion Challenge
+  - **Priority-Based Queue**: Urgent/High/Normal/Low prioritization with visual indicators
+  - **One-Click Approval**: Staff review and approve with bulk actions
+  - **Trigger Types**: CRA verified, no response 35+ days, collection disputed, mortgage late, item reinserted, MOV inadequate, escalation stage change
+  - **Integration**: Auto-triggers from CRA response uploads and escalation pathway changes
 - **Instant Violation Preview** (`/preview`): Public landing page with 60-second AI analysis for lead conversion, featuring rate limiting (10 requests/10 minutes), robust numeric sanitization for AI outputs ($1k, $1,000 formats), and defensive error handling.
 - **AI Settlement Demand Letter Generator** (`/dashboard/demand-generator`): One-click professional demand letter generation with damages breakdown, legal citations, PDF export, and comprehensive null handling.
 - **Enhanced Client ROI Dashboard** (`/api/client/<id>/roi-summary`): Visual financial projections with settlement probability, case value breakdown, timeline estimates, and bulletproof null coalescing for all financial calculations.

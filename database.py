@@ -644,6 +644,56 @@ class DisputeItem(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class LetterQueue(Base):
+    """Queue for auto-suggested letters based on escalation triggers"""
+    __tablename__ = 'letter_queue'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    dispute_item_id = Column(Integer, ForeignKey('dispute_items.id'), nullable=True)
+    
+    # Letter type (matches advanced letter templates)
+    letter_type = Column(String(50), nullable=False)
+    # Types: mov_request, fdcpa_validation, respa_qwr, reg_z_dispute, 
+    #        section_605b_block, section_623_direct, reinsertion_challenge
+    
+    # Trigger info
+    trigger_type = Column(String(100), nullable=False)
+    # Triggers: cra_verified, no_cra_response_35_days, collection_disputed, 
+    #           mortgage_late, item_reinserted, mov_inadequate, escalation_stage_change
+    trigger_description = Column(Text)  # Human-readable trigger explanation
+    trigger_date = Column(DateTime, default=datetime.utcnow)
+    
+    # Target info
+    target_bureau = Column(String(50))  # Experian, TransUnion, Equifax
+    target_creditor = Column(String(255))  # Creditor/furnisher name
+    target_account = Column(String(100))  # Account number (masked)
+    
+    # Pre-filled letter data (JSON)
+    letter_data = Column(JSON)  # Pre-populated fields for the letter
+    
+    # Priority and status
+    priority = Column(String(20), default='normal')  # urgent, high, normal, low
+    status = Column(String(50), default='pending')  # pending, approved, dismissed, generated, sent
+    
+    # Staff action tracking
+    reviewed_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    reviewed_at = Column(DateTime)
+    action_notes = Column(Text)  # Staff notes on approval/dismissal
+    
+    # Generated letter info
+    generated_letter_id = Column(Integer, ForeignKey('dispute_letters.id'), nullable=True)
+    generated_at = Column(DateTime)
+    generated_pdf_path = Column(String(500))
+    
+    # Notification tracking
+    notification_sent = Column(Boolean, default=False)
+    notification_sent_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class SecondaryBureauFreeze(Base):
     """Track freeze status with secondary credit bureaus"""
     __tablename__ = 'secondary_bureau_freezes'
@@ -3578,6 +3628,29 @@ def init_db():
         ("dispute_items", "method_of_verification_received", "BOOLEAN DEFAULT FALSE"),
         ("dispute_items", "dofd", "DATE"),
         ("dispute_items", "obsolescence_date", "DATE"),
+        ("letter_queue", "id", "SERIAL PRIMARY KEY"),
+        ("letter_queue", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("letter_queue", "dispute_item_id", "INTEGER REFERENCES dispute_items(id)"),
+        ("letter_queue", "letter_type", "VARCHAR(50) NOT NULL"),
+        ("letter_queue", "trigger_type", "VARCHAR(100) NOT NULL"),
+        ("letter_queue", "trigger_description", "TEXT"),
+        ("letter_queue", "trigger_date", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("letter_queue", "target_bureau", "VARCHAR(50)"),
+        ("letter_queue", "target_creditor", "VARCHAR(255)"),
+        ("letter_queue", "target_account", "VARCHAR(100)"),
+        ("letter_queue", "letter_data", "JSON"),
+        ("letter_queue", "priority", "VARCHAR(20) DEFAULT 'normal'"),
+        ("letter_queue", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("letter_queue", "reviewed_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("letter_queue", "reviewed_at", "TIMESTAMP"),
+        ("letter_queue", "action_notes", "TEXT"),
+        ("letter_queue", "generated_letter_id", "INTEGER REFERENCES dispute_letters(id)"),
+        ("letter_queue", "generated_at", "TIMESTAMP"),
+        ("letter_queue", "generated_pdf_path", "VARCHAR(500)"),
+        ("letter_queue", "notification_sent", "BOOLEAN DEFAULT FALSE"),
+        ("letter_queue", "notification_sent_at", "TIMESTAMP"),
+        ("letter_queue", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("letter_queue", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     conn = engine.connect()

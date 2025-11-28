@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -57,6 +57,7 @@ from services.whitelabel_service import WhiteLabelConfigService, get_whitelabel_
 from services.franchise_service import FranchiseService, get_org_filter, get_clients_for_org
 from services.api_access_service import APIAccessService, get_api_access_service
 from services.audit_service import AuditService, get_audit_service
+from services import letter_queue_service
 from services.performance_service import (
     PerformanceService, get_performance_service, request_timing_middleware,
     app_cache, cached, invalidate_cache
@@ -6988,6 +6989,16 @@ def api_cra_response_upload():
                 print(f"📱 CRA response SMS sent to client {client_id} for {bureau}")
         except Exception as sms_error:
             print(f"⚠️  SMS trigger error (non-fatal): {sms_error}")
+        
+        try:
+            from services.letter_queue_service import check_cra_response_triggers
+            letter_queue_results = check_cra_response_triggers(db, cra_response.id)
+            if letter_queue_results:
+                print(f"📬 Letter Queue: {len(letter_queue_results)} letters auto-queued based on CRA response")
+                for lqr in letter_queue_results:
+                    print(f"   → {lqr.get('letter_type_display', lqr.get('letter_type'))} ({lqr.get('priority')})")
+        except Exception as lq_error:
+            print(f"⚠️  Letter queue trigger error (non-fatal): {lq_error}")
         
         analysis_result = None
         if auto_analyze:
@@ -15309,12 +15320,21 @@ def api_escalate_item(item_id):
         
         db.commit()
         
+        try:
+            from services.letter_queue_service import check_escalation_triggers
+            letter_queue_results = check_escalation_triggers(db, item_id, new_stage)
+            if letter_queue_results:
+                print(f"📬 Letter Queue: {len(letter_queue_results)} letters auto-queued for escalation to {new_stage}")
+        except Exception as lq_error:
+            print(f"⚠️  Letter queue trigger error (non-fatal): {lq_error}")
+        
         return jsonify({
             'success': True,
             'item_id': item_id,
             'previous_stage': current_stage,
             'new_stage': new_stage,
-            'stage_info': ESCALATION_STAGES[new_stage]
+            'stage_info': ESCALATION_STAGES[new_stage],
+            'letters_queued': len(letter_queue_results) if 'letter_queue_results' in dir() else 0
         })
     except Exception as e:
         db.rollback()
@@ -15574,6 +15594,233 @@ def api_check_dofd_compliance():
 
 # ============================================================
 # END DOFD & OBSOLESCENCE ANALYSIS
+# ============================================================
+
+
+# ============================================================
+# LETTER QUEUE AUTOMATION
+# Smart letter suggestions based on escalation triggers
+# ============================================================
+
+@app.route('/dashboard/letter-queue')
+@require_staff()
+def letter_queue_dashboard():
+    """Letter Queue Dashboard - Review and approve auto-suggested letters"""
+    return render_template('letter_queue.html')
+
+
+@app.route('/api/letter-queue', methods=['GET'])
+@require_staff()
+def api_get_letter_queue():
+    """Get pending letter queue entries"""
+    from services.letter_queue_service import get_pending_queue, get_queue_stats
+    db = get_db()
+    try:
+        client_id = request.args.get('client_id', type=int)
+        priority = request.args.get('priority')
+        limit = request.args.get('limit', 50, type=int)
+        
+        entries = get_pending_queue(db, client_id=client_id, priority=priority, limit=limit)
+        stats = get_queue_stats(db)
+        
+        return jsonify({
+            'success': True,
+            'entries': entries,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/stats', methods=['GET'])
+@require_staff()
+def api_get_letter_queue_stats():
+    """Get letter queue statistics"""
+    from services.letter_queue_service import get_queue_stats
+    db = get_db()
+    try:
+        stats = get_queue_stats(db)
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/<int:queue_id>/approve', methods=['POST'])
+@require_staff()
+def api_approve_letter_queue(queue_id):
+    """Approve a queued letter for generation"""
+    from services.letter_queue_service import approve_queue_entry
+    db = get_db()
+    try:
+        staff_id = session.get('staff_id', 1)
+        data = request.get_json() or {}
+        notes = data.get('notes')
+        
+        result = approve_queue_entry(db, queue_id, staff_id, notes)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/<int:queue_id>/dismiss', methods=['POST'])
+@require_staff()
+def api_dismiss_letter_queue(queue_id):
+    """Dismiss a queued letter suggestion"""
+    from services.letter_queue_service import dismiss_queue_entry
+    db = get_db()
+    try:
+        staff_id = session.get('staff_id', 1)
+        data = request.get_json() or {}
+        reason = data.get('reason', 'Dismissed by staff')
+        
+        result = dismiss_queue_entry(db, queue_id, staff_id, reason)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/bulk-approve', methods=['POST'])
+@require_staff()
+def api_bulk_approve_letters():
+    """Approve multiple queued letters at once"""
+    from services.letter_queue_service import bulk_approve
+    db = get_db()
+    try:
+        staff_id = session.get('staff_id', 1)
+        data = request.get_json() or {}
+        queue_ids = data.get('queue_ids', [])
+        
+        if not queue_ids:
+            return jsonify({'success': False, 'error': 'No queue IDs provided'}), 400
+        
+        result = bulk_approve(db, queue_ids, staff_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/run-triggers', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_run_letter_triggers():
+    """Manually run all trigger checks (admin only)"""
+    from services.letter_queue_service import run_all_triggers
+    db = get_db()
+    try:
+        result = run_all_triggers(db)
+        return jsonify({
+            'success': True,
+            'message': f'Trigger check complete. {result["total_queued"]} letters queued.',
+            'details': result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/trigger-check/<int:client_id>', methods=['POST'])
+@require_staff()
+def api_check_client_triggers(client_id):
+    """Check triggers for a specific client"""
+    from services.letter_queue_service import check_item_type_triggers, check_escalation_triggers
+    from database import DisputeItem
+    db = get_db()
+    try:
+        results = []
+        
+        items = db.query(DisputeItem).filter_by(client_id=client_id).all()
+        for item in items:
+            item_results = check_item_type_triggers(db, item.id)
+            results.extend(item_results)
+        
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'letters_queued': len(results),
+            'details': results
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/<int:queue_id>/generate', methods=['POST'])
+@require_staff()
+def api_generate_queued_letter(queue_id):
+    """Generate PDF for an approved queued letter"""
+    from database import LetterQueue, Client
+    db = get_db()
+    try:
+        entry = db.query(LetterQueue).filter_by(id=queue_id).first()
+        if not entry:
+            return jsonify({'success': False, 'error': 'Queue entry not found'}), 404
+        
+        if entry.status not in ['pending', 'approved']:
+            return jsonify({'success': False, 'error': f'Cannot generate - status is {entry.status}'}), 400
+        
+        client = db.query(Client).filter_by(id=entry.client_id).first()
+        letter_data = entry.letter_data or {}
+        letter_data['client_name'] = client.name if client else letter_data.get('client_name', 'Unknown')
+        letter_data['client_address'] = {
+            'street': client.address_street if client else '',
+            'city': client.address_city if client else '',
+            'state': client.address_state if client else '',
+            'zip': client.address_zip if client else ''
+        } if client else {}
+        
+        entry.status = 'generated'
+        entry.generated_at = datetime.utcnow()
+        entry.updated_at = datetime.utcnow()
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'queue_id': queue_id,
+            'letter_type': entry.letter_type,
+            'status': 'generated',
+            'message': 'Letter generated successfully. Use Automation Tools to customize and download.',
+            'letter_data': letter_data
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/letter-queue/letter-types', methods=['GET'])
+@require_staff()
+def api_get_letter_types():
+    """Get available letter types and their descriptions"""
+    from services.letter_queue_service import LETTER_TYPE_DISPLAY, TRIGGER_DISPLAY
+    return jsonify({
+        'success': True,
+        'letter_types': LETTER_TYPE_DISPLAY,
+        'trigger_types': TRIGGER_DISPLAY
+    })
+
+
+# ============================================================
+# END LETTER QUEUE AUTOMATION
 # ============================================================
 
 
