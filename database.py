@@ -1565,6 +1565,163 @@ class CaseLawCitation(Base):
         return f"{self.case_name}, {self.citation}"
 
 
+# ============================================================
+# PHASE 7: EXTERNAL INTEGRATIONS
+# ============================================================
+
+class IntegrationConnection(Base):
+    """Store API credentials and connection status for external services"""
+    __tablename__ = 'integration_connections'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    service_name = Column(String(100), unique=True, nullable=False, index=True)
+    display_name = Column(String(255))
+    api_key_encrypted = Column(Text)
+    api_secret_encrypted = Column(Text)
+    webhook_secret_encrypted = Column(Text)
+    base_url = Column(String(500))
+    is_active = Column(Boolean, default=False)
+    is_sandbox = Column(Boolean, default=True)
+    last_connected_at = Column(DateTime)
+    last_error = Column(Text)
+    connection_status = Column(String(50), default='not_configured')
+    config_json = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class IntegrationEvent(Base):
+    """Audit logging for all integration actions"""
+    __tablename__ = 'integration_events'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    integration_id = Column(Integer, ForeignKey('integration_connections.id'), nullable=False)
+    event_type = Column(String(100))
+    event_data = Column(JSON)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    request_id = Column(String(100))
+    response_status = Column(Integer)
+    error_message = Column(Text)
+    cost_cents = Column(Integer, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CertifiedMailingRecord(Base):
+    """Track SendCertified mailings"""
+    __tablename__ = 'certified_mailing_records'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    dispute_id = Column(Integer, ForeignKey('dispute_letters.id'), nullable=True)
+    external_label_id = Column(String(255))
+    tracking_number = Column(String(100))
+    recipient_name = Column(String(255))
+    recipient_address = Column(Text)
+    document_type = Column(String(100))
+    mail_class = Column(String(50), default='certified')
+    status = Column(String(50), default='pending')
+    cost_cents = Column(Integer, default=0)
+    mailed_at = Column(DateTime)
+    delivered_at = Column(DateTime)
+    return_receipt_path = Column(String(500))
+    signature_name = Column(String(255))
+    tracking_history = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class NotarizeTransaction(Base):
+    """Track Notarize.com transactions"""
+    __tablename__ = 'notarize_transactions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    document_id = Column(Integer, ForeignKey('client_documents.id'), nullable=True)
+    external_transaction_id = Column(String(255))
+    transaction_type = Column(String(100))
+    status = Column(String(50), default='created')
+    access_link = Column(Text)
+    signer_email = Column(String(255))
+    signer_name = Column(String(255))
+    document_name = Column(String(500))
+    original_document_path = Column(String(500))
+    notarized_document_path = Column(String(500))
+    completed_at = Column(DateTime)
+    expires_at = Column(DateTime)
+    cost_cents = Column(Integer, default=0)
+    webhook_events = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class CreditPullRequest(Base):
+    """Track credit report pull requests"""
+    __tablename__ = 'credit_pull_requests'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+    provider = Column(String(100))
+    external_request_id = Column(String(255))
+    status = Column(String(50), default='pending')
+    bureaus_requested = Column(JSON)
+    report_type = Column(String(50), default='tri-merge')
+    score_experian = Column(Integer, nullable=True)
+    score_equifax = Column(Integer, nullable=True)
+    score_transunion = Column(Integer, nullable=True)
+    raw_response_path = Column(String(500))
+    parsed_data = Column(JSON)
+    cost_cents = Column(Integer, default=0)
+    pulled_at = Column(DateTime)
+    error_message = Column(Text)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class BillingPlan(Base):
+    """Define subscription plans"""
+    __tablename__ = 'billing_plans'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100))
+    display_name = Column(String(255))
+    stripe_product_id = Column(String(255))
+    stripe_price_id = Column(String(255))
+    price_cents = Column(Integer)
+    billing_interval = Column(String(50))
+    features = Column(JSON)
+    is_active = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ClientSubscription(Base):
+    """Track client billing subscriptions"""
+    __tablename__ = 'client_subscriptions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), unique=True, nullable=False)
+    plan_id = Column(Integer, ForeignKey('billing_plans.id'), nullable=True)
+    stripe_subscription_id = Column(String(255))
+    stripe_customer_id = Column(String(255))
+    status = Column(String(50), default='pending')
+    current_period_start = Column(DateTime)
+    current_period_end = Column(DateTime)
+    cancel_at_period_end = Column(Boolean, default=False)
+    canceled_at = Column(DateTime, nullable=True)
+    amount_paid_cents = Column(Integer, default=0)
+    next_payment_date = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -1728,6 +1885,110 @@ def init_db():
         ("escalation_recommendations", "outcome_recorded_at", "TIMESTAMP"),
         ("escalation_recommendations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("escalation_recommendations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("integration_connections", "id", "SERIAL PRIMARY KEY"),
+        ("integration_connections", "service_name", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("integration_connections", "display_name", "VARCHAR(255)"),
+        ("integration_connections", "api_key_encrypted", "TEXT"),
+        ("integration_connections", "api_secret_encrypted", "TEXT"),
+        ("integration_connections", "webhook_secret_encrypted", "TEXT"),
+        ("integration_connections", "base_url", "VARCHAR(500)"),
+        ("integration_connections", "is_active", "BOOLEAN DEFAULT FALSE"),
+        ("integration_connections", "is_sandbox", "BOOLEAN DEFAULT TRUE"),
+        ("integration_connections", "last_connected_at", "TIMESTAMP"),
+        ("integration_connections", "last_error", "TEXT"),
+        ("integration_connections", "connection_status", "VARCHAR(50) DEFAULT 'not_configured'"),
+        ("integration_connections", "config_json", "JSON"),
+        ("integration_connections", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("integration_connections", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("integration_events", "id", "SERIAL PRIMARY KEY"),
+        ("integration_events", "integration_id", "INTEGER NOT NULL REFERENCES integration_connections(id)"),
+        ("integration_events", "event_type", "VARCHAR(100)"),
+        ("integration_events", "event_data", "JSON"),
+        ("integration_events", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("integration_events", "request_id", "VARCHAR(100)"),
+        ("integration_events", "response_status", "INTEGER"),
+        ("integration_events", "error_message", "TEXT"),
+        ("integration_events", "cost_cents", "INTEGER DEFAULT 0"),
+        ("integration_events", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("certified_mailing_records", "id", "SERIAL PRIMARY KEY"),
+        ("certified_mailing_records", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("certified_mailing_records", "dispute_id", "INTEGER REFERENCES dispute_letters(id)"),
+        ("certified_mailing_records", "external_label_id", "VARCHAR(255)"),
+        ("certified_mailing_records", "tracking_number", "VARCHAR(100)"),
+        ("certified_mailing_records", "recipient_name", "VARCHAR(255)"),
+        ("certified_mailing_records", "recipient_address", "TEXT"),
+        ("certified_mailing_records", "document_type", "VARCHAR(100)"),
+        ("certified_mailing_records", "mail_class", "VARCHAR(50) DEFAULT 'certified'"),
+        ("certified_mailing_records", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("certified_mailing_records", "cost_cents", "INTEGER DEFAULT 0"),
+        ("certified_mailing_records", "mailed_at", "TIMESTAMP"),
+        ("certified_mailing_records", "delivered_at", "TIMESTAMP"),
+        ("certified_mailing_records", "return_receipt_path", "VARCHAR(500)"),
+        ("certified_mailing_records", "signature_name", "VARCHAR(255)"),
+        ("certified_mailing_records", "tracking_history", "JSON"),
+        ("certified_mailing_records", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("certified_mailing_records", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("notarize_transactions", "id", "SERIAL PRIMARY KEY"),
+        ("notarize_transactions", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("notarize_transactions", "document_id", "INTEGER REFERENCES client_documents(id)"),
+        ("notarize_transactions", "external_transaction_id", "VARCHAR(255)"),
+        ("notarize_transactions", "transaction_type", "VARCHAR(100)"),
+        ("notarize_transactions", "status", "VARCHAR(50) DEFAULT 'created'"),
+        ("notarize_transactions", "access_link", "TEXT"),
+        ("notarize_transactions", "signer_email", "VARCHAR(255)"),
+        ("notarize_transactions", "signer_name", "VARCHAR(255)"),
+        ("notarize_transactions", "document_name", "VARCHAR(500)"),
+        ("notarize_transactions", "original_document_path", "VARCHAR(500)"),
+        ("notarize_transactions", "notarized_document_path", "VARCHAR(500)"),
+        ("notarize_transactions", "completed_at", "TIMESTAMP"),
+        ("notarize_transactions", "expires_at", "TIMESTAMP"),
+        ("notarize_transactions", "cost_cents", "INTEGER DEFAULT 0"),
+        ("notarize_transactions", "webhook_events", "JSON"),
+        ("notarize_transactions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("notarize_transactions", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("credit_pull_requests", "id", "SERIAL PRIMARY KEY"),
+        ("credit_pull_requests", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("credit_pull_requests", "provider", "VARCHAR(100)"),
+        ("credit_pull_requests", "external_request_id", "VARCHAR(255)"),
+        ("credit_pull_requests", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("credit_pull_requests", "bureaus_requested", "JSON"),
+        ("credit_pull_requests", "report_type", "VARCHAR(50) DEFAULT 'tri-merge'"),
+        ("credit_pull_requests", "score_experian", "INTEGER"),
+        ("credit_pull_requests", "score_equifax", "INTEGER"),
+        ("credit_pull_requests", "score_transunion", "INTEGER"),
+        ("credit_pull_requests", "raw_response_path", "VARCHAR(500)"),
+        ("credit_pull_requests", "parsed_data", "JSON"),
+        ("credit_pull_requests", "cost_cents", "INTEGER DEFAULT 0"),
+        ("credit_pull_requests", "pulled_at", "TIMESTAMP"),
+        ("credit_pull_requests", "error_message", "TEXT"),
+        ("credit_pull_requests", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("credit_pull_requests", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("billing_plans", "id", "SERIAL PRIMARY KEY"),
+        ("billing_plans", "name", "VARCHAR(100)"),
+        ("billing_plans", "display_name", "VARCHAR(255)"),
+        ("billing_plans", "stripe_product_id", "VARCHAR(255)"),
+        ("billing_plans", "stripe_price_id", "VARCHAR(255)"),
+        ("billing_plans", "price_cents", "INTEGER"),
+        ("billing_plans", "billing_interval", "VARCHAR(50)"),
+        ("billing_plans", "features", "JSON"),
+        ("billing_plans", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("billing_plans", "sort_order", "INTEGER DEFAULT 0"),
+        ("billing_plans", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("billing_plans", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_subscriptions", "id", "SERIAL PRIMARY KEY"),
+        ("client_subscriptions", "client_id", "INTEGER UNIQUE NOT NULL REFERENCES clients(id)"),
+        ("client_subscriptions", "plan_id", "INTEGER REFERENCES billing_plans(id)"),
+        ("client_subscriptions", "stripe_subscription_id", "VARCHAR(255)"),
+        ("client_subscriptions", "stripe_customer_id", "VARCHAR(255)"),
+        ("client_subscriptions", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("client_subscriptions", "current_period_start", "TIMESTAMP"),
+        ("client_subscriptions", "current_period_end", "TIMESTAMP"),
+        ("client_subscriptions", "cancel_at_period_end", "BOOLEAN DEFAULT FALSE"),
+        ("client_subscriptions", "canceled_at", "TIMESTAMP"),
+        ("client_subscriptions", "amount_paid_cents", "INTEGER DEFAULT 0"),
+        ("client_subscriptions", "next_payment_date", "TIMESTAMP"),
+        ("client_subscriptions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_subscriptions", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     conn = engine.connect()

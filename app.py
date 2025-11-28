@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -46,6 +46,7 @@ from services import affiliate_service
 from services import triage_service
 from services import case_law_service
 from services import escalation_service
+from services import credit_pull_service
 import json
 
 app = Flask(__name__)
@@ -10015,6 +10016,310 @@ def api_notarization_webhook():
 
 
 # ==============================================================================
+# NOTARIZE.COM API (Class-based NotarizeService Integration)
+# ==============================================================================
+
+@app.route('/api/notarize/create', methods=['POST'])
+@require_staff()
+def api_notarize_create_transaction():
+    """
+    Create a new notarization transaction for a client document.
+    
+    Request JSON:
+        - client_id: int (required)
+        - document_url: str (required) - URL to the document to be notarized
+        - signer_email: str (optional) - defaults to client email
+        - signer_first_name: str (optional) - defaults to client first_name
+        - signer_last_name: str (optional) - defaults to client last_name
+        - document_name: str (optional)
+        - requirement: str (optional) - 'notarization', 'esignature', or 'witness'
+    
+    Returns:
+        - success: bool
+        - transaction_id: str - External Notarize.com transaction ID
+        - access_link: str - URL for signer to access notarization session
+        - internal_id: int - Internal database record ID
+    """
+    db = get_db()
+    try:
+        data = request.json or {}
+        client_id = data.get('client_id')
+        document_url = data.get('document_url')
+        
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+        
+        if not document_url:
+            return jsonify({'success': False, 'error': 'document_url is required'}), 400
+        
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        signer_email = data.get('signer_email') or client.email
+        signer_first_name = data.get('signer_first_name') or client.first_name or client.name.split()[0]
+        signer_last_name = data.get('signer_last_name') or client.last_name or (client.name.split()[-1] if len(client.name.split()) > 1 else '')
+        document_name = data.get('document_name', 'Document for Notarization')
+        requirement = data.get('requirement', 'notarization')
+        
+        if not signer_email:
+            return jsonify({'success': False, 'error': 'Signer email is required'}), 400
+        
+        from services.notarize_service import get_notarize_service
+        service = get_notarize_service()
+        
+        if not service.is_configured:
+            return jsonify({
+                'success': False, 
+                'error': 'Notarize.com API key not configured. Set NOTARIZE_API_KEY environment variable.'
+            }), 503
+        
+        result = service.create_transaction(
+            signer_email=signer_email,
+            signer_first_name=signer_first_name,
+            signer_last_name=signer_last_name,
+            document_url=document_url,
+            requirement=requirement,
+            client_id=client_id,
+            document_name=document_name
+        )
+        
+        if not result['success']:
+            return jsonify(result), 500
+        
+        return jsonify({
+            'success': True,
+            'transaction_id': result['transaction_id'],
+            'access_link': result['access_link'],
+            'internal_id': result['internal_id'],
+            'message': 'Notarization transaction created. Signer will receive an email to complete the session.'
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/notarize/<int:transaction_id>/status', methods=['GET'])
+@require_staff()
+def api_notarize_get_status(transaction_id):
+    """
+    Get the current status of a notarization transaction.
+    
+    Args:
+        transaction_id: Internal database transaction ID
+        
+    Returns:
+        - success: bool
+        - status: str - Current transaction status
+        - events: list - Status change events
+        - transaction_data: dict - Full API response data
+    """
+    try:
+        from services.notarize_service import get_notarize_service
+        service = get_notarize_service()
+        
+        if not service.is_configured:
+            db = get_db()
+            try:
+                transaction = db.query(NotarizeTransaction).filter_by(id=transaction_id).first()
+                if not transaction:
+                    return jsonify({'success': False, 'error': 'Transaction not found'}), 404
+                
+                return jsonify({
+                    'success': True,
+                    'status': transaction.status,
+                    'events': transaction.webhook_events or [],
+                    'transaction_data': None,
+                    'internal_id': transaction.id,
+                    'note': 'API key not configured - showing cached status only'
+                })
+            finally:
+                db.close()
+        
+        result = service.get_transaction_status(transaction_id)
+        
+        if not result['success'] and result.get('error', '').startswith('Transaction') and 'not found' in result.get('error', ''):
+            return jsonify(result), 404
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/notarize/<int:transaction_id>/download', methods=['GET'])
+@require_staff()
+def api_notarize_download_document(transaction_id):
+    """
+    Download the completed notarized document.
+    
+    Args:
+        transaction_id: Internal database transaction ID
+        
+    Returns:
+        PDF file or error JSON
+    """
+    try:
+        from services.notarize_service import get_notarize_service
+        service = get_notarize_service()
+        
+        if not service.is_configured:
+            return jsonify({
+                'success': False, 
+                'error': 'Notarize.com API key not configured'
+            }), 503
+        
+        result = service.download_completed_document(transaction_id)
+        
+        if isinstance(result, dict) and not result.get('success'):
+            status_code = 400
+            if 'not completed' in result.get('error', '').lower():
+                status_code = 400
+            elif 'not found' in result.get('error', '').lower():
+                status_code = 404
+            return jsonify(result), status_code
+        
+        if isinstance(result, bytes):
+            db = get_db()
+            try:
+                transaction = db.query(NotarizeTransaction).filter_by(id=transaction_id).first()
+                filename = f"notarized_document_{transaction_id}.pdf"
+                if transaction and transaction.document_name:
+                    safe_name = "".join(c for c in transaction.document_name if c.isalnum() or c in (' ', '_', '-')).strip()
+                    safe_name = safe_name.replace(' ', '_')[:50]
+                    filename = f"{safe_name}_notarized.pdf"
+            finally:
+                db.close()
+            
+            return send_file(
+                io.BytesIO(result),
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=filename
+            )
+        
+        return jsonify({'success': False, 'error': 'Unexpected response from download'}), 500
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/webhooks/notarize', methods=['POST'])
+def webhooks_notarize():
+    """
+    Handle Notarize.com webhook callbacks.
+    
+    This endpoint receives notifications about transaction status changes
+    from Notarize.com and updates the local database accordingly.
+    """
+    try:
+        raw_payload = request.get_data()
+        signature = request.headers.get('X-Notarize-Signature') or request.headers.get('X-Webhook-Signature')
+        webhook_data = request.json
+        
+        if not webhook_data:
+            return jsonify({'success': False, 'error': 'No webhook data received'}), 400
+        
+        from services.notarize_service import get_notarize_service
+        service = get_notarize_service()
+        
+        result = service.handle_webhook(
+            webhook_data=webhook_data,
+            raw_payload=raw_payload,
+            signature=signature
+        )
+        
+        if not result['success'] and 'signature' in result.get('error', '').lower():
+            return jsonify(result), 401
+        
+        if not result['success']:
+            return jsonify(result), 400
+        
+        return jsonify({
+            'success': True,
+            'internal_id': result.get('internal_id'),
+            'action_taken': result.get('action_taken')
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/notarize/test-connection', methods=['GET'])
+@require_staff(['admin'])
+def api_notarize_test_connection():
+    """Test connection to Notarize.com API (admin only)"""
+    try:
+        from services.notarize_service import get_notarize_service, is_notarize_configured
+        
+        if not is_notarize_configured():
+            return jsonify({
+                'success': False,
+                'configured': False,
+                'connected': False,
+                'error': 'Notarize.com API key not configured. Set NOTARIZE_API_KEY environment variable.'
+            })
+        
+        service = get_notarize_service()
+        connected = service.test_connection()
+        
+        return jsonify({
+            'success': True,
+            'configured': True,
+            'connected': connected,
+            'sandbox': service.sandbox,
+            'message': 'Connection successful' if connected else 'Connection failed'
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/notarize/client/<int:client_id>', methods=['GET'])
+@require_staff()
+def api_notarize_client_transactions(client_id):
+    """Get all notarize transactions for a client"""
+    db = get_db()
+    try:
+        transactions = db.query(NotarizeTransaction).filter_by(
+            client_id=client_id
+        ).order_by(NotarizeTransaction.created_at.desc()).all()
+        
+        transactions_data = [{
+            'id': t.id,
+            'external_transaction_id': t.external_transaction_id,
+            'document_name': t.document_name,
+            'status': t.status,
+            'access_link': t.access_link,
+            'signer_email': t.signer_email,
+            'signer_name': t.signer_name,
+            'completed_at': t.completed_at.isoformat() if t.completed_at else None,
+            'created_at': t.created_at.isoformat() if t.created_at else None
+        } for t in transactions]
+        
+        return jsonify({'success': True, 'transactions': transactions_data})
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ==============================================================================
 # CERTIFIED MAIL API (SendCertifiedMail.com Integration)
 # ==============================================================================
 
@@ -14912,6 +15217,768 @@ def api_client_roi_summary(client_id):
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
+
+
+# ============================================================
+# INTEGRATIONS HUB - API ENDPOINTS
+# ============================================================
+
+from services import sendcertified_service
+from services import notarization_service
+from services import certified_mail_service
+
+
+@app.route('/dashboard/integrations')
+@require_staff()
+def integrations_hub():
+    """Integrations hub dashboard page"""
+    db = get_db()
+    try:
+        from database import IntegrationConnection, IntegrationEvent, CertifiedMailOrder, NotarizationOrder
+        from sqlalchemy import func
+        from datetime import timedelta
+        
+        sendcertified_status = sendcertified_service.get_sendcertified_status()
+        sendcertified_stats = sendcertified_service.get_mailing_statistics()
+        
+        notarize_configured = notarization_service.is_proof_configured()
+        notarize_stats = {'total': 0, 'completed': 0}
+        try:
+            notarize_stats['total'] = db.query(func.count(NotarizationOrder.id)).scalar() or 0
+            notarize_stats['completed'] = db.query(func.count(NotarizationOrder.id)).filter(
+                NotarizationOrder.status == 'completed'
+            ).scalar() or 0
+        except:
+            pass
+        
+        creditpull_connection = db.query(IntegrationConnection).filter_by(
+            service_name='creditpull'
+        ).first()
+        creditpull_status = {
+            'configured': bool(creditpull_connection and creditpull_connection.api_key_encrypted),
+            'connected': creditpull_connection.connection_status == 'connected' if creditpull_connection else False,
+            'status': creditpull_connection.connection_status if creditpull_connection else 'not_configured'
+        }
+        
+        stripe_key = os.environ.get('STRIPE_SECRET_KEY')
+        stripe_status = {
+            'configured': bool(stripe_key),
+            'connected': bool(stripe_key),
+            'status': 'connected' if stripe_key else 'not_configured'
+        }
+        stripe_stats = {'total_revenue': 0, 'transactions': 0}
+        try:
+            from database import Client
+            paid_clients = db.query(Client).filter(Client.payment_status == 'paid').count()
+            total_revenue = db.query(func.sum(Client.signup_amount)).filter(
+                Client.payment_status == 'paid'
+            ).scalar() or 0
+            stripe_stats['transactions'] = paid_clients
+            stripe_stats['total_revenue'] = total_revenue / 100 if total_revenue else 0
+        except:
+            pass
+        
+        integrations = {
+            'sendcertified': {
+                'configured': sendcertified_status.get('configured', False),
+                'connected': sendcertified_status.get('connected', False),
+                'status': sendcertified_status.get('status', 'not_configured'),
+                'stats': sendcertified_stats
+            },
+            'notarize': {
+                'configured': notarize_configured,
+                'connected': notarize_configured,
+                'status': 'connected' if notarize_configured else 'not_configured',
+                'stats': notarize_stats
+            },
+            'creditpull': {
+                'configured': creditpull_status.get('configured', False),
+                'connected': creditpull_status.get('connected', False),
+                'status': creditpull_status.get('status', 'not_configured'),
+                'stats': {'total': 0, 'this_month': 0}
+            },
+            'stripe': {
+                'configured': stripe_status.get('configured', False),
+                'connected': stripe_status.get('connected', False),
+                'status': stripe_status.get('status', 'not_configured'),
+                'stats': stripe_stats
+            }
+        }
+        
+        active_count = sum(1 for i in integrations.values() if i['connected'])
+        
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        mailings_month = db.query(func.count(CertifiedMailOrder.id)).filter(
+            CertifiedMailOrder.created_at >= thirty_days_ago
+        ).scalar() or 0
+        notarized_month = 0
+        try:
+            notarized_month = db.query(func.count(NotarizationOrder.id)).filter(
+                NotarizationOrder.created_at >= thirty_days_ago,
+                NotarizationOrder.status == 'completed'
+            ).scalar() or 0
+        except:
+            pass
+        
+        stats = {
+            'mailings_sent': sendcertified_stats.get('total', 0),
+            'mailings_month': mailings_month,
+            'docs_notarized': notarize_stats.get('completed', 0),
+            'notarized_month': notarized_month,
+            'active_integrations': active_count,
+            'total_integrations': 4,
+            'total_spend': sendcertified_stats.get('total_cost', 0)
+        }
+        
+        events = []
+        try:
+            recent_events = db.query(IntegrationEvent).order_by(
+                IntegrationEvent.created_at.desc()
+            ).limit(20).all()
+            
+            for event in recent_events:
+                connection = db.query(IntegrationConnection).filter_by(
+                    id=event.integration_id
+                ).first()
+                
+                time_diff = datetime.utcnow() - event.created_at
+                if time_diff.days > 0:
+                    time_ago = f"{time_diff.days}d ago"
+                elif time_diff.seconds > 3600:
+                    time_ago = f"{time_diff.seconds // 3600}h ago"
+                else:
+                    time_ago = f"{time_diff.seconds // 60}m ago"
+                
+                events.append({
+                    'title': event.event_type.replace('_', ' ').title(),
+                    'service': connection.display_name if connection else 'Unknown',
+                    'details': event.error_message[:50] if event.error_message else '',
+                    'success': event.response_status == 200 if event.response_status else not event.error_message,
+                    'error': bool(event.error_message),
+                    'time_ago': time_ago
+                })
+        except Exception as e:
+            print(f"Error loading integration events: {e}")
+        
+        return render_template('integrations_hub.html',
+            integrations=integrations,
+            stats=stats,
+            events=events
+        )
+        
+    except Exception as e:
+        print(f"Integrations hub error: {e}")
+        return render_template('error.html', error='Error loading integrations', message=str(e))
+    finally:
+        db.close()
+
+
+@app.route('/api/integrations/status')
+@require_staff()
+def get_integrations_status():
+    """Get status of all integrations"""
+    try:
+        sendcertified_status = sendcertified_service.get_sendcertified_status()
+        
+        notarize_configured = notarization_service.is_proof_configured()
+        
+        db = get_db()
+        try:
+            from database import IntegrationConnection
+            creditpull = db.query(IntegrationConnection).filter_by(
+                service_name='creditpull'
+            ).first()
+            creditpull_status = {
+                'configured': bool(creditpull and creditpull.api_key_encrypted),
+                'connected': creditpull.connection_status == 'connected' if creditpull else False,
+                'status': creditpull.connection_status if creditpull else 'not_configured'
+            }
+        except:
+            creditpull_status = {'configured': False, 'connected': False, 'status': 'not_configured'}
+        finally:
+            db.close()
+        
+        stripe_key = os.environ.get('STRIPE_SECRET_KEY')
+        
+        return jsonify({
+            'success': True,
+            'integrations': {
+                'sendcertified': sendcertified_status,
+                'notarize': {
+                    'configured': notarize_configured,
+                    'connected': notarize_configured,
+                    'status': 'connected' if notarize_configured else 'not_configured'
+                },
+                'creditpull': creditpull_status,
+                'stripe': {
+                    'configured': bool(stripe_key),
+                    'connected': bool(stripe_key),
+                    'status': 'connected' if stripe_key else 'not_configured'
+                }
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/integrations/<service>/test', methods=['POST'])
+@require_staff()
+def test_integration_connection(service):
+    """Test connection for a specific integration"""
+    try:
+        if service == 'sendcertified':
+            svc = sendcertified_service.get_sendcertified_service()
+            if not svc.is_configured():
+                return jsonify({
+                    'success': True,
+                    'configured': False,
+                    'connected': False,
+                    'error': 'API credentials not configured'
+                })
+            
+            connected = svc.test_connection()
+            return jsonify({
+                'success': True,
+                'configured': True,
+                'connected': connected,
+                'error': None if connected else 'Connection test failed'
+            })
+            
+        elif service == 'notarize':
+            configured = notarization_service.is_proof_configured()
+            return jsonify({
+                'success': True,
+                'configured': configured,
+                'connected': configured,
+                'error': None if configured else 'PROOF_API_KEY not configured'
+            })
+            
+        elif service == 'creditpull':
+            db = get_db()
+            try:
+                from database import IntegrationConnection
+                connection = db.query(IntegrationConnection).filter_by(
+                    service_name='creditpull'
+                ).first()
+                
+                configured = bool(connection and connection.api_key_encrypted)
+                return jsonify({
+                    'success': True,
+                    'configured': configured,
+                    'connected': connection.connection_status == 'connected' if connection else False,
+                    'error': None if configured else 'API credentials not configured'
+                })
+            finally:
+                db.close()
+                
+        elif service == 'stripe':
+            stripe_key = os.environ.get('STRIPE_SECRET_KEY')
+            return jsonify({
+                'success': True,
+                'configured': bool(stripe_key),
+                'connected': bool(stripe_key),
+                'error': None if stripe_key else 'STRIPE_SECRET_KEY not configured'
+            })
+            
+        else:
+            return jsonify({'success': False, 'error': f'Unknown service: {service}'}), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/integrations/<service>/configure', methods=['POST'])
+@require_staff(roles=['admin'])
+def configure_integration(service):
+    """Configure API credentials for an integration"""
+    data = request.get_json() or {}
+    api_key = data.get('api_key', '').strip()
+    api_secret = data.get('api_secret', '').strip()
+    sandbox = data.get('sandbox', True)
+    
+    if not api_key:
+        return jsonify({'success': False, 'error': 'API key is required'}), 400
+    
+    try:
+        if service == 'sendcertified':
+            result = sendcertified_service.configure_sendcertified(
+                api_key=api_key,
+                api_secret=api_secret,
+                sandbox=sandbox
+            )
+            return jsonify(result)
+            
+        elif service == 'notarize':
+            return jsonify({
+                'success': False,
+                'error': 'Notarize API key must be set as PROOF_API_KEY environment variable'
+            }), 400
+            
+        elif service == 'creditpull':
+            db = get_db()
+            try:
+                from database import IntegrationConnection
+                from services.encryption import encrypt_value
+                
+                connection = db.query(IntegrationConnection).filter_by(
+                    service_name='creditpull'
+                ).first()
+                
+                if not connection:
+                    connection = IntegrationConnection(
+                        service_name='creditpull',
+                        display_name='Credit Pull Service',
+                        is_sandbox=sandbox,
+                        connection_status='configured',
+                        created_at=datetime.utcnow()
+                    )
+                    db.add(connection)
+                
+                connection.api_key_encrypted = encrypt_value(api_key)
+                if api_secret:
+                    connection.api_secret_encrypted = encrypt_value(api_secret)
+                connection.is_sandbox = sandbox
+                connection.is_active = True
+                connection.connection_status = 'configured'
+                connection.updated_at = datetime.utcnow()
+                
+                db.commit()
+                
+                return jsonify({
+                    'success': True,
+                    'configured': True,
+                    'connection_test': False,
+                    'error': None
+                })
+            finally:
+                db.close()
+                
+        elif service == 'stripe':
+            return jsonify({
+                'success': False,
+                'error': 'Stripe API key must be set as STRIPE_SECRET_KEY environment variable'
+            }), 400
+            
+        else:
+            return jsonify({'success': False, 'error': f'Unknown service: {service}'}), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/certified-mail/<int:order_id>/tracking')
+@require_staff()
+def get_certified_mail_tracking(order_id):
+    """Get tracking status for a certified mail order"""
+    try:
+        svc = sendcertified_service.get_sendcertified_service()
+        result = svc.get_tracking_status(order_id=order_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/certified-mail/<int:order_id>/receipt')
+@require_staff()
+def download_certified_mail_receipt(order_id):
+    """Download return receipt for a certified mail order"""
+    try:
+        svc = sendcertified_service.get_sendcertified_service()
+        pdf_bytes = svc.download_return_receipt(order_id=order_id)
+        
+        if pdf_bytes:
+            return send_file(
+                io.BytesIO(pdf_bytes),
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'return_receipt_{order_id}.pdf'
+            )
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Return receipt not available'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# CREDIT PULL API ENDPOINTS
+# ============================================================
+
+@app.route('/api/credit-pull/providers')
+@require_staff()
+def get_credit_pull_providers():
+    """Get list of available credit pull providers and their configuration status"""
+    try:
+        service = credit_pull_service.get_credit_pull_service()
+        providers = service.get_available_providers()
+        return jsonify({
+            'success': True,
+            'providers': providers
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/credit-pull/request/<int:client_id>', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def request_credit_pull(client_id):
+    """Request a credit report pull for a client"""
+    data = request.get_json() or {}
+    ssn_last4 = data.get('ssn_last4', '').strip()
+    dob = data.get('dob', '').strip()
+    full_ssn_encrypted = data.get('full_ssn_encrypted')
+    provider = data.get('provider', 'smartcredit')
+    sandbox = data.get('sandbox', True)
+    
+    if not ssn_last4 or len(ssn_last4) != 4:
+        return jsonify({
+            'success': False,
+            'error': 'Valid 4-digit SSN last 4 required'
+        }), 400
+    
+    if not dob:
+        return jsonify({
+            'success': False,
+            'error': 'Date of birth required (YYYY-MM-DD format)'
+        }), 400
+    
+    try:
+        service = credit_pull_service.get_credit_pull_service(
+            provider=provider,
+            sandbox=sandbox
+        )
+        
+        result = service.request_credit_report(
+            client_id=client_id,
+            ssn_last4=ssn_last4,
+            dob=dob,
+            full_ssn_encrypted=full_ssn_encrypted
+        )
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/credit-pull/<int:pull_id>/status')
+@require_staff()
+def get_credit_pull_status(pull_id):
+    """Get the status of a credit pull request"""
+    try:
+        service = credit_pull_service.get_credit_pull_service()
+        result = service.get_report_status(pull_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/credit-pull/<int:pull_id>/report')
+@require_staff()
+def get_credit_pull_report(pull_id):
+    """Get the parsed credit report data"""
+    try:
+        service = credit_pull_service.get_credit_pull_service()
+        result = service.get_parsed_report(pull_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/credit-pull/client/<int:client_id>')
+@require_staff()
+def get_client_credit_pulls(client_id):
+    """Get all credit pull requests for a client"""
+    try:
+        service = credit_pull_service.get_credit_pull_service()
+        pulls = service.get_client_pulls(client_id)
+        return jsonify({
+            'success': True,
+            'pulls': pulls,
+            'count': len(pulls)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/credit-pull/import/<int:pull_id>', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def import_credit_pull_to_analysis(pull_id):
+    """Import a completed credit pull into the analysis pipeline"""
+    try:
+        service = credit_pull_service.get_credit_pull_service()
+        result = service.import_to_analysis(pull_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/credit-pull/test-connection', methods=['POST'])
+@require_staff(roles=['admin'])
+def test_credit_pull_connection():
+    """Test connection to the credit pull provider"""
+    data = request.get_json() or {}
+    provider = data.get('provider', 'smartcredit')
+    sandbox = data.get('sandbox', True)
+    
+    try:
+        service = credit_pull_service.get_credit_pull_service(
+            provider=provider,
+            sandbox=sandbox
+        )
+        
+        connected = service.test_connection()
+        
+        return jsonify({
+            'success': True,
+            'provider': provider,
+            'configured': service.is_configured,
+            'connected': connected,
+            'sandbox': sandbox
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================
+# BILLING & SUBSCRIPTION API ENDPOINTS
+# ============================================================
+
+from services.stripe_plans_service import stripe_plans_service
+
+
+@app.route('/dashboard/billing')
+@require_staff(roles=['admin'])
+def dashboard_billing():
+    """Billing management page for admins"""
+    try:
+        plans = stripe_plans_service.list_plans(active_only=False)
+        stats = stripe_plans_service.get_subscription_stats()
+        subscriptions = stripe_plans_service.get_active_subscriptions(limit=50)
+        
+        return render_template('billing_management.html',
+            plans=plans,
+            stats=stats,
+            subscriptions=subscriptions
+        )
+    except Exception as e:
+        return render_template('error.html',
+            error='Billing Error',
+            message=f'Could not load billing data: {str(e)}'
+        ), 500
+
+
+@app.route('/api/billing/plans')
+@require_staff()
+def api_billing_list_plans():
+    """List all billing plans"""
+    try:
+        active_only = request.args.get('active_only', 'true').lower() == 'true'
+        plans = stripe_plans_service.list_plans(active_only=active_only)
+        return jsonify({
+            'success': True,
+            'plans': plans
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/plans', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_billing_create_plan():
+    """Create a new billing plan (admin only)"""
+    data = request.get_json() or {}
+    
+    name = data.get('name', '').strip().lower().replace(' ', '_')
+    display_name = data.get('display_name', '').strip()
+    price_cents = data.get('price_cents', 0)
+    interval = data.get('interval', 'month')
+    features = data.get('features', [])
+    
+    if not name:
+        return jsonify({'success': False, 'error': 'Plan name is required'}), 400
+    
+    if price_cents <= 0:
+        return jsonify({'success': False, 'error': 'Price must be greater than 0'}), 400
+    
+    try:
+        result = stripe_plans_service.create_plan(
+            name=name,
+            price_cents=int(price_cents),
+            interval=interval,
+            features=features,
+            display_name=display_name or name.replace('_', ' ').title()
+        )
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/plans/<int:plan_id>', methods=['PUT'])
+@require_staff(roles=['admin'])
+def api_billing_update_plan(plan_id):
+    """Update a billing plan (admin only)"""
+    data = request.get_json() or {}
+    
+    try:
+        result = stripe_plans_service.update_plan(plan_id, **data)
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/plans/initialize', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_billing_initialize_plans():
+    """Initialize default billing plans (admin only)"""
+    try:
+        result = stripe_plans_service.initialize_default_plans()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/checkout/<int:client_id>', methods=['POST'])
+@require_staff()
+def api_billing_create_checkout(client_id):
+    """Create a Stripe checkout session for a client"""
+    data = request.get_json() or {}
+    
+    plan_id = data.get('plan_id')
+    if not plan_id:
+        return jsonify({'success': False, 'error': 'Plan ID is required'}), 400
+    
+    base_url = request.host_url.rstrip('/')
+    success_url = data.get('success_url', f'{base_url}/dashboard/clients?payment=success&client_id={client_id}')
+    cancel_url = data.get('cancel_url', f'{base_url}/dashboard/clients?payment=canceled&client_id={client_id}')
+    
+    try:
+        result = stripe_plans_service.create_checkout_session(
+            client_id=client_id,
+            plan_id=int(plan_id),
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/portal/<int:client_id>')
+@require_staff()
+def api_billing_customer_portal(client_id):
+    """Create a Stripe customer portal session"""
+    base_url = request.host_url.rstrip('/')
+    return_url = request.args.get('return_url', f'{base_url}/dashboard/clients')
+    
+    try:
+        result = stripe_plans_service.create_customer_portal_session(
+            client_id=client_id,
+            return_url=return_url
+        )
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/webhooks/stripe', methods=['POST'])
+def stripe_billing_webhook():
+    """Handle Stripe webhook events for billing subscriptions"""
+    payload = request.get_data()
+    signature = request.headers.get('Stripe-Signature', '')
+    
+    try:
+        result = stripe_plans_service.handle_webhook(payload, signature)
+        
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    except Exception as e:
+        print(f"Stripe billing webhook error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/subscription/<int:client_id>')
+@require_staff()
+def api_billing_subscription_status(client_id):
+    """Get subscription status for a client"""
+    try:
+        result = stripe_plans_service.get_subscription_status(client_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/cancel/<int:client_id>', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_billing_cancel_subscription(client_id):
+    """Cancel a client's subscription (admin only)"""
+    data = request.get_json() or {}
+    at_period_end = data.get('at_period_end', True)
+    
+    try:
+        success = stripe_plans_service.cancel_subscription(
+            client_id=client_id,
+            at_period_end=at_period_end
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Subscription canceled successfully',
+                'at_period_end': at_period_end
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Could not cancel subscription'
+            }), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/stats')
+@require_staff(roles=['admin'])
+def api_billing_stats():
+    """Get billing statistics (admin only)"""
+    try:
+        stats = stripe_plans_service.get_subscription_stats()
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/billing/test-connection')
+@require_staff(roles=['admin'])
+def api_billing_test_connection():
+    """Test Stripe connection (admin only)"""
+    try:
+        connected = stripe_plans_service.test_connection()
+        return jsonify({
+            'success': True,
+            'connected': connected
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML

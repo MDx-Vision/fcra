@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Management - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo img { height: 40px; margin-right: 10px; }
+        .logo span { color: #84cc16; }
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .stat-label {
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .stat-value.small {
+            font-size: 18px;
+        }
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .plan-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .plan-card:hover {
+            border-color: #319795;
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.2);
+        }
+        .plan-card.inactive {
+            opacity: 0.6;
+        }
+        .plan-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .plan-badge.active {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .plan-badge.inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .plan-price {
+            font-size: 28px;
+            font-weight: 700;
+            color: #319795;
+            margin-bottom: 4px;
+        }
+        .plan-interval {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+        .plan-features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+        .plan-features li {
+            padding: 6px 0;
+            font-size: 14px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .plan-features li:before {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            border-radius: 50%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+            background-size: 12px;
+            background-position: center;
+            background-repeat: no-repeat;
+            flex-shrink: 0;
+        }
+        .plan-actions {
+            display: flex;
+            gap: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            background: #f8fafc;
+        }
+        td {
+            font-size: 14px;
+            color: #475569;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-past_due { background: #fef3c7; color: #92400e; }
+        .status-canceled { background: #fee2e2; color: #991b1b; }
+        .status-pending { background: #e0e7ff; color: #3730a3; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #319795;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-group .help-text {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .alert-success { background: #dcfce7; color: #166534; }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+        .alert-info { background: #e0e7ff; color: #3730a3; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .stripe-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f0f9ff;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #0369a1;
+        }
+        .stripe-indicator.connected {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .stripe-indicator.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #319795;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+            Bright<span>path</span>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                Clients
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Admin</div>
+            <a href="/dashboard/billing" class="nav-item active">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                Billing & Plans
+            </a>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                Settings
+            </a>
+            <a href="/dashboard/staff" class="nav-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Staff
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Billing & Subscription Management</h1>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="stripe-indicator" id="stripeStatus">
+                    <span class="loading"></span>
+                    Checking Stripe...
+                </div>
+                <button class="btn btn-primary" onclick="openCreatePlanModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    Create Plan
+                </button>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Monthly Recurring Revenue</div>
+                <div class="stat-value">{{ stats.mrr_display if stats.success else '$0.00' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Subscriptions</div>
+                <div class="stat-value">{{ stats.active_subscriptions if stats.success else 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value small">{{ stats.total_revenue_display if stats.success else '$0.00' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Past Due</div>
+                <div class="stat-value" style="color: {{ '#ef4444' if (stats.past_due_subscriptions or 0) > 0 else 'inherit' }}">{{ stats.past_due_subscriptions if stats.success else 0 }}</div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">
+                <span>Billing Plans</span>
+                <button class="btn btn-secondary btn-sm" onclick="initializeDefaultPlans()">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Initialize Default Plans
+                </button>
+            </div>
+
+            {% if plans %}
+            <div class="plans-grid">
+                {% for plan in plans %}
+                <div class="plan-card {% if not plan.is_active %}inactive{% endif %}">
+                    <span class="plan-badge {% if plan.is_active %}active{% else %}inactive{% endif %}">
+                        {{ 'Active' if plan.is_active else 'Inactive' }}
+                    </span>
+                    <div class="plan-name">{{ plan.display_name }}</div>
+                    <div class="plan-price">{{ plan.price_display }}</div>
+                    <div class="plan-interval">per {{ plan.billing_interval }}</div>
+                    
+                    {% if plan.features %}
+                    <ul class="plan-features">
+                        {% for feature in plan.features[:5] %}
+                        <li>{{ feature }}</li>
+                        {% endfor %}
+                        {% if plan.features|length > 5 %}
+                        <li style="color: #64748b;">+{{ plan.features|length - 5 }} more features</li>
+                        {% endif %}
+                    </ul>
+                    {% endif %}
+                    
+                    <div class="plan-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editPlan({{ plan.id }})">Edit</button>
+                        <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-primary{% endif %}" 
+                                onclick="togglePlanStatus({{ plan.id }}, {{ 'false' if plan.is_active else 'true' }})">
+                            {{ 'Deactivate' if plan.is_active else 'Activate' }}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                <h3>No Billing Plans</h3>
+                <p>Create your first billing plan or initialize the default 3-tier pricing.</p>
+                <button class="btn btn-primary" style="margin-top: 20px;" onclick="initializeDefaultPlans()">
+                    Initialize Default Plans
+                </button>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="content-card">
+            <div class="section-title">Active Subscriptions</div>
+            
+            {% if subscriptions %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Amount Paid</th>
+                        <th>Next Payment</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscriptions %}
+                    <tr>
+                        <td>
+                            <strong>{{ sub.client_name }}</strong>
+                            {% if sub.client_email %}
+                            <br><small style="color: #64748b;">{{ sub.client_email }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ sub.plan_name }} ({{ sub.plan_price }})</td>
+                        <td>
+                            <span class="status-badge status-{{ sub.status }}">
+                                {{ sub.status.replace('_', ' ').title() }}
+                            </span>
+                            {% if sub.cancel_at_period_end %}
+                            <br><small style="color: #ef4444;">Cancels at period end</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ sub.amount_paid }}</td>
+                        <td>{{ sub.current_period_end or '-' }}</td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm" onclick="openPortal({{ sub.client_id }})">
+                                Portal
+                            </button>
+                            {% if sub.status == 'active' and not sub.cancel_at_period_end %}
+                            <button class="btn btn-danger btn-sm" onclick="cancelSubscription({{ sub.client_id }})">
+                                Cancel
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <h3>No Active Subscriptions</h3>
+                <p>When clients subscribe to a plan, they will appear here.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="createPlanModal">
+        <div class="modal">
+            <div class="modal-title">Create New Billing Plan</div>
+            <form id="createPlanForm">
+                <div class="form-group">
+                    <label for="planName">Plan Name (internal)</label>
+                    <input type="text" id="planName" name="name" placeholder="e.g., basic, premium, enterprise" required>
+                    <div class="help-text">Lowercase, no spaces. Used internally for identification.</div>
+                </div>
+                <div class="form-group">
+                    <label for="planDisplayName">Display Name</label>
+                    <input type="text" id="planDisplayName" name="display_name" placeholder="e.g., Basic Plan, Premium Package">
+                    <div class="help-text">Customer-facing name. Leave blank to auto-generate from plan name.</div>
+                </div>
+                <div class="form-group">
+                    <label for="planPrice">Price (in dollars)</label>
+                    <input type="number" id="planPrice" name="price" min="1" step="0.01" placeholder="299.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="planInterval">Billing Interval</label>
+                    <select id="planInterval" name="interval">
+                        <option value="month">Monthly</option>
+                        <option value="year">Yearly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="planFeatures">Features (one per line)</label>
+                    <textarea id="planFeatures" name="features" placeholder="Standard credit repair&#10;Round 1 dispute letters&#10;Email support"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreatePlanModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkStripeConnection();
+        });
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = message;
+            container.insertBefore(alert, container.firstChild);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        async function checkStripeConnection() {
+            const indicator = document.getElementById('stripeStatus');
+            try {
+                const response = await fetch('/api/billing/test-connection');
+                const data = await response.json();
+                if (data.connected) {
+                    indicator.className = 'stripe-indicator connected';
+                    indicator.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Stripe Connected';
+                } else {
+                    indicator.className = 'stripe-indicator error';
+                    indicator.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg> Stripe Not Connected';
+                }
+            } catch (e) {
+                indicator.className = 'stripe-indicator error';
+                indicator.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg> Connection Error';
+            }
+        }
+
+        function openCreatePlanModal() {
+            document.getElementById('createPlanModal').classList.add('active');
+        }
+
+        function closeCreatePlanModal() {
+            document.getElementById('createPlanModal').classList.remove('active');
+            document.getElementById('createPlanForm').reset();
+        }
+
+        document.getElementById('createPlanForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('planName').value.trim().toLowerCase().replace(/\s+/g, '_');
+            const displayName = document.getElementById('planDisplayName').value.trim();
+            const priceInDollars = parseFloat(document.getElementById('planPrice').value);
+            const interval = document.getElementById('planInterval').value;
+            const featuresText = document.getElementById('planFeatures').value.trim();
+            
+            const features = featuresText ? featuresText.split('\n').map(f => f.trim()).filter(f => f) : [];
+            const priceCents = Math.round(priceInDollars * 100);
+            
+            try {
+                const response = await fetch('/api/billing/plans', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        display_name: displayName,
+                        price_cents: priceCents,
+                        interval: interval,
+                        features: features
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Plan created successfully!');
+                    closeCreatePlanModal();
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + (data.error || 'Failed to create plan'), 'error');
+                }
+            } catch (e) {
+                showAlert('Error creating plan: ' + e.message, 'error');
+            }
+        });
+
+        async function initializeDefaultPlans() {
+            if (!confirm('This will create the default 3-tier pricing plans (Basic $299, Professional $599, Premium $999). Continue?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/billing/plans/initialize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Default plans initialized! Refreshing page...');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + (data.error || 'Failed to initialize plans'), 'error');
+                }
+            } catch (e) {
+                showAlert('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function togglePlanStatus(planId, activate) {
+            const action = activate ? 'activate' : 'deactivate';
+            if (!confirm(`Are you sure you want to ${action} this plan?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/billing/plans/${planId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ is_active: activate })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(`Plan ${action}d successfully!`);
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showAlert('Error: ' + (data.error || `Failed to ${action} plan`), 'error');
+                }
+            } catch (e) {
+                showAlert('Error: ' + e.message, 'error');
+            }
+        }
+
+        function editPlan(planId) {
+            showAlert('Edit functionality coming soon. Use the Stripe Dashboard for advanced edits.', 'info');
+        }
+
+        async function openPortal(clientId) {
+            try {
+                const response = await fetch(`/api/billing/portal/${clientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.portal_url) {
+                    window.open(data.portal_url, '_blank');
+                } else {
+                    showAlert('Error: ' + (data.error || 'Could not open customer portal'), 'error');
+                }
+            } catch (e) {
+                showAlert('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function cancelSubscription(clientId) {
+            const cancelType = confirm('Click OK to cancel at the end of the billing period, or Cancel and then use immediate cancellation.');
+            
+            if (!confirm(`Are you sure you want to cancel this subscription${cancelType ? ' at period end' : ' immediately'}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/billing/cancel/${clientId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ at_period_end: cancelType })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Subscription canceled successfully!');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert('Error: ' + (data.error || 'Failed to cancel subscription'), 'error');
+                }
+            } catch (e) {
+                showAlert('Error: ' + e.message, 'error');
+            }
+        }
+
+        document.getElementById('createPlanModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCreatePlanModal();
+            }
+        });
+    </script>
+</body>
+</html>
