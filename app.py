@@ -15160,6 +15160,423 @@ def case_law_dashboard():
         db.close()
 
 
+@app.route('/dashboard/knowledge-base')
+@require_staff()
+def dashboard_knowledge_base():
+    """Legal Strategy Knowledge Base - Credit Repair Warfare integration"""
+    return render_template('knowledge_base.html')
+
+
+# ============================================================
+# ESCALATION PATHWAY TRACKING API (Credit Repair Warfare)
+# ============================================================
+
+ESCALATION_STAGES = {
+    'section_611': {
+        'name': '§611 Bureau Dispute',
+        'description': 'Initial dispute with CRA (Equifax, Experian, TransUnion)',
+        'next_stage': 'section_623',
+        'triggers': ['verified_without_proof', 'no_method_verification', 'superficial_check']
+    },
+    'section_623': {
+        'name': '§623 Direct Furnisher',
+        'description': 'Direct dispute to furnisher bypassing bureau',
+        'next_stage': 'section_621',
+        'triggers': ['furnisher_non_response', 'continued_inaccuracy', 'no_dispute_flag']
+    },
+    'section_621': {
+        'name': '§621 Regulators',
+        'description': 'Complaint to CFPB, State AG, OCC, NCUA',
+        'next_stage': 'section_616_617',
+        'triggers': ['pattern_violations', 'systemic_noncompliance', 'regulator_pressure_fails']
+    },
+    'section_616_617': {
+        'name': '§§616-617 Litigation',
+        'description': 'Civil lawsuit with consumer attorney',
+        'next_stage': None,
+        'triggers': ['willful_violations', 'clear_damages', 'strong_evidence']
+    }
+}
+
+
+@app.route('/api/escalation/stages', methods=['GET'])
+@require_staff()
+def api_get_escalation_stages():
+    """Get all escalation stages with descriptions"""
+    return jsonify({'success': True, 'stages': ESCALATION_STAGES})
+
+
+@app.route('/api/escalation/items', methods=['GET'])
+@require_staff()
+def api_get_escalation_items():
+    """Get all dispute items grouped by escalation stage"""
+    client_id = request.args.get('client_id')
+    stage = request.args.get('stage')
+    
+    db = get_db()
+    try:
+        query = db.query(DisputeItem)
+        
+        if client_id:
+            query = query.filter(DisputeItem.client_id == int(client_id))
+        if stage:
+            query = query.filter(DisputeItem.escalation_stage == stage)
+        
+        items = query.order_by(DisputeItem.created_at.desc()).all()
+        
+        result = {
+            'section_611': [],
+            'section_623': [],
+            'section_621': [],
+            'section_616_617': []
+        }
+        
+        for item in items:
+            stage_key = item.escalation_stage or 'section_611'
+            if stage_key in result:
+                result[stage_key].append({
+                    'id': item.id,
+                    'client_id': item.client_id,
+                    'creditor_name': item.creditor_name,
+                    'account_id': item.account_id,
+                    'item_type': item.item_type,
+                    'bureau': item.bureau,
+                    'dispute_round': item.dispute_round,
+                    'status': item.status,
+                    'escalation_stage': item.escalation_stage,
+                    'escalation_notes': item.escalation_notes,
+                    'furnisher_dispute_sent': item.furnisher_dispute_sent,
+                    'furnisher_dispute_date': str(item.furnisher_dispute_date) if item.furnisher_dispute_date else None,
+                    'cfpb_complaint_filed': item.cfpb_complaint_filed,
+                    'cfpb_complaint_id': item.cfpb_complaint_id,
+                    'attorney_referral': item.attorney_referral,
+                    'method_of_verification_requested': item.method_of_verification_requested,
+                    'method_of_verification_received': item.method_of_verification_received,
+                    'sent_date': str(item.sent_date) if item.sent_date else None,
+                    'response_date': str(item.response_date) if item.response_date else None
+                })
+        
+        stats = {
+            'section_611': len(result['section_611']),
+            'section_623': len(result['section_623']),
+            'section_621': len(result['section_621']),
+            'section_616_617': len(result['section_616_617']),
+            'total': sum(len(v) for v in result.values())
+        }
+        
+        return jsonify({'success': True, 'items': result, 'stats': stats})
+    except Exception as e:
+        print(f"Escalation items error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/escalation/item/<int:item_id>/escalate', methods=['POST'])
+@require_staff()
+def api_escalate_item(item_id):
+    """Escalate a dispute item to the next stage"""
+    data = request.get_json() or {}
+    target_stage = data.get('target_stage')
+    notes = data.get('notes', '')
+    
+    db = get_db()
+    try:
+        item = db.query(DisputeItem).filter(DisputeItem.id == item_id).first()
+        if not item:
+            return jsonify({'success': False, 'error': 'Dispute item not found'}), 404
+        
+        current_stage = item.escalation_stage or 'section_611'
+        
+        if target_stage:
+            if target_stage not in ESCALATION_STAGES:
+                return jsonify({'success': False, 'error': 'Invalid escalation stage'}), 400
+            new_stage = target_stage
+        else:
+            next_stage = ESCALATION_STAGES.get(current_stage, {}).get('next_stage')
+            if not next_stage:
+                return jsonify({'success': False, 'error': 'Already at final stage'}), 400
+            new_stage = next_stage
+        
+        item.escalation_stage = new_stage
+        if notes:
+            existing_notes = item.escalation_notes or ''
+            timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M')
+            item.escalation_notes = f"{existing_notes}\n[{timestamp}] Escalated to {ESCALATION_STAGES[new_stage]['name']}: {notes}".strip()
+        
+        if new_stage == 'section_623' and not item.furnisher_dispute_sent:
+            pass
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'item_id': item_id,
+            'previous_stage': current_stage,
+            'new_stage': new_stage,
+            'stage_info': ESCALATION_STAGES[new_stage]
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/escalation/item/<int:item_id>/update', methods=['POST'])
+@require_staff()
+def api_update_escalation_details(item_id):
+    """Update escalation-specific details for a dispute item"""
+    data = request.get_json() or {}
+    
+    db = get_db()
+    try:
+        item = db.query(DisputeItem).filter(DisputeItem.id == item_id).first()
+        if not item:
+            return jsonify({'success': False, 'error': 'Dispute item not found'}), 404
+        
+        if 'furnisher_dispute_sent' in data:
+            item.furnisher_dispute_sent = data['furnisher_dispute_sent']
+            if data['furnisher_dispute_sent'] and not item.furnisher_dispute_date:
+                item.furnisher_dispute_date = datetime.utcnow().date()
+        
+        if 'furnisher_dispute_date' in data:
+            item.furnisher_dispute_date = datetime.strptime(data['furnisher_dispute_date'], '%Y-%m-%d').date() if data['furnisher_dispute_date'] else None
+        
+        if 'cfpb_complaint_filed' in data:
+            item.cfpb_complaint_filed = data['cfpb_complaint_filed']
+            if data['cfpb_complaint_filed'] and not item.cfpb_complaint_date:
+                item.cfpb_complaint_date = datetime.utcnow().date()
+        
+        if 'cfpb_complaint_id' in data:
+            item.cfpb_complaint_id = data['cfpb_complaint_id']
+        
+        if 'attorney_referral' in data:
+            item.attorney_referral = data['attorney_referral']
+            if data['attorney_referral'] and not item.attorney_referral_date:
+                item.attorney_referral_date = datetime.utcnow().date()
+        
+        if 'method_of_verification_requested' in data:
+            item.method_of_verification_requested = data['method_of_verification_requested']
+        
+        if 'method_of_verification_received' in data:
+            item.method_of_verification_received = data['method_of_verification_received']
+        
+        if 'escalation_notes' in data:
+            item.escalation_notes = data['escalation_notes']
+        
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Escalation details updated'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/escalation/client/<int:client_id>/summary', methods=['GET'])
+@require_staff()
+def api_client_escalation_summary(client_id):
+    """Get escalation summary for a client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        items = db.query(DisputeItem).filter(DisputeItem.client_id == client_id).all()
+        
+        summary = {
+            'client_id': client_id,
+            'client_name': client.name,
+            'total_items': len(items),
+            'stages': {
+                'section_611': {'count': 0, 'items': []},
+                'section_623': {'count': 0, 'items': []},
+                'section_621': {'count': 0, 'items': []},
+                'section_616_617': {'count': 0, 'items': []}
+            },
+            'metrics': {
+                'method_verification_requested': 0,
+                'furnisher_disputes_sent': 0,
+                'cfpb_complaints_filed': 0,
+                'attorney_referrals': 0
+            },
+            'recommended_actions': []
+        }
+        
+        for item in items:
+            stage = item.escalation_stage or 'section_611'
+            if stage in summary['stages']:
+                summary['stages'][stage]['count'] += 1
+                summary['stages'][stage]['items'].append({
+                    'id': item.id,
+                    'creditor': item.creditor_name,
+                    'status': item.status
+                })
+            
+            if item.method_of_verification_requested:
+                summary['metrics']['method_verification_requested'] += 1
+            if item.furnisher_dispute_sent:
+                summary['metrics']['furnisher_disputes_sent'] += 1
+            if item.cfpb_complaint_filed:
+                summary['metrics']['cfpb_complaints_filed'] += 1
+            if item.attorney_referral:
+                summary['metrics']['attorney_referrals'] += 1
+        
+        for item in items:
+            if item.status in ['no_change', 'verified'] and not item.method_of_verification_requested:
+                summary['recommended_actions'].append({
+                    'item_id': item.id,
+                    'action': 'Request Method of Verification',
+                    'reason': f'{item.creditor_name} verified without proof - request §611(a)(6)(B)(iii) details'
+                })
+            if item.status in ['no_change', 'verified'] and item.dispute_round >= 2 and not item.furnisher_dispute_sent:
+                summary['recommended_actions'].append({
+                    'item_id': item.id,
+                    'action': 'Send §623 Direct Furnisher Dispute',
+                    'reason': f'{item.creditor_name} - bureau disputes unsuccessful, escalate to direct furnisher'
+                })
+        
+        return jsonify({'success': True, 'summary': summary})
+    except Exception as e:
+        print(f"Client escalation summary error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# END ESCALATION PATHWAY TRACKING API
+# ============================================================
+
+
+# ============================================================
+# DOFD & OBSOLESCENCE ANALYSIS (Credit Repair Warfare)
+# ============================================================
+
+@app.route('/api/obsolescence/calculate', methods=['POST'])
+@require_staff()
+def api_calculate_obsolescence():
+    """Calculate obsolescence date based on DOFD and item type"""
+    data = request.get_json() or {}
+    
+    dofd_str = data.get('date_of_first_delinquency')
+    item_type = data.get('item_type', 'standard')
+    
+    if not dofd_str:
+        return jsonify({'success': False, 'error': 'Date of first delinquency required'}), 400
+    
+    try:
+        dofd = datetime.strptime(dofd_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+    
+    obsolescence_years = {
+        'standard': 7,
+        'collection': 7,
+        'late_payment': 7,
+        'charge_off': 7,
+        'bankruptcy_ch7': 10,
+        'bankruptcy_ch13': 7,
+        'tax_lien_paid': 7,
+        'judgment': 7,
+        'inquiry': 2
+    }
+    
+    years = obsolescence_years.get(item_type, 7)
+    
+    from dateutil.relativedelta import relativedelta
+    obsolescence_date = dofd + relativedelta(years=years)
+    
+    today = datetime.utcnow().date()
+    days_remaining = (obsolescence_date - today).days
+    
+    if days_remaining <= 0:
+        status = 'obsolete'
+        recommendation = 'Item should be removed - past 7-year reporting period'
+    elif days_remaining <= 90:
+        status = 'expiring_soon'
+        recommendation = f'Item expires in {days_remaining} days - consider waiting or challenging DOFD accuracy'
+    elif days_remaining <= 365:
+        status = 'within_year'
+        recommendation = f'Item expires in {days_remaining} days ({days_remaining // 30} months)'
+    else:
+        status = 'active'
+        recommendation = f'Item has {days_remaining} days ({days_remaining // 365} years, {(days_remaining % 365) // 30} months) until obsolescence'
+    
+    return jsonify({
+        'success': True,
+        'dofd': str(dofd),
+        'item_type': item_type,
+        'obsolescence_years': years,
+        'obsolescence_date': str(obsolescence_date),
+        'days_remaining': max(0, days_remaining),
+        'status': status,
+        'recommendation': recommendation,
+        'legal_basis': f'FCRA §605(a) - {years}-year reporting period from Date of First Delinquency'
+    })
+
+
+@app.route('/api/obsolescence/check-dofd', methods=['POST'])
+@require_staff()
+def api_check_dofd_compliance():
+    """Check if DOFD is properly reported (§623(a)(5) requirement)"""
+    data = request.get_json() or {}
+    
+    has_dofd = data.get('has_dofd', False)
+    reported_dofd = data.get('reported_dofd')
+    actual_dofd = data.get('actual_dofd')
+    
+    violations = []
+    recommendations = []
+    
+    if not has_dofd:
+        violations.append({
+            'type': 'missing_dofd',
+            'statute': '§623(a)(5)',
+            'description': 'Furnisher failed to report Date of First Delinquency as required',
+            'severity': 'high'
+        })
+        recommendations.append('Dispute as incomplete reporting under §623(a)(5)')
+        recommendations.append('File CFPB complaint for §623(a)(5) violation')
+    
+    if reported_dofd and actual_dofd:
+        try:
+            reported = datetime.strptime(reported_dofd, '%Y-%m-%d').date()
+            actual = datetime.strptime(actual_dofd, '%Y-%m-%d').date()
+            
+            if reported != actual:
+                diff_days = (reported - actual).days
+                violations.append({
+                    'type': 'incorrect_dofd',
+                    'statute': '§623(a)(5)',
+                    'description': f'DOFD incorrect by {abs(diff_days)} days - affects obsolescence calculation',
+                    'severity': 'high' if abs(diff_days) > 30 else 'medium',
+                    'reported': str(reported),
+                    'actual': str(actual)
+                })
+                recommendations.append(f'Challenge DOFD accuracy - off by {abs(diff_days)} days')
+                if reported > actual:
+                    recommendations.append('Reported DOFD is later than actual - item may have expired earlier')
+        except ValueError:
+            pass
+    
+    return jsonify({
+        'success': True,
+        'violations': violations,
+        'recommendations': recommendations,
+        'has_violations': len(violations) > 0,
+        'legal_reference': 'FCRA §623(a)(5) requires furnishers to report the Date of First Delinquency'
+    })
+
+
+# ============================================================
+# END DOFD & OBSOLESCENCE ANALYSIS
+# ============================================================
+
+
 @app.route('/api/case-law', methods=['GET'])
 @require_staff()
 def api_get_case_law():

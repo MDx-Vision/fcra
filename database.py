@@ -617,6 +617,20 @@ class DisputeItem(Base):
     # Status tracking
     status = Column(String(50), default='to_do')  # sent, deleted, updated, in_progress, to_do, no_change, no_answer, on_hold, positive, duplicate, other
     
+    # FCRA Escalation Pathway (Credit Repair Warfare)
+    # Stages: section_611 -> section_623 -> section_621 -> section_616_617
+    escalation_stage = Column(String(50), default='section_611')  # section_611, section_623, section_621, section_616_617
+    escalation_notes = Column(Text)  # Notes on escalation decisions
+    furnisher_dispute_sent = Column(Boolean, default=False)  # §623 direct dispute sent
+    furnisher_dispute_date = Column(Date)  # When §623 dispute was sent
+    cfpb_complaint_filed = Column(Boolean, default=False)  # §621 CFPB complaint
+    cfpb_complaint_date = Column(Date)
+    cfpb_complaint_id = Column(String(100))  # CFPB complaint reference number
+    attorney_referral = Column(Boolean, default=False)  # §§616-617 attorney involvement
+    attorney_referral_date = Column(Date)
+    method_of_verification_requested = Column(Boolean, default=False)  # §611(a)(6)(B)(iii)
+    method_of_verification_received = Column(Boolean, default=False)
+    
     # Dates
     follow_up_date = Column(Date)  # When to follow up
     sent_date = Column(Date)  # When dispute was sent
@@ -3551,6 +3565,19 @@ def init_db():
         ("cache_entries", "expires_at", "TIMESTAMP"),
         ("cache_entries", "last_accessed", "TIMESTAMP"),
         ("cache_entries", "hit_count", "INTEGER DEFAULT 0"),
+        ("dispute_items", "escalation_stage", "VARCHAR(50) DEFAULT 'section_611'"),
+        ("dispute_items", "escalation_date", "TIMESTAMP"),
+        ("dispute_items", "fcra_section_violated", "VARCHAR(50)"),
+        ("dispute_items", "furnisher_dispute_sent", "BOOLEAN DEFAULT FALSE"),
+        ("dispute_items", "furnisher_dispute_date", "TIMESTAMP"),
+        ("dispute_items", "cfpb_complaint_filed", "BOOLEAN DEFAULT FALSE"),
+        ("dispute_items", "cfpb_complaint_date", "TIMESTAMP"),
+        ("dispute_items", "cfpb_complaint_id", "VARCHAR(100)"),
+        ("dispute_items", "attorney_referral", "BOOLEAN DEFAULT FALSE"),
+        ("dispute_items", "method_of_verification_requested", "BOOLEAN DEFAULT FALSE"),
+        ("dispute_items", "method_of_verification_received", "BOOLEAN DEFAULT FALSE"),
+        ("dispute_items", "dofd", "DATE"),
+        ("dispute_items", "obsolescence_date", "DATE"),
     ]
     
     conn = engine.connect()

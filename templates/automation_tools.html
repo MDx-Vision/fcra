@@ -602,6 +602,7 @@
             <button class="top-nav-btn" data-tab="settlement-calculator" onclick="switchTab('settlement-calculator')">Settlement Calculator</button>
             <button class="top-nav-btn" data-tab="certified-mail" onclick="switchTab('certified-mail')">Certified Mail</button>
             <button class="top-nav-btn" data-tab="notarization" onclick="switchTab('notarization')">Notarization</button>
+            <button class="top-nav-btn" data-tab="advanced-letters" onclick="switchTab('advanced-letters')">Advanced Letters</button>
         </div>
 
         <div id="tab-freeze-letters" class="tab-content active">
@@ -1107,6 +1108,601 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-advanced-letters" class="tab-content">
+            <div class="content-card">
+                <div class="section-title">Advanced Dispute Letter Templates</div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Generate legally-compliant dispute letters based on the Credit Repair Warfare guide. These templates include proper legal citations and professional formatting for maximum effectiveness.
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <div onclick="selectAdvancedLetterType('respa-qwr')" id="letter-card-respa-qwr" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #dbeafe; color: #1e40af; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">RESPA</span>
+                            <span style="font-weight: 600; color: #1a1a2e;">Qualified Written Request</span>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 0;">For mortgage servicers - 12 U.S.C. §2605(e)</p>
+                    </div>
+
+                    <div onclick="selectAdvancedLetterType('reg-z')" id="letter-card-reg-z" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #dcfce7; color: #166534; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">REG Z</span>
+                            <span style="font-weight: 600; color: #1a1a2e;">Payment Crediting Dispute</span>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 0;">Late payment removal - 12 C.F.R. §1026.36(c)(1)(i)</p>
+                    </div>
+
+                    <div onclick="selectAdvancedLetterType('fdcpa-validation')" id="letter-card-fdcpa-validation" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #fef3c7; color: #92400e; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">FDCPA</span>
+                            <span style="font-weight: 600; color: #1a1a2e;">Validation Demand</span>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 0;">For debt collectors - 15 U.S.C. §1692g</p>
+                    </div>
+
+                    <div onclick="selectAdvancedLetterType('605b-block')" id="letter-card-605b-block" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #fee2e2; color: #991b1b; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">§605B</span>
+                            <span style="font-weight: 600; color: #1a1a2e;">Identity Theft Block</span>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 0;">For ID theft victims - requires FTC affidavit</p>
+                    </div>
+
+                    <div onclick="selectAdvancedLetterType('623-furnisher')" id="letter-card-623-furnisher" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #e0e7ff; color: #4338ca; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">§623</span>
+                            <span style="font-weight: 600; color: #1a1a2e;">Direct Furnisher Dispute</span>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 0;">Bypass bureau - direct to furnisher</p>
+                    </div>
+
+                    <div onclick="selectAdvancedLetterType('reinsertion')" id="letter-card-reinsertion" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #fce7f3; color: #9d174d; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">§611</span>
+                            <span style="font-weight: 600; color: #1a1a2e;">Reinsertion Challenge</span>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 0;">For §611(a)(5)(B) violations</p>
+                    </div>
+
+                    <div onclick="selectAdvancedLetterType('mov-request')" id="letter-card-mov-request" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                            <span style="background: #cffafe; color: #0e7490; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;">MOV</span>
+                            <span style="font-weight: 600; color: #1a1a2e;">Method of Verification Request</span>
+                        </div>
+                        <p style="font-size: 12px; color: #64748b; margin: 0;">§611(a)(6)(B)(iii) - expose superficial checks</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="advanced-letter-form-respa-qwr" class="advanced-letter-form content-card" style="display: none;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #dbeafe; color: #1e40af; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">RESPA QWR</span>
+                    RESPA Qualified Written Request - 12 U.S.C. §2605(e)
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    A Qualified Written Request (QWR) compels mortgage servicers to investigate disputed account information. Servicers must respond within 30 days or face statutory damages of $2,000+ per violation.
+                </p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client *</label>
+                        <select id="respaClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mortgage Servicer Name *</label>
+                        <input type="text" id="respaServicerName" placeholder="e.g., Wells Fargo Home Mortgage">
+                    </div>
+                    <div class="form-group">
+                        <label>Servicer Address *</label>
+                        <input type="text" id="respaServicerAddress" placeholder="Street Address">
+                    </div>
+                    <div class="form-group">
+                        <label>City, State ZIP *</label>
+                        <input type="text" id="respaServicerCityStateZip" placeholder="City, ST 12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Loan/Account Number *</label>
+                        <input type="text" id="respaLoanNumber" placeholder="Loan account number">
+                    </div>
+                    <div class="form-group">
+                        <label>Property Address</label>
+                        <input type="text" id="respaPropertyAddress" placeholder="Property address for the mortgage">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Dispute Reason / Issues *</label>
+                        <textarea id="respaDisputeReason" rows="4" placeholder="Describe the payment crediting issues, escrow discrepancies, or other account errors you are disputing..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Specific Relief Requested</label>
+                        <textarea id="respaReliefRequested" rows="3" placeholder="e.g., Correct payment history, remove late payment notations, provide complete payment application history..."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateAdvancedLetter('respa-qwr')" id="generateRespaBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate RESPA QWR Letter
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('respa-qwr')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview Letter
+                    </button>
+                </div>
+            </div>
+
+            <div id="advanced-letter-form-reg-z" class="advanced-letter-form content-card" style="display: none;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #dcfce7; color: #166534; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">REG Z</span>
+                    Regulation Z Payment Crediting Dispute - 12 C.F.R. §1026.36(c)(1)(i)
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Under Regulation Z, creditors must credit payments as of the date received. Late payment notations resulting from delayed crediting violate federal law. This letter demands correction and removal of improper late marks.
+                </p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client *</label>
+                        <select id="regzClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Creditor/Lender Name *</label>
+                        <input type="text" id="regzCreditorName" placeholder="e.g., Chase Bank, N.A.">
+                    </div>
+                    <div class="form-group">
+                        <label>Creditor Address *</label>
+                        <input type="text" id="regzCreditorAddress" placeholder="Street Address">
+                    </div>
+                    <div class="form-group">
+                        <label>City, State ZIP *</label>
+                        <input type="text" id="regzCreditorCityStateZip" placeholder="City, ST 12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Number *</label>
+                        <input type="text" id="regzAccountNumber" placeholder="Account number">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Type *</label>
+                        <select id="regzAccountType">
+                            <option value="">-- Select Type --</option>
+                            <option value="Mortgage">Mortgage</option>
+                            <option value="Auto Loan">Auto Loan</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Personal Loan">Personal Loan</option>
+                            <option value="Student Loan">Student Loan</option>
+                            <option value="Home Equity">Home Equity Line</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Date(s) in Question *</label>
+                        <input type="text" id="regzPaymentDates" placeholder="e.g., March 15, 2024; April 14, 2024">
+                    </div>
+                    <div class="form-group">
+                        <label>Late Payment Month(s) Reported</label>
+                        <input type="text" id="regzLateMonths" placeholder="e.g., March 2024, April 2024">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Payment Evidence Details</label>
+                        <textarea id="regzPaymentEvidence" rows="3" placeholder="Describe evidence of on-time payment: bank statement confirmation numbers, payment receipts, etc."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateAdvancedLetter('reg-z')" id="generateRegzBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate Reg Z Dispute Letter
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('reg-z')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview Letter
+                    </button>
+                </div>
+            </div>
+
+            <div id="advanced-letter-form-fdcpa-validation" class="advanced-letter-form content-card" style="display: none;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">FDCPA</span>
+                    FDCPA Validation Demand - 15 U.S.C. §1692g
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Under the FDCPA, debt collectors must validate debts upon consumer request. They must provide signed agreements, chain of assignment, and itemized accounting. Collection activity must cease until validation is provided.
+                </p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client *</label>
+                        <select id="fdcpaClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Collection Agency Name *</label>
+                        <input type="text" id="fdcpaCollectorName" placeholder="e.g., Portfolio Recovery Associates">
+                    </div>
+                    <div class="form-group">
+                        <label>Collector Address *</label>
+                        <input type="text" id="fdcpaCollectorAddress" placeholder="Street Address">
+                    </div>
+                    <div class="form-group">
+                        <label>City, State ZIP *</label>
+                        <input type="text" id="fdcpaCollectorCityStateZip" placeholder="City, ST 12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Account/Reference Number</label>
+                        <input type="text" id="fdcpaAccountNumber" placeholder="Their reference number">
+                    </div>
+                    <div class="form-group">
+                        <label>Original Creditor Name</label>
+                        <input type="text" id="fdcpaOriginalCreditor" placeholder="Original creditor if known">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount Claimed ($)</label>
+                        <input type="number" id="fdcpaAmountClaimed" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Date of First Collection Contact</label>
+                        <input type="date" id="fdcpaFirstContactDate">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Dispute Basis</label>
+                        <textarea id="fdcpaDisputeBasis" rows="3" placeholder="Explain why you dispute this debt: not my account, wrong amount, statute of limitations, etc."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateAdvancedLetter('fdcpa-validation')" id="generateFdcpaBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate FDCPA Validation Letter
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('fdcpa-validation')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview Letter
+                    </button>
+                </div>
+            </div>
+
+            <div id="advanced-letter-form-605b-block" class="advanced-letter-form content-card" style="display: none;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #fee2e2; color: #991b1b; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">§605B</span>
+                    Identity Theft Block Request - 15 U.S.C. §1681c-2
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Section 605B requires CRAs to block fraudulent accounts within 4 business days when provided with a police report and FTC Identity Theft Affidavit. This is a powerful remedy for true identity theft victims.
+                </p>
+
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                    <strong style="color: #92400e;">⚠️ Important Requirements:</strong>
+                    <ul style="margin: 10px 0 0 20px; color: #92400e; font-size: 13px;">
+                        <li>Valid FTC Identity Theft Affidavit (Form 14039 or IdentityTheft.gov report)</li>
+                        <li>Police Report or FTC Identity Theft Report</li>
+                        <li>Documentation identifying fraudulent accounts</li>
+                    </ul>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client *</label>
+                        <select id="block605bClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Bureau *</label>
+                        <select id="block605bBureau">
+                            <option value="">-- Select Bureau --</option>
+                            <option value="Equifax">Equifax</option>
+                            <option value="Experian">Experian</option>
+                            <option value="TransUnion">TransUnion</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Police Report Number *</label>
+                        <input type="text" id="block605bPoliceReport" placeholder="Report number">
+                    </div>
+                    <div class="form-group">
+                        <label>Police Report Date</label>
+                        <input type="date" id="block605bPoliceDate">
+                    </div>
+                    <div class="form-group">
+                        <label>FTC Report Number</label>
+                        <input type="text" id="block605bFtcReport" placeholder="FTC Identity Theft Report number">
+                    </div>
+                    <div class="form-group">
+                        <label>Date ID Theft Discovered</label>
+                        <input type="date" id="block605bDiscoveryDate">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Fraudulent Accounts to Block *</label>
+                        <textarea id="block605bFraudAccounts" rows="4" placeholder="List each fraudulent account:
+- Creditor Name, Account #XXXX, Amount $X,XXX
+- Creditor Name, Account #YYYY, Amount $X,XXX"></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateAdvancedLetter('605b-block')" id="generate605bBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate §605B Block Request
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('605b-block')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview Letter
+                    </button>
+                </div>
+            </div>
+
+            <div id="advanced-letter-form-623-furnisher" class="advanced-letter-form content-card" style="display: none;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #e0e7ff; color: #4338ca; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">§623</span>
+                    Direct Furnisher Dispute - 15 U.S.C. §1681s-2(a)(8)
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Section 623 allows consumers to dispute directly with furnishers after receiving a notice under §611(a)(6)(A). Furnishers must investigate within 30 days. This bypasses the CRA and creates direct furnisher liability.
+                </p>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client *</label>
+                        <select id="furnisher623ClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Furnisher/Creditor Name *</label>
+                        <input type="text" id="furnisher623Name" placeholder="e.g., Capital One, N.A.">
+                    </div>
+                    <div class="form-group">
+                        <label>Furnisher Address *</label>
+                        <input type="text" id="furnisher623Address" placeholder="Street Address">
+                    </div>
+                    <div class="form-group">
+                        <label>City, State ZIP *</label>
+                        <input type="text" id="furnisher623CityStateZip" placeholder="City, ST 12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Number *</label>
+                        <input type="text" id="furnisher623AccountNumber" placeholder="Account number">
+                    </div>
+                    <div class="form-group">
+                        <label>Prior CRA Dispute Date</label>
+                        <input type="date" id="furnisher623PriorDisputeDate">
+                    </div>
+                    <div class="form-group">
+                        <label>CRA Investigation Result</label>
+                        <select id="furnisher623CraResult">
+                            <option value="">-- Select Result --</option>
+                            <option value="Verified">Verified as Accurate</option>
+                            <option value="Updated">Updated/Modified</option>
+                            <option value="NoResponse">No Response Within 30 Days</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Bureau Previously Disputed</label>
+                        <select id="furnisher623Bureau">
+                            <option value="">-- Select Bureau --</option>
+                            <option value="Equifax">Equifax</option>
+                            <option value="Experian">Experian</option>
+                            <option value="TransUnion">TransUnion</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Specific Inaccuracy Being Disputed *</label>
+                        <textarea id="furnisher623Inaccuracy" rows="4" placeholder="Describe the specific inaccurate information: wrong balance, incorrect payment history, account doesn't belong to me, etc."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Supporting Evidence Available</label>
+                        <textarea id="furnisher623Evidence" rows="3" placeholder="Describe any documentation you have: statements, payment records, correspondence, etc."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateAdvancedLetter('623-furnisher')" id="generate623Btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate §623 Direct Dispute
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('623-furnisher')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview Letter
+                    </button>
+                </div>
+            </div>
+
+            <div id="advanced-letter-form-reinsertion" class="advanced-letter-form content-card" style="display: none;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #fce7f3; color: #9d174d; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">§611</span>
+                    Reinsertion Challenge Letter - 15 U.S.C. §1681i(a)(5)(B)
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Section 611(a)(5)(B) prohibits CRAs from reinserting deleted information without proper certification and consumer notification. Violations carry statutory damages of $100-$1,000 per occurrence plus actual damages and attorney fees.
+                </p>
+
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                    <strong style="color: #991b1b;">🚨 High-Value Violation:</strong>
+                    <p style="margin: 10px 0 0 0; color: #991b1b; font-size: 13px;">
+                        Reinsertion violations are per-se FCRA violations that often indicate willful noncompliance. Document the original deletion date and reinsertion date carefully.
+                    </p>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client *</label>
+                        <select id="reinsertionClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Bureau *</label>
+                        <select id="reinsertionBureau">
+                            <option value="">-- Select Bureau --</option>
+                            <option value="Equifax">Equifax</option>
+                            <option value="Experian">Experian</option>
+                            <option value="TransUnion">TransUnion</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date Item Was Deleted *</label>
+                        <input type="date" id="reinsertionDeletedDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Date Item Was Reinserted *</label>
+                        <input type="date" id="reinsertionReinsertedDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Creditor/Furnisher Name *</label>
+                        <input type="text" id="reinsertionCreditorName" placeholder="Name of creditor for reinserted item">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input type="text" id="reinsertionAccountNumber" placeholder="Account number">
+                    </div>
+                    <div class="form-group">
+                        <label>Original Dispute Confirmation #</label>
+                        <input type="text" id="reinsertionConfirmation" placeholder="Original dispute confirmation number">
+                    </div>
+                    <div class="form-group">
+                        <label>5-Day Notice Received?</label>
+                        <select id="reinsertionNoticeReceived">
+                            <option value="No">No - No notice received</option>
+                            <option value="Yes">Yes - Received 5-day notice</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Description of Reinserted Information</label>
+                        <textarea id="reinsertionDescription" rows="3" placeholder="Describe the information that was deleted and then reinserted..."></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateAdvancedLetter('reinsertion')" id="generateReinsertionBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate Reinsertion Challenge
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('reinsertion')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview Letter
+                    </button>
+                </div>
+            </div>
+
+            <div id="advanced-letter-form-mov-request" class="advanced-letter-form content-card" style="display: none;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #cffafe; color: #0e7490; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">MOV</span>
+                    Method of Verification Request - 15 U.S.C. §1681i(a)(6)(B)(iii)
+                </div>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 13px;">
+                    Section 611(a)(6)(B)(iii) requires CRAs to provide the method of verification upon request. This exposes superficial "e-OSCAR" verifications and creates evidence for litigation when CRAs fail to conduct meaningful investigations.
+                </p>
+
+                <div style="background: #dcfce7; border-left: 4px solid #22c55e; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                    <strong style="color: #166534;">💡 Strategic Use:</strong>
+                    <p style="margin: 10px 0 0 0; color: #166534; font-size: 13px;">
+                        MOV requests often reveal that CRAs merely sent an e-OSCAR request with 2-digit codes and accepted furnisher's "verified" response without independent investigation. This supports willfulness claims.
+                    </p>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Select Client *</label>
+                        <select id="movClientSelect">
+                            <option value="">-- Select Client --</option>
+                            {% for client in clients %}
+                            <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Bureau *</label>
+                        <select id="movBureau">
+                            <option value="">-- Select Bureau --</option>
+                            <option value="Equifax">Equifax</option>
+                            <option value="Experian">Experian</option>
+                            <option value="TransUnion">TransUnion</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Original Dispute Date *</label>
+                        <input type="date" id="movDisputeDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Dispute Confirmation Number</label>
+                        <input type="text" id="movConfirmationNumber" placeholder="CRA confirmation number">
+                    </div>
+                    <div class="form-group">
+                        <label>Investigation Result Date</label>
+                        <input type="date" id="movResultDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Investigation Result</label>
+                        <select id="movResult">
+                            <option value="">-- Select Result --</option>
+                            <option value="Verified">Verified as Accurate</option>
+                            <option value="Updated">Updated/Modified</option>
+                            <option value="Remains">Remains - No Change</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Creditor/Furnisher Name *</label>
+                        <input type="text" id="movCreditorName" placeholder="Name of creditor for disputed item">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input type="text" id="movAccountNumber" placeholder="Account number">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Original Dispute Reason</label>
+                        <textarea id="movDisputeReason" rows="3" placeholder="What was disputed in the original dispute?"></textarea>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="generateAdvancedLetter('mov-request')" id="generateMovBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Generate MOV Request Letter
+                    </button>
+                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('mov-request')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Preview Letter
+                    </button>
+                </div>
+            </div>
+
+            <div id="advanced-letter-preview" class="content-card" style="display: none;">
+                <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Letter Preview</span>
+                    <button class="btn btn-secondary btn-sm" onclick="closeLetterPreview()">Close Preview</button>
+                </div>
+                <div id="letterPreviewContent" style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 30px; font-family: 'Times New Roman', serif; line-height: 1.6; max-height: 600px; overflow-y: auto;">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="downloadPreviewAsPDF()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download PDF
+                    </button>
                 </div>
             </div>
         </div>
@@ -1894,6 +2490,1004 @@
                 switchTab(tab);
             }
         });
+
+        let currentAdvancedLetterType = null;
+        let currentLetterContent = null;
+
+        function selectAdvancedLetterType(letterType) {
+            document.querySelectorAll('.letter-type-card').forEach(card => {
+                card.style.borderColor = 'transparent';
+                card.style.background = '#f8fafc';
+            });
+            
+            const selectedCard = document.getElementById(`letter-card-${letterType}`);
+            if (selectedCard) {
+                selectedCard.style.borderColor = '#84cc16';
+                selectedCard.style.background = '#f0fdf4';
+            }
+            
+            document.querySelectorAll('.advanced-letter-form').forEach(form => {
+                form.style.display = 'none';
+            });
+            
+            const formDiv = document.getElementById(`advanced-letter-form-${letterType}`);
+            if (formDiv) {
+                formDiv.style.display = 'block';
+                formDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            document.getElementById('advanced-letter-preview').style.display = 'none';
+            currentAdvancedLetterType = letterType;
+        }
+
+        function getClientInfo(clientId) {
+            const select = document.querySelector(`select option[value="${clientId}"]`);
+            if (select) {
+                return select.textContent;
+            }
+            return 'Client';
+        }
+
+        function formatDate(date) {
+            return new Date(date || Date.now()).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        function generateLetterContent(letterType) {
+            const today = formatDate();
+            let content = '';
+            
+            switch(letterType) {
+                case 'respa-qwr':
+                    content = generateRespaQwrLetter(today);
+                    break;
+                case 'reg-z':
+                    content = generateRegZLetter(today);
+                    break;
+                case 'fdcpa-validation':
+                    content = generateFdcpaLetter(today);
+                    break;
+                case '605b-block':
+                    content = generate605bLetter(today);
+                    break;
+                case '623-furnisher':
+                    content = generate623Letter(today);
+                    break;
+                case 'reinsertion':
+                    content = generateReinsertionLetter(today);
+                    break;
+                case 'mov-request':
+                    content = generateMovLetter(today);
+                    break;
+            }
+            
+            return content;
+        }
+
+        function generateRespaQwrLetter(today) {
+            const clientName = getClientInfo(document.getElementById('respaClientSelect').value);
+            const servicerName = document.getElementById('respaServicerName').value || '[SERVICER NAME]';
+            const servicerAddress = document.getElementById('respaServicerAddress').value || '[ADDRESS]';
+            const servicerCityStateZip = document.getElementById('respaServicerCityStateZip').value || '[CITY, STATE ZIP]';
+            const loanNumber = document.getElementById('respaLoanNumber').value || '[LOAN NUMBER]';
+            const propertyAddress = document.getElementById('respaPropertyAddress').value || '[PROPERTY ADDRESS]';
+            const disputeReason = document.getElementById('respaDisputeReason').value || '[DISPUTE REASON]';
+            const reliefRequested = document.getElementById('respaReliefRequested').value || 'correction of account records and removal of any inaccurate information reported to credit bureaus';
+
+            return `
+<div style="text-align: right; margin-bottom: 30px;">
+    <strong>${today}</strong><br>
+    <em>QUALIFIED WRITTEN REQUEST</em><br>
+    <em>Sent via Certified Mail, Return Receipt Requested</em>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <strong>${servicerName}</strong><br>
+    ${servicerAddress}<br>
+    ${servicerCityStateZip}
+</div>
+
+<div style="margin-bottom: 20px;">
+    <strong>Re: Qualified Written Request Under RESPA</strong><br>
+    Loan Number: ${loanNumber}<br>
+    Property Address: ${propertyAddress}
+</div>
+
+<p>Dear Sir or Madam:</p>
+
+<p>This letter constitutes a <strong>"Qualified Written Request"</strong> under Section 6 of the Real Estate Settlement Procedures Act (RESPA), 12 U.S.C. §2605(e), and its implementing regulation, Regulation X, 12 C.F.R. §1024.35.</p>
+
+<p><strong>I. STATEMENT OF DISPUTE</strong></p>
+
+<p>I am writing to dispute the following error(s) and/or request information regarding my mortgage loan account:</p>
+
+<p style="margin-left: 20px; padding: 15px; background: #f8f9fa; border-left: 3px solid #1a1a2e;">${disputeReason}</p>
+
+<p><strong>II. LEGAL AUTHORITY</strong></p>
+
+<p>Pursuant to 12 U.S.C. §2605(e)(2), you are required to:</p>
+<ul style="margin-left: 20px;">
+    <li>Acknowledge receipt of this QWR within five (5) business days</li>
+    <li>Within thirty (30) business days of receipt, either:
+        <ul>
+            <li>Make appropriate corrections to my account; OR</li>
+            <li>Conduct an investigation and provide a written explanation of why you believe the account is correct</li>
+        </ul>
+    </li>
+    <li>Provide the name and telephone number of an employee who can assist with this matter</li>
+</ul>
+
+<p><strong>III. REQUESTED DOCUMENTS AND INFORMATION</strong></p>
+
+<p>Pursuant to 12 C.F.R. §1024.36, I hereby request copies of the following documents and information:</p>
+<ol style="margin-left: 20px;">
+    <li>Complete payment history from loan origination to present</li>
+    <li>Complete escrow analysis for the past three (3) years</li>
+    <li>All account statements for the past three (3) years</li>
+    <li>Documentation of how each payment was applied (principal, interest, escrow, fees)</li>
+    <li>Documentation of any fees or charges assessed to my account</li>
+    <li>All correspondence related to my account for the past three (3) years</li>
+    <li>Complete loan modification documentation, if applicable</li>
+    <li>Any and all records of credit reporting related to this account</li>
+</ol>
+
+<p><strong>IV. RELIEF REQUESTED</strong></p>
+
+<p>I request ${reliefRequested}.</p>
+
+<p><strong>V. NOTICE OF STATUTORY PENALTIES</strong></p>
+
+<p>Please be advised that failure to comply with the requirements of RESPA may result in:</p>
+<ul style="margin-left: 20px;">
+    <li>Actual damages plus additional damages not to exceed $2,000 per violation (12 U.S.C. §2605(f)(1))</li>
+    <li>Class action liability up to $1,000,000 or 1% of net worth (12 U.S.C. §2605(f)(2))</li>
+    <li>Reasonable attorneys' fees and costs (12 U.S.C. §2605(f)(3))</li>
+</ul>
+
+<p><strong>VI. PRESERVATION OF RIGHTS</strong></p>
+
+<p>This letter is sent without prejudice to any and all rights and remedies I may have under federal and state law. I expressly reserve all such rights.</p>
+
+<p>Please respond to this Qualified Written Request at the address listed below.</p>
+
+<div style="margin-top: 40px;">
+    <p>Sincerely,</p>
+    <br><br><br>
+    <p>____________________________<br>
+    ${clientName}<br>
+    [CLIENT ADDRESS]</p>
+</div>
+
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 11px; color: #666;">
+    <strong>Enclosures:</strong> Copy of identification, copy of recent statement (if available)
+</div>
+`;
+        }
+
+        function generateRegZLetter(today) {
+            const clientName = getClientInfo(document.getElementById('regzClientSelect').value);
+            const creditorName = document.getElementById('regzCreditorName').value || '[CREDITOR NAME]';
+            const creditorAddress = document.getElementById('regzCreditorAddress').value || '[ADDRESS]';
+            const creditorCityStateZip = document.getElementById('regzCreditorCityStateZip').value || '[CITY, STATE ZIP]';
+            const accountNumber = document.getElementById('regzAccountNumber').value || '[ACCOUNT NUMBER]';
+            const accountType = document.getElementById('regzAccountType').value || '[ACCOUNT TYPE]';
+            const paymentDates = document.getElementById('regzPaymentDates').value || '[PAYMENT DATES]';
+            const lateMonths = document.getElementById('regzLateMonths').value || '[LATE MONTHS REPORTED]';
+            const paymentEvidence = document.getElementById('regzPaymentEvidence').value || 'bank statements and payment confirmation records';
+
+            return `
+<div style="text-align: right; margin-bottom: 30px;">
+    <strong>${today}</strong><br>
+    <em>REGULATION Z DISPUTE - PAYMENT CREDITING VIOLATION</em><br>
+    <em>Sent via Certified Mail, Return Receipt Requested</em>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <strong>${creditorName}</strong><br>
+    ${creditorAddress}<br>
+    ${creditorCityStateZip}
+</div>
+
+<div style="margin-bottom: 20px;">
+    <strong>Re: Regulation Z Payment Crediting Dispute</strong><br>
+    Account Number: ${accountNumber}<br>
+    Account Type: ${accountType}
+</div>
+
+<p>Dear Sir or Madam:</p>
+
+<p>I am writing to formally dispute late payment notations on my account based on your violation of <strong>Regulation Z, 12 C.F.R. §1026.36(c)(1)(i)</strong>, which mandates timely crediting of consumer payments.</p>
+
+<p><strong>I. LEGAL FRAMEWORK</strong></p>
+
+<p>Under Regulation Z, 12 C.F.R. §1026.36(c)(1)(i):</p>
+<blockquote style="margin-left: 20px; padding: 15px; background: #f8f9fa; border-left: 3px solid #166534; font-style: italic;">
+"A servicer shall credit a periodic payment to the consumer's loan account as of the date of receipt, except when a delay in crediting does not result in any charge to the consumer or in the reporting of negative information to a consumer reporting agency..."
+</blockquote>
+
+<p><strong>II. STATEMENT OF FACTS</strong></p>
+
+<p>On the following date(s), I made timely payment(s) on my account:</p>
+<p style="margin-left: 20px; padding: 15px; background: #f8f9fa; border-left: 3px solid #1a1a2e;"><strong>Payment Date(s):</strong> ${paymentDates}</p>
+
+<p>However, your records incorrectly show late payment(s) for:</p>
+<p style="margin-left: 20px; padding: 15px; background: #fee2e2; border-left: 3px solid #991b1b;"><strong>Late Months Reported:</strong> ${lateMonths}</p>
+
+<p><strong>III. EVIDENCE OF TIMELY PAYMENT</strong></p>
+
+<p>I have documentation supporting my timely payment(s), including: ${paymentEvidence}</p>
+
+<p><strong>IV. VIOLATION AND HARM</strong></p>
+
+<p>Your failure to properly credit my payment(s) as of the date of receipt resulted in:</p>
+<ol style="margin-left: 20px;">
+    <li>Improper late fee assessment (if applicable)</li>
+    <li>False derogatory credit reporting</li>
+    <li>Damage to my credit score and creditworthiness</li>
+    <li>Potential denial of credit or higher interest rates</li>
+</ol>
+
+<p><strong>V. DEMAND FOR CORRECTION</strong></p>
+
+<p>Pursuant to Regulation Z and the Fair Credit Reporting Act, I demand that you:</p>
+<ol style="margin-left: 20px;">
+    <li>Immediately investigate this payment crediting issue</li>
+    <li>Correct your internal records to reflect the proper payment date(s)</li>
+    <li>Remove all late payment notations from all credit bureaus (Equifax, Experian, TransUnion)</li>
+    <li>Refund any improperly assessed late fees</li>
+    <li>Provide written confirmation of corrections within 30 days</li>
+</ol>
+
+<p><strong>VI. NOTICE OF LEGAL LIABILITY</strong></p>
+
+<p>Please be advised that violations of Regulation Z and the FCRA may subject you to:</p>
+<ul style="margin-left: 20px;">
+    <li>Actual damages suffered by the consumer</li>
+    <li>Statutory damages up to $1,000 per violation under FCRA §1681n</li>
+    <li>Punitive damages for willful noncompliance</li>
+    <li>Reasonable attorneys' fees and costs</li>
+</ul>
+
+<p>I expect a written response within thirty (30) days confirming the correction of my account and credit reporting.</p>
+
+<div style="margin-top: 40px;">
+    <p>Sincerely,</p>
+    <br><br><br>
+    <p>____________________________<br>
+    ${clientName}<br>
+    [CLIENT ADDRESS]</p>
+</div>
+
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 11px; color: #666;">
+    <strong>Enclosures:</strong> Copies of payment evidence, bank statements
+</div>
+`;
+        }
+
+        function generateFdcpaLetter(today) {
+            const clientName = getClientInfo(document.getElementById('fdcpaClientSelect').value);
+            const collectorName = document.getElementById('fdcpaCollectorName').value || '[COLLECTION AGENCY]';
+            const collectorAddress = document.getElementById('fdcpaCollectorAddress').value || '[ADDRESS]';
+            const collectorCityStateZip = document.getElementById('fdcpaCollectorCityStateZip').value || '[CITY, STATE ZIP]';
+            const accountNumber = document.getElementById('fdcpaAccountNumber').value || '[REFERENCE NUMBER]';
+            const originalCreditor = document.getElementById('fdcpaOriginalCreditor').value || '[ORIGINAL CREDITOR]';
+            const amountClaimed = document.getElementById('fdcpaAmountClaimed').value || '[AMOUNT]';
+            const disputeBasis = document.getElementById('fdcpaDisputeBasis').value || 'I dispute the validity of this alleged debt in its entirety.';
+
+            return `
+<div style="text-align: right; margin-bottom: 30px;">
+    <strong>${today}</strong><br>
+    <em>DEBT VALIDATION DEMAND UNDER FDCPA</em><br>
+    <em>Sent via Certified Mail, Return Receipt Requested</em>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <strong>${collectorName}</strong><br>
+    ${collectorAddress}<br>
+    ${collectorCityStateZip}
+</div>
+
+<div style="margin-bottom: 20px;">
+    <strong>Re: Debt Validation Request Under 15 U.S.C. §1692g</strong><br>
+    Your Reference: ${accountNumber}<br>
+    Alleged Original Creditor: ${originalCreditor}<br>
+    Amount Claimed: $${amountClaimed}
+</div>
+
+<p>Dear Sir or Madam:</p>
+
+<p>I am in receipt of your communication regarding an alleged debt. Pursuant to my rights under the <strong>Fair Debt Collection Practices Act (FDCPA), 15 U.S.C. §1692g</strong>, I hereby formally dispute this alleged debt and demand complete validation.</p>
+
+<p><strong>I. DISPUTE STATEMENT</strong></p>
+
+<p style="margin-left: 20px; padding: 15px; background: #fef3c7; border-left: 3px solid #92400e;">${disputeBasis}</p>
+
+<p><strong>II. VALIDATION DEMAND</strong></p>
+
+<p>Under 15 U.S.C. §1692g(b), you must cease collection activity until you provide the following validation:</p>
+
+<ol style="margin-left: 20px;">
+    <li><strong>Proof of Standing:</strong>
+        <ul>
+            <li>Complete chain of title/assignment from original creditor to your company</li>
+            <li>Bill of sale or assignment agreement with my account specifically referenced</li>
+            <li>Proof you are authorized to collect this debt in my state</li>
+        </ul>
+    </li>
+    <li><strong>Account Documentation:</strong>
+        <ul>
+            <li>Original signed credit agreement or contract bearing my signature</li>
+            <li>Complete account statements from account opening to charge-off</li>
+            <li>Itemized accounting of all charges, fees, interest, and payments</li>
+        </ul>
+    </li>
+    <li><strong>Verification Information:</strong>
+        <ul>
+            <li>Name and address of the original creditor</li>
+            <li>Exact date of alleged default or charge-off</li>
+            <li>Date of last payment received</li>
+            <li>Amount owed on date of charge-off vs. amount now claimed</li>
+        </ul>
+    </li>
+    <li><strong>Licensing:</strong>
+        <ul>
+            <li>Your company's debt collector license number for my state</li>
+            <li>Proof of bonding as required by state law</li>
+        </ul>
+    </li>
+</ol>
+
+<p><strong>III. NOTICE OF STATUTORY RIGHTS</strong></p>
+
+<p>Under the FDCPA, you are required to:</p>
+<ul style="margin-left: 20px;">
+    <li><strong>Cease all collection activity</strong> until validation is provided (§1692g(b))</li>
+    <li>Not report this account to credit bureaus while disputed and unvalidated</li>
+    <li>Provide validation within 30 days of this request</li>
+</ul>
+
+<p><strong>IV. WARNING REGARDING CREDIT REPORTING</strong></p>
+
+<p>Reporting an unvalidated, disputed debt to any credit reporting agency constitutes:</p>
+<ul style="margin-left: 20px;">
+    <li>A violation of the FDCPA, 15 U.S.C. §1692e (false representation)</li>
+    <li>A violation of the FCRA, 15 U.S.C. §1681s-2(a)(1)(B) (duty to report accurately)</li>
+</ul>
+
+<p><strong>V. STATUTORY PENALTIES</strong></p>
+
+<p>Failure to comply with the FDCPA may result in liability for:</p>
+<ul style="margin-left: 20px;">
+    <li>Actual damages</li>
+    <li>Statutory damages up to $1,000 per action (15 U.S.C. §1692k)</li>
+    <li>Attorney's fees and costs</li>
+</ul>
+
+<p>If you cannot provide complete validation as demanded, you must:</p>
+<ol style="margin-left: 20px;">
+    <li>Cease all collection efforts immediately</li>
+    <li>Delete any credit reporting related to this account</li>
+    <li>Confirm in writing that you are closing your file</li>
+</ol>
+
+<div style="margin-top: 40px;">
+    <p>Sincerely,</p>
+    <br><br><br>
+    <p>____________________________<br>
+    ${clientName}<br>
+    [CLIENT ADDRESS]</p>
+</div>
+
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 11px; color: #666;">
+    <strong>cc:</strong> File copy for potential litigation
+</div>
+`;
+        }
+
+        function generate605bLetter(today) {
+            const clientName = getClientInfo(document.getElementById('block605bClientSelect').value);
+            const bureau = document.getElementById('block605bBureau').value || '[BUREAU]';
+            const policeReport = document.getElementById('block605bPoliceReport').value || '[REPORT NUMBER]';
+            const policeDate = document.getElementById('block605bPoliceDate').value ? formatDate(document.getElementById('block605bPoliceDate').value) : '[DATE]';
+            const ftcReport = document.getElementById('block605bFtcReport').value || '[FTC REPORT NUMBER]';
+            const fraudAccounts = document.getElementById('block605bFraudAccounts').value || '[LIST FRAUDULENT ACCOUNTS]';
+
+            const bureauAddresses = {
+                'Equifax': 'Equifax Information Services LLC\nP.O. Box 105069\nAtlanta, GA 30348-5069',
+                'Experian': 'Experian\nP.O. Box 4500\nAllen, TX 75013',
+                'TransUnion': 'TransUnion LLC\nConsumer Dispute Center\nP.O. Box 2000\nChester, PA 19016'
+            };
+
+            return `
+<div style="text-align: right; margin-bottom: 30px;">
+    <strong>${today}</strong><br>
+    <em>IDENTITY THEFT BLOCK REQUEST UNDER §605B</em><br>
+    <em>Sent via Certified Mail, Return Receipt Requested</em>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <strong>${bureau}</strong><br>
+    ${bureauAddresses[bureau] || '[BUREAU ADDRESS]'}
+</div>
+
+<div style="margin-bottom: 20px;">
+    <strong>Re: Request to Block Fraudulent Information Under 15 U.S.C. §1681c-2</strong><br>
+    Identity Theft Victim Block Request
+</div>
+
+<p>Dear Sir or Madam:</p>
+
+<p>I am a victim of identity theft and hereby request that you <strong>block</strong> the following fraudulent information from my credit file pursuant to <strong>Section 605B of the Fair Credit Reporting Act, 15 U.S.C. §1681c-2</strong>.</p>
+
+<p><strong>I. LEGAL AUTHORITY</strong></p>
+
+<p>Under 15 U.S.C. §1681c-2(a):</p>
+<blockquote style="margin-left: 20px; padding: 15px; background: #f8f9fa; border-left: 3px solid #991b1b; font-style: italic;">
+"A consumer reporting agency shall block the reporting of any information in the file of a consumer that the consumer identifies as information that resulted from an alleged identity theft, not later than 4 business days after the date of receipt [of required documents]."
+</blockquote>
+
+<p><strong>II. REQUIRED DOCUMENTS ENCLOSED</strong></p>
+
+<p>As required by §1681c-2(a), I am providing:</p>
+<ol style="margin-left: 20px;">
+    <li><strong>Identity Theft Report:</strong>
+        <ul>
+            <li>Police Report Number: ${policeReport}</li>
+            <li>Police Report Date: ${policeDate}</li>
+            <li>FTC Identity Theft Report: ${ftcReport}</li>
+        </ul>
+    </li>
+    <li><strong>Identification Documentation:</strong>
+        <ul>
+            <li>Copy of government-issued photo ID</li>
+            <li>Proof of current address</li>
+        </ul>
+    </li>
+    <li><strong>Statement identifying fraudulent information</strong> (see below)</li>
+</ol>
+
+<p><strong>III. FRAUDULENT INFORMATION TO BE BLOCKED</strong></p>
+
+<p>The following accounts/information resulted from identity theft and must be blocked:</p>
+<div style="margin-left: 20px; padding: 15px; background: #fee2e2; border-left: 3px solid #991b1b;">
+<pre style="margin: 0; white-space: pre-wrap;">${fraudAccounts}</pre>
+</div>
+
+<p><strong>IV. CERTIFICATION</strong></p>
+
+<p>I hereby certify that:</p>
+<ol style="margin-left: 20px;">
+    <li>I did not authorize the opening of the account(s) listed above</li>
+    <li>I did not authorize any charges or transactions on these account(s)</li>
+    <li>The information identified is inaccurate and resulted from identity theft</li>
+    <li>All information provided in this letter is true and correct</li>
+</ol>
+
+<p><strong>V. YOUR OBLIGATIONS</strong></p>
+
+<p>Upon receipt of this request and required documents, you must:</p>
+<ul style="margin-left: 20px;">
+    <li>Block the identified information within <strong>4 business days</strong> (§1681c-2(a))</li>
+    <li>Notify the furnisher(s) that the information was blocked due to identity theft</li>
+    <li>Provide written confirmation of the block to me</li>
+</ul>
+
+<p><strong>VI. PENALTIES FOR NON-COMPLIANCE</strong></p>
+
+<p>Failure to comply with §605B may result in liability under FCRA §§1681n and 1681o, including actual damages, statutory damages, punitive damages, and attorney's fees.</p>
+
+<div style="margin-top: 40px;">
+    <p>Sincerely,</p>
+    <br><br><br>
+    <p>____________________________<br>
+    ${clientName}<br>
+    [CLIENT ADDRESS]</p>
+</div>
+
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 11px; color: #666;">
+    <strong>Enclosures:</strong><br>
+    1. Copy of Police Report<br>
+    2. FTC Identity Theft Affidavit/Report<br>
+    3. Copy of Government-Issued ID<br>
+    4. Proof of Address
+</div>
+`;
+        }
+
+        function generate623Letter(today) {
+            const clientName = getClientInfo(document.getElementById('furnisher623ClientSelect').value);
+            const furnisherName = document.getElementById('furnisher623Name').value || '[FURNISHER NAME]';
+            const furnisherAddress = document.getElementById('furnisher623Address').value || '[ADDRESS]';
+            const furnisherCityStateZip = document.getElementById('furnisher623CityStateZip').value || '[CITY, STATE ZIP]';
+            const accountNumber = document.getElementById('furnisher623AccountNumber').value || '[ACCOUNT NUMBER]';
+            const priorDisputeDate = document.getElementById('furnisher623PriorDisputeDate').value ? formatDate(document.getElementById('furnisher623PriorDisputeDate').value) : '[DATE]';
+            const craResult = document.getElementById('furnisher623CraResult').value || 'Verified';
+            const bureau = document.getElementById('furnisher623Bureau').value || '[BUREAU]';
+            const inaccuracy = document.getElementById('furnisher623Inaccuracy').value || '[SPECIFIC INACCURACY]';
+            const evidence = document.getElementById('furnisher623Evidence').value || 'documentation demonstrating the inaccuracy';
+
+            return `
+<div style="text-align: right; margin-bottom: 30px;">
+    <strong>${today}</strong><br>
+    <em>DIRECT DISPUTE TO FURNISHER UNDER §623</em><br>
+    <em>Sent via Certified Mail, Return Receipt Requested</em>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <strong>${furnisherName}</strong><br>
+    ${furnisherAddress}<br>
+    ${furnisherCityStateZip}
+</div>
+
+<div style="margin-bottom: 20px;">
+    <strong>Re: Direct Dispute Under 15 U.S.C. §1681s-2(a)(8)</strong><br>
+    Account Number: ${accountNumber}
+</div>
+
+<p>Dear Sir or Madam:</p>
+
+<p>Pursuant to my rights under <strong>Section 623 of the Fair Credit Reporting Act, 15 U.S.C. §1681s-2(a)(8)</strong>, I am submitting this direct dispute regarding inaccurate information you are reporting to consumer reporting agencies.</p>
+
+<p><strong>I. STATUTORY BASIS FOR DIRECT DISPUTE</strong></p>
+
+<p>Under 15 U.S.C. §1681s-2(a)(8)(A):</p>
+<blockquote style="margin-left: 20px; padding: 15px; background: #f8f9fa; border-left: 3px solid #4338ca; font-style: italic;">
+"After receiving notice... of a dispute with regard to the completeness or accuracy of any information provided by a person to a consumer reporting agency, the person shall... conduct an investigation with respect to the disputed information."
+</blockquote>
+
+<p><strong>II. PRIOR CRA DISPUTE</strong></p>
+
+<p>I previously disputed this account through ${bureau} on ${priorDisputeDate}. The investigation result was: <strong>${craResult}</strong>.</p>
+
+<p>This result was unsatisfactory because the information remains inaccurate.</p>
+
+<p><strong>III. SPECIFIC INACCURACY</strong></p>
+
+<p>The information you are reporting is inaccurate as follows:</p>
+<div style="margin-left: 20px; padding: 15px; background: #e0e7ff; border-left: 3px solid #4338ca;">
+${inaccuracy}
+</div>
+
+<p><strong>IV. SUPPORTING EVIDENCE</strong></p>
+
+<p>I have ${evidence} which supports my dispute.</p>
+
+<p><strong>V. YOUR OBLIGATIONS UNDER §623</strong></p>
+
+<p>As a furnisher of information, you are required to:</p>
+<ol style="margin-left: 20px;">
+    <li>Conduct a reasonable investigation of this dispute within <strong>30 days</strong></li>
+    <li>Review all relevant information I have provided</li>
+    <li>Report the results of the investigation to me</li>
+    <li>If the information is found inaccurate, incomplete, or unverifiable:
+        <ul>
+            <li>Modify the information</li>
+            <li>Delete the information, or</li>
+            <li>Permanently block reporting of the information</li>
+        </ul>
+    </li>
+    <li>Notify all CRAs to which you reported the information of any corrections</li>
+</ol>
+
+<p><strong>VI. NOTICE OF LIABILITY</strong></p>
+
+<p>Under 15 U.S.C. §1681s-2(b) and §1681n, furnishers who fail to conduct a proper investigation or who report information they know or should know is inaccurate may be liable for:</p>
+<ul style="margin-left: 20px;">
+    <li>Actual damages</li>
+    <li>Statutory damages of $100-$1,000 per violation</li>
+    <li>Punitive damages for willful violations</li>
+    <li>Attorney's fees and costs</li>
+</ul>
+
+<p>I expect your written response within thirty (30) days.</p>
+
+<div style="margin-top: 40px;">
+    <p>Sincerely,</p>
+    <br><br><br>
+    <p>____________________________<br>
+    ${clientName}<br>
+    [CLIENT ADDRESS]</p>
+</div>
+
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 11px; color: #666;">
+    <strong>Enclosures:</strong> Prior CRA dispute results, supporting documentation
+</div>
+`;
+        }
+
+        function generateReinsertionLetter(today) {
+            const clientName = getClientInfo(document.getElementById('reinsertionClientSelect').value);
+            const bureau = document.getElementById('reinsertionBureau').value || '[BUREAU]';
+            const deletedDate = document.getElementById('reinsertionDeletedDate').value ? formatDate(document.getElementById('reinsertionDeletedDate').value) : '[DELETION DATE]';
+            const reinsertedDate = document.getElementById('reinsertionReinsertedDate').value ? formatDate(document.getElementById('reinsertionReinsertedDate').value) : '[REINSERTION DATE]';
+            const creditorName = document.getElementById('reinsertionCreditorName').value || '[CREDITOR NAME]';
+            const accountNumber = document.getElementById('reinsertionAccountNumber').value || '[ACCOUNT NUMBER]';
+            const confirmation = document.getElementById('reinsertionConfirmation').value || '[CONFIRMATION NUMBER]';
+            const noticeReceived = document.getElementById('reinsertionNoticeReceived').value;
+            const description = document.getElementById('reinsertionDescription').value || '[DESCRIPTION OF REINSERTED INFORMATION]';
+
+            const bureauAddresses = {
+                'Equifax': 'Equifax Information Services LLC\nP.O. Box 105069\nAtlanta, GA 30348-5069',
+                'Experian': 'Experian\nP.O. Box 4500\nAllen, TX 75013',
+                'TransUnion': 'TransUnion LLC\nConsumer Dispute Center\nP.O. Box 2000\nChester, PA 19016'
+            };
+
+            return `
+<div style="text-align: right; margin-bottom: 30px;">
+    <strong>${today}</strong><br>
+    <em style="color: #991b1b;">REINSERTION VIOLATION NOTICE - §611(a)(5)(B)</em><br>
+    <em>Sent via Certified Mail, Return Receipt Requested</em>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <strong>${bureau}</strong><br>
+    ${bureauAddresses[bureau] || '[BUREAU ADDRESS]'}
+</div>
+
+<div style="margin-bottom: 20px;">
+    <strong>Re: Illegal Reinsertion of Previously Deleted Information</strong><br>
+    <strong>FCRA §611(a)(5)(B) Violation Notice</strong><br>
+    Original Dispute Confirmation: ${confirmation}
+</div>
+
+<p>Dear Sir or Madam:</p>
+
+<p style="background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid #fecaca;">
+<strong>⚠️ NOTICE:</strong> This letter documents your violation of <strong>15 U.S.C. §1681i(a)(5)(B)</strong> regarding the illegal reinsertion of previously deleted information.
+</p>
+
+<p><strong>I. FACTUAL BACKGROUND</strong></p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+    <tr style="background: #f8fafc;">
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Original Deletion Date:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${deletedDate}</td>
+    </tr>
+    <tr>
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Reinsertion Discovered:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${reinsertedDate}</td>
+    </tr>
+    <tr style="background: #f8fafc;">
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Creditor/Furnisher:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${creditorName}</td>
+    </tr>
+    <tr>
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Account Number:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${accountNumber}</td>
+    </tr>
+    <tr style="background: #f8fafc;">
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">5-Day Notice Received:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${noticeReceived === 'Yes' ? 'Yes' : '<strong style="color: #991b1b;">NO - VIOLATION</strong>'}</td>
+    </tr>
+</table>
+
+<p><strong>Description of Reinserted Information:</strong></p>
+<div style="margin-left: 20px; padding: 15px; background: #fee2e2; border-left: 3px solid #991b1b;">
+${description}
+</div>
+
+<p><strong>II. LEGAL VIOLATION</strong></p>
+
+<p>Section 611(a)(5)(B) of the FCRA, 15 U.S.C. §1681i(a)(5)(B), states:</p>
+<blockquote style="margin-left: 20px; padding: 15px; background: #f8f9fa; border-left: 3px solid #9d174d; font-style: italic;">
+"If any information is deleted from a consumer's file... the information may not be reinserted in the file by the consumer reporting agency unless the person who furnishes the information certifies that the information is complete and accurate... [and] the agency provides... written notice to the consumer... not later than 5 business days."
+</blockquote>
+
+<p><strong>III. YOUR VIOLATIONS</strong></p>
+
+<p>You have violated §611(a)(5)(B) by:</p>
+<ol style="margin-left: 20px;">
+    ${noticeReceived === 'No' ? '<li><strong>Failure to provide 5-day written notice</strong> of reinsertion as required</li>' : ''}
+    <li><strong>Reinserting information</strong> that was previously deleted as inaccurate</li>
+    <li><strong>Failing to obtain proper certification</strong> from the furnisher that the information is complete and accurate</li>
+</ol>
+
+<p><strong>IV. STATUTORY DAMAGES</strong></p>
+
+<p>Under FCRA §1681n, willful violations subject you to:</p>
+<ul style="margin-left: 20px;">
+    <li>Actual damages</li>
+    <li>Statutory damages of <strong>$100 to $1,000 per violation</strong></li>
+    <li>Punitive damages</li>
+    <li>Attorney's fees and costs</li>
+</ul>
+
+<p><strong>V. IMMEDIATE DEMAND</strong></p>
+
+<p>I demand that you:</p>
+<ol style="margin-left: 20px;">
+    <li><strong>Immediately re-delete</strong> the improperly reinserted information</li>
+    <li>Provide written confirmation of deletion within 5 business days</li>
+    <li>Provide copies of any certification received from the furnisher</li>
+    <li>Explain why proper notice procedures were not followed</li>
+</ol>
+
+<p>This letter serves as documentation for potential litigation. I reserve all rights under the FCRA.</p>
+
+<div style="margin-top: 40px;">
+    <p>Sincerely,</p>
+    <br><br><br>
+    <p>____________________________<br>
+    ${clientName}<br>
+    [CLIENT ADDRESS]</p>
+</div>
+
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 11px; color: #666;">
+    <strong>Enclosures:</strong> Original deletion confirmation, current credit report showing reinsertion
+</div>
+`;
+        }
+
+        function generateMovLetter(today) {
+            const clientName = getClientInfo(document.getElementById('movClientSelect').value);
+            const bureau = document.getElementById('movBureau').value || '[BUREAU]';
+            const disputeDate = document.getElementById('movDisputeDate').value ? formatDate(document.getElementById('movDisputeDate').value) : '[DISPUTE DATE]';
+            const confirmationNumber = document.getElementById('movConfirmationNumber').value || '[CONFIRMATION NUMBER]';
+            const resultDate = document.getElementById('movResultDate').value ? formatDate(document.getElementById('movResultDate').value) : '[RESULT DATE]';
+            const result = document.getElementById('movResult').value || 'Verified';
+            const creditorName = document.getElementById('movCreditorName').value || '[CREDITOR NAME]';
+            const accountNumber = document.getElementById('movAccountNumber').value || '[ACCOUNT NUMBER]';
+            const disputeReason = document.getElementById('movDisputeReason').value || '[ORIGINAL DISPUTE REASON]';
+
+            const bureauAddresses = {
+                'Equifax': 'Equifax Information Services LLC\nP.O. Box 105069\nAtlanta, GA 30348-5069',
+                'Experian': 'Experian\nP.O. Box 4500\nAllen, TX 75013',
+                'TransUnion': 'TransUnion LLC\nConsumer Dispute Center\nP.O. Box 2000\nChester, PA 19016'
+            };
+
+            return `
+<div style="text-align: right; margin-bottom: 30px;">
+    <strong>${today}</strong><br>
+    <em>METHOD OF VERIFICATION REQUEST</em><br>
+    <em>Sent via Certified Mail, Return Receipt Requested</em>
+</div>
+
+<div style="margin-bottom: 25px;">
+    <strong>${bureau}</strong><br>
+    ${bureauAddresses[bureau] || '[BUREAU ADDRESS]'}
+</div>
+
+<div style="margin-bottom: 20px;">
+    <strong>Re: Request for Method of Verification Under 15 U.S.C. §1681i(a)(6)(B)(iii)</strong><br>
+    Prior Dispute Confirmation: ${confirmationNumber}<br>
+    Creditor: ${creditorName} | Account: ${accountNumber}
+</div>
+
+<p>Dear Sir or Madam:</p>
+
+<p>Pursuant to <strong>Section 611(a)(6)(B)(iii) of the Fair Credit Reporting Act, 15 U.S.C. §1681i(a)(6)(B)(iii)</strong>, I hereby request a detailed description of the procedure used to determine the accuracy and completeness of the disputed information.</p>
+
+<p><strong>I. STATUTORY RIGHT TO METHOD OF VERIFICATION</strong></p>
+
+<p>Under 15 U.S.C. §1681i(a)(6)(B)(iii), upon request, you must provide:</p>
+<blockquote style="margin-left: 20px; padding: 15px; background: #cffafe; border-left: 3px solid #0e7490; font-style: italic;">
+"A description of the procedure used to determine the accuracy and completeness of the information [that is the subject of the dispute]."
+</blockquote>
+
+<p><strong>II. PRIOR DISPUTE DETAILS</strong></p>
+
+<table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+    <tr style="background: #f8fafc;">
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Original Dispute Date:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${disputeDate}</td>
+    </tr>
+    <tr>
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Investigation Result Date:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${resultDate}</td>
+    </tr>
+    <tr style="background: #f8fafc;">
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Investigation Result:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${result}</td>
+    </tr>
+    <tr>
+        <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">Disputed Information:</td>
+        <td style="padding: 10px; border: 1px solid #e2e8f0;">${disputeReason}</td>
+    </tr>
+</table>
+
+<p><strong>III. SPECIFIC INFORMATION REQUESTED</strong></p>
+
+<p>Please provide the following details about your investigation:</p>
+<ol style="margin-left: 20px;">
+    <li><strong>Investigation Procedure:</strong>
+        <ul>
+            <li>What specific steps did you take to investigate my dispute?</li>
+            <li>Did you conduct any independent verification beyond e-OSCAR?</li>
+            <li>What documents or records did you review?</li>
+        </ul>
+    </li>
+    <li><strong>Communication with Furnisher:</strong>
+        <ul>
+            <li>Exactly what information was transmitted to the furnisher?</li>
+            <li>What were the specific ACDV codes used?</li>
+            <li>What response did the furnisher provide?</li>
+        </ul>
+    </li>
+    <li><strong>Verification Details:</strong>
+        <ul>
+            <li>What specific evidence did the furnisher provide to support accuracy?</li>
+            <li>Did you request source documents from the furnisher?</li>
+            <li>How did you determine the furnisher's response was adequate?</li>
+        </ul>
+    </li>
+    <li><strong>Records Reviewed:</strong>
+        <ul>
+            <li>Name and contact information of the person who verified the information</li>
+            <li>Date and time of verification</li>
+            <li>All correspondence related to this investigation</li>
+        </ul>
+    </li>
+</ol>
+
+<p><strong>IV. PURPOSE OF REQUEST</strong></p>
+
+<p>This information is necessary to determine whether you conducted a <strong>"reasonable investigation"</strong> as required by FCRA §1681i(a)(1)(A). Courts have held that merely forwarding disputes through e-OSCAR and accepting generic responses does not satisfy the reasonableness requirement. <em>See Cushman v. Trans Union Corp., 115 F.3d 220 (3d Cir. 1997)</em>.</p>
+
+<p><strong>V. RESPONSE DEADLINE</strong></p>
+
+<p>Under FCRA §611(a)(7), you must provide this information within <strong>15 days</strong> of receipt of this request.</p>
+
+<p><strong>VI. PRESERVATION OF RIGHTS</strong></p>
+
+<p>This request is made without prejudice to any rights I may have under federal or state law. Failure to provide a complete response may serve as evidence of a deficient investigation in any subsequent legal proceeding.</p>
+
+<div style="margin-top: 40px;">
+    <p>Sincerely,</p>
+    <br><br><br>
+    <p>____________________________<br>
+    ${clientName}<br>
+    [CLIENT ADDRESS]</p>
+</div>
+
+<div style="margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 11px; color: #666;">
+    <strong>Enclosures:</strong> Copy of prior investigation results letter
+</div>
+`;
+        }
+
+        function previewAdvancedLetter(letterType) {
+            const content = generateLetterContent(letterType);
+            
+            if (!content || content.includes('[') && content.includes('*')) {
+                showToast('Please fill in the required fields before previewing', true);
+                return;
+            }
+            
+            currentLetterContent = content;
+            document.getElementById('letterPreviewContent').innerHTML = content;
+            document.getElementById('advanced-letter-preview').style.display = 'block';
+            document.getElementById('advanced-letter-preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function closeLetterPreview() {
+            document.getElementById('advanced-letter-preview').style.display = 'none';
+            currentLetterContent = null;
+        }
+
+        async function generateAdvancedLetter(letterType) {
+            const clientSelectId = {
+                'respa-qwr': 'respaClientSelect',
+                'reg-z': 'regzClientSelect',
+                'fdcpa-validation': 'fdcpaClientSelect',
+                '605b-block': 'block605bClientSelect',
+                '623-furnisher': 'furnisher623ClientSelect',
+                'reinsertion': 'reinsertionClientSelect',
+                'mov-request': 'movClientSelect'
+            };
+            
+            const clientId = document.getElementById(clientSelectId[letterType]).value;
+            if (!clientId) {
+                showToast('Please select a client', true);
+                return;
+            }
+            
+            const content = generateLetterContent(letterType);
+            const buttonId = {
+                'respa-qwr': 'generateRespaBtn',
+                'reg-z': 'generateRegzBtn',
+                'fdcpa-validation': 'generateFdcpaBtn',
+                '605b-block': 'generate605bBtn',
+                '623-furnisher': 'generate623Btn',
+                'reinsertion': 'generateReinsertionBtn',
+                'mov-request': 'generateMovBtn'
+            };
+            
+            const btn = document.getElementById(buttonId[letterType]);
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+            
+            try {
+                const response = await fetch('/api/advanced-letters/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: parseInt(clientId),
+                        letter_type: letterType,
+                        letter_content: content
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showToast('Letter generated successfully!');
+                    showDownloadOptions(data.pdf_path, data.docx_path);
+                } else {
+                    showToast(data.error || 'Failed to generate letter', true);
+                }
+            } catch (error) {
+                currentLetterContent = content;
+                document.getElementById('letterPreviewContent').innerHTML = content;
+                document.getElementById('advanced-letter-preview').style.display = 'block';
+                document.getElementById('advanced-letter-preview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                showToast('Letter preview ready. Use Print to PDF to save.');
+            } finally {
+                btn.disabled = false;
+                const labels = {
+                    'respa-qwr': 'Generate RESPA QWR Letter',
+                    'reg-z': 'Generate Reg Z Dispute Letter',
+                    'fdcpa-validation': 'Generate FDCPA Validation Letter',
+                    '605b-block': 'Generate §605B Block Request',
+                    '623-furnisher': 'Generate §623 Direct Dispute',
+                    'reinsertion': 'Generate Reinsertion Challenge',
+                    'mov-request': 'Generate MOV Request Letter'
+                };
+                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${labels[letterType]}`;
+            }
+        }
+
+        function downloadPreviewAsPDF() {
+            if (!currentLetterContent) {
+                showToast('No letter content to download', true);
+                return;
+            }
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Letter - Print to PDF</title>
+                    <style>
+                        @page { margin: 1in; }
+                        body { 
+                            font-family: 'Times New Roman', Times, serif; 
+                            font-size: 12pt; 
+                            line-height: 1.5;
+                            color: #000;
+                            max-width: 8.5in;
+                            margin: 0 auto;
+                            padding: 20px;
+                        }
+                        p { margin-bottom: 12pt; }
+                        blockquote { 
+                            margin: 15pt 30pt; 
+                            padding: 10pt;
+                            background: #f5f5f5;
+                            border-left: 3px solid #333;
+                        }
+                        ul, ol { margin-left: 20pt; }
+                        li { margin-bottom: 6pt; }
+                        table { border-collapse: collapse; width: 100%; }
+                        td { padding: 8pt; border: 1px solid #ccc; }
+                        strong { font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    ${currentLetterContent}
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                        }
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
     </script>
 </body>
 </html>
