@@ -23,6 +23,7 @@
 
 ```
 CONSUMER INFO:
+
 - Full Name: [Name]
 - Address: [Address]
 - SSN (Full): [XXX-XX-XXXX]
