@@ -347,6 +347,17 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 - **Personalized Experience** - Show clients their state's specific protections and relevant case law
 - **Inspiration:** creditmoneymachine.com/credit-repair-law-all-states (but tailored for litigation clients)
 
+### Virtual Assistant (VA) Call Manager System
+- **Twilio Voice Integration** - One-click calling from dashboard (we already have Twilio SMS configured)
+- **VA-Specific Portal** - Limited-access interface for external virtual assistants
+- **Call Scripts Library** - Pre-written scripts for common client calls and follow-ups
+- **Call Logging & Recording** - Track who called whom, when, and call outcomes
+- **Automated Task Assignment** - Auto-assign outreach tasks to VAs based on case status
+- **Contact List Management** - Organize client outreach campaigns
+- **Personalized Email/SMS Templates** - VA-specific templates for outreach
+- **Priority:** Low for litigation focus, Medium if scaling with outsourced VAs
+- **Inspiration:** creditmoneymachine.com/virtual-assistant-system
+
 ---
 
 *Document Last Updated: November 2025*
