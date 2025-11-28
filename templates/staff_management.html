@@ -6,116 +6,13 @@
     <title>Staff Management - Brightpath Ascend FCRA Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        {% include 'includes/dashboard_sidebar_styles.html' %}
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100vh;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-            padding: 20px;
-            z-index: 100;
-            overflow-y: auto;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            color: white;
-            font-size: 20px;
-            font-weight: 700;
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 30px;
-        }
-        .logo img { height: 40px; margin-right: 10px; }
-        .logo span { color: #84cc16; }
-        
-        .nav-section {
-            margin-bottom: 25px;
-        }
-        .nav-section-title {
-            color: #64748b;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            color: #94a3b8;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 5px;
-            transition: all 0.2s;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
-        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
-        
-        .staff-indicator {
-            margin-top: auto;
-            padding: 15px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-        .staff-indicator-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .staff-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .staff-info {
-            flex: 1;
-        }
-        .staff-name {
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        .staff-role {
-            color: #84cc16;
-            font-size: 12px;
-            text-transform: capitalize;
-        }
-        .logout-btn {
-            display: block;
-            margin-top: 10px;
-            padding: 8px;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            border-radius: 6px;
-            color: #94a3b8;
-            font-size: 12px;
-            cursor: pointer;
-            text-align: center;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-        .logout-btn:hover { background: rgba(255,255,255,0.2); color: white; }
         
         .main-content {
             margin-left: 260px;
@@ -455,56 +352,14 @@
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 768px) {
-            .sidebar { display: none; }
-            .main-content { margin-left: 0; }
             .stats-grid { grid-template-columns: 1fr; }
             .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <nav class="sidebar">
-        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
-        
-        <div class="nav-section">
-            <div class="nav-section-title">Main</div>
-            <a href="/dashboard" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                Dashboard
-            </a>
-            <a href="/dashboard/analytics" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                Analytics
-            </a>
-            <a href="/dashboard/clients" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Cases
-            </a>
-        </div>
-        
-        <div class="nav-section">
-            <div class="nav-section-title">Admin</div>
-            <a href="/dashboard/staff" class="nav-item active">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Staff Management
-            </a>
-            <a href="/dashboard/settings" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Settings
-            </a>
-        </div>
-        
-        <div class="staff-indicator">
-            <div class="staff-indicator-content">
-                <div class="staff-avatar">{{ session.get('staff_initials', 'U') }}</div>
-                <div class="staff-info">
-                    <div class="staff-name">{{ session.get('staff_name', 'User') }}</div>
-                    <div class="staff-role">{{ session.get('staff_role', 'staff') }}</div>
-                </div>
-            </div>
-            <a href="/staff/logout" class="logout-btn">Sign Out</a>
-        </div>
-    </nav>
+    {% set active_page = 'staff' %}
+    {% include 'includes/dashboard_sidebar.html' %}
     
     <main class="main-content">
         <div class="header">

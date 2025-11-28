@@ -6,29 +6,13 @@
     <title>Case Detail - {{ analysis.client_name }}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        {% include 'includes/dashboard_sidebar_styles.html' %}
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
         }
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100vh;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-            padding: 20px;
-        }
-        .logo { display: flex; align-items: center; color: white; font-size: 20px; font-weight: 700; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
-        .logo img { height: 40px; margin-right: 10px; }
-        .logo span { color: #84cc16; }
-        .nav-item {
-            display: flex; align-items: center; padding: 12px 15px; color: #94a3b8;
-            text-decoration: none; border-radius: 8px; margin-bottom: 5px;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
         .main-content { margin-left: 260px; padding: 30px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .header h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; }
@@ -68,11 +52,8 @@
     </style>
 </head>
 <body>
-    <nav class="sidebar">
-        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
-        <a href="/dashboard" class="nav-item">Dashboard</a>
-        <a href="/dashboard/clients" class="nav-item">Clients</a>
-    </nav>
+    {% set active_page = 'cases' %}
+    {% include 'includes/dashboard_sidebar.html' %}
     
     <main class="main-content">
         <div class="header">

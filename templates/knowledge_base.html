@@ -316,6 +316,7 @@
         </div>
         
         <div class="tabs">
+            <div class="tab" data-tab="all">All</div>
             <div class="tab active" data-tab="statutes">FCRA Statutes</div>
             <div class="tab" data-tab="metro2">Metro 2 Codes</div>
             <div class="tab" data-tab="timelines">Timelines</div>
@@ -1339,10 +1340,22 @@
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
                 tab.classList.add('active');
-                document.getElementById(tab.dataset.tab).classList.add('active');
+                
+                if (tab.dataset.tab === 'all') {
+                    // Show all tab content when "All" is selected
+                    document.querySelectorAll('.tab-content').forEach(c => {
+                        c.classList.add('active');
+                        c.style.display = 'block';
+                    });
+                } else {
+                    // Show only the selected tab
+                    document.querySelectorAll('.tab-content').forEach(c => {
+                        c.classList.remove('active');
+                        c.style.display = '';
+                    });
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                }
             });
         });
         
