@@ -56,6 +56,15 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Instant Violation Preview** (`/preview`): Public landing page with 60-second AI analysis for lead conversion, featuring rate limiting (10 requests/10 minutes), robust numeric sanitization for AI outputs ($1k, $1,000 formats), and defensive error handling.
 - **AI Settlement Demand Letter Generator** (`/dashboard/demand-generator`): One-click professional demand letter generation with damages breakdown, legal citations, PDF export, and comprehensive null handling.
 - **Enhanced Client ROI Dashboard** (`/api/client/<id>/roi-summary`): Visual financial projections with settlement probability, case value breakdown, timeline estimates, and bulletproof null coalescing for all financial calculations.
+- **Background Task Queue** (`/dashboard/tasks`): Database-backed async job processing with scheduler for bulk operations and scheduled reports.
+- **ML Outcome Learning** (`/dashboard/ml-insights`): Machine learning from case results with predictive settlement values and furnisher response forecasting.
+- **Predictive Analytics Engine** (`/dashboard/predictive`): Revenue forecasting, client lifetime value, case timeline predictions, and attorney performance leaderboard.
+- **Automated Workflow Triggers** (`/dashboard/workflows`): Event-based automation with 7 trigger types and 8 action types for smart case management.
+- **White-Label Support** (`/dashboard/whitelabel`): Multi-tenant branding for partner law firms with custom domains, logos, colors, fonts, and CSS.
+- **Franchise Mode** (`/dashboard/franchise`): Multi-office management with organizational hierarchy (HQ/Franchise/Satellite), client transfers, and consolidated reporting.
+- **Public API Access** (`/dashboard/api-keys`): RESTful API with scope-based authentication, rate limiting, and webhook support for third-party integrations.
+- **Comprehensive Audit Logging** (`/dashboard/audit`): Complete action history with SOC 2 and HIPAA compliance reporting, PHI access tracking, and security event monitoring.
+- **Performance Optimization** (`/dashboard/performance`): In-memory caching layer, database query optimization, request timing middleware, and slow endpoint detection.
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
