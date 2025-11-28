@@ -1722,6 +1722,374 @@ class ClientSubscription(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class BackgroundTask(Base):
+    """Background task queue for async job processing"""
+    __tablename__ = 'background_tasks'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    task_type = Column(String(100), nullable=False, index=True)
+    payload = Column(JSON)
+    status = Column(String(50), default='pending', index=True)
+    priority = Column(Integer, default=5, index=True)
+    scheduled_at = Column(DateTime, nullable=True, index=True)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    result = Column(JSON, nullable=True)
+    error_message = Column(Text, nullable=True)
+    retries = Column(Integer, default=0)
+    max_retries = Column(Integer, default=3)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'task_type': self.task_type,
+            'payload': self.payload,
+            'status': self.status,
+            'priority': self.priority,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'result': self.result,
+            'error_message': self.error_message,
+            'retries': self.retries,
+            'max_retries': self.max_retries,
+            'client_id': self.client_id,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class ScheduledJob(Base):
+    """Scheduled jobs with cron expressions for recurring tasks"""
+    __tablename__ = 'scheduled_jobs'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False, unique=True)
+    task_type = Column(String(100), nullable=False)
+    payload = Column(JSON, default={})
+    cron_expression = Column(String(100), nullable=False)
+    is_active = Column(Boolean, default=True, index=True)
+    last_run = Column(DateTime, nullable=True)
+    next_run = Column(DateTime, nullable=True, index=True)
+    run_count = Column(Integer, default=0)
+    last_status = Column(String(50), nullable=True)
+    last_error = Column(Text, nullable=True)
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'task_type': self.task_type,
+            'payload': self.payload,
+            'cron_expression': self.cron_expression,
+            'is_active': self.is_active,
+            'last_run': self.last_run.isoformat() if self.last_run else None,
+            'next_run': self.next_run.isoformat() if self.next_run else None,
+            'run_count': self.run_count,
+            'last_status': self.last_status,
+            'last_error': self.last_error,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class CaseOutcome(Base):
+    """ML Learning - Track completed case outcomes for prediction training"""
+    __tablename__ = 'case_outcomes'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    case_type = Column(String(100), index=True)
+    violation_types = Column(JSON)
+    furnisher_id = Column(Integer, ForeignKey('furnishers.id'), nullable=True, index=True)
+    initial_score = Column(Float, default=0)
+    final_outcome = Column(String(50), nullable=False, index=True)
+    settlement_amount = Column(Float, default=0)
+    actual_damages = Column(Float, default=0)
+    time_to_resolution_days = Column(Integer, default=0)
+    attorney_id = Column(Integer, ForeignKey('staff.id'), nullable=True, index=True)
+    key_factors = Column(JSON)
+    dispute_rounds_completed = Column(Integer, default=0)
+    bureaus_involved = Column(JSON)
+    violation_count = Column(Integer, default=0)
+    willfulness_score = Column(Float, default=0)
+    documentation_quality = Column(Float, default=0)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'case_type': self.case_type,
+            'violation_types': self.violation_types or [],
+            'furnisher_id': self.furnisher_id,
+            'initial_score': self.initial_score,
+            'final_outcome': self.final_outcome,
+            'settlement_amount': self.settlement_amount,
+            'actual_damages': self.actual_damages,
+            'time_to_resolution_days': self.time_to_resolution_days,
+            'attorney_id': self.attorney_id,
+            'key_factors': self.key_factors or {},
+            'dispute_rounds_completed': self.dispute_rounds_completed,
+            'bureaus_involved': self.bureaus_involved or [],
+            'violation_count': self.violation_count,
+            'willfulness_score': self.willfulness_score,
+            'documentation_quality': self.documentation_quality,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class OutcomePrediction(Base):
+    """ML Learning - Store predictions and compare with actual outcomes"""
+    __tablename__ = 'outcome_predictions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    prediction_type = Column(String(100), nullable=False, index=True)
+    predicted_value = Column(Text)
+    confidence_score = Column(Float, default=0.5)
+    features_used = Column(JSON)
+    actual_value = Column(Text, nullable=True)
+    prediction_error = Column(Float, nullable=True)
+    model_version = Column(String(50), default='v1.0')
+    was_accurate = Column(Boolean, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'prediction_type': self.prediction_type,
+            'predicted_value': self.predicted_value,
+            'confidence_score': self.confidence_score,
+            'features_used': self.features_used or {},
+            'actual_value': self.actual_value,
+            'prediction_error': self.prediction_error,
+            'model_version': self.model_version,
+            'was_accurate': self.was_accurate,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None
+        }
+
+
+class FurnisherPattern(Base):
+    """ML Learning - Track furnisher behavior patterns for strategic insights"""
+    __tablename__ = 'furnisher_patterns'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    furnisher_id = Column(Integer, ForeignKey('furnishers.id'), nullable=True, index=True)
+    furnisher_name = Column(String(255), index=True)
+    pattern_type = Column(String(100), nullable=False, index=True)
+    pattern_data = Column(JSON)
+    sample_size = Column(Integer, default=0)
+    confidence = Column(Float, default=0.5)
+    insight_text = Column(Text)
+    actionable_recommendation = Column(Text)
+    
+    last_updated = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'furnisher_id': self.furnisher_id,
+            'furnisher_name': self.furnisher_name,
+            'pattern_type': self.pattern_type,
+            'pattern_data': self.pattern_data or {},
+            'sample_size': self.sample_size,
+            'confidence': self.confidence,
+            'insight_text': self.insight_text,
+            'actionable_recommendation': self.actionable_recommendation,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class RevenueForecast(Base):
+    """Revenue forecasting for predictive analytics"""
+    __tablename__ = 'revenue_forecasts'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    forecast_date = Column(Date, nullable=False, index=True)
+    forecast_period = Column(String(50), nullable=False)
+    predicted_revenue = Column(Float, default=0)
+    actual_revenue = Column(Float, nullable=True)
+    variance = Column(Float, nullable=True)
+    confidence_interval_low = Column(Float, default=0)
+    confidence_interval_high = Column(Float, default=0)
+    factors = Column(JSON)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'forecast_date': self.forecast_date.isoformat() if self.forecast_date else None,
+            'forecast_period': self.forecast_period,
+            'predicted_revenue': self.predicted_revenue,
+            'actual_revenue': self.actual_revenue,
+            'variance': self.variance,
+            'confidence_interval_low': self.confidence_interval_low,
+            'confidence_interval_high': self.confidence_interval_high,
+            'factors': self.factors or {},
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class ClientLifetimeValue(Base):
+    """Client lifetime value estimation for predictive analytics"""
+    __tablename__ = 'client_lifetime_values'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    ltv_estimate = Column(Float, default=0)
+    probability_of_success = Column(Float, default=0.5)
+    expected_settlement = Column(Float, default=0)
+    expected_fees = Column(Float, default=0)
+    acquisition_cost = Column(Float, default=0)
+    churn_risk = Column(Float, default=0.5)
+    risk_factors = Column(JSON)
+    
+    calculated_at = Column(DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'ltv_estimate': self.ltv_estimate,
+            'probability_of_success': self.probability_of_success,
+            'expected_settlement': self.expected_settlement,
+            'expected_fees': self.expected_fees,
+            'acquisition_cost': self.acquisition_cost,
+            'churn_risk': self.churn_risk,
+            'risk_factors': self.risk_factors or {},
+            'calculated_at': self.calculated_at.isoformat() if self.calculated_at else None
+        }
+
+
+class AttorneyPerformance(Base):
+    """Attorney/staff performance metrics for predictive analytics"""
+    __tablename__ = 'attorney_performance'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    staff_user_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+    period_start = Column(Date, nullable=False)
+    period_end = Column(Date, nullable=False)
+    cases_handled = Column(Integer, default=0)
+    cases_won = Column(Integer, default=0)
+    cases_lost = Column(Integer, default=0)
+    cases_settled = Column(Integer, default=0)
+    cases_pending = Column(Integer, default=0)
+    total_settlements = Column(Float, default=0)
+    avg_settlement_amount = Column(Float, default=0)
+    avg_resolution_days = Column(Float, default=0)
+    client_satisfaction = Column(Float, default=0)
+    efficiency_score = Column(Float, default=0)
+    strengths = Column(JSON)
+    
+    calculated_at = Column(DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'staff_user_id': self.staff_user_id,
+            'period_start': self.period_start.isoformat() if self.period_start else None,
+            'period_end': self.period_end.isoformat() if self.period_end else None,
+            'cases_handled': self.cases_handled,
+            'cases_won': self.cases_won,
+            'cases_lost': self.cases_lost,
+            'cases_settled': self.cases_settled,
+            'cases_pending': self.cases_pending,
+            'total_settlements': self.total_settlements,
+            'avg_settlement_amount': self.avg_settlement_amount,
+            'avg_resolution_days': self.avg_resolution_days,
+            'client_satisfaction': self.client_satisfaction,
+            'efficiency_score': self.efficiency_score,
+            'strengths': self.strengths or [],
+            'calculated_at': self.calculated_at.isoformat() if self.calculated_at else None
+        }
+
+
+class WorkflowTrigger(Base):
+    """Automated workflow triggers for case events"""
+    __tablename__ = 'workflow_triggers'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    trigger_type = Column(String(50), nullable=False, index=True)
+    conditions = Column(JSON)
+    actions = Column(JSON, nullable=False)
+    is_active = Column(Boolean, default=True, index=True)
+    priority = Column(Integer, default=5)
+    last_triggered = Column(DateTime)
+    trigger_count = Column(Integer, default=0)
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'trigger_type': self.trigger_type,
+            'conditions': self.conditions or {},
+            'actions': self.actions or [],
+            'is_active': self.is_active,
+            'priority': self.priority,
+            'last_triggered': self.last_triggered.isoformat() if self.last_triggered else None,
+            'trigger_count': self.trigger_count,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class WorkflowExecution(Base):
+    """Execution history for workflow triggers"""
+    __tablename__ = 'workflow_executions'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    trigger_id = Column(Integer, ForeignKey('workflow_triggers.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+    trigger_event = Column(JSON)
+    actions_executed = Column(JSON)
+    status = Column(String(50), default='pending', index=True)
+    error_message = Column(Text)
+    execution_time_ms = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'trigger_id': self.trigger_id,
+            'client_id': self.client_id,
+            'trigger_event': self.trigger_event or {},
+            'actions_executed': self.actions_executed or [],
+            'status': self.status,
+            'error_message': self.error_message,
+            'execution_time_ms': self.execution_time_ms,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -1989,6 +2357,136 @@ def init_db():
         ("client_subscriptions", "next_payment_date", "TIMESTAMP"),
         ("client_subscriptions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("client_subscriptions", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("background_tasks", "id", "SERIAL PRIMARY KEY"),
+        ("background_tasks", "task_type", "VARCHAR(100) NOT NULL"),
+        ("background_tasks", "payload", "JSON"),
+        ("background_tasks", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("background_tasks", "priority", "INTEGER DEFAULT 5"),
+        ("background_tasks", "scheduled_at", "TIMESTAMP"),
+        ("background_tasks", "started_at", "TIMESTAMP"),
+        ("background_tasks", "completed_at", "TIMESTAMP"),
+        ("background_tasks", "result", "JSON"),
+        ("background_tasks", "error_message", "TEXT"),
+        ("background_tasks", "retries", "INTEGER DEFAULT 0"),
+        ("background_tasks", "max_retries", "INTEGER DEFAULT 3"),
+        ("background_tasks", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("background_tasks", "created_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("background_tasks", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("background_tasks", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("scheduled_jobs", "id", "SERIAL PRIMARY KEY"),
+        ("scheduled_jobs", "name", "VARCHAR(255) UNIQUE NOT NULL"),
+        ("scheduled_jobs", "task_type", "VARCHAR(100) NOT NULL"),
+        ("scheduled_jobs", "payload", "JSON"),
+        ("scheduled_jobs", "cron_expression", "VARCHAR(100) NOT NULL"),
+        ("scheduled_jobs", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("scheduled_jobs", "last_run", "TIMESTAMP"),
+        ("scheduled_jobs", "next_run", "TIMESTAMP"),
+        ("scheduled_jobs", "run_count", "INTEGER DEFAULT 0"),
+        ("scheduled_jobs", "last_status", "VARCHAR(50)"),
+        ("scheduled_jobs", "last_error", "TEXT"),
+        ("scheduled_jobs", "created_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("scheduled_jobs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("scheduled_jobs", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("case_outcomes", "id", "SERIAL PRIMARY KEY"),
+        ("case_outcomes", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("case_outcomes", "case_type", "VARCHAR(100)"),
+        ("case_outcomes", "violation_types", "JSON"),
+        ("case_outcomes", "furnisher_id", "INTEGER REFERENCES furnishers(id)"),
+        ("case_outcomes", "initial_score", "FLOAT DEFAULT 0"),
+        ("case_outcomes", "final_outcome", "VARCHAR(50) NOT NULL"),
+        ("case_outcomes", "settlement_amount", "FLOAT DEFAULT 0"),
+        ("case_outcomes", "actual_damages", "FLOAT DEFAULT 0"),
+        ("case_outcomes", "time_to_resolution_days", "INTEGER DEFAULT 0"),
+        ("case_outcomes", "attorney_id", "INTEGER REFERENCES staff(id)"),
+        ("case_outcomes", "key_factors", "JSON"),
+        ("case_outcomes", "dispute_rounds_completed", "INTEGER DEFAULT 0"),
+        ("case_outcomes", "bureaus_involved", "JSON"),
+        ("case_outcomes", "violation_count", "INTEGER DEFAULT 0"),
+        ("case_outcomes", "willfulness_score", "FLOAT DEFAULT 0"),
+        ("case_outcomes", "documentation_quality", "FLOAT DEFAULT 0"),
+        ("case_outcomes", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("case_outcomes", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("outcome_predictions", "id", "SERIAL PRIMARY KEY"),
+        ("outcome_predictions", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("outcome_predictions", "prediction_type", "VARCHAR(100) NOT NULL"),
+        ("outcome_predictions", "predicted_value", "TEXT"),
+        ("outcome_predictions", "confidence_score", "FLOAT DEFAULT 0.5"),
+        ("outcome_predictions", "features_used", "JSON"),
+        ("outcome_predictions", "actual_value", "TEXT"),
+        ("outcome_predictions", "prediction_error", "FLOAT"),
+        ("outcome_predictions", "model_version", "VARCHAR(50) DEFAULT 'v1.0'"),
+        ("outcome_predictions", "was_accurate", "BOOLEAN"),
+        ("outcome_predictions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("outcome_predictions", "resolved_at", "TIMESTAMP"),
+        ("furnisher_patterns", "id", "SERIAL PRIMARY KEY"),
+        ("furnisher_patterns", "furnisher_id", "INTEGER REFERENCES furnishers(id)"),
+        ("furnisher_patterns", "furnisher_name", "VARCHAR(255)"),
+        ("furnisher_patterns", "pattern_type", "VARCHAR(100) NOT NULL"),
+        ("furnisher_patterns", "pattern_data", "JSON"),
+        ("furnisher_patterns", "sample_size", "INTEGER DEFAULT 0"),
+        ("furnisher_patterns", "confidence", "FLOAT DEFAULT 0.5"),
+        ("furnisher_patterns", "insight_text", "TEXT"),
+        ("furnisher_patterns", "actionable_recommendation", "TEXT"),
+        ("furnisher_patterns", "last_updated", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("furnisher_patterns", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("revenue_forecasts", "id", "SERIAL PRIMARY KEY"),
+        ("revenue_forecasts", "forecast_date", "DATE NOT NULL"),
+        ("revenue_forecasts", "forecast_period", "VARCHAR(50) NOT NULL"),
+        ("revenue_forecasts", "predicted_revenue", "FLOAT DEFAULT 0"),
+        ("revenue_forecasts", "actual_revenue", "FLOAT"),
+        ("revenue_forecasts", "variance", "FLOAT"),
+        ("revenue_forecasts", "confidence_interval_low", "FLOAT DEFAULT 0"),
+        ("revenue_forecasts", "confidence_interval_high", "FLOAT DEFAULT 0"),
+        ("revenue_forecasts", "factors", "JSON"),
+        ("revenue_forecasts", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_lifetime_values", "id", "SERIAL PRIMARY KEY"),
+        ("client_lifetime_values", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("client_lifetime_values", "ltv_estimate", "FLOAT DEFAULT 0"),
+        ("client_lifetime_values", "probability_of_success", "FLOAT DEFAULT 0.5"),
+        ("client_lifetime_values", "expected_settlement", "FLOAT DEFAULT 0"),
+        ("client_lifetime_values", "expected_fees", "FLOAT DEFAULT 0"),
+        ("client_lifetime_values", "acquisition_cost", "FLOAT DEFAULT 0"),
+        ("client_lifetime_values", "churn_risk", "FLOAT DEFAULT 0.5"),
+        ("client_lifetime_values", "risk_factors", "JSON"),
+        ("client_lifetime_values", "calculated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("attorney_performance", "id", "SERIAL PRIMARY KEY"),
+        ("attorney_performance", "staff_user_id", "INTEGER NOT NULL REFERENCES staff(id)"),
+        ("attorney_performance", "period_start", "DATE NOT NULL"),
+        ("attorney_performance", "period_end", "DATE NOT NULL"),
+        ("attorney_performance", "cases_handled", "INTEGER DEFAULT 0"),
+        ("attorney_performance", "cases_won", "INTEGER DEFAULT 0"),
+        ("attorney_performance", "cases_lost", "INTEGER DEFAULT 0"),
+        ("attorney_performance", "cases_settled", "INTEGER DEFAULT 0"),
+        ("attorney_performance", "cases_pending", "INTEGER DEFAULT 0"),
+        ("attorney_performance", "total_settlements", "FLOAT DEFAULT 0"),
+        ("attorney_performance", "avg_settlement_amount", "FLOAT DEFAULT 0"),
+        ("attorney_performance", "avg_resolution_days", "FLOAT DEFAULT 0"),
+        ("attorney_performance", "client_satisfaction", "FLOAT DEFAULT 0"),
+        ("attorney_performance", "efficiency_score", "FLOAT DEFAULT 0"),
+        ("attorney_performance", "strengths", "JSON"),
+        ("attorney_performance", "calculated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("workflow_triggers", "id", "SERIAL PRIMARY KEY"),
+        ("workflow_triggers", "name", "VARCHAR(255) NOT NULL"),
+        ("workflow_triggers", "description", "TEXT"),
+        ("workflow_triggers", "trigger_type", "VARCHAR(50) NOT NULL"),
+        ("workflow_triggers", "conditions", "JSON"),
+        ("workflow_triggers", "actions", "JSON NOT NULL"),
+        ("workflow_triggers", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("workflow_triggers", "priority", "INTEGER DEFAULT 5"),
+        ("workflow_triggers", "last_triggered", "TIMESTAMP"),
+        ("workflow_triggers", "trigger_count", "INTEGER DEFAULT 0"),
+        ("workflow_triggers", "created_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("workflow_triggers", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("workflow_triggers", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("workflow_executions", "id", "SERIAL PRIMARY KEY"),
+        ("workflow_executions", "trigger_id", "INTEGER NOT NULL REFERENCES workflow_triggers(id)"),
+        ("workflow_executions", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("workflow_executions", "trigger_event", "JSON"),
+        ("workflow_executions", "actions_executed", "JSON"),
+        ("workflow_executions", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("workflow_executions", "error_message", "TEXT"),
+        ("workflow_executions", "execution_time_ms", "INTEGER"),
+        ("workflow_executions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     conn = engine.connect()

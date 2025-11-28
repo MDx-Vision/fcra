@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Triggers - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #84cc16; }
+        
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-actions { display: flex; gap: 15px; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-card.highlight .stat-label { color: #94a3b8; }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .stat-card.highlight .stat-value { color: #84cc16; }
+        .stat-change {
+            font-size: 12px;
+            color: #84cc16;
+            font-weight: 500;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: #1a1a2e; }
+        .tab.active {
+            color: #319795;
+            font-weight: 600;
+        }
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        .tab-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #f1f5f9;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 6px;
+        }
+        .tab.active .tab-badge { background: #dcfce7; color: #166534; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .workflow-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        .workflow-card:hover { border-color: #84cc16; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .workflow-card.inactive { opacity: 0.6; }
+        
+        .workflow-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .workflow-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .workflow-description {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 12px;
+        }
+        
+        .workflow-meta {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .workflow-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .workflow-meta-item svg { width: 14px; height: 14px; }
+        
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+        
+        .trigger-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .trigger-type-badge.case_created { background: #dcfce7; color: #166534; }
+        .trigger-type-badge.status_changed { background: #dbeafe; color: #1e40af; }
+        .trigger-type-badge.deadline_approaching { background: #fee2e2; color: #991b1b; }
+        .trigger-type-badge.document_uploaded { background: #fef3c7; color: #92400e; }
+        .trigger-type-badge.payment_received { background: #d1fae5; color: #065f46; }
+        .trigger-type-badge.dispute_sent { background: #ede9fe; color: #6d28d9; }
+        .trigger-type-badge.response_received { background: #cffafe; color: #0e7490; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-success { background: #dcfce7; color: #166534; }
+        .status-failed { background: #fee2e2; color: #991b1b; }
+        .status-partial { background: #fef3c7; color: #92400e; }
+        .status-pending { background: #f1f5f9; color: #64748b; }
+        
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .priority-high { background: #fee2e2; color: #991b1b; }
+        .priority-medium { background: #fef3c7; color: #92400e; }
+        .priority-low { background: #f1f5f9; color: #64748b; }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+        .action-btn.danger { border-color: #ef4444; color: #ef4444; }
+        .action-btn.danger:hover { background: #fee2e2; }
+        
+        .execution-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .execution-item:last-child { border-bottom: none; }
+        .execution-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        .execution-icon.success { background: #dcfce7; color: #166534; }
+        .execution-icon.failed { background: #fee2e2; color: #991b1b; }
+        .execution-icon.partial { background: #fef3c7; color: #92400e; }
+        .execution-icon svg { width: 18px; height: 18px; }
+        .execution-details { flex: 1; }
+        .execution-title { font-size: 14px; font-weight: 500; color: #1a1a2e; }
+        .execution-meta { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .execution-time { font-size: 12px; color: #94a3b8; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg { width: 80px; height: 80px; margin-bottom: 20px; opacity: 0.3; }
+        .empty-state h3 { font-size: 18px; color: #1a1a2e; margin-bottom: 10px; }
+        .empty-state p { font-size: 14px; margin-bottom: 20px; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 700px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 { font-size: 18px; font-weight: 600; color: #1a1a2e; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #319795;
+            box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+        
+        .action-builder {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 10px;
+        }
+        .action-builder-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .action-builder-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .quick-templates {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .quick-template {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-template:hover { border-color: #84cc16; background: #f8fafc; }
+        .quick-template-title { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 4px; }
+        .quick-template-desc { font-size: 12px; color: #64748b; }
+        
+        .test-result {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+        .test-result.success { background: #dcfce7; border: 1px solid #84cc16; }
+        .test-result.fail { background: #fee2e2; border: 1px solid #ef4444; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .quick-templates { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .quick-templates { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="logo">Bright<span>path</span> Ascend</div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Main</div>
+            <a href="/dashboard" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Dashboard
+            </a>
+            <a href="/dashboard/clients" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+                Clients
+            </a>
+            <a href="/dashboard/calendar" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Calendar
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Automation</div>
+            <a href="/dashboard/automation-tools" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                Automation Tools
+            </a>
+            <a href="/dashboard/workflows" class="nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Workflow Triggers
+            </a>
+            <a href="/dashboard/tasks" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Task Queue
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <div class="nav-section-title">Settings</div>
+            <a href="/dashboard/settings" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                Settings
+            </a>
+            <a href="/dashboard/integrations" class="nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Integrations
+            </a>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>Workflow Triggers</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="refreshData()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    Refresh
+                </button>
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Workflow
+                </button>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card highlight">
+                <div class="stat-label">Active Triggers</div>
+                <div class="stat-value" id="stat-active">{{ stats.active_triggers or 0 }}</div>
+                <div class="stat-change">Ready to fire</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Executions Today</div>
+                <div class="stat-value" id="stat-executions">{{ stats.executions_today or 0 }}</div>
+                <div class="stat-change">{{ stats.successful_today or 0 }} successful</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Success Rate</div>
+                <div class="stat-value" id="stat-success-rate">{{ stats.success_rate_today or 100 }}%</div>
+                <div class="stat-change">Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Time</div>
+                <div class="stat-value" id="stat-avg-time">{{ stats.avg_execution_time_ms or 0 }}ms</div>
+                <div class="stat-change">Execution time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Triggers</div>
+                <div class="stat-value" id="stat-total">{{ stats.total_triggers or 0 }}</div>
+                <div class="stat-change">{{ stats.inactive_triggers or 0 }} inactive</div>
+            </div>
+        </div>
+        
+        <div class="content-card">
+            <div class="tabs">
+                <button class="tab active" data-tab="triggers" onclick="switchTab('triggers')">
+                    Workflow Triggers <span class="tab-badge" id="triggers-count">{{ triggers|length }}</span>
+                </button>
+                <button class="tab" data-tab="executions" onclick="switchTab('executions')">
+                    Recent Executions <span class="tab-badge" id="executions-count">{{ recent_executions|length }}</span>
+                </button>
+                <button class="tab" data-tab="templates" onclick="switchTab('templates')">
+                    Quick Templates
+                </button>
+            </div>
+            
+            <div id="tab-triggers" class="tab-content active">
+                <div id="triggers-list">
+                    {% for trigger in triggers %}
+                    <div class="workflow-card {% if not trigger.is_active %}inactive{% endif %}" data-id="{{ trigger.id }}">
+                        <div class="workflow-header">
+                            <div>
+                                <div class="workflow-title">{{ trigger.name }}</div>
+                                <span class="trigger-type-badge {{ trigger.trigger_type }}">{{ trigger_types[trigger.trigger_type].name if trigger.trigger_type in trigger_types else trigger.trigger_type }}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" {% if trigger.is_active %}checked{% endif %} onchange="toggleTrigger({{ trigger.id }})">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        {% if trigger.description %}
+                        <div class="workflow-description">{{ trigger.description }}</div>
+                        {% endif %}
+                        <div class="workflow-meta">
+                            <div class="workflow-meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                {{ trigger.trigger_count or 0 }} executions
+                            </div>
+                            <div class="workflow-meta-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                {% if trigger.last_triggered %}
+                                Last: {{ trigger.last_triggered[:16] }}
+                                {% else %}
+                                Never triggered
+                                {% endif %}
+                            </div>
+                            <div class="workflow-meta-item">
+                                <span class="priority-badge {% if trigger.priority >= 8 %}priority-high{% elif trigger.priority >= 5 %}priority-medium{% else %}priority-low{% endif %}">
+                                    {{ trigger.priority }}
+                                </span>
+                                Priority
+                            </div>
+                            <div class="workflow-meta-item">
+                                {{ trigger.actions|length }} action(s)
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px; display: flex; gap: 8px;">
+                            <button class="action-btn" onclick="testTrigger({{ trigger.id }})">Test</button>
+                            <button class="action-btn" onclick="viewHistory({{ trigger.id }})">History</button>
+                            <button class="action-btn" onclick="editTrigger({{ trigger.id }})">Edit</button>
+                            <button class="action-btn danger" onclick="deleteTrigger({{ trigger.id }})">Delete</button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        <h3>No workflow triggers yet</h3>
+                        <p>Create your first workflow trigger to automate case events</p>
+                        <button class="btn btn-primary" onclick="openCreateModal()">Create Workflow</button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div id="tab-executions" class="tab-content">
+                {% if recent_executions %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Trigger</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                            <th>Time</th>
+                            <th>Executed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exec in recent_executions %}
+                        <tr>
+                            <td>{{ exec.trigger_name or 'Unknown' }}</td>
+                            <td><span class="trigger-type-badge {{ exec.trigger_type or '' }}">{{ trigger_types[exec.trigger_type].name if exec.trigger_type in trigger_types else exec.trigger_type or 'N/A' }}</span></td>
+                            <td><span class="status-badge status-{{ exec.status }}">{{ exec.status }}</span></td>
+                            <td>{{ exec.actions_executed|length if exec.actions_executed else 0 }}</td>
+                            <td>{{ exec.execution_time_ms or 0 }}ms</td>
+                            <td>{{ exec.created_at[:16] if exec.created_at else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    <h3>No executions yet</h3>
+                    <p>Workflow executions will appear here when triggers fire</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div id="tab-templates" class="tab-content">
+                <div class="quick-templates">
+                    <div class="quick-template" onclick="useTemplate('welcome')">
+                        <div class="quick-template-title">Welcome New Client</div>
+                        <div class="quick-template-desc">Send welcome email and SMS when a client signs up</div>
+                    </div>
+                    <div class="quick-template" onclick="useTemplate('sol_warning')">
+                        <div class="quick-template-title">SOL Warning</div>
+                        <div class="quick-template-desc">Alert when statute of limitations deadline approaches</div>
+                    </div>
+                    <div class="quick-template" onclick="useTemplate('document_review')">
+                        <div class="quick-template-title">Document Review</div>
+                        <div class="quick-template-desc">Notify attorney when new document is uploaded</div>
+                    </div>
+                    <div class="quick-template" onclick="useTemplate('payment_confirmation')">
+                        <div class="quick-template-title">Payment Confirmation</div>
+                        <div class="quick-template-desc">Send confirmation when payment is received</div>
+                    </div>
+                    <div class="quick-template" onclick="useTemplate('dispute_tracking')">
+                        <div class="quick-template-title">Dispute Tracking</div>
+                        <div class="quick-template-desc">Schedule followup when dispute letter is sent</div>
+                    </div>
+                    <div class="quick-template" onclick="useTemplate('response_alert')">
+                        <div class="quick-template-title">Response Alert</div>
+                        <div class="quick-template-desc">Notify client when CRA response is received</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div id="create-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Create Workflow Trigger</h2>
+                <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="workflow-form">
+                    <input type="hidden" id="edit-trigger-id">
+                    
+                    <div class="form-group">
+                        <label>Trigger Name</label>
+                        <input type="text" id="trigger-name" placeholder="e.g., Welcome New Client" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="trigger-description" rows="2" placeholder="What does this workflow do?"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Trigger Type</label>
+                        <select id="trigger-type" required onchange="updateTriggerFields()">
+                            <option value="">Select trigger type...</option>
+                            {% for key, value in trigger_types.items() %}
+                            <option value="{{ key }}">{{ value.name }} - {{ value.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Priority (1-10, higher = runs first)</label>
+                        <input type="number" id="trigger-priority" value="5" min="1" max="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Conditions (JSON)</label>
+                        <textarea id="trigger-conditions" rows="3" placeholder='{"field": "value", "field_min": 10}'></textarea>
+                        <div class="form-hint">Optional filters. Use _min, _max, _in, _not_in suffixes for advanced conditions.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Actions</label>
+                        <div id="actions-container"></div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addAction()">+ Add Action</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTrigger()">Save Workflow</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="test-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Test Workflow Trigger</h2>
+                <button class="modal-close" onclick="closeTestModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Sample Event Data (JSON)</label>
+                    <textarea id="test-event-data" rows="8">{
+  "client_id": 1,
+  "client_name": "Test Client",
+  "email": "test@example.com",
+  "phone": "555-0100"
+}</textarea>
+                </div>
+                <div id="test-result"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTestModal()">Close</button>
+                <button class="btn btn-primary" onclick="runTest()">Run Test</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="history-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Execution History</h2>
+                <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="history-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeHistoryModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const triggerTypes = {{ trigger_types|tojson|safe }};
+        const actionTypes = {{ action_types|tojson|safe }};
+        let currentTriggerId = null;
+        let actionCount = 0;
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        
+        function refreshData() {
+            location.reload();
+        }
+        
+        function openCreateModal() {
+            document.getElementById('modal-title').textContent = 'Create Workflow Trigger';
+            document.getElementById('workflow-form').reset();
+            document.getElementById('edit-trigger-id').value = '';
+            document.getElementById('actions-container').innerHTML = '';
+            actionCount = 0;
+            addAction();
+            document.getElementById('create-modal').classList.add('active');
+        }
+        
+        function closeCreateModal() {
+            document.getElementById('create-modal').classList.remove('active');
+        }
+        
+        function addAction() {
+            const container = document.getElementById('actions-container');
+            const actionId = actionCount++;
+            
+            let optionsHtml = '<option value="">Select action type...</option>';
+            for (const [key, value] of Object.entries(actionTypes)) {
+                optionsHtml += `<option value="${key}">${value.name} - ${value.description}</option>`;
+            }
+            
+            const html = `
+                <div class="action-builder" id="action-${actionId}">
+                    <div class="action-builder-header">
+                        <span class="action-builder-title">Action ${actionId + 1}</span>
+                        <button type="button" class="action-btn danger" onclick="removeAction(${actionId})">Remove</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Action Type</label>
+                        <select id="action-type-${actionId}" required onchange="updateActionParams(${actionId})">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div id="action-params-${actionId}"></div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+        
+        function removeAction(actionId) {
+            document.getElementById(`action-${actionId}`).remove();
+        }
+        
+        function updateActionParams(actionId) {
+            const actionType = document.getElementById(`action-type-${actionId}`).value;
+            const paramsContainer = document.getElementById(`action-params-${actionId}`);
+            
+            if (!actionType || !actionTypes[actionType]) {
+                paramsContainer.innerHTML = '';
+                return;
+            }
+            
+            const params = actionTypes[actionType].params || [];
+            let html = '';
+            
+            params.forEach(param => {
+                html += `
+                    <div class="form-group">
+                        <label>${param.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</label>
+                        <input type="text" id="action-${actionId}-${param}" placeholder="${param}">
+                    </div>
+                `;
+            });
+            
+            paramsContainer.innerHTML = html;
+        }
+        
+        function updateTriggerFields() {
+            const triggerType = document.getElementById('trigger-type').value;
+            if (triggerType && triggerTypes[triggerType]) {
+                const fields = triggerTypes[triggerType].fields || [];
+                document.getElementById('trigger-conditions').placeholder = 
+                    'Available fields: ' + fields.join(', ');
+            }
+        }
+        
+        async function saveTrigger() {
+            const triggerId = document.getElementById('edit-trigger-id').value;
+            const name = document.getElementById('trigger-name').value;
+            const description = document.getElementById('trigger-description').value;
+            const triggerType = document.getElementById('trigger-type').value;
+            const priority = parseInt(document.getElementById('trigger-priority').value) || 5;
+            
+            let conditions = {};
+            try {
+                const conditionsText = document.getElementById('trigger-conditions').value.trim();
+                if (conditionsText) {
+                    conditions = JSON.parse(conditionsText);
+                }
+            } catch (e) {
+                alert('Invalid JSON in conditions field');
+                return;
+            }
+            
+            const actions = [];
+            document.querySelectorAll('.action-builder').forEach(builder => {
+                const id = builder.id.replace('action-', '');
+                const actionType = document.getElementById(`action-type-${id}`).value;
+                if (!actionType) return;
+                
+                const params = {};
+                const actionParams = actionTypes[actionType]?.params || [];
+                actionParams.forEach(param => {
+                    const input = document.getElementById(`action-${id}-${param}`);
+                    if (input && input.value) {
+                        params[param] = input.value;
+                    }
+                });
+                
+                actions.push({ type: actionType, params });
+            });
+            
+            if (!name || !triggerType || actions.length === 0) {
+                alert('Please fill in all required fields and add at least one action');
+                return;
+            }
+            
+            const data = { name, description, trigger_type: triggerType, priority, conditions, actions };
+            
+            try {
+                const method = triggerId ? 'PUT' : 'POST';
+                const url = triggerId ? `/api/workflows/${triggerId}` : '/api/workflows';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    closeCreateModal();
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (e) {
+                alert('Error saving workflow: ' + e.message);
+            }
+        }
+        
+        async function toggleTrigger(triggerId) {
+            try {
+                const response = await fetch(`/api/workflows/${triggerId}/toggle`, { method: 'POST' });
+                const result = await response.json();
+                if (!result.success) {
+                    alert('Error: ' + result.error);
+                    location.reload();
+                }
+            } catch (e) {
+                alert('Error toggling trigger: ' + e.message);
+                location.reload();
+            }
+        }
+        
+        async function editTrigger(triggerId) {
+            try {
+                const response = await fetch(`/api/workflows/${triggerId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const trigger = result.trigger;
+                    document.getElementById('modal-title').textContent = 'Edit Workflow Trigger';
+                    document.getElementById('edit-trigger-id').value = triggerId;
+                    document.getElementById('trigger-name').value = trigger.name;
+                    document.getElementById('trigger-description').value = trigger.description || '';
+                    document.getElementById('trigger-type').value = trigger.trigger_type;
+                    document.getElementById('trigger-priority').value = trigger.priority;
+                    document.getElementById('trigger-conditions').value = 
+                        JSON.stringify(trigger.conditions || {}, null, 2);
+                    
+                    document.getElementById('actions-container').innerHTML = '';
+                    actionCount = 0;
+                    
+                    (trigger.actions || []).forEach(action => {
+                        addAction();
+                        const id = actionCount - 1;
+                        document.getElementById(`action-type-${id}`).value = action.type;
+                        updateActionParams(id);
+                        
+                        const params = action.params || {};
+                        for (const [key, value] of Object.entries(params)) {
+                            const input = document.getElementById(`action-${id}-${key}`);
+                            if (input) input.value = value;
+                        }
+                    });
+                    
+                    document.getElementById('create-modal').classList.add('active');
+                } else {
+                    alert('Error loading trigger: ' + result.error);
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        
+        async function deleteTrigger(triggerId) {
+            if (!confirm('Are you sure you want to delete this workflow trigger?')) return;
+            
+            try {
+                const response = await fetch(`/api/workflows/${triggerId}`, { method: 'DELETE' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (e) {
+                alert('Error deleting trigger: ' + e.message);
+            }
+        }
+        
+        function testTrigger(triggerId) {
+            currentTriggerId = triggerId;
+            document.getElementById('test-result').innerHTML = '';
+            document.getElementById('test-modal').classList.add('active');
+        }
+        
+        function closeTestModal() {
+            document.getElementById('test-modal').classList.remove('active');
+            currentTriggerId = null;
+        }
+        
+        async function runTest() {
+            if (!currentTriggerId) return;
+            
+            let eventData = {};
+            try {
+                eventData = JSON.parse(document.getElementById('test-event-data').value);
+            } catch (e) {
+                alert('Invalid JSON in event data');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/workflows/${currentTriggerId}/test`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event_data: eventData })
+                });
+                
+                const result = await response.json();
+                
+                let html = '';
+                if (result.success) {
+                    html = `
+                        <div class="test-result ${result.conditions_match ? 'success' : 'fail'}">
+                            <h4>${result.conditions_match ? 'Conditions Match!' : 'Conditions Do Not Match'}</h4>
+                            <p><strong>Trigger:</strong> ${result.trigger_name}</p>
+                            <p><strong>Type:</strong> ${result.trigger_type}</p>
+                            <h5>Actions that would execute:</h5>
+                            <ul>
+                                ${result.actions_preview.map(a => 
+                                    `<li>${a.type}: ${a.would_execute ? 'Yes' : 'No'}</li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    html = `<div class="test-result fail"><p>Error: ${result.error}</p></div>`;
+                }
+                
+                document.getElementById('test-result').innerHTML = html;
+            } catch (e) {
+                document.getElementById('test-result').innerHTML = 
+                    `<div class="test-result fail"><p>Error: ${e.message}</p></div>`;
+            }
+        }
+        
+        async function viewHistory(triggerId) {
+            try {
+                const response = await fetch(`/api/workflows/${triggerId}/history`);
+                const result = await response.json();
+                
+                let html = '';
+                if (result.success && result.history.length > 0) {
+                    html = '<div>';
+                    result.history.forEach(exec => {
+                        html += `
+                            <div class="execution-item">
+                                <div class="execution-icon ${exec.status}">
+                                    ${exec.status === 'success' ? 
+                                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>' :
+                                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+                                    }
+                                </div>
+                                <div class="execution-details">
+                                    <div class="execution-title">${exec.status.toUpperCase()}</div>
+                                    <div class="execution-meta">
+                                        ${exec.actions_executed?.length || 0} actions executed in ${exec.execution_time_ms || 0}ms
+                                        ${exec.error_message ? `<br><small style="color:#991b1b">${exec.error_message}</small>` : ''}
+                                    </div>
+                                </div>
+                                <div class="execution-time">${exec.created_at?.slice(0, 16) || 'N/A'}</div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                } else {
+                    html = '<div class="empty-state"><p>No execution history yet</p></div>';
+                }
+                
+                document.getElementById('history-content').innerHTML = html;
+                document.getElementById('history-modal').classList.add('active');
+            } catch (e) {
+                alert('Error loading history: ' + e.message);
+            }
+        }
+        
+        function closeHistoryModal() {
+            document.getElementById('history-modal').classList.remove('active');
+        }
+        
+        function useTemplate(template) {
+            const templates = {
+                welcome: {
+                    name: 'Welcome New Client',
+                    description: 'Send welcome email and SMS when a client signs up',
+                    trigger_type: 'case_created',
+                    priority: 10,
+                    actions: [
+                        { type: 'send_email', params: { template: 'welcome', subject: 'Welcome to Brightpath Ascend!' } },
+                        { type: 'send_sms', params: { message: 'Welcome! Your credit dispute journey begins now.' } }
+                    ]
+                },
+                sol_warning: {
+                    name: 'SOL Warning',
+                    description: 'Alert when statute of limitations deadline approaches',
+                    trigger_type: 'deadline_approaching',
+                    priority: 10,
+                    conditions: { deadline_type: 'sol', days_remaining_max: 30 },
+                    actions: [
+                        { type: 'send_email', params: { template: 'sol_warning', subject: 'URGENT: SOL Deadline Approaching' } }
+                    ]
+                },
+                document_review: {
+                    name: 'Document Review Needed',
+                    description: 'Notify attorney when new document is uploaded',
+                    trigger_type: 'document_uploaded',
+                    priority: 5,
+                    actions: [
+                        { type: 'send_email', params: { template: 'document_review', subject: 'New Document Uploaded - Review Required' } },
+                        { type: 'add_note', params: { note_text: 'New document uploaded - pending review', note_type: 'document' } }
+                    ]
+                },
+                payment_confirmation: {
+                    name: 'Payment Confirmation',
+                    description: 'Send confirmation when payment is received',
+                    trigger_type: 'payment_received',
+                    priority: 8,
+                    actions: [
+                        { type: 'send_email', params: { template: 'payment_confirmation', subject: 'Payment Received - Thank You!' } },
+                        { type: 'update_status', params: { new_status: 'active' } }
+                    ]
+                },
+                dispute_tracking: {
+                    name: 'Dispute Tracking',
+                    description: 'Schedule followup when dispute letter is sent',
+                    trigger_type: 'dispute_sent',
+                    priority: 7,
+                    actions: [
+                        { type: 'schedule_followup', params: { days_from_now: '35', deadline_type: 'response_check', description: 'Check for CRA response' } }
+                    ]
+                },
+                response_alert: {
+                    name: 'Response Alert',
+                    description: 'Notify client when CRA response is received',
+                    trigger_type: 'response_received',
+                    priority: 9,
+                    actions: [
+                        { type: 'send_email', params: { template: 'response_received', subject: 'Credit Bureau Response Received' } },
+                        { type: 'send_sms', params: { message: 'Good news! We received a response from the credit bureau.' } }
+                    ]
+                }
+            };
+            
+            const t = templates[template];
+            if (!t) return;
+            
+            document.getElementById('modal-title').textContent = 'Create Workflow Trigger';
+            document.getElementById('edit-trigger-id').value = '';
+            document.getElementById('trigger-name').value = t.name;
+            document.getElementById('trigger-description').value = t.description;
+            document.getElementById('trigger-type').value = t.trigger_type;
+            document.getElementById('trigger-priority').value = t.priority;
+            document.getElementById('trigger-conditions').value = t.conditions ? JSON.stringify(t.conditions, null, 2) : '';
+            
+            document.getElementById('actions-container').innerHTML = '';
+            actionCount = 0;
+            
+            t.actions.forEach(action => {
+                addAction();
+                const id = actionCount - 1;
+                document.getElementById(`action-type-${id}`).value = action.type;
+                updateActionParams(id);
+                
+                for (const [key, value] of Object.entries(action.params || {})) {
+                    const input = document.getElementById(`action-${id}-${key}`);
+                    if (input) input.value = value;
+                }
+            });
+            
+            document.getElementById('create-modal').classList.add('active');
+        }
+    </script>
+</body>
+</html>

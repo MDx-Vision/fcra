@@ -47,6 +47,11 @@ from services import triage_service
 from services import case_law_service
 from services import escalation_service
 from services import credit_pull_service
+from services.task_queue_service import TaskQueueService
+from services.scheduler_service import SchedulerService, CronParser, COMMON_CRON_EXPRESSIONS
+from services.workflow_triggers_service import WorkflowTriggersService, TRIGGER_TYPES, ACTION_TYPES
+from services.predictive_analytics_service import predictive_analytics_service
+from services.attorney_analytics_service import attorney_analytics_service
 import json
 
 app = Flask(__name__)
@@ -3944,6 +3949,191 @@ def dashboard_analytics():
         db.close()
 
 
+@app.route('/dashboard/predictive')
+@require_staff(roles=['admin', 'attorney'])
+def dashboard_predictive():
+    """Predictive Analytics Dashboard - Business Intelligence with Forecasting"""
+    db = get_db()
+    try:
+        revenue_forecast = predictive_analytics_service.forecast_revenue(months_ahead=6)
+        revenue_trends = predictive_analytics_service.get_revenue_trends()
+        caseload_forecast = predictive_analytics_service.forecast_caseload(months_ahead=3)
+        growth_opportunities = predictive_analytics_service.identify_growth_opportunities()
+        top_clients = predictive_analytics_service.get_top_clients_by_ltv(limit=10)
+        workload = attorney_analytics_service.get_workload_distribution()
+        leaderboard = attorney_analytics_service.get_leaderboard(metric='efficiency_score', period='month')
+        
+        return render_template('predictive_analytics.html',
+            revenue_forecast=revenue_forecast,
+            revenue_trends=revenue_trends,
+            caseload_forecast=caseload_forecast,
+            growth_opportunities=growth_opportunities,
+            top_clients=top_clients,
+            workload_distribution=workload,
+            leaderboard=leaderboard
+        )
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Predictive Analytics error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analytics/revenue-forecast')
+@require_staff(roles=['admin', 'attorney'])
+def api_revenue_forecast():
+    """API: Get revenue forecasts"""
+    try:
+        months = request.args.get('months', 3, type=int)
+        result = predictive_analytics_service.forecast_revenue(months_ahead=months)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/client-ltv/<int:client_id>')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_client_ltv(client_id):
+    """API: Get client lifetime value estimation"""
+    try:
+        result = predictive_analytics_service.calculate_client_ltv(client_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/case-timeline/<int:client_id>')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_case_timeline(client_id):
+    """API: Get predicted case timeline"""
+    try:
+        result = predictive_analytics_service.predict_case_timeline(client_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/settlement-probability/<int:client_id>')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_settlement_probability(client_id):
+    """API: Get settlement probability prediction"""
+    try:
+        result = predictive_analytics_service.predict_settlement_probability(client_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/churn-risk/<int:client_id>')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_churn_risk(client_id):
+    """API: Get client churn risk assessment"""
+    try:
+        result = predictive_analytics_service.calculate_churn_risk(client_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/attorney-performance')
+@require_staff(roles=['admin', 'attorney'])
+def api_attorney_performance():
+    """API: Get attorney performance metrics"""
+    try:
+        staff_id = request.args.get('staff_id', type=int)
+        period = request.args.get('period', 'month')
+        
+        if staff_id:
+            result = attorney_analytics_service.calculate_performance(staff_id, period)
+        else:
+            result = attorney_analytics_service.get_workload_distribution()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/attorney-leaderboard')
+@require_staff(roles=['admin', 'attorney'])
+def api_attorney_leaderboard():
+    """API: Get attorney performance rankings"""
+    try:
+        metric = request.args.get('metric', 'efficiency_score')
+        period = request.args.get('period', 'month')
+        result = attorney_analytics_service.get_leaderboard(metric, period)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/attorney-strengths/<int:staff_id>')
+@require_staff(roles=['admin', 'attorney'])
+def api_attorney_strengths(staff_id):
+    """API: Get attorney strengths analysis"""
+    try:
+        result = attorney_analytics_service.identify_strengths(staff_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/growth-opportunities')
+@require_staff(roles=['admin', 'attorney'])
+def api_growth_opportunities():
+    """API: Get growth opportunity insights"""
+    try:
+        result = predictive_analytics_service.identify_growth_opportunities()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/case-assignment-recommendation/<int:case_id>')
+@require_staff(roles=['admin', 'attorney'])
+def api_case_assignment_recommendation(case_id):
+    """API: Get best attorney recommendation for a case"""
+    try:
+        result = attorney_analytics_service.recommend_case_assignment(case_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/attorney-capacity/<int:staff_id>')
+@require_staff(roles=['admin', 'attorney'])
+def api_attorney_capacity(staff_id):
+    """API: Get attorney capacity forecast"""
+    try:
+        result = attorney_analytics_service.forecast_capacity(staff_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/caseload-forecast')
+@require_staff(roles=['admin', 'attorney'])
+def api_caseload_forecast():
+    """API: Get caseload forecast"""
+    try:
+        months = request.args.get('months', 3, type=int)
+        result = predictive_analytics_service.forecast_caseload(months_ahead=months)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/analytics/revenue-trends')
+@require_staff(roles=['admin', 'attorney'])
+def api_revenue_trends():
+    """API: Get historical revenue trends"""
+    try:
+        result = predictive_analytics_service.get_revenue_trends()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/intake', methods=['POST'])
 def api_intake():
     """New client intake endpoint"""
@@ -5776,6 +5966,17 @@ def api_complete_free_signup():
         except Exception as affiliate_error:
             print(f"⚠️  Affiliate processing error (non-fatal): {affiliate_error}")
         
+        try:
+            WorkflowTriggersService.evaluate_triggers('case_created', {
+                'client_id': client.id,
+                'client_name': client.name,
+                'email': client.email,
+                'phone': client.phone,
+                'plan': 'free'
+            })
+        except Exception as wf_error:
+            print(f"⚠️  Workflow trigger error (non-fatal): {wf_error}")
+        
         return jsonify({
             'success': True,
             'clientId': client.id,
@@ -5865,6 +6066,17 @@ def api_complete_manual_signup():
                     print(f"🤝 Client {client.id} linked to affiliate {ref_result.get('affiliate_name')}")
         except Exception as affiliate_error:
             print(f"⚠️  Affiliate processing error (non-fatal): {affiliate_error}")
+        
+        try:
+            WorkflowTriggersService.evaluate_triggers('case_created', {
+                'client_id': client.id,
+                'client_name': client.name,
+                'email': client.email,
+                'phone': client.phone,
+                'plan': draft.plan_tier
+            })
+        except Exception as wf_error:
+            print(f"⚠️  Workflow trigger error (non-fatal): {wf_error}")
         
         return jsonify({
             'success': True,
@@ -6135,6 +6347,23 @@ def handle_checkout_completed(db, session):
                 print(f"📧 Welcome email skipped: {email_result.get('reason', 'unknown')}")
         except Exception as email_error:
             print(f"⚠️  Email trigger error (non-fatal): {email_error}")
+        
+        try:
+            WorkflowTriggersService.evaluate_triggers('case_created', {
+                'client_id': client.id,
+                'client_name': client.name,
+                'email': client.email,
+                'phone': client.phone,
+                'plan': tier or draft.plan_tier
+            })
+            WorkflowTriggersService.evaluate_triggers('payment_received', {
+                'client_id': client.id,
+                'amount': amount_total / 100 if amount_total else 0,
+                'payment_method': 'stripe',
+                'plan': tier or draft.plan_tier
+            })
+        except Exception as wf_error:
+            print(f"⚠️  Workflow trigger error (non-fatal): {wf_error}")
         
     except Exception as e:
         db.rollback()
@@ -8795,6 +9024,17 @@ def api_create_client():
         
         db.add(client)
         db.commit()
+        
+        try:
+            WorkflowTriggersService.evaluate_triggers('case_created', {
+                'client_id': client.id,
+                'client_name': client.name,
+                'email': client.email,
+                'phone': client.phone,
+                'plan': 'manual'
+            })
+        except Exception as wf_error:
+            print(f"⚠️  Workflow trigger error (non-fatal): {wf_error}")
         
         return jsonify({'success': True, 'client_id': client.id})
     except Exception as e:
@@ -15976,6 +16216,851 @@ def api_billing_test_connection():
         return jsonify({
             'success': True,
             'connected': connected
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ============================================================================
+# TASK QUEUE & SCHEDULER ROUTES
+# ============================================================================
+
+@app.route('/dashboard/tasks')
+@require_staff()
+def dashboard_tasks():
+    """Task queue dashboard"""
+    SchedulerService.initialize_built_in_schedules()
+    
+    task_stats = TaskQueueService.get_task_stats()
+    scheduler_stats = SchedulerService.get_scheduler_stats()
+    task_types = TaskQueueService.get_available_task_types()
+    cron_presets = COMMON_CRON_EXPRESSIONS
+    
+    return render_template('task_queue.html',
+                         task_stats=task_stats,
+                         scheduler_stats=scheduler_stats,
+                         task_types=task_types,
+                         cron_presets=cron_presets,
+                         staff=session.get('staff'))
+
+
+@app.route('/api/tasks', methods=['GET'])
+@require_staff()
+def api_get_tasks():
+    """Get all tasks with optional filtering"""
+    status = request.args.get('status')
+    task_type = request.args.get('task_type')
+    limit = int(request.args.get('limit', 100))
+    offset = int(request.args.get('offset', 0))
+    
+    try:
+        tasks = TaskQueueService.get_tasks(
+            status=status,
+            task_type=task_type,
+            limit=limit,
+            offset=offset
+        )
+        stats = TaskQueueService.get_task_stats()
+        
+        return jsonify({
+            'success': True,
+            'tasks': tasks,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tasks', methods=['POST'])
+@require_staff()
+def api_create_task():
+    """Create a new background task"""
+    data = request.get_json()
+    
+    if not data or 'task_type' not in data:
+        return jsonify({'success': False, 'error': 'task_type is required'}), 400
+    
+    try:
+        scheduled_at = None
+        if data.get('scheduled_at'):
+            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+        
+        task = TaskQueueService.enqueue_task(
+            task_type=data['task_type'],
+            payload=data.get('payload', {}),
+            priority=data.get('priority', 5),
+            scheduled_at=scheduled_at,
+            client_id=data.get('client_id'),
+            staff_id=session.get('staff', {}).get('id'),
+            max_retries=data.get('max_retries', 3)
+        )
+        
+        return jsonify({
+            'success': True,
+            'task': task.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tasks/<int:task_id>', methods=['GET'])
+@require_staff()
+def api_get_task(task_id):
+    """Get a specific task status"""
+    try:
+        task = TaskQueueService.get_task_status(task_id)
+        if task:
+            return jsonify({'success': True, 'task': task})
+        return jsonify({'success': False, 'error': 'Task not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+@require_staff()
+def api_cancel_task(task_id):
+    """Cancel a pending task"""
+    try:
+        success = TaskQueueService.cancel_task(task_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Task cancelled'})
+        return jsonify({'success': False, 'error': 'Task cannot be cancelled (not pending)'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tasks/<int:task_id>/retry', methods=['POST'])
+@require_staff()
+def api_retry_task(task_id):
+    """Retry a failed task"""
+    try:
+        success = TaskQueueService.retry_failed_task(task_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Task queued for retry'})
+        return jsonify({'success': False, 'error': 'Task cannot be retried (not failed)'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tasks/process', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_process_tasks():
+    """Manually trigger task processing (admin only)"""
+    limit = request.get_json().get('limit', 1) if request.get_json() else 1
+    
+    try:
+        results = TaskQueueService.process_pending_tasks(limit=limit)
+        return jsonify({
+            'success': True,
+            'processed': len(results),
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tasks/cleanup', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_cleanup_tasks():
+    """Cleanup old tasks (admin only)"""
+    data = request.get_json() or {}
+    days = data.get('days', 30)
+    
+    try:
+        deleted = TaskQueueService.cleanup_old_tasks(days=days)
+        return jsonify({
+            'success': True,
+            'deleted': deleted,
+            'message': f'Deleted {deleted} tasks older than {days} days'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/tasks/stats', methods=['GET'])
+@require_staff()
+def api_task_stats():
+    """Get task queue statistics"""
+    try:
+        stats = TaskQueueService.get_task_stats()
+        return jsonify({'success': True, 'stats': stats})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules', methods=['GET'])
+@require_staff()
+def api_get_schedules():
+    """Get all scheduled jobs"""
+    active_only = request.args.get('active_only', 'false').lower() == 'true'
+    
+    try:
+        schedules = SchedulerService.get_all_schedules(active_only=active_only)
+        stats = SchedulerService.get_scheduler_stats()
+        
+        return jsonify({
+            'success': True,
+            'schedules': schedules,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules', methods=['POST'])
+@require_staff(roles=['admin', 'manager'])
+def api_create_schedule():
+    """Create a new scheduled job"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+    
+    required = ['name', 'task_type', 'cron_expression']
+    for field in required:
+        if field not in data:
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
+    
+    try:
+        CronParser.parse(data['cron_expression'])
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    
+    try:
+        job = SchedulerService.create_schedule(
+            name=data['name'],
+            task_type=data['task_type'],
+            payload=data.get('payload', {}),
+            cron_expression=data['cron_expression'],
+            staff_id=session.get('staff', {}).get('id')
+        )
+        
+        return jsonify({
+            'success': True,
+            'schedule': job.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/<int:job_id>', methods=['GET'])
+@require_staff()
+def api_get_schedule(job_id):
+    """Get a specific scheduled job"""
+    try:
+        schedule = SchedulerService.get_schedule(job_id)
+        if schedule:
+            return jsonify({'success': True, 'schedule': schedule})
+        return jsonify({'success': False, 'error': 'Schedule not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/<int:job_id>', methods=['PUT'])
+@require_staff(roles=['admin', 'manager'])
+def api_update_schedule(job_id):
+    """Update a scheduled job"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+    
+    if 'cron_expression' in data:
+        try:
+            CronParser.parse(data['cron_expression'])
+        except ValueError as e:
+            return jsonify({'success': False, 'error': str(e)}), 400
+    
+    try:
+        job = SchedulerService.update_schedule(job_id, **data)
+        if job:
+            return jsonify({
+                'success': True,
+                'schedule': job.to_dict()
+            })
+        return jsonify({'success': False, 'error': 'Schedule not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/<int:job_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_delete_schedule(job_id):
+    """Delete a scheduled job (admin only)"""
+    try:
+        success = SchedulerService.delete_schedule(job_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Schedule deleted'})
+        return jsonify({'success': False, 'error': 'Schedule not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/<int:job_id>/run', methods=['POST'])
+@require_staff()
+def api_run_schedule_now(job_id):
+    """Manually run a scheduled job now"""
+    try:
+        result = SchedulerService.run_job_now(job_id)
+        if result:
+            return jsonify({
+                'success': True,
+                'result': result
+            })
+        return jsonify({'success': False, 'error': 'Schedule not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/<int:job_id>/pause', methods=['POST'])
+@require_staff()
+def api_pause_schedule(job_id):
+    """Pause a scheduled job"""
+    try:
+        success = SchedulerService.pause_schedule(job_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Schedule paused'})
+        return jsonify({'success': False, 'error': 'Schedule not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/<int:job_id>/resume', methods=['POST'])
+@require_staff()
+def api_resume_schedule(job_id):
+    """Resume a paused scheduled job"""
+    try:
+        success = SchedulerService.resume_schedule(job_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Schedule resumed'})
+        return jsonify({'success': False, 'error': 'Schedule not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/run-due', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_run_due_schedules():
+    """Manually run all due schedules (admin only)"""
+    try:
+        results = SchedulerService.run_due_jobs()
+        return jsonify({
+            'success': True,
+            'processed': len(results),
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/schedules/cron-presets', methods=['GET'])
+@require_staff()
+def api_get_cron_presets():
+    """Get common cron expression presets"""
+    return jsonify({
+        'success': True,
+        'presets': COMMON_CRON_EXPRESSIONS
+    })
+
+
+# ============================================================
+# WORKFLOW TRIGGERS ROUTES
+# ============================================================
+
+@app.route('/dashboard/workflows')
+@require_staff()
+def dashboard_workflows():
+    """Workflow triggers dashboard"""
+    try:
+        WorkflowTriggersService.initialize_default_triggers()
+        
+        triggers = WorkflowTriggersService.get_all_triggers()
+        stats = WorkflowTriggersService.get_trigger_stats()
+        recent_executions = WorkflowTriggersService.get_recent_executions(limit=20)
+        
+        return render_template('workflow_triggers.html',
+                             triggers=[t.to_dict() for t in triggers],
+                             stats=stats,
+                             recent_executions=recent_executions,
+                             trigger_types=TRIGGER_TYPES,
+                             action_types=ACTION_TYPES,
+                             staff=session.get('staff'))
+    except Exception as e:
+        print(f"Workflow dashboard error: {e}")
+        return render_template('workflow_triggers.html',
+                             triggers=[],
+                             stats={},
+                             recent_executions=[],
+                             trigger_types=TRIGGER_TYPES,
+                             action_types=ACTION_TYPES,
+                             staff=session.get('staff'))
+
+
+@app.route('/api/workflows', methods=['GET'])
+@require_staff()
+def api_get_workflows():
+    """Get all workflow triggers"""
+    try:
+        active_only = request.args.get('active_only', 'false').lower() == 'true'
+        triggers = WorkflowTriggersService.get_all_triggers(active_only=active_only)
+        stats = WorkflowTriggersService.get_trigger_stats()
+        
+        return jsonify({
+            'success': True,
+            'triggers': [t.to_dict() for t in triggers],
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows', methods=['POST'])
+@require_staff(roles=['admin', 'attorney'])
+def api_create_workflow():
+    """Create a new workflow trigger"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    required = ['name', 'trigger_type', 'actions']
+    for field in required:
+        if field not in data:
+            return jsonify({'success': False, 'error': f'{field} is required'}), 400
+    
+    try:
+        trigger = WorkflowTriggersService.create_trigger(
+            name=data['name'],
+            trigger_type=data['trigger_type'],
+            conditions=data.get('conditions', {}),
+            actions=data['actions'],
+            description=data.get('description'),
+            priority=data.get('priority', 5),
+            staff_id=session.get('staff', {}).get('id')
+        )
+        
+        return jsonify({
+            'success': True,
+            'trigger': trigger.to_dict()
+        })
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/<int:trigger_id>', methods=['GET'])
+@require_staff()
+def api_get_workflow(trigger_id):
+    """Get a specific workflow trigger"""
+    try:
+        trigger = WorkflowTriggersService.get_trigger(trigger_id)
+        if trigger:
+            return jsonify({
+                'success': True,
+                'trigger': trigger.to_dict()
+            })
+        return jsonify({'success': False, 'error': 'Trigger not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/<int:trigger_id>', methods=['PUT'])
+@require_staff(roles=['admin', 'attorney'])
+def api_update_workflow(trigger_id):
+    """Update a workflow trigger"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    try:
+        trigger = WorkflowTriggersService.update_trigger(trigger_id, **data)
+        if trigger:
+            return jsonify({
+                'success': True,
+                'trigger': trigger.to_dict()
+            })
+        return jsonify({'success': False, 'error': 'Trigger not found'}), 404
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/<int:trigger_id>', methods=['DELETE'])
+@require_staff(roles=['admin'])
+def api_delete_workflow(trigger_id):
+    """Delete a workflow trigger (admin only)"""
+    try:
+        success = WorkflowTriggersService.delete_trigger(trigger_id)
+        if success:
+            return jsonify({'success': True, 'message': 'Trigger deleted'})
+        return jsonify({'success': False, 'error': 'Trigger not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/<int:trigger_id>/toggle', methods=['POST'])
+@require_staff(roles=['admin', 'attorney'])
+def api_toggle_workflow(trigger_id):
+    """Toggle a workflow trigger's active state"""
+    try:
+        is_active = WorkflowTriggersService.toggle_trigger(trigger_id)
+        if is_active is not None:
+            return jsonify({
+                'success': True,
+                'is_active': is_active,
+                'message': f'Trigger {"enabled" if is_active else "disabled"}'
+            })
+        return jsonify({'success': False, 'error': 'Trigger not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/<int:trigger_id>/test', methods=['POST'])
+@require_staff()
+def api_test_workflow(trigger_id):
+    """Test a trigger with sample data"""
+    data = request.get_json() or {}
+    sample_event_data = data.get('event_data', {
+        'client_id': 1,
+        'client_name': 'Test Client',
+        'email': 'test@example.com',
+        'phone': '555-0100'
+    })
+    
+    try:
+        result = WorkflowTriggersService.test_trigger(trigger_id, sample_event_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/<int:trigger_id>/history', methods=['GET'])
+@require_staff()
+def api_get_workflow_history(trigger_id):
+    """Get execution history for a trigger"""
+    limit = int(request.args.get('limit', 50))
+    
+    try:
+        history = WorkflowTriggersService.get_trigger_history(trigger_id, limit=limit)
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/executions', methods=['GET'])
+@require_staff()
+def api_get_workflow_executions():
+    """Get all recent workflow executions"""
+    limit = int(request.args.get('limit', 100))
+    
+    try:
+        executions = WorkflowTriggersService.get_recent_executions(limit=limit)
+        return jsonify({
+            'success': True,
+            'executions': executions
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/stats', methods=['GET'])
+@require_staff()
+def api_get_workflow_stats():
+    """Get workflow trigger statistics"""
+    try:
+        stats = WorkflowTriggersService.get_trigger_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/evaluate', methods=['POST'])
+@require_staff(roles=['admin', 'attorney'])
+def api_evaluate_workflows():
+    """Manually trigger event evaluation"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    if 'event_type' not in data:
+        return jsonify({'success': False, 'error': 'event_type is required'}), 400
+    
+    try:
+        results = WorkflowTriggersService.evaluate_triggers(
+            event_type=data['event_type'],
+            event_data=data.get('event_data', {})
+        )
+        
+        return jsonify({
+            'success': True,
+            'triggered_count': len(results),
+            'results': results
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/workflows/types', methods=['GET'])
+@require_staff()
+def api_get_workflow_types():
+    """Get available trigger and action types"""
+    return jsonify({
+        'success': True,
+        'trigger_types': TRIGGER_TYPES,
+        'action_types': ACTION_TYPES
+    })
+
+
+# ============================================================
+# ML INSIGHTS & OUTCOME LEARNING ROUTES
+# ============================================================
+from services import ml_learning_service
+from services import pattern_analyzer_service
+
+
+@app.route('/dashboard/ml-insights')
+@require_staff()
+def ml_insights_dashboard():
+    """ML Insights Dashboard - Outcome Learning & Pattern Analysis"""
+    try:
+        learning_stats = ml_learning_service.get_learning_stats()
+        success_rates = ml_learning_service.calculate_success_rate()
+        settlement_stats = ml_learning_service.get_average_settlement()
+        seasonal_trends = pattern_analyzer_service.detect_seasonal_trends()
+        winning_strategies = pattern_analyzer_service.identify_winning_strategies()
+        
+        return render_template('ml_insights.html',
+                             learning_stats=learning_stats,
+                             success_rates=success_rates,
+                             settlement_stats=settlement_stats,
+                             seasonal_trends=seasonal_trends,
+                             winning_strategies=winning_strategies)
+    except Exception as e:
+        print(f"ML Insights error: {e}")
+        return render_template('ml_insights.html',
+                             learning_stats={},
+                             success_rates={},
+                             settlement_stats={},
+                             seasonal_trends={},
+                             winning_strategies={})
+
+
+@app.route('/api/ml/predictions/<int:client_id>')
+@require_staff()
+def api_ml_predictions(client_id):
+    """Get ML predictions for a specific client"""
+    try:
+        outcome_prediction = ml_learning_service.predict_outcome(client_id)
+        settlement_prediction = ml_learning_service.predict_settlement_range(client_id)
+        resolution_estimate = ml_learning_service.get_resolution_time_estimate()
+        
+        features = ml_learning_service.MLLearningService().generate_prediction_features(client_id)
+        
+        similar_cases = ml_learning_service.get_similar_cases(
+            violation_types=features.get('violation_types', []),
+            limit=5
+        )
+        
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'predictions': {
+                'outcome': outcome_prediction,
+                'settlement': settlement_prediction,
+                'resolution_time': resolution_estimate
+            },
+            'features': features,
+            'similar_cases': similar_cases
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/outcomes', methods=['POST'])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_ml_record_outcome():
+    """Record a new case outcome for ML training"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+    
+    if 'client_id' not in data:
+        return jsonify({'success': False, 'error': 'client_id is required'}), 400
+    
+    if 'final_outcome' not in data:
+        return jsonify({'success': False, 'error': 'final_outcome is required'}), 400
+    
+    valid_outcomes = ['won', 'lost', 'settled', 'dismissed']
+    if data['final_outcome'] not in valid_outcomes:
+        return jsonify({
+            'success': False, 
+            'error': f'final_outcome must be one of: {valid_outcomes}'
+        }), 400
+    
+    try:
+        result = ml_learning_service.record_outcome(
+            client_id=data['client_id'],
+            outcome_data=data
+        )
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/success-rates')
+@require_staff()
+def api_ml_success_rates():
+    """Get success rate analytics with optional filters"""
+    filters = {}
+    
+    if request.args.get('furnisher_id'):
+        filters['furnisher_id'] = int(request.args.get('furnisher_id'))
+    
+    if request.args.get('attorney_id'):
+        filters['attorney_id'] = int(request.args.get('attorney_id'))
+    
+    if request.args.get('date_from'):
+        filters['date_from'] = request.args.get('date_from')
+    
+    if request.args.get('date_to'):
+        filters['date_to'] = request.args.get('date_to')
+    
+    try:
+        success_rates = ml_learning_service.calculate_success_rate(filters if filters else None)
+        settlement_stats = ml_learning_service.get_average_settlement(filters if filters else None)
+        
+        return jsonify({
+            'success': True,
+            'filters_applied': filters,
+            'success_rates': success_rates,
+            'settlement_stats': settlement_stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/patterns')
+@require_staff()
+def api_ml_patterns():
+    """Get identified patterns and insights"""
+    filters = {}
+    
+    if request.args.get('furnisher_id'):
+        filters['furnisher_id'] = int(request.args.get('furnisher_id'))
+    
+    if request.args.get('pattern_type'):
+        filters['pattern_type'] = request.args.get('pattern_type')
+    
+    if request.args.get('violation_type'):
+        filters['violation_type'] = request.args.get('violation_type')
+    
+    try:
+        patterns = pattern_analyzer_service.get_pattern_insights(filters if filters else None)
+        seasonal = pattern_analyzer_service.detect_seasonal_trends()
+        strategies = pattern_analyzer_service.identify_winning_strategies(
+            filters.get('violation_type')
+        )
+        
+        return jsonify({
+            'success': True,
+            'filters_applied': filters,
+            'patterns': patterns,
+            'seasonal_trends': seasonal,
+            'winning_strategies': strategies
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/model-stats')
+@require_staff()
+def api_ml_model_stats():
+    """Get ML model performance statistics"""
+    try:
+        learning_stats = ml_learning_service.get_learning_stats()
+        accuracy = ml_learning_service.MLLearningService().update_model_accuracy()
+        
+        return jsonify({
+            'success': True,
+            'learning_stats': learning_stats,
+            'accuracy_report': accuracy
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/furnisher-analysis/<int:furnisher_id>')
+@require_staff()
+def api_ml_furnisher_analysis(furnisher_id):
+    """Get detailed analysis for a specific furnisher"""
+    try:
+        analysis = pattern_analyzer_service.analyze_furnisher_behavior(furnisher_id=furnisher_id)
+        return jsonify({
+            'success': True,
+            'analysis': analysis
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/attorney-performance')
+@require_staff()
+def api_ml_attorney_performance():
+    """Get attorney performance analysis"""
+    try:
+        performance = pattern_analyzer_service.find_attorney_strengths()
+        return jsonify({
+            'success': True,
+            'performance': performance
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/similar-cases')
+@require_staff()
+def api_ml_similar_cases():
+    """Find similar historical cases"""
+    violation_types = request.args.getlist('violation_types')
+    furnisher_id = request.args.get('furnisher_id', type=int)
+    limit = request.args.get('limit', 10, type=int)
+    
+    try:
+        similar = ml_learning_service.get_similar_cases(
+            violation_types=violation_types if violation_types else None,
+            furnisher_id=furnisher_id,
+            limit=min(limit, 50)
+        )
+        return jsonify({
+            'success': True,
+            'similar_cases': similar,
+            'count': len(similar)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/ml/refresh-patterns', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_ml_refresh_patterns():
+    """Refresh all pattern analysis (admin only)"""
+    try:
+        service = pattern_analyzer_service.PatternAnalyzerService()
+        result = service.refresh_all_patterns()
+        return jsonify({
+            'success': True,
+            'result': result
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
