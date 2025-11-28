@@ -358,6 +358,16 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 - **Priority:** Low for litigation focus, Medium if scaling with outsourced VAs
 - **Inspiration:** creditmoneymachine.com/virtual-assistant-system
 
+### Mobile-Friendly Responsive Design
+- **Dashboard Responsive Layout** - Collapsible sidebar, hamburger menu for mobile
+- **Touch-Friendly UI** - Larger tap targets, mobile-optimized buttons
+- **Data Tables** - Horizontal scroll or card view for mobile screens
+- **Client Portal Mobile** - Optimized for clients checking status on phones
+- **Forms Optimization** - Touch-friendly inputs, proper keyboard types
+- **Bottom Navigation** - Mobile-friendly navigation pattern
+- **PWA Enhancements** - Better offline support and app-like experience
+- **Priority:** Medium - implement after desktop version is fully tested with real clients
+
 ---
 
 *Document Last Updated: November 2025*
