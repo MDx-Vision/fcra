@@ -6,34 +6,13 @@
     <title>Furnisher Intelligence Database - FCRA Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        {% include 'includes/dashboard_sidebar_styles.html' %}
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f0f2f5;
             min-height: 100vh;
         }
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 260px;
-            height: 100vh;
-            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-            padding: 20px;
-            overflow-y: auto;
-        }
-        .logo { display: flex; align-items: center; color: white; font-size: 20px; font-weight: 700; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 30px; }
-        .logo img { height: 40px; margin-right: 10px; }
-        .logo span { color: #84cc16; }
-        .nav-section { margin-bottom: 25px; }
-        .nav-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; padding: 0 15px; margin-bottom: 10px; }
-        .nav-item {
-            display: flex; align-items: center; padding: 12px 15px; color: #94a3b8;
-            text-decoration: none; border-radius: 8px; margin-bottom: 5px; transition: all 0.2s;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
-        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
         .main-content { margin-left: 260px; padding: 30px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .header h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; }
@@ -130,31 +109,8 @@
     </style>
 </head>
 <body>
-    <nav class="sidebar">
-        <div class="logo"><img src="/static/images/logo.png" alt="Brightpath Ascend"><span>Brightpath Ascend</span></div>
-        <div class="nav-section">
-            <div class="nav-section-title">Main</div>
-            <a href="/dashboard" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                Dashboard
-            </a>
-            <a href="/dashboard/clients" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Cases
-            </a>
-            <a href="/dashboard/settlements" class="nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Settlements
-            </a>
-        </div>
-        <div class="nav-section">
-            <div class="nav-section-title">Intelligence</div>
-            <a href="/dashboard/furnishers" class="nav-item active">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/></svg>
-                Furnisher Database
-            </a>
-        </div>
-    </nav>
+    {% set active_page = 'furnishers' %}
+    {% include 'includes/dashboard_sidebar.html' %}
     
     <main class="main-content">
         <div class="header">
