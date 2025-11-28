@@ -14417,6 +14417,461 @@ def api_populate_case_law():
     return jsonify({'success': True, **result})
 
 
+# ============================================================================
+# POWER FEATURES: INSTANT VIOLATION PREVIEW (Lead Generation)
+# ============================================================================
+
+@app.route('/preview')
+def instant_preview_page():
+    """Public landing page for instant credit report violation preview"""
+    return render_template('instant_preview.html')
+
+
+@app.route('/api/instant-preview', methods=['POST'])
+def api_instant_preview():
+    """
+    Fast AI-powered credit report preview - designed for lead conversion.
+    Returns violation count, estimated value, and top violations in 60 seconds.
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+        
+        file = request.files['file']
+        if not file.filename:
+            return jsonify({'success': False, 'error': 'Empty file'}), 400
+        
+        file_ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        
+        if file_ext == 'pdf':
+            try:
+                import pdfplumber
+                pdf_bytes = io.BytesIO(file.read())
+                text_content = ""
+                with pdfplumber.open(pdf_bytes) as pdf:
+                    for page in pdf.pages[:10]:
+                        text_content += page.extract_text() or ""
+            except Exception as pdf_err:
+                return jsonify({'success': False, 'error': f'PDF parsing failed: {str(pdf_err)}'}), 400
+        else:
+            text_content = file.read().decode('utf-8', errors='ignore')
+        
+        if len(text_content) < 100:
+            return jsonify({'success': False, 'error': 'Credit report appears empty or too short'}), 400
+        
+        text_content = text_content[:50000]
+        
+        preview_prompt = """You are an FCRA expert analyzing a credit report for potential violations.
+        
+Analyze this credit report and identify the TOP 5-10 most actionable FCRA violations.
+Focus on HIGH-VALUE violations that would be most likely to succeed in litigation.
+
+RETURN ONLY VALID JSON in this exact format:
+{
+    "violation_count": <total number of violations found>,
+    "estimated_value_low": <minimum total statutory damages>,
+    "estimated_value_high": <maximum total statutory damages>,
+    "case_strength": "Strong" | "Moderate" | "Weak",
+    "violations": [
+        {
+            "type": "<violation type, e.g., 'Inaccurate Balance Reporting'>",
+            "bureau": "<Equifax, Experian, or TransUnion>",
+            "fcra_section": "<e.g., '§1681e(b)'>",
+            "severity": "high" | "medium" | "low",
+            "value_min": <min damages for this violation>,
+            "value_max": <max damages for this violation>,
+            "brief_description": "<1 sentence description>"
+        }
+    ]
+}
+
+Common high-value violations to look for:
+- Mixed files (wrong person's info) - §1681e(b) - $1,000-$5,000 each
+- Inaccurate account status - §1681e(b) - $500-$2,000 each
+- Outdated negative information - §1681c - $500-$1,500 each
+- Duplicate accounts - §1681e(b) - $300-$1,000 each
+- Wrong balance/credit limit - §1681e(b) - $200-$800 each
+- Failure to update after dispute - §1681i - $1,000-$3,000 each
+
+If you cannot identify clear violations, return violation_count: 0 with empty violations array.
+
+CREDIT REPORT TO ANALYZE:
+"""
+        
+        if client is None:
+            return jsonify({'success': False, 'error': 'AI service unavailable'}), 503
+        
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2000,
+            temperature=0,
+            messages=[{
+                "role": "user",
+                "content": preview_prompt + text_content
+            }]
+        )
+        
+        response_text = response.content[0].text.strip()
+        
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        if response_text.startswith("```"):
+            response_text = response_text[3:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+        response_text = response_text.strip()
+        
+        try:
+            result = json.loads(response_text)
+        except json.JSONDecodeError:
+            import re
+            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            if json_match:
+                try:
+                    result = json.loads(json_match.group())
+                except json.JSONDecodeError:
+                    result = {
+                        "violation_count": 0,
+                        "estimated_value_low": 0,
+                        "estimated_value_high": 0,
+                        "case_strength": "Unknown",
+                        "violations": []
+                    }
+            else:
+                result = {
+                    "violation_count": 0,
+                    "estimated_value_low": 0,
+                    "estimated_value_high": 0,
+                    "case_strength": "Unknown",
+                    "violations": []
+                }
+        
+        if not isinstance(result.get('violations'), list):
+            result['violations'] = []
+        if not isinstance(result.get('violation_count'), (int, float)):
+            result['violation_count'] = len(result.get('violations', []))
+        
+        try:
+            val_low = int(result.get('estimated_value_low', 0) or 0)
+            val_high = int(result.get('estimated_value_high', 0) or 0)
+        except (ValueError, TypeError):
+            val_low = 0
+            val_high = 0
+        estimated_avg = (val_low + val_high) // 2
+        
+        def safe_int(val, default):
+            try:
+                return int(val) if val else default
+            except (ValueError, TypeError):
+                return default
+        
+        safe_violations = []
+        for v in result.get('violations', [])[:10]:
+            if isinstance(v, dict):
+                safe_violations.append({
+                    'type': str(v.get('type', 'Unknown'))[:100],
+                    'bureau': str(v.get('bureau', 'Unknown'))[:50],
+                    'fcra_section': str(v.get('fcra_section', 'N/A'))[:20],
+                    'severity': str(v.get('severity', 'medium'))[:10],
+                    'value_min': safe_int(v.get('value_min'), 100),
+                    'value_max': safe_int(v.get('value_max'), 1000),
+                    'brief_description': str(v.get('brief_description', ''))[:200]
+                })
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'violation_count': int(result.get('violation_count', 0) or 0),
+                'estimated_value': estimated_avg,
+                'case_strength': str(result.get('case_strength', 'Unknown'))[:20],
+                'violations': safe_violations
+            }
+        })
+        
+    except Exception as e:
+        print(f"Instant preview error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Analysis failed. Please try again.'}), 500
+
+
+# ============================================================================
+# POWER FEATURES: AI SETTLEMENT DEMAND LETTER GENERATOR
+# ============================================================================
+
+@app.route('/dashboard/demand-generator')
+@require_staff()
+def demand_generator_page():
+    """Dashboard page for generating AI-powered settlement demand letters"""
+    db = get_db()
+    try:
+        clients = db.query(Client).order_by(Client.created_at.desc()).limit(100).all()
+        return render_template('demand_generator.html', clients=clients)
+    finally:
+        db.close()
+
+
+@app.route('/api/generate-demand/<int:client_id>', methods=['POST'])
+@require_staff()
+def api_generate_demand_letter(client_id):
+    """Generate AI-powered settlement demand letter for a client"""
+    db = get_db()
+    try:
+        client_rec = db.query(Client).filter_by(id=client_id).first()
+        if not client_rec:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        analysis = db.query(Analysis).filter_by(client_id=client_id).order_by(Analysis.created_at.desc()).first()
+        if not analysis:
+            return jsonify({'success': False, 'error': 'No analysis found for this client'}), 404
+        
+        violations = db.query(Violation).filter_by(analysis_id=analysis.id).all()
+        damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
+        
+        data = request.json or {}
+        demand_target = data.get('target', 'bureaus')
+        demand_amount = data.get('amount')
+        deadline_days = data.get('deadline_days', 30)
+        
+        if not demand_amount and damages:
+            demand_amount = damages.settlement_target or damages.total_exposure
+        elif not demand_amount:
+            demand_amount = sum(v.statutory_damages_max or 1000 for v in violations)
+        
+        violation_summary = []
+        for v in violations:
+            violation_summary.append({
+                'bureau': v.bureau,
+                'account': v.account_name,
+                'section': v.fcra_section,
+                'type': v.violation_type,
+                'is_willful': v.is_willful,
+                'damages_max': v.statutory_damages_max
+            })
+        
+        demand_prompt = f"""You are an FCRA litigation attorney drafting a formal settlement demand letter.
+
+CLIENT: {client_rec.name}
+TARGET: {demand_target.upper()} (Equifax, Experian, TransUnion)
+DEMAND AMOUNT: ${demand_amount:,.2f}
+RESPONSE DEADLINE: {deadline_days} days
+
+VIOLATIONS IDENTIFIED:
+{json.dumps(violation_summary, indent=2)}
+
+DAMAGES CALCULATION:
+- Total Statutory Damages: ${damages.statutory_damages_total if damages else 'N/A'}
+- Actual Damages: ${damages.actual_damages_total if damages else 'N/A'}
+- Punitive Potential: ${damages.punitive_damages_amount if damages else 'N/A'}
+- Attorney Fees Estimate: ${(demand_amount * 0.3):.2f}
+
+CASE STRENGTH: {case_score.case_strength if case_score else 'Strong'} (Score: {case_score.total_score if case_score else 'N/A'}/10)
+
+Generate a professional, aggressive but legally sound settlement demand letter that:
+1. Opens with clear identification of the claim and demand
+2. Summarizes the most egregious violations with FCRA section citations
+3. Details the damages calculation methodology
+4. Cites relevant case law (Spokeo v. Robins, Safeco v. Burr, etc.)
+5. States the settlement demand and deadline clearly
+6. Warns of litigation if demand is not met
+7. Includes all required legal disclaimers
+
+Format the letter professionally with proper headers, spacing, and signature block.
+Use assertive but professional language befitting FCRA consumer protection litigation.
+"""
+        
+        if client is None:
+            return jsonify({'success': False, 'error': 'AI service unavailable'}), 503
+        
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=4000,
+            temperature=0.3,
+            messages=[{
+                "role": "user",
+                "content": demand_prompt
+            }]
+        )
+        
+        letter_content = response.content[0].text.strip()
+        
+        from reportlab.lib.pagesizes import letter
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import inch
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"demand_letter_{client_id}_{timestamp}.pdf"
+        filepath = f"static/generated_letters/{filename}"
+        
+        doc = SimpleDocTemplate(filepath, pagesize=letter,
+                                leftMargin=1*inch, rightMargin=1*inch,
+                                topMargin=1*inch, bottomMargin=1*inch)
+        
+        styles = getSampleStyleSheet()
+        body_style = ParagraphStyle('BodyStyle', parent=styles['Normal'],
+                                    fontSize=11, leading=14, spaceAfter=12)
+        
+        story = []
+        for paragraph in letter_content.split('\n\n'):
+            if paragraph.strip():
+                clean_para = paragraph.replace('\n', ' ').strip()
+                story.append(Paragraph(clean_para, body_style))
+                story.append(Spacer(1, 6))
+        
+        doc.build(story)
+        
+        return jsonify({
+            'success': True,
+            'letter_content': letter_content,
+            'pdf_path': f'/static/generated_letters/{filename}',
+            'demand_amount': demand_amount,
+            'deadline_days': deadline_days,
+            'violation_count': len(violations)
+        })
+        
+    except Exception as e:
+        print(f"Demand letter generation error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================================
+# POWER FEATURES: CLIENT ROI DASHBOARD
+# ============================================================================
+
+@app.route('/api/client/<int:client_id>/roi-summary')
+def api_client_roi_summary(client_id):
+    """Get comprehensive ROI summary for client portal display"""
+    db = get_db()
+    try:
+        client_rec = db.query(Client).filter_by(id=client_id).first()
+        if not client_rec:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        analysis = db.query(Analysis).filter_by(client_id=client_id).order_by(Analysis.created_at.desc()).first()
+        if not analysis:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'has_analysis': False,
+                    'message': 'No analysis available yet'
+                }
+            })
+        
+        violations = db.query(Violation).filter_by(analysis_id=analysis.id).all()
+        damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
+        
+        triage = db.query(CaseTriage).filter_by(client_id=client_id).order_by(CaseTriage.created_at.desc()).first()
+        
+        cra_responses = db.query(CRAResponse).filter_by(client_id=client_id).all()
+        items_deleted = sum(r.items_deleted or 0 for r in cra_responses)
+        items_verified = sum(r.items_verified or 0 for r in cra_responses)
+        
+        violation_breakdown = {
+            'high_value': len([v for v in violations if v.statutory_damages_max and v.statutory_damages_max >= 1000]),
+            'medium_value': len([v for v in violations if v.statutory_damages_max and 500 <= v.statutory_damages_max < 1000]),
+            'low_value': len([v for v in violations if not v.statutory_damages_max or v.statutory_damages_max < 500]),
+            'willful': len([v for v in violations if v.is_willful])
+        }
+        
+        avg_fcra_settlement = 7500
+        
+        total_exposure = 0
+        if damages and damages.total_exposure:
+            total_exposure = damages.total_exposure
+        elif violations:
+            total_exposure = sum((v.statutory_damages_max or 500) for v in violations)
+        else:
+            total_exposure = 5000
+        
+        if damages and damages.settlement_target:
+            settlement_target = damages.settlement_target
+        else:
+            settlement_target = max(int(total_exposure * 0.6), 1000)
+        
+        conservative_estimate = max(int(settlement_target * 0.4), 500)
+        aggressive_estimate = int(total_exposure * 1.2)
+        
+        if case_score and case_score.settlement_probability is not None:
+            settlement_probability = case_score.settlement_probability
+            if settlement_probability > 1:
+                settlement_probability = settlement_probability / 100
+        else:
+            settlement_probability = 0.6
+        
+        expected_value = max(int(settlement_target * settlement_probability), 500)
+        
+        dispute_round = 1
+        if client_rec.current_dispute_round:
+            dispute_round = client_rec.current_dispute_round
+        if dispute_round == 1:
+            estimated_weeks = "8-12 weeks"
+            timeline_stage = "Initial Dispute"
+        elif dispute_round == 2:
+            estimated_weeks = "6-10 weeks"
+            timeline_stage = "MOV Demand"
+        elif dispute_round == 3:
+            estimated_weeks = "4-8 weeks"
+            timeline_stage = "Regulatory Escalation"
+        else:
+            estimated_weeks = "2-6 weeks"
+            timeline_stage = "Pre-Litigation"
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'has_analysis': True,
+                'client_name': client_rec.name,
+                'analysis_date': analysis.created_at.strftime('%Y-%m-%d'),
+                'dispute_round': dispute_round,
+                'timeline_stage': timeline_stage,
+                'estimated_resolution': estimated_weeks,
+                
+                'violations': {
+                    'total': len(violations),
+                    'breakdown': violation_breakdown
+                },
+                
+                'financials': {
+                    'total_exposure': int(total_exposure) if total_exposure else 5000,
+                    'settlement_target': int(settlement_target) if settlement_target else 3000,
+                    'conservative_estimate': int(conservative_estimate) if conservative_estimate else 1500,
+                    'aggressive_estimate': int(aggressive_estimate) if aggressive_estimate else 6000,
+                    'expected_value': int(expected_value) if expected_value else 2500,
+                    'avg_fcra_settlement': avg_fcra_settlement,
+                    'your_case_vs_average': round((settlement_target / avg_fcra_settlement) * 100) if avg_fcra_settlement > 0 else 100
+                },
+                
+                'case_metrics': {
+                    'case_strength': case_score.case_strength if case_score else 'Unknown',
+                    'total_score': case_score.total_score if case_score else 0,
+                    'settlement_probability': int(settlement_probability * 100),
+                    'priority': triage.priority_level if triage else 'standard',
+                    'star_rating': triage.star_rating if triage else 3
+                },
+                
+                'progress': {
+                    'items_deleted': items_deleted,
+                    'items_verified': items_verified,
+                    'disputes_sent': len(cra_responses),
+                    'success_rate': round((items_deleted / (items_deleted + items_verified) * 100)) if (items_deleted + items_verified) > 0 else 0
+                }
+            }
+        })
+        
+    except Exception as e:
+        print(f"ROI summary error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 # 🚨 GLOBAL ERROR HANDLER: Always return JSON, never HTML
 @app.errorhandler(500)
 def handle_500_error(error):

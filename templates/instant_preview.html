@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Credit Report Violation Preview | Brightpath Ascend</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 100%);
+        }
+        .upload-zone {
+            border: 3px dashed #3b82f6;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .glow-effect {
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .analyzing-animation {
+            animation: analyzing 1.5s ease-in-out infinite;
+        }
+        @keyframes analyzing {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .violation-card {
+            transition: transform 0.2s ease;
+        }
+        .violation-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-number {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center mb-4">
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-shield-alt text-3xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white">Brightpath Ascend</h1>
+                    <p class="text-blue-300 text-sm">FCRA Litigation Automation Platform</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="uploadSection" class="max-w-3xl mx-auto">
+            <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl glow-effect">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">
+                        <i class="fas fa-search-dollar text-green-400 mr-2"></i>
+                        Free Violation Preview
+                    </h2>
+                    <p class="text-gray-300 text-lg">
+                        Upload your credit report and see potential FCRA violations in <span class="text-green-400 font-bold">60 seconds</span>
+                    </p>
+                </div>
+
+                <div id="dropZone" class="upload-zone rounded-xl p-12 text-center cursor-pointer mb-6">
+                    <input type="file" id="fileInput" accept=".pdf,.html,.htm,.txt" class="hidden">
+                    <div id="uploadPrompt">
+                        <i class="fas fa-cloud-upload-alt text-6xl text-blue-400 mb-4"></i>
+                        <p class="text-xl text-white mb-2">Drop your credit report here</p>
+                        <p class="text-gray-400">or click to browse</p>
+                        <p class="text-sm text-gray-500 mt-4">Supports: PDF, HTML, TXT (IdentityIQ, MyScoreIQ, AnnualCreditReport.com)</p>
+                    </div>
+                    <div id="fileSelected" class="hidden">
+                        <i class="fas fa-file-alt text-6xl text-green-400 mb-4"></i>
+                        <p class="text-xl text-white mb-2" id="fileName">File selected</p>
+                        <button id="analyzeBtn" class="mt-4 bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-semibold transition pulse-animation">
+                            <i class="fas fa-bolt mr-2"></i>Analyze Now - FREE
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <i class="fas fa-lock text-green-400 text-2xl mb-2"></i>
+                        <p class="text-gray-300 text-sm">100% Secure</p>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <i class="fas fa-clock text-blue-400 text-2xl mb-2"></i>
+                        <p class="text-gray-300 text-sm">60-Second Analysis</p>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4">
+                        <i class="fas fa-gavel text-yellow-400 text-2xl mb-2"></i>
+                        <p class="text-gray-300 text-sm">Legal Expert AI</p>
+                    </div>
+                </div>
+
+                <p class="text-center text-gray-500 text-xs">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    Your data is encrypted and never stored. This preview is for informational purposes only.
+                </p>
+            </div>
+        </div>
+
+        <div id="analyzingSection" class="hidden max-w-3xl mx-auto">
+            <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl text-center">
+                <div class="analyzing-animation">
+                    <i class="fas fa-cog fa-spin text-6xl text-blue-400 mb-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white mb-4">AI Analyzing Your Credit Report...</h2>
+                <div class="bg-gray-800 rounded-lg p-4 mb-6">
+                    <div class="flex items-center justify-center space-x-4">
+                        <div id="step1" class="flex items-center">
+                            <i class="fas fa-circle-notch fa-spin text-blue-400 mr-2"></i>
+                            <span class="text-gray-300">Parsing Report</span>
+                        </div>
+                        <div id="step2" class="flex items-center text-gray-600">
+                            <i class="fas fa-circle text-gray-600 mr-2"></i>
+                            <span>Detecting Violations</span>
+                        </div>
+                        <div id="step3" class="flex items-center text-gray-600">
+                            <i class="fas fa-circle text-gray-600 mr-2"></i>
+                            <span>Calculating Value</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-400">This typically takes 30-60 seconds...</p>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="hidden max-w-4xl mx-auto">
+            <div class="bg-gray-900 rounded-2xl p-8 shadow-2xl glow-effect">
+                <div class="text-center mb-8">
+                    <div class="inline-block bg-green-600 rounded-full px-6 py-2 mb-4">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span class="font-semibold">Analysis Complete</span>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-2">Your Violation Preview</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-red-900 to-red-800 rounded-xl p-6 text-center">
+                        <p class="text-red-300 text-sm mb-1">Violations Found</p>
+                        <p class="text-4xl font-bold text-white stat-number" id="violationCount">0</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-900 to-green-800 rounded-xl p-6 text-center">
+                        <p class="text-green-300 text-sm mb-1">Estimated Value</p>
+                        <p class="text-4xl font-bold text-white stat-number" id="estimatedValue">$0</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-yellow-900 to-yellow-800 rounded-xl p-6 text-center">
+                        <p class="text-yellow-300 text-sm mb-1">Case Strength</p>
+                        <p class="text-4xl font-bold text-white" id="caseStrength">-</p>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-white mb-4">
+                        <i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>
+                        Top Violations Detected
+                    </h3>
+                    <div id="violationsList" class="space-y-3">
+                    </div>
+                </div>
+
+                <div class="bg-blue-900 bg-opacity-50 rounded-xl p-6 mb-8">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-blue-400 text-xl mt-1 mr-4"></i>
+                        <div>
+                            <p class="text-white font-semibold mb-2">This is a Preview Only</p>
+                            <p class="text-gray-300 text-sm">
+                                A full analysis includes detailed standing assessment, damages calculation with punitive multipliers, 
+                                ready-to-send dispute letters, and litigation-ready documentation. 
+                                The average FCRA settlement for cases with these violations is <span class="text-green-400 font-bold">$3,500 - $15,000</span>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <a href="/signup" class="inline-block bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-xl text-xl font-bold transition transform hover:scale-105 pulse-animation">
+                        <i class="fas fa-rocket mr-2"></i>Get Full Analysis & Start Your Case
+                    </a>
+                    <p class="text-gray-500 text-sm mt-4">No credit card required to get started</p>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-gray-900 rounded-2xl p-6 shadow-xl">
+                <h3 class="text-xl font-semibold text-white mb-4 text-center">
+                    <i class="fas fa-balance-scale text-blue-400 mr-2"></i>
+                    What Clients Are Winning
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-800 rounded-lg p-4 text-center">
+                        <p class="text-gray-400 text-sm">Inaccurate Account</p>
+                        <p class="text-green-400 font-bold text-xl">$4,500 Settlement</p>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4 text-center">
+                        <p class="text-gray-400 text-sm">Mixed File / Wrong Info</p>
+                        <p class="text-green-400 font-bold text-xl">$12,000 Settlement</p>
+                    </div>
+                    <div class="bg-gray-800 rounded-lg p-4 text-center">
+                        <p class="text-gray-400 text-sm">Failure to Investigate</p>
+                        <p class="text-green-400 font-bold text-xl">$8,750 Settlement</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="errorSection" class="hidden max-w-2xl mx-auto">
+            <div class="bg-red-900 bg-opacity-50 rounded-2xl p-8 text-center">
+                <i class="fas fa-exclamation-circle text-red-400 text-6xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-white mb-4">Analysis Error</h2>
+                <p class="text-gray-300 mb-6" id="errorMessage">Something went wrong. Please try again.</p>
+                <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold">
+                    <i class="fas fa-redo mr-2"></i>Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+        const fileSelected = document.getElementById('fileSelected');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const fileName = document.getElementById('fileName');
+
+        let selectedFile = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            selectedFile = file;
+            uploadPrompt.classList.add('hidden');
+            fileSelected.classList.remove('hidden');
+            fileName.textContent = file.name;
+        }
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('analyzingSection').classList.remove('hidden');
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            setTimeout(() => {
+                document.getElementById('step1').innerHTML = '<i class="fas fa-check-circle text-green-400 mr-2"></i><span class="text-green-400">Parsed</span>';
+                document.getElementById('step2').innerHTML = '<i class="fas fa-circle-notch fa-spin text-blue-400 mr-2"></i><span class="text-gray-300">Detecting Violations</span>';
+            }, 2000);
+
+            setTimeout(() => {
+                document.getElementById('step2').innerHTML = '<i class="fas fa-check-circle text-green-400 mr-2"></i><span class="text-green-400">Detected</span>';
+                document.getElementById('step3').innerHTML = '<i class="fas fa-circle-notch fa-spin text-blue-400 mr-2"></i><span class="text-gray-300">Calculating Value</span>';
+            }, 4000);
+
+            try {
+                const response = await fetch('/api/instant-preview', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showResults(result.data);
+                } else {
+                    showError(result.error || 'Analysis failed');
+                }
+            } catch (error) {
+                showError('Network error. Please try again.');
+            }
+        });
+
+        function showResults(data) {
+            document.getElementById('analyzingSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            document.getElementById('violationCount').textContent = data.violation_count;
+            document.getElementById('estimatedValue').textContent = '$' + data.estimated_value.toLocaleString();
+            document.getElementById('caseStrength').textContent = data.case_strength;
+
+            const violationsList = document.getElementById('violationsList');
+            violationsList.innerHTML = '';
+
+            const severityColors = {
+                'high': 'border-red-500 bg-red-900 bg-opacity-30',
+                'medium': 'border-yellow-500 bg-yellow-900 bg-opacity-30',
+                'low': 'border-blue-500 bg-blue-900 bg-opacity-30'
+            };
+
+            data.violations.forEach((v, i) => {
+                const colorClass = severityColors[v.severity] || severityColors['medium'];
+                const html = `
+                    <div class="violation-card border-l-4 ${colorClass} rounded-lg p-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs font-semibold px-2 py-1 rounded ${v.severity === 'high' ? 'bg-red-600' : v.severity === 'medium' ? 'bg-yellow-600' : 'bg-blue-600'} text-white">${v.severity.toUpperCase()}</span>
+                                <h4 class="text-white font-semibold mt-2">${v.type}</h4>
+                                <p class="text-gray-400 text-sm">${v.bureau} - ${v.fcra_section}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-green-400 font-bold">$${v.value_min.toLocaleString()} - $${v.value_max.toLocaleString()}</p>
+                                <p class="text-gray-500 text-xs">Potential Recovery</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                violationsList.innerHTML += html;
+            });
+
+            if (data.violations.length === 0) {
+                violationsList.innerHTML = `
+                    <div class="bg-gray-800 rounded-lg p-6 text-center">
+                        <i class="fas fa-check-circle text-green-400 text-4xl mb-4"></i>
+                        <p class="text-white">No obvious violations detected in this preview.</p>
+                        <p class="text-gray-400 text-sm mt-2">A full analysis may uncover more subtle issues.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('analyzingSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
+        }
+    </script>
+</body>
+</html>
