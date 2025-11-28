@@ -337,4 +337,16 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 
 ---
 
+## FUTURE ENHANCEMENTS (BACKLOG)
+
+### Client Education Center with Interactive FCRA Litigation Map
+- **Interactive US Map** - State-by-state litigation guide
+- **State-Specific Data** - FCRA case law, average settlements, statute of limitations
+- **AG Complaint Links** - Direct links to state Attorney General complaint forms
+- **Notable Victories** - State-specific case outcomes
+- **Personalized Experience** - Show clients their state's specific protections and relevant case law
+- **Inspiration:** creditmoneymachine.com/credit-repair-law-all-states (but tailored for litigation clients)
+
+---
+
 *Document Last Updated: November 2025*
