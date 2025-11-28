@@ -81,6 +81,9 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Data Integrity**: Intelligent sectioning and analysis prevent data loss.
 - **Workflow Optimization**: Verification checkpoints ensure accuracy and control.
 
+## Future Enhancements (Backlog)
+- **Client Education Center with Interactive FCRA Litigation Map**: State-by-state litigation guide with interactive US map showing FCRA case law, average settlements, statute of limitations, AG complaint links, and notable victories. Personalized to show clients their state-specific protections and relevant case law. Inspired by creditmoneymachine.com/credit-repair-law-all-states but tailored for litigation clients.
+
 ## External Dependencies
 - **Flask**: Python web framework.
 - **Anthropic Claude 3 Sonnet 4**: Primary AI analysis engine.
