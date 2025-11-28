@@ -8,7 +8,7 @@
     
     <div class="sidebar-nav">
         <div class="nav-section" data-section="main">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Main</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -51,7 +51,7 @@
         </div>
         
         <div class="nav-section" data-section="cases">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Cases</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -89,7 +89,7 @@
         
         {% if staff_role in ['admin', 'attorney', 'paralegal'] %}
         <div class="nav-section" data-section="legal-tools">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Legal Tools</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -118,7 +118,7 @@
         
         {% if staff_role in ['admin', 'attorney'] %}
         <div class="nav-section" data-section="revenue">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Revenue</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -141,7 +141,7 @@
         
         {% if staff_role in ['admin', 'attorney', 'paralegal'] %}
         <div class="nav-section" data-section="regulatory">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Regulatory</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -160,7 +160,7 @@
         
         {% if staff_role in ['admin', 'attorney'] %}
         <div class="nav-section" data-section="automation">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Automation</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -183,7 +183,7 @@
         
         {% if staff_role == 'admin' %}
         <div class="nav-section" data-section="enterprise">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Enterprise</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -205,7 +205,7 @@
         {% endif %}
         
         <div class="nav-section" data-section="tools">
-            <div class="nav-section-title" onclick="toggleSection(this)">
+            <div class="nav-section-title">
                 <span>Tools</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -255,7 +255,7 @@
 </nav>
 
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY = 'dashboard_sidebar_sections';
     
     function getSavedState() {
@@ -270,45 +270,12 @@
     function saveState(state) {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (e) {}
+        } catch (e) {
+            console.error('Failed to save sidebar state', e);
+        }
     }
     
-    function initializeSidebar() {
-        const savedState = getSavedState();
-        const sections = document.querySelectorAll('.nav-section');
-        
-        sections.forEach(section => {
-            const sectionId = section.dataset.section;
-            const items = section.querySelector('.nav-section-items');
-            const chevron = section.querySelector('.chevron');
-            
-            if (items) {
-                const hasActiveItem = items.querySelector('.nav-item.active');
-                
-                if (savedState[sectionId] !== undefined) {
-                    if (savedState[sectionId]) {
-                        items.classList.add('expanded');
-                        if (chevron) chevron.classList.add('rotated');
-                    } else {
-                        items.classList.remove('expanded');
-                        if (chevron) chevron.classList.remove('rotated');
-                    }
-                } else if (hasActiveItem) {
-                    items.classList.add('expanded');
-                    if (chevron) chevron.classList.add('rotated');
-                    savedState[sectionId] = true;
-                } else {
-                    items.classList.remove('expanded');
-                    if (chevron) chevron.classList.remove('rotated');
-                }
-            }
-        });
-        
-        saveState(savedState);
-    }
-    
-    window.toggleSection = function(titleElement) {
-        const section = titleElement.closest('.nav-section');
+    function toggleSection(section) {
         const sectionId = section.dataset.section;
         const items = section.querySelector('.nav-section-items');
         const chevron = section.querySelector('.chevron');
@@ -321,12 +288,47 @@
             state[sectionId] = isExpanded;
             saveState(state);
         }
-    };
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeSidebar);
-    } else {
-        initializeSidebar();
     }
-})();
+    
+    // Use event delegation for clicks
+    document.querySelector('.sidebar-nav').addEventListener('click', function(e) {
+        const title = e.target.closest('.nav-section-title');
+        if (title) {
+            e.preventDefault();
+            const section = title.closest('.nav-section');
+            if (section) {
+                toggleSection(section);
+            }
+        }
+    });
+    
+    // Initialize sections on page load
+    const savedState = getSavedState();
+    const sections = document.querySelectorAll('.nav-section');
+    
+    sections.forEach(section => {
+        const sectionId = section.dataset.section;
+        const items = section.querySelector('.nav-section-items');
+        const chevron = section.querySelector('.chevron');
+        
+        if (items) {
+            const hasActiveItem = items.querySelector('.nav-item.active');
+            
+            // Check saved state first
+            if (savedState[sectionId] !== undefined) {
+                if (savedState[sectionId]) {
+                    items.classList.add('expanded');
+                    if (chevron) chevron.classList.add('rotated');
+                }
+            } else if (hasActiveItem || sectionId === 'main') {
+                // Auto-expand if has active item or is main section
+                items.classList.add('expanded');
+                if (chevron) chevron.classList.add('rotated');
+                savedState[sectionId] = true;
+            }
+        }
+    });
+    
+    saveState(savedState);
+});
 </script>
