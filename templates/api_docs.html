@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        .logo span { color: #84cc16; }
+        
+        .nav-section { margin-bottom: 25px; }
+        .nav-section-title {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; font-weight: 600; }
+        .nav-item svg { width: 20px; height: 20px; margin-right: 12px; }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            max-width: 1200px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-actions { display: flex; gap: 15px; }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .toc {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .toc h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .toc-list {
+            list-style: none;
+        }
+        .toc-list li {
+            margin-bottom: 8px;
+        }
+        .toc-list a {
+            color: #319795;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .toc-list a:hover {
+            text-decoration: underline;
+        }
+        .toc-list .sub-item {
+            padding-left: 16px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+            padding-top: 20px;
+        }
+        
+        .section-description {
+            font-size: 15px;
+            color: #64748b;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+        
+        .code-block {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+        .code-block .comment { color: #64748b; }
+        .code-block .keyword { color: #84cc16; }
+        .code-block .string { color: #fbbf24; }
+        .code-block .number { color: #60a5fa; }
+        .code-block .property { color: #f472b6; }
+        
+        .endpoint-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            padding: 16px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 12px;
+        }
+        .method-badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        .method-get { background: #dcfce7; color: #166534; }
+        .method-post { background: #dbeafe; color: #1e40af; }
+        .method-put { background: #fef3c7; color: #92400e; }
+        .method-delete { background: #fee2e2; color: #991b1b; }
+        
+        .endpoint-path {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            color: #1a1a2e;
+            font-weight: 500;
+        }
+        .endpoint-scope {
+            margin-left: auto;
+            font-size: 12px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        .endpoint-body {
+            padding: 20px;
+        }
+        .endpoint-description {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+        
+        .param-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        .param-table th {
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .param-table td {
+            padding: 12px;
+            font-size: 14px;
+            color: #1a1a2e;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .param-name {
+            font-family: 'Monaco', 'Consolas', monospace;
+            color: #319795;
+            font-size: 13px;
+        }
+        .param-type {
+            font-size: 12px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .param-required {
+            font-size: 11px;
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .param-optional {
+            font-size: 11px;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .response-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 12px;
+        }
+        .response-tab {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+        }
+        .response-tab:hover { background: #e2e8f0; }
+        .response-tab.active { background: #1a1a2e; color: white; }
+        
+        .error-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .error-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .error-table td {
+            padding: 14px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .error-code {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-weight: 600;
+        }
+        .error-code.code-401 { color: #f59e0b; }
+        .error-code.code-403 { color: #ef4444; }
+        .error-code.code-404 { color: #64748b; }
+        .error-code.code-429 { color: #8b5cf6; }
+        .error-code.code-500 { color: #dc2626; }
+        
+        .lang-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 0;
+        }
+        .lang-tab {
+            padding: 8px 16px;
+            background: #2d2d44;
+            border: none;
+            border-radius: 6px 6px 0 0;
+            font-size: 13px;
+            font-weight: 500;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .lang-tab:hover { color: white; }
+        .lang-tab.active { background: #1a1a2e; color: #84cc16; }
+        
+        .info-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .info-box.warning {
+            background: #fef3c7;
+            border-color: #fcd34d;
+        }
+        .info-box h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-box.warning h4 { color: #92400e; }
+        .info-box p {
+            font-size: 14px;
+            color: #166534;
+            line-height: 1.6;
+        }
+        .info-box.warning p { color: #92400e; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">Brightpath <span>Ascend</span></div>
+        <nav>
+            <div class="nav-section">
+                <div class="nav-section-title">Main</div>
+                <a href="/dashboard" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard
+                </a>
+                <a href="/dashboard/clients" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Clients
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Developer</div>
+                <a href="/dashboard/api-keys" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                    API Keys
+                </a>
+                <a href="/dashboard/api-docs" class="nav-item active">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                    API Documentation
+                </a>
+            </div>
+            <div class="nav-section">
+                <div class="nav-section-title">Settings</div>
+                <a href="/dashboard/settings" class="nav-item">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Settings
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h1>API Documentation</h1>
+            <div class="header-actions">
+                <a href="/dashboard/api-keys" class="btn btn-primary">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                    Manage API Keys
+                </a>
+            </div>
+        </div>
+
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul class="toc-list">
+                <li><a href="#overview">API Overview</a></li>
+                <li><a href="#authentication">Authentication</a></li>
+                <li><a href="#rate-limiting">Rate Limiting</a></li>
+                <li><a href="#endpoints">Endpoints</a>
+                    <ul class="toc-list">
+                        <li class="sub-item"><a href="#clients">Clients</a></li>
+                        <li class="sub-item"><a href="#disputes">Disputes</a></li>
+                        <li class="sub-item"><a href="#violations">Violations</a></li>
+                        <li class="sub-item"><a href="#webhooks">Webhooks</a></li>
+                    </ul>
+                </li>
+                <li><a href="#errors">Error Codes</a></li>
+                <li><a href="#examples">Code Examples</a></li>
+            </ul>
+        </div>
+
+        <section id="overview">
+            <h2 class="section-title">API Overview</h2>
+            <div class="card">
+                <p class="section-description">
+                    The Brightpath Ascend FCRA Platform API provides programmatic access to client management, dispute tracking, violation monitoring, and webhook integrations. 
+                    This RESTful API uses JSON for request and response bodies and follows standard HTTP conventions.
+                </p>
+                <p class="section-description">
+                    <strong>Base URL:</strong> <code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-family: monospace;">https://your-domain.com/api/v1</code>
+                </p>
+                <p class="section-description">
+                    All API requests must be made over HTTPS. Requests made over plain HTTP will be rejected.
+                </p>
+            </div>
+        </section>
+
+        <section id="authentication">
+            <h2 class="section-title">Authentication</h2>
+            <div class="card">
+                <p class="section-description">
+                    The API uses Bearer token authentication. Include your API key in the <code>Authorization</code> header of each request.
+                </p>
+                
+                <div class="code-block">
+                    <pre><span class="keyword">Authorization:</span> <span class="string">Bearer your-api-key-here</span></pre>
+                </div>
+
+                <div class="info-box">
+                    <h4>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Getting Your API Key
+                    </h4>
+                    <p>
+                        Generate your API key from the <a href="/dashboard/api-keys" style="color: #15803d; font-weight: 500;">API Keys Management</a> page. 
+                        Each key has configurable scopes that determine which endpoints it can access. Keep your API key secure and never expose it in client-side code.
+                    </p>
+                </div>
+
+                <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px 0;">API Scopes</h3>
+                <table class="param-table">
+                    <thead>
+                        <tr>
+                            <th>Scope</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="param-name">read:clients</span></td>
+                            <td>Read access to client data</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">write:clients</span></td>
+                            <td>Create and update client records</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">read:disputes</span></td>
+                            <td>Read access to dispute information</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">write:disputes</span></td>
+                            <td>Create and manage disputes</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">read:violations</span></td>
+                            <td>Read access to FCRA violations</td>
+                        </tr>
+                        <tr>
+                            <td><span class="param-name">webhooks</span></td>
+                            <td>Manage webhook registrations</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="rate-limiting">
+            <h2 class="section-title">Rate Limiting</h2>
+            <div class="card">
+                <p class="section-description">
+                    API requests are rate limited to ensure fair usage and platform stability. Rate limits are configurable per API key.
+                </p>
+
+                <table class="param-table">
+                    <thead>
+                        <tr>
+                            <th>Limit Type</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Per Minute</td>
+                            <td><span class="badge badge-info">60 requests</span></td>
+                            <td>Maximum requests allowed per minute</td>
+                        </tr>
+                        <tr>
+                            <td>Per Day</td>
+                            <td><span class="badge badge-info">10,000 requests</span></td>
+                            <td>Maximum requests allowed per 24 hours</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box warning">
+                    <h4>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        Rate Limit Response
+                    </h4>
+                    <p>
+                        When you exceed rate limits, the API returns a <code>429 Too Many Requests</code> response. 
+                        The response includes headers indicating when you can retry.
+                    </p>
+                </div>
+
+                <div class="code-block">
+                    <pre><span class="comment">// Rate limit exceeded response</span>
+{
+    <span class="property">"success"</span>: <span class="keyword">false</span>,
+    <span class="property">"error"</span>: <span class="string">"Rate limit exceeded"</span>,
+    <span class="property">"rate_limit"</span>: {
+        <span class="property">"limit"</span>: <span class="number">60</span>,
+        <span class="property">"remaining"</span>: <span class="number">0</span>,
+        <span class="property">"reset_at"</span>: <span class="string">"2025-01-15T10:31:00Z"</span>
+    }
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="endpoints">
+            <h2 class="section-title">Endpoints</h2>
+
+            <h3 id="clients" style="font-size: 18px; font-weight: 600; margin: 24px 0 16px 0;">Clients</h3>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/clients</span>
+                    <span class="endpoint-scope">Scope: read:clients</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">Retrieve a paginated list of all clients.</p>
+                    
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Query Parameters</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">page</span></td>
+                                <td><span class="param-type">integer</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Page number (default: 1)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">limit</span></td>
+                                <td><span class="param-type">integer</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Results per page (default: 20, max: 100)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">status</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Filter by status (active, pending, completed)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Response</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"success"</span>: <span class="keyword">true</span>,
+    <span class="property">"data"</span>: {
+        <span class="property">"clients"</span>: [
+            {
+                <span class="property">"id"</span>: <span class="number">1</span>,
+                <span class="property">"first_name"</span>: <span class="string">"John"</span>,
+                <span class="property">"last_name"</span>: <span class="string">"Doe"</span>,
+                <span class="property">"email"</span>: <span class="string">"john.doe@example.com"</span>,
+                <span class="property">"status"</span>: <span class="string">"active"</span>,
+                <span class="property">"created_at"</span>: <span class="string">"2025-01-15T10:30:00Z"</span>
+            }
+        ],
+        <span class="property">"pagination"</span>: {
+            <span class="property">"page"</span>: <span class="number">1</span>,
+            <span class="property">"limit"</span>: <span class="number">20</span>,
+            <span class="property">"total"</span>: <span class="number">150</span>,
+            <span class="property">"pages"</span>: <span class="number">8</span>
+        }
+    }
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/clients/{id}</span>
+                    <span class="endpoint-scope">Scope: read:clients</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">Retrieve detailed information about a specific client.</p>
+                    
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Path Parameters</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">id</span></td>
+                                <td><span class="param-type">integer</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>The client's unique identifier</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Response</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"success"</span>: <span class="keyword">true</span>,
+    <span class="property">"data"</span>: {
+        <span class="property">"id"</span>: <span class="number">1</span>,
+        <span class="property">"first_name"</span>: <span class="string">"John"</span>,
+        <span class="property">"last_name"</span>: <span class="string">"Doe"</span>,
+        <span class="property">"email"</span>: <span class="string">"john.doe@example.com"</span>,
+        <span class="property">"phone"</span>: <span class="string">"+1-555-123-4567"</span>,
+        <span class="property">"status"</span>: <span class="string">"active"</span>,
+        <span class="property">"disputes_count"</span>: <span class="number">5</span>,
+        <span class="property">"violations_count"</span>: <span class="number">12</span>,
+        <span class="property">"created_at"</span>: <span class="string">"2025-01-15T10:30:00Z"</span>,
+        <span class="property">"updated_at"</span>: <span class="string">"2025-01-20T14:22:00Z"</span>
+    }
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-post">POST</span>
+                    <span class="endpoint-path">/api/v1/clients</span>
+                    <span class="endpoint-scope">Scope: write:clients</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">Create a new client record.</p>
+                    
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Request Body</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">first_name</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>Client's first name</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">last_name</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>Client's last name</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">email</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>Client's email address</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">phone</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Client's phone number</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Request Example</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"first_name"</span>: <span class="string">"Jane"</span>,
+    <span class="property">"last_name"</span>: <span class="string">"Smith"</span>,
+    <span class="property">"email"</span>: <span class="string">"jane.smith@example.com"</span>,
+    <span class="property">"phone"</span>: <span class="string">"+1-555-987-6543"</span>
+}</pre>
+                    </div>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Response</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"success"</span>: <span class="keyword">true</span>,
+    <span class="property">"data"</span>: {
+        <span class="property">"id"</span>: <span class="number">152</span>,
+        <span class="property">"first_name"</span>: <span class="string">"Jane"</span>,
+        <span class="property">"last_name"</span>: <span class="string">"Smith"</span>,
+        <span class="property">"email"</span>: <span class="string">"jane.smith@example.com"</span>,
+        <span class="property">"phone"</span>: <span class="string">"+1-555-987-6543"</span>,
+        <span class="property">"status"</span>: <span class="string">"pending"</span>,
+        <span class="property">"created_at"</span>: <span class="string">"2025-01-21T09:15:00Z"</span>
+    },
+    <span class="property">"message"</span>: <span class="string">"Client created successfully"</span>
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <h3 id="disputes" style="font-size: 18px; font-weight: 600; margin: 32px 0 16px 0;">Disputes</h3>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/disputes</span>
+                    <span class="endpoint-scope">Scope: read:disputes</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">Retrieve a list of all disputes with optional filtering.</p>
+                    
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Query Parameters</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">client_id</span></td>
+                                <td><span class="param-type">integer</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Filter by client ID</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">status</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Filter by status (pending, sent, resolved)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">page</span></td>
+                                <td><span class="param-type">integer</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Page number (default: 1)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Response</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"success"</span>: <span class="keyword">true</span>,
+    <span class="property">"data"</span>: {
+        <span class="property">"disputes"</span>: [
+            {
+                <span class="property">"id"</span>: <span class="number">1</span>,
+                <span class="property">"client_id"</span>: <span class="number">42</span>,
+                <span class="property">"bureau"</span>: <span class="string">"Equifax"</span>,
+                <span class="property">"account_name"</span>: <span class="string">"Capital One"</span>,
+                <span class="property">"dispute_reason"</span>: <span class="string">"Not my account"</span>,
+                <span class="property">"status"</span>: <span class="string">"pending"</span>,
+                <span class="property">"round"</span>: <span class="number">1</span>,
+                <span class="property">"created_at"</span>: <span class="string">"2025-01-10T08:00:00Z"</span>
+            }
+        ],
+        <span class="property">"count"</span>: <span class="number">25</span>
+    }
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-post">POST</span>
+                    <span class="endpoint-path">/api/v1/disputes</span>
+                    <span class="endpoint-scope">Scope: write:disputes</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">Create a new dispute for a client.</p>
+                    
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Request Body</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">client_id</span></td>
+                                <td><span class="param-type">integer</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>The client's ID</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">bureau</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>Credit bureau (Equifax, Experian, TransUnion)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">account_name</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>Name of the account being disputed</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">dispute_reason</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>Reason for the dispute</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Request Example</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"client_id"</span>: <span class="number">42</span>,
+    <span class="property">"bureau"</span>: <span class="string">"Experian"</span>,
+    <span class="property">"account_name"</span>: <span class="string">"Chase Bank"</span>,
+    <span class="property">"dispute_reason"</span>: <span class="string">"Account balance is incorrect"</span>
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <h3 id="violations" style="font-size: 18px; font-weight: 600; margin: 32px 0 16px 0;">Violations</h3>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-get">GET</span>
+                    <span class="endpoint-path">/api/v1/violations</span>
+                    <span class="endpoint-scope">Scope: read:violations</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">Retrieve a list of identified FCRA violations.</p>
+                    
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Query Parameters</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">client_id</span></td>
+                                <td><span class="param-type">integer</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Filter by client ID</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">violation_type</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-optional">Optional</span></td>
+                                <td>Filter by violation type</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Response</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"success"</span>: <span class="keyword">true</span>,
+    <span class="property">"data"</span>: {
+        <span class="property">"violations"</span>: [
+            {
+                <span class="property">"id"</span>: <span class="number">1</span>,
+                <span class="property">"client_id"</span>: <span class="number">42</span>,
+                <span class="property">"violation_type"</span>: <span class="string">"15 USC 1681e(b)"</span>,
+                <span class="property">"description"</span>: <span class="string">"Failure to maintain reasonable procedures"</span>,
+                <span class="property">"severity"</span>: <span class="string">"high"</span>,
+                <span class="property">"statute"</span>: <span class="string">"FCRA"</span>,
+                <span class="property">"potential_damages"</span>: <span class="number">1000</span>,
+                <span class="property">"created_at"</span>: <span class="string">"2025-01-12T11:30:00Z"</span>
+            }
+        ],
+        <span class="property">"count"</span>: <span class="number">12</span>
+    }
+}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <h3 id="webhooks" style="font-size: 18px; font-weight: 600; margin: 32px 0 16px 0;">Webhooks</h3>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <span class="method-badge method-post">POST</span>
+                    <span class="endpoint-path">/api/v1/webhooks</span>
+                    <span class="endpoint-scope">Scope: webhooks</span>
+                </div>
+                <div class="endpoint-body">
+                    <p class="endpoint-description">Register a new webhook to receive event notifications.</p>
+                    
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Request Body</h4>
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Field</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="param-name">name</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>Name for the webhook</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">url</span></td>
+                                <td><span class="param-type">string</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>HTTPS URL to receive webhook events</td>
+                            </tr>
+                            <tr>
+                                <td><span class="param-name">events</span></td>
+                                <td><span class="param-type">array</span></td>
+                                <td><span class="param-required">Required</span></td>
+                                <td>List of events to subscribe to</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Available Events</h4>
+                    <ul style="list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+                        <li><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px;">client.created</code></li>
+                        <li><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px;">client.updated</code></li>
+                        <li><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px;">dispute.created</code></li>
+                        <li><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px;">dispute.resolved</code></li>
+                        <li><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px;">violation.detected</code></li>
+                        <li><code style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 12px;">analysis.completed</code></li>
+                    </ul>
+
+                    <h4 style="font-size: 14px; font-weight: 600; margin: 20px 0 12px 0;">Request Example</h4>
+                    <div class="code-block">
+                        <pre>{
+    <span class="property">"name"</span>: <span class="string">"My CRM Integration"</span>,
+    <span class="property">"url"</span>: <span class="string">"https://mycrm.example.com/webhooks/brightpath"</span>,
+    <span class="property">"events"</span>: [<span class="string">"client.created"</span>, <span class="string">"dispute.resolved"</span>]
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="errors">
+            <h2 class="section-title">Error Codes</h2>
+            <div class="card">
+                <p class="section-description">
+                    The API uses standard HTTP status codes to indicate the success or failure of requests. 
+                    Error responses include a JSON body with details about what went wrong.
+                </p>
+
+                <table class="error-table">
+                    <thead>
+                        <tr>
+                            <th>Status Code</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="error-code code-401">401</span></td>
+                            <td>Unauthorized</td>
+                            <td>Invalid or missing API key. Ensure you're including a valid Bearer token.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="error-code code-403">403</span></td>
+                            <td>Forbidden</td>
+                            <td>Your API key doesn't have the required scope for this endpoint.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="error-code code-404">404</span></td>
+                            <td>Not Found</td>
+                            <td>The requested resource doesn't exist.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="error-code code-429">429</span></td>
+                            <td>Too Many Requests</td>
+                            <td>Rate limit exceeded. Wait and retry your request.</td>
+                        </tr>
+                        <tr>
+                            <td><span class="error-code code-500">500</span></td>
+                            <td>Internal Server Error</td>
+                            <td>Something went wrong on our end. Please try again later.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 style="font-size: 14px; font-weight: 600; margin: 24px 0 12px 0;">Error Response Format</h4>
+                <div class="code-block">
+                    <pre>{
+    <span class="property">"success"</span>: <span class="keyword">false</span>,
+    <span class="property">"error"</span>: <span class="string">"Insufficient permissions. Required scopes: ['read:clients']"</span>,
+    <span class="property">"code"</span>: <span class="string">"FORBIDDEN"</span>
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2 class="section-title">Code Examples</h2>
+            <div class="card">
+                <p class="section-description">
+                    Here are complete working examples of how to interact with the API in different programming languages.
+                </p>
+
+                <h3 style="font-size: 16px; font-weight: 600; margin: 20px 0 12px 0;">Python</h3>
+                <div class="code-block">
+                    <pre><span class="keyword">import</span> requests
+
+<span class="comment"># Your API key from the dashboard</span>
+API_KEY = <span class="string">"your-api-key-here"</span>
+BASE_URL = <span class="string">"https://your-domain.com/api/v1"</span>
+
+<span class="comment"># Set up headers for all requests</span>
+headers = {
+    <span class="string">"Authorization"</span>: <span class="string">f"Bearer {API_KEY}"</span>,
+    <span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>
+}
+
+<span class="comment"># List all clients</span>
+response = requests.get(
+    <span class="string">f"{BASE_URL}/clients"</span>,
+    headers=headers,
+    params={<span class="string">"page"</span>: <span class="number">1</span>, <span class="string">"limit"</span>: <span class="number">20</span>}
+)
+
+<span class="keyword">if</span> response.status_code == <span class="number">200</span>:
+    data = response.json()
+    <span class="keyword">for</span> client <span class="keyword">in</span> data[<span class="string">"data"</span>][<span class="string">"clients"</span>]:
+        <span class="keyword">print</span>(<span class="string">f"Client: {client['first_name']} {client['last_name']}"</span>)
+<span class="keyword">else</span>:
+    <span class="keyword">print</span>(<span class="string">f"Error: {response.json()['error']}"</span>)
+
+<span class="comment"># Create a new client</span>
+new_client = {
+    <span class="string">"first_name"</span>: <span class="string">"Alice"</span>,
+    <span class="string">"last_name"</span>: <span class="string">"Johnson"</span>,
+    <span class="string">"email"</span>: <span class="string">"alice@example.com"</span>,
+    <span class="string">"phone"</span>: <span class="string">"+1-555-123-4567"</span>
+}
+
+response = requests.post(
+    <span class="string">f"{BASE_URL}/clients"</span>,
+    headers=headers,
+    json=new_client
+)
+
+<span class="keyword">if</span> response.status_code == <span class="number">201</span>:
+    <span class="keyword">print</span>(<span class="string">"Client created successfully!"</span>)
+    <span class="keyword">print</span>(response.json())</pre>
+                </div>
+
+                <h3 style="font-size: 16px; font-weight: 600; margin: 28px 0 12px 0;">JavaScript (Node.js / Fetch)</h3>
+                <div class="code-block">
+                    <pre><span class="comment">// Your API key from the dashboard</span>
+<span class="keyword">const</span> API_KEY = <span class="string">'your-api-key-here'</span>;
+<span class="keyword">const</span> BASE_URL = <span class="string">'https://your-domain.com/api/v1'</span>;
+
+<span class="comment">// Helper function for API calls</span>
+<span class="keyword">async function</span> <span class="function">apiRequest</span>(endpoint, options = {}) {
+    <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">`${BASE_URL}${endpoint}`</span>, {
+        ...options,
+        headers: {
+            <span class="string">'Authorization'</span>: <span class="string">`Bearer ${API_KEY}`</span>,
+            <span class="string">'Content-Type'</span>: <span class="string">'application/json'</span>,
+            ...options.headers
+        }
+    });
+    <span class="keyword">return</span> response.json();
+}
+
+<span class="comment">// List all clients</span>
+<span class="keyword">async function</span> <span class="function">listClients</span>() {
+    <span class="keyword">const</span> data = <span class="keyword">await</span> apiRequest(<span class="string">'/clients?page=1&limit=20'</span>);
+    
+    <span class="keyword">if</span> (data.success) {
+        data.data.clients.forEach(client => {
+            console.log(<span class="string">`Client: ${client.first_name} ${client.last_name}`</span>);
+        });
+    } <span class="keyword">else</span> {
+        console.error(<span class="string">`Error: ${data.error}`</span>);
+    }
+}
+
+<span class="comment">// Create a new client</span>
+<span class="keyword">async function</span> <span class="function">createClient</span>() {
+    <span class="keyword">const</span> newClient = {
+        first_name: <span class="string">'Alice'</span>,
+        last_name: <span class="string">'Johnson'</span>,
+        email: <span class="string">'alice@example.com'</span>,
+        phone: <span class="string">'+1-555-123-4567'</span>
+    };
+
+    <span class="keyword">const</span> data = <span class="keyword">await</span> apiRequest(<span class="string">'/clients'</span>, {
+        method: <span class="string">'POST'</span>,
+        body: JSON.stringify(newClient)
+    });
+
+    <span class="keyword">if</span> (data.success) {
+        console.log(<span class="string">'Client created successfully!'</span>);
+        console.log(data);
+    } <span class="keyword">else</span> {
+        console.error(<span class="string">`Error: ${data.error}`</span>);
+    }
+}
+
+<span class="comment">// Run examples</span>
+listClients();
+createClient();</pre>
+                </div>
+
+                <h3 style="font-size: 16px; font-weight: 600; margin: 28px 0 12px 0;">cURL</h3>
+                <div class="code-block">
+                    <pre><span class="comment"># List clients</span>
+curl -X GET <span class="string">"https://your-domain.com/api/v1/clients?page=1&limit=20"</span> \
+  -H <span class="string">"Authorization: Bearer your-api-key-here"</span> \
+  -H <span class="string">"Content-Type: application/json"</span>
+
+<span class="comment"># Create a client</span>
+curl -X POST <span class="string">"https://your-domain.com/api/v1/clients"</span> \
+  -H <span class="string">"Authorization: Bearer your-api-key-here"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -d <span class="string">'{
+    "first_name": "Alice",
+    "last_name": "Johnson",
+    "email": "alice@example.com",
+    "phone": "+1-555-123-4567"
+  }'</span>
+
+<span class="comment"># Get violations for a client</span>
+curl -X GET <span class="string">"https://your-domain.com/api/v1/violations?client_id=42"</span> \
+  -H <span class="string">"Authorization: Bearer your-api-key-here"</span></pre>
+                </div>
+            </div>
+        </section>
+
+        <div class="card" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; margin-top: 40px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <h3 style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">Ready to get started?</h3>
+                    <p style="color: #94a3b8; font-size: 14px;">Generate your API key and start integrating with the Brightpath Ascend platform.</p>
+                </div>
+                <a href="/dashboard/api-keys" class="btn btn-primary" style="background: linear-gradient(135deg, #84cc16 0%, #22c55e 100%);">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                    Get Your API Key
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

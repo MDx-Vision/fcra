@@ -585,13 +585,13 @@
                     <tr>
                         <td><code>{{ endpoint.endpoint }}</code></td>
                         <td><span class="badge badge-info">{{ endpoint.method }}</span></td>
-                        <td>{{ "%.1f"|format(endpoint.avg_time) }}ms</td>
+                        <td>{{ "%.1f"|format(endpoint.avg_response_time_ms) }}ms</td>
                         <td>{{ "%.1f"|format(endpoint.p95_time) }}ms</td>
                         <td>{{ endpoint.request_count }}</td>
                         <td>
-                            {% if endpoint.avg_time > 500 %}
+                            {% if endpoint.avg_response_time_ms > 500 %}
                             <span class="badge badge-danger">Critical</span>
-                            {% elif endpoint.avg_time > 200 %}
+                            {% elif endpoint.avg_response_time_ms > 200 %}
                             <span class="badge badge-warning">Slow</span>
                             {% else %}
                             <span class="badge badge-success">OK</span>
@@ -890,15 +890,16 @@
             }
 
             tbody.innerHTML = endpoints.map(ep => {
-                const statusClass = ep.avg_time > 500 ? 'danger' : ep.avg_time > 200 ? 'warning' : 'success';
-                const statusText = ep.avg_time > 500 ? 'Critical' : ep.avg_time > 200 ? 'Slow' : 'OK';
+                const avgTime = ep.avg_response_time_ms || 0;
+                const statusClass = avgTime > 500 ? 'danger' : avgTime > 200 ? 'warning' : 'success';
+                const statusText = avgTime > 500 ? 'Critical' : avgTime > 200 ? 'Slow' : 'OK';
                 
                 return `
                     <tr>
                         <td><code>${ep.endpoint}</code></td>
                         <td><span class="badge badge-info">${ep.method}</span></td>
-                        <td>${ep.avg_time.toFixed(1)}ms</td>
-                        <td>${ep.p95_time.toFixed(1)}ms</td>
+                        <td>${avgTime.toFixed(1)}ms</td>
+                        <td>${(ep.p95_time || 0).toFixed(1)}ms</td>
                         <td>${ep.request_count}</td>
                         <td><span class="badge badge-${statusClass}">${statusText}</span></td>
                         <td>${ep.recommendation || 'Review endpoint logic'}</td>

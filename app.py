@@ -181,6 +181,21 @@ def require_staff(roles=None):
                         error='Access Denied', 
                         message='You do not have permission to access this page.'), 403
             
+            db = get_db()
+            try:
+                staff = db.query(Staff).filter_by(id=session['staff_id']).first()
+                if staff:
+                    g.staff_user = staff
+                else:
+                    session.clear()
+                    if request.is_json:
+                        return jsonify({'error': 'Session expired'}), 401
+                    return redirect('/staff/login')
+            except:
+                pass
+            finally:
+                db.close()
+            
             return f(*args, **kwargs)
         return decorated_function
     return decorator
@@ -20037,6 +20052,13 @@ def api_v1_docs():
     service = get_api_access_service()
     spec = service.get_api_documentation()
     return jsonify(spec)
+
+
+@app.route('/api-docs')
+@app.route('/dashboard/api-docs')
+def api_documentation():
+    """API Documentation page"""
+    return render_template('api_docs.html')
 
 
 # ============================================================
