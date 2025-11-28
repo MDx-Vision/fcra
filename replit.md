@@ -65,6 +65,8 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Public API Access** (`/dashboard/api-keys`): RESTful API with scope-based authentication, rate limiting, and webhook support for third-party integrations.
 - **Comprehensive Audit Logging** (`/dashboard/audit`): Complete action history with SOC 2 and HIPAA compliance reporting, PHI access tracking, and security event monitoring.
 - **Performance Optimization** (`/dashboard/performance`): In-memory caching layer, database query optimization, request timing middleware, and slow endpoint detection.
+- **API Documentation** (`/api-docs`): Comprehensive public API documentation with authentication guide, endpoint details, rate limiting info, and code examples in Python/JavaScript/cURL.
+- **Enhanced Sidebar Navigation**: Collapsible accordion-style sections with localStorage persistence, smooth animations, and improved scrolling for all 70+ features.
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
