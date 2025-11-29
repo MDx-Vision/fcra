@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credit Score Tracker - Admin Dashboard</title>
+    <title>Credit Score Tracker - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% include 'includes/dashboard_sidebar_styles.html' %}
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #1a1a2e; }
-        .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
-        .header h1 { font-size: 1.5rem; }
-        .header a { color: white; text-decoration: none; opacity: 0.8; }
-        .header a:hover { opacity: 1; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 30px; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #1a1a2e; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .page-header h1 { font-size: 1.75rem; color: #1a1a2e; }
+        .page-header-subtitle { color: #64748b; margin-top: 5px; }
+        .container { max-width: 1400px; margin: 0 auto; }
         
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab-btn { padding: 12px 24px; border: none; background: white; border-radius: 8px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.2s; }
@@ -106,12 +107,18 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Credit Score Improvement Tracker</h1>
-        <a href="/dashboard">&larr; Back to Dashboard</a>
-    </div>
+    {% set active_page = 'credit-tracker' %}
+    {% include 'includes/dashboard_sidebar.html' %}
     
-    <div class="container">
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Credit Score Improvement Tracker</h1>
+                <p class="page-header-subtitle">Track and estimate credit score improvements for clients</p>
+            </div>
+        </div>
+        
+        <div class="container">
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('quick')">Quick Estimate</button>
             <button class="tab-btn" onclick="switchTab('detailed')">Detailed Calculator</button>
@@ -537,5 +544,6 @@
         
         loadItemTypes();
     </script>
+    </main>
 </body>
 </html>

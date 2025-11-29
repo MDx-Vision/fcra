@@ -1,618 +1,647 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Insights - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        @media (max-width: 768px) {
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    {% set active_page = 'ml-insights' %}
+    {% include 'includes/dashboard_sidebar.html' %}
+    
+    <main class="main-content">
+        <div class="container-fluid px-0">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">ML Insights Dashboard</h1>
+                    <p class="text-muted mb-0">Outcome learning, predictions, and pattern analysis</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="refreshPatterns()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh Patterns
+                    </button>
+                    <button class="btn btn-primary" onclick="showRecordOutcomeModal()">
+                        <i class="bi bi-plus-lg"></i> Record Outcome
+                    </button>
+                </div>
+            </div>
 
-{% block title %}ML Insights - FCRA Automation{% endblock %}
-
-{% block content %}
-<div class="container-fluid px-4 py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="h3 mb-1">ML Insights Dashboard</h1>
-            <p class="text-muted mb-0">Outcome learning, predictions, and pattern analysis</p>
-        </div>
-        <div>
-            <button class="btn btn-outline-primary me-2" onclick="refreshPatterns()">
-                <i class="bi bi-arrow-clockwise"></i> Refresh Patterns
-            </button>
-            <button class="btn btn-primary" onclick="showRecordOutcomeModal()">
-                <i class="bi bi-plus-lg"></i> Record Outcome
-            </button>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-white-50 mb-1">Training Cases</h6>
-                            <h2 class="mb-0">{{ learning_stats.training_data.total_outcomes|default(0) }}</h2>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-2">
-                            <i class="bi bi-database fs-4"></i>
-                        </div>
-                    </div>
-                    <small class="text-white-50">
-                        <i class="bi bi-info-circle"></i> 
-                        {{ learning_stats.recommendation|default('Start recording outcomes') }}
-                    </small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-white-50 mb-1">Success Rate</h6>
-                            <h2 class="mb-0">{{ (success_rates.success_rate|default(0) * 100)|round(1) }}%</h2>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-2">
-                            <i class="bi bi-trophy fs-4"></i>
-                        </div>
-                    </div>
-                    <small class="text-white-50">
-                        Won: {{ (success_rates.won_rate|default(0) * 100)|round(1) }}% | 
-                        Settled: {{ (success_rates.settlement_rate|default(0) * 100)|round(1) }}%
-                    </small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-info text-white h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-white-50 mb-1">Avg Settlement</h6>
-                            <h2 class="mb-0">${{ "{:,.0f}".format(settlement_stats.average|default(0)) }}</h2>
-                        </div>
-                        <div class="bg-white bg-opacity-25 rounded-circle p-2">
-                            <i class="bi bi-cash-stack fs-4"></i>
-                        </div>
-                    </div>
-                    <small class="text-white-50">
-                        Range: ${{ "{:,.0f}".format(settlement_stats.min|default(0)) }} - ${{ "{:,.0f}".format(settlement_stats.max|default(0)) }}
-                    </small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h6 class="text-dark-50 mb-1">Model Confidence</h6>
-                            <h2 class="mb-0">{{ (learning_stats.confidence_level|default(0) * 100)|round(0) }}%</h2>
-                        </div>
-                        <div class="bg-dark bg-opacity-25 rounded-circle p-2">
-                            <i class="bi bi-cpu fs-4"></i>
-                        </div>
-                    </div>
-                    <small class="text-dark-50">
-                        v{{ learning_stats.model_info.version|default('1.0') }} | Bayesian Model
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-lg-8">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-graph-up text-primary"></i> Success Rates by Violation Type</h5>
-                    <span class="badge bg-primary">{{ success_rates.total_cases|default(0) }} cases analyzed</span>
-                </div>
-                <div class="card-body">
-                    {% if success_rates.by_violation_type %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Violation Type</th>
-                                    <th>Total Cases</th>
-                                    <th>Success Rate</th>
-                                    <th>Visual</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for vtype, data in success_rates.by_violation_type.items()|sort(attribute='1.rate', reverse=true) %}
-                                <tr>
-                                    <td><strong>{{ vtype }}</strong></td>
-                                    <td>{{ data.total }}</td>
-                                    <td>
-                                        <span class="badge {% if data.rate >= 0.7 %}bg-success{% elif data.rate >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}">
-                                            {{ (data.rate * 100)|round(1) }}%
-                                        </span>
-                                    </td>
-                                    <td style="width: 200px;">
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar {% if data.rate >= 0.7 %}bg-success{% elif data.rate >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}" 
-                                                 style="width: {{ data.rate * 100 }}%">
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-bar-chart-line text-muted" style="font-size: 4rem;"></i>
-                        <h5 class="mt-3 text-muted">No Outcome Data Yet</h5>
-                        <p class="text-muted">Record case outcomes to see success rate analysis by violation type.</p>
-                        <button class="btn btn-primary" onclick="showRecordOutcomeModal()">
-                            <i class="bi bi-plus-lg"></i> Record First Outcome
-                        </button>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-pie-chart text-info"></i> Outcome Distribution</h5>
-                </div>
-                <div class="card-body">
-                    {% if learning_stats.training_data.outcomes_by_type %}
-                    <div class="mb-4">
-                        {% set total = learning_stats.training_data.total_outcomes|default(1) %}
-                        {% for outcome, count in learning_stats.training_data.outcomes_by_type.items() %}
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="text-capitalize">{{ outcome }}</span>
-                                <span class="fw-bold">{{ count }} ({{ ((count / total) * 100)|round(1) }}%)</span>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar 
-                                    {% if outcome == 'won' %}bg-success
-                                    {% elif outcome == 'settled' %}bg-info
-                                    {% elif outcome == 'dismissed' %}bg-warning
-                                    {% else %}bg-danger{% endif %}" 
-                                     style="width: {{ (count / total) * 100 }}%">
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-pie-chart text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">No outcome data available</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-calendar3 text-warning"></i> Seasonal Trends</h5>
-                </div>
-                <div class="card-body">
-                    {% if seasonal_trends.trends %}
-                    <div class="row g-3">
-                        {% for trend in seasonal_trends.trends %}
-                        <div class="col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <div class="d-flex align-items-center mb-2">
-                                    {% if trend.type == 'best_month' or trend.type == 'best_quarter' %}
-                                    <i class="bi bi-graph-up-arrow text-success fs-4 me-2"></i>
-                                    {% else %}
-                                    <i class="bi bi-graph-down-arrow text-danger fs-4 me-2"></i>
-                                    {% endif %}
-                                    <strong>{{ trend.month_name|default(trend.quarter) }}</strong>
-                                </div>
-                                <p class="mb-1 text-muted small">{{ trend.description }}</p>
-                                <span class="badge {% if trend.type == 'best_month' or trend.type == 'best_quarter' %}bg-success{% else %}bg-danger{% endif %}">
-                                    {{ (trend.success_rate * 100)|round(1) }}% success rate
-                                </span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% if seasonal_trends.recommendations %}
-                    <hr class="my-3">
-                    <h6><i class="bi bi-lightbulb text-warning"></i> Recommendations:</h6>
-                    <ul class="mb-0">
-                        {% for rec in seasonal_trends.recommendations %}
-                        <li class="text-muted">{{ rec }}</li>
-                        {% endfor %}
-                    </ul>
-                    {% endif %}
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-calendar3 text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">{{ seasonal_trends.message|default('Need more data for seasonal analysis') }}</p>
-                        <small class="text-muted">Sample size: {{ seasonal_trends.sample_size|default(0) }} cases</small>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-trophy text-success"></i> Winning Strategies</h5>
-                </div>
-                <div class="card-body">
-                    {% if winning_strategies.strategies %}
-                    <div class="list-group list-group-flush">
-                        {% for strategy in winning_strategies.strategies[:5] %}
-                        <div class="list-group-item px-0">
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    {% if strategy.type == 'violation_effectiveness' %}
-                                    <h6 class="mb-1">
-                                        <i class="bi bi-check-circle text-success"></i>
-                                        {{ strategy.violation_type }}
-                                    </h6>
-                                    <p class="mb-0 text-muted small">
-                                        {{ strategy.recommendation }}
-                                    </p>
-                                    {% elif strategy.type == 'documentation_impact' %}
-                                    <h6 class="mb-1">
-                                        <i class="bi bi-file-earmark-text text-primary"></i>
-                                        Documentation Quality
-                                    </h6>
-                                    <p class="mb-0 text-muted small">{{ strategy.recommendation }}</p>
-                                    {% else %}
-                                    <h6 class="mb-1">
-                                        <i class="bi bi-lightbulb text-warning"></i>
-                                        {{ strategy.type|replace('_', ' ')|title }}
-                                    </h6>
-                                    <p class="mb-0 text-muted small">{{ strategy.recommendation }}</p>
-                                    {% endif %}
+                                    <h6 class="text-white-50 mb-1">Training Cases</h6>
+                                    <h2 class="mb-0">{{ learning_stats.training_data.total_outcomes|default(0) }}</h2>
                                 </div>
-                                {% if strategy.success_rate %}
-                                <span class="badge bg-success">{{ (strategy.success_rate * 100)|round(0) }}%</span>
-                                {% endif %}
+                                <div class="bg-white bg-opacity-25 rounded-circle p-2">
+                                    <i class="bi bi-database fs-4"></i>
+                                </div>
                             </div>
+                            <small class="text-white-50">
+                                <i class="bi bi-info-circle"></i> 
+                                {{ learning_stats.recommendation|default('Start recording outcomes') }}
+                            </small>
                         </div>
-                        {% endfor %}
                     </div>
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-trophy text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">{{ winning_strategies.message|default('Need more data for strategy analysis') }}</p>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">Success Rate</h6>
+                                    <h2 class="mb-0">{{ (success_rates.success_rate|default(0) * 100)|round(1) }}%</h2>
+                                </div>
+                                <div class="bg-white bg-opacity-25 rounded-circle p-2">
+                                    <i class="bi bi-trophy fs-4"></i>
+                                </div>
+                            </div>
+                            <small class="text-white-50">
+                                Won: {{ (success_rates.won_rate|default(0) * 100)|round(1) }}% | 
+                                Settled: {{ (success_rates.settlement_rate|default(0) * 100)|round(1) }}%
+                            </small>
+                        </div>
                     </div>
-                    {% endif %}
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="text-white-50 mb-1">Avg Settlement</h6>
+                                    <h2 class="mb-0">${{ "{:,.0f}".format(settlement_stats.average|default(0)) }}</h2>
+                                </div>
+                                <div class="bg-white bg-opacity-25 rounded-circle p-2">
+                                    <i class="bi bi-cash-stack fs-4"></i>
+                                </div>
+                            </div>
+                            <small class="text-white-50">
+                                Range: ${{ "{:,.0f}".format(settlement_stats.min|default(0)) }} - ${{ "{:,.0f}".format(settlement_stats.max|default(0)) }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="text-dark-50 mb-1">Model Confidence</h6>
+                                    <h2 class="mb-0">{{ (learning_stats.confidence_level|default(0) * 100)|round(0) }}%</h2>
+                                </div>
+                                <div class="bg-dark bg-opacity-25 rounded-circle p-2">
+                                    <i class="bi bi-cpu fs-4"></i>
+                                </div>
+                            </div>
+                            <small class="text-dark-50">
+                                v{{ learning_stats.model_info.version|default('1.0') }} | Bayesian Model
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="row g-4 mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-cash-coin text-success"></i> Settlement Distribution</h5>
-                </div>
-                <div class="card-body">
-                    {% if settlement_stats.count %}
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <div class="text-center p-4 bg-light rounded">
-                                <h6 class="text-muted mb-2">Settlement Statistics</h6>
-                                <table class="table table-borderless mb-0">
-                                    <tr>
-                                        <td class="text-start">Cases with settlements:</td>
-                                        <td class="text-end fw-bold">{{ settlement_stats.count }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start">Average:</td>
-                                        <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(settlement_stats.average) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start">Median:</td>
-                                        <td class="text-end fw-bold">${{ "{:,.2f}".format(settlement_stats.median) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start">Min:</td>
-                                        <td class="text-end">${{ "{:,.2f}".format(settlement_stats.min) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start">Max:</td>
-                                        <td class="text-end">${{ "{:,.2f}".format(settlement_stats.max) }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start">Std Dev:</td>
-                                        <td class="text-end">${{ "{:,.2f}".format(settlement_stats.std_dev) }}</td>
-                                    </tr>
+            <div class="row g-4 mb-4">
+                <div class="col-lg-8">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-graph-up text-primary"></i> Success Rates by Violation Type</h5>
+                            <span class="badge bg-primary">{{ success_rates.total_cases|default(0) }} cases analyzed</span>
+                        </div>
+                        <div class="card-body">
+                            {% if success_rates.by_violation_type %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Violation Type</th>
+                                            <th>Total Cases</th>
+                                            <th>Success Rate</th>
+                                            <th>Visual</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for vtype, data in success_rates.by_violation_type.items()|sort(attribute='1.rate', reverse=true) %}
+                                        <tr>
+                                            <td><strong>{{ vtype }}</strong></td>
+                                            <td>{{ data.total }}</td>
+                                            <td>
+                                                <span class="badge {% if data.rate >= 0.7 %}bg-success{% elif data.rate >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                    {{ (data.rate * 100)|round(1) }}%
+                                                </span>
+                                            </td>
+                                            <td style="width: 200px;">
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar {% if data.rate >= 0.7 %}bg-success{% elif data.rate >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                         style="width: {{ data.rate * 100 }}%">
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
                                 </table>
                             </div>
-                        </div>
-                        <div class="col-md-8">
-                            <h6 class="mb-3">Settlement Range by Percentile</h6>
-                            <div class="position-relative" style="height: 60px;">
-                                <div class="progress" style="height: 30px;">
-                                    <div class="progress-bar bg-secondary" style="width: {{ (settlement_stats.percentile_25 / settlement_stats.max * 100) if settlement_stats.max else 0 }}%"></div>
-                                    <div class="progress-bar bg-success" style="width: {{ ((settlement_stats.percentile_75 - settlement_stats.percentile_25) / settlement_stats.max * 100) if settlement_stats.max else 0 }}%">
-                                        Middle 50%
-                                    </div>
-                                    <div class="progress-bar bg-secondary" style="width: {{ ((settlement_stats.max - settlement_stats.percentile_75) / settlement_stats.max * 100) if settlement_stats.max else 0 }}%"></div>
-                                </div>
-                                <div class="d-flex justify-content-between mt-2">
-                                    <small class="text-muted">${{ "{:,.0f}".format(settlement_stats.min) }}</small>
-                                    <small class="text-muted">25th: ${{ "{:,.0f}".format(settlement_stats.percentile_25) }}</small>
-                                    <small class="text-success fw-bold">Median: ${{ "{:,.0f}".format(settlement_stats.median) }}</small>
-                                    <small class="text-muted">75th: ${{ "{:,.0f}".format(settlement_stats.percentile_75) }}</small>
-                                    <small class="text-muted">${{ "{:,.0f}".format(settlement_stats.max) }}</small>
-                                </div>
-                            </div>
-                            {% if settlement_stats.by_violation_type %}
-                            <h6 class="mb-3 mt-4">Avg Settlement by Violation Type</h6>
-                            <div class="row g-2">
-                                {% for vtype, data in settlement_stats.by_violation_type.items()|sort(attribute='1.average', reverse=true) %}
-                                <div class="col-md-6">
-                                    <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
-                                        <span>{{ vtype }}</span>
-                                        <span class="fw-bold text-success">${{ "{:,.0f}".format(data.average) }}</span>
-                                    </div>
-                                </div>
-                                {% endfor %}
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-bar-chart-line text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3 text-muted">No Outcome Data Yet</h5>
+                                <p class="text-muted">Record case outcomes to see success rate analysis by violation type.</p>
+                                <button class="btn btn-primary" onclick="showRecordOutcomeModal()">
+                                    <i class="bi bi-plus-lg"></i> Record First Outcome
+                                </button>
                             </div>
                             {% endif %}
                         </div>
                     </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-cash-coin text-muted" style="font-size: 4rem;"></i>
-                        <h5 class="mt-3 text-muted">No Settlement Data Yet</h5>
-                        <p class="text-muted">Record case outcomes with settlement amounts to see distribution analysis.</p>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-pie-chart text-info"></i> Outcome Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if learning_stats.training_data.outcomes_by_type %}
+                            <div class="mb-4">
+                                {% set total = learning_stats.training_data.total_outcomes|default(1) %}
+                                {% for outcome, count in learning_stats.training_data.outcomes_by_type.items() %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-capitalize">{{ outcome }}</span>
+                                        <span class="fw-bold">{{ count }} ({{ ((count / total) * 100)|round(1) }}%)</span>
+                                    </div>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar 
+                                            {% if outcome == 'won' %}bg-success
+                                            {% elif outcome == 'settled' %}bg-info
+                                            {% elif outcome == 'dismissed' %}bg-warning
+                                            {% else %}bg-danger{% endif %}" 
+                                             style="width: {{ (count / total) * 100 }}%">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-pie-chart text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No outcome data available</p>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-calendar3 text-warning"></i> Seasonal Trends</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if seasonal_trends.trends %}
+                            <div class="row g-3">
+                                {% for trend in seasonal_trends.trends %}
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 h-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            {% if trend.type == 'best_month' or trend.type == 'best_quarter' %}
+                                            <i class="bi bi-graph-up-arrow text-success fs-4 me-2"></i>
+                                            {% else %}
+                                            <i class="bi bi-graph-down-arrow text-danger fs-4 me-2"></i>
+                                            {% endif %}
+                                            <strong>{{ trend.month_name|default(trend.quarter) }}</strong>
+                                        </div>
+                                        <p class="mb-1 text-muted small">{{ trend.description }}</p>
+                                        <span class="badge {% if trend.type == 'best_month' or trend.type == 'best_quarter' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ (trend.success_rate * 100)|round(1) }}% success rate
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if seasonal_trends.recommendations %}
+                            <hr class="my-3">
+                            <h6><i class="bi bi-lightbulb text-warning"></i> Recommendations:</h6>
+                            <ul class="mb-0">
+                                {% for rec in seasonal_trends.recommendations %}
+                                <li class="text-muted">{{ rec }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-calendar3 text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">{{ seasonal_trends.message|default('Need more data for seasonal analysis') }}</p>
+                                <small class="text-muted">Sample size: {{ seasonal_trends.sample_size|default(0) }} cases</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-trophy text-success"></i> Winning Strategies</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if winning_strategies.strategies %}
+                            <div class="list-group list-group-flush">
+                                {% for strategy in winning_strategies.strategies[:5] %}
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            {% if strategy.type == 'violation_effectiveness' %}
+                                            <h6 class="mb-1">
+                                                <i class="bi bi-check-circle text-success"></i>
+                                                {{ strategy.violation_type }}
+                                            </h6>
+                                            <p class="mb-0 text-muted small">
+                                                {{ strategy.recommendation }}
+                                            </p>
+                                            {% elif strategy.type == 'documentation_impact' %}
+                                            <h6 class="mb-1">
+                                                <i class="bi bi-file-earmark-text text-primary"></i>
+                                                Documentation Quality
+                                            </h6>
+                                            <p class="mb-0 text-muted small">{{ strategy.recommendation }}</p>
+                                            {% else %}
+                                            <h6 class="mb-1">
+                                                <i class="bi bi-lightbulb text-warning"></i>
+                                                {{ strategy.type|replace('_', ' ')|title }}
+                                            </h6>
+                                            <p class="mb-0 text-muted small">{{ strategy.recommendation }}</p>
+                                            {% endif %}
+                                        </div>
+                                        {% if strategy.success_rate %}
+                                        <span class="badge bg-success">{{ (strategy.success_rate * 100)|round(0) }}%</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-trophy text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">{{ winning_strategies.message|default('Need more data for strategy analysis') }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-cash-coin text-success"></i> Settlement Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if settlement_stats.count %}
+                            <div class="row g-4">
+                                <div class="col-md-4">
+                                    <div class="text-center p-4 bg-light rounded">
+                                        <h6 class="text-muted mb-2">Settlement Statistics</h6>
+                                        <table class="table table-borderless mb-0">
+                                            <tr>
+                                                <td class="text-start">Cases with settlements:</td>
+                                                <td class="text-end fw-bold">{{ settlement_stats.count }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start">Average:</td>
+                                                <td class="text-end fw-bold text-success">${{ "{:,.2f}".format(settlement_stats.average) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start">Median:</td>
+                                                <td class="text-end fw-bold">${{ "{:,.2f}".format(settlement_stats.median) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start">Min:</td>
+                                                <td class="text-end">${{ "{:,.2f}".format(settlement_stats.min) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start">Max:</td>
+                                                <td class="text-end">${{ "{:,.2f}".format(settlement_stats.max) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-start">Std Dev:</td>
+                                                <td class="text-end">${{ "{:,.2f}".format(settlement_stats.std_dev) }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <h6 class="mb-3">Settlement Range by Percentile</h6>
+                                    <div class="position-relative" style="height: 60px;">
+                                        <div class="progress" style="height: 30px;">
+                                            <div class="progress-bar bg-secondary" style="width: {{ (settlement_stats.percentile_25 / settlement_stats.max * 100) if settlement_stats.max else 0 }}%"></div>
+                                            <div class="progress-bar bg-success" style="width: {{ ((settlement_stats.percentile_75 - settlement_stats.percentile_25) / settlement_stats.max * 100) if settlement_stats.max else 0 }}%">
+                                                Middle 50%
+                                            </div>
+                                            <div class="progress-bar bg-secondary" style="width: {{ ((settlement_stats.max - settlement_stats.percentile_75) / settlement_stats.max * 100) if settlement_stats.max else 0 }}%"></div>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-2">
+                                            <small class="text-muted">${{ "{:,.0f}".format(settlement_stats.min) }}</small>
+                                            <small class="text-muted">25th: ${{ "{:,.0f}".format(settlement_stats.percentile_25) }}</small>
+                                            <small class="text-success fw-bold">Median: ${{ "{:,.0f}".format(settlement_stats.median) }}</small>
+                                            <small class="text-muted">75th: ${{ "{:,.0f}".format(settlement_stats.percentile_75) }}</small>
+                                            <small class="text-muted">${{ "{:,.0f}".format(settlement_stats.max) }}</small>
+                                        </div>
+                                    </div>
+                                    {% if settlement_stats.by_violation_type %}
+                                    <h6 class="mb-3 mt-4">Avg Settlement by Violation Type</h6>
+                                    <div class="row g-2">
+                                        {% for vtype, data in settlement_stats.by_violation_type.items()|sort(attribute='1.average', reverse=true) %}
+                                        <div class="col-md-6">
+                                            <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                                                <span>{{ vtype }}</span>
+                                                <span class="fw-bold text-success">${{ "{:,.0f}".format(data.average) }}</span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-cash-coin text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3 text-muted">No Settlement Data Yet</h5>
+                                <p class="text-muted">Record case outcomes with settlement amounts to see distribution analysis.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-cpu text-primary"></i> Model Performance</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if learning_stats.model_performance %}
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <div class="text-center p-3 border rounded">
+                                        <h3 class="mb-0 text-primary">{{ learning_stats.predictions.total|default(0) }}</h3>
+                                        <small class="text-muted">Total Predictions</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3 border rounded">
+                                        <h3 class="mb-0 text-success">{{ (learning_stats.model_performance.accuracy|default(0) * 100)|round(1) }}%</h3>
+                                        <small class="text-muted">Accuracy Rate</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if learning_stats.model_performance.by_type %}
+                            <h6 class="mb-3">Accuracy by Prediction Type</h6>
+                            {% for ptype, data in learning_stats.model_performance.by_type.items() %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-capitalize">{{ ptype|replace('_', ' ') }}</span>
+                                    <span>{{ data.accurate }}/{{ data.total }} ({{ (data.accuracy_rate * 100)|round(1) }}%)</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: {{ data.accuracy_rate * 100 }}%"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-cpu text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No predictions resolved yet</p>
+                                <small class="text-muted">Record outcomes to measure model accuracy</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-info-circle text-info"></i> Model Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="text-muted">Model Type:</td>
+                                        <td class="fw-bold">{{ learning_stats.model_info.type|default('Bayesian Statistical Model') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Version:</td>
+                                        <td class="fw-bold">{{ learning_stats.model_info.version|default('v1.0') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Predictions (7 days):</td>
+                                        <td class="fw-bold">{{ learning_stats.predictions.last_7_days|default(0) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Predictions (30 days):</td>
+                                        <td class="fw-bold">{{ learning_stats.predictions.last_30_days|default(0) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Pending Validation:</td>
+                                        <td class="fw-bold">{{ learning_stats.predictions.pending|default(0) }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <hr>
+                            <h6 class="mb-2">Features Used:</h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% if learning_stats.model_info.features %}
+                                {% for feature in learning_stats.model_info.features %}
+                                <span class="badge bg-light text-dark">{{ feature|replace('_', ' ') }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="badge bg-light text-dark">violation_count</span>
+                                <span class="badge bg-light text-dark">violation_types</span>
+                                <span class="badge bg-light text-dark">willfulness_ratio</span>
+                                <span class="badge bg-light text-dark">concrete_harm</span>
+                                <span class="badge bg-light text-dark">denial_letters</span>
+                                <span class="badge bg-light text-dark">bureaus_count</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row g-4">
-        <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-cpu text-primary"></i> Model Performance</h5>
-                </div>
-                <div class="card-body">
-                    {% if learning_stats.model_performance %}
-                    <div class="row g-3 mb-4">
-                        <div class="col-6">
-                            <div class="text-center p-3 border rounded">
-                                <h3 class="mb-0 text-primary">{{ learning_stats.predictions.total|default(0) }}</h3>
-                                <small class="text-muted">Total Predictions</small>
+        <div class="modal fade" id="recordOutcomeModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Record Case Outcome</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="outcomeForm">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Client ID <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="client_id" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Final Outcome <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="final_outcome" required>
+                                        <option value="">Select outcome...</option>
+                                        <option value="won">Won</option>
+                                        <option value="settled">Settled</option>
+                                        <option value="lost">Lost</option>
+                                        <option value="dismissed">Dismissed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Settlement Amount</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" name="settlement_amount" step="0.01" min="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Actual Damages</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" name="actual_damages" step="0.01" min="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Time to Resolution (days)</label>
+                                    <input type="number" class="form-control" name="time_to_resolution_days" min="0">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Case Type</label>
+                                    <select class="form-select" name="case_type">
+                                        <option value="fcra_dispute">FCRA Dispute</option>
+                                        <option value="identity_theft">Identity Theft</option>
+                                        <option value="mixed_file">Mixed File</option>
+                                        <option value="reinsertion">Reinsertion</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Furnisher ID</label>
+                                    <input type="number" class="form-control" name="furnisher_id">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Attorney ID</label>
+                                    <input type="number" class="form-control" name="attorney_id">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Violation Types (comma-separated)</label>
+                                    <input type="text" class="form-control" name="violation_types" placeholder="e.g., reinsertion, 611_failure, inaccurate_reporting">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Dispute Rounds Completed</label>
+                                    <input type="number" class="form-control" name="dispute_rounds_completed" min="0" max="10">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Violation Count</label>
+                                    <input type="number" class="form-control" name="violation_count" min="0">
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center p-3 border rounded">
-                                <h3 class="mb-0 text-success">{{ (learning_stats.model_performance.accuracy|default(0) * 100)|round(1) }}%</h3>
-                                <small class="text-muted">Accuracy Rate</small>
-                            </div>
-                        </div>
+                        </form>
                     </div>
-                    {% if learning_stats.model_performance.by_type %}
-                    <h6 class="mb-3">Accuracy by Prediction Type</h6>
-                    {% for ptype, data in learning_stats.model_performance.by_type.items() %}
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span class="text-capitalize">{{ ptype|replace('_', ' ') }}</span>
-                            <span>{{ data.accurate }}/{{ data.total }} ({{ (data.accuracy_rate * 100)|round(1) }}%)</span>
-                        </div>
-                        <div class="progress" style="height: 8px;">
-                            <div class="progress-bar bg-success" style="width: {{ data.accuracy_rate * 100 }}%"></div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-                    {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-cpu text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">No predictions resolved yet</p>
-                        <small class="text-muted">Record outcomes to measure model accuracy</small>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-info-circle text-info"></i> Model Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-borderless">
-                            <tr>
-                                <td class="text-muted">Model Type:</td>
-                                <td class="fw-bold">{{ learning_stats.model_info.type|default('Bayesian Statistical Model') }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Version:</td>
-                                <td class="fw-bold">{{ learning_stats.model_info.version|default('v1.0') }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Predictions (7 days):</td>
-                                <td class="fw-bold">{{ learning_stats.predictions.last_7_days|default(0) }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Predictions (30 days):</td>
-                                <td class="fw-bold">{{ learning_stats.predictions.last_30_days|default(0) }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Pending Validation:</td>
-                                <td class="fw-bold">{{ learning_stats.predictions.pending|default(0) }}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <hr>
-                    <h6 class="mb-2">Features Used:</h6>
-                    <div class="d-flex flex-wrap gap-1">
-                        {% if learning_stats.model_info.features %}
-                        {% for feature in learning_stats.model_info.features %}
-                        <span class="badge bg-light text-dark">{{ feature|replace('_', ' ') }}</span>
-                        {% endfor %}
-                        {% else %}
-                        <span class="badge bg-light text-dark">violation_count</span>
-                        <span class="badge bg-light text-dark">violation_types</span>
-                        <span class="badge bg-light text-dark">willfulness_ratio</span>
-                        <span class="badge bg-light text-dark">concrete_harm</span>
-                        <span class="badge bg-light text-dark">denial_letters</span>
-                        <span class="badge bg-light text-dark">bureaus_count</span>
-                        {% endif %}
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="submitOutcome()">
+                            <i class="bi bi-check-lg"></i> Record Outcome
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
+    </main>
 
-<div class="modal fade" id="recordOutcomeModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Record Case Outcome</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="outcomeForm">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Client ID <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="client_id" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Final Outcome <span class="text-danger">*</span></label>
-                            <select class="form-select" name="final_outcome" required>
-                                <option value="">Select outcome...</option>
-                                <option value="won">Won</option>
-                                <option value="settled">Settled</option>
-                                <option value="lost">Lost</option>
-                                <option value="dismissed">Dismissed</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Settlement Amount</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" name="settlement_amount" step="0.01" min="0">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Actual Damages</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" name="actual_damages" step="0.01" min="0">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Time to Resolution (days)</label>
-                            <input type="number" class="form-control" name="time_to_resolution_days" min="0">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Case Type</label>
-                            <select class="form-select" name="case_type">
-                                <option value="fcra_dispute">FCRA Dispute</option>
-                                <option value="identity_theft">Identity Theft</option>
-                                <option value="mixed_file">Mixed File</option>
-                                <option value="reinsertion">Reinsertion</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Furnisher ID</label>
-                            <input type="number" class="form-control" name="furnisher_id">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Attorney ID</label>
-                            <input type="number" class="form-control" name="attorney_id">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Violation Types (comma-separated)</label>
-                            <input type="text" class="form-control" name="violation_types" placeholder="e.g., reinsertion, 611_failure, inaccurate_reporting">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Dispute Rounds Completed</label>
-                            <input type="number" class="form-control" name="dispute_rounds_completed" min="0" max="10">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Violation Count</label>
-                            <input type="number" class="form-control" name="violation_count" min="0">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="submitOutcome()">
-                    <i class="bi bi-check-lg"></i> Record Outcome
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function showRecordOutcomeModal() {
+        const modal = new bootstrap.Modal(document.getElementById('recordOutcomeModal'));
+        modal.show();
+    }
 
-<script>
-function showRecordOutcomeModal() {
-    const modal = new bootstrap.Modal(document.getElementById('recordOutcomeModal'));
-    modal.show();
-}
+    function submitOutcome() {
+        const form = document.getElementById('outcomeForm');
+        const formData = new FormData(form);
+        
+        const data = {
+            client_id: parseInt(formData.get('client_id')),
+            final_outcome: formData.get('final_outcome'),
+            settlement_amount: parseFloat(formData.get('settlement_amount')) || 0,
+            actual_damages: parseFloat(formData.get('actual_damages')) || 0,
+            time_to_resolution_days: parseInt(formData.get('time_to_resolution_days')) || 0,
+            case_type: formData.get('case_type'),
+            furnisher_id: formData.get('furnisher_id') ? parseInt(formData.get('furnisher_id')) : null,
+            attorney_id: formData.get('attorney_id') ? parseInt(formData.get('attorney_id')) : null,
+            violation_types: formData.get('violation_types') ? formData.get('violation_types').split(',').map(v => v.trim()) : [],
+            dispute_rounds_completed: parseInt(formData.get('dispute_rounds_completed')) || 0,
+            violation_count: parseInt(formData.get('violation_count')) || 0
+        };
+        
+        fetch('/api/ml/outcomes', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Outcome recorded successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        })
+        .catch(error => {
+            alert('Error recording outcome: ' + error);
+        });
+    }
 
-function submitOutcome() {
-    const form = document.getElementById('outcomeForm');
-    const formData = new FormData(form);
-    
-    const data = {
-        client_id: parseInt(formData.get('client_id')),
-        final_outcome: formData.get('final_outcome'),
-        settlement_amount: parseFloat(formData.get('settlement_amount')) || 0,
-        actual_damages: parseFloat(formData.get('actual_damages')) || 0,
-        time_to_resolution_days: parseInt(formData.get('time_to_resolution_days')) || 0,
-        case_type: formData.get('case_type'),
-        furnisher_id: formData.get('furnisher_id') ? parseInt(formData.get('furnisher_id')) : null,
-        attorney_id: formData.get('attorney_id') ? parseInt(formData.get('attorney_id')) : null,
-        violation_types: formData.get('violation_types') ? formData.get('violation_types').split(',').map(v => v.trim()) : [],
-        dispute_rounds_completed: parseInt(formData.get('dispute_rounds_completed')) || 0,
-        violation_count: parseInt(formData.get('violation_count')) || 0
-    };
-    
-    fetch('/api/ml/outcomes', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            alert('Outcome recorded successfully!');
-            location.reload();
-        } else {
-            alert('Error: ' + result.error);
-        }
-    })
-    .catch(error => {
-        alert('Error recording outcome: ' + error);
-    });
-}
-
-function refreshPatterns() {
-    if (!confirm('Refresh all pattern analysis? This may take a moment.')) return;
-    
-    fetch('/api/ml/refresh-patterns', {method: 'POST'})
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            alert('Patterns refreshed successfully!');
-            location.reload();
-        } else {
-            alert('Error: ' + result.error);
-        }
-    })
-    .catch(error => {
-        alert('Error refreshing patterns: ' + error);
-    });
-}
-</script>
-{% endblock %}
+    function refreshPatterns() {
+        if (!confirm('Refresh all pattern analysis? This may take a moment.')) return;
+        
+        fetch('/api/ml/refresh-patterns', {method: 'POST'})
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Patterns refreshed successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        })
+        .catch(error => {
+            alert('Error refreshing patterns: ' + error);
+        });
+    }
+    </script>
+</body>
+</html>

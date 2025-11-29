@@ -8619,13 +8619,25 @@ def dashboard_automation_tools():
     db = get_db()
     try:
         clients = db.query(Client).order_by(Client.first_name).all()
-        return render_template('automation_tools.html', clients=clients)
+        return render_template('automation_tools.html', clients=clients, active_page='automation-tools')
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return render_template('automation_tools.html', clients=[])
+        return render_template('automation_tools.html', clients=[], active_page='automation-tools')
     finally:
         db.close()
+
+@app.route('/dashboard/automation')
+@require_staff(roles=['admin', 'paralegal'])
+def dashboard_automation_redirect():
+    """Redirect old automation URL to automation-tools"""
+    return redirect('/dashboard/automation-tools')
+
+@app.route('/dashboard/reports')
+@require_staff(roles=['admin', 'attorney'])
+def dashboard_reports_redirect():
+    """Redirect old reports URL to analytics"""
+    return redirect('/dashboard/analytics')
 
 
 @app.route('/api/freeze-letters/generate', methods=['POST'])

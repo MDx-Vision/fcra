@@ -6,6 +6,7 @@
     <title>Document Scanner - Brightpath Ascend</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
     <style>
         :root {
             --teal: #008080;
@@ -16,20 +17,29 @@
         body {
             background: #f8f9fa;
             min-height: 100vh;
+        }
+        
+        .main-content {
+            margin-left: 260px;
             padding-bottom: 100px;
         }
         
-        .header-gradient {
+        .page-header {
             background: var(--gradient);
             color: white;
-            padding: 1rem;
-            text-align: center;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .page-header h4 {
+            margin: 0;
+            font-weight: 600;
         }
         
         .scanner-container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 0 1rem;
         }
         
         .doc-type-card {
@@ -229,7 +239,7 @@
         .bottom-actions {
             position: fixed;
             bottom: 0;
-            left: 0;
+            left: 260px;
             right: 0;
             background: white;
             padding: 1rem;
@@ -314,7 +324,13 @@
             border-bottom: none;
         }
         
-        @media (max-width: 576px) {
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+            .bottom-actions {
+                left: 0;
+            }
             .page-thumbnail {
                 width: calc(50% - 0.25rem);
             }
@@ -322,245 +338,250 @@
     </style>
 </head>
 <body>
-    <div class="header-gradient">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h4 class="mb-0"><i class="bi bi-camera"></i> Document Scanner</h4>
-                <small>{% if client_name %}Scanning for {{ client_name }}{% else %}Brightpath Ascend Group{% endif %}</small>
-            </div>
-            {% if portal_token %}
-            <a href="/portal/{{ portal_token }}" class="btn btn-sm btn-light">
-                <i class="bi bi-arrow-left"></i> Back to Portal
-            </a>
-            {% endif %}
-        </div>
-    </div>
+    {% set active_page = 'scanner' %}
+    {% include 'includes/dashboard_sidebar.html' %}
     
-    <div class="scanner-container">
-        <div class="step-indicator mb-3">
-            <div class="step" id="step-1"></div>
-            <div class="step" id="step-2"></div>
-            <div class="step" id="step-3"></div>
-        </div>
-        
-        <div id="step-select-type">
-            <h5 class="mb-3">Select Document Type</h5>
-            
-            <div class="doc-type-card" data-type="cra_response" data-has-rounds="true">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-envelope-open fs-4 me-3 text-info"></i>
-                    <div>
-                        <strong>CRA Response Letter</strong>
-                        <div class="text-muted small">Response from credit bureau (select round next)</div>
-                    </div>
-                    <i class="bi bi-chevron-right ms-auto text-muted"></i>
+    <main class="main-content">
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4><i class="bi bi-camera"></i> Document Scanner</h4>
+                    <small>{% if client_name %}Scanning for {{ client_name }}{% else %}Brightpath Ascend Group{% endif %}</small>
                 </div>
-            </div>
-            
-            <div class="doc-type-card" data-type="collection_letter">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-exclamation-triangle fs-4 me-3 text-warning"></i>
-                    <div>
-                        <strong>Collection Letter</strong>
-                        <div class="text-muted small">Letter from debt collector</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card" data-type="creditor_response">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-bank fs-4 me-3 text-primary"></i>
-                    <div>
-                        <strong>Creditor/Furnisher Response</strong>
-                        <div class="text-muted small">Response from creditor or data furnisher</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card" data-type="court_document">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-building fs-4 me-3 text-danger"></i>
-                    <div>
-                        <strong>Court Document</strong>
-                        <div class="text-muted small">Lawsuit, summons, or court filing</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card" data-type="id_document">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-person-badge fs-4 me-3 text-success"></i>
-                    <div>
-                        <strong>ID Document</strong>
-                        <div class="text-muted small">Driver license, passport, or other ID</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card" data-type="proof_of_address">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-house fs-4 me-3 text-secondary"></i>
-                    <div>
-                        <strong>Proof of Address</strong>
-                        <div class="text-muted small">Utility bill, bank statement</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card" data-type="other">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-file-earmark fs-4 me-3 text-muted"></i>
-                    <div>
-                        <strong>Other Document</strong>
-                        <div class="text-muted small">Any other document type</div>
-                    </div>
-                </div>
+                {% if portal_token %}
+                <a href="/portal/{{ portal_token }}" class="btn btn-sm btn-light">
+                    <i class="bi bi-arrow-left"></i> Back to Portal
+                </a>
+                {% endif %}
             </div>
         </div>
         
-        <div id="step-select-round" class="d-none">
-            <h5 class="mb-3">Select Dispute Round</h5>
-            <p class="text-muted mb-3">Which dispute round is this response from?</p>
+        <div class="scanner-container">
+            <div class="step-indicator mb-3">
+                <div class="step" id="step-1"></div>
+                <div class="step" id="step-2"></div>
+                <div class="step" id="step-3"></div>
+            </div>
             
-            <div class="doc-type-card round-card" data-round="1" data-type="cra_response_r1">
-                <div class="d-flex align-items-center">
-                    <div class="round-badge bg-primary text-white">R1</div>
-                    <div class="ms-3">
-                        <strong>Round 1 Response</strong>
-                        <div class="text-muted small">Initial dispute investigation results</div>
+            <div id="step-select-type">
+                <h5 class="mb-3">Select Document Type</h5>
+                
+                <div class="doc-type-card" data-type="cra_response" data-has-rounds="true">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-envelope-open fs-4 me-3 text-info"></i>
+                        <div>
+                            <strong>CRA Response Letter</strong>
+                            <div class="text-muted small">Response from credit bureau (select round next)</div>
+                        </div>
+                        <i class="bi bi-chevron-right ms-auto text-muted"></i>
                     </div>
                 </div>
-            </div>
-            
-            <div class="doc-type-card round-card" data-round="2" data-type="cra_response_r2">
-                <div class="d-flex align-items-center">
-                    <div class="round-badge bg-info text-white">R2</div>
-                    <div class="ms-3">
-                        <strong>Round 2 Response</strong>
-                        <div class="text-muted small">Re-investigation results</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card round-card" data-round="3" data-type="cra_response_r3">
-                <div class="d-flex align-items-center">
-                    <div class="round-badge bg-warning text-dark">R3</div>
-                    <div class="ms-3">
-                        <strong>Round 3 Response</strong>
-                        <div class="text-muted small">Escalated dispute response</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="doc-type-card round-card" data-round="4" data-type="cra_response_r4">
-                <div class="d-flex align-items-center">
-                    <div class="round-badge bg-danger text-white">R4</div>
-                    <div class="ms-3">
-                        <strong>Round 4 / MOV Response</strong>
-                        <div class="text-muted small">Method of Verification request response</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="step-capture" class="d-none">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Scan Pages</h5>
-                <span class="badge bg-secondary" id="page-count-badge">0 pages</span>
-            </div>
-            
-            <ul class="nav nav-tabs mb-3" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-camera" type="button">
-                        <i class="bi bi-camera"></i> Camera
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-upload" type="button">
-                        <i class="bi bi-upload"></i> Upload
-                    </button>
-                </li>
-            </ul>
-            
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="tab-camera">
-                    <div class="camera-container">
-                        <video id="video-preview" autoplay playsinline></video>
-                        <canvas id="capture-canvas" class="d-none"></canvas>
-                        <div class="camera-overlay">
-                            <button class="capture-btn" id="btn-capture" onclick="capturePhoto()">
-                                <div class="capture-btn-inner"></div>
-                            </button>
+                
+                <div class="doc-type-card" data-type="collection_letter">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle fs-4 me-3 text-warning"></i>
+                        <div>
+                            <strong>Collection Letter</strong>
+                            <div class="text-muted small">Letter from debt collector</div>
                         </div>
                     </div>
-                    <div class="text-center text-muted small mb-3">
-                        <i class="bi bi-lightbulb"></i> Position document flat with good lighting
+                </div>
+                
+                <div class="doc-type-card" data-type="creditor_response">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-bank fs-4 me-3 text-primary"></i>
+                        <div>
+                            <strong>Creditor/Furnisher Response</strong>
+                            <div class="text-muted small">Response from creditor or data furnisher</div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="tab-pane fade" id="tab-upload">
-                    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
-                        <i class="bi bi-cloud-upload"></i>
-                        <p class="mb-0 mt-2">Tap to select images</p>
-                        <small class="text-muted">or drag & drop files here</small>
+                <div class="doc-type-card" data-type="court_document">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-building fs-4 me-3 text-danger"></i>
+                        <div>
+                            <strong>Court Document</strong>
+                            <div class="text-muted small">Lawsuit, summons, or court filing</div>
+                        </div>
                     </div>
-                    <input type="file" id="file-input" accept="image/*" multiple class="d-none" onchange="handleFileSelect(event)">
+                </div>
+                
+                <div class="doc-type-card" data-type="id_document">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-person-badge fs-4 me-3 text-success"></i>
+                        <div>
+                            <strong>ID Document</strong>
+                            <div class="text-muted small">Driver license, passport, or other ID</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-type-card" data-type="proof_of_address">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-house fs-4 me-3 text-secondary"></i>
+                        <div>
+                            <strong>Proof of Address</strong>
+                            <div class="text-muted small">Utility bill, bank statement</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-type-card" data-type="other">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-file-earmark fs-4 me-3 text-muted"></i>
+                        <div>
+                            <strong>Other Document</strong>
+                            <div class="text-muted small">Any other document type</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div id="pages-container">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">Scanned Pages</h6>
-                    <small class="text-muted" id="pages-hint">Capture all pages, then process</small>
-                </div>
-                <div class="page-queue" id="page-queue"></div>
+            <div id="step-select-round" class="d-none">
+                <h5 class="mb-3">Select Dispute Round</h5>
+                <p class="text-muted mb-3">Which dispute round is this response from?</p>
                 
-                <div class="add-more-prompt" id="add-more-prompt" style="display: none;">
-                    <button class="add-more-btn" id="add-more-btn" onclick="addMorePages()">
-                        <i class="bi bi-plus-circle-fill"></i>
-                    </button>
-                    <p class="mb-1 mt-2"><strong>Page captured!</strong></p>
-                    <p class="text-muted mb-0 small">
-                        Tap the <strong>+</strong> button to add more pages.<br>
-                        When done, tap <strong>Process Document</strong> below.
-                    </p>
+                <div class="doc-type-card round-card" data-round="1" data-type="cra_response_r1">
+                    <div class="d-flex align-items-center">
+                        <div class="round-badge bg-primary text-white">R1</div>
+                        <div class="ms-3">
+                            <strong>Round 1 Response</strong>
+                            <div class="text-muted small">Initial dispute investigation results</div>
+                        </div>
+                    </div>
                 </div>
+                
+                <div class="doc-type-card round-card" data-round="2" data-type="cra_response_r2">
+                    <div class="d-flex align-items-center">
+                        <div class="round-badge bg-info text-white">R2</div>
+                        <div class="ms-3">
+                            <strong>Round 2 Response</strong>
+                            <div class="text-muted small">Re-investigation results</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-type-card round-card" data-round="3" data-type="cra_response_r3">
+                    <div class="d-flex align-items-center">
+                        <div class="round-badge bg-warning text-dark">R3</div>
+                        <div class="ms-3">
+                            <strong>Round 3 Response</strong>
+                            <div class="text-muted small">Escalated dispute response</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-type-card round-card" data-round="4" data-type="cra_response_r4">
+                    <div class="d-flex align-items-center">
+                        <div class="round-badge bg-danger text-white">R4</div>
+                        <div class="ms-3">
+                            <strong>Round 4 / MOV Response</strong>
+                            <div class="text-muted small">Method of Verification request response</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="step-capture" class="d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Scan Pages</h5>
+                    <span class="badge bg-secondary" id="page-count-badge">0 pages</span>
+                </div>
+                
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-camera" type="button">
+                            <i class="bi bi-camera"></i> Camera
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-upload" type="button">
+                            <i class="bi bi-upload"></i> Upload
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-camera">
+                        <div class="camera-container">
+                            <video id="video-preview" autoplay playsinline></video>
+                            <canvas id="capture-canvas" class="d-none"></canvas>
+                            <div class="camera-overlay">
+                                <button class="capture-btn" id="btn-capture" onclick="capturePhoto()">
+                                    <div class="capture-btn-inner"></div>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="text-center text-muted small mb-3">
+                            <i class="bi bi-lightbulb"></i> Position document flat with good lighting
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="tab-upload">
+                        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+                            <i class="bi bi-cloud-upload"></i>
+                            <p class="mb-0 mt-2">Tap to select images</p>
+                            <small class="text-muted">or drag & drop files here</small>
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" multiple class="d-none" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+                
+                <div id="pages-container">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Scanned Pages</h6>
+                        <small class="text-muted" id="pages-hint">Capture all pages, then process</small>
+                    </div>
+                    <div class="page-queue" id="page-queue"></div>
+                    
+                    <div class="add-more-prompt" id="add-more-prompt" style="display: none;">
+                        <button class="add-more-btn" id="add-more-btn" onclick="addMorePages()">
+                            <i class="bi bi-plus-circle-fill"></i>
+                        </button>
+                        <p class="mb-1 mt-2"><strong>Page captured!</strong></p>
+                        <p class="text-muted mb-0 small">
+                            Tap the <strong>+</strong> button to add more pages.<br>
+                            When done, tap <strong>Process Document</strong> below.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="step-result" class="d-none">
+                <div class="result-card">
+                    <h5><i class="bi bi-check-circle text-success"></i> Processing Complete</h5>
+                    
+                    <div class="stat-row">
+                        <span>Document Type</span>
+                        <strong id="result-doc-type">-</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Pages Scanned</span>
+                        <strong id="result-pages">-</strong>
+                    </div>
+                    <div class="stat-row">
+                        <span>Text Extracted</span>
+                        <strong id="result-words">- words</strong>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <h6>Generated Files</h6>
+                    <a href="#" id="download-pdf-link" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="bi bi-file-pdf"></i> Download PDF
+                    </a>
+                    <a href="#" id="download-text-link" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-file-text"></i> Download Text
+                    </a>
+                </div>
+                
+                <button class="btn btn-gradient w-100" onclick="startNewScan()">
+                    <i class="bi bi-plus-circle"></i> Scan Another Document
+                </button>
             </div>
         </div>
-        
-        <div id="step-result" class="d-none">
-            <div class="result-card">
-                <h5><i class="bi bi-check-circle text-success"></i> Processing Complete</h5>
-                
-                <div class="stat-row">
-                    <span>Document Type</span>
-                    <strong id="result-doc-type">-</strong>
-                </div>
-                <div class="stat-row">
-                    <span>Pages Scanned</span>
-                    <strong id="result-pages">-</strong>
-                </div>
-                <div class="stat-row">
-                    <span>Text Extracted</span>
-                    <strong id="result-words">- words</strong>
-                </div>
-            </div>
-            
-            <div class="result-card">
-                <h6>Generated Files</h6>
-                <a href="#" id="download-pdf-link" class="btn btn-outline-primary w-100 mb-2">
-                    <i class="bi bi-file-pdf"></i> Download PDF
-                </a>
-                <a href="#" id="download-text-link" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-file-text"></i> Download Text
-                </a>
-            </div>
-            
-            <button class="btn btn-gradient w-100" onclick="startNewScan()">
-                <i class="bi bi-plus-circle"></i> Scan Another Document
-            </button>
-        </div>
-    </div>
+    </main>
     
     <div class="bottom-actions" id="bottom-actions">
         <button class="btn btn-outline-secondary flex-grow-1" id="btn-back" onclick="goBack()">

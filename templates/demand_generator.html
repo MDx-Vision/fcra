@@ -4,168 +4,207 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Settlement Demand Generator | Brightpath Ascend</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
     <style>
-        .gradient-sidebar { background: linear-gradient(180deg, #1e3a5f 0%, #0d1b2a 100%); }
-        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header { margin-bottom: 30px; }
+        .header h1 { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+        .header p { color: #64748b; margin-top: 8px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .card-title { font-size: 18px; font-weight: 600; color: #1a1a2e; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .card-title i { color: #319795; }
+        .form-input { width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; }
+        .form-input:focus { outline: none; border-color: #84cc16; }
+        .form-select { width: 100%; padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: white; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: #1a1a2e; margin-bottom: 8px; }
+        .form-group { margin-bottom: 20px; }
+        .client-item { padding: 12px 15px; border: 2px solid #e2e8f0; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+        .client-item:hover { background: #f0fdf4; border-color: #84cc16; }
+        .client-item.selected { background: #dcfce7; border-color: #84cc16; }
+        .client-name { font-weight: 500; color: #1a1a2e; }
+        .client-email { font-size: 12px; color: #64748b; }
+        .client-list { max-height: 400px; overflow-y: auto; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; width: 100%; justify-content: center; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+        .btn-download { background: #dc2626; color: white; }
+        .btn-copy { background: #2563eb; color: white; }
+        .selected-client-box { background: #dbeafe; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .selected-client-box p { font-weight: 600; color: #1e40af; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .result-card { margin-top: 24px; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-box { padding: 15px; border-radius: 10px; text-align: center; }
+        .stat-box.green { background: #dcfce7; }
+        .stat-box.blue { background: #dbeafe; }
+        .stat-box.purple { background: #f3e8ff; }
+        .stat-label { font-size: 12px; margin-bottom: 5px; }
+        .stat-label.green { color: #16a34a; }
+        .stat-label.blue { color: #2563eb; }
+        .stat-label.purple { color: #9333ea; }
+        .stat-value { font-size: 20px; font-weight: 700; }
+        .stat-value.green { color: #166534; }
+        .stat-value.blue { color: #1e40af; }
+        .stat-value.purple { color: #7c3aed; }
+        .letter-content { background: #f8fafc; border-radius: 8px; padding: 20px; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 13px; white-space: pre-wrap; }
+        .no-selection { text-align: center; padding: 60px 20px; color: #64748b; }
+        .no-selection i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .hidden { display: none; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .loading-content { background: white; border-radius: 16px; padding: 40px; text-align: center; }
+        .loading-content i { font-size: 48px; color: #2563eb; margin-bottom: 20px; }
+        @media (max-width: 1200px) {
+            .grid-container { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="flex">
-        <nav class="gradient-sidebar w-64 min-h-screen p-6 fixed">
-            <div class="mb-8">
-                <h1 class="text-xl font-bold text-white">Brightpath Ascend</h1>
-                <p class="text-blue-300 text-sm">FCRA Platform</p>
-            </div>
-            <ul class="space-y-2">
-                <li><a href="/dashboard" class="flex items-center text-gray-300 hover:text-white py-2"><i class="fas fa-home w-6"></i> Dashboard</a></li>
-                <li><a href="/dashboard/clients" class="flex items-center text-gray-300 hover:text-white py-2"><i class="fas fa-users w-6"></i> Clients</a></li>
-                <li><a href="/dashboard/demand-generator" class="flex items-center text-white bg-blue-600 rounded px-2 py-2"><i class="fas fa-file-invoice-dollar w-6"></i> Demand Generator</a></li>
-                <li><a href="/dashboard/settlements" class="flex items-center text-gray-300 hover:text-white py-2"><i class="fas fa-handshake w-6"></i> Settlements</a></li>
-                <li><a href="/dashboard/triage" class="flex items-center text-gray-300 hover:text-white py-2"><i class="fas fa-sort-amount-down w-6"></i> Case Triage</a></li>
-                <li><a href="/dashboard/case-law" class="flex items-center text-gray-300 hover:text-white py-2"><i class="fas fa-gavel w-6"></i> Case Law</a></li>
-                <li><a href="/dashboard/escalation" class="flex items-center text-gray-300 hover:text-white py-2"><i class="fas fa-arrow-up w-6"></i> Escalation</a></li>
-            </ul>
-        </nav>
+<body>
+    {% set active_page = 'demand-generator' %}
+    {% include 'includes/dashboard_sidebar.html' %}
 
-        <main class="ml-64 flex-1 p-8">
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-800">
-                    <i class="fas fa-file-invoice-dollar text-green-600 mr-3"></i>
-                    AI Settlement Demand Generator
-                </h1>
-                <p class="text-gray-600 mt-2">Generate professional demand letters with one click using AI analysis</p>
+    <main class="main-content">
+        <div class="header">
+            <h1><i class="fas fa-file-invoice-dollar" style="color: #16a34a;"></i> AI Settlement Demand Generator</h1>
+            <p>Generate professional demand letters with one click using AI analysis</p>
+        </div>
+
+        <div class="grid-container">
+            <div>
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-user"></i> Select Client</h2>
+                    
+                    <div class="form-group">
+                        <input type="text" id="clientSearch" placeholder="Search clients..." class="form-input">
+                    </div>
+                    
+                    <div id="clientList" class="client-list">
+                        {% for client in clients %}
+                        <div class="client-item" data-id="{{ client.id }}" data-name="{{ client.name }}">
+                            <div class="client-name">{{ client.name }}</div>
+                            <div class="client-email">{{ client.email or 'No email' }}</div>
+                        </div>
+                        {% endfor %}
+                        {% if not clients %}
+                        <p style="text-align: center; color: #64748b; padding: 20px;">No clients found</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover transition">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-user text-blue-600 mr-2"></i>Select Client
-                        </h2>
-                        
-                        <div class="mb-4">
-                            <input type="text" id="clientSearch" placeholder="Search clients..." 
-                                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <div>
+                <div class="card">
+                    <h2 class="card-title"><i class="fas fa-cog" style="color: #9333ea;"></i> Demand Configuration</h2>
+                    
+                    <div id="noClientSelected" class="no-selection">
+                        <i class="fas fa-arrow-left"></i>
+                        <p>Select a client to generate a demand letter</p>
+                    </div>
+                    
+                    <div id="demandForm" class="hidden">
+                        <div class="selected-client-box">
+                            <p>Selected Client: <span id="selectedClientName"></span></p>
+                            <input type="hidden" id="selectedClientId">
                         </div>
                         
-                        <div id="clientList" class="max-h-96 overflow-y-auto space-y-2">
-                            {% for client in clients %}
-                            <div class="client-item p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition" 
-                                 data-id="{{ client.id }}" data-name="{{ client.name }}">
-                                <div class="font-medium text-gray-800">{{ client.name }}</div>
-                                <div class="text-sm text-gray-500">{{ client.email or 'No email' }}</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Target</label>
+                                <select id="demandTarget" class="form-select">
+                                    <option value="bureaus">All Credit Bureaus</option>
+                                    <option value="equifax">Equifax Only</option>
+                                    <option value="experian">Experian Only</option>
+                                    <option value="transunion">TransUnion Only</option>
+                                    <option value="furnisher">Data Furnisher</option>
+                                </select>
                             </div>
-                            {% endfor %}
-                            {% if not clients %}
-                            <p class="text-gray-500 text-center py-4">No clients found</p>
-                            {% endif %}
+                            <div class="form-group">
+                                <label class="form-label">Response Deadline</label>
+                                <select id="deadlineDays" class="form-select">
+                                    <option value="15">15 Days</option>
+                                    <option value="30" selected>30 Days</option>
+                                    <option value="45">45 Days</option>
+                                    <option value="60">60 Days</option>
+                                </select>
+                            </div>
                         </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Demand Amount (Optional)</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="color: #64748b;">$</span>
+                                <input type="number" id="demandAmount" placeholder="Auto-calculated from analysis" class="form-input">
+                            </div>
+                            <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Leave blank to use calculated settlement target</p>
+                        </div>
+                        
+                        <button id="generateBtn" class="btn btn-primary">
+                            <i class="fas fa-magic"></i> Generate AI Demand Letter
+                        </button>
                     </div>
                 </div>
 
-                <div class="lg:col-span-2">
-                    <div class="bg-white rounded-xl shadow-lg p-6 card-hover transition">
-                        <h2 class="text-lg font-semibold text-gray-800 mb-4">
-                            <i class="fas fa-cog text-purple-600 mr-2"></i>Demand Configuration
-                        </h2>
-                        
-                        <div id="noClientSelected" class="text-center py-12 text-gray-500">
-                            <i class="fas fa-arrow-left text-4xl mb-4"></i>
-                            <p>Select a client to generate a demand letter</p>
+                <div id="resultSection" class="hidden result-card">
+                    <div class="card">
+                        <div class="result-header">
+                            <h2 class="card-title"><i class="fas fa-file-alt" style="color: #16a34a;"></i> Generated Demand Letter</h2>
+                            <div style="display: flex; gap: 10px;">
+                                <a id="downloadPdfBtn" href="#" target="_blank" class="btn btn-download">
+                                    <i class="fas fa-file-pdf"></i> Download PDF
+                                </a>
+                                <button id="copyBtn" class="btn btn-copy">
+                                    <i class="fas fa-copy"></i> Copy Text
+                                </button>
+                            </div>
                         </div>
                         
-                        <div id="demandForm" class="hidden">
-                            <div class="mb-4 p-4 bg-blue-50 rounded-lg">
-                                <p class="font-semibold text-blue-800">Selected Client: <span id="selectedClientName"></span></p>
-                                <input type="hidden" id="selectedClientId">
+                        <div class="result-stats">
+                            <div class="stat-box green">
+                                <p class="stat-label green">Demand Amount</p>
+                                <p class="stat-value green" id="resultAmount">$0</p>
                             </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 mb-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Target</label>
-                                    <select id="demandTarget" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                        <option value="bureaus">All Credit Bureaus</option>
-                                        <option value="equifax">Equifax Only</option>
-                                        <option value="experian">Experian Only</option>
-                                        <option value="transunion">TransUnion Only</option>
-                                        <option value="furnisher">Data Furnisher</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Response Deadline</label>
-                                    <select id="deadlineDays" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                        <option value="15">15 Days</option>
-                                        <option value="30" selected>30 Days</option>
-                                        <option value="45">45 Days</option>
-                                        <option value="60">60 Days</option>
-                                    </select>
-                                </div>
+                            <div class="stat-box blue">
+                                <p class="stat-label blue">Violations Cited</p>
+                                <p class="stat-value blue" id="resultViolations">0</p>
                             </div>
-                            
-                            <div class="mb-6">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Demand Amount (Optional)</label>
-                                <div class="flex items-center">
-                                    <span class="text-gray-500 mr-2">$</span>
-                                    <input type="number" id="demandAmount" placeholder="Auto-calculated from analysis" 
-                                           class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                </div>
-                                <p class="text-sm text-gray-500 mt-1">Leave blank to use calculated settlement target</p>
+                            <div class="stat-box purple">
+                                <p class="stat-label purple">Response Deadline</p>
+                                <p class="stat-value purple" id="resultDeadline">30 Days</p>
                             </div>
-                            
-                            <button id="generateBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition flex items-center justify-center">
-                                <i class="fas fa-magic mr-2"></i>Generate AI Demand Letter
-                            </button>
                         </div>
-                    </div>
-
-                    <div id="resultSection" class="hidden mt-6">
-                        <div class="bg-white rounded-xl shadow-lg p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-lg font-semibold text-gray-800">
-                                    <i class="fas fa-file-alt text-green-600 mr-2"></i>Generated Demand Letter
-                                </h2>
-                                <div class="space-x-2">
-                                    <a id="downloadPdfBtn" href="#" target="_blank" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-                                        <i class="fas fa-file-pdf mr-2"></i>Download PDF
-                                    </a>
-                                    <button id="copyBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                                        <i class="fas fa-copy mr-2"></i>Copy Text
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-3 gap-4 mb-4">
-                                <div class="bg-green-50 rounded-lg p-3 text-center">
-                                    <p class="text-sm text-green-600">Demand Amount</p>
-                                    <p class="text-xl font-bold text-green-800" id="resultAmount">$0</p>
-                                </div>
-                                <div class="bg-blue-50 rounded-lg p-3 text-center">
-                                    <p class="text-sm text-blue-600">Violations Cited</p>
-                                    <p class="text-xl font-bold text-blue-800" id="resultViolations">0</p>
-                                </div>
-                                <div class="bg-purple-50 rounded-lg p-3 text-center">
-                                    <p class="text-sm text-purple-600">Response Deadline</p>
-                                    <p class="text-xl font-bold text-purple-800" id="resultDeadline">30 Days</p>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                                <pre id="letterContent" class="whitespace-pre-wrap text-sm text-gray-800 font-mono"></pre>
-                            </div>
+                        
+                        <div class="letter-content">
+                            <pre id="letterContent"></pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
-    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-xl p-8 text-center">
-            <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
-            <p class="text-lg font-semibold">Generating AI Demand Letter...</p>
-            <p class="text-gray-500">This may take 15-30 seconds</p>
+    <div id="loadingOverlay" class="hidden loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p style="font-size: 18px; font-weight: 600;">Generating AI Demand Letter...</p>
+            <p style="color: #64748b;">This may take 15-30 seconds</p>
         </div>
     </div>
 
@@ -188,8 +227,8 @@
 
         clientItems.forEach(item => {
             item.addEventListener('click', () => {
-                clientItems.forEach(i => i.classList.remove('bg-blue-100', 'border-blue-500'));
-                item.classList.add('bg-blue-100', 'border-blue-500');
+                clientItems.forEach(i => i.classList.remove('selected'));
+                item.classList.add('selected');
                 
                 document.getElementById('selectedClientId').value = item.dataset.id;
                 document.getElementById('selectedClientName').textContent = item.dataset.name;
