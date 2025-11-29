@@ -78,6 +78,26 @@ The platform is built on a Flask web framework and employs a two-stage, section-
 - **Performance Optimization** (`/dashboard/performance`): In-memory caching layer, database query optimization, request timing middleware, and slow endpoint detection.
 - **API Documentation** (`/api-docs`): Comprehensive public API documentation with authentication guide, endpoint details, rate limiting info, and code examples in Python/JavaScript/cURL.
 - **Enhanced Sidebar Navigation**: Collapsible accordion-style sections with localStorage persistence, smooth animations, and improved scrolling for all 70+ features.
+- **Enhanced Knowledge Base with Training Content** (`/dashboard/knowledge-base`): Comprehensive legal education system integrated with professional credit repair courses:
+  - **Credit Repair Course**: 8 sections covering FCRA fundamentals, §611/§623 tactics, mortgage lates, collections/FDCPA, identity theft §605B, and advanced escalation strategies
+  - **Metro 2® Course**: 4 sections on data format standards, reporting challenges, DOFD hierarchy, and compliance condition codes
+  - **Metro 2® Code Reference**: 38+ codes including account status (11-97), payment history (0-6), special comments (AU, AW, B, CP, CL, M, Q, V, AC), and compliance conditions (XA-XR)
+  - **Search and Filtering**: Full-text search across all content with course and difficulty filtering
+  - **API Endpoints**: `/api/knowledge/search`, `/api/metro2/codes`
+- **Standard Operating Procedures (SOPs)** (`/dashboard/sops`): Step-by-step workflow guides for staff:
+  - **30-Day Client Onboarding**: Complete new client setup checklist
+  - **60-Day Round 2 Escalation**: Processing bureau responses and MOV requests
+  - **ChexSystems/EWS Disputes**: Specialty bureau dispute workflow
+  - **§605B Identity Theft Blocks**: Proper FTC affidavit and police report procedures
+  - **90-Day Case Reviews**: Strategy adjustment and escalation evaluation
+  - **Features**: Searchable procedures, difficulty levels, timeline estimates, checklist items, related statutes
+- **ChexSystems/EWS Dispute Helper** (`/dashboard/chexsystems`): Specialty bureau dispute tracking:
+  - **Dispute Tracking**: Status tracking (pending, sent, responded, resolved)
+  - **Bureau Support**: ChexSystems and Early Warning Services
+  - **Dispute Types**: NSF fees, closed-for-cause, fraud, unauthorized inquiries
+  - **Template Letters**: Pre-built dispute templates with proper addresses
+  - **Response Tracking**: Due dates, outcomes, and escalation levels
+  - **API Endpoints**: POST/PUT `/api/chexsystems/disputes`
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
