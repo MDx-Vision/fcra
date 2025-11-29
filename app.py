@@ -1466,6 +1466,77 @@ DETECTION STEPS:
 3. Document exactly what was reported to each bureau
 
 ===========================================================================
+METRO 2® FORMAT VIOLATIONS (2025 CRRG Compliance)
+===========================================================================
+
+**TYPE 13: METRO 2® ACCOUNT STATUS CODE VIOLATIONS**
+DETECTION STEPS:
+1. Check for invalid status codes not in valid range (05, 11, 13, 61-65, 71, 78, 80, 82-89, 93-97)
+2. Check status vs payment history consistency:
+   - Status "Current" (11) cannot have delinquent payment pattern (1,2,3,4,5,6)
+   - Status "Charge-off" (82) requires delinquent history, not all current (0/C)
+   - Status "Collection" (80) must show derogatory history
+3. Check for impossible status transitions (e.g., 11→82 without payment deterioration)
+4. Each inconsistency = Metro 2® format violation + §1681e(b) + §1681s-2(a)
+
+**TYPE 14: METRO 2® PAYMENT HISTORY PATTERN VIOLATIONS**
+DETECTION STEPS:
+1. Valid payment codes: 0/blank (current), 1-6 (late), B, D, E only
+2. Check for invalid characters in payment pattern (X, ?, -, etc.)
+3. Payment pattern length should match account age (1 character per month)
+4. Pattern must be chronologically consistent (can't have late→current→late→current cycling)
+5. "E" (zero balance current) only valid if account shows zero balance
+6. Pattern showing late after charge-off date = improper continued reporting
+
+**TYPE 15: METRO 2® SPECIAL COMMENT CODE VIOLATIONS**
+DETECTION STEPS:
+1. Check for REQUIRED but MISSING special comments:
+   - Bankruptcy accounts MUST have appropriate bankruptcy code (DA, DB, DC, DD, etc.)
+   - Disputed accounts MUST have "Consumer disputes" or code "XB" notation
+   - Fraud/ID theft MUST have ID theft block notation
+   - Paid collections should have "Paid collection" notation
+2. Check for CONFLICTING special comments:
+   - Cannot have "Paid in full" AND derogatory status simultaneously without "was" qualifier
+   - Cannot have "Current" notation with collection/charge-off status
+3. Check for OUTDATED special comments:
+   - Disaster codes (XA-XH) have expiration requirements per 2025 rules
+   - SCRA codes (XJ-XL) must match active duty dates
+
+**TYPE 16: METRO 2® DOFD (DATE OF FIRST DELINQUENCY) VIOLATIONS**
+DETECTION STEPS (per CRRG 2025 DOFD Hierarchy):
+1. DOFD must be preserved when account transfers to collection:
+   - Original creditor's DOFD must carry forward to debt buyer/collector
+   - New DOFD = re-aging violation (federal offense)
+2. DOFD cannot be later than first 30-day delinquency in payment history
+3. DOFD triggers 7-year reporting limit (7.5 years for some states)
+4. Check: Current date - DOFD > 7 years = obsolete item still reporting
+5. Collection/charge-off without any DOFD = Metro 2® format violation
+6. DOFD that changes/resets between reports = willful re-aging
+
+**TYPE 17: METRO 2® 2025 COMPLIANCE REQUIREMENT VIOLATIONS**
+2025-SPECIFIC DETECTION STEPS:
+1. **Enhanced Bankruptcy Notation**: Bankruptcy accounts must include:
+   - Correct status code (83-87)
+   - Discharge date when applicable
+   - Proper disposition notation
+2. **Disaster Code Updates (COVID/Natural Disasters)**:
+   - XA (Natural disaster) / XB (Declared disaster) codes
+   - Must include start/end dates per 2025 requirements
+   - Cannot report delinquency during active accommodation
+3. **SCRA Military Protections**:
+   - XJ (Military duty) must include deployment dates
+   - Interest rate caps enforced (6% max)
+   - Cannot report negative during active duty
+4. **Forbearance/Deferral Reporting (Post-COVID)**:
+   - XR (Forbearance) code required
+   - Account cannot show delinquent during approved forbearance
+   - End of forbearance date must be documented
+5. **Medical Debt Reporting (2025 Updates)**:
+   - Medical collections under $500 should not be reported (2024+ rule)
+   - Paid medical debt must be removed within 7 days
+   - Medical debt in payment plan cannot be reported to collections
+
+===========================================================================
 STANDING ANALYSIS (TransUnion LLC v. Ramirez, 141 S. Ct. 2190)
 ===========================================================================
 
@@ -1541,6 +1612,26 @@ After your analysis, output this JSON block. Use bureau_violations array to trac
       "description": "Charge-off account lacks required Date of Last Payment",
       "is_willful": false,
       "willfulness_indicators": "Negligent failure to maintain records per Cushman v. TransUnion"
+    },
+    {
+      "account_name": "PORTFOLIO RECOVERY",
+      "violation_type": "Metro 2® Account Status/Payment Mismatch",
+      "bureau_violations": [
+        {"bureau": "TransUnion", "data_reported": "Status: 80 (Collection), Payment History: 000000000000 (all current)", "fcra_section": "§1681s-2(a)", "metro2_violation": true, "crrg_reference": "CRRG 4.2.11"}
+      ],
+      "description": "Collection status (80) conflicts with all-current payment history - Metro 2® format violation per CRRG 2025",
+      "is_willful": true,
+      "willfulness_indicators": "Metro 2® compliance is mandatory for all furnishers; format violations indicate systemic reporting failures"
+    },
+    {
+      "account_name": "LVNV FUNDING",
+      "violation_type": "Metro 2® DOFD Re-aging Violation",
+      "bureau_violations": [
+        {"bureau": "Experian", "data_reported": "DOFD: 03/2023 (collection opened 06/2024), Original Account DOFD: 09/2019", "fcra_section": "§1681s-2(a)", "metro2_violation": true, "crrg_reference": "CRRG 6.1 DOFD Hierarchy"}
+      ],
+      "description": "Debt collector reset DOFD from original 09/2019 to 03/2023 - willful re-aging extends 7-year reporting beyond legal limit",
+      "is_willful": true,
+      "willfulness_indicators": "DOFD re-aging is per se willful violation; extends consumer harm beyond statutory limit"
     }
   ],
   "standing": {
@@ -15478,6 +15569,144 @@ def api_metro2_codes():
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
+
+
+@app.route('/api/metro2/validate', methods=['POST'])
+@require_staff()
+def api_metro2_validate():
+    """Validate account data against Metro 2® 2025 compliance rules"""
+    try:
+        from metro2_validator import run_full_metro2_validation, validate_account_status, validate_payment_pattern, validate_dofd_hierarchy
+        
+        data = request.get_json() or {}
+        accounts = data.get('accounts', [])
+        
+        if not accounts:
+            return jsonify({
+                'success': False,
+                'error': 'No accounts provided for validation'
+            }), 400
+        
+        results = run_full_metro2_validation(accounts)
+        
+        return jsonify({
+            'success': True,
+            'validation_results': results,
+            'total_accounts': len(accounts),
+            'violations_found': len(results.get('metro2_violations', [])),
+            'compliance_score': results.get('compliance_score', 100),
+            'is_2025_compliant': results.get('2025_compliant', True)
+        })
+    except ImportError as e:
+        print(f"Metro2 validator import error: {e}")
+        return jsonify({'success': False, 'error': 'Metro 2 validator module not available'}), 500
+    except Exception as e:
+        print(f"Metro2 validation error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/metro2/validate-single', methods=['POST'])
+@require_staff()
+def api_metro2_validate_single():
+    """Validate a single account field against Metro 2® rules"""
+    try:
+        from metro2_validator import (
+            validate_account_status, 
+            validate_payment_pattern, 
+            validate_special_comments,
+            validate_compliance_conditions,
+            validate_dofd_hierarchy,
+            ACCOUNT_STATUS_CODES,
+            PAYMENT_RATING_CODES
+        )
+        
+        data = request.get_json() or {}
+        validation_type = data.get('type', 'status')
+        
+        result = {'valid': True, 'issues': [], 'info': {}}
+        
+        if validation_type == 'status':
+            status_code = data.get('status_code', '')
+            result = validate_account_status(status_code)
+            if status_code in ACCOUNT_STATUS_CODES:
+                result['info'] = ACCOUNT_STATUS_CODES[status_code]
+                
+        elif validation_type == 'payment':
+            pattern = data.get('pattern', '')
+            status = data.get('status', '')
+            result = validate_payment_pattern(pattern, status)
+            
+        elif validation_type == 'dofd':
+            dofd = data.get('dofd', '')
+            status_changes = data.get('status_changes', [])
+            original_dofd = data.get('original_dofd')
+            result = validate_dofd_hierarchy(dofd, status_changes, original_dofd)
+            
+        elif validation_type == 'comments':
+            comments = data.get('comments', [])
+            account_data = data.get('account_data', {})
+            result = validate_special_comments(comments, account_data)
+            
+        elif validation_type == 'compliance':
+            conditions = data.get('conditions', [])
+            account_data = data.get('account_data', {})
+            result = validate_compliance_conditions(conditions, account_data)
+        else:
+            return jsonify({'success': False, 'error': f'Unknown validation type: {validation_type}'}), 400
+        
+        return jsonify({
+            'success': True,
+            'validation_type': validation_type,
+            'result': result
+        })
+    except ImportError as e:
+        print(f"Metro2 validator import error: {e}")
+        return jsonify({'success': False, 'error': 'Metro 2 validator module not available'}), 500
+    except Exception as e:
+        print(f"Metro2 single validation error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/metro2/reference', methods=['GET'])
+def api_metro2_reference():
+    """Get Metro 2® code reference data (public endpoint for lookup)"""
+    try:
+        from metro2_validator import (
+            ACCOUNT_STATUS_CODES,
+            PAYMENT_RATING_CODES,
+            SPECIAL_COMMENT_CODES,
+            COMPLIANCE_CONDITION_CODES,
+            COMPLIANCE_2025_REQUIREMENTS
+        )
+        
+        code_type = request.args.get('type', 'all')
+        
+        response_data = {}
+        
+        if code_type in ['all', 'status']:
+            response_data['account_status_codes'] = ACCOUNT_STATUS_CODES
+        if code_type in ['all', 'payment']:
+            response_data['payment_rating_codes'] = PAYMENT_RATING_CODES
+        if code_type in ['all', 'comments']:
+            response_data['special_comment_codes'] = SPECIAL_COMMENT_CODES
+        if code_type in ['all', 'compliance']:
+            response_data['compliance_condition_codes'] = COMPLIANCE_CONDITION_CODES
+        if code_type in ['all', 'requirements']:
+            response_data['requirements_2025'] = COMPLIANCE_2025_REQUIREMENTS
+        
+        return jsonify({
+            'success': True,
+            'code_type': code_type,
+            'data': response_data
+        })
+    except ImportError as e:
+        print(f"Metro2 validator import error: {e}")
+        return jsonify({'success': False, 'error': 'Metro 2 validator module not available'}), 500
+    except Exception as e:
+        print(f"Metro2 reference error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/sops', methods=['GET'])
