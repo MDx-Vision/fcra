@@ -240,9 +240,13 @@
 
         generateBtn.addEventListener('click', async () => {
             const clientId = document.getElementById('selectedClientId').value;
-            if (!clientId) return;
+            if (!clientId) {
+                alert('Please select a client first');
+                return;
+            }
             
             loadingOverlay.classList.remove('hidden');
+            generateBtn.disabled = true;
             
             const data = {
                 target: document.getElementById('demandTarget').value,
@@ -254,31 +258,47 @@
                 data.amount = parseFloat(amountInput);
             }
             
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            
             try {
                 const response = await fetch(`/api/generate-demand/${clientId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data),
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `Server error: ${response.status}`);
+                }
                 
                 const result = await response.json();
                 
                 if (result.success) {
                     document.getElementById('letterContent').textContent = result.letter_content;
-                    document.getElementById('resultAmount').textContent = '$' + result.demand_amount.toLocaleString();
-                    document.getElementById('resultViolations').textContent = result.violation_count;
-                    document.getElementById('resultDeadline').textContent = result.deadline_days + ' Days';
-                    document.getElementById('downloadPdfBtn').href = result.pdf_path;
+                    document.getElementById('resultAmount').textContent = '$' + (result.demand_amount || 0).toLocaleString();
+                    document.getElementById('resultViolations').textContent = result.violation_count || 0;
+                    document.getElementById('resultDeadline').textContent = (result.deadline_days || 30) + ' Days';
+                    document.getElementById('downloadPdfBtn').href = result.pdf_path || '#';
                     
                     resultSection.classList.remove('hidden');
                     resultSection.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    alert('Error: ' + (result.error || 'Generation failed'));
+                    alert('Error: ' + (result.error || 'Generation failed. Please ensure client has an analysis.'));
                 }
             } catch (error) {
-                alert('Network error: ' + error.message);
+                if (error.name === 'AbortError') {
+                    alert('Request timed out after 60 seconds. The AI service may be busy. Please try again.');
+                } else {
+                    alert('Error: ' + error.message);
+                }
             } finally {
                 loadingOverlay.classList.add('hidden');
+                generateBtn.disabled = false;
             }
         });
 

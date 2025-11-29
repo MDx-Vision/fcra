@@ -16673,15 +16673,22 @@ def demand_generator_page():
 @require_staff()
 def api_generate_demand_letter(client_id):
     """Generate AI-powered settlement demand letter for a client"""
+    print(f"[Demand Generator] Starting generation for client {client_id}")
     db = get_db()
     try:
         client_rec = db.query(Client).filter_by(id=client_id).first()
         if not client_rec:
+            print(f"[Demand Generator] Client {client_id} not found")
             return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        print(f"[Demand Generator] Found client: {client_rec.name}")
         
         analysis = db.query(Analysis).filter_by(client_id=client_id).order_by(Analysis.created_at.desc()).first()
         if not analysis:
-            return jsonify({'success': False, 'error': 'No analysis found for this client'}), 404
+            print(f"[Demand Generator] No analysis found for client {client_id}")
+            return jsonify({'success': False, 'error': 'No analysis found for this client. Please run credit report analysis first.'}), 404
+        
+        print(f"[Demand Generator] Found analysis ID: {analysis.id}")
         
         violations = db.query(Violation).filter_by(analysis_id=analysis.id).all()
         damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
@@ -16740,17 +16747,25 @@ Use assertive but professional language befitting FCRA consumer protection litig
 """
         
         if client is None:
-            return jsonify({'success': False, 'error': 'AI service unavailable'}), 503
+            print("[Demand Generator] AI client is None - service unavailable")
+            return jsonify({'success': False, 'error': 'AI service unavailable. Please check API key configuration.'}), 503
         
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=4000,
-            temperature=0.3,
-            messages=[{
-                "role": "user",
-                "content": demand_prompt
-            }]
-        )
+        print(f"[Demand Generator] Calling AI with {len(violation_summary)} violations, demand amount: ${demand_amount}")
+        
+        try:
+            response = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=4000,
+                temperature=0.3,
+                messages=[{
+                    "role": "user",
+                    "content": demand_prompt
+                }]
+            )
+            print(f"[Demand Generator] AI response received, tokens used: {response.usage.input_tokens + response.usage.output_tokens}")
+        except Exception as ai_error:
+            print(f"[Demand Generator] AI API error: {ai_error}")
+            return jsonify({'success': False, 'error': f'AI generation failed: {str(ai_error)}'}), 500
         
         letter_content = response.content[0].text.strip()
         
