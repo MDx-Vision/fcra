@@ -255,7 +255,7 @@
 </nav>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     const STORAGE_KEY = 'dashboard_sidebar_sections';
     
     function getSavedState() {
@@ -290,45 +290,63 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Use event delegation for clicks
-    document.querySelector('.sidebar-nav').addEventListener('click', function(e) {
-        const title = e.target.closest('.nav-section-title');
-        if (title) {
-            e.preventDefault();
-            const section = title.closest('.nav-section');
-            if (section) {
-                toggleSection(section);
-            }
+    function initSidebar() {
+        const sidebarNav = document.querySelector('.sidebar-nav');
+        if (!sidebarNav) {
+            console.warn('Sidebar nav not found');
+            return;
         }
-    });
-    
-    // Initialize sections on page load
-    const savedState = getSavedState();
-    const sections = document.querySelectorAll('.nav-section');
-    
-    sections.forEach(section => {
-        const sectionId = section.dataset.section;
-        const items = section.querySelector('.nav-section-items');
-        const chevron = section.querySelector('.chevron');
         
-        if (items) {
-            const hasActiveItem = items.querySelector('.nav-item.active');
+        // Handle click events on section titles
+        sidebarNav.addEventListener('click', function(e) {
+            const title = e.target.closest('.nav-section-title');
+            if (title) {
+                e.preventDefault();
+                e.stopPropagation();
+                const section = title.closest('.nav-section');
+                if (section) {
+                    toggleSection(section);
+                }
+            }
+        });
+        
+        // Initialize sections on page load
+        const savedState = getSavedState();
+        const sections = document.querySelectorAll('.nav-section');
+        
+        sections.forEach(section => {
+            const sectionId = section.dataset.section;
+            const items = section.querySelector('.nav-section-items');
+            const chevron = section.querySelector('.chevron');
             
-            // Check saved state first
-            if (savedState[sectionId] !== undefined) {
-                if (savedState[sectionId]) {
+            if (items) {
+                const hasActiveItem = items.querySelector('.nav-item.active');
+                
+                // Check saved state first, otherwise expand main and sections with active items
+                if (savedState[sectionId] !== undefined) {
+                    if (savedState[sectionId]) {
+                        items.classList.add('expanded');
+                        if (chevron) chevron.classList.add('rotated');
+                    } else {
+                        items.classList.remove('expanded');
+                        if (chevron) chevron.classList.remove('rotated');
+                    }
+                } else if (hasActiveItem || sectionId === 'main') {
                     items.classList.add('expanded');
                     if (chevron) chevron.classList.add('rotated');
+                    savedState[sectionId] = true;
                 }
-            } else if (hasActiveItem || sectionId === 'main') {
-                // Auto-expand if has active item or is main section
-                items.classList.add('expanded');
-                if (chevron) chevron.classList.add('rotated');
-                savedState[sectionId] = true;
             }
-        }
-    });
+        });
+        
+        saveState(savedState);
+    }
     
-    saveState(savedState);
-});
+    // Run immediately since script is at bottom of sidebar
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSidebar);
+    } else {
+        initSidebar();
+    }
+})();
 </script>
