@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standard Operating Procedures - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 20px;
+            width: 400px;
+            max-width: 100%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .search-box input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 15px;
+            margin-left: 10px;
+        }
+        .search-box svg { color: #64748b; }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-card .stat-label {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+        .filter-btn:hover { border-color: #319795; }
+        .filter-btn.active { 
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%); 
+            color: #1a1a2e; 
+            border-color: transparent;
+        }
+        .filter-btn .count {
+            display: inline-block;
+            background: rgba(0,0,0,0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        
+        .sop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .sop-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+            overflow: hidden;
+        }
+        .sop-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .sop-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .sop-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, #319795 0%, #0d9488 100%);
+        }
+        .sop-icon svg { width: 24px; height: 24px; color: white; }
+        
+        .sop-title-block {
+            flex: 1;
+        }
+        .sop-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        .sop-category {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #64748b;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .sop-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .sop-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .sop-meta-item svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .sop-body {
+            padding: 20px 24px;
+        }
+        .sop-description {
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .sop-steps {
+            margin-top: 15px;
+        }
+        .sop-steps-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .sop-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .sop-step:last-child {
+            border-bottom: none;
+        }
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .step-text {
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .sop-footer {
+            padding: 15px 24px;
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sop-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .sop-tag {
+            display: inline-block;
+            background: #e2e8f0;
+            color: #475569;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+        }
+        .sop-tag.statute {
+            background: #1a1a2e;
+            color: #84cc16;
+            font-family: monospace;
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            border: none;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .view-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4);
+        }
+        
+        .difficulty-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .difficulty-badge.basic { background: #dcfce7; color: #16a34a; }
+        .difficulty-badge.standard { background: #dbeafe; color: #1d4ed8; }
+        .difficulty-badge.advanced { background: #fef3c7; color: #ca8a04; }
+        .difficulty-badge.expert { background: #fee2e2; color: #dc2626; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+            grid-column: 1 / -1;
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .empty-state p {
+            color: #64748b;
+        }
+        
+        .error-banner {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    {% set active_page = 'sops' %}
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Standard Operating Procedures</h1>
+            <form class="search-box" method="GET">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="hidden" name="category" value="{{ current_category }}">
+                <input type="text" name="search" placeholder="Search procedures..." value="{{ search_query or '' }}">
+            </form>
+        </div>
+        
+        {% if error %}
+        <div class="error-banner">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_sops or 0 }}</div>
+                <div class="stat-label">Total SOPs</div>
+            </div>
+            {% for cat, count in (category_counts or {}).items() %}
+            <div class="stat-card">
+                <div class="stat-value">{{ count }}</div>
+                <div class="stat-label">{{ cat|title|replace('_', ' ') }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="filters">
+            <a href="?category=all{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-btn {% if current_category == 'all' %}active{% endif %}">
+                All Categories
+            </a>
+            {% for category in categories %}
+            <a href="?category={{ category }}{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-btn {% if current_category == category %}active{% endif %}">
+                {{ category|title|replace('_', ' ') }}
+                <span class="count">{{ category_counts.get(category, 0) }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <div class="sop-grid">
+            {% if sops %}
+                {% for sop in sops %}
+                <div class="sop-card">
+                    <div class="sop-header">
+                        <div class="sop-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                        </div>
+                        <div class="sop-title-block">
+                            <div class="sop-title">{{ sop.title }}</div>
+                            <span class="sop-category">{{ sop.category|title|replace('_', ' ') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="sop-body">
+                        {% if sop.description %}
+                        <div class="sop-description">{{ sop.description }}</div>
+                        {% endif %}
+                        
+                        <div class="sop-meta">
+                            {% if sop.timeline_days %}
+                            <div class="sop-meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                {{ sop.timeline_days }} days
+                            </div>
+                            {% endif %}
+                            {% if sop.difficulty %}
+                            <span class="difficulty-badge {{ sop.difficulty }}">{{ sop.difficulty|title }}</span>
+                            {% endif %}
+                            {% if sop.required_role %}
+                            <div class="sop-meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                {{ sop.required_role|title }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if sop.steps %}
+                        <div class="sop-steps">
+                            <div class="sop-steps-title">Key Steps:</div>
+                            {% for step in sop.steps[:3] %}
+                            <div class="sop-step">
+                                <div class="step-number">{{ loop.index }}</div>
+                                <div class="step-text">{{ step }}</div>
+                            </div>
+                            {% endfor %}
+                            {% if sop.steps|length > 3 %}
+                            <div class="sop-step">
+                                <div class="step-number">+</div>
+                                <div class="step-text" style="color: #64748b; font-style: italic;">{{ sop.steps|length - 3 }} more steps...</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="sop-footer">
+                        <div class="sop-tags">
+                            {% if sop.related_statutes %}
+                                {% for statute in sop.related_statutes[:3] %}
+                                <span class="sop-tag statute">{{ statute }}</span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <button class="view-btn" onclick="viewSOP({{ sop.id }})">View Full SOP</button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                    <h3>No SOPs Found</h3>
+                    <p>{% if search_query %}No procedures match your search "{{ search_query }}". Try different keywords.{% else %}Standard operating procedures will appear here once they're added to the system.{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="modal" id="sopModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">SOP Details</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function viewSOP(sopId) {
+            const modal = document.getElementById('sopModal');
+            const modalBody = document.getElementById('modalBody');
+            const modalTitle = document.getElementById('modalTitle');
+            
+            modalBody.innerHTML = 'Loading...';
+            modal.classList.add('active');
+            
+            fetch(`/api/sops/${sopId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.sop) {
+                        const sop = data.sop;
+                        modalTitle.textContent = sop.title;
+                        
+                        let stepsHtml = '';
+                        if (sop.steps && sop.steps.length > 0) {
+                            stepsHtml = `
+                                <h4 style="margin-top: 20px; margin-bottom: 10px;">Steps</h4>
+                                <ol style="padding-left: 20px;">
+                                    ${sop.steps.map(step => `<li style="margin-bottom: 10px;">${step}</li>`).join('')}
+                                </ol>
+                            `;
+                        }
+                        
+                        let checklistHtml = '';
+                        if (sop.checklist_items && sop.checklist_items.length > 0) {
+                            checklistHtml = `
+                                <h4 style="margin-top: 20px; margin-bottom: 10px;">Checklist</h4>
+                                <ul style="padding-left: 20px;">
+                                    ${sop.checklist_items.map(item => `<li style="margin-bottom: 8px;">${item}</li>`).join('')}
+                                </ul>
+                            `;
+                        }
+                        
+                        let tipsHtml = '';
+                        if (sop.tips && sop.tips.length > 0) {
+                            tipsHtml = `
+                                <h4 style="margin-top: 20px; margin-bottom: 10px;">Tips</h4>
+                                <ul style="padding-left: 20px; color: #16a34a;">
+                                    ${sop.tips.map(tip => `<li style="margin-bottom: 8px;">${tip}</li>`).join('')}
+                                </ul>
+                            `;
+                        }
+                        
+                        let warningsHtml = '';
+                        if (sop.warnings && sop.warnings.length > 0) {
+                            warningsHtml = `
+                                <h4 style="margin-top: 20px; margin-bottom: 10px; color: #dc2626;">Warnings</h4>
+                                <ul style="padding-left: 20px; color: #dc2626;">
+                                    ${sop.warnings.map(warning => `<li style="margin-bottom: 8px;">${warning}</li>`).join('')}
+                                </ul>
+                            `;
+                        }
+                        
+                        modalBody.innerHTML = `
+                            <p style="color: #64748b; margin-bottom: 15px;">${sop.description || ''}</p>
+                            <div style="color: #475569; line-height: 1.7;">${sop.content || ''}</div>
+                            ${stepsHtml}
+                            ${checklistHtml}
+                            ${tipsHtml}
+                            ${warningsHtml}
+                        `;
+                    } else {
+                        modalBody.innerHTML = '<p style="color: #dc2626;">Failed to load SOP details.</p>';
+                    }
+                })
+                .catch(error => {
+                    modalBody.innerHTML = '<p style="color: #dc2626;">Error loading SOP details.</p>';
+                });
+        }
+        
+        function closeModal() {
+            document.getElementById('sopModal').classList.remove('active');
+        }
+        
+        document.getElementById('sopModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>

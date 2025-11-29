@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChexSystems/EWS Helper - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #319795; }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-card .stat-label {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .stat-card.pending { border-top: 4px solid #f59e0b; }
+        .stat-card.sent { border-top: 4px solid #3b82f6; }
+        .stat-card.responded { border-top: 4px solid #8b5cf6; }
+        .stat-card.resolved { border-top: 4px solid #22c55e; }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+        .filter-btn:hover { border-color: #319795; }
+        .filter-btn.active { 
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%); 
+            color: #1a1a2e; 
+            border-color: transparent;
+        }
+        
+        .select-filter {
+            padding: 10px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            background: white;
+            min-width: 200px;
+        }
+        
+        .content-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+        @media (max-width: 1200px) {
+            .content-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .disputes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .dispute-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+        }
+        .dispute-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        
+        .dispute-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .dispute-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .dispute-client {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-badge.pending { background: #fef3c7; color: #ca8a04; }
+        .status-badge.sent { background: #dbeafe; color: #1d4ed8; }
+        .status-badge.responded { background: #ede9fe; color: #6d28d9; }
+        .status-badge.resolved { background: #dcfce7; color: #16a34a; }
+        .status-badge.escalated { background: #fee2e2; color: #dc2626; }
+        
+        .dispute-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .meta-item svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .dispute-details {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: #64748b; font-size: 13px; }
+        .detail-value { color: #1a1a2e; font-size: 13px; font-weight: 500; }
+        
+        .sidebar-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-title svg {
+            width: 20px;
+            height: 20px;
+            color: #319795;
+        }
+        
+        .template-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .template-item {
+            padding: 12px 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .template-item:hover {
+            border-color: #319795;
+            background: white;
+        }
+        .template-item .name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+        .template-item .desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .template-item .bureau-type {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 3px 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #475569;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .info-box h4 {
+            color: #1d4ed8;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .info-box p {
+            color: #1e40af;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .info-box ul {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+        .info-box li {
+            color: #1e40af;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .empty-state p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+        
+        .error-banner {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #319795;
+        }
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    {% set active_page = 'chexsystems' %}
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">
+            <h1>ChexSystems/EWS Dispute Helper</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openNewDisputeModal()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    New Dispute
+                </button>
+            </div>
+        </div>
+        
+        {% if error %}
+        <div class="error-banner">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.total or 0 }}</div>
+                <div class="stat-label">Total Disputes</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-value">{{ stats.pending or 0 }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card sent">
+                <div class="stat-value">{{ stats.sent or 0 }}</div>
+                <div class="stat-label">Sent</div>
+            </div>
+            <div class="stat-card responded">
+                <div class="stat-value">{{ stats.responded or 0 }}</div>
+                <div class="stat-label">Responded</div>
+            </div>
+            <div class="stat-card resolved">
+                <div class="stat-value">{{ stats.resolved or 0 }}</div>
+                <div class="stat-label">Resolved</div>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <a href="?status=all{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'all' %}active{% endif %}">All</a>
+            <a href="?status=pending{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'pending' %}active{% endif %}">Pending</a>
+            <a href="?status=sent{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'sent' %}active{% endif %}">Sent</a>
+            <a href="?status=responded{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'responded' %}active{% endif %}">Responded</a>
+            <a href="?status=resolved{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'resolved' %}active{% endif %}">Resolved</a>
+            
+            <select class="select-filter" onchange="filterByClient(this.value)">
+                <option value="">All Clients</option>
+                {% for client in clients %}
+                <option value="{{ client.id }}" {% if current_client_id|string == client.id|string %}selected{% endif %}>{{ client.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="content-layout">
+            <div class="disputes-list">
+                {% if disputes %}
+                    {% for dispute in disputes %}
+                    <div class="dispute-card">
+                        <div class="dispute-header">
+                            <div>
+                                <div class="dispute-title">{{ dispute.dispute_type|replace('_', ' ')|title }}</div>
+                                <div class="dispute-client">Client ID: {{ dispute.client_id }}</div>
+                            </div>
+                            <span class="status-badge {{ dispute.status }}">{{ dispute.status|title }}</span>
+                        </div>
+                        
+                        <div class="dispute-meta">
+                            <div class="meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                {{ dispute.bureau_type|upper }}
+                            </div>
+                            {% if dispute.reported_by %}
+                            <div class="meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                {{ dispute.reported_by }}
+                            </div>
+                            {% endif %}
+                            <div class="meta-item">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                {{ dispute.created_at.strftime('%m/%d/%Y') if dispute.created_at else 'N/A' }}
+                            </div>
+                            {% if dispute.escalation_level > 1 %}
+                            <div class="meta-item" style="color: #dc2626;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                Level {{ dispute.escalation_level }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if dispute.dispute_reason %}
+                        <div class="dispute-details">
+                            <div class="detail-row">
+                                <span class="detail-label">Dispute Reason</span>
+                                <span class="detail-value">{{ dispute.dispute_reason[:100] }}{% if dispute.dispute_reason|length > 100 %}...{% endif %}</span>
+                            </div>
+                            {% if dispute.next_action %}
+                            <div class="detail-row">
+                                <span class="detail-label">Next Action</span>
+                                <span class="detail-value">{{ dispute.next_action }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <h3>No Disputes Found</h3>
+                        <p>Start by creating a new ChexSystems or EWS dispute for a client.</p>
+                        <button class="btn btn-primary" onclick="openNewDisputeModal()">Create First Dispute</button>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="sidebar-panel">
+                <div class="panel-card">
+                    <div class="panel-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Dispute Templates
+                    </div>
+                    <div class="template-list">
+                        {% for template in dispute_templates %}
+                        <div class="template-item" onclick="selectTemplate('{{ template.id }}', '{{ template.name }}')">
+                            <div class="name">{{ template.name }}</div>
+                            <div class="desc">{{ template.description }}</div>
+                            <span class="bureau-type">{{ template.bureau_type|upper }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="panel-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        About ChexSystems/EWS
+                    </div>
+                    <div class="info-box">
+                        <h4>What are these bureaus?</h4>
+                        <p><strong>ChexSystems</strong> tracks checking account history - closures, overdrafts, and unpaid balances.</p>
+                        <p style="margin-top: 10px;"><strong>Early Warning Services (EWS)</strong> is similar but used by different banks.</p>
+                        <ul>
+                            <li>Reports stay for 5 years</li>
+                            <li>Affects ability to open new bank accounts</li>
+                            <li>Can dispute inaccurate information under FCRA</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="panel-card">
+                    <div class="panel-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        Quick Actions
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="/dashboard/knowledge-base" class="btn btn-secondary" style="justify-content: center;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            Knowledge Base
+                        </a>
+                        <a href="/dashboard/sops" class="btn btn-secondary" style="justify-content: center;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                            View SOPs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="newDisputeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>New ChexSystems/EWS Dispute</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="disputeForm" onsubmit="submitDispute(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Client *</label>
+                            <select name="client_id" required>
+                                <option value="">Select Client</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Bureau Type *</label>
+                            <select name="bureau_type" required>
+                                <option value="">Select Bureau</option>
+                                <option value="chexsystems">ChexSystems</option>
+                                <option value="ews">Early Warning Services (EWS)</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Dispute Type *</label>
+                            <select name="dispute_type" id="disputeType" required>
+                                <option value="">Select Type</option>
+                                <option value="unauthorized_account">Unauthorized Account</option>
+                                <option value="identity_theft">Identity Theft</option>
+                                <option value="incorrect_info">Incorrect Information</option>
+                                <option value="outdated_info">Outdated Information</option>
+                                <option value="bank_error">Bank Error</option>
+                                <option value="paid_account">Paid/Settled Account</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Account Type</label>
+                            <select name="account_type">
+                                <option value="">Select Type</option>
+                                <option value="checking">Checking Account</option>
+                                <option value="savings">Savings Account</option>
+                                <option value="overdraft">Overdraft Protection</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Reported By (Bank/Institution)</label>
+                        <input type="text" name="reported_by" placeholder="e.g., Chase Bank, Wells Fargo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Dispute Reason *</label>
+                        <textarea name="dispute_reason" placeholder="Explain why this information is inaccurate or should be removed..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Additional Notes</label>
+                        <textarea name="notes" placeholder="Any additional information or context..." rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Dispute</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openNewDisputeModal() {
+            document.getElementById('newDisputeModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('newDisputeModal').classList.remove('active');
+            document.getElementById('disputeForm').reset();
+        }
+        
+        function filterByClient(clientId) {
+            const url = new URL(window.location.href);
+            if (clientId) {
+                url.searchParams.set('client_id', clientId);
+            } else {
+                url.searchParams.delete('client_id');
+            }
+            window.location.href = url.toString();
+        }
+        
+        function selectTemplate(templateId, templateName) {
+            document.getElementById('disputeType').value = templateId;
+            openNewDisputeModal();
+        }
+        
+        function submitDispute(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('/api/chexsystems/disputes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + (result.error || 'Failed to create dispute'));
+                }
+            })
+            .catch(error => {
+                alert('Error creating dispute: ' + error.message);
+            });
+        }
+        
+        document.getElementById('newDisputeModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>

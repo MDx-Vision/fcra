@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Knowledge Base - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 20px;
+            width: 400px;
+            max-width: 100%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .search-box input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 15px;
+            margin-left: 10px;
+        }
+        .search-box svg { color: #64748b; }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-card .stat-label {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .stat-card.credit-repair { border-left: 4px solid #3b82f6; }
+        .stat-card.metro2 { border-left: 4px solid #22c55e; }
+        .stat-card.codes { border-left: 4px solid #8b5cf6; }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #1a1a2e;
+        }
+        .tab:hover { border-color: #319795; }
+        .tab.active { 
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%); 
+            color: #1a1a2e; 
+            border-color: transparent;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .card-icon.blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+        .card-icon.green { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+        .card-icon.purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); }
+        .card-icon.orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+        .card-icon.teal { background: linear-gradient(135deg, #319795 0%, #0d9488 100%); }
+        .card-icon svg { width: 24px; height: 24px; color: white; }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .card-subtitle {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .card-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        .card-badge.credit_repair { background: #dbeafe; color: #1d4ed8; }
+        .card-badge.metro2 { background: #dcfce7; color: #16a34a; }
+        
+        .card-content {
+            color: #475569;
+            line-height: 1.7;
+            font-size: 14px;
+            max-height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+        .card-content.expanded {
+            max-height: none;
+        }
+        .card-content::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(transparent, white);
+        }
+        .card-content.expanded::after {
+            display: none;
+        }
+        
+        .expand-btn {
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .expand-btn:hover {
+            background: #e2e8f0;
+        }
+        
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .tag {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        .tag.statute {
+            background: #1a1a2e;
+            color: #84cc16;
+            font-family: monospace;
+        }
+        .tag.metro2 {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .metro2-section {
+            margin-top: 40px;
+        }
+        .metro2-section h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+        }
+        
+        .metro2-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .metro2-code-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid #8b5cf6;
+        }
+        .metro2-code-card .code {
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+        .metro2-code-card .name {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-top: 5px;
+        }
+        .metro2-code-card .description {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+        .metro2-code-card.derogatory {
+            border-left-color: #ef4444;
+        }
+        .metro2-code-card.derogatory .code {
+            color: #ef4444;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 16px;
+            grid-column: 1 / -1;
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        .empty-state p {
+            color: #64748b;
+        }
+        
+        .error-banner {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .quick-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: white;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #1a1a2e;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.2s;
+        }
+        .quick-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .quick-link svg {
+            width: 18px;
+            height: 18px;
+            color: #319795;
+        }
+    </style>
+</head>
+<body>
+    {% set active_page = 'knowledge-base' %}
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Enhanced Knowledge Base</h1>
+            <form class="search-box" method="GET">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="hidden" name="course" value="{{ current_course }}">
+                <input type="text" name="search" placeholder="Search content, statutes, codes..." value="{{ search_query or '' }}">
+            </form>
+        </div>
+        
+        {% if error %}
+        <div class="error-banner">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+        
+        <div class="stats-row">
+            <div class="stat-card credit-repair">
+                <div class="stat-value">{{ credit_repair_count or 0 }}</div>
+                <div class="stat-label">Credit Repair Sections</div>
+            </div>
+            <div class="stat-card metro2">
+                <div class="stat-value">{{ metro2_count or 0 }}</div>
+                <div class="stat-label">Metro 2 Sections</div>
+            </div>
+            <div class="stat-card codes">
+                <div class="stat-value">{{ metro2_codes|length if metro2_codes else 0 }}</div>
+                <div class="stat-label">Metro 2 Codes</div>
+            </div>
+        </div>
+        
+        <div class="quick-links">
+            <a href="/dashboard/sops" class="quick-link">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                Standard Operating Procedures
+            </a>
+            <a href="/dashboard/chexsystems" class="quick-link">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                ChexSystems Helper
+            </a>
+            <a href="/dashboard/knowledge-base" class="quick-link">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                Static Knowledge Base
+            </a>
+        </div>
+        
+        <div class="tabs">
+            <a href="?course=all{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'all' %}active{% endif %}">All Content</a>
+            <a href="?course=credit_repair{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'credit_repair' %}active{% endif %}">Credit Repair Course</a>
+            <a href="?course=metro2{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'metro2' %}active{% endif %}">Metro 2 Course</a>
+        </div>
+        
+        <div class="content-grid">
+            {% if content %}
+                {% for item in content %}
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon {% if item.course == 'credit_repair' %}blue{% else %}green{% endif %}">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        </div>
+                        <div>
+                            <div class="card-title">{{ item.section_title }}</div>
+                            <div class="card-subtitle">Section {{ item.section_number }}{% if item.subsection %} - {{ item.subsection }}{% endif %}</div>
+                        </div>
+                        <span class="card-badge {{ item.course }}">{{ 'Credit Repair' if item.course == 'credit_repair' else 'Metro 2' }}</span>
+                    </div>
+                    <div class="card-content" id="content-{{ item.id }}">
+                        {{ item.content|safe }}
+                    </div>
+                    <button class="expand-btn" onclick="toggleContent({{ item.id }})">Show More</button>
+                    
+                    <div class="tags">
+                        {% if item.statute_references %}
+                            {% for statute in item.statute_references %}
+                            <span class="tag statute">{{ statute }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        {% if item.metro2_codes %}
+                            {% for code in item.metro2_codes %}
+                            <span class="tag metro2">{{ code }}</span>
+                            {% endfor %}
+                        {% endif %}
+                        {% if item.tags %}
+                            {% for tag in item.tags %}
+                            <span class="tag">{{ tag }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <h3>No Training Content Found</h3>
+                    <p>{% if search_query %}No content matches your search "{{ search_query }}". Try different keywords.{% else %}Training content will appear here once it's added to the system.{% endif %}</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if metro2_codes %}
+        <div class="metro2-section">
+            <h2>Metro 2 Code Reference</h2>
+            <div class="metro2-grid">
+                {% for code in metro2_codes %}
+                <div class="metro2-code-card {% if code.is_derogatory %}derogatory{% endif %}">
+                    <div class="code">{{ code.code }}</div>
+                    <div class="name">{{ code.name }}</div>
+                    {% if code.description %}
+                    <div class="description">{{ code.description }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleContent(id) {
+            const content = document.getElementById('content-' + id);
+            const btn = content.nextElementSibling;
+            
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                btn.textContent = 'Show More';
+            } else {
+                content.classList.add('expanded');
+                btn.textContent = 'Show Less';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -15239,8 +15239,427 @@ def case_law_dashboard():
 @app.route('/dashboard/knowledge-base')
 @require_staff()
 def dashboard_knowledge_base():
-    """Legal Strategy Knowledge Base - Credit Repair Warfare integration"""
-    return render_template('knowledge_base.html')
+    """Enhanced Legal Strategy Knowledge Base with training content"""
+    db = get_db()
+    try:
+        course = request.args.get('course', 'all')
+        search = request.args.get('search', '')
+        
+        query = db.query(KnowledgeContent).filter(KnowledgeContent.is_active == True)
+        if course != 'all':
+            query = query.filter(KnowledgeContent.course == course)
+        if search:
+            query = query.filter(
+                (KnowledgeContent.content.ilike(f'%{search}%')) |
+                (KnowledgeContent.section_title.ilike(f'%{search}%')) |
+                (KnowledgeContent.search_keywords.ilike(f'%{search}%'))
+            )
+        
+        content = query.order_by(KnowledgeContent.course, KnowledgeContent.section_number).all()
+        
+        metro2_codes = db.query(Metro2Code).order_by(Metro2Code.code_type, Metro2Code.code).all()
+        
+        credit_repair_count = db.query(KnowledgeContent).filter(KnowledgeContent.course == 'credit_repair').count()
+        metro2_count = db.query(KnowledgeContent).filter(KnowledgeContent.course == 'metro2').count()
+        
+        return render_template('knowledge_base_enhanced.html',
+            content=content,
+            metro2_codes=metro2_codes,
+            current_course=course,
+            search_query=search,
+            credit_repair_count=credit_repair_count,
+            metro2_count=metro2_count
+        )
+    except Exception as e:
+        print(f"Knowledge base error: {e}")
+        return render_template('knowledge_base_enhanced.html', content=[], metro2_codes=[], error=str(e))
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/sops')
+@require_staff()
+def dashboard_sops():
+    """Standard Operating Procedures for credit repair workflows"""
+    db = get_db()
+    try:
+        category = request.args.get('category', 'all')
+        search = request.args.get('search', '')
+        
+        query = db.query(SOP).filter(SOP.is_active == True)
+        if category != 'all':
+            query = query.filter(SOP.category == category)
+        if search:
+            query = query.filter(
+                (SOP.title.ilike(f'%{search}%')) |
+                (SOP.description.ilike(f'%{search}%')) |
+                (SOP.content.ilike(f'%{search}%'))
+            )
+        
+        sops = query.order_by(SOP.category, SOP.display_order).all()
+        
+        categories = db.query(SOP.category).filter(SOP.is_active == True).distinct().all()
+        categories = sorted(set([c[0] for c in categories if c[0]]))
+        
+        category_counts = {}
+        for cat in categories:
+            category_counts[cat] = db.query(SOP).filter(SOP.category == cat, SOP.is_active == True).count()
+        
+        return render_template('sops.html',
+            sops=sops,
+            categories=categories,
+            category_counts=category_counts,
+            current_category=category,
+            search_query=search,
+            total_sops=len(sops)
+        )
+    except Exception as e:
+        print(f"SOPs dashboard error: {e}")
+        return render_template('sops.html', sops=[], categories=[], error=str(e))
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/chexsystems')
+@require_staff()
+def dashboard_chexsystems():
+    """ChexSystems and Early Warning Services dispute helper"""
+    db = get_db()
+    try:
+        status = request.args.get('status', 'all')
+        client_id = request.args.get('client_id')
+        
+        query = db.query(ChexSystemsDispute)
+        if status != 'all':
+            query = query.filter(ChexSystemsDispute.status == status)
+        if client_id:
+            query = query.filter(ChexSystemsDispute.client_id == int(client_id))
+        
+        disputes = query.order_by(ChexSystemsDispute.created_at.desc()).all()
+        
+        clients = db.query(Client).filter(Client.status.in_(['active', 'signup'])).order_by(Client.name).all()
+        
+        stats = {
+            'total': db.query(ChexSystemsDispute).count(),
+            'pending': db.query(ChexSystemsDispute).filter(ChexSystemsDispute.status == 'pending').count(),
+            'sent': db.query(ChexSystemsDispute).filter(ChexSystemsDispute.status == 'sent').count(),
+            'responded': db.query(ChexSystemsDispute).filter(ChexSystemsDispute.status == 'responded').count(),
+            'resolved': db.query(ChexSystemsDispute).filter(ChexSystemsDispute.status == 'resolved').count()
+        }
+        
+        dispute_templates = [
+            {
+                'id': 'unauthorized_account',
+                'name': 'Unauthorized Account Dispute',
+                'description': 'Dispute an account opened without your authorization',
+                'bureau_type': 'chexsystems'
+            },
+            {
+                'id': 'identity_theft',
+                'name': 'Identity Theft Dispute',
+                'description': 'Dispute fraudulent accounts due to identity theft',
+                'bureau_type': 'both'
+            },
+            {
+                'id': 'incorrect_info',
+                'name': 'Incorrect Information',
+                'description': 'Dispute inaccurate account details or balances',
+                'bureau_type': 'both'
+            },
+            {
+                'id': 'outdated_info',
+                'name': 'Outdated Information',
+                'description': 'Request removal of old/obsolete information',
+                'bureau_type': 'both'
+            },
+            {
+                'id': 'bank_error',
+                'name': 'Bank Error Dispute',
+                'description': 'Dispute charges or closures due to bank error',
+                'bureau_type': 'chexsystems'
+            },
+            {
+                'id': 'paid_account',
+                'name': 'Paid/Settled Account',
+                'description': 'Update status for paid or settled accounts',
+                'bureau_type': 'ews'
+            }
+        ]
+        
+        return render_template('chexsystems.html',
+            disputes=disputes,
+            clients=clients,
+            stats=stats,
+            dispute_templates=dispute_templates,
+            current_status=status,
+            current_client_id=client_id
+        )
+    except Exception as e:
+        print(f"ChexSystems dashboard error: {e}")
+        return render_template('chexsystems.html', disputes=[], clients=[], stats={}, error=str(e))
+    finally:
+        db.close()
+
+
+# ============================================================
+# KNOWLEDGE BASE & TRAINING CONTENT API
+# ============================================================
+
+@app.route('/api/knowledge/search', methods=['GET'])
+@require_staff()
+def api_knowledge_search():
+    """Search knowledge content with filters"""
+    db = get_db()
+    try:
+        search = request.args.get('q', '')
+        course = request.args.get('course', 'all')
+        content_type = request.args.get('type', 'all')
+        limit = min(int(request.args.get('limit', 50)), 100)
+        
+        query = db.query(KnowledgeContent).filter(KnowledgeContent.is_active == True)
+        
+        if search:
+            query = query.filter(
+                (KnowledgeContent.content.ilike(f'%{search}%')) |
+                (KnowledgeContent.section_title.ilike(f'%{search}%')) |
+                (KnowledgeContent.search_keywords.ilike(f'%{search}%'))
+            )
+        if course != 'all':
+            query = query.filter(KnowledgeContent.course == course)
+        if content_type != 'all':
+            query = query.filter(KnowledgeContent.content_type == content_type)
+        
+        results = query.order_by(KnowledgeContent.course, KnowledgeContent.section_number).limit(limit).all()
+        
+        return jsonify({
+            'success': True,
+            'results': [r.to_dict() for r in results],
+            'count': len(results)
+        })
+    except Exception as e:
+        print(f"Knowledge search error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/metro2/codes', methods=['GET'])
+@require_staff()
+def api_metro2_codes():
+    """Get Metro 2 codes with optional filtering"""
+    db = get_db()
+    try:
+        code_type = request.args.get('type', 'all')
+        category = request.args.get('category', 'all')
+        derogatory_only = request.args.get('derogatory', 'false').lower() == 'true'
+        
+        query = db.query(Metro2Code)
+        
+        if code_type != 'all':
+            query = query.filter(Metro2Code.code_type == code_type)
+        if category != 'all':
+            query = query.filter(Metro2Code.category == category)
+        if derogatory_only:
+            query = query.filter(Metro2Code.is_derogatory == True)
+        
+        codes = query.order_by(Metro2Code.code_type, Metro2Code.code).all()
+        
+        code_types = db.query(Metro2Code.code_type).distinct().all()
+        code_types = sorted(set([c[0] for c in code_types if c[0]]))
+        
+        return jsonify({
+            'success': True,
+            'codes': [c.to_dict() for c in codes],
+            'code_types': code_types,
+            'count': len(codes)
+        })
+    except Exception as e:
+        print(f"Metro2 codes error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sops', methods=['GET'])
+@require_staff()
+def api_list_sops():
+    """List SOPs with filtering"""
+    db = get_db()
+    try:
+        category = request.args.get('category', 'all')
+        difficulty = request.args.get('difficulty', 'all')
+        search = request.args.get('q', '')
+        
+        query = db.query(SOP).filter(SOP.is_active == True)
+        
+        if category != 'all':
+            query = query.filter(SOP.category == category)
+        if difficulty != 'all':
+            query = query.filter(SOP.difficulty == difficulty)
+        if search:
+            query = query.filter(
+                (SOP.title.ilike(f'%{search}%')) |
+                (SOP.description.ilike(f'%{search}%'))
+            )
+        
+        sops = query.order_by(SOP.category, SOP.display_order).all()
+        
+        categories = db.query(SOP.category).filter(SOP.is_active == True).distinct().all()
+        categories = sorted(set([c[0] for c in categories if c[0]]))
+        
+        return jsonify({
+            'success': True,
+            'sops': [s.to_dict() for s in sops],
+            'categories': categories,
+            'count': len(sops)
+        })
+    except Exception as e:
+        print(f"SOPs API error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/sops/<int:sop_id>', methods=['GET'])
+@require_staff()
+def api_get_sop(sop_id):
+    """Get single SOP by ID"""
+    db = get_db()
+    try:
+        sop = db.query(SOP).filter(SOP.id == sop_id).first()
+        if not sop:
+            return jsonify({'success': False, 'error': 'SOP not found'}), 404
+        
+        return jsonify({'success': True, 'sop': sop.to_dict()})
+    except Exception as e:
+        print(f"Get SOP error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/chexsystems/disputes', methods=['GET'])
+@require_staff()
+def api_list_chexsystems_disputes():
+    """List ChexSystems disputes"""
+    db = get_db()
+    try:
+        status = request.args.get('status', 'all')
+        client_id = request.args.get('client_id')
+        bureau_type = request.args.get('bureau_type', 'all')
+        
+        query = db.query(ChexSystemsDispute)
+        
+        if status != 'all':
+            query = query.filter(ChexSystemsDispute.status == status)
+        if client_id:
+            query = query.filter(ChexSystemsDispute.client_id == int(client_id))
+        if bureau_type != 'all':
+            query = query.filter(ChexSystemsDispute.bureau_type == bureau_type)
+        
+        disputes = query.order_by(ChexSystemsDispute.created_at.desc()).all()
+        
+        return jsonify({
+            'success': True,
+            'disputes': [d.to_dict() for d in disputes],
+            'count': len(disputes)
+        })
+    except Exception as e:
+        print(f"ChexSystems disputes list error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/chexsystems/disputes', methods=['POST'])
+@require_staff()
+def api_create_chexsystems_dispute():
+    """Create a new ChexSystems dispute"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        required_fields = ['client_id', 'bureau_type', 'dispute_type']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+        
+        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        dispute = ChexSystemsDispute(
+            client_id=data['client_id'],
+            bureau_type=data['bureau_type'],
+            dispute_type=data['dispute_type'],
+            account_type=data.get('account_type'),
+            reported_by=data.get('reported_by'),
+            dispute_reason=data.get('dispute_reason'),
+            dispute_details=data.get('dispute_details', {}),
+            letter_type=data.get('letter_type'),
+            notes=data.get('notes'),
+            status='pending'
+        )
+        
+        db.add(dispute)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'dispute': dispute.to_dict(),
+            'message': 'ChexSystems dispute created successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Create ChexSystems dispute error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/chexsystems/disputes/<int:dispute_id>', methods=['PUT'])
+@require_staff()
+def api_update_chexsystems_dispute(dispute_id):
+    """Update a ChexSystems dispute"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        dispute = db.query(ChexSystemsDispute).filter(ChexSystemsDispute.id == dispute_id).first()
+        if not dispute:
+            return jsonify({'success': False, 'error': 'Dispute not found'}), 404
+        
+        updatable_fields = [
+            'dispute_type', 'account_type', 'reported_by', 'dispute_reason',
+            'dispute_details', 'letter_sent_date', 'letter_type', 'tracking_number',
+            'response_due_date', 'response_received_date', 'response_outcome',
+            'response_details', 'status', 'escalation_level', 'next_action', 'notes'
+        ]
+        
+        for field in updatable_fields:
+            if field in data:
+                if field in ['letter_sent_date', 'response_due_date', 'response_received_date'] and data[field]:
+                    setattr(dispute, field, datetime.fromisoformat(data[field].replace('Z', '+00:00')))
+                else:
+                    setattr(dispute, field, data[field])
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'dispute': dispute.to_dict(),
+            'message': 'Dispute updated successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Update ChexSystems dispute error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
 
 
 # ============================================================
