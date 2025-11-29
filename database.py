@@ -3024,6 +3024,178 @@ class CacheEntry(Base):
         return datetime.utcnow() > self.expires_at
 
 
+class KnowledgeContent(Base):
+    """Training content from Credit Repair and Metro 2® courses"""
+    __tablename__ = 'knowledge_content'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    course = Column(String(100), nullable=False, index=True)
+    section_number = Column(Integer, nullable=False)
+    section_title = Column(String(500), nullable=False)
+    subsection = Column(String(100))
+    content = Column(Text, nullable=False)
+    content_type = Column(String(50), default='article')
+    tags = Column(JSON)
+    statute_references = Column(JSON)
+    metro2_codes = Column(JSON)
+    search_keywords = Column(Text)
+    difficulty_level = Column(String(20), default='intermediate')
+    estimated_read_time = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    display_order = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'course': self.course,
+            'section_number': self.section_number,
+            'section_title': self.section_title,
+            'subsection': self.subsection,
+            'content': self.content,
+            'content_type': self.content_type,
+            'tags': self.tags or [],
+            'statute_references': self.statute_references or [],
+            'metro2_codes': self.metro2_codes or [],
+            'difficulty_level': self.difficulty_level,
+            'estimated_read_time': self.estimated_read_time,
+            'display_order': self.display_order
+        }
+
+
+class Metro2Code(Base):
+    """Metro 2® code lookup tables for violations and reporting"""
+    __tablename__ = 'metro2_codes'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    code_type = Column(String(50), nullable=False, index=True)
+    code = Column(String(20), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)
+    category = Column(String(100))
+    usage_guidance = Column(Text)
+    common_violations = Column(JSON)
+    dispute_language = Column(Text)
+    fcra_reference = Column(String(100))
+    crrg_reference = Column(String(100))
+    is_derogatory = Column(Boolean, default=False)
+    severity_score = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'code_type': self.code_type,
+            'code': self.code,
+            'name': self.name,
+            'description': self.description,
+            'category': self.category,
+            'usage_guidance': self.usage_guidance,
+            'common_violations': self.common_violations or [],
+            'dispute_language': self.dispute_language,
+            'fcra_reference': self.fcra_reference,
+            'crrg_reference': self.crrg_reference,
+            'is_derogatory': self.is_derogatory,
+            'severity_score': self.severity_score
+        }
+
+
+class SOP(Base):
+    """Standard Operating Procedures for credit repair workflows"""
+    __tablename__ = 'sops'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(500), nullable=False)
+    category = Column(String(100), nullable=False, index=True)
+    subcategory = Column(String(100))
+    description = Column(Text)
+    content = Column(Text, nullable=False)
+    steps = Column(JSON)
+    checklist_items = Column(JSON)
+    timeline_days = Column(Integer)
+    difficulty = Column(String(20), default='standard')
+    required_role = Column(String(50), default='paralegal')
+    related_statutes = Column(JSON)
+    related_templates = Column(JSON)
+    tips = Column(JSON)
+    warnings = Column(JSON)
+    version = Column(String(20), default='1.0')
+    is_active = Column(Boolean, default=True)
+    display_order = Column(Integer, default=0)
+    created_by_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'category': self.category,
+            'subcategory': self.subcategory,
+            'description': self.description,
+            'content': self.content,
+            'steps': self.steps or [],
+            'checklist_items': self.checklist_items or [],
+            'timeline_days': self.timeline_days,
+            'difficulty': self.difficulty,
+            'required_role': self.required_role,
+            'related_statutes': self.related_statutes or [],
+            'related_templates': self.related_templates or [],
+            'tips': self.tips or [],
+            'warnings': self.warnings or [],
+            'version': self.version,
+            'display_order': self.display_order
+        }
+
+
+class ChexSystemsDispute(Base):
+    """ChexSystems and Early Warning Services dispute tracking"""
+    __tablename__ = 'chexsystems_disputes'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    bureau_type = Column(String(50), nullable=False)
+    dispute_type = Column(String(100), nullable=False)
+    account_type = Column(String(100))
+    reported_by = Column(String(255))
+    dispute_reason = Column(Text)
+    dispute_details = Column(JSON)
+    supporting_docs = Column(JSON)
+    letter_sent_date = Column(DateTime)
+    letter_type = Column(String(100))
+    tracking_number = Column(String(100))
+    response_due_date = Column(DateTime)
+    response_received_date = Column(DateTime)
+    response_outcome = Column(String(50))
+    response_details = Column(Text)
+    status = Column(String(50), default='pending', index=True)
+    escalation_level = Column(Integer, default=1)
+    next_action = Column(String(255))
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'bureau_type': self.bureau_type,
+            'dispute_type': self.dispute_type,
+            'account_type': self.account_type,
+            'reported_by': self.reported_by,
+            'dispute_reason': self.dispute_reason,
+            'dispute_details': self.dispute_details or {},
+            'letter_sent_date': self.letter_sent_date.isoformat() if self.letter_sent_date else None,
+            'response_due_date': self.response_due_date.isoformat() if self.response_due_date else None,
+            'response_received_date': self.response_received_date.isoformat() if self.response_received_date else None,
+            'response_outcome': self.response_outcome,
+            'status': self.status,
+            'escalation_level': self.escalation_level,
+            'next_action': self.next_action
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
