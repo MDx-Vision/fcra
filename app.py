@@ -8639,6 +8639,59 @@ def dashboard_reports_redirect():
     """Redirect old reports URL to analytics"""
     return redirect('/dashboard/analytics')
 
+@app.route('/dashboard/queue')
+@require_staff(roles=['admin', 'paralegal'])
+def dashboard_queue_redirect():
+    """Redirect queue URL to letter-queue"""
+    return redirect('/dashboard/letter-queue')
+
+@app.route('/dashboard/cases')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def dashboard_cases():
+    """Cases dashboard with status filter support"""
+    db = get_db()
+    try:
+        status = request.args.get('status', 'all')
+        
+        query = db.query(Client)
+        
+        if status == 'stage1_complete':
+            query = query.filter(Client.case_status == 'stage1_complete')
+            active_page = 'pending_review'
+        elif status == 'stage2_complete':
+            query = query.filter(Client.case_status == 'stage2_complete')
+            active_page = 'ready_deliver'
+        elif status == 'in_progress':
+            query = query.filter(Client.case_status.in_(['uploaded', 'analyzing', 'stage1_complete']))
+            active_page = 'cases'
+        elif status == 'complete':
+            query = query.filter(Client.case_status == 'stage2_complete')
+            active_page = 'cases'
+        else:
+            active_page = 'cases'
+        
+        clients = query.order_by(Client.created_at.desc()).all()
+        
+        status_labels = {
+            'stage1_complete': 'Pending Review',
+            'stage2_complete': 'Ready to Deliver',
+            'in_progress': 'In Progress',
+            'complete': 'Complete',
+            'all': 'All Cases'
+        }
+        
+        return render_template('clients.html',
+                             clients=clients,
+                             active_page=active_page,
+                             status_filter=status,
+                             status_label=status_labels.get(status, 'All Cases'))
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template('clients.html', clients=[], active_page='cases')
+    finally:
+        db.close()
+
 
 @app.route('/api/freeze-letters/generate', methods=['POST'])
 def api_generate_freeze_letters():
