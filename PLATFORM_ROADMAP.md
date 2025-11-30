@@ -319,6 +319,9 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 | ML Insights | `/dashboard/ml-insights` | Staff |
 | Predictive Analytics | `/dashboard/predictive` | Staff |
 | Workflow Automation | `/dashboard/workflows` | Staff |
+| Frivolousness Tracker | `/dashboard/frivolousness` | Staff |
+| Suspense Accounts | `/dashboard/suspense-accounts` | Staff |
+| Violation Patterns | `/dashboard/patterns` | Admin/Attorney |
 
 ---
 
@@ -402,10 +405,12 @@ Based on the comprehensive "Credit Repair Warfare" legal guide, the following ha
 - **Item Type Support** - Different periods for bankruptcies (7-10yr), inquiries (2yr), etc.
 - **Violation Detection** - Missing or incorrect DOFD flagging
 
+#### ✅ Litigation Intelligence Features - DONE (November 2025)
+- **Frivolousness Defense Tracker** (`/dashboard/frivolousness`) - Track CRA frivolous claim defenses with evidence requirements, legal theory documentation, and 5-stage re-dispute workflow management
+- **Suspense Account Detection** (`/dashboard/suspense-accounts`) - Mortgage payment ledger analysis identifying misapplied payments in suspense accounts that cause false late payment reporting, with CSV upload and timeline visualization
+- **Violation Pattern Documentation** (`/dashboard/patterns`) - Cross-client pattern tracking for systemic FCRA violations with evidence packet PDF generation for class action preparation
+
 #### Future Enhancements (Remaining from Credit Repair Warfare)
-- **Frivolousness Defense Tracker** - New evidence/legal theory requirements for re-disputes
-- **Suspense Account Detection** - Identify misapplied mortgage payments causing false lates
-- **Pattern Documentation** - Evidence packaging for systemic violation claims
 - **Client Education Portal** - Client-facing FCRA rights explainer
 
 - **Source:** "Credit Repair Warfare" by PrimaryTradelineHub.com
@@ -413,4 +418,4 @@ Based on the comprehensive "Credit Repair Warfare" legal guide, the following ha
 
 ---
 
-*Document Last Updated: November 2025*
+*Document Last Updated: November 30, 2025*
