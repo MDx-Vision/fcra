@@ -90,6 +90,38 @@ The platform is built on Flask and employs a two-stage, section-based analysis a
 - **Data Integrity**: Intelligent sectioning and analysis prevent data loss.
 - **Workflow Optimization**: Verification checkpoints ensure accuracy and control.
 
+## Testing Infrastructure
+
+### Cypress E2E Testing
+The platform includes a complete end-to-end testing infrastructure using Cypress 13.17.0.
+
+**Test Files:**
+- `cypress/e2e/login.cy.js` - Staff login authentication tests
+- `cypress/e2e/smoke.cy.js` - Basic page load verification tests
+- `cypress/e2e/create_item.cy.js` - Item creation workflow tests (staff member creation)
+
+**Running Tests:**
+```bash
+npm run test:e2e              # Run all E2E tests
+npm run test:e2e -- --spec "cypress/e2e/login.cy.js"  # Run specific test file
+npm run db:seed               # Reset database with test user
+```
+
+**Test User Credentials:**
+- Email: `test@example.com`
+- Password: `password123`
+- Role: `admin`
+
+**Configuration:**
+- `cypress.config.js` - Cypress configuration with baseUrl http://localhost:5000
+- `cypress/support/e2e.js` - Support file with beforeEach hook for database seeding
+- `seed.py` - Database seeding script that clears tables and creates test user
+
+**NixOS Environment Notes:**
+- Tests use the Nix-provided Cypress binary via `CYPRESS_RUN_BINARY` environment variable
+- The npm script automatically locates and uses the correct binary
+- Tests run headless with xvfb for the virtual display
+
 ## External Dependencies
 - **Flask**: Python web framework.
 - **Anthropic Claude 3 Sonnet 4**: Primary AI analysis engine.
@@ -99,3 +131,4 @@ The platform is built on Flask and employs a two-stage, section-based analysis a
 - **Stripe**: Payment processing.
 - **Twilio**: SMS automation.
 - **SendGrid**: Email automation.
+- **Cypress**: E2E testing framework (v13.17.0).
