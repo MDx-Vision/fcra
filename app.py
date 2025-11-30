@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13655,6 +13655,531 @@ def dashboard_furnisher_detail(furnisher_id):
 
 
 # ============================================================
+# PATTERN DOCUMENTATION (Systemic Violations)
+# ============================================================
+
+@app.route('/dashboard/patterns')
+@require_staff(roles=['admin', 'attorney'])
+def dashboard_patterns():
+    """Violation patterns dashboard - track systemic violations"""
+    db = get_db()
+    try:
+        patterns = db.query(ViolationPattern).order_by(ViolationPattern.created_at.desc()).all()
+        
+        total_patterns = len(patterns)
+        total_clients_affected = sum(p.clients_affected or 0 for p in patterns)
+        total_damages = sum(p.total_damages_estimate or 0 for p in patterns)
+        ready_for_action = sum(1 for p in patterns if p.status == 'ready_for_action')
+        
+        furnishers = db.query(Furnisher).order_by(Furnisher.name).all()
+        furnisher_names = [f.name for f in furnishers]
+        
+        return render_template('violation_patterns.html',
+            patterns=patterns,
+            total_patterns=total_patterns,
+            total_clients_affected=total_clients_affected,
+            total_damages=total_damages,
+            ready_for_action=ready_for_action,
+            furnisher_names=furnisher_names,
+            cras=['Equifax', 'Experian', 'TransUnion']
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error loading patterns: {e}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/patterns/create', methods=['POST'])
+@require_staff(roles=['admin', 'attorney'])
+def api_patterns_create():
+    """Create a new violation pattern"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        
+        pattern_name = data.get('pattern_name', '').strip()
+        if not pattern_name:
+            return jsonify({'success': False, 'error': 'Pattern name is required'}), 400
+        
+        pattern = ViolationPattern(
+            pattern_name=pattern_name,
+            pattern_type=data.get('pattern_type', 'furnisher_practice'),
+            target_type=data.get('target_type', 'furnisher'),
+            furnisher_name=data.get('furnisher_name'),
+            cra_name=data.get('cra_name'),
+            violation_code=data.get('violation_code'),
+            violation_type=data.get('violation_type'),
+            violation_description=data.get('violation_description'),
+            evidence_strength=data.get('evidence_strength', 'moderate'),
+            recommended_strategy=data.get('recommended_strategy', 'individual_suits'),
+            strategy_notes=data.get('strategy_notes'),
+            status=data.get('status', 'monitoring'),
+            priority=data.get('priority', 'medium'),
+            admin_notes=data.get('admin_notes'),
+            created_by_staff_id=session.get('staff_id')
+        )
+        
+        db.add(pattern)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'pattern_id': pattern.id,
+            'message': 'Pattern created successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/patterns/<int:pattern_id>')
+@require_staff(roles=['admin', 'attorney'])
+def api_pattern_details(pattern_id):
+    """Get pattern details with linked violations"""
+    db = get_db()
+    try:
+        pattern = db.query(ViolationPattern).filter_by(id=pattern_id).first()
+        if not pattern:
+            return jsonify({'success': False, 'error': 'Pattern not found'}), 404
+        
+        instances = db.query(PatternInstance).filter_by(pattern_id=pattern_id).all()
+        
+        linked_violations = []
+        for inst in instances:
+            violation = db.query(Violation).filter_by(id=inst.violation_id).first()
+            client = db.query(Client).filter_by(id=inst.client_id).first()
+            
+            linked_violations.append({
+                'instance_id': inst.id,
+                'violation_id': inst.violation_id,
+                'client_id': inst.client_id,
+                'client_name': client.name if client else 'Unknown',
+                'occurrence_date': inst.occurrence_date.isoformat() if inst.occurrence_date else None,
+                'instance_description': inst.instance_description,
+                'damages_for_instance': inst.damages_for_instance or 0,
+                'included_in_packet': inst.included_in_packet,
+                'violation_type': violation.violation_type if violation else None,
+                'bureau': violation.bureau if violation else None,
+                'account_name': violation.account_name if violation else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'pattern': pattern.to_dict(),
+            'pattern_full': {
+                'id': pattern.id,
+                'pattern_name': pattern.pattern_name,
+                'pattern_type': pattern.pattern_type,
+                'target_type': pattern.target_type,
+                'furnisher_name': pattern.furnisher_name,
+                'cra_name': pattern.cra_name,
+                'violation_code': pattern.violation_code,
+                'violation_type': pattern.violation_type,
+                'violation_description': pattern.violation_description,
+                'occurrences_count': pattern.occurrences_count,
+                'clients_affected': pattern.clients_affected,
+                'total_damages_estimate': pattern.total_damages_estimate,
+                'avg_damages_per_client': pattern.avg_damages_per_client,
+                'earliest_occurrence': pattern.earliest_occurrence.isoformat() if pattern.earliest_occurrence else None,
+                'latest_occurrence': pattern.latest_occurrence.isoformat() if pattern.latest_occurrence else None,
+                'evidence_packet_path': pattern.evidence_packet_path,
+                'evidence_summary': pattern.evidence_summary,
+                'evidence_strength': pattern.evidence_strength,
+                'recommended_strategy': pattern.recommended_strategy,
+                'strategy_notes': pattern.strategy_notes,
+                'case_law_citations': pattern.case_law_citations,
+                'status': pattern.status,
+                'priority': pattern.priority,
+                'cfpb_complaint_filed': pattern.cfpb_complaint_filed,
+                'cfpb_complaint_date': pattern.cfpb_complaint_date.isoformat() if pattern.cfpb_complaint_date else None,
+                'cfpb_complaint_id': pattern.cfpb_complaint_id,
+                'litigation_filed': pattern.litigation_filed,
+                'litigation_date': pattern.litigation_date.isoformat() if pattern.litigation_date else None,
+                'litigation_case_number': pattern.litigation_case_number,
+                'admin_notes': pattern.admin_notes,
+                'created_at': pattern.created_at.isoformat() if pattern.created_at else None
+            },
+            'linked_violations': linked_violations,
+            'total_linked': len(linked_violations)
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/patterns/<int:pattern_id>/add-instance', methods=['POST'])
+@require_staff(roles=['admin', 'attorney'])
+def api_pattern_add_instance(pattern_id):
+    """Link a violation to a pattern"""
+    db = get_db()
+    try:
+        pattern = db.query(ViolationPattern).filter_by(id=pattern_id).first()
+        if not pattern:
+            return jsonify({'success': False, 'error': 'Pattern not found'}), 404
+        
+        data = request.get_json() or {}
+        violation_id = data.get('violation_id')
+        client_id = data.get('client_id')
+        
+        if not violation_id:
+            return jsonify({'success': False, 'error': 'violation_id is required'}), 400
+        
+        violation = db.query(Violation).filter_by(id=violation_id).first()
+        if not violation:
+            return jsonify({'success': False, 'error': 'Violation not found'}), 404
+        
+        if not client_id:
+            client_id = violation.client_id
+        
+        existing = db.query(PatternInstance).filter_by(
+            pattern_id=pattern_id,
+            violation_id=violation_id
+        ).first()
+        if existing:
+            return jsonify({'success': False, 'error': 'Violation already linked to this pattern'}), 400
+        
+        occurrence_date = None
+        if data.get('occurrence_date'):
+            try:
+                occurrence_date = datetime.fromisoformat(data['occurrence_date'].replace('Z', '+00:00')).date()
+            except:
+                pass
+        elif violation.violation_date:
+            occurrence_date = violation.violation_date
+        
+        instance = PatternInstance(
+            pattern_id=pattern_id,
+            violation_id=violation_id,
+            client_id=client_id,
+            occurrence_date=occurrence_date,
+            instance_description=data.get('instance_description', violation.description),
+            damages_for_instance=data.get('damages_for_instance', violation.statutory_damages_min or 0),
+            evidence_notes=data.get('evidence_notes')
+        )
+        db.add(instance)
+        
+        pattern.occurrences_count = (pattern.occurrences_count or 0) + 1
+        
+        existing_clients = db.query(PatternInstance.client_id).filter_by(pattern_id=pattern_id).distinct().count()
+        is_new_client = not db.query(PatternInstance).filter_by(
+            pattern_id=pattern_id,
+            client_id=client_id
+        ).filter(PatternInstance.id != instance.id).first()
+        if is_new_client:
+            pattern.clients_affected = existing_clients + 1
+        
+        pattern.total_damages_estimate = (pattern.total_damages_estimate or 0) + (instance.damages_for_instance or 0)
+        
+        if pattern.clients_affected and pattern.clients_affected > 0:
+            pattern.avg_damages_per_client = pattern.total_damages_estimate / pattern.clients_affected
+        
+        if occurrence_date:
+            if not pattern.earliest_occurrence or occurrence_date < pattern.earliest_occurrence:
+                pattern.earliest_occurrence = occurrence_date
+            if not pattern.latest_occurrence or occurrence_date > pattern.latest_occurrence:
+                pattern.latest_occurrence = occurrence_date
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'instance_id': instance.id,
+            'message': 'Violation linked to pattern successfully',
+            'pattern_stats': {
+                'occurrences_count': pattern.occurrences_count,
+                'clients_affected': pattern.clients_affected,
+                'total_damages_estimate': pattern.total_damages_estimate
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/patterns/<int:pattern_id>/generate-packet', methods=['POST'])
+@require_staff(roles=['admin', 'attorney'])
+def api_pattern_generate_packet(pattern_id):
+    """Generate evidence packet PDF for a pattern"""
+    db = get_db()
+    try:
+        pattern = db.query(ViolationPattern).filter_by(id=pattern_id).first()
+        if not pattern:
+            return jsonify({'success': False, 'error': 'Pattern not found'}), 404
+        
+        instances = db.query(PatternInstance).filter_by(pattern_id=pattern_id).all()
+        
+        evidence_data = []
+        for inst in instances:
+            violation = db.query(Violation).filter_by(id=inst.violation_id).first()
+            client = db.query(Client).filter_by(id=inst.client_id).first()
+            
+            evidence_data.append({
+                'client_name': client.name if client else 'Unknown',
+                'client_id': inst.client_id,
+                'violation_type': violation.violation_type if violation else 'Unknown',
+                'bureau': violation.bureau if violation else 'Unknown',
+                'account_name': violation.account_name if violation else 'Unknown',
+                'occurrence_date': inst.occurrence_date.strftime('%Y-%m-%d') if inst.occurrence_date else 'Unknown',
+                'description': inst.instance_description or (violation.description if violation else ''),
+                'damages': inst.damages_for_instance or 0,
+                'evidence_notes': inst.evidence_notes
+            })
+            
+            inst.included_in_packet = True
+            inst.included_date = datetime.utcnow()
+        
+        os.makedirs('static/generated_letters', exist_ok=True)
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        safe_name = re.sub(r'[^\w\s-]', '', pattern.pattern_name).strip().replace(' ', '_')[:30]
+        filename = f"evidence_packet_{safe_name}_{timestamp}.pdf"
+        filepath = os.path.join('static/generated_letters', filename)
+        
+        try:
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import letter
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.units import inch
+            
+            doc = SimpleDocTemplate(filepath, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+            styles = getSampleStyleSheet()
+            
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=18, spaceAfter=20, textColor=colors.HexColor('#1a1a2e'))
+            heading_style = ParagraphStyle('HeadingStyle', parent=styles['Heading2'], fontSize=14, spaceAfter=12, textColor=colors.HexColor('#319795'))
+            body_style = ParagraphStyle('BodyStyle', parent=styles['Normal'], fontSize=11, spaceAfter=8)
+            
+            story = []
+            
+            story.append(Paragraph("FCRA VIOLATION PATTERN EVIDENCE PACKET", title_style))
+            story.append(Paragraph(f"Pattern: {pattern.pattern_name}", heading_style))
+            story.append(Spacer(1, 0.2*inch))
+            
+            story.append(Paragraph("PATTERN SUMMARY", heading_style))
+            
+            summary_data = [
+                ['Pattern Type:', pattern.pattern_type or 'N/A', 'Target:', pattern.furnisher_name or pattern.cra_name or 'N/A'],
+                ['Occurrences:', str(pattern.occurrences_count or 0), 'Clients Affected:', str(pattern.clients_affected or 0)],
+                ['Total Damages:', f"${pattern.total_damages_estimate or 0:,.2f}", 'Evidence Strength:', (pattern.evidence_strength or 'N/A').title()],
+                ['Status:', (pattern.status or 'N/A').replace('_', ' ').title(), 'Priority:', (pattern.priority or 'N/A').title()],
+            ]
+            
+            summary_table = Table(summary_data, colWidths=[1.5*inch, 2*inch, 1.5*inch, 2*inch])
+            summary_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 10),
+                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ]))
+            story.append(summary_table)
+            story.append(Spacer(1, 0.3*inch))
+            
+            if pattern.recommended_strategy:
+                strategy_labels = {
+                    'class_action': 'Class Action Lawsuit',
+                    'individual_suits': 'Individual Lawsuits',
+                    'regulatory_complaint': 'Regulatory Complaint (CFPB)'
+                }
+                strategy = strategy_labels.get(pattern.recommended_strategy, pattern.recommended_strategy.replace('_', ' ').title())
+                story.append(Paragraph(f"RECOMMENDED STRATEGY: {strategy}", heading_style))
+                if pattern.strategy_notes:
+                    story.append(Paragraph(pattern.strategy_notes, body_style))
+                story.append(Spacer(1, 0.2*inch))
+            
+            story.append(Paragraph(f"LINKED VIOLATIONS ({len(evidence_data)} instances)", heading_style))
+            
+            if evidence_data:
+                table_data = [['Client', 'Violation Type', 'Bureau', 'Date', 'Damages']]
+                for ev in evidence_data:
+                    table_data.append([
+                        ev['client_name'][:20],
+                        ev['violation_type'][:25] if ev['violation_type'] else 'N/A',
+                        ev['bureau'] or 'N/A',
+                        ev['occurrence_date'],
+                        f"${ev['damages']:,.0f}"
+                    ])
+                
+                evidence_table = Table(table_data, colWidths=[1.5*inch, 2*inch, 1*inch, 1*inch, 1*inch])
+                evidence_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#319795')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 9),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('ALIGN', (4, 0), (4, -1), 'RIGHT'),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                    ('TOPPADDING', (0, 0), (-1, -1), 6),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+                ]))
+                story.append(evidence_table)
+            else:
+                story.append(Paragraph("No violations linked to this pattern yet.", body_style))
+            
+            story.append(Spacer(1, 0.3*inch))
+            story.append(Paragraph(f"Generated: {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p UTC')}", body_style))
+            story.append(Paragraph("This document is confidential attorney work product.", body_style))
+            
+            doc.build(story)
+            
+        except ImportError:
+            with open(filepath, 'w') as f:
+                f.write(f"EVIDENCE PACKET: {pattern.pattern_name}\n")
+                f.write(f"Generated: {datetime.utcnow()}\n\n")
+                f.write(f"Occurrences: {pattern.occurrences_count}\n")
+                f.write(f"Clients Affected: {pattern.clients_affected}\n")
+                f.write(f"Total Damages: ${pattern.total_damages_estimate or 0:,.2f}\n\n")
+                for ev in evidence_data:
+                    f.write(f"- {ev['client_name']}: {ev['violation_type']} ({ev['occurrence_date']}) - ${ev['damages']:,.0f}\n")
+        
+        pattern.evidence_packet_path = filepath
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'filepath': f'/static/generated_letters/{filename}',
+            'filename': filename,
+            'instances_included': len(evidence_data),
+            'message': 'Evidence packet generated successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/patterns/<int:pattern_id>/update', methods=['POST'])
+@require_staff(roles=['admin', 'attorney'])
+def api_pattern_update(pattern_id):
+    """Update pattern status and details"""
+    db = get_db()
+    try:
+        pattern = db.query(ViolationPattern).filter_by(id=pattern_id).first()
+        if not pattern:
+            return jsonify({'success': False, 'error': 'Pattern not found'}), 404
+        
+        data = request.get_json() or {}
+        
+        updatable_fields = [
+            'pattern_name', 'pattern_type', 'target_type', 'furnisher_name', 'cra_name',
+            'violation_code', 'violation_type', 'violation_description',
+            'evidence_strength', 'evidence_summary', 'recommended_strategy', 'strategy_notes',
+            'status', 'priority', 'admin_notes'
+        ]
+        
+        for field in updatable_fields:
+            if field in data:
+                setattr(pattern, field, data[field])
+        
+        if data.get('cfpb_complaint_filed'):
+            pattern.cfpb_complaint_filed = True
+            if data.get('cfpb_complaint_date'):
+                try:
+                    pattern.cfpb_complaint_date = datetime.fromisoformat(data['cfpb_complaint_date'].replace('Z', '+00:00')).date()
+                except:
+                    pass
+            pattern.cfpb_complaint_id = data.get('cfpb_complaint_id')
+        
+        if data.get('litigation_filed'):
+            pattern.litigation_filed = True
+            if data.get('litigation_date'):
+                try:
+                    pattern.litigation_date = datetime.fromisoformat(data['litigation_date'].replace('Z', '+00:00')).date()
+                except:
+                    pass
+            pattern.litigation_case_number = data.get('litigation_case_number')
+        
+        if data.get('case_law_citations'):
+            pattern.case_law_citations = data['case_law_citations']
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Pattern updated successfully',
+            'pattern': pattern.to_dict()
+        })
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/patterns/<int:pattern_id>/available-violations')
+@require_staff(roles=['admin', 'attorney'])
+def api_pattern_available_violations(pattern_id):
+    """Get violations that can be linked to a pattern"""
+    db = get_db()
+    try:
+        pattern = db.query(ViolationPattern).filter_by(id=pattern_id).first()
+        if not pattern:
+            return jsonify({'success': False, 'error': 'Pattern not found'}), 404
+        
+        linked_ids = [inst.violation_id for inst in db.query(PatternInstance).filter_by(pattern_id=pattern_id).all()]
+        
+        query = db.query(Violation)
+        
+        if pattern.furnisher_name:
+            query = query.filter(Violation.account_name.ilike(f'%{pattern.furnisher_name}%'))
+        if pattern.cra_name:
+            query = query.filter(Violation.bureau.ilike(f'%{pattern.cra_name}%'))
+        if pattern.violation_type:
+            query = query.filter(Violation.violation_type.ilike(f'%{pattern.violation_type}%'))
+        
+        if linked_ids:
+            query = query.filter(~Violation.id.in_(linked_ids))
+        
+        violations = query.order_by(Violation.created_at.desc()).limit(100).all()
+        
+        result = []
+        for v in violations:
+            client = db.query(Client).filter_by(id=v.client_id).first()
+            result.append({
+                'id': v.id,
+                'client_id': v.client_id,
+                'client_name': client.name if client else 'Unknown',
+                'bureau': v.bureau,
+                'account_name': v.account_name,
+                'violation_type': v.violation_type,
+                'description': v.description[:100] if v.description else '',
+                'statutory_damages_min': v.statutory_damages_min or 0,
+                'violation_date': v.violation_date.isoformat() if v.violation_date else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'violations': result,
+            'total': len(result)
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
 # STATUTE OF LIMITATIONS (SOL) CALCULATOR API
 # FCRA § 1681p: Earlier of 2 years from discovery or 5 years from occurrence
 # ============================================================
@@ -15889,6 +16414,362 @@ def api_update_chexsystems_dispute(dispute_id):
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
+
+
+# ============================================================
+# FRIVOLOUSNESS DEFENSE TRACKER
+# ============================================================
+
+FRIVOLOUS_EVIDENCE_TYPES = [
+    {'id': 'government_id', 'name': 'Government-Issued ID', 'description': 'Valid drivers license, passport, or state ID'},
+    {'id': 'utility_bill', 'name': 'Utility Bill', 'description': 'Recent utility bill showing name and address'},
+    {'id': 'bank_statement', 'name': 'Bank Statement', 'description': 'Recent bank statement showing name and address'},
+    {'id': 'ssn_card', 'name': 'Social Security Card', 'description': 'Copy of Social Security card'},
+    {'id': 'affidavit', 'name': 'Consumer Affidavit', 'description': 'Signed affidavit regarding dispute'},
+    {'id': 'police_report', 'name': 'Police Report', 'description': 'Police report for identity theft cases'},
+    {'id': 'ftc_report', 'name': 'FTC Identity Theft Report', 'description': 'Official FTC identity theft affidavit'},
+    {'id': 'credit_report', 'name': 'Credit Report Copy', 'description': 'Copy of credit report showing disputed item'},
+    {'id': 'payment_records', 'name': 'Payment Records', 'description': 'Cancelled checks, payment receipts'},
+    {'id': 'correspondence', 'name': 'Prior Correspondence', 'description': 'Previous dispute letters and CRA responses'},
+    {'id': 'account_statement', 'name': 'Account Statement', 'description': 'Statement from creditor/furnisher'},
+    {'id': 'other', 'name': 'Other Evidence', 'description': 'Other supporting documentation'}
+]
+
+FRIVOLOUS_STATUS_WORKFLOW = [
+    {'status': 'pending', 'label': 'Pending Review', 'next': 'evidence_gathering'},
+    {'status': 'evidence_gathering', 'label': 'Gathering Evidence', 'next': 'ready_to_redispute'},
+    {'status': 'ready_to_redispute', 'label': 'Ready to Re-dispute', 'next': 'redisputed'},
+    {'status': 'redisputed', 'label': 'Re-disputed', 'next': 'resolved'},
+    {'status': 'resolved', 'label': 'Resolved', 'next': None}
+]
+
+
+@app.route('/dashboard/frivolousness')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def dashboard_frivolousness():
+    """Dashboard page for frivolous defense tracking"""
+    db = get_db()
+    try:
+        defenses = db.query(FrivolousDefense).order_by(FrivolousDefense.created_at.desc()).all()
+        
+        stats = {
+            'total': len(defenses),
+            'pending': sum(1 for d in defenses if d.status == 'pending'),
+            'evidence_gathering': sum(1 for d in defenses if d.status == 'evidence_gathering'),
+            'ready_to_redispute': sum(1 for d in defenses if d.status == 'ready_to_redispute'),
+            'redisputed': sum(1 for d in defenses if d.status == 'redisputed'),
+            'resolved': sum(1 for d in defenses if d.status == 'resolved')
+        }
+        
+        defense_list = []
+        for defense in defenses:
+            client = db.query(Client).filter(Client.id == defense.client_id).first()
+            evidence_count = db.query(FrivolousDefenseEvidence).filter(
+                FrivolousDefenseEvidence.defense_id == defense.id
+            ).count()
+            
+            required_count = len(defense.required_evidence) if defense.required_evidence else 0
+            
+            defense_list.append({
+                'id': defense.id,
+                'client_id': defense.client_id,
+                'client_name': client.name if client else 'Unknown',
+                'bureau': defense.bureau,
+                'dispute_round': defense.dispute_round,
+                'claim_date': defense.claim_date,
+                'claim_reason': defense.claim_reason,
+                'status': defense.status,
+                'evidence_collected': evidence_count,
+                'evidence_required': required_count,
+                'evidence_sufficient': defense.evidence_sufficient,
+                'follow_up_due': defense.follow_up_due,
+                'redispute_outcome': defense.redispute_outcome,
+                'created_at': defense.created_at
+            })
+        
+        clients = db.query(Client).filter(Client.status.in_(['active', 'signup'])).order_by(Client.name).all()
+        
+        return render_template('frivolousness_tracker.html',
+            defenses=defense_list,
+            stats=stats,
+            clients=clients,
+            evidence_types=FRIVOLOUS_EVIDENCE_TYPES,
+            status_workflow=FRIVOLOUS_STATUS_WORKFLOW
+        )
+    except Exception as e:
+        print(f"Frivolousness dashboard error: {e}")
+        return render_template('error.html',
+            error='Dashboard Error',
+            message=str(e)), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/frivolousness/add', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_add_frivolous_defense():
+    """Add a new frivolous defense case"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        required_fields = ['client_id', 'bureau']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'success': False, 'error': f'{field} is required'}), 400
+        
+        claim_date = None
+        if data.get('claim_date'):
+            claim_date = datetime.strptime(data['claim_date'], '%Y-%m-%d').date()
+        
+        follow_up_due = None
+        if data.get('follow_up_due'):
+            follow_up_due = datetime.strptime(data['follow_up_due'], '%Y-%m-%d').date()
+        
+        defense = FrivolousDefense(
+            client_id=int(data['client_id']),
+            bureau=data['bureau'],
+            dispute_round=data.get('dispute_round', 1),
+            claim_date=claim_date,
+            claim_reason=data.get('claim_reason'),
+            claim_citation=data.get('claim_citation'),
+            required_evidence=data.get('required_evidence', []),
+            new_legal_theory=data.get('new_legal_theory'),
+            new_facts_required=data.get('new_facts_required'),
+            defense_strategy=data.get('defense_strategy'),
+            follow_up_due=follow_up_due,
+            status='pending',
+            assigned_to_staff_id=session.get('staff_id')
+        )
+        
+        db.add(defense)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'defense': defense.to_dict(),
+            'message': 'Frivolous defense case created successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Add frivolous defense error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/frivolousness/<int:defense_id>', methods=['GET'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_get_frivolous_defense(defense_id):
+    """Get a frivolous defense case details"""
+    db = get_db()
+    try:
+        defense = db.query(FrivolousDefense).filter(FrivolousDefense.id == defense_id).first()
+        if not defense:
+            return jsonify({'success': False, 'error': 'Defense case not found'}), 404
+        
+        client = db.query(Client).filter(Client.id == defense.client_id).first()
+        evidence_docs = db.query(FrivolousDefenseEvidence).filter(
+            FrivolousDefenseEvidence.defense_id == defense_id
+        ).order_by(FrivolousDefenseEvidence.created_at.desc()).all()
+        
+        evidence_list = [{
+            'id': e.id,
+            'evidence_type': e.evidence_type,
+            'file_name': e.file_name,
+            'file_path': e.file_path,
+            'description': e.description,
+            'verified': e.verified,
+            'verified_at': e.verified_at.isoformat() if e.verified_at else None,
+            'created_at': e.created_at.isoformat()
+        } for e in evidence_docs]
+        
+        defense_data = defense.to_dict()
+        defense_data['client_name'] = client.name if client else 'Unknown'
+        defense_data['claim_citation'] = defense.claim_citation
+        defense_data['new_facts_required'] = defense.new_facts_required
+        defense_data['defense_strategy'] = defense.defense_strategy
+        defense_data['admin_notes'] = defense.admin_notes
+        defense_data['redispute_date'] = defense.redispute_date.isoformat() if defense.redispute_date else None
+        defense_data['escalation_notes'] = defense.escalation_notes
+        defense_data['evidence_docs'] = evidence_list
+        defense_data['created_at'] = defense.created_at.isoformat()
+        defense_data['updated_at'] = defense.updated_at.isoformat() if defense.updated_at else None
+        
+        return jsonify({
+            'success': True,
+            'defense': defense_data,
+            'evidence_types': FRIVOLOUS_EVIDENCE_TYPES,
+            'status_workflow': FRIVOLOUS_STATUS_WORKFLOW
+        })
+    except Exception as e:
+        print(f"Get frivolous defense error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/frivolousness/<int:defense_id>/update', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_update_frivolous_defense(defense_id):
+    """Update a frivolous defense case status"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        defense = db.query(FrivolousDefense).filter(FrivolousDefense.id == defense_id).first()
+        if not defense:
+            return jsonify({'success': False, 'error': 'Defense case not found'}), 404
+        
+        updatable_fields = [
+            'bureau', 'dispute_round', 'claim_reason', 'claim_citation',
+            'required_evidence', 'new_legal_theory', 'new_facts_required',
+            'status', 'defense_strategy', 'evidence_collected', 'evidence_sufficient',
+            'redispute_outcome', 'escalation_notes', 'admin_notes'
+        ]
+        
+        for field in updatable_fields:
+            if field in data:
+                setattr(defense, field, data[field])
+        
+        if 'claim_date' in data and data['claim_date']:
+            defense.claim_date = datetime.strptime(data['claim_date'], '%Y-%m-%d').date()
+        
+        if 'follow_up_due' in data and data['follow_up_due']:
+            defense.follow_up_due = datetime.strptime(data['follow_up_due'], '%Y-%m-%d').date()
+        
+        if 'redispute_date' in data and data['redispute_date']:
+            defense.redispute_date = datetime.strptime(data['redispute_date'], '%Y-%m-%d').date()
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'defense': defense.to_dict(),
+            'message': 'Defense case updated successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Update frivolous defense error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/frivolousness/<int:defense_id>/evidence', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_upload_frivolous_evidence(defense_id):
+    """Upload evidence document for a frivolous defense case"""
+    db = get_db()
+    try:
+        defense = db.query(FrivolousDefense).filter(FrivolousDefense.id == defense_id).first()
+        if not defense:
+            return jsonify({'success': False, 'error': 'Defense case not found'}), 404
+        
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+        
+        evidence_type = request.form.get('evidence_type', 'other')
+        description = request.form.get('description', '')
+        
+        filename = secure_filename(file.filename)
+        unique_filename = f"frivolous_{defense_id}_{uuid.uuid4().hex[:8]}_{filename}"
+        
+        upload_dir = 'static/client_uploads/frivolous_evidence'
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, unique_filename)
+        file.save(file_path)
+        
+        evidence = FrivolousDefenseEvidence(
+            defense_id=defense_id,
+            evidence_type=evidence_type,
+            file_path=file_path,
+            file_name=filename,
+            description=description
+        )
+        
+        db.add(evidence)
+        
+        required = defense.required_evidence or []
+        if evidence_type in required:
+            collected = defense.evidence_collected or []
+            if evidence_type not in collected:
+                collected.append(evidence_type)
+                defense.evidence_collected = collected
+                flag_modified(defense, 'evidence_collected')
+            
+            if set(required).issubset(set(collected)):
+                defense.evidence_sufficient = True
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'evidence': {
+                'id': evidence.id,
+                'evidence_type': evidence.evidence_type,
+                'file_name': evidence.file_name,
+                'file_path': evidence.file_path,
+                'description': evidence.description
+            },
+            'message': 'Evidence uploaded successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Upload frivolous evidence error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/frivolousness/<int:defense_id>/evidence/<int:evidence_id>/verify', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_verify_frivolous_evidence(defense_id, evidence_id):
+    """Mark evidence document as verified"""
+    db = get_db()
+    try:
+        evidence = db.query(FrivolousDefenseEvidence).filter(
+            FrivolousDefenseEvidence.id == evidence_id,
+            FrivolousDefenseEvidence.defense_id == defense_id
+        ).first()
+        
+        if not evidence:
+            return jsonify({'success': False, 'error': 'Evidence not found'}), 404
+        
+        evidence.verified = True
+        evidence.verified_by_staff_id = session.get('staff_id')
+        evidence.verified_at = datetime.utcnow()
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Evidence verified successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Verify frivolous evidence error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/frivolousness/evidence-types', methods=['GET'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_get_evidence_types():
+    """Get list of available evidence types"""
+    return jsonify({
+        'success': True,
+        'evidence_types': FRIVOLOUS_EVIDENCE_TYPES
+    })
 
 
 # ============================================================
@@ -22269,6 +23150,346 @@ def handle_500_error(error):
         'success': False,
         'error': 'Internal server error (check server logs for details)'
     }), 500
+
+
+# ============================================================
+# SUSPENSE ACCOUNT DETECTION ROUTES
+# ============================================================
+
+@app.route('/dashboard/suspense-accounts')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def dashboard_suspense_accounts():
+    """Dashboard page showing suspense account findings"""
+    db = get_db()
+    try:
+        findings = db.query(SuspenseAccountFinding).order_by(SuspenseAccountFinding.created_at.desc()).all()
+        
+        total_findings = len(findings)
+        false_lates = sum(f.false_lates_count or 0 for f in findings)
+        total_suspense = sum(f.total_suspense_amount or 0 for f in findings)
+        clients_affected = len(set(f.client_id for f in findings))
+        
+        clients = db.query(Client).filter(Client.status.in_(['active', 'signup'])).all()
+        
+        findings_with_clients = []
+        for f in findings:
+            client = db.query(Client).filter_by(id=f.client_id).first()
+            findings_with_clients.append({
+                'finding': f,
+                'client_name': client.name if client else 'Unknown'
+            })
+        
+        return render_template('suspense_accounts.html',
+            findings=findings_with_clients,
+            total_findings=total_findings,
+            false_lates=false_lates,
+            total_suspense=total_suspense,
+            clients_affected=clients_affected,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
+@app.route('/api/mortgage-ledger/upload', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_upload_mortgage_ledger():
+    """Upload mortgage payment history CSV"""
+    import csv
+    from io import StringIO
+    
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    client_id = request.form.get('client_id')
+    
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Client ID required'}), 400
+    
+    if not file.filename.endswith('.csv'):
+        return jsonify({'success': False, 'error': 'Only CSV files are supported'}), 400
+    
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=int(client_id)).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        content = file.read().decode('utf-8')
+        csv_reader = csv.DictReader(StringIO(content))
+        
+        records_created = 0
+        for row in csv_reader:
+            try:
+                payment_date = None
+                due_date = None
+                
+                if row.get('payment_date'):
+                    try:
+                        payment_date = datetime.strptime(row['payment_date'], '%Y-%m-%d').date()
+                    except:
+                        try:
+                            payment_date = datetime.strptime(row['payment_date'], '%m/%d/%Y').date()
+                        except:
+                            continue
+                
+                if row.get('due_date'):
+                    try:
+                        due_date = datetime.strptime(row['due_date'], '%Y-%m-%d').date()
+                    except:
+                        try:
+                            due_date = datetime.strptime(row['due_date'], '%m/%d/%Y').date()
+                        except:
+                            pass
+                
+                ledger = MortgagePaymentLedger(
+                    client_id=int(client_id),
+                    creditor_name=row.get('creditor_name', row.get('lender', 'Unknown')),
+                    account_number_masked=row.get('account_number', row.get('account', ''))[-4:] if row.get('account_number') or row.get('account') else '',
+                    loan_type=row.get('loan_type', 'conventional'),
+                    payment_date=payment_date,
+                    payment_amount=float(row.get('payment_amount', row.get('amount', 0)) or 0),
+                    due_date=due_date,
+                    applied_to_principal=float(row.get('principal', 0) or 0),
+                    applied_to_interest=float(row.get('interest', 0) or 0),
+                    applied_to_escrow=float(row.get('escrow', 0) or 0),
+                    applied_to_fees=float(row.get('fees', 0) or 0),
+                    held_in_suspense=float(row.get('suspense', row.get('held_in_suspense', 0)) or 0),
+                    is_suspense=float(row.get('suspense', row.get('held_in_suspense', 0)) or 0) > 0,
+                    suspense_reason=row.get('suspense_reason', ''),
+                    reported_as_late=row.get('reported_late', '').lower() in ['true', 'yes', '1', 'y'],
+                    days_late_reported=int(row.get('days_late', 0) or 0)
+                )
+                db.add(ledger)
+                records_created += 1
+            except Exception as e:
+                print(f"Error processing row: {e}")
+                continue
+        
+        db.commit()
+        return jsonify({
+            'success': True,
+            'message': f'Successfully uploaded {records_created} payment records',
+            'records_created': records_created
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/suspense-accounts/analyze/<int:client_id>', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_analyze_suspense_accounts(client_id):
+    """Analyze client's mortgage payments for suspense issues"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        ledger_entries = db.query(MortgagePaymentLedger).filter_by(client_id=client_id).order_by(MortgagePaymentLedger.payment_date).all()
+        
+        if not ledger_entries:
+            return jsonify({'success': False, 'error': 'No mortgage payment records found for this client'}), 404
+        
+        findings_created = 0
+        creditor_groups = {}
+        for entry in ledger_entries:
+            if entry.creditor_name not in creditor_groups:
+                creditor_groups[entry.creditor_name] = []
+            creditor_groups[entry.creditor_name].append(entry)
+        
+        for creditor, entries in creditor_groups.items():
+            suspense_entries = [e for e in entries if e.is_suspense or (e.held_in_suspense and e.held_in_suspense > 0)]
+            false_late_entries = [e for e in entries if e.reported_as_late and e.held_in_suspense and e.held_in_suspense > 0]
+            
+            if suspense_entries or false_late_entries:
+                total_suspense = sum(e.held_in_suspense or 0 for e in suspense_entries)
+                months_affected = len(set(e.payment_date.strftime('%Y-%m') for e in suspense_entries if e.payment_date))
+                false_lates = len(false_late_entries)
+                
+                finding_type = 'false_late' if false_lates > 0 else 'payment_held'
+                if any(e.suspense_reason and 'misapplied' in e.suspense_reason.lower() for e in suspense_entries):
+                    finding_type = 'misapplied_payment'
+                elif any(e.suspense_reason and 'escrow' in e.suspense_reason.lower() for e in suspense_entries):
+                    finding_type = 'escrow_mishandling'
+                
+                timeline = []
+                for e in entries[-12:]:
+                    timeline.append({
+                        'date': e.payment_date.strftime('%Y-%m-%d') if e.payment_date else None,
+                        'amount': e.payment_amount,
+                        'suspense': e.held_in_suspense,
+                        'reported_late': e.reported_as_late,
+                        'days_late': e.days_late_reported
+                    })
+                
+                finding = SuspenseAccountFinding(
+                    client_id=client_id,
+                    creditor_name=creditor,
+                    account_number_masked=entries[0].account_number_masked if entries else '',
+                    finding_type=finding_type,
+                    finding_description=f"Detected {months_affected} months of suspense account activity with {false_lates} potential false late payments reported",
+                    total_suspense_amount=total_suspense,
+                    months_affected=months_affected,
+                    false_lates_count=false_lates,
+                    evidence_summary=f"Analysis of {len(entries)} payment records reveals systematic mishandling of payments",
+                    payment_timeline=timeline,
+                    is_fcra_violation=false_lates > 0,
+                    fcra_section='1681s-2(a)' if false_lates > 0 else None,
+                    violation_description=f"Furnisher reported {false_lates} late payments while holding funds in suspense" if false_lates > 0 else None,
+                    estimated_damages=1000 * false_lates + total_suspense * 0.1 if false_lates > 0 else 0,
+                    status='identified'
+                )
+                db.add(finding)
+                findings_created += 1
+        
+        db.commit()
+        return jsonify({
+            'success': True,
+            'message': f'Analysis complete. Created {findings_created} findings.',
+            'findings_created': findings_created
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/suspense-accounts/<int:id>', methods=['GET'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_get_suspense_finding(id):
+    """Get suspense account finding details"""
+    db = get_db()
+    try:
+        finding = db.query(SuspenseAccountFinding).filter_by(id=id).first()
+        if not finding:
+            return jsonify({'success': False, 'error': 'Finding not found'}), 404
+        
+        client = db.query(Client).filter_by(id=finding.client_id).first()
+        
+        return jsonify({
+            'success': True,
+            'finding': {
+                'id': finding.id,
+                'client_id': finding.client_id,
+                'client_name': client.name if client else 'Unknown',
+                'creditor_name': finding.creditor_name,
+                'account_number_masked': finding.account_number_masked,
+                'finding_type': finding.finding_type,
+                'finding_description': finding.finding_description,
+                'total_suspense_amount': finding.total_suspense_amount,
+                'months_affected': finding.months_affected,
+                'false_lates_count': finding.false_lates_count,
+                'evidence_summary': finding.evidence_summary,
+                'payment_timeline': finding.payment_timeline,
+                'is_fcra_violation': finding.is_fcra_violation,
+                'fcra_section': finding.fcra_section,
+                'violation_description': finding.violation_description,
+                'estimated_damages': finding.estimated_damages,
+                'status': finding.status,
+                'dispute_sent_date': finding.dispute_sent_date.isoformat() if finding.dispute_sent_date else None,
+                'resolution_date': finding.resolution_date.isoformat() if finding.resolution_date else None,
+                'resolution_outcome': finding.resolution_outcome,
+                'admin_notes': finding.admin_notes,
+                'created_at': finding.created_at.isoformat() if finding.created_at else None
+            }
+        })
+    finally:
+        db.close()
+
+
+@app.route('/api/suspense-accounts/<int:id>/update', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_update_suspense_finding(id):
+    """Update suspense account finding status"""
+    db = get_db()
+    try:
+        finding = db.query(SuspenseAccountFinding).filter_by(id=id).first()
+        if not finding:
+            return jsonify({'success': False, 'error': 'Finding not found'}), 404
+        
+        data = request.get_json() or {}
+        
+        if 'status' in data:
+            finding.status = data['status']
+        if 'admin_notes' in data:
+            finding.admin_notes = data['admin_notes']
+        if 'dispute_sent_date' in data:
+            if data['dispute_sent_date']:
+                finding.dispute_sent_date = datetime.strptime(data['dispute_sent_date'], '%Y-%m-%d').date()
+            else:
+                finding.dispute_sent_date = None
+        if 'resolution_date' in data:
+            if data['resolution_date']:
+                finding.resolution_date = datetime.strptime(data['resolution_date'], '%Y-%m-%d').date()
+            else:
+                finding.resolution_date = None
+        if 'resolution_outcome' in data:
+            finding.resolution_outcome = data['resolution_outcome']
+        if 'remediation_requested' in data:
+            finding.remediation_requested = data['remediation_requested']
+        if 'credit_correction_requested' in data:
+            finding.credit_correction_requested = data['credit_correction_requested']
+        if 'damages_claimed' in data:
+            finding.damages_claimed = float(data['damages_claimed']) if data['damages_claimed'] else None
+        
+        db.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Finding updated successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/suspense-accounts/<int:id>/create-dispute', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_create_dispute_from_finding(id):
+    """Create a dispute from a suspense account finding"""
+    db = get_db()
+    try:
+        finding = db.query(SuspenseAccountFinding).filter_by(id=id).first()
+        if not finding:
+            return jsonify({'success': False, 'error': 'Finding not found'}), 404
+        
+        finding.status = 'disputed'
+        finding.dispute_sent_date = datetime.utcnow().date()
+        
+        if finding.is_fcra_violation:
+            violation = Violation(
+                analysis_id=None,
+                client_id=finding.client_id,
+                bureau='Furnisher',
+                account_name=finding.creditor_name,
+                violation_type='False Late Payment Reporting',
+                fcra_section=finding.fcra_section or '1681s-2(a)',
+                severity='high',
+                description=finding.violation_description or finding.finding_description,
+                evidence=finding.evidence_summary
+            )
+            db.add(violation)
+            db.flush()
+            finding.violation_id = violation.id
+        
+        db.commit()
+        return jsonify({
+            'success': True,
+            'message': 'Dispute created successfully',
+            'finding_id': finding.id
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
 
 
 @app.errorhandler(404)

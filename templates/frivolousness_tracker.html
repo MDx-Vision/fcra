@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frivolousness Defense Tracker - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-secondary:hover { border-color: #84cc16; }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .stat-icon.total { background: #dbeafe; color: #1e40af; }
+        .stat-icon.pending { background: #fef3c7; color: #92400e; }
+        .stat-icon.ready { background: #d1fae5; color: #065f46; }
+        .stat-icon.resolved { background: #e0e7ff; color: #3730a3; }
+        
+        .workflow-bar {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .workflow-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+        }
+        .workflow-steps {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .workflow-step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .workflow-step-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        .workflow-step.active .workflow-step-circle {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: white;
+        }
+        .workflow-step.completed .workflow-step-circle {
+            background: #84cc16;
+            color: white;
+        }
+        .workflow-step-label {
+            font-size: 11px;
+            color: #64748b;
+            text-align: center;
+        }
+        .workflow-step.active .workflow-step-label {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+        .workflow-arrow {
+            color: #cbd5e1;
+            font-size: 18px;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            max-width: 400px;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+        }
+        .search-box svg { color: #94a3b8; margin-right: 10px; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        
+        .client-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .client-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .client-info {
+            flex: 1;
+        }
+        .client-name {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .client-id {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .bureau-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .bureau-equifax { background: #fef3c7; color: #92400e; }
+        .bureau-experian { background: #dbeafe; color: #1e40af; }
+        .bureau-transunion { background: #d1fae5; color: #065f46; }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-evidence_gathering { background: #dbeafe; color: #1e40af; }
+        .status-ready_to_redispute { background: #d1fae5; color: #065f46; }
+        .status-redisputed { background: #e0e7ff; color: #3730a3; }
+        .status-resolved { background: #dcfce7; color: #166534; }
+        
+        .evidence-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .evidence-bar {
+            flex: 1;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            max-width: 80px;
+        }
+        .evidence-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .evidence-count {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .evidence-sufficient {
+            color: #16a34a;
+            font-weight: 600;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 700px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-lg {
+            width: 900px;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #84cc16;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-row-3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+        
+        .evidence-checklist {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .evidence-checklist-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+        .evidence-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .evidence-item:last-child { border-bottom: none; }
+        .evidence-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .evidence-checkbox.collected {
+            background: #84cc16;
+            border-color: #84cc16;
+            color: white;
+        }
+        .evidence-item-name {
+            flex: 1;
+            font-size: 14px;
+            color: #334155;
+        }
+        .evidence-item-status {
+            font-size: 12px;
+            color: #64748b;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+        .tab.active {
+            color: #1a1a2e;
+            border-bottom-color: #84cc16;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .evidence-upload-area {
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .evidence-upload-area:hover {
+            border-color: #84cc16;
+            background: #f8fafc;
+        }
+        .evidence-upload-area svg {
+            width: 40px;
+            height: 40px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+        .evidence-upload-area p {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .evidence-list {
+            margin-top: 20px;
+        }
+        .evidence-list-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .evidence-file-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+        }
+        .evidence-file-info { flex: 1; }
+        .evidence-file-name {
+            font-weight: 500;
+            color: #1a1a2e;
+            font-size: 14px;
+        }
+        .evidence-file-type {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .evidence-verified {
+            color: #16a34a;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .alert {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .alert-warning {
+            background: #fefce8;
+            color: #854d0e;
+            border: 1px solid #fef08a;
+        }
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .workflow-steps { flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    {% set active_page = 'frivolousness' %}
+    {% include 'includes/dashboard_sidebar.html' %}
+    
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Frivolousness Defense Tracker</h1>
+                <p class="header-subtitle">Manage CRA frivolous claim defenses and evidence gathering</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddModal()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Defense Case
+            </button>
+        </div>
+        
+        <div id="alertContainer"></div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon total">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <div class="stat-label">Total Cases</div>
+                <div class="stat-value">{{ stats.total }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon pending">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div class="stat-label">Pending Evidence</div>
+                <div class="stat-value">{{ stats.pending + stats.evidence_gathering }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ready">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="stat-label">Ready to Re-dispute</div>
+                <div class="stat-value">{{ stats.ready_to_redispute }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon resolved">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <div class="stat-label">Resolved</div>
+                <div class="stat-value">{{ stats.resolved }}</div>
+            </div>
+        </div>
+        
+        <div class="workflow-bar">
+            <div class="workflow-title">Defense Workflow</div>
+            <div class="workflow-steps">
+                {% for step in status_workflow %}
+                <div class="workflow-step" data-status="{{ step.status }}">
+                    <div class="workflow-step-circle">{{ loop.index }}</div>
+                    <div class="workflow-step-label">{{ step.label }}</div>
+                </div>
+                {% if not loop.last %}
+                <span class="workflow-arrow">→</span>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="content-card">
+            <div class="section-header">
+                <div class="section-title">Defense Cases</div>
+            </div>
+            
+            <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" placeholder="Search by client name or bureau..." id="searchInput" onkeyup="searchCases()">
+            </div>
+            
+            {% if defenses %}
+            <table id="casesTable">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Bureau</th>
+                        <th>Claim Date</th>
+                        <th>Status</th>
+                        <th>Evidence Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for defense in defenses %}
+                    <tr data-client="{{ defense.client_name }}" data-bureau="{{ defense.bureau }}">
+                        <td>
+                            <div class="client-cell">
+                                <div class="client-avatar">{{ defense.client_name[:2].upper() }}</div>
+                                <div class="client-info">
+                                    <div class="client-name">{{ defense.client_name }}</div>
+                                    <div class="client-id">Round {{ defense.dispute_round }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="bureau-badge bureau-{{ defense.bureau|lower }}">{{ defense.bureau }}</span>
+                        </td>
+                        <td>
+                            {% if defense.claim_date %}
+                                {{ defense.claim_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                <span style="color: #94a3b8;">Not set</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ defense.status }}">
+                                {{ defense.status.replace('_', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="evidence-status">
+                                {% set percent = (defense.evidence_collected / defense.evidence_required * 100) if defense.evidence_required > 0 else 0 %}
+                                <div class="evidence-bar">
+                                    <div class="evidence-bar-fill" style="width: {{ percent|int }}%"></div>
+                                </div>
+                                {% if defense.evidence_sufficient %}
+                                    <span class="evidence-count evidence-sufficient">Complete</span>
+                                {% else %}
+                                    <span class="evidence-count">{{ defense.evidence_collected }}/{{ defense.evidence_required }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="action-btn" onclick="viewCase({{ defense.id }})">View</button>
+                            <button class="action-btn" onclick="uploadEvidence({{ defense.id }})">Upload</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                <h3>No defense cases yet</h3>
+                <p>Add your first frivolous defense case to get started tracking CRA responses.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+    
+    <div id="addModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Add Frivolous Defense Case</h2>
+                <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+            </div>
+            <form id="addForm" onsubmit="submitAddForm(event)">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Client *</label>
+                            <select name="client_id" required>
+                                <option value="">Select client...</option>
+                                {% for client in clients %}
+                                <option value="{{ client.id }}">{{ client.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Bureau *</label>
+                            <select name="bureau" required>
+                                <option value="">Select bureau...</option>
+                                <option value="Equifax">Equifax</option>
+                                <option value="Experian">Experian</option>
+                                <option value="TransUnion">TransUnion</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row form-row-3">
+                        <div class="form-group">
+                            <label>Dispute Round</label>
+                            <select name="dispute_round">
+                                <option value="1">Round 1</option>
+                                <option value="2">Round 2</option>
+                                <option value="3">Round 3</option>
+                                <option value="4">Round 4</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Date</label>
+                            <input type="date" name="claim_date">
+                        </div>
+                        <div class="form-group">
+                            <label>Follow-up Due</label>
+                            <input type="date" name="follow_up_due">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>CRA's Reason for Frivolous Claim</label>
+                        <textarea name="claim_reason" placeholder="Enter the CRA's stated reason for the frivolous determination..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Required Evidence</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            {% for etype in evidence_types %}
+                            <label style="display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 13px;">
+                                <input type="checkbox" name="required_evidence" value="{{ etype.id }}">
+                                {{ etype.name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>New Legal Theory / Argument</label>
+                        <textarea name="new_legal_theory" placeholder="Enter the new legal theory or argument to overcome the frivolous claim..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Defense Strategy</label>
+                        <textarea name="defense_strategy" placeholder="Describe the planned strategy for overcoming the frivolous claim..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Case</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="viewModal" class="modal-overlay">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2>Defense Case Details</h2>
+                <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('details')">Details</div>
+                    <div class="tab" onclick="switchTab('evidence')">Evidence</div>
+                    <div class="tab" onclick="switchTab('notes')">Notes</div>
+                </div>
+                
+                <div id="tab-details" class="tab-content active">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Client</label>
+                            <input type="text" id="view_client_name" readonly style="background: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label>Bureau</label>
+                            <select id="view_bureau">
+                                <option value="Equifax">Equifax</option>
+                                <option value="Experian">Experian</option>
+                                <option value="TransUnion">TransUnion</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row form-row-3">
+                        <div class="form-group">
+                            <label>Status</label>
+                            <select id="view_status">
+                                {% for step in status_workflow %}
+                                <option value="{{ step.status }}">{{ step.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Claim Date</label>
+                            <input type="date" id="view_claim_date">
+                        </div>
+                        <div class="form-group">
+                            <label>Follow-up Due</label>
+                            <input type="date" id="view_follow_up_due">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>CRA's Reason for Frivolous Claim</label>
+                        <textarea id="view_claim_reason"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>New Legal Theory / Argument</label>
+                        <textarea id="view_new_legal_theory"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Defense Strategy</label>
+                        <textarea id="view_defense_strategy"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Re-dispute Date</label>
+                            <input type="date" id="view_redispute_date">
+                        </div>
+                        <div class="form-group">
+                            <label>Re-dispute Outcome</label>
+                            <select id="view_redispute_outcome">
+                                <option value="">Not yet redisputed</option>
+                                <option value="accepted">Accepted - Item Removed</option>
+                                <option value="rejected">Rejected - Verified Again</option>
+                                <option value="deleted">Deleted by CRA</option>
+                                <option value="verified">Verified as Accurate</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="tab-evidence" class="tab-content">
+                    <div class="evidence-checklist" id="evidenceChecklist">
+                        <div class="evidence-checklist-title">Required Evidence Checklist</div>
+                    </div>
+                    
+                    <div class="evidence-upload-area" onclick="document.getElementById('evidenceFileInput').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p>Click to upload evidence document</p>
+                    </div>
+                    <input type="file" id="evidenceFileInput" style="display: none;" onchange="handleEvidenceUpload(this)">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Evidence Type</label>
+                            <select id="evidenceType">
+                                {% for etype in evidence_types %}
+                                <option value="{{ etype.id }}">{{ etype.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input type="text" id="evidenceDescription" placeholder="Brief description of the document...">
+                        </div>
+                    </div>
+                    
+                    <div class="evidence-list" id="evidenceList">
+                    </div>
+                </div>
+                
+                <div id="tab-notes" class="tab-content">
+                    <div class="form-group">
+                        <label>Admin Notes</label>
+                        <textarea id="view_admin_notes" rows="6" placeholder="Internal notes about this case..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Escalation Notes</label>
+                        <textarea id="view_escalation_notes" rows="4" placeholder="Notes about escalation if needed..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('viewModal')">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCase()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentDefenseId = null;
+        let currentDefenseData = null;
+        
+        const evidenceTypeNames = {
+            {% for etype in evidence_types %}
+            '{{ etype.id }}': '{{ etype.name }}',
+            {% endfor %}
+        };
+        
+        function openAddModal() {
+            document.getElementById('addForm').reset();
+            document.getElementById('addModal').classList.add('active');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `
+                <div class="alert alert-${type}">
+                    <span>${type === 'success' ? '✓' : '⚠️'}</span> ${message}
+                </div>
+            `;
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+        
+        function searchCases() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#casesTable tbody tr');
+            
+            rows.forEach(row => {
+                const client = row.dataset.client.toLowerCase();
+                const bureau = row.dataset.bureau.toLowerCase();
+                if (client.includes(input) || bureau.includes(input)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        async function submitAddForm(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            const requiredEvidence = [];
+            formData.getAll('required_evidence').forEach(v => requiredEvidence.push(v));
+            
+            const data = {
+                client_id: formData.get('client_id'),
+                bureau: formData.get('bureau'),
+                dispute_round: parseInt(formData.get('dispute_round')) || 1,
+                claim_date: formData.get('claim_date') || null,
+                claim_reason: formData.get('claim_reason') || null,
+                required_evidence: requiredEvidence,
+                new_legal_theory: formData.get('new_legal_theory') || null,
+                defense_strategy: formData.get('defense_strategy') || null,
+                follow_up_due: formData.get('follow_up_due') || null
+            };
+            
+            try {
+                const response = await fetch('/api/frivolousness/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeModal('addModal');
+                    showAlert('Defense case created successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(result.error || 'Failed to create case', 'error');
+                }
+            } catch (error) {
+                showAlert('Error creating case: ' + error.message, 'error');
+            }
+        }
+        
+        async function viewCase(defenseId) {
+            currentDefenseId = defenseId;
+            
+            try {
+                const response = await fetch(`/api/frivolousness/${defenseId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentDefenseData = result.defense;
+                    populateViewModal(result.defense);
+                    document.getElementById('viewModal').classList.add('active');
+                } else {
+                    showAlert(result.error || 'Failed to load case', 'error');
+                }
+            } catch (error) {
+                showAlert('Error loading case: ' + error.message, 'error');
+            }
+        }
+        
+        function populateViewModal(defense) {
+            document.getElementById('view_client_name').value = defense.client_name;
+            document.getElementById('view_bureau').value = defense.bureau;
+            document.getElementById('view_status').value = defense.status;
+            document.getElementById('view_claim_date').value = defense.claim_date || '';
+            document.getElementById('view_follow_up_due').value = defense.follow_up_due || '';
+            document.getElementById('view_claim_reason').value = defense.claim_reason || '';
+            document.getElementById('view_new_legal_theory').value = defense.new_legal_theory || '';
+            document.getElementById('view_defense_strategy').value = defense.defense_strategy || '';
+            document.getElementById('view_redispute_date').value = defense.redispute_date || '';
+            document.getElementById('view_redispute_outcome').value = defense.redispute_outcome || '';
+            document.getElementById('view_admin_notes').value = defense.admin_notes || '';
+            document.getElementById('view_escalation_notes').value = defense.escalation_notes || '';
+            
+            const checklist = document.getElementById('evidenceChecklist');
+            const required = defense.required_evidence || [];
+            const collected = defense.evidence_collected || [];
+            
+            if (required.length > 0) {
+                let html = '<div class="evidence-checklist-title">Required Evidence Checklist</div>';
+                required.forEach(type => {
+                    const isCollected = collected.includes(type);
+                    html += `
+                        <div class="evidence-item">
+                            <div class="evidence-checkbox ${isCollected ? 'collected' : ''}">
+                                ${isCollected ? '✓' : ''}
+                            </div>
+                            <span class="evidence-item-name">${evidenceTypeNames[type] || type}</span>
+                            <span class="evidence-item-status">${isCollected ? 'Collected' : 'Needed'}</span>
+                        </div>
+                    `;
+                });
+                checklist.innerHTML = html;
+            } else {
+                checklist.innerHTML = '<div class="alert alert-info">No specific evidence requirements set for this case.</div>';
+            }
+            
+            const evidenceList = document.getElementById('evidenceList');
+            const docs = defense.evidence_docs || [];
+            
+            if (docs.length > 0) {
+                let html = '<h4 style="margin-bottom: 12px; font-size: 14px;">Uploaded Evidence</h4>';
+                docs.forEach(doc => {
+                    html += `
+                        <div class="evidence-list-item">
+                            <div class="evidence-file-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            </div>
+                            <div class="evidence-file-info">
+                                <div class="evidence-file-name">${doc.file_name}</div>
+                                <div class="evidence-file-type">${evidenceTypeNames[doc.evidence_type] || doc.evidence_type}</div>
+                            </div>
+                            ${doc.verified ? '<span class="evidence-verified">✓ Verified</span>' : `<button class="action-btn" onclick="verifyEvidence(${doc.id})">Verify</button>`}
+                        </div>
+                    `;
+                });
+                evidenceList.innerHTML = html;
+            } else {
+                evidenceList.innerHTML = '<p style="color: #64748b; text-align: center; padding: 20px;">No evidence documents uploaded yet.</p>';
+            }
+            
+            switchTab('details');
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+        
+        async function saveCase() {
+            if (!currentDefenseId) return;
+            
+            const data = {
+                bureau: document.getElementById('view_bureau').value,
+                status: document.getElementById('view_status').value,
+                claim_date: document.getElementById('view_claim_date').value || null,
+                follow_up_due: document.getElementById('view_follow_up_due').value || null,
+                claim_reason: document.getElementById('view_claim_reason').value,
+                new_legal_theory: document.getElementById('view_new_legal_theory').value,
+                defense_strategy: document.getElementById('view_defense_strategy').value,
+                redispute_date: document.getElementById('view_redispute_date').value || null,
+                redispute_outcome: document.getElementById('view_redispute_outcome').value || null,
+                admin_notes: document.getElementById('view_admin_notes').value,
+                escalation_notes: document.getElementById('view_escalation_notes').value
+            };
+            
+            try {
+                const response = await fetch(`/api/frivolousness/${currentDefenseId}/update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeModal('viewModal');
+                    showAlert('Case updated successfully');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showAlert(result.error || 'Failed to update case', 'error');
+                }
+            } catch (error) {
+                showAlert('Error updating case: ' + error.message, 'error');
+            }
+        }
+        
+        function uploadEvidence(defenseId) {
+            currentDefenseId = defenseId;
+            viewCase(defenseId).then(() => {
+                setTimeout(() => switchTab('evidence'), 100);
+            });
+        }
+        
+        async function handleEvidenceUpload(input) {
+            if (!input.files.length || !currentDefenseId) return;
+            
+            const file = input.files[0];
+            const evidenceType = document.getElementById('evidenceType').value;
+            const description = document.getElementById('evidenceDescription').value;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('evidence_type', evidenceType);
+            formData.append('description', description);
+            
+            try {
+                const response = await fetch(`/api/frivolousness/${currentDefenseId}/evidence`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Evidence uploaded successfully');
+                    viewCase(currentDefenseId);
+                } else {
+                    showAlert(result.error || 'Failed to upload evidence', 'error');
+                }
+            } catch (error) {
+                showAlert('Error uploading evidence: ' + error.message, 'error');
+            }
+            
+            input.value = '';
+            document.getElementById('evidenceDescription').value = '';
+        }
+        
+        async function verifyEvidence(evidenceId) {
+            if (!currentDefenseId) return;
+            
+            try {
+                const response = await fetch(`/api/frivolousness/${currentDefenseId}/evidence/${evidenceId}/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert('Evidence verified successfully');
+                    viewCase(currentDefenseId);
+                } else {
+                    showAlert(result.error || 'Failed to verify evidence', 'error');
+                }
+            } catch (error) {
+                showAlert('Error verifying evidence: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

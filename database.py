@@ -3196,6 +3196,314 @@ class ChexSystemsDispute(Base):
         }
 
 
+# ============================================================
+# FRIVOLOUSNESS DEFENSE TRACKER
+# ============================================================
+
+class FrivolousDefense(Base):
+    """Track CRA frivolous claims and defense evidence requirements"""
+    __tablename__ = 'frivolous_defenses'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    cra_response_id = Column(Integer, ForeignKey('cra_responses.id'), nullable=True, index=True)
+    dispute_item_id = Column(Integer, ForeignKey('dispute_items.id'), nullable=True, index=True)
+    
+    # Which bureau made the frivolous claim
+    bureau = Column(String(50), nullable=False)  # Equifax, Experian, TransUnion
+    dispute_round = Column(Integer, default=1)
+    
+    # Frivolous claim details
+    claim_date = Column(Date)  # When CRA claimed frivolous
+    claim_reason = Column(Text)  # CRA's stated reason for frivolous determination
+    claim_citation = Column(String(255))  # CRA's legal citation if provided
+    
+    # Required evidence/theory for re-dispute
+    required_evidence = Column(JSON)  # List of evidence types needed
+    new_legal_theory = Column(Text)  # New legal theory or argument required
+    new_facts_required = Column(Text)  # New factual basis needed
+    
+    # Status tracking
+    status = Column(String(50), default='pending')  # pending, evidence_gathering, ready_to_redispute, redisputed, resolved
+    defense_strategy = Column(Text)  # Planned strategy for overcoming frivolous claim
+    
+    # Evidence collected
+    evidence_collected = Column(JSON)  # List of evidence documents collected
+    evidence_sufficient = Column(Boolean, default=False)
+    
+    # Re-dispute tracking
+    redispute_date = Column(Date)
+    redispute_letter_id = Column(Integer, ForeignKey('dispute_letters.id'), nullable=True)
+    redispute_outcome = Column(String(50))  # accepted, rejected, deleted, verified
+    
+    # Follow-up
+    follow_up_due = Column(Date)
+    escalation_notes = Column(Text)
+    
+    # Admin notes
+    admin_notes = Column(Text)
+    assigned_to_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'bureau': self.bureau,
+            'dispute_round': self.dispute_round,
+            'claim_date': self.claim_date.isoformat() if self.claim_date else None,
+            'claim_reason': self.claim_reason,
+            'required_evidence': self.required_evidence or [],
+            'new_legal_theory': self.new_legal_theory,
+            'status': self.status,
+            'evidence_collected': self.evidence_collected or [],
+            'evidence_sufficient': self.evidence_sufficient,
+            'follow_up_due': self.follow_up_due.isoformat() if self.follow_up_due else None,
+            'redispute_outcome': self.redispute_outcome
+        }
+
+
+class FrivolousDefenseEvidence(Base):
+    """Evidence documents for frivolous defense cases"""
+    __tablename__ = 'frivolous_defense_evidence'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    defense_id = Column(Integer, ForeignKey('frivolous_defenses.id'), nullable=False, index=True)
+    
+    # Evidence details
+    evidence_type = Column(String(100))  # id_document, utility_bill, bank_statement, affidavit, etc.
+    file_path = Column(String(500))
+    file_name = Column(String(255))
+    description = Column(Text)
+    
+    # Verification
+    verified = Column(Boolean, default=False)
+    verified_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    verified_at = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+# ============================================================
+# SUSPENSE ACCOUNT DETECTION
+# ============================================================
+
+class MortgagePaymentLedger(Base):
+    """Track mortgage payment history for suspense account detection"""
+    __tablename__ = 'mortgage_payment_ledgers'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    
+    # Account identification
+    creditor_name = Column(String(255), nullable=False)
+    account_number_masked = Column(String(100))  # Last 4 digits
+    loan_type = Column(String(50))  # conventional, FHA, VA, USDA
+    
+    # Payment details
+    payment_date = Column(Date, nullable=False)
+    payment_amount = Column(Float)
+    due_date = Column(Date)
+    
+    # How payment was applied
+    applied_to_principal = Column(Float, default=0)
+    applied_to_interest = Column(Float, default=0)
+    applied_to_escrow = Column(Float, default=0)
+    applied_to_fees = Column(Float, default=0)
+    held_in_suspense = Column(Float, default=0)
+    
+    # Suspense flags
+    is_suspense = Column(Boolean, default=False)
+    suspense_reason = Column(String(255))  # partial_payment, misapplied, escrow_shortage, etc.
+    suspense_resolved = Column(Boolean, default=False)
+    suspense_resolved_date = Column(Date)
+    
+    # Reporting impact
+    reported_as_late = Column(Boolean, default=False)
+    days_late_reported = Column(Integer, default=0)
+    actual_days_late = Column(Integer, default=0)  # Calculated based on when full payment received
+    
+    # Source document
+    source_doc_path = Column(String(500))
+    source_doc_type = Column(String(50))  # statement, ledger, payment_history
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SuspenseAccountFinding(Base):
+    """Identified suspense account issues that may be FCRA violations"""
+    __tablename__ = 'suspense_account_findings'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    ledger_id = Column(Integer, ForeignKey('mortgage_payment_ledgers.id'), nullable=True)
+    violation_id = Column(Integer, ForeignKey('violations.id'), nullable=True)
+    
+    # Finding details
+    creditor_name = Column(String(255))
+    account_number_masked = Column(String(100))
+    
+    # Suspense issue
+    finding_type = Column(String(100))  # false_late, misapplied_payment, escrow_mishandling, payment_held
+    finding_description = Column(Text)
+    
+    # Payment analysis
+    total_suspense_amount = Column(Float, default=0)
+    months_affected = Column(Integer, default=0)
+    false_lates_count = Column(Integer, default=0)
+    
+    # Evidence
+    evidence_summary = Column(Text)
+    payment_timeline = Column(JSON)  # Timeline of payments and suspense activity
+    
+    # FCRA violation potential
+    is_fcra_violation = Column(Boolean, default=False)
+    fcra_section = Column(String(50))  # e.g., 1681e(b), 1681s-2(a)
+    violation_description = Column(Text)
+    estimated_damages = Column(Float, default=0)
+    
+    # Status
+    status = Column(String(50), default='identified')  # identified, disputed, resolved, litigation
+    dispute_sent_date = Column(Date)
+    resolution_date = Column(Date)
+    resolution_outcome = Column(String(100))
+    
+    # Remediation
+    remediation_requested = Column(Boolean, default=False)
+    credit_correction_requested = Column(Boolean, default=False)
+    damages_claimed = Column(Float)
+    
+    admin_notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'creditor_name': self.creditor_name,
+            'finding_type': self.finding_type,
+            'finding_description': self.finding_description,
+            'total_suspense_amount': self.total_suspense_amount,
+            'months_affected': self.months_affected,
+            'false_lates_count': self.false_lates_count,
+            'is_fcra_violation': self.is_fcra_violation,
+            'fcra_section': self.fcra_section,
+            'estimated_damages': self.estimated_damages,
+            'status': self.status
+        }
+
+
+# ============================================================
+# PATTERN DOCUMENTATION (Systemic Violations)
+# ============================================================
+
+class ViolationPattern(Base):
+    """Track patterns of violations across multiple clients for systemic claims"""
+    __tablename__ = 'violation_patterns'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Pattern identification
+    pattern_name = Column(String(255), nullable=False)
+    pattern_type = Column(String(100))  # furnisher_practice, cra_procedure, industry_wide
+    
+    # Target entity
+    target_type = Column(String(50))  # furnisher, cra, both
+    furnisher_name = Column(String(255), index=True)
+    cra_name = Column(String(50), index=True)  # Equifax, Experian, TransUnion
+    
+    # Violation pattern details
+    violation_code = Column(String(50))  # FCRA section
+    violation_type = Column(String(255))
+    violation_description = Column(Text)
+    
+    # Pattern metrics
+    occurrences_count = Column(Integer, default=0)
+    clients_affected = Column(Integer, default=0)
+    total_damages_estimate = Column(Float, default=0)
+    avg_damages_per_client = Column(Float, default=0)
+    
+    # Date range
+    earliest_occurrence = Column(Date)
+    latest_occurrence = Column(Date)
+    
+    # Evidence packaging
+    evidence_packet_path = Column(String(500))  # PDF evidence packet
+    evidence_summary = Column(Text)
+    evidence_strength = Column(String(50))  # weak, moderate, strong, compelling
+    
+    # Legal strategy
+    recommended_strategy = Column(String(100))  # class_action, individual_suits, regulatory_complaint
+    strategy_notes = Column(Text)
+    case_law_citations = Column(JSON)  # Relevant case citations
+    
+    # Status
+    status = Column(String(50), default='monitoring')  # monitoring, documenting, ready_for_action, active_litigation
+    priority = Column(String(20), default='medium')  # low, medium, high, critical
+    
+    # Actions taken
+    cfpb_complaint_filed = Column(Boolean, default=False)
+    cfpb_complaint_date = Column(Date)
+    cfpb_complaint_id = Column(String(100))
+    litigation_filed = Column(Boolean, default=False)
+    litigation_date = Column(Date)
+    litigation_case_number = Column(String(100))
+    
+    admin_notes = Column(Text)
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'pattern_name': self.pattern_name,
+            'pattern_type': self.pattern_type,
+            'target_type': self.target_type,
+            'furnisher_name': self.furnisher_name,
+            'cra_name': self.cra_name,
+            'violation_code': self.violation_code,
+            'violation_type': self.violation_type,
+            'occurrences_count': self.occurrences_count,
+            'clients_affected': self.clients_affected,
+            'total_damages_estimate': self.total_damages_estimate,
+            'evidence_strength': self.evidence_strength,
+            'recommended_strategy': self.recommended_strategy,
+            'status': self.status,
+            'priority': self.priority
+        }
+
+
+class PatternInstance(Base):
+    """Link individual violations to pattern groups"""
+    __tablename__ = 'pattern_instances'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    pattern_id = Column(Integer, ForeignKey('violation_patterns.id'), nullable=False, index=True)
+    violation_id = Column(Integer, ForeignKey('violations.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    
+    # Instance details
+    occurrence_date = Column(Date)
+    instance_description = Column(Text)
+    damages_for_instance = Column(Float, default=0)
+    
+    # Evidence
+    evidence_docs = Column(JSON)  # List of document paths
+    evidence_notes = Column(Text)
+    
+    # Status
+    included_in_packet = Column(Boolean, default=False)
+    included_date = Column(DateTime)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
