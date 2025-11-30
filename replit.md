@@ -76,6 +76,9 @@ The platform is built on Flask and employs a two-stage, section-based analysis a
 - **Standard Operating Procedures (SOPs)** (`/dashboard/sops`): Step-by-step workflow guides for staff.
 - **ChexSystems/EWS Dispute Helper** (`/dashboard/chexsystems`): Specialty bureau dispute tracking.
 - **Metro 2® Field Validation System** (`metro2_validator.py`): Comprehensive 2025 CRRG compliance validation with AI prompt integration.
+- **Frivolousness Defense Tracker** (`/dashboard/frivolousness`): Track CRA frivolous claim defenses with evidence requirements, legal theory documentation, and re-dispute workflow management.
+- **Suspense Account Detection** (`/dashboard/suspense-accounts`): Mortgage payment ledger analysis identifying misapplied payments in suspense accounts that cause false late payment reporting.
+- **Violation Pattern Documentation** (`/dashboard/patterns`): Cross-client pattern tracking for systemic FCRA violations with evidence packet PDF generation for class action preparation.
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
