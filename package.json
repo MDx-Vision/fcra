@@ -4,7 +4,8 @@
   "description": "FCRA Litigation Automation Platform with AI-powered credit report analysis",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:e2e": "npx cypress run"
+    "test:e2e": "npx cypress run",
+    "db:seed": "python seed.py"
   },
   "keywords": [
     "fcra",
