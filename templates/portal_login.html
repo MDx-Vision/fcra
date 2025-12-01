@@ -235,7 +235,7 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-container" data-testid="portal-login-container">
         <div class="logo">
             {% if whitelabel_branding and whitelabel_branding.logo_url %}
             <img src="{{ whitelabel_branding.logo_url }}" alt="{{ whitelabel_branding.organization_name|default('Logo', true) }}" onerror="this.style.display='none'">
@@ -254,127 +254,127 @@
             {% endif %}
             <p>Client Portal</p>
         </div>
-        
-        <div class="login-card">
+
+        <div class="login-card" data-testid="portal-login-card">
             {% if error %}
-            <div class="alert alert-error">
+            <div class="alert alert-error" data-testid="error-message">
                 <span>⚠️</span> {{ error }}
             </div>
             {% endif %}
-            
+
             {% if success %}
-            <div class="alert alert-success">
+            <div class="alert alert-success" data-testid="success-message">
                 <span>✓</span> {{ success }}
             </div>
             {% endif %}
-            
-            <div id="loginFormContainer">
-                <h2>Welcome Back</h2>
+
+            <div id="loginFormContainer" data-testid="login-form-container">
+                <h2 data-testid="login-title">Welcome Back</h2>
                 <p class="subtitle">Sign in to access your credit repair portal</p>
-                
-                <form id="loginForm" method="POST" action="/portal/login">
+
+                <form id="loginForm" method="POST" action="/portal/login" data-testid="portal-login-form">
                     <div class="form-group">
                         <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email">
+                        <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email" data-testid="portal-email-input">
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="password">Password</label>
                         <div class="password-toggle">
-                            <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-                            <button type="button" class="toggle-btn" onclick="togglePassword()">👁</button>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password" data-testid="portal-password-input">
+                            <button type="button" class="toggle-btn" onclick="togglePassword()" data-testid="toggle-password-btn">👁</button>
                         </div>
                     </div>
-                    
-                    <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+
+                    <button type="submit" class="login-btn" id="loginBtn" data-testid="portal-login-button">Sign In</button>
                 </form>
-                
-                <a href="#" class="forgot-link" onclick="showForgotForm(); return false;">Forgot your password?</a>
-                
+
+                <a href="#" class="forgot-link" onclick="showForgotForm(); return false;" data-testid="forgot-password-link">Forgot your password?</a>
+
                 <div class="divider"><span>or</span></div>
-                
+
                 <p class="token-link">
-                    Have an access link? <a href="#" onclick="promptTokenAccess(); return false;">Use direct link access</a>
+                    Have an access link? <a href="#" onclick="promptTokenAccess(); return false;" data-testid="token-access-link">Use direct link access</a>
                 </p>
             </div>
-            
-            <div id="forgotFormContainer" class="forgot-form">
-                <a href="#" class="back-link" onclick="showLoginForm(); return false;">
+
+            <div id="forgotFormContainer" class="forgot-form" data-testid="forgot-form-container">
+                <a href="#" class="back-link" onclick="showLoginForm(); return false;" data-testid="back-to-login-link">
                     ← Back to login
                 </a>
-                
+
                 <h2>Reset Password</h2>
                 <p class="subtitle">Enter your email and we'll send you a reset link</p>
-                
-                <div id="forgotAlert" class="hidden"></div>
-                
-                <form id="forgotForm" onsubmit="handleForgotPassword(event)">
+
+                <div id="forgotAlert" class="hidden" data-testid="forgot-alert"></div>
+
+                <form id="forgotForm" onsubmit="handleForgotPassword(event)" data-testid="forgot-password-form">
                     <div class="form-group">
                         <label for="forgotEmail">Email Address</label>
-                        <input type="email" id="forgotEmail" name="email" placeholder="your@email.com" required>
+                        <input type="email" id="forgotEmail" name="email" placeholder="your@email.com" required data-testid="forgot-email-input">
                     </div>
-                    
-                    <button type="submit" class="login-btn" id="forgotBtn">Send Reset Link</button>
+
+                    <button type="submit" class="login-btn" id="forgotBtn" data-testid="send-reset-button">Send Reset Link</button>
                 </form>
             </div>
-            
-            <div id="resetFormContainer" class="forgot-form">
+
+            <div id="resetFormContainer" class="forgot-form" data-testid="reset-form-container">
                 <h2>Set New Password</h2>
                 <p class="subtitle">Create a strong password for your account</p>
-                
-                <div id="resetAlert" class="hidden"></div>
-                
-                <form id="resetForm" onsubmit="handleResetPassword(event)">
+
+                <div id="resetAlert" class="hidden" data-testid="reset-alert"></div>
+
+                <form id="resetForm" onsubmit="handleResetPassword(event)" data-testid="reset-password-form">
                     <input type="hidden" id="resetToken" value="{{ reset_token or '' }}">
-                    
+
                     <div class="form-group">
                         <label for="newPassword">New Password</label>
                         <div class="password-toggle">
-                            <input type="password" id="newPassword" name="password" placeholder="At least 8 characters" required minlength="8">
+                            <input type="password" id="newPassword" name="password" placeholder="At least 8 characters" required minlength="8" data-testid="new-password-input">
                             <button type="button" class="toggle-btn" onclick="toggleNewPassword()">👁</button>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="confirmPassword">Confirm Password</label>
-                        <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm your password" required>
+                        <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm your password" required data-testid="confirm-password-input">
                     </div>
-                    
-                    <button type="submit" class="login-btn" id="resetBtn">Reset Password</button>
+
+                    <button type="submit" class="login-btn" id="resetBtn" data-testid="reset-password-button">Reset Password</button>
                 </form>
             </div>
         </div>
     </div>
-    
+
     <script>
         function togglePassword() {
             const input = document.getElementById('password');
             input.type = input.type === 'password' ? 'text' : 'password';
         }
-        
+
         function toggleNewPassword() {
             const input = document.getElementById('newPassword');
             input.type = input.type === 'password' ? 'text' : 'password';
         }
-        
+
         function showForgotForm() {
             document.getElementById('loginFormContainer').classList.add('hidden');
             document.getElementById('forgotFormContainer').classList.add('active');
             document.getElementById('resetFormContainer').classList.remove('active');
         }
-        
+
         function showLoginForm() {
             document.getElementById('loginFormContainer').classList.remove('hidden');
             document.getElementById('forgotFormContainer').classList.remove('active');
             document.getElementById('resetFormContainer').classList.remove('active');
         }
-        
+
         function showResetForm() {
             document.getElementById('loginFormContainer').classList.add('hidden');
             document.getElementById('forgotFormContainer').classList.remove('active');
             document.getElementById('resetFormContainer').classList.add('active');
         }
-        
+
         function promptTokenAccess() {
             const token = prompt('Enter your access token or paste your full portal link:');
             if (token) {
@@ -387,25 +387,25 @@
                 }
             }
         }
-        
+
         async function handleForgotPassword(e) {
             e.preventDefault();
             const btn = document.getElementById('forgotBtn');
             const email = document.getElementById('forgotEmail').value;
             const alertDiv = document.getElementById('forgotAlert');
-            
+
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Sending...';
-            
+
             try {
                 const response = await fetch('/api/portal/forgot-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
                 });
-                
+
                 const data = await response.json();
-                
+
                 alertDiv.classList.remove('hidden');
                 if (data.success) {
                     alertDiv.className = 'alert alert-success';
@@ -423,7 +423,7 @@
                 btn.textContent = 'Send Reset Link';
             }
         }
-        
+
         async function handleResetPassword(e) {
             e.preventDefault();
             const btn = document.getElementById('resetBtn');
@@ -431,33 +431,33 @@
             const password = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const alertDiv = document.getElementById('resetAlert');
-            
+
             if (password !== confirmPassword) {
                 alertDiv.classList.remove('hidden');
                 alertDiv.className = 'alert alert-error';
                 alertDiv.innerHTML = '<span>⚠️</span> Passwords do not match';
                 return;
             }
-            
+
             if (password.length < 8) {
                 alertDiv.classList.remove('hidden');
                 alertDiv.className = 'alert alert-error';
                 alertDiv.innerHTML = '<span>⚠️</span> Password must be at least 8 characters';
                 return;
             }
-            
+
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Resetting...';
-            
+
             try {
                 const response = await fetch('/api/portal/reset-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token, password })
                 });
-                
+
                 const data = await response.json();
-                
+
                 alertDiv.classList.remove('hidden');
                 if (data.success) {
                     alertDiv.className = 'alert alert-success';
@@ -479,13 +479,13 @@
                 btn.textContent = 'Reset Password';
             }
         }
-        
+
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Signing in...';
         });
-        
+
         const urlParams = new URLSearchParams(window.location.search);
         const resetToken = urlParams.get('token');
         if (resetToken) {

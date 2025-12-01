@@ -193,110 +193,110 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="login-container" data-testid="login-container">
         <div class="logo">
             <img src="/static/images/logo.png" alt="Brightpath Ascend Group">
             <h1>Brightpath <span>Ascend</span> Group</h1>
             <p>FCRA Litigation Platform</p>
         </div>
-        
-        <div class="login-card">
+
+        <div class="login-card" data-testid="login-card">
             <div class="staff-badge">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Staff Portal
             </div>
-            
+
             {% if error %}
-            <div class="alert alert-error">
+            <div class="alert alert-error" data-testid="error-message">
                 <span>⚠️</span> {{ error }}
             </div>
             {% endif %}
-            
+
             {% if success %}
-            <div class="alert alert-success">
+            <div class="alert alert-success" data-testid="success-message">
                 <span>✓</span> {{ success }}
             </div>
             {% endif %}
-            
+
             {% if force_change %}
-            <div class="alert alert-warning">
+            <div class="alert alert-warning" data-testid="force-change-warning">
                 <span>🔐</span> Please change your temporary password
             </div>
             {% endif %}
-            
-            <h2>{% if force_change %}Change Password{% else %}Staff Login{% endif %}</h2>
+
+            <h2 data-testid="login-title">{% if force_change %}Change Password{% else %}Staff Login{% endif %}</h2>
             <p class="subtitle">{% if force_change %}Create a new secure password{% else %}Sign in to access the admin dashboard{% endif %}</p>
-            
+
             {% if force_change %}
-            <form id="changePasswordForm" method="POST" action="/staff/change-password">
+            <form id="changePasswordForm" method="POST" action="/staff/change-password" data-testid="change-password-form">
                 <div class="form-group">
                     <label for="new_password">New Password</label>
                     <div class="password-toggle">
-                        <input type="password" id="new_password" name="new_password" placeholder="At least 8 characters" required minlength="8">
+                        <input type="password" id="new_password" name="new_password" placeholder="At least 8 characters" required minlength="8" data-testid="new-password-input">
                         <button type="button" class="toggle-btn" onclick="togglePassword('new_password')">👁</button>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="confirm_password">Confirm Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required>
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required data-testid="confirm-password-input">
                 </div>
-                
-                <button type="submit" class="login-btn" id="changeBtn">Change Password</button>
+
+                <button type="submit" class="login-btn" id="changeBtn" data-testid="change-password-button">Change Password</button>
             </form>
             {% else %}
-            <form id="loginForm" method="POST" action="/staff/login">
+            <form id="loginForm" method="POST" action="/staff/login" data-testid="login-form">
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email" value="{{ email or '' }}">
+                    <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email" value="{{ email or '' }}" data-testid="email-input">
                 </div>
-                
+
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="password-toggle">
-                        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password" data-testid="password-input">
                         <button type="button" class="toggle-btn" onclick="togglePassword('password')">👁</button>
                     </div>
                 </div>
-                
-                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+
+                <button type="submit" class="login-btn" id="loginBtn" data-testid="login-button">Sign In</button>
             </form>
             {% endif %}
-            
+
             <p class="client-portal-link">
-                Looking for client portal? <a href="/portal/login">Client Login</a>
+                Looking for client portal? <a href="/portal/login" data-testid="client-portal-link">Client Login</a>
             </p>
         </div>
     </div>
-    
+
     <script>
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             input.type = input.type === 'password' ? 'text' : 'password';
         }
-        
+
         document.getElementById('loginForm')?.addEventListener('submit', function(e) {
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Signing in...';
         });
-        
+
         document.getElementById('changePasswordForm')?.addEventListener('submit', function(e) {
             const newPass = document.getElementById('new_password').value;
             const confirmPass = document.getElementById('confirm_password').value;
-            
+
             if (newPass !== confirmPass) {
                 e.preventDefault();
                 alert('Passwords do not match');
                 return;
             }
-            
+
             if (newPass.length < 8) {
                 e.preventDefault();
                 alert('Password must be at least 8 characters');
                 return;
             }
-            
+
             const btn = document.getElementById('changeBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Updating...';

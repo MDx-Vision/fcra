@@ -5,7 +5,7 @@ integrations = ["stripe:1.0.0", "twilio:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "openssl", "pkg-config", "poppler-utils", "rustc", "dbus", "gtk3", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXrandr", "xorg.libXcursor", "xorg.libXi", "xorg.libXtst", "xorg.libXScrnSaver", "nss", "alsa-lib", "mesa", "libnotify", "xvfb-run", "cypress", "libxkbcommon", "pango", "cairo", "gdk-pixbuf", "atk", "at-spi2-atk", "at-spi2-core", "libdrm", "expat", "cups", "systemd", "xorg.libxkbfile"]
+packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "openssl", "pkg-config", "poppler-utils", "rustc", "dbus", "gtk3", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXrandr", "xorg.libXcursor", "xorg.libXi", "xorg.libXtst", "xorg.libXScrnSaver", "nss", "alsa-lib", "mesa", "libnotify", "xvfb-run", "cypress", "libxkbcommon", "pango", "cairo", "gdk-pixbuf", "atk", "at-spi2-atk", "at-spi2-core", "libdrm", "expat", "cups", "systemd", "xorg.libxkbfile", "imagemagick_light"]
 
 [workflows]
 runButton = "Project"
@@ -86,6 +86,10 @@ externalPort = 3001
 [[ports]]
 localPort = 43971
 externalPort = 3000
+
+[[ports]]
+localPort = 45097
+externalPort = 5173
 
 [[ports]]
 localPort = 45369

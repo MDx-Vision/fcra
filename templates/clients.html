@@ -196,26 +196,26 @@
 <body>
     {% set active_page = 'clients' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
-    <main class="main-content">
+
+    <main class="main-content" data-testid="clients-page">
         <div class="header">
-            <h1>All Clients</h1>
-            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            <h1 data-testid="page-title">All Clients</h1>
+            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">Back to Dashboard</a>
         </div>
-        
-        <div class="content-card">
-            <div class="filters">
-                <a href="/dashboard/clients" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
-                <a href="/dashboard/clients?status=stage1_complete" class="filter-btn {% if status_filter == 'stage1_complete' %}active{% endif %}">Needs Review</a>
-                <a href="/dashboard/clients?status=stage2_complete" class="filter-btn {% if status_filter == 'stage2_complete' %}active{% endif %}">Ready to Deliver</a>
+
+        <div class="content-card" data-testid="clients-card">
+            <div class="filters" data-testid="filters">
+                <a href="/dashboard/clients" class="filter-btn {% if status_filter == 'all' %}active{% endif %}" data-testid="filter-all">All</a>
+                <a href="/dashboard/clients?status=stage1_complete" class="filter-btn {% if status_filter == 'stage1_complete' %}active{% endif %}" data-testid="filter-needs-review">Needs Review</a>
+                <a href="/dashboard/clients?status=stage2_complete" class="filter-btn {% if status_filter == 'stage2_complete' %}active{% endif %}" data-testid="filter-ready-to-deliver">Ready to Deliver</a>
             </div>
-            
+
             <div class="search-box">
-                <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()">
+                <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()" data-testid="search-input">
             </div>
-            
+
             {% if cases %}
-            <table>
+            <table data-testid="clients-table">
                 <thead>
                     <tr>
                         <th>Client</th>
@@ -227,9 +227,9 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody id="clientTableBody">
+                <tbody id="clientTableBody" data-testid="clients-table-body">
                     {% for case in cases %}
-                    <tr>
+                    <tr data-testid="client-row-{{ case.id }}">
                         <td>
                             <div class="client-cell">
                                 <div class="client-avatar">
@@ -240,45 +240,45 @@
                                     {% endif %}
                                 </div>
                                 <div class="client-info">
-                                    <div class="client-name">{{ case.client_name }}</div>
-                                    <div class="client-email">{{ case.client_email or 'No email' }}</div>
+                                    <div class="client-name" data-testid="client-name-{{ case.id }}">{{ case.client_name }}</div>
+                                    <div class="client-email" data-testid="client-email-{{ case.id }}">{{ case.client_email or 'No email' }}</div>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="status-badge status-{{ case.status|replace('_', '-') }}">
+                            <span class="status-badge status-{{ case.status|replace('_', '-') }}" data-testid="client-status-{{ case.id }}">
                                 {{ case.status_label }}
                             </span>
                         </td>
                         <td>
                             {% if case.score %}
-                            <span class="score-badge {% if case.score >= 8 %}score-high{% elif case.score >= 5 %}score-medium{% else %}score-low{% endif %}">
+                            <span class="score-badge {% if case.score >= 8 %}score-high{% elif case.score >= 5 %}score-medium{% else %}score-low{% endif %}" data-testid="client-score-{{ case.id }}">
                                 {{ case.score }}
                             </span>
                             {% else %}-{% endif %}
                         </td>
-                        <td>{{ case.violations }}</td>
-                        <td>{% if case.exposure %}${{ "{:,.0f}".format(case.exposure) }}{% else %}-{% endif %}</td>
-                        <td>{{ case.created_at }}</td>
+                        <td data-testid="client-violations-{{ case.id }}">{{ case.violations }}</td>
+                        <td data-testid="client-exposure-{{ case.id }}">{% if case.exposure %}${{ "{:,.0f}".format(case.exposure) }}{% else %}-{% endif %}</td>
+                        <td data-testid="client-created-{{ case.id }}">{{ case.created_at }}</td>
                         <td>
                             {% if case.status == 'stage1_complete' %}
-                            <a href="/analysis/{{ case.analysis_id }}/review" class="action-btn primary">Review</a>
+                            <a href="/analysis/{{ case.analysis_id }}/review" class="action-btn primary" data-testid="review-btn-{{ case.id }}">Review</a>
                             {% endif %}
-                            <a href="/dashboard/case/{{ case.id }}" class="action-btn">View</a>
+                            <a href="/dashboard/case/{{ case.id }}" class="action-btn" data-testid="view-btn-{{ case.id }}">View</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
             {% else %}
-            <div class="empty-state">
+            <div class="empty-state" data-testid="empty-state">
                 <h3>No clients found</h3>
                 <p>Add your first client from the dashboard</p>
             </div>
             {% endif %}
         </div>
     </main>
-    
+
     <script>
         function searchClients() {
             const query = document.getElementById('searchInput').value.toLowerCase();

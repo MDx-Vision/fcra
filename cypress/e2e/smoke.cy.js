@@ -6,8 +6,9 @@ describe('Smoke Tests', () => {
 
   it('loads the staff login page', () => {
     cy.visit('/staff/login')
-    cy.get('input[name="email"]').should('be.visible')
-    cy.get('input[name="password"]').should('be.visible')
+    cy.get('[data-testid="email-input"]').should('be.visible')
+    cy.get('[data-testid="password-input"]').should('be.visible')
+    cy.get('[data-testid="login-button"]').should('be.visible')
   })
 
   it('loads the Metro 2 reference API', () => {
