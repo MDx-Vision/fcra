@@ -14,12 +14,12 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -36,7 +36,7 @@
             font-size: 14px;
             margin-top: 5px;
         }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -56,7 +56,7 @@
             border: 2px solid #e2e8f0;
         }
         .btn-secondary:hover { border-color: #84cc16; }
-        
+
         /* Key Metrics Cards */
         .metrics-grid {
             display: grid;
@@ -64,7 +64,7 @@
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .metric-card {
             background: white;
             border-radius: 16px;
@@ -94,7 +94,7 @@
         .metric-card .metric-icon { background: rgba(49, 151, 149, 0.1); }
         .metric-card.highlight .metric-icon { background: rgba(255,255,255,0.1); }
         .metric-card.success .metric-icon { background: rgba(255,255,255,0.2); }
-        
+
         .metric-label {
             font-size: 13px;
             color: #64748b;
@@ -103,7 +103,7 @@
         }
         .metric-card.highlight .metric-label,
         .metric-card.success .metric-label { color: rgba(255,255,255,0.8); }
-        
+
         .metric-value {
             font-size: 32px;
             font-weight: 700;
@@ -112,7 +112,7 @@
         }
         .metric-card.highlight .metric-value { color: #84cc16; }
         .metric-card.success .metric-value { color: white; }
-        
+
         .metric-change {
             font-size: 12px;
             color: #84cc16;
@@ -121,7 +121,7 @@
         .metric-change.negative { color: #ef4444; }
         .metric-card.highlight .metric-change { color: #84cc16; }
         .metric-card.success .metric-change { color: rgba(255,255,255,0.9); }
-        
+
         /* Sections */
         .dashboard-section {
             background: white;
@@ -130,7 +130,7 @@
             margin-bottom: 30px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -142,7 +142,7 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         /* Charts Grid */
         .charts-grid {
             display: grid;
@@ -150,7 +150,7 @@
             gap: 30px;
             margin-bottom: 30px;
         }
-        
+
         .chart-container {
             background: white;
             border-radius: 16px;
@@ -167,14 +167,14 @@
             position: relative;
             height: 300px;
         }
-        
+
         /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
-        
+
         .stat-box {
             background: #f8fafc;
             border-radius: 12px;
@@ -192,7 +192,7 @@
             color: #64748b;
             font-weight: 500;
         }
-        
+
         /* Status Breakdown */
         .status-grid {
             display: grid;
@@ -220,7 +220,7 @@
             color: #64748b;
             margin-top: 5px;
         }
-        
+
         /* Dispute Progress */
         .progress-grid {
             display: grid;
@@ -248,7 +248,7 @@
             margin-top: 5px;
             text-transform: uppercase;
         }
-        
+
         /* Revenue by Tier */
         .tier-grid {
             display: grid;
@@ -274,7 +274,7 @@
             font-weight: 700;
             color: #1a1a2e;
         }
-        
+
         /* Round Stats */
         .round-grid {
             display: grid;
@@ -309,7 +309,7 @@
             color: #64748b;
             margin-top: 5px;
         }
-        
+
         /* Success Rate Circle */
         .success-rate-container {
             display: flex;
@@ -358,7 +358,7 @@
             font-size: 13px;
             color: #64748b;
         }
-        
+
         @media (max-width: 1400px) {
             .metrics-grid { grid-template-columns: repeat(2, 1fr); }
             .charts-grid { grid-template-columns: 1fr; }
@@ -366,7 +366,7 @@
             .status-grid { grid-template-columns: repeat(2, 1fr); }
             .progress-grid { grid-template-columns: repeat(3, 1fr); }
         }
-        
+
         @media (max-width: 768px) {
             .metrics-grid { grid-template-columns: 1fr; }
             .tier-grid { grid-template-columns: 1fr; }
@@ -377,170 +377,170 @@
 <body>
     {% set active_page = 'analytics' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
-    <main class="main-content">
+
+    <main class="main-content" data-testid="analytics-page">
         <div class="header">
             <div>
-                <h1>Analytics Dashboard</h1>
+                <h1 data-testid="page-title">Analytics Dashboard</h1>
                 <p class="header-subtitle">Business intelligence and performance metrics</p>
             </div>
-            <a href="/dashboard" class="btn btn-secondary">
+            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 Back to Dashboard
             </a>
         </div>
-        
+
         <!-- Key Metrics -->
-        <div class="metrics-grid">
-            <div class="metric-card highlight">
+        <div class="metrics-grid" data-testid="metrics-grid">
+            <div class="metric-card highlight" data-testid="metric-total-clients">
                 <div class="metric-icon">👥</div>
                 <div class="metric-label">Total Clients</div>
-                <div class="metric-value">{{ client_stats.total }}</div>
+                <div class="metric-value" data-testid="metric-total-clients-value">{{ client_stats.total }}</div>
                 <div class="metric-change">+{{ client_stats.new_this_month }} this month</div>
             </div>
-            <div class="metric-card success">
+            <div class="metric-card success" data-testid="metric-total-revenue">
                 <div class="metric-icon">💰</div>
                 <div class="metric-label">Total Revenue</div>
-                <div class="metric-value">${{ "{:,.2f}".format(revenue_stats.total) }}</div>
+                <div class="metric-value" data-testid="metric-total-revenue-value">${{ "{:,.2f}".format(revenue_stats.total) }}</div>
                 <div class="metric-change {% if revenue_stats.month_change < 0 %}negative{% endif %}">
                     {% if revenue_stats.month_change >= 0 %}+{% endif %}${{ "{:,.2f}".format(revenue_stats.month_change) }} vs last month
                 </div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card" data-testid="metric-total-analyses">
                 <div class="metric-icon">📊</div>
                 <div class="metric-label">Total Analyses</div>
-                <div class="metric-value">{{ case_stats.total_analyses }}</div>
+                <div class="metric-value" data-testid="metric-total-analyses-value">{{ case_stats.total_analyses }}</div>
                 <div class="metric-change">Avg Score: {{ case_stats.avg_score }}/10</div>
             </div>
-            <div class="metric-card">
+            <div class="metric-card" data-testid="metric-success-rate">
                 <div class="metric-icon">✅</div>
                 <div class="metric-label">Dispute Success Rate</div>
-                <div class="metric-value">{{ dispute_stats.success_rate }}%</div>
+                <div class="metric-value" data-testid="metric-success-rate-value">{{ dispute_stats.success_rate }}%</div>
                 <div class="metric-change">{{ dispute_stats.deleted }} items deleted</div>
             </div>
         </div>
-        
+
         <!-- Charts Row -->
-        <div class="charts-grid">
-            <div class="chart-container">
+        <div class="charts-grid" data-testid="charts-grid-1">
+            <div class="chart-container" data-testid="chart-signups">
                 <div class="chart-title">📈 New Signups (Last 30 Days)</div>
                 <div class="chart-wrapper">
                     <canvas id="signupsChart"></canvas>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" data-testid="chart-status">
                 <div class="chart-title">📊 Client Status Breakdown</div>
                 <div class="chart-wrapper">
                     <canvas id="statusChart"></canvas>
                 </div>
             </div>
         </div>
-        
-        <div class="charts-grid">
-            <div class="chart-container">
+
+        <div class="charts-grid" data-testid="charts-grid-2">
+            <div class="chart-container" data-testid="chart-revenue">
                 <div class="chart-title">💵 Revenue Trend (Last 30 Days)</div>
                 <div class="chart-wrapper">
                     <canvas id="revenueChart"></canvas>
                 </div>
             </div>
-            <div class="chart-container">
+            <div class="chart-container" data-testid="chart-scores">
                 <div class="chart-title">🎯 Case Score Distribution</div>
                 <div class="chart-wrapper">
                     <canvas id="scoreChart"></canvas>
                 </div>
             </div>
         </div>
-        
+
         <!-- Client Stats Section -->
-        <div class="dashboard-section">
+        <div class="dashboard-section" data-testid="client-status-section">
             <div class="section-header">
                 <h2 class="section-title">👥 Client Status Overview</h2>
             </div>
-            <div class="status-grid">
-                <div class="status-item active">
+            <div class="status-grid" data-testid="status-grid">
+                <div class="status-item active" data-testid="status-active">
                     <div class="count">{{ client_stats.active }}</div>
                     <div class="label">Active Clients</div>
                 </div>
-                <div class="status-item signup">
+                <div class="status-item signup" data-testid="status-signup">
                     <div class="count">{{ client_stats.signup }}</div>
                     <div class="label">In Signup</div>
                 </div>
-                <div class="status-item paused">
+                <div class="status-item paused" data-testid="status-paused">
                     <div class="count">{{ client_stats.paused }}</div>
                     <div class="label">Paused</div>
                 </div>
-                <div class="status-item complete">
+                <div class="status-item complete" data-testid="status-complete">
                     <div class="count">{{ client_stats.complete }}</div>
                     <div class="label">Complete</div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Revenue Stats Section -->
-        <div class="dashboard-section">
+        <div class="dashboard-section" data-testid="revenue-section">
             <div class="section-header">
                 <h2 class="section-title">💰 Revenue by Pricing Tier</h2>
             </div>
-            <div class="stats-grid" style="margin-bottom: 20px;">
-                <div class="stat-box">
+            <div class="stats-grid" style="margin-bottom: 20px;" data-testid="revenue-stats-grid">
+                <div class="stat-box" data-testid="revenue-this-month">
                     <div class="stat-box-value">${{ "{:,.2f}".format(revenue_stats.this_month) }}</div>
                     <div class="stat-box-label">This Month</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" data-testid="revenue-last-month">
                     <div class="stat-box-value">${{ "{:,.2f}".format(revenue_stats.last_month) }}</div>
                     <div class="stat-box-label">Last Month</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" data-testid="revenue-all-time">
                     <div class="stat-box-value">${{ "{:,.2f}".format(revenue_stats.total) }}</div>
                     <div class="stat-box-label">All Time</div>
                 </div>
             </div>
-            <div class="tier-grid">
+            <div class="tier-grid" data-testid="tier-grid">
                 {% for tier, amount in revenue_stats.by_tier.items() %}
-                <div class="tier-item">
+                <div class="tier-item" data-testid="tier-{{ tier | lower | replace(' ', '-') }}">
                     <div class="name">{{ tier }}</div>
                     <div class="amount">${{ "{:,.2f}".format(amount) }}</div>
                 </div>
                 {% endfor %}
             </div>
         </div>
-        
+
         <!-- Case Stats Section -->
-        <div class="dashboard-section">
+        <div class="dashboard-section" data-testid="case-stats-section">
             <div class="section-header">
                 <h2 class="section-title">📋 Cases by Dispute Round</h2>
             </div>
-            <div class="round-grid">
-                <div class="round-item">
+            <div class="round-grid" data-testid="round-grid">
+                <div class="round-item" data-testid="round-1">
                     <div class="round-num">1</div>
                     <div class="count">{{ case_stats.by_round.round_1 }}</div>
                     <div class="label">Initial Disputes</div>
                 </div>
-                <div class="round-item">
+                <div class="round-item" data-testid="round-2">
                     <div class="round-num">2</div>
                     <div class="count">{{ case_stats.by_round.round_2 }}</div>
                     <div class="label">MOV Requests</div>
                 </div>
-                <div class="round-item">
+                <div class="round-item" data-testid="round-3">
                     <div class="round-num">3</div>
                     <div class="count">{{ case_stats.by_round.round_3 }}</div>
                     <div class="label">Pre-Litigation</div>
                 </div>
-                <div class="round-item">
+                <div class="round-item" data-testid="round-4">
                     <div class="round-num">4</div>
                     <div class="count">{{ case_stats.by_round.round_4 }}</div>
                     <div class="label">Final Demand</div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Dispute Progress Section -->
-        <div class="dashboard-section">
+        <div class="dashboard-section" data-testid="dispute-progress-section">
             <div class="section-header">
                 <h2 class="section-title">🎯 Dispute Progress Tracking</h2>
             </div>
-            <div class="success-rate-container">
-                <div class="success-circle" style="--rate: {{ dispute_stats.success_rate }};">
+            <div class="success-rate-container" data-testid="success-rate-container">
+                <div class="success-circle" style="--rate: {{ dispute_stats.success_rate }};" data-testid="success-circle">
                     <span class="success-rate-value">{{ dispute_stats.success_rate }}%</span>
                 </div>
                 <div class="success-rate-label">
@@ -548,142 +548,142 @@
                     <p>{{ dispute_stats.deleted }} deleted out of {{ dispute_stats.deleted + dispute_stats.verified + dispute_stats.no_change }} completed items</p>
                 </div>
             </div>
-            <div class="progress-grid">
-                <div class="progress-item">
+            <div class="progress-grid" data-testid="progress-grid">
+                <div class="progress-item" data-testid="progress-sent">
                     <div class="icon">📤</div>
                     <div class="count">{{ dispute_stats.sent }}</div>
                     <div class="label">Sent</div>
                 </div>
-                <div class="progress-item">
+                <div class="progress-item" data-testid="progress-in-progress">
                     <div class="icon">⏳</div>
                     <div class="count">{{ dispute_stats.in_progress }}</div>
                     <div class="label">In Progress</div>
                 </div>
-                <div class="progress-item">
+                <div class="progress-item" data-testid="progress-deleted">
                     <div class="icon">✅</div>
                     <div class="count">{{ dispute_stats.deleted }}</div>
                     <div class="label">Deleted</div>
                 </div>
-                <div class="progress-item">
+                <div class="progress-item" data-testid="progress-updated">
                     <div class="icon">🔄</div>
                     <div class="count">{{ dispute_stats.updated }}</div>
                     <div class="label">Updated</div>
                 </div>
-                <div class="progress-item">
+                <div class="progress-item" data-testid="progress-no-change">
                     <div class="icon">❌</div>
                     <div class="count">{{ dispute_stats.no_change }}</div>
                     <div class="label">No Change</div>
                 </div>
             </div>
         </div>
-        
+
         <!-- CRA Response Stats -->
-        <div class="dashboard-section">
+        <div class="dashboard-section" data-testid="cra-response-section">
             <div class="section-header">
                 <h2 class="section-title">📬 CRA Response Summary</h2>
             </div>
-            <div class="stats-grid">
-                <div class="stat-box">
+            <div class="stats-grid" data-testid="cra-stats-grid">
+                <div class="stat-box" data-testid="cra-total-responses">
                     <div class="stat-box-value">{{ cra_stats.total_responses }}</div>
                     <div class="stat-box-label">Total Responses</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" data-testid="cra-deleted">
                     <div class="stat-box-value">{{ cra_stats.by_type.deleted }}</div>
                     <div class="stat-box-label">Deleted</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" data-testid="cra-verified">
                     <div class="stat-box-value">{{ cra_stats.by_type.verified }}</div>
                     <div class="stat-box-label">Verified</div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Settlement Analytics -->
-        <div class="dashboard-section" id="settlementAnalytics">
+        <div class="dashboard-section" id="settlementAnalytics" data-testid="settlement-analytics-section">
             <div class="section-header">
                 <h2 class="section-title">💰 Settlement Analytics</h2>
-                <a href="/dashboard/settlements" style="color: #84cc16; text-decoration: none; font-size: 14px; font-weight: 500;">View All Settlements →</a>
+                <a href="/dashboard/settlements" style="color: #84cc16; text-decoration: none; font-size: 14px; font-weight: 500;" data-testid="view-all-settlements-link">View All Settlements →</a>
             </div>
-            <div class="stats-grid" id="settlementStatsGrid">
-                <div class="stat-box" style="background: linear-gradient(135deg, #319795, #84cc16); color: white;">
+            <div class="stats-grid" id="settlementStatsGrid" data-testid="settlement-stats-grid">
+                <div class="stat-box" style="background: linear-gradient(135deg, #319795, #84cc16); color: white;" data-testid="settlement-total-settled">
                     <div class="stat-box-value" id="statTotalSettled" style="color: white;">$0</div>
                     <div class="stat-box-label" style="color: rgba(255,255,255,0.8);">Total Settled</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" data-testid="settlement-avg">
                     <div class="stat-box-value" id="statAvgSettlement">$0</div>
                     <div class="stat-box-label">Avg Settlement</div>
                 </div>
-                <div class="stat-box">
+                <div class="stat-box" data-testid="settlement-contingency">
                     <div class="stat-box-value" id="statContingency">$0</div>
                     <div class="stat-box-label">Contingency Earned</div>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-top: 20px;" id="settlementPipeline">
-                <div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 10px; padding: 15px; text-align: center;">
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; margin-top: 20px;" id="settlementPipeline" data-testid="settlement-pipeline">
+                <div style="background: #f1f5f9; border-left: 4px solid #64748b; border-radius: 10px; padding: 15px; text-align: center;" data-testid="settlement-pending">
                     <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countPending">0</div>
                     <div style="font-size: 11px; color: #64748b;">Pending</div>
                 </div>
-                <div style="background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 10px; padding: 15px; text-align: center;">
+                <div style="background: #dbeafe; border-left: 4px solid #3b82f6; border-radius: 10px; padding: 15px; text-align: center;" data-testid="settlement-demand-sent">
                     <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countDemandSent">0</div>
                     <div style="font-size: 11px; color: #3b82f6;">Demand Sent</div>
                 </div>
-                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 15px; text-align: center;">
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 15px; text-align: center;" data-testid="settlement-negotiating">
                     <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countNegotiating">0</div>
                     <div style="font-size: 11px; color: #f59e0b;">Negotiating</div>
                 </div>
-                <div style="background: #dcfce7; border-left: 4px solid #22c55e; border-radius: 10px; padding: 15px; text-align: center;">
+                <div style="background: #dcfce7; border-left: 4px solid #22c55e; border-radius: 10px; padding: 15px; text-align: center;" data-testid="settlement-accepted">
                     <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countAccepted">0</div>
                     <div style="font-size: 11px; color: #22c55e;">Accepted</div>
                 </div>
-                <div style="background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 10px; padding: 15px; text-align: center;">
+                <div style="background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 10px; padding: 15px; text-align: center;" data-testid="settlement-rejected">
                     <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countRejected">0</div>
                     <div style="font-size: 11px; color: #ef4444;">Rejected</div>
                 </div>
-                <div style="background: #ede9fe; border-left: 4px solid #8b5cf6; border-radius: 10px; padding: 15px; text-align: center;">
+                <div style="background: #ede9fe; border-left: 4px solid #8b5cf6; border-radius: 10px; padding: 15px; text-align: center;" data-testid="settlement-litigated">
                     <div style="font-size: 24px; font-weight: 700; color: #1a1a2e;" id="countLitigated">0</div>
                     <div style="font-size: 11px; color: #8b5cf6;">Litigated</div>
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
-                <div style="background: #f8fafc; border-radius: 12px; padding: 20px;">
+                <div style="background: #f8fafc; border-radius: 12px; padding: 20px;" data-testid="settlement-metrics-box">
                     <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 15px;">Settlement Metrics</div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
                         <span style="color: #64748b;">Success Rate</span>
-                        <span style="font-weight: 600; color: #22c55e;" id="statSuccessRate">0%</span>
+                        <span style="font-weight: 600; color: #22c55e;" id="statSuccessRate" data-testid="stat-success-rate">0%</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
                         <span style="color: #64748b;">Total Cases</span>
-                        <span style="font-weight: 600;" id="statTotalCount">0</span>
+                        <span style="font-weight: 600;" id="statTotalCount" data-testid="stat-total-count">0</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0;">
                         <span style="color: #64748b;">Pipeline Value</span>
-                        <span style="font-weight: 600;" id="statPipelineValue">$0</span>
+                        <span style="font-weight: 600;" id="statPipelineValue" data-testid="stat-pipeline-value">$0</span>
                     </div>
                 </div>
-                <div style="background: #f8fafc; border-radius: 12px; padding: 20px;">
+                <div style="background: #f8fafc; border-radius: 12px; padding: 20px;" data-testid="settlement-mom-box">
                     <div style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 15px;">Month-over-Month</div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
                         <span style="color: #64748b;">This Month</span>
-                        <span style="font-weight: 600;" id="statThisMonth">$0</span>
+                        <span style="font-weight: 600;" id="statThisMonth" data-testid="stat-this-month">$0</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
                         <span style="color: #64748b;">Last Month</span>
-                        <span style="font-weight: 600;" id="statLastMonth">$0</span>
+                        <span style="font-weight: 600;" id="statLastMonth" data-testid="stat-last-month">$0</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; padding: 10px 0;">
                         <span style="color: #64748b;">Change</span>
-                        <span style="font-weight: 600;" id="statMonthChange">$0</span>
+                        <span style="font-weight: 600;" id="statMonthChange" data-testid="stat-month-change">$0</span>
                     </div>
                 </div>
             </div>
         </div>
     </main>
-    
+
     <script>
         // Timeline Data from Backend
         const signupData = {{ timeline_data.signups | tojson }};
         const revenueData = {{ timeline_data.revenue | tojson }};
-        
+
         // Client Status Data
         const clientStats = {
             active: {{ client_stats.active }},
@@ -691,19 +691,19 @@
             paused: {{ client_stats.paused }},
             complete: {{ client_stats.complete }}
         };
-        
+
         // Case Score Data
         const scoreStats = {
             high: {{ case_stats.high_score }},
             medium: {{ case_stats.medium_score }},
             low: {{ case_stats.low_score }}
         };
-        
+
         // Chart Colors
         const tealGreen = 'rgba(49, 151, 149, 1)';
         const limeGreen = 'rgba(132, 204, 22, 1)';
         const tealGreenLight = 'rgba(49, 151, 149, 0.2)';
-        
+
         // Signups Chart (Line)
         const signupsCtx = document.getElementById('signupsChart').getContext('2d');
         new Chart(signupsCtx, {
@@ -735,7 +735,7 @@
                 }
             }
         });
-        
+
         // Revenue Chart (Bar)
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
         new Chart(revenueCtx, {
@@ -767,7 +767,7 @@
                 }
             }
         });
-        
+
         // Client Status Chart (Doughnut)
         const statusCtx = document.getElementById('statusChart').getContext('2d');
         new Chart(statusCtx, {
@@ -791,7 +791,7 @@
                 cutout: '60%'
             }
         });
-        
+
         // Case Score Distribution (Doughnut)
         const scoreCtx = document.getElementById('scoreChart').getContext('2d');
         new Chart(scoreCtx, {
@@ -815,33 +815,33 @@
                 cutout: '60%'
             }
         });
-        
+
         async function loadSettlementAnalytics() {
             try {
                 const response = await fetch('/api/settlements/stats');
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const stats = data.stats;
-                    
+
                     document.getElementById('statTotalSettled').textContent = '$' + parseFloat(stats.total_settled || 0).toLocaleString();
                     document.getElementById('statAvgSettlement').textContent = '$' + parseFloat(stats.avg_settlement || 0).toLocaleString();
                     document.getElementById('statContingency').textContent = '$' + parseFloat(stats.total_contingency || 0).toLocaleString();
-                    
+
                     document.getElementById('countPending').textContent = stats.status_counts.pending || 0;
                     document.getElementById('countDemandSent').textContent = stats.status_counts.demand_sent || 0;
                     document.getElementById('countNegotiating').textContent = stats.status_counts.negotiating || 0;
                     document.getElementById('countAccepted').textContent = stats.status_counts.accepted || 0;
                     document.getElementById('countRejected').textContent = stats.status_counts.rejected || 0;
                     document.getElementById('countLitigated').textContent = stats.status_counts.litigated || 0;
-                    
+
                     document.getElementById('statSuccessRate').textContent = stats.success_rate + '%';
                     document.getElementById('statTotalCount').textContent = stats.total_count || 0;
                     document.getElementById('statPipelineValue').textContent = '$' + parseFloat(stats.total_pending_value || 0).toLocaleString();
-                    
+
                     document.getElementById('statThisMonth').textContent = '$' + parseFloat(stats.this_month_settled || 0).toLocaleString();
                     document.getElementById('statLastMonth').textContent = '$' + parseFloat(stats.last_month_settled || 0).toLocaleString();
-                    
+
                     const monthChange = stats.month_change || 0;
                     const changeElement = document.getElementById('statMonthChange');
                     changeElement.textContent = (monthChange >= 0 ? '+' : '') + '$' + parseFloat(monthChange).toLocaleString();
@@ -851,7 +851,7 @@
                 console.error('Error loading settlement analytics:', error);
             }
         }
-        
+
         document.addEventListener('DOMContentLoaded', loadSettlementAnalytics);
     </script>
 </body>

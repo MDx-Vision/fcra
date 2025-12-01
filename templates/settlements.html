@@ -13,12 +13,12 @@
             background: #f0f2f5;
             min-height: 100vh;
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -35,7 +35,7 @@
             font-size: 14px;
             margin-top: 5px;
         }
-        
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -64,14 +64,14 @@
             padding: 8px 16px;
             font-size: 12px;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
-        
+
         .stat-card {
             background: white;
             border-radius: 16px;
@@ -121,7 +121,7 @@
         }
         .stat-card.highlight .stat-sub,
         .stat-card.success .stat-sub { color: rgba(255,255,255,0.7); }
-        
+
         .pipeline-section {
             background: white;
             border-radius: 16px;
@@ -129,7 +129,7 @@
             margin-bottom: 30px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -141,13 +141,13 @@
             font-weight: 600;
             color: #1a1a2e;
         }
-        
+
         .pipeline-stages {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
             gap: 15px;
         }
-        
+
         .pipeline-stage {
             background: #f8fafc;
             border-radius: 12px;
@@ -165,7 +165,7 @@
         .pipeline-stage.accepted { border-left: 4px solid #22c55e; }
         .pipeline-stage.rejected { border-left: 4px solid #ef4444; }
         .pipeline-stage.litigated { border-left: 4px solid #8b5cf6; }
-        
+
         .stage-count {
             font-size: 36px;
             font-weight: 700;
@@ -178,7 +178,7 @@
             font-weight: 500;
             text-transform: capitalize;
         }
-        
+
         .filters-bar {
             display: flex;
             gap: 15px;
@@ -203,7 +203,7 @@
             font-size: 13px;
             background: white;
         }
-        
+
         .settlement-table {
             width: 100%;
             border-collapse: collapse;
@@ -225,7 +225,7 @@
             color: #334155;
         }
         .settlement-table tr:hover { background: #f8fafc; }
-        
+
         .client-cell {
             display: flex;
             align-items: center;
@@ -243,7 +243,7 @@
             font-weight: 600;
             font-size: 14px;
         }
-        
+
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -257,13 +257,13 @@
         .status-badge.accepted { background: #dcfce7; color: #166534; }
         .status-badge.rejected { background: #fee2e2; color: #991b1b; }
         .status-badge.litigated { background: #ede9fe; color: #5b21b6; }
-        
+
         .amount-cell {
             font-weight: 600;
             color: #1a1a2e;
         }
         .amount-cell.success { color: #22c55e; }
-        
+
         .actions-cell {
             display: flex;
             gap: 8px;
@@ -280,7 +280,7 @@
         }
         .action-btn:hover { background: #e2e8f0; }
         .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: white; }
-        
+
         .modal-overlay {
             display: none;
             position: fixed;
@@ -294,7 +294,7 @@
             justify-content: center;
         }
         .modal-overlay.active { display: flex; }
-        
+
         .modal {
             background: white;
             border-radius: 16px;
@@ -327,7 +327,7 @@
             color: #64748b;
         }
         .modal-close:hover { background: #e2e8f0; }
-        
+
         .modal-body {
             padding: 24px;
         }
@@ -361,7 +361,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
-        
+
         .modal-footer {
             padding: 20px 24px;
             border-top: 1px solid #e2e8f0;
@@ -369,7 +369,7 @@
             justify-content: flex-end;
             gap: 10px;
         }
-        
+
         .offers-timeline {
             margin-top: 20px;
             padding: 20px;
@@ -414,7 +414,7 @@
             font-size: 12px;
             color: #94a3b8;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -431,7 +431,7 @@
             color: #1a1a2e;
             margin-bottom: 10px;
         }
-        
+
         @media (max-width: 1200px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .pipeline-stages { grid-template-columns: repeat(3, 1fr); }
@@ -446,87 +446,87 @@
 <body>
     {% set active_page = 'settlements' %}
     {% include 'includes/dashboard_sidebar.html' %}
-    
-    <main class="main-content">
+
+    <main class="main-content" data-testid="settlements-page">
         <div class="header">
             <div>
-                <h1>Settlement Tracking</h1>
+                <h1 data-testid="page-title">Settlement Tracking</h1>
                 <p class="header-subtitle">Manage negotiations, track outcomes, and monitor revenue</p>
             </div>
-            <a href="/dashboard" class="btn btn-secondary">
+            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 Back to Dashboard
             </a>
         </div>
-        
-        <div class="stats-grid">
-            <div class="stat-card success">
+
+        <div class="stats-grid" data-testid="stats-grid">
+            <div class="stat-card success" data-testid="stat-total-settled">
                 <div class="stat-icon">💰</div>
                 <div class="stat-label">Total Settled</div>
-                <div class="stat-value">${{ "{:,.0f}".format(stats.total_settled) }}</div>
+                <div class="stat-value" data-testid="stat-total-settled-value">${{ "{:,.0f}".format(stats.total_settled) }}</div>
                 <div class="stat-sub">{{ stats.count_settled }} settlements closed</div>
             </div>
-            <div class="stat-card highlight">
+            <div class="stat-card highlight" data-testid="stat-pipeline-value">
                 <div class="stat-icon">📊</div>
                 <div class="stat-label">Pipeline Value</div>
-                <div class="stat-value">${{ "{:,.0f}".format(stats.total_pending_value) }}</div>
+                <div class="stat-value" data-testid="stat-pipeline-value-amount">${{ "{:,.0f}".format(stats.total_pending_value) }}</div>
                 <div class="stat-sub">{{ stats.count_pending }} pending settlements</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-testid="stat-avg-settlement">
                 <div class="stat-icon">📈</div>
                 <div class="stat-label">Avg Settlement</div>
-                <div class="stat-value">${{ "{:,.0f}".format(stats.avg_settlement) }}</div>
+                <div class="stat-value" data-testid="stat-avg-settlement-value">${{ "{:,.0f}".format(stats.avg_settlement) }}</div>
                 <div class="stat-sub">Per case average</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-testid="stat-contingency">
                 <div class="stat-icon">🏆</div>
                 <div class="stat-label">Contingency Earned</div>
-                <div class="stat-value">${{ "{:,.0f}".format(stats.total_contingency) }}</div>
+                <div class="stat-value" data-testid="stat-contingency-value">${{ "{:,.0f}".format(stats.total_contingency) }}</div>
                 <div class="stat-sub">Total revenue share</div>
             </div>
         </div>
-        
-        <div class="pipeline-section">
+
+        <div class="pipeline-section" data-testid="pipeline-section">
             <div class="section-header">
                 <h2 class="section-title">Settlement Pipeline</h2>
             </div>
-            <div class="pipeline-stages">
-                <div class="pipeline-stage pending" data-status="pending" onclick="filterByStatus('pending')">
+            <div class="pipeline-stages" data-testid="pipeline-stages">
+                <div class="pipeline-stage pending" data-status="pending" data-testid="stage-pending" onclick="filterByStatus('pending')">
                     <div class="stage-count">{{ status_counts.pending }}</div>
                     <div class="stage-label">Pending</div>
                 </div>
-                <div class="pipeline-stage demand_sent" data-status="demand_sent" onclick="filterByStatus('demand_sent')">
+                <div class="pipeline-stage demand_sent" data-status="demand_sent" data-testid="stage-demand-sent" onclick="filterByStatus('demand_sent')">
                     <div class="stage-count">{{ status_counts.demand_sent }}</div>
                     <div class="stage-label">Demand Sent</div>
                 </div>
-                <div class="pipeline-stage negotiating" data-status="negotiating" onclick="filterByStatus('negotiating')">
+                <div class="pipeline-stage negotiating" data-status="negotiating" data-testid="stage-negotiating" onclick="filterByStatus('negotiating')">
                     <div class="stage-count">{{ status_counts.negotiating }}</div>
                     <div class="stage-label">Negotiating</div>
                 </div>
-                <div class="pipeline-stage accepted" data-status="accepted" onclick="filterByStatus('accepted')">
+                <div class="pipeline-stage accepted" data-status="accepted" data-testid="stage-accepted" onclick="filterByStatus('accepted')">
                     <div class="stage-count">{{ status_counts.accepted }}</div>
                     <div class="stage-label">Accepted</div>
                 </div>
-                <div class="pipeline-stage rejected" data-status="rejected" onclick="filterByStatus('rejected')">
+                <div class="pipeline-stage rejected" data-status="rejected" data-testid="stage-rejected" onclick="filterByStatus('rejected')">
                     <div class="stage-count">{{ status_counts.rejected }}</div>
                     <div class="stage-label">Rejected</div>
                 </div>
-                <div class="pipeline-stage litigated" data-status="litigated" onclick="filterByStatus('litigated')">
+                <div class="pipeline-stage litigated" data-status="litigated" data-testid="stage-litigated" onclick="filterByStatus('litigated')">
                     <div class="stage-count">{{ status_counts.litigated }}</div>
                     <div class="stage-label">Litigated</div>
                 </div>
             </div>
         </div>
-        
-        <div class="pipeline-section">
+
+        <div class="pipeline-section" data-testid="settlements-section">
             <div class="section-header">
                 <h2 class="section-title">All Settlements</h2>
             </div>
-            
-            <div class="filters-bar">
+
+            <div class="filters-bar" data-testid="filters-bar">
                 <div class="filter-group">
                     <label>Status:</label>
-                    <select id="filterStatus" onchange="applyFilters()">
+                    <select id="filterStatus" data-testid="filter-status" onchange="applyFilters()">
                         <option value="">All Statuses</option>
                         <option value="pending">Pending</option>
                         <option value="demand_sent">Demand Sent</option>
@@ -538,17 +538,17 @@
                 </div>
                 <div class="filter-group">
                     <label>From:</label>
-                    <input type="date" id="filterDateFrom" onchange="applyFilters()">
+                    <input type="date" id="filterDateFrom" data-testid="filter-date-from" onchange="applyFilters()">
                 </div>
                 <div class="filter-group">
                     <label>To:</label>
-                    <input type="date" id="filterDateTo" onchange="applyFilters()">
+                    <input type="date" id="filterDateTo" data-testid="filter-date-to" onchange="applyFilters()">
                 </div>
-                <button class="btn btn-sm btn-secondary" onclick="clearFilters()">Clear Filters</button>
+                <button class="btn btn-sm btn-secondary" data-testid="clear-filters-button" onclick="clearFilters()">Clear Filters</button>
             </div>
-            
+
             {% if settlements %}
-            <table class="settlement-table" id="settlementsTable">
+            <table class="settlement-table" id="settlementsTable" data-testid="settlements-table">
                 <thead>
                     <tr>
                         <th>Client</th>
@@ -560,19 +560,19 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody data-testid="settlements-table-body">
                     {% for s in settlements %}
-                    <tr data-id="{{ s.id }}" data-status="{{ s.status }}" data-date="{{ s.created_at.strftime('%Y-%m-%d') if s.created_at else '' }}">
+                    <tr data-id="{{ s.id }}" data-status="{{ s.status }}" data-date="{{ s.created_at.strftime('%Y-%m-%d') if s.created_at else '' }}" data-testid="settlement-row-{{ s.id }}">
                         <td>
                             <div class="client-cell">
                                 <div class="client-avatar">{{ s.client_name[:1].upper() if s.client_name else '?' }}</div>
                                 <div>
-                                    <div style="font-weight: 500;">{{ s.client_name }}</div>
+                                    <div style="font-weight: 500;" data-testid="settlement-client-{{ s.id }}">{{ s.client_name }}</div>
                                     <div style="font-size: 12px; color: #64748b;">Case #{{ s.case_id }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="amount-cell">${{ "{:,.0f}".format(s.target_amount) }}</td>
+                        <td class="amount-cell" data-testid="settlement-target-{{ s.id }}">${{ "{:,.0f}".format(s.target_amount) }}</td>
                         <td class="amount-cell">
                             {% if s.counter_offer_2 %}
                             ${{ "{:,.0f}".format(s.counter_offer_2) }}
@@ -584,7 +584,7 @@
                             -
                             {% endif %}
                         </td>
-                        <td><span class="status-badge {{ s.status }}">{{ s.status.replace('_', ' ').title() }}</span></td>
+                        <td><span class="status-badge {{ s.status }}" data-testid="settlement-status-{{ s.id }}">{{ s.status.replace('_', ' ').title() }}</span></td>
                         <td class="amount-cell {% if s.final_amount %}success{% endif %}">
                             {% if s.final_amount %}${{ "{:,.0f}".format(s.final_amount) }}{% else %}-{% endif %}
                         </td>
@@ -593,12 +593,12 @@
                         </td>
                         <td>
                             <div class="actions-cell">
-                                <button class="action-btn primary" onclick="openSettlementModal({{ s.id }})">View</button>
+                                <button class="action-btn primary" data-testid="view-settlement-{{ s.id }}" onclick="openSettlementModal({{ s.id }})">View</button>
                                 {% if s.status not in ['accepted', 'rejected', 'litigated'] %}
-                                <button class="action-btn" onclick="openOfferModal({{ s.id }})">+ Offer</button>
+                                <button class="action-btn" data-testid="add-offer-{{ s.id }}" onclick="openOfferModal({{ s.id }})">+ Offer</button>
                                 {% endif %}
                                 {% if s.status == 'accepted' and not s.payment_received %}
-                                <button class="action-btn" onclick="openPaymentModal({{ s.id }})">Payment</button>
+                                <button class="action-btn" data-testid="record-payment-{{ s.id }}" onclick="openPaymentModal({{ s.id }})">Payment</button>
                                 {% endif %}
                             </div>
                         </td>
@@ -607,7 +607,7 @@
                 </tbody>
             </table>
             {% else %}
-            <div class="empty-state">
+            <div class="empty-state" data-testid="empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
                 </svg>
@@ -617,22 +617,22 @@
             {% endif %}
         </div>
     </main>
-    
-    <div class="modal-overlay" id="settlementModal">
+
+    <div class="modal-overlay" id="settlementModal" data-testid="settlement-modal">
         <div class="modal">
             <div class="modal-header">
                 <h2 id="modalTitle">Settlement Details</h2>
-                <button class="modal-close" onclick="closeModal('settlementModal')">&times;</button>
+                <button class="modal-close" data-testid="settlement-modal-close" onclick="closeModal('settlementModal')">&times;</button>
             </div>
             <div class="modal-body" id="modalBody">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Client</label>
-                        <input type="text" id="modalClientName" readonly>
+                        <input type="text" id="modalClientName" data-testid="modal-client-name" readonly>
                     </div>
                     <div class="form-group">
                         <label>Status</label>
-                        <select id="modalStatus">
+                        <select id="modalStatus" data-testid="modal-status">
                             <option value="pending">Pending</option>
                             <option value="demand_sent">Demand Sent</option>
                             <option value="negotiating">Negotiating</option>
@@ -645,135 +645,135 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Target Amount</label>
-                        <input type="number" id="modalTargetAmount" step="0.01">
+                        <input type="number" id="modalTargetAmount" data-testid="modal-target-amount" step="0.01">
                     </div>
                     <div class="form-group">
                         <label>Minimum Acceptable</label>
-                        <input type="number" id="modalMinimumAcceptable" step="0.01">
+                        <input type="number" id="modalMinimumAcceptable" data-testid="modal-minimum-acceptable" step="0.01">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>Initial Demand</label>
-                        <input type="number" id="modalInitialDemand" step="0.01">
+                        <input type="number" id="modalInitialDemand" data-testid="modal-initial-demand" step="0.01">
                     </div>
                     <div class="form-group">
                         <label>Final Amount</label>
-                        <input type="number" id="modalFinalAmount" step="0.01">
+                        <input type="number" id="modalFinalAmount" data-testid="modal-final-amount" step="0.01">
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Notes</label>
-                    <textarea id="modalNotes" rows="3" placeholder="Settlement notes..."></textarea>
+                    <textarea id="modalNotes" data-testid="modal-notes" rows="3" placeholder="Settlement notes..."></textarea>
                 </div>
-                
-                <div class="offers-timeline" id="offersTimeline">
+
+                <div class="offers-timeline" id="offersTimeline" data-testid="offers-timeline">
                     <h4>Offers Timeline</h4>
-                    <div id="offersTimelineContent"></div>
+                    <div id="offersTimelineContent" data-testid="offers-timeline-content"></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('settlementModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveSettlement()">Save Changes</button>
+                <button class="btn btn-secondary" data-testid="settlement-modal-cancel" onclick="closeModal('settlementModal')">Cancel</button>
+                <button class="btn btn-primary" data-testid="settlement-modal-save" onclick="saveSettlement()">Save Changes</button>
             </div>
         </div>
     </div>
-    
-    <div class="modal-overlay" id="offerModal">
+
+    <div class="modal-overlay" id="offerModal" data-testid="offer-modal">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>Add Counter-Offer</h2>
-                <button class="modal-close" onclick="closeModal('offerModal')">&times;</button>
+                <button class="modal-close" data-testid="offer-modal-close" onclick="closeModal('offerModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label>Offer Amount</label>
-                    <input type="number" id="offerAmount" step="0.01" placeholder="Enter offer amount">
+                    <input type="number" id="offerAmount" data-testid="offer-amount-input" step="0.01" placeholder="Enter offer amount">
                 </div>
                 <div class="form-group">
                     <label>Notes (optional)</label>
-                    <textarea id="offerNotes" rows="3" placeholder="Add notes about this offer..."></textarea>
+                    <textarea id="offerNotes" data-testid="offer-notes-input" rows="3" placeholder="Add notes about this offer..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('offerModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitOffer()">Add Offer</button>
+                <button class="btn btn-secondary" data-testid="offer-modal-cancel" onclick="closeModal('offerModal')">Cancel</button>
+                <button class="btn btn-primary" data-testid="offer-modal-submit" onclick="submitOffer()">Add Offer</button>
             </div>
         </div>
     </div>
-    
-    <div class="modal-overlay" id="settleModal">
+
+    <div class="modal-overlay" id="settleModal" data-testid="settle-modal">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>Mark as Settled</h2>
-                <button class="modal-close" onclick="closeModal('settleModal')">&times;</button>
+                <button class="modal-close" data-testid="settle-modal-close" onclick="closeModal('settleModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label>Final Settlement Amount</label>
-                    <input type="number" id="settleAmount" step="0.01" placeholder="Enter final amount">
+                    <input type="number" id="settleAmount" data-testid="settle-amount-input" step="0.01" placeholder="Enter final amount">
                 </div>
                 <div class="form-group">
                     <label>Notes (optional)</label>
-                    <textarea id="settleNotes" rows="3" placeholder="Add settlement notes..."></textarea>
+                    <textarea id="settleNotes" data-testid="settle-notes-input" rows="3" placeholder="Add settlement notes..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('settleModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitSettle()">Confirm Settlement</button>
+                <button class="btn btn-secondary" data-testid="settle-modal-cancel" onclick="closeModal('settleModal')">Cancel</button>
+                <button class="btn btn-primary" data-testid="settle-modal-submit" onclick="submitSettle()">Confirm Settlement</button>
             </div>
         </div>
     </div>
-    
-    <div class="modal-overlay" id="paymentModal">
+
+    <div class="modal-overlay" id="paymentModal" data-testid="payment-modal">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>Record Payment</h2>
-                <button class="modal-close" onclick="closeModal('paymentModal')">&times;</button>
+                <button class="modal-close" data-testid="payment-modal-close" onclick="closeModal('paymentModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
                     <label>Payment Amount Received</label>
-                    <input type="number" id="paymentAmount" step="0.01" placeholder="Enter payment amount">
+                    <input type="number" id="paymentAmount" data-testid="payment-amount-input" step="0.01" placeholder="Enter payment amount">
                 </div>
                 <div class="form-group">
                     <label>Notes (optional)</label>
-                    <textarea id="paymentNotes" rows="3" placeholder="Add payment notes..."></textarea>
+                    <textarea id="paymentNotes" data-testid="payment-notes-input" rows="3" placeholder="Add payment notes..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('paymentModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="submitPayment()">Record Payment</button>
+                <button class="btn btn-secondary" data-testid="payment-modal-cancel" onclick="closeModal('paymentModal')">Cancel</button>
+                <button class="btn btn-primary" data-testid="payment-modal-submit" onclick="submitPayment()">Record Payment</button>
             </div>
         </div>
     </div>
-    
+
     <script>
         let currentSettlementId = null;
-        
+
         function filterByStatus(status) {
             document.querySelectorAll('.pipeline-stage').forEach(s => s.classList.remove('active'));
             document.querySelector(`.pipeline-stage.${status}`).classList.add('active');
             document.getElementById('filterStatus').value = status;
             applyFilters();
         }
-        
+
         function applyFilters() {
             const status = document.getElementById('filterStatus').value;
             const dateFrom = document.getElementById('filterDateFrom').value;
             const dateTo = document.getElementById('filterDateTo').value;
-            
+
             document.querySelectorAll('#settlementsTable tbody tr').forEach(row => {
                 let show = true;
-                
+
                 if (status && row.dataset.status !== status) show = false;
                 if (dateFrom && row.dataset.date < dateFrom) show = false;
                 if (dateTo && row.dataset.date > dateTo) show = false;
-                
+
                 row.style.display = show ? '' : 'none';
             });
         }
-        
+
         function clearFilters() {
             document.getElementById('filterStatus').value = '';
             document.getElementById('filterDateFrom').value = '';
@@ -781,7 +781,7 @@
             document.querySelectorAll('.pipeline-stage').forEach(s => s.classList.remove('active'));
             applyFilters();
         }
-        
+
         function openSettlementModal(id) {
             currentSettlementId = id;
             fetch(`/api/settlements/${id}`)
@@ -796,7 +796,7 @@
                         document.getElementById('modalInitialDemand').value = s.initial_demand || '';
                         document.getElementById('modalFinalAmount').value = s.final_amount || '';
                         document.getElementById('modalNotes').value = s.settlement_notes || '';
-                        
+
                         let timeline = '';
                         if (s.initial_demand) {
                             timeline += `<div class="offer-item">
@@ -839,20 +839,20 @@
                             </div>`;
                         }
                         document.getElementById('offersTimelineContent').innerHTML = timeline || '<p style="color: #64748b; font-size: 13px;">No offers recorded yet</p>';
-                        
+
                         document.getElementById('settlementModal').classList.add('active');
                     }
                 });
         }
-        
+
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
             currentSettlementId = null;
         }
-        
+
         function saveSettlement() {
             if (!currentSettlementId) return;
-            
+
             const data = {
                 status: document.getElementById('modalStatus').value,
                 target_amount: parseFloat(document.getElementById('modalTargetAmount').value) || 0,
@@ -860,7 +860,7 @@
                 initial_demand: parseFloat(document.getElementById('modalInitialDemand').value) || 0,
                 settlement_notes: document.getElementById('modalNotes').value
             };
-            
+
             fetch(`/api/settlements/${currentSettlementId}`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
@@ -876,23 +876,23 @@
                 }
             });
         }
-        
+
         function openOfferModal(id) {
             currentSettlementId = id;
             document.getElementById('offerAmount').value = '';
             document.getElementById('offerNotes').value = '';
             document.getElementById('offerModal').classList.add('active');
         }
-        
+
         function submitOffer() {
             if (!currentSettlementId) return;
-            
+
             const amount = parseFloat(document.getElementById('offerAmount').value);
             if (!amount) {
                 alert('Please enter an offer amount');
                 return;
             }
-            
+
             fetch(`/api/settlements/${currentSettlementId}/offer`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -911,23 +911,23 @@
                 }
             });
         }
-        
+
         function openSettleModal(id) {
             currentSettlementId = id;
             document.getElementById('settleAmount').value = '';
             document.getElementById('settleNotes').value = '';
             document.getElementById('settleModal').classList.add('active');
         }
-        
+
         function submitSettle() {
             if (!currentSettlementId) return;
-            
+
             const amount = parseFloat(document.getElementById('settleAmount').value);
             if (!amount) {
                 alert('Please enter the final settlement amount');
                 return;
             }
-            
+
             fetch(`/api/settlements/${currentSettlementId}/settle`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -946,23 +946,23 @@
                 }
             });
         }
-        
+
         function openPaymentModal(id) {
             currentSettlementId = id;
             document.getElementById('paymentAmount').value = '';
             document.getElementById('paymentNotes').value = '';
             document.getElementById('paymentModal').classList.add('active');
         }
-        
+
         function submitPayment() {
             if (!currentSettlementId) return;
-            
+
             const amount = parseFloat(document.getElementById('paymentAmount').value);
             if (!amount) {
                 alert('Please enter the payment amount');
                 return;
             }
-            
+
             fetch(`/api/settlements/${currentSettlementId}/payment`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
