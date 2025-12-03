@@ -70,6 +70,16 @@ app = Flask(__name__)
 # Secret key for session management (use environment variable or generate secure key)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
 
+# CI/CD Authentication Bypass (ONLY activates with CI=true AND not in production)
+if os.getenv('CI') == 'true' and os.getenv('FLASK_ENV') != 'production' and os.getenv('REPLIT_DEPLOYMENT') != '1':
+    @app.before_request
+    def ci_mock_auth():
+        if 'staff_id' not in session:
+            session['staff_id'] = 1
+            session['staff_email'] = 'test@example.com'
+            session['staff_role'] = 'admin'
+            session['staff_name'] = 'CI Test Admin'
+
 # Session configuration for secure cookies
 app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JS access
