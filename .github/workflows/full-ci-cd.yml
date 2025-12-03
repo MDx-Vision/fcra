@@ -59,9 +59,9 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Initialize database
+      - - name: Initialize database
         run: |
-          python -c "from app import app, db; app.app_context().push(); db.create_all()"
+          python -c "from database import engine, Base; Base.metadata.create_all(bind=engine)"
 
       - name: Generate Exhaustive Tests
         if: github.event.inputs.generate_all_tests != 'true'
