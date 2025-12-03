@@ -6,8 +6,12 @@ Generates 30-50+ comprehensive tests per feature with full edge case coverage
 import os
 import sys
 import json
+import re
 import subprocess
 from anthropic import Anthropic
+
+MAX_CONTEXT_CHARS = 50000
+MAX_ERROR_LOG_CHARS = 10000
 
 client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 
@@ -104,7 +108,7 @@ EXHAUSTIVE_FIX_PROMPT = """You are an expert at fixing code to make Cypress E2E 
 ## ERROR LOG:
 {error_log}
 
-## CURRENT APPLICATION CODE:
+## RELEVANT CODE (file that needs fixing):
 {app_code}
 
 ## INSTRUCTIONS:
@@ -123,6 +127,13 @@ Return a JSON object with this exact structure:
 }}
 
 Return ONLY the JSON object, no other text."""
+
+
+def truncate_content(content, max_chars=MAX_CONTEXT_CHARS):
+    """Truncate content to max characters with a note"""
+    if len(content) <= max_chars:
+        return content
+    return content[:max_chars] + f"\n\n... [TRUNCATED - {len(content) - max_chars} chars removed]"
 
 
 def get_all_python_files():
@@ -171,6 +182,28 @@ def get_changed_files():
         return []
 
 
+def extract_failing_file_from_error(error_log):
+    """Extract the specific file that's failing from error log"""
+    patterns = [
+        r'at\s+(?:Object\.)?<anonymous>\s+\(([^:]+):',
+        r'Error:.*?(?:in|at)\s+([^\s:]+\.(?:py|js|ts|html))',
+        r'File\s+"([^"]+)"',
+        r'cypress/e2e/([^\s:]+\.cy\.js)',
+        r'([^\s]+\.(?:py|js|ts|html)):\d+:\d+',
+    ]
+    
+    for pattern in patterns:
+        matches = re.findall(pattern, error_log)
+        if matches:
+            for match in matches:
+                if os.path.exists(match):
+                    return match
+                if match.startswith('cypress/') and os.path.exists(match):
+                    return match
+    
+    return None
+
+
 def generate_tests_for_new_features():
     changed_files = get_changed_files()
     relevant_changes = [f for f in changed_files if f.endswith('.py') or f.endswith('.html')]
@@ -182,20 +215,25 @@ def generate_tests_for_new_features():
     print(f"Generating exhaustive tests for: {relevant_changes}")
     
     all_code = []
-    core_files = ['app.py', 'models.py', 'routes.py']
-    for core_file in core_files:
-        if os.path.exists(core_file):
-            all_code.append(f"\n\n=== {core_file} ===\n{read_file(core_file)}")
+    total_chars = 0
     
-    for filepath in relevant_changes:
-        if os.path.exists(filepath) and filepath not in core_files:
-            all_code.append(f"\n\n=== {filepath} ===\n{read_file(filepath)}")
+    for filepath in relevant_changes[:5]:
+        if os.path.exists(filepath):
+            content = read_file(filepath)
+            if total_chars + len(content) < MAX_CONTEXT_CHARS:
+                all_code.append(f"\n\n=== {filepath} ===\n{content}")
+                total_chars += len(content)
     
-    for template in get_all_template_files()[:10]:
-        all_code.append(f"\n\n=== {template} ===\n{read_file(template)}")
+    for template in get_all_template_files()[:3]:
+        content = read_file(template)
+        if total_chars + len(content) < MAX_CONTEXT_CHARS:
+            all_code.append(f"\n\n=== {template} ===\n{content}")
+            total_chars += len(content)
     
-    combined_code = '\n'.join(all_code)
+    combined_code = truncate_content('\n'.join(all_code))
     feature_name = changed_files[0].replace('.py', '').replace('/', '_').replace('.', '_')
+    
+    print(f"Sending {len(combined_code)} characters to API...")
     
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
@@ -222,31 +260,40 @@ def generate_tests_for_new_features():
 def generate_tests_for_entire_app():
     print("Generating exhaustive tests for ENTIRE application...")
     
-    all_code = []
-    for py_file in get_all_python_files():
-        all_code.append(f"\n\n=== {py_file} ===\n{read_file(py_file)}")
-    for template in get_all_template_files():
-        all_code.append(f"\n\n=== {template} ===\n{read_file(template)}")
-    
-    combined_code = '\n'.join(all_code)
-    
     modules = [
-        ('authentication', 'login, logout, session management'),
-        ('clients', 'client CRUD, listing, search'),
-        ('cases', 'case CRUD, status, assignment'),
-        ('violations', 'violation CRUD, types, statutes'),
-        ('analysis', 'analysis CRUD, findings'),
-        ('dispute_letters', 'letter generation, CRUD'),
-        ('staff', 'staff management, roles'),
-        ('dashboard', 'widgets, statistics'),
+        ('authentication', 'login, logout, session management', ['app.py']),
+        ('clients', 'client CRUD, listing, search', ['app.py']),
+        ('cases', 'case CRUD, status, assignment', ['app.py']),
+        ('violations', 'violation CRUD, types, statutes', ['app.py']),
+        ('analysis', 'analysis CRUD, findings', ['app.py']),
+        ('dispute_letters', 'letter generation, CRUD', ['app.py']),
+        ('staff', 'staff management, roles', ['app.py']),
+        ('dashboard', 'widgets, statistics', ['app.py']),
     ]
     
     generated_files = []
     
-    for module_name, module_desc in modules:
+    for module_name, module_desc, relevant_files in modules:
         print(f"Generating tests for: {module_name}")
         
+        all_code = []
+        total_chars = 0
+        
+        for filepath in relevant_files:
+            if os.path.exists(filepath):
+                content = read_file(filepath)
+                if total_chars + len(content) < MAX_CONTEXT_CHARS:
+                    all_code.append(f"\n\n=== {filepath} ===\n{content}")
+                    total_chars += len(content)
+                else:
+                    all_code.append(f"\n\n=== {filepath} (truncated) ===\n{content[:MAX_CONTEXT_CHARS - total_chars]}")
+                    break
+        
+        combined_code = truncate_content('\n'.join(all_code))
+        
         module_prompt = f"Focus on {module_name.upper()} ({module_desc}). Generate 30-50+ exhaustive tests.\n\n{EXHAUSTIVE_TEST_GENERATION_PROMPT.format(code_content=combined_code)}"
+        
+        print(f"Sending {len(module_prompt)} characters to API...")
         
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
@@ -269,18 +316,37 @@ def generate_tests_for_entire_app():
 
 
 def fix_failing_tests(error_log_path, screenshot_path=None):
-    error_log = read_file(error_log_path) if os.path.exists(error_log_path) else "No error log found"
+    """Fix failing tests by analyzing ONLY the error and the specific failing file"""
     
-    app_code = read_file('app.py') if os.path.exists('app.py') else ""
-    models_code = read_file('models.py') if os.path.exists('models.py') else ""
-    full_context = f"app.py:\n{app_code}\n\nmodels.py:\n{models_code}"
+    error_log = ""
+    if os.path.exists(error_log_path):
+        error_log = read_file(error_log_path)
+    else:
+        print(f"Error log not found: {error_log_path}")
+        return False
+    
+    error_log = truncate_content(error_log, MAX_ERROR_LOG_CHARS)
+    print(f"Error log: {len(error_log)} characters")
+    
+    failing_file = extract_failing_file_from_error(error_log)
+    
+    if failing_file and os.path.exists(failing_file):
+        print(f"Identified failing file: {failing_file}")
+        file_content = read_file(failing_file)
+        code_context = truncate_content(f"=== {failing_file} ===\n{file_content}", MAX_CONTEXT_CHARS)
+    else:
+        print("Could not identify specific failing file, using minimal context")
+        code_context = "Unable to identify specific file. Please analyze the error log to determine the fix."
+    
+    total_prompt_size = len(error_log) + len(code_context) + len(EXHAUSTIVE_FIX_PROMPT)
+    print(f"Total prompt size: {total_prompt_size} characters")
     
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=4000,
         messages=[{
             "role": "user",
-            "content": EXHAUSTIVE_FIX_PROMPT.format(error_log=error_log, app_code=full_context)
+            "content": EXHAUSTIVE_FIX_PROMPT.format(error_log=error_log, app_code=code_context)
         }]
     )
     
@@ -301,6 +367,7 @@ def fix_failing_tests(error_log_path, screenshot_path=None):
         return True
     except json.JSONDecodeError as e:
         print(f"Failed to parse fix response: {e}")
+        print(f"Response was: {fix_response[:500]}")
         return False
 
 
