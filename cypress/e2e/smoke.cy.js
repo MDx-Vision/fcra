@@ -4,8 +4,9 @@ describe('Smoke Tests', () => {
     cy.get('body').should('be.visible')
   })
 
-  it('loads the staff login page', () => {
+  it('loads the staff login page with all elements', () => {
     cy.visit('/staff/login')
+    cy.get('[data-testid="login-form"]').should('be.visible')
     cy.get('[data-testid="email-input"]').should('be.visible')
     cy.get('[data-testid="password-input"]').should('be.visible')
     cy.get('[data-testid="login-button"]').should('be.visible')
@@ -17,5 +18,11 @@ describe('Smoke Tests', () => {
       expect(response.body.success).to.eq(true)
       expect(response.body.data).to.have.property('account_status_codes')
     })
+  })
+
+  it('can login and access dashboard', () => {
+    cy.login('test@example.com', 'password123')
+    cy.url().should('include', '/dashboard')
+    cy.get('body').should('be.visible')
   })
 })

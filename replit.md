@@ -99,14 +99,28 @@ The platform is built on Flask and employs a two-stage, section-based analysis a
 The platform includes a complete end-to-end testing infrastructure using Cypress 13.17.0.
 
 **Test Files:**
-- `cypress/e2e/login.cy.js` - Staff login authentication tests
 - `cypress/e2e/smoke.cy.js` - Basic page load verification tests
-- `cypress/e2e/create_item.cy.js` - Item creation workflow tests (staff member creation)
+- `cypress/e2e/login.cy.js` - Staff login authentication tests
+- `cypress/e2e/dashboard.cy.js` - Main dashboard component tests
+- `cypress/e2e/clients.cy.js` - Clients page tests
+- `cypress/e2e/clients_crud.cy.js` - Comprehensive client CRUD operations
+- `cypress/e2e/settlements.cy.js` - Settlements page tests
+- `cypress/e2e/settlements_crud.cy.js` - Comprehensive settlement CRUD operations
+- `cypress/e2e/staff_crud.cy.js` - Staff management tests
+- `cypress/e2e/analytics.cy.js` - Analytics dashboard tests
+- `cypress/e2e/portal_login.cy.js` - Client portal login tests
+- `cypress/e2e/create_item.cy.js` - Item creation workflow tests
 
-**Running Tests:**
+**Running Tests (Replit/NixOS):**
 ```bash
+# Run all tests
+CI=true CYPRESS_SKIP_VERIFY=true CYPRESS_RUN_BINARY=/nix/store/0ydb4ml5crpmir6nyv7xz2m63plby0cq-cypress-13.17.0/opt/cypress/Cypress npx cypress run
+
+# Run specific test file
+CI=true CYPRESS_SKIP_VERIFY=true CYPRESS_RUN_BINARY=/nix/store/0ydb4ml5crpmir6nyv7xz2m63plby0cq-cypress-13.17.0/opt/cypress/Cypress npx cypress run --spec "cypress/e2e/login.cy.js"
+
+# npm shortcuts
 npm run test:e2e              # Run all E2E tests
-npm run test:e2e -- --spec "cypress/e2e/login.cy.js"  # Run specific test file
 npm run db:seed               # Reset database with test user
 ```
 
@@ -115,15 +129,20 @@ npm run db:seed               # Reset database with test user
 - Password: `password123`
 - Role: `admin`
 
+**Custom Cypress Commands:**
+- `cy.login(email, password)` - Robust login command with proper waits (defined in `cypress/support/commands.js`)
+
 **Configuration:**
 - `cypress.config.js` - Cypress configuration with baseUrl http://localhost:5000
 - `cypress/support/e2e.js` - Support file with beforeEach hook for database seeding
+- `cypress/support/commands.js` - Custom login command with explicit waits
 - `seed.py` - Database seeding script that clears tables and creates test user
 
-**NixOS Environment Notes:**
-- Tests use the Nix-provided Cypress binary via `CYPRESS_RUN_BINARY` environment variable
-- The npm script automatically locates and uses the correct binary
-- Tests run headless with xvfb for the virtual display
+**NixOS/Replit Environment Notes:**
+- CRITICAL: Must set `CYPRESS_SKIP_VERIFY=true` to bypass read-only Nix store permission errors
+- Binary location: `/nix/store/0ydb4ml5crpmir6nyv7xz2m63plby0cq-cypress-13.17.0/opt/cypress/Cypress`
+- CI authentication bypass activates when `CI=true` AND not in production
+- All tests use `cy.login()` command for consistent login behavior
 
 ## External Dependencies
 - **Flask**: Python web framework.

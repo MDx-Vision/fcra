@@ -1,9 +1,6 @@
 describe('Settlements Page', () => {
   beforeEach(() => {
-    cy.visit('/staff/login')
-    cy.get('[data-testid="email-input"]').type('test@example.com')
-    cy.get('[data-testid="password-input"]').type('password123')
-    cy.get('[data-testid="login-button"]').click()
+    cy.login('test@example.com', 'password123')
     cy.url().should('include', '/dashboard')
   })
 

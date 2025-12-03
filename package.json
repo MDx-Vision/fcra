@@ -4,7 +4,7 @@
   "description": "FCRA Litigation Automation Platform with AI-powered credit report analysis",
   "scripts": {
     "test": "npm run test:e2e",
-    "test:e2e": "CYPRESS_RUN_BINARY=$(ls /nix/store/*-cypress-*/bin/Cypress 2>/dev/null | head -1) xvfb-run --auto-servernum npx cypress run",
+    "test:e2e": "CI=true CYPRESS_SKIP_VERIFY=true CYPRESS_RUN_BINARY=/nix/store/0ydb4ml5crpmir6nyv7xz2m63plby0cq-cypress-13.17.0/opt/cypress/Cypress npx cypress run",
     "db:seed": "python seed.py"
   },
   "keywords": [
