@@ -145,3 +145,4 @@ jobs:
           git add cypress/e2e/*.cy.js || true
           git diff --staged --quiet || git commit -m "Auto-generated exhaustive tests [skip ci]"
           git push || true
+
