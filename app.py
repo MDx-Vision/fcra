@@ -139,6 +139,46 @@ try:
 except Exception as e:
     print(f"⚠️  Database initialization error: {e}")
 
+def seed_ci_test_data():
+    """Seed test data for CI/CD testing"""
+    if os.getenv('CI') != 'true':
+        return
+    db = get_db()
+    try:
+        existing = db.query(Staff).filter_by(email='test@example.com').first()
+        if existing:
+            db.close()
+            return
+        admin = Staff(
+            email='test@example.com',
+            password_hash=generate_password_hash('testpass123'),
+            first_name='CI Test',
+            last_name='Admin',
+            role='admin',
+            is_active=True
+        )
+        db.add(admin)
+        db.commit()
+        client = Client(
+            name='John Doe',
+            first_name='John',
+            last_name='Doe',
+            email='johndoe@test.com',
+            phone='555-123-4567'
+        )
+        db.add(client)
+        db.commit()
+        print("✅ CI test data seeded")
+    except Exception as e:
+        print(f"⚠️  CI test data seeding: {e}")
+    finally:
+        db.close()
+
+try:
+    seed_ci_test_data()
+except Exception as e:
+    print(f"⚠️  CI seeding error: {e}")
+
 def create_initial_admin():
     """Create initial admin account if no staff exists"""
     db = get_db()
