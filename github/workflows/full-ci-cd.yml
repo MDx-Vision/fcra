@@ -61,7 +61,7 @@ jobs:
 
       - name: Initialize database
         run: |
-          python -c "from app import app, db; app.app_context().push(); db.create_all()"
+          python -c "from database import Base, engine; Base.metadata.create_all(bind=engine)"
 
       - name: Generate Exhaustive Tests
         if: github.event.inputs.generate_all_tests != 'true'
