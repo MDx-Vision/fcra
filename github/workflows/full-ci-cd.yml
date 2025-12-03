@@ -1,0 +1,147 @@
+name: FCRA Full CI/CD with Exhaustive Testing
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      generate_all_tests:
+        description: 'Generate tests for entire application'
+        required: false
+        default: 'false'
+
+env:
+  CI: true
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fcra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install anthropic
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Initialize database
+        run: |
+          python -c "from app import app, db; app.app_context().push(); db.create_all()"
+
+      - name: Generate Exhaustive Tests
+        if: github.event.inputs.generate_all_tests != 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python ci_helpers/claude_assistant.py generate
+        continue-on-error: true
+
+      - name: Generate All Tests
+        if: github.event.inputs.generate_all_tests == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python ci_helpers/claude_assistant.py generate-all
+
+      - name: Start Flask Application
+        run: |
+          python app.py &
+          sleep 10
+          curl --retry 10 --retry-delay 2 --retry-connrefused http://localhost:5000/
+
+      - name: Run Cypress Tests
+        id: cypress
+        uses: cypress-io/github-action@v6
+        with:
+          wait-on: 'http://localhost:5000'
+          wait-on-timeout: 120
+        continue-on-error: true
+
+      - name: Auto-Fix Failing Tests
+        if: steps.cypress.outcome == 'failure'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "Tests failed, attempting auto-fix..."
+          python ci_helpers/claude_assistant.py fix cypress/logs/error.log
+
+      - name: Re-run Tests After Fix
+        if: steps.cypress.outcome == 'failure'
+        id: cypress_retry
+        uses: cypress-io/github-action@v6
+        with:
+          wait-on: 'http://localhost:5000'
+          wait-on-timeout: 120
+        continue-on-error: true
+
+      - name: Upload Screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore
+
+      - name: Upload Videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: ignore
+
+      - name: Deploy to Replit
+        if: steps.cypress.outcome == 'success' || steps.cypress_retry.outcome == 'success'
+        run: |
+          echo "All tests passed! Deployment triggered."
+          curl -X POST "${{ secrets.REPLIT_WEBHOOK_URL }}" || true
+
+      - name: Final Status Check
+        if: steps.cypress.outcome == 'failure' && steps.cypress_retry.outcome == 'failure'
+        run: |
+          echo "Tests failed even after auto-fix attempt"
+          exit 1
+
+      - name: Commit Generated Tests
+        if: success()
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add cypress/e2e/*.cy.js || true
+          git diff --staged --quiet || git commit -m "Auto-generated exhaustive tests [skip ci]"
+          git push || true
