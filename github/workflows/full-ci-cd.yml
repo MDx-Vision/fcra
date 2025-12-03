@@ -1,20 +1,24 @@
-name: FCRA Full CI/CD with Exhaustive Testing
+name: FCRA Full CI/CD
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
+      - master
   pull_request:
-    branches: [main, master]
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 env:
-  CI: true
-  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
+  CI: "true"
+  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/fcra_test"
 
 jobs:
   test-and-deploy:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -35,21 +39,23 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: "3.11"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: "18"
 
       - name: Install Python dependencies
-        run: pip install -r requirements.txt && pip install anthropic
+        run: |
+          pip install -r requirements.txt
+          pip install anthropic
 
       - name: Install Node dependencies
         run: npm ci
 
       - name: Initialize database
-        run: python -c "from database import engine, Base; Base.metadata.create_all(bind=engine)"
+        run: python init_db.py
 
       - name: Generate Exhaustive Tests
         env:
@@ -58,16 +64,15 @@ jobs:
         continue-on-error: true
 
       - name: Start Flask Application
-        run: python app.py &
-
-      - name: Wait for Flask
-        run: sleep 15
+        run: |
+          nohup python app.py &
+          sleep 15
 
       - name: Run Cypress Tests
         id: cypress
         uses: cypress-io/github-action@v6
         with:
-          wait-on: http://localhost:5000
+          wait-on: "http://localhost:5000"
           wait-on-timeout: 120
         continue-on-error: true
 
@@ -82,7 +87,7 @@ jobs:
         id: cypress_retry
         uses: cypress-io/github-action@v6
         with:
-          wait-on: http://localhost:5000
+          wait-on: "http://localhost:5000"
           wait-on-timeout: 120
         continue-on-error: true
 
