@@ -8,9 +8,11 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
-# Add SSL parameter if not present (Replit Postgres requires SSL)
-if 'sslmode' not in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL + "?sslmode=require"
+# CI mode: skip SSL (GitHub Actions uses local PostgreSQL)
+# Production: require SSL for Replit/Neon Postgres
+if os.getenv('CI') != 'true':
+    if 'sslmode' not in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL + "?sslmode=require"
 
 # Create engine with connection pooling + resilience for large text writes
 engine = create_engine(
