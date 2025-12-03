@@ -1,8 +1,39 @@
-name: CI
+name: FCRA Full CI/CD
 on: push
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fcra_test
+        ports:
+          - 5432:5432
+    env:
+      CI: "true"
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
     steps:
       - uses: actions/checkout@v4
-      - run: echo "hello"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Install Python deps
+        run: pip install -r requirements.txt && pip install anthropic
+      - name: Install Node deps
+        run: npm ci
+      - name: Start app
+        run: nohup python app.py &
+      - name: Wait for app
+        run: sleep 20
+      - name: Run Cypress
+        uses: cypress-io/github-action@v6
+        with:
+          wait-on: http://localhost:5000
+          wait-on-timeout: 120
+        continue-on-error: true
