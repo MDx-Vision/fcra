@@ -61,7 +61,7 @@ jobs:
 
       - name: Initialize database
         run: |
-          python -c "from database import Base, engine; Base.metadata.create_all(bind=engine)"
+          python -c "from database import engine, Base; Base.metadata.create_all(bind=engine)"
 
       - name: Generate Exhaustive Tests
         if: github.event.inputs.generate_all_tests != 'true'
@@ -145,4 +145,3 @@ jobs:
           git add cypress/e2e/*.cy.js || true
           git diff --staged --quiet || git commit -m "Auto-generated exhaustive tests [skip ci]"
           git push || true
-
