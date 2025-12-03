@@ -15,6 +15,7 @@ jobs:
     env:
       CI: "true"
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,11 +28,25 @@ jobs:
         run: pip install -r requirements.txt && pip install anthropic
       - name: Install Node deps
         run: npm ci
+      - name: Generate tests
+        run: python ci_helpers/claude_assistant.py generate
+        continue-on-error: true
       - name: Start app
         run: nohup python app.py &
       - name: Wait for app
         run: sleep 20
       - name: Run Cypress
+        id: cypress
+        uses: cypress-io/github-action@v6
+        with:
+          wait-on: http://localhost:5000
+          wait-on-timeout: 120
+        continue-on-error: true
+      - name: Auto-fix failures
+        if: steps.cypress.outcome == 'failure'
+        run: python ci_helpers/claude_assistant.py fix cypress/logs/error.log
+      - name: Re-run after fix
+        if: steps.cypress.outcome == 'failure'
         uses: cypress-io/github-action@v6
         with:
           wait-on: http://localhost:5000
