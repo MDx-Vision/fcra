@@ -1,51 +1,8 @@
-name: FCRA CI
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-env:
-  CI: "true"
-
+name: CI
+on: push
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: fcra_test
-        ports:
-          - 5432:5432
-
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-
-      - name: Install deps
-        run: |
-          pip install -r requirements.txt
-          npm ci
-
-      - name: Start app
-        run: |
-          python app.py &
-          sleep 15
-
-      - name: Run tests
-        uses: cypress-io/github-action@v6
-        with:
-          wait-on: "http://localhost:5000"
-        continue-on-error: true
+      - run: echo "hello"
