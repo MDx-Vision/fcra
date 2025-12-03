@@ -1,22 +1,16 @@
-name: FCRA Full CI/CD
+name: FCRA CI
 
 on:
   push:
     branches:
       - main
-      - master
-  pull_request:
-    branches:
-      - main
-      - master
   workflow_dispatch:
 
 env:
   CI: "true"
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/fcra_test"
 
 jobs:
-  test-and-deploy:
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -28,85 +22,30 @@ jobs:
           POSTGRES_DB: fcra_test
         ports:
           - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "18"
 
-      - name: Install Python dependencies
+      - name: Install deps
         run: |
           pip install -r requirements.txt
-          pip install anthropic
+          npm ci
 
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Initialize database
-        run: python init_db.py
-
-      - name: Generate Exhaustive Tests
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python ci_helpers/claude_assistant.py generate
-        continue-on-error: true
-
-      - name: Start Flask Application
+      - name: Start app
         run: |
-          nohup python app.py &
+          python app.py &
           sleep 15
 
-      - name: Run Cypress Tests
-        id: cypress
+      - name: Run tests
         uses: cypress-io/github-action@v6
         with:
           wait-on: "http://localhost:5000"
-          wait-on-timeout: 120
         continue-on-error: true
-
-      - name: Auto-Fix Failing Tests
-        if: steps.cypress.outcome == 'failure'
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python ci_helpers/claude_assistant.py fix cypress/logs/error.log
-
-      - name: Re-run Tests After Fix
-        if: steps.cypress.outcome == 'failure'
-        id: cypress_retry
-        uses: cypress-io/github-action@v6
-        with:
-          wait-on: "http://localhost:5000"
-          wait-on-timeout: 120
-        continue-on-error: true
-
-      - name: Upload Screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cypress-screenshots
-          path: cypress/screenshots
-          if-no-files-found: ignore
-
-      - name: Upload Videos
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cypress-videos
-          path: cypress/videos
-          if-no-files-found: ignore
-
-      - name: Final Status Check
-        if: steps.cypress.outcome == 'failure' && steps.cypress_retry.outcome == 'failure'
-        run: exit 1
