@@ -1751,6 +1751,61 @@ class CreditPullRequest(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+CREDIT_MONITORING_SERVICES = [
+    'IdentityIQ.com',
+    'MyScoreIQ.com',
+    'SmartCredit.com',
+    'MyFreeScoreNow.com',
+    'HighScoreNow.com',
+    'IdentityClub.com',
+    'PrivacyGuard.com',
+    'IDClub.com',
+    'MyThreeScores.com',
+    'MyScore750.com',
+    'CreditHeroScore.com',
+]
+
+
+class CreditMonitoringCredential(Base):
+    """Store encrypted credentials for credit monitoring service auto-import"""
+    __tablename__ = 'credit_monitoring_credentials'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    service_name = Column(String(100), nullable=False)
+    username = Column(String(255), nullable=False)
+    password_encrypted = Column(Text, nullable=False)
+    is_active = Column(Boolean, default=True)
+    last_import_at = Column(DateTime, nullable=True)
+    last_import_status = Column(String(50), default='pending')
+    last_import_error = Column(Text, nullable=True)
+    import_frequency = Column(String(50), default='manual')
+    next_scheduled_import = Column(DateTime, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    client = relationship('Client', backref='credit_monitoring_credentials')
+    
+    def to_dict(self):
+        """Return dictionary representation (excluding password)"""
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'service_name': self.service_name,
+            'username': self.username,
+            'is_active': self.is_active,
+            'last_import_at': self.last_import_at.isoformat() if self.last_import_at else None,
+            'last_import_status': self.last_import_status,
+            'last_import_error': self.last_import_error,
+            'import_frequency': self.import_frequency,
+            'next_scheduled_import': self.next_scheduled_import.isoformat() if self.next_scheduled_import else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class BillingPlan(Base):
     """Define subscription plans"""
     __tablename__ = 'billing_plans'
@@ -3839,6 +3894,19 @@ def init_db():
         ("credit_pull_requests", "error_message", "TEXT"),
         ("credit_pull_requests", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("credit_pull_requests", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("credit_monitoring_credentials", "id", "SERIAL PRIMARY KEY"),
+        ("credit_monitoring_credentials", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("credit_monitoring_credentials", "service_name", "VARCHAR(100) NOT NULL"),
+        ("credit_monitoring_credentials", "username", "VARCHAR(255) NOT NULL"),
+        ("credit_monitoring_credentials", "password_encrypted", "TEXT NOT NULL"),
+        ("credit_monitoring_credentials", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("credit_monitoring_credentials", "last_import_at", "TIMESTAMP"),
+        ("credit_monitoring_credentials", "last_import_status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("credit_monitoring_credentials", "last_import_error", "TEXT"),
+        ("credit_monitoring_credentials", "import_frequency", "VARCHAR(50) DEFAULT 'manual'"),
+        ("credit_monitoring_credentials", "next_scheduled_import", "TIMESTAMP"),
+        ("credit_monitoring_credentials", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("credit_monitoring_credentials", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("billing_plans", "id", "SERIAL PRIMARY KEY"),
         ("billing_plans", "name", "VARCHAR(100)"),
         ("billing_plans", "display_name", "VARCHAR(255)"),

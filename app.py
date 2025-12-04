@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance, SpecialtyBureauDispute, SPECIALTY_BUREAUS, SPECIALTY_DISPUTE_TYPES, SPECIALTY_LETTER_TYPES, SPECIALTY_RESPONSE_OUTCOMES
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance, SpecialtyBureauDispute, SPECIALTY_BUREAUS, SPECIALTY_DISPUTE_TYPES, SPECIALTY_LETTER_TYPES, SPECIALTY_RESPONSE_OUTCOMES, CreditMonitoringCredential, CREDIT_MONITORING_SERVICES
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -23893,6 +23893,281 @@ def api_create_dispute_from_finding(id):
     except Exception as e:
         db.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/credit-import')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def credit_import_dashboard():
+    """Credit Report Auto-Import Dashboard"""
+    db = get_db()
+    try:
+        credentials = db.query(CreditMonitoringCredential).order_by(CreditMonitoringCredential.created_at.desc()).all()
+        clients = db.query(Client).filter(Client.status != 'cancelled').order_by(Client.name).all()
+        
+        now = datetime.utcnow()
+        day_ago = now - timedelta(days=1)
+        
+        stats = {
+            'total': len(credentials),
+            'active': sum(1 for c in credentials if c.is_active),
+            'recent_imports': sum(1 for c in credentials if c.last_import_at and c.last_import_at > day_ago),
+            'failed': sum(1 for c in credentials if c.last_import_status == 'failed'),
+        }
+        
+        credentials_data = [c.to_dict() for c in credentials]
+        
+        return render_template('credit_import.html',
+            credentials=credentials_data,
+            clients=clients,
+            services=CREDIT_MONITORING_SERVICES,
+            stats=stats
+        )
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/credentials', methods=['GET'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_list_credit_import_credentials():
+    """List all credit monitoring credentials"""
+    db = get_db()
+    try:
+        credentials = db.query(CreditMonitoringCredential).order_by(CreditMonitoringCredential.created_at.desc()).all()
+        return jsonify({
+            'success': True,
+            'credentials': [c.to_dict() for c in credentials]
+        })
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/credentials', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_create_credit_import_credential():
+    """Create new credit monitoring credential"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        
+        if not data.get('client_id'):
+            return jsonify({'success': False, 'error': 'Client ID is required'}), 400
+        if not data.get('service_name'):
+            return jsonify({'success': False, 'error': 'Service name is required'}), 400
+        if not data.get('username'):
+            return jsonify({'success': False, 'error': 'Username is required'}), 400
+        if not data.get('password'):
+            return jsonify({'success': False, 'error': 'Password is required'}), 400
+        
+        client = db.query(Client).filter_by(id=data['client_id']).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        existing = db.query(CreditMonitoringCredential).filter_by(
+            client_id=data['client_id'],
+            service_name=data['service_name']
+        ).first()
+        if existing:
+            return jsonify({'success': False, 'error': 'Credential already exists for this client and service'}), 400
+        
+        encrypted_password = encrypt_value(data['password'])
+        
+        credential = CreditMonitoringCredential(
+            client_id=data['client_id'],
+            service_name=data['service_name'],
+            username=data['username'],
+            password_encrypted=encrypted_password,
+            is_active=True,
+            import_frequency=data.get('import_frequency', 'manual'),
+            last_import_status='pending'
+        )
+        
+        if credential.import_frequency == 'daily':
+            credential.next_scheduled_import = datetime.utcnow() + timedelta(days=1)
+        elif credential.import_frequency == 'weekly':
+            credential.next_scheduled_import = datetime.utcnow() + timedelta(weeks=1)
+        
+        db.add(credential)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Credential created successfully',
+            'credential': credential.to_dict()
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/credentials/<int:id>', methods=['PUT'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_update_credit_import_credential(id):
+    """Update credit monitoring credential"""
+    db = get_db()
+    try:
+        credential = db.query(CreditMonitoringCredential).filter_by(id=id).first()
+        if not credential:
+            return jsonify({'success': False, 'error': 'Credential not found'}), 404
+        
+        data = request.get_json()
+        
+        if 'client_id' in data:
+            credential.client_id = data['client_id']
+        if 'service_name' in data:
+            credential.service_name = data['service_name']
+        if 'username' in data:
+            credential.username = data['username']
+        if 'password' in data and data['password']:
+            credential.password_encrypted = encrypt_value(data['password'])
+        if 'is_active' in data:
+            credential.is_active = data['is_active']
+        if 'import_frequency' in data:
+            credential.import_frequency = data['import_frequency']
+            if credential.import_frequency == 'daily':
+                credential.next_scheduled_import = datetime.utcnow() + timedelta(days=1)
+            elif credential.import_frequency == 'weekly':
+                credential.next_scheduled_import = datetime.utcnow() + timedelta(weeks=1)
+            else:
+                credential.next_scheduled_import = None
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Credential updated successfully',
+            'credential': credential.to_dict()
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/credentials/<int:id>', methods=['DELETE'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_delete_credit_import_credential(id):
+    """Delete credit monitoring credential"""
+    db = get_db()
+    try:
+        credential = db.query(CreditMonitoringCredential).filter_by(id=id).first()
+        if not credential:
+            return jsonify({'success': False, 'error': 'Credential not found'}), 404
+        
+        db.delete(credential)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Credential deleted successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/trigger/<int:client_id>', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_trigger_credit_import(client_id):
+    """Trigger manual credit report import for a client"""
+    db = get_db()
+    try:
+        credentials = db.query(CreditMonitoringCredential).filter_by(
+            client_id=client_id,
+            is_active=True
+        ).all()
+        
+        if not credentials:
+            return jsonify({'success': False, 'error': 'No active credentials found for this client'}), 404
+        
+        for cred in credentials:
+            cred.last_import_status = 'pending'
+            cred.last_import_error = None
+            print(f"📥 Credit import queued for client {client_id}, service: {cred.service_name}")
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Import queued for {len(credentials)} credential(s). Note: Actual scraping requires browser automation (future feature).',
+            'queued_count': len(credentials)
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/trigger-all', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_trigger_all_credit_imports():
+    """Trigger all due credit report imports"""
+    db = get_db()
+    try:
+        now = datetime.utcnow()
+        
+        due_credentials = db.query(CreditMonitoringCredential).filter(
+            CreditMonitoringCredential.is_active == True,
+            CreditMonitoringCredential.import_frequency.in_(['daily', 'weekly']),
+            (CreditMonitoringCredential.next_scheduled_import <= now) | 
+            (CreditMonitoringCredential.next_scheduled_import == None)
+        ).all()
+        
+        for cred in due_credentials:
+            cred.last_import_status = 'pending'
+            cred.last_import_error = None
+            
+            if cred.import_frequency == 'daily':
+                cred.next_scheduled_import = now + timedelta(days=1)
+            elif cred.import_frequency == 'weekly':
+                cred.next_scheduled_import = now + timedelta(weeks=1)
+            
+            print(f"📥 Credit import queued for client {cred.client_id}, service: {cred.service_name}")
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'{len(due_credentials)} import(s) queued. Note: Actual scraping requires browser automation (future feature).',
+            'queued_count': len(due_credentials)
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/stats', methods=['GET'])
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_credit_import_stats():
+    """Get credit import dashboard statistics"""
+    db = get_db()
+    try:
+        credentials = db.query(CreditMonitoringCredential).all()
+        now = datetime.utcnow()
+        day_ago = now - timedelta(days=1)
+        
+        stats = {
+            'total': len(credentials),
+            'active': sum(1 for c in credentials if c.is_active),
+            'recent_imports': sum(1 for c in credentials if c.last_import_at and c.last_import_at > day_ago),
+            'failed': sum(1 for c in credentials if c.last_import_status == 'failed'),
+            'pending': sum(1 for c in credentials if c.last_import_status == 'pending'),
+            'due_for_import': sum(1 for c in credentials if c.is_active and c.next_scheduled_import and c.next_scheduled_import <= now)
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
     finally:
         db.close()
 
