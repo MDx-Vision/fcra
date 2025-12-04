@@ -372,6 +372,35 @@ class CreditImportAutomation:
                 logger.info("Login successful - in member area")
                 return True
             
+            if 'security' in page_lower or 'ssn' in page_lower or 'last four' in page_lower:
+                logger.info("Security question detected - entering SSN last 4")
+                ssn_selectors = [
+                    '#FBfbforcechangesecurityanswer_txtSecurityAnswer',
+                    'input[name="userSecurityAnswer"]',
+                    'input[id*="SecurityAnswer"]',
+                    'input[id*="ssn"]',
+                ]
+                
+                for selector in ssn_selectors:
+                    try:
+                        ssn_field = await self.page.query_selector(selector)
+                        if ssn_field:
+                            await ssn_field.type(ssn_last4, delay=50)
+                            logger.info(f"Entered SSN with selector: {selector}")
+                            
+                            submit_btn = await self.page.query_selector('#FBfbforcechangesecurityanswer_ibtSubmit, button[type="submit"]')
+                            if submit_btn:
+                                await submit_btn.click()
+                                await asyncio.sleep(5)
+                                try:
+                                    await self.page.wait_for_load_state('networkidle', timeout=30000)
+                                except:
+                                    pass
+                                logger.info("Security question submitted")
+                            break
+                    except:
+                        continue
+            
             logger.info(f"Login status unclear, URL: {current_url} - proceeding anyway")
             return True
             
