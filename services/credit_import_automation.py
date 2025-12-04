@@ -7,7 +7,7 @@ import os
 import logging
 import asyncio
 from datetime import datetime
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
