@@ -84,7 +84,7 @@ if os.getenv('CI') == 'true' and os.getenv('FLASK_ENV') != 'production' and os.g
             session['staff_name'] = 'CI Test Admin'
 
 # Session configuration for secure cookies
-app.config['SESSION_COOKIE_SECURE'] = True  # HTTPS only
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('CI') != 'true'  # HTTPS only (disabled in CI)
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JS access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session expiry
