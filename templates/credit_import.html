@@ -621,7 +621,7 @@
         async function triggerImport(clientId) {
             const btn = event.target;
             const originalText = btn.textContent;
-            btn.innerHTML = '<span class="loading-spinner"></span>';
+            btn.innerHTML = '<span class="loading-spinner"></span> Importing...';
             btn.disabled = true;
             
             try {
@@ -632,13 +632,16 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showAlert(result.message || 'Import triggered successfully', 'info');
+                    showAlert(result.message || 'Import completed! Refreshing...', 'success');
+                    // Reload page after short delay to show updated status
+                    setTimeout(() => window.location.reload(), 1500);
                 } else {
                     showAlert(result.error || 'Failed to trigger import', 'error');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
                 }
             } catch (error) {
                 showAlert('Network error: ' + error.message, 'error');
-            } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
             }
