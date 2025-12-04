@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance, SpecialtyBureauDispute, SPECIALTY_BUREAUS, SPECIALTY_DISPUTE_TYPES, SPECIALTY_LETTER_TYPES, SPECIALTY_RESPONSE_OUTCOMES
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -16464,6 +16464,358 @@ def api_update_chexsystems_dispute(dispute_id):
     except Exception as e:
         db.rollback()
         print(f"Update ChexSystems dispute error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# SPECIALTY BUREAU DISPUTES DASHBOARD
+# ============================================================
+
+@app.route('/dashboard/specialty-bureaus')
+@require_staff()
+def dashboard_specialty_bureaus():
+    """Unified specialty bureau disputes dashboard"""
+    db = get_db()
+    try:
+        status = request.args.get('status', 'all')
+        client_id = request.args.get('client_id')
+        bureau = request.args.get('bureau')
+        
+        query = db.query(SpecialtyBureauDispute)
+        if status != 'all':
+            query = query.filter(SpecialtyBureauDispute.status == status)
+        if client_id:
+            query = query.filter(SpecialtyBureauDispute.client_id == int(client_id))
+        if bureau:
+            query = query.filter(SpecialtyBureauDispute.bureau_name == bureau)
+        
+        disputes = query.order_by(SpecialtyBureauDispute.created_at.desc()).limit(50).all()
+        
+        clients = db.query(Client).filter(Client.status.in_(['active', 'signup'])).order_by(Client.name).all()
+        
+        total_disputes = db.query(SpecialtyBureauDispute).count()
+        pending_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'pending').count()
+        sent_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'sent').count()
+        awaiting_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'awaiting_response').count()
+        resolved_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'resolved').count()
+        escalated_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'escalated').count()
+        
+        deleted_outcomes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.response_outcome == 'deleted').count()
+        total_with_outcome = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.response_outcome.isnot(None)).count()
+        success_rate = round((deleted_outcomes / total_with_outcome * 100) if total_with_outcome > 0 else 0)
+        
+        stats = {
+            'total': total_disputes,
+            'pending': pending_disputes,
+            'sent': sent_disputes,
+            'awaiting_response': awaiting_disputes,
+            'resolved': resolved_disputes,
+            'escalated': escalated_disputes,
+            'success_rate': success_rate
+        }
+        
+        bureau_stats = {}
+        for bureau_name in SPECIALTY_BUREAUS:
+            active = db.query(SpecialtyBureauDispute).filter(
+                SpecialtyBureauDispute.bureau_name == bureau_name,
+                SpecialtyBureauDispute.status.in_(['pending', 'sent', 'awaiting_response', 'escalated'])
+            ).count()
+            pending_response = db.query(SpecialtyBureauDispute).filter(
+                SpecialtyBureauDispute.bureau_name == bureau_name,
+                SpecialtyBureauDispute.status == 'awaiting_response'
+            ).count()
+            bureau_stats[bureau_name] = {
+                'active': active,
+                'pending_response': pending_response
+            }
+        
+        disputes_with_clients = []
+        for dispute in disputes:
+            client = db.query(Client).filter(Client.id == dispute.client_id).first()
+            dispute_dict = dispute.to_dict()
+            dispute_dict['client_name'] = client.name if client else 'Unknown'
+            disputes_with_clients.append(dispute_dict)
+        
+        return render_template('specialty_bureaus.html',
+            disputes=disputes_with_clients,
+            clients=clients,
+            stats=stats,
+            bureau_stats=bureau_stats,
+            bureaus=SPECIALTY_BUREAUS,
+            dispute_types=SPECIALTY_DISPUTE_TYPES,
+            letter_types=SPECIALTY_LETTER_TYPES,
+            response_outcomes=SPECIALTY_RESPONSE_OUTCOMES,
+            current_status=status,
+            current_client_id=client_id,
+            current_bureau=bureau
+        )
+    except Exception as e:
+        print(f"Specialty bureaus dashboard error: {e}")
+        import traceback
+        traceback.print_exc()
+        return render_template('specialty_bureaus.html',
+            disputes=[],
+            clients=[],
+            stats={'total': 0, 'pending': 0, 'sent': 0, 'awaiting_response': 0, 'resolved': 0, 'escalated': 0, 'success_rate': 0},
+            bureau_stats={b: {'active': 0, 'pending_response': 0} for b in SPECIALTY_BUREAUS},
+            bureaus=SPECIALTY_BUREAUS,
+            dispute_types=SPECIALTY_DISPUTE_TYPES,
+            letter_types=SPECIALTY_LETTER_TYPES,
+            response_outcomes=SPECIALTY_RESPONSE_OUTCOMES,
+            current_status='all',
+            current_client_id=None,
+            current_bureau=None,
+            error=str(e)
+        )
+    finally:
+        db.close()
+
+
+@app.route('/api/specialty-bureaus/disputes', methods=['GET'])
+@require_staff()
+def api_list_specialty_disputes():
+    """List specialty bureau disputes with filtering"""
+    db = get_db()
+    try:
+        status = request.args.get('status', 'all')
+        client_id = request.args.get('client_id')
+        bureau = request.args.get('bureau')
+        
+        query = db.query(SpecialtyBureauDispute)
+        
+        if status != 'all':
+            query = query.filter(SpecialtyBureauDispute.status == status)
+        if client_id:
+            query = query.filter(SpecialtyBureauDispute.client_id == int(client_id))
+        if bureau:
+            query = query.filter(SpecialtyBureauDispute.bureau_name == bureau)
+        
+        disputes = query.order_by(SpecialtyBureauDispute.created_at.desc()).all()
+        
+        disputes_with_clients = []
+        for dispute in disputes:
+            client = db.query(Client).filter(Client.id == dispute.client_id).first()
+            dispute_dict = dispute.to_dict()
+            dispute_dict['client_name'] = client.name if client else 'Unknown'
+            disputes_with_clients.append(dispute_dict)
+        
+        return jsonify({
+            'success': True,
+            'disputes': disputes_with_clients,
+            'count': len(disputes)
+        })
+    except Exception as e:
+        print(f"Specialty disputes list error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/specialty-bureaus/disputes', methods=['POST'])
+@require_staff()
+def api_create_specialty_dispute():
+    """Create a new specialty bureau dispute"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        required_fields = ['client_id', 'bureau_name', 'dispute_type', 'account_name', 'dispute_reason']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+        
+        if data['bureau_name'] not in SPECIALTY_BUREAUS:
+            return jsonify({'success': False, 'error': f"Invalid bureau. Must be one of: {', '.join(SPECIALTY_BUREAUS)}"}), 400
+        
+        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+        
+        letter_sent_date = None
+        response_due_date = None
+        if data.get('letter_sent_date'):
+            try:
+                letter_sent_date = datetime.fromisoformat(data['letter_sent_date'].replace('Z', '+00:00').replace('T', ' ').split('+')[0])
+                response_due_date = letter_sent_date + timedelta(days=30)
+            except:
+                pass
+        
+        dispute = SpecialtyBureauDispute(
+            client_id=data['client_id'],
+            bureau_name=data['bureau_name'],
+            dispute_type=data['dispute_type'],
+            account_name=data['account_name'],
+            account_number=data.get('account_number'),
+            dispute_reason=data['dispute_reason'],
+            dispute_details=data.get('dispute_details', {}),
+            supporting_docs=data.get('supporting_docs', []),
+            letter_sent_date=letter_sent_date,
+            letter_type=data.get('letter_type'),
+            tracking_number=data.get('tracking_number'),
+            response_due_date=response_due_date,
+            notes=data.get('notes'),
+            status='pending' if not letter_sent_date else 'sent'
+        )
+        
+        db.add(dispute)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'dispute': dispute.to_dict(),
+            'message': 'Specialty bureau dispute created successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Create specialty dispute error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/specialty-bureaus/disputes/<int:dispute_id>', methods=['PUT'])
+@require_staff()
+def api_update_specialty_dispute(dispute_id):
+    """Update a specialty bureau dispute"""
+    db = get_db()
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        dispute = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.id == dispute_id).first()
+        if not dispute:
+            return jsonify({'success': False, 'error': 'Dispute not found'}), 404
+        
+        updatable_fields = [
+            'bureau_name', 'dispute_type', 'account_name', 'account_number',
+            'dispute_reason', 'dispute_details', 'supporting_docs',
+            'letter_type', 'tracking_number', 'response_outcome',
+            'status', 'escalation_level', 'next_action', 'notes'
+        ]
+        
+        date_fields = ['letter_sent_date', 'response_due_date', 'response_received_date']
+        
+        for field in updatable_fields:
+            if field in data:
+                setattr(dispute, field, data[field])
+        
+        for field in date_fields:
+            if field in data:
+                if data[field]:
+                    try:
+                        setattr(dispute, field, datetime.fromisoformat(data[field].replace('Z', '+00:00').replace('T', ' ').split('+')[0]))
+                    except:
+                        pass
+                else:
+                    setattr(dispute, field, None)
+        
+        if data.get('letter_sent_date') and not dispute.response_due_date:
+            dispute.response_due_date = dispute.letter_sent_date + timedelta(days=30)
+        
+        if data.get('status') == 'sent' and dispute.letter_sent_date:
+            dispute.status = 'awaiting_response'
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'dispute': dispute.to_dict(),
+            'message': 'Dispute updated successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Update specialty dispute error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/specialty-bureaus/disputes/<int:dispute_id>', methods=['DELETE'])
+@require_staff()
+def api_delete_specialty_dispute(dispute_id):
+    """Delete a specialty bureau dispute"""
+    db = get_db()
+    try:
+        dispute = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.id == dispute_id).first()
+        if not dispute:
+            return jsonify({'success': False, 'error': 'Dispute not found'}), 404
+        
+        db.delete(dispute)
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Dispute deleted successfully'
+        })
+    except Exception as e:
+        db.rollback()
+        print(f"Delete specialty dispute error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/specialty-bureaus/stats', methods=['GET'])
+@require_staff()
+def api_specialty_bureaus_stats():
+    """Get aggregate stats for specialty bureaus dashboard"""
+    db = get_db()
+    try:
+        total_disputes = db.query(SpecialtyBureauDispute).count()
+        pending_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'pending').count()
+        sent_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'sent').count()
+        awaiting_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'awaiting_response').count()
+        resolved_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'resolved').count()
+        escalated_disputes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.status == 'escalated').count()
+        
+        deleted_outcomes = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.response_outcome == 'deleted').count()
+        total_with_outcome = db.query(SpecialtyBureauDispute).filter(SpecialtyBureauDispute.response_outcome.isnot(None)).count()
+        success_rate = round((deleted_outcomes / total_with_outcome * 100) if total_with_outcome > 0 else 0)
+        
+        bureau_stats = {}
+        for bureau_name in SPECIALTY_BUREAUS:
+            active = db.query(SpecialtyBureauDispute).filter(
+                SpecialtyBureauDispute.bureau_name == bureau_name,
+                SpecialtyBureauDispute.status.in_(['pending', 'sent', 'awaiting_response', 'escalated'])
+            ).count()
+            pending_response = db.query(SpecialtyBureauDispute).filter(
+                SpecialtyBureauDispute.bureau_name == bureau_name,
+                SpecialtyBureauDispute.status == 'awaiting_response'
+            ).count()
+            total_bureau = db.query(SpecialtyBureauDispute).filter(
+                SpecialtyBureauDispute.bureau_name == bureau_name
+            ).count()
+            resolved_bureau = db.query(SpecialtyBureauDispute).filter(
+                SpecialtyBureauDispute.bureau_name == bureau_name,
+                SpecialtyBureauDispute.status == 'resolved'
+            ).count()
+            bureau_stats[bureau_name] = {
+                'active': active,
+                'pending_response': pending_response,
+                'total': total_bureau,
+                'resolved': resolved_bureau
+            }
+        
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total': total_disputes,
+                'pending': pending_disputes,
+                'sent': sent_disputes,
+                'awaiting_response': awaiting_disputes,
+                'resolved': resolved_disputes,
+                'escalated': escalated_disputes,
+                'success_rate': success_rate
+            },
+            'bureau_stats': bureau_stats
+        })
+    except Exception as e:
+        print(f"Specialty bureaus stats error: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()

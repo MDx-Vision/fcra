@@ -3199,6 +3199,98 @@ class ChexSystemsDispute(Base):
 
 
 # ============================================================
+# SPECIALTY BUREAU DISPUTES (All 9 Secondary CRAs)
+# ============================================================
+
+SPECIALTY_BUREAUS = [
+    'Innovis',
+    'ChexSystems', 
+    'Clarity Services Inc',
+    'LexisNexis',
+    'CoreLogic Teletrack',
+    'Factor Trust Inc',
+    'MicroBilt/PRBC',
+    'LexisNexis Risk Solutions',
+    'DataX Ltd'
+]
+
+SPECIALTY_DISPUTE_TYPES = [
+    'inaccurate_info',
+    'identity_theft',
+    'obsolete_data',
+    'not_mine',
+    'paid_account',
+    'other'
+]
+
+SPECIALTY_LETTER_TYPES = [
+    'initial_dispute',
+    'follow_up',
+    'intent_to_sue'
+]
+
+SPECIALTY_RESPONSE_OUTCOMES = [
+    'deleted',
+    'verified',
+    'modified',
+    'frivolous',
+    'pending',
+    'no_response'
+]
+
+class SpecialtyBureauDispute(Base):
+    """Unified dispute tracking for all 9 specialty consumer reporting agencies"""
+    __tablename__ = 'specialty_bureau_disputes'
+    
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    bureau_name = Column(String(100), nullable=False, index=True)
+    dispute_type = Column(String(100), nullable=False)
+    account_name = Column(String(255), nullable=False)
+    account_number = Column(String(100), nullable=True)
+    dispute_reason = Column(Text, nullable=False)
+    dispute_details = Column(JSON)
+    supporting_docs = Column(JSON)
+    letter_sent_date = Column(DateTime)
+    letter_type = Column(String(100))
+    tracking_number = Column(String(100))
+    response_due_date = Column(DateTime)
+    response_received_date = Column(DateTime)
+    response_outcome = Column(String(50))
+    status = Column(String(50), default='pending', index=True)
+    escalation_level = Column(Integer, default=1)
+    next_action = Column(String(255))
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'bureau_name': self.bureau_name,
+            'dispute_type': self.dispute_type,
+            'account_name': self.account_name,
+            'account_number': self.account_number,
+            'dispute_reason': self.dispute_reason,
+            'dispute_details': self.dispute_details or {},
+            'supporting_docs': self.supporting_docs or [],
+            'letter_sent_date': self.letter_sent_date.isoformat() if self.letter_sent_date else None,
+            'letter_type': self.letter_type,
+            'tracking_number': self.tracking_number,
+            'response_due_date': self.response_due_date.isoformat() if self.response_due_date else None,
+            'response_received_date': self.response_received_date.isoformat() if self.response_received_date else None,
+            'response_outcome': self.response_outcome,
+            'status': self.status,
+            'escalation_level': self.escalation_level,
+            'next_action': self.next_action,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+# ============================================================
 # FRIVOLOUSNESS DEFENSE TRACKER
 # ============================================================
 
