@@ -223,8 +223,8 @@ def require_staff(roles=None):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             if 'staff_id' not in session:
-                if request.is_json:
-                    return jsonify({'error': 'Authentication required'}), 401
+                if request.is_json or request.path.startswith('/api/'):
+                    return jsonify({'success': False, 'error': 'Session expired. Please log in again.'}), 401
                 return redirect('/staff/login')
             
             if roles and session.get('staff_role') not in roles:
