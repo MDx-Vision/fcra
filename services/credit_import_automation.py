@@ -448,29 +448,46 @@ class CreditImportAutomation:
     async def _download_report(self, config: Dict, client_id: int, client_name: str) -> Optional[Dict]:
         """Navigate to credit report and download/save it."""
         try:
-            report_selectors = [
-                'a[href*="credit-report"]',
-                'a[href*="creditreport"]',
-                'a[href*="view-report"]',
-                'a[href*="viewreport"]',
-                '.credit-report-link',
-                '#view-report',
-                'a:has-text("View Report")',
-                'a:has-text("Credit Report")',
-                'a:has-text("View Credit Report")',
-                'button:has-text("View Report")',
-            ]
+            flow = config.get('report_download_flow', '')
             
-            for selector in report_selectors:
+            if flow == 'myscoreiq':
+                logger.info("Navigating to MyScoreIQ credit report page...")
+                await self.page.goto('https://member.myscoreiq.com/CreditReport.aspx', wait_until='networkidle', timeout=60000)
+                await asyncio.sleep(5)
+                
                 try:
-                    link = await self.page.query_selector(selector)
-                    if link:
-                        await link.click()
-                        await self.page.wait_for_load_state('networkidle', timeout=30000)
+                    show_all = await self.page.query_selector('a:has-text("Show All")')
+                    if show_all:
+                        await show_all.click()
                         await asyncio.sleep(2)
-                        break
                 except:
-                    continue
+                    pass
+            else:
+                report_selectors = [
+                    'a[href*="credit-report"]',
+                    'a[href*="creditreport"]',
+                    'a[href*="CreditReport"]',
+                    'a[href*="view-report"]',
+                    'a[href*="viewreport"]',
+                    '.credit-report-link',
+                    '#view-report',
+                    'a:has-text("View Report")',
+                    'a:has-text("Credit Report")',
+                    'a:has-text("View Credit Report")',
+                    'a:has-text("3 Bureau Credit Report")',
+                    'button:has-text("View Report")',
+                ]
+                
+                for selector in report_selectors:
+                    try:
+                        link = await self.page.query_selector(selector)
+                        if link:
+                            await link.click()
+                            await self.page.wait_for_load_state('networkidle', timeout=30000)
+                            await asyncio.sleep(2)
+                            break
+                    except:
+                        continue
             
             html_content = await self.page.content()
             

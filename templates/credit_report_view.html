@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Report - {{ client_name }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            padding: 24px 32px;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .client-info {
+            text-align: right;
+        }
+        
+        .client-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .report-date {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+        
+        .scores-section {
+            margin-bottom: 32px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: white;
+        }
+        
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        
+        .score-card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .score-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
+        
+        .score-card.transunion {
+            border-top: 4px solid #3b82f6;
+        }
+        
+        .score-card.experian {
+            border-top: 4px solid #ef4444;
+        }
+        
+        .score-card.equifax {
+            border-top: 4px solid #f59e0b;
+        }
+        
+        .bureau-logo {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+        
+        .transunion .bureau-logo { color: #3b82f6; }
+        .experian .bureau-logo { color: #ef4444; }
+        .equifax .bureau-logo { color: #f59e0b; }
+        
+        .score-value {
+            font-size: 72px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+        
+        .score-good { color: #10b981; }
+        .score-fair { color: #f59e0b; }
+        .score-poor { color: #ef4444; }
+        .score-na { color: #6b7280; font-size: 36px; }
+        
+        .score-rating {
+            font-size: 14px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .summary-section {
+            margin-bottom: 32px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        
+        .summary-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .summary-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        
+        .summary-label {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .accounts-section {
+            margin-bottom: 32px;
+        }
+        
+        .accounts-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .accounts-table th {
+            background: #0f172a;
+            padding: 16px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .accounts-table td {
+            padding: 16px;
+            border-bottom: 1px solid #334155;
+            font-size: 14px;
+        }
+        
+        .accounts-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .accounts-table tr:hover {
+            background: #334155;
+        }
+        
+        .creditor-name {
+            font-weight: 600;
+            color: white;
+        }
+        
+        .account-number {
+            font-size: 12px;
+            color: #6b7280;
+            font-family: monospace;
+        }
+        
+        .bureau-dots {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .bureau-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .bureau-dot.tu { background: #3b82f6; color: white; }
+        .bureau-dot.ex { background: #ef4444; color: white; }
+        .bureau-dot.eq { background: #f59e0b; color: white; }
+        .bureau-dot.inactive { background: #374151; color: #6b7280; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-open { background: #10b981; color: white; }
+        .status-closed { background: #6b7280; color: white; }
+        .status-collection { background: #ef4444; color: white; }
+        .status-late { background: #f59e0b; color: white; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #6b7280;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .print-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .print-btn:hover {
+            background: #2563eb;
+        }
+        
+        .back-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .inquiries-section, .collections-section, .public-records-section {
+            margin-bottom: 32px;
+        }
+        
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .item-list {
+            list-style: none;
+        }
+        
+        .item-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .item-list li:last-child {
+            border-bottom: none;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            .header {
+                background: white;
+                border-bottom: 2px solid #000;
+            }
+            .score-card, .summary-card, .card {
+                background: white;
+                border: 1px solid #ccc;
+            }
+            .print-btn, .back-link {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .scores-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">BA</div>
+                <span class="logo-text">Brightpath Ascend</span>
+            </div>
+            <div class="client-info">
+                <div class="client-name">{{ client_name }}</div>
+                <div class="report-date">Report Date: {{ report_date }}</div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <a href="/dashboard/credit-import" class="back-link">&larr; Back to Credit Import</a>
+            <button class="print-btn" onclick="window.print()">Print Report</button>
+        </div>
+        
+        <section class="scores-section">
+            <h2 class="section-title">Credit Scores</h2>
+            <div class="scores-grid">
+                <div class="score-card transunion">
+                    <div class="bureau-logo">TransUnion</div>
+                    {% if scores.transunion %}
+                        <div class="score-value {% if scores.transunion >= 670 %}score-good{% elif scores.transunion >= 580 %}score-fair{% else %}score-poor{% endif %}">
+                            {{ scores.transunion }}
+                        </div>
+                        <div class="score-rating">
+                            {% if scores.transunion >= 800 %}Exceptional{% elif scores.transunion >= 740 %}Very Good{% elif scores.transunion >= 670 %}Good{% elif scores.transunion >= 580 %}Fair{% else %}Poor{% endif %}
+                        </div>
+                    {% else %}
+                        <div class="score-value score-na">N/A</div>
+                        <div class="score-rating">Not Available</div>
+                    {% endif %}
+                </div>
+                
+                <div class="score-card experian">
+                    <div class="bureau-logo">Experian</div>
+                    {% if scores.experian %}
+                        <div class="score-value {% if scores.experian >= 670 %}score-good{% elif scores.experian >= 580 %}score-fair{% else %}score-poor{% endif %}">
+                            {{ scores.experian }}
+                        </div>
+                        <div class="score-rating">
+                            {% if scores.experian >= 800 %}Exceptional{% elif scores.experian >= 740 %}Very Good{% elif scores.experian >= 670 %}Good{% elif scores.experian >= 580 %}Fair{% else %}Poor{% endif %}
+                        </div>
+                    {% else %}
+                        <div class="score-value score-na">N/A</div>
+                        <div class="score-rating">Not Available</div>
+                    {% endif %}
+                </div>
+                
+                <div class="score-card equifax">
+                    <div class="bureau-logo">Equifax</div>
+                    {% if scores.equifax %}
+                        <div class="score-value {% if scores.equifax >= 670 %}score-good{% elif scores.equifax >= 580 %}score-fair{% else %}score-poor{% endif %}">
+                            {{ scores.equifax }}
+                        </div>
+                        <div class="score-rating">
+                            {% if scores.equifax >= 800 %}Exceptional{% elif scores.equifax >= 740 %}Very Good{% elif scores.equifax >= 670 %}Good{% elif scores.equifax >= 580 %}Fair{% else %}Poor{% endif %}
+                        </div>
+                    {% else %}
+                        <div class="score-value score-na">N/A</div>
+                        <div class="score-rating">Not Available</div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+        
+        <section class="summary-section">
+            <h2 class="section-title">Report Summary</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-value">{{ summary.total_accounts or 0 }}</div>
+                    <div class="summary-label">Total Accounts</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value">{{ summary.total_inquiries or 0 }}</div>
+                    <div class="summary-label">Inquiries</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="color: {% if summary.total_collections > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.total_collections or 0 }}</div>
+                    <div class="summary-label">Collections</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="color: {% if summary.total_public_records > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.total_public_records or 0 }}</div>
+                    <div class="summary-label">Public Records</div>
+                </div>
+            </div>
+        </section>
+        
+        {% if accounts %}
+        <section class="accounts-section">
+            <h2 class="section-title">Trade Lines ({{ accounts|length }})</h2>
+            <table class="accounts-table">
+                <thead>
+                    <tr>
+                        <th>Creditor</th>
+                        <th>Account #</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Bureaus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in accounts[:25] %}
+                    <tr>
+                        <td>
+                            <div class="creditor-name">{{ account.creditor }}</div>
+                        </td>
+                        <td><span class="account-number">{{ account.account_number }}</span></td>
+                        <td>{{ account.account_type }}</td>
+                        <td>
+                            <span class="status-badge status-open">{{ account.status }}</span>
+                        </td>
+                        <td>
+                            <div class="bureau-dots">
+                                <span class="bureau-dot {% if account.bureaus.transunion %}tu{% else %}inactive{% endif %}">TU</span>
+                                <span class="bureau-dot {% if account.bureaus.experian %}ex{% else %}inactive{% endif %}">EX</span>
+                                <span class="bureau-dot {% if account.bureaus.equifax %}eq{% else %}inactive{% endif %}">EQ</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if accounts|length > 25 %}
+            <p style="text-align: center; padding: 16px; color: #6b7280;">Showing 25 of {{ accounts|length }} accounts</p>
+            {% endif %}
+        </section>
+        {% endif %}
+        
+        {% if inquiries %}
+        <section class="inquiries-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Inquiries ({{ inquiries|length }})</h3>
+                </div>
+                <ul class="item-list">
+                    {% for inquiry in inquiries[:10] %}
+                    <li>
+                        <span>{{ inquiry.creditor or 'Unknown Creditor' }}</span>
+                        <span style="color: #6b7280;">{{ inquiry.date }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+        {% endif %}
+        
+        {% if collections %}
+        <section class="collections-section">
+            <div class="card" style="border-left: 4px solid #ef4444;">
+                <div class="card-header">
+                    <h3 class="card-title" style="color: #ef4444;">Collections ({{ collections|length }})</h3>
+                </div>
+                <ul class="item-list">
+                    {% for collection in collections %}
+                    <li>
+                        <span>{{ collection.agency }}</span>
+                        <span style="color: #ef4444; font-weight: 600;">{{ collection.amount }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+        {% endif %}
+        
+        {% if public_records %}
+        <section class="public-records-section">
+            <div class="card" style="border-left: 4px solid #f59e0b;">
+                <div class="card-header">
+                    <h3 class="card-title" style="color: #f59e0b;">Public Records ({{ public_records|length }})</h3>
+                </div>
+                <ul class="item-list">
+                    {% for record in public_records %}
+                    <li>
+                        <span>{{ record.type }}</span>
+                        <span style="color: #6b7280;">{{ record.status }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+        {% endif %}
+        
+        <div style="text-align: center; padding: 32px; color: #6b7280; font-size: 12px;">
+            <p>This report was imported from {{ service_name }} on {{ report_date }}</p>
+            <p>Brightpath Ascend FCRA Platform</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -24296,7 +24296,43 @@ def api_credit_import_browser_status():
 @app.route('/api/credit-import/report/<int:credential_id>')
 @require_staff(roles=['admin', 'paralegal', 'attorney'])
 def api_view_credit_import_report(credential_id):
-    """View downloaded credit report"""
+    """View downloaded credit report in clean three-bureau format"""
+    from services.credit_report_parser import parse_credit_report
+    
+    db = get_db()
+    try:
+        cred = db.query(CreditMonitoringCredential).filter_by(id=credential_id).first()
+        if not cred or not cred.last_report_path:
+            return jsonify({'success': False, 'error': 'No report found'}), 404
+        
+        report_path = cred.last_report_path
+        if not os.path.exists(report_path):
+            return jsonify({'success': False, 'error': 'Report file not found'}), 404
+        
+        parsed_data = parse_credit_report(report_path, cred.service_name)
+        
+        client_name = cred.client.name if cred.client else f"Client {cred.client_id}"
+        report_date = cred.last_import_at.strftime('%B %d, %Y at %I:%M %p') if cred.last_import_at else 'Unknown'
+        
+        return render_template('credit_report_view.html',
+            client_name=client_name,
+            service_name=cred.service_name,
+            report_date=report_date,
+            scores=parsed_data.get('scores', {}),
+            accounts=parsed_data.get('accounts', []),
+            inquiries=parsed_data.get('inquiries', []),
+            collections=parsed_data.get('collections', []),
+            public_records=parsed_data.get('public_records', []),
+            summary=parsed_data.get('summary', {}),
+        )
+    finally:
+        db.close()
+
+
+@app.route('/api/credit-import/report/<int:credential_id>/raw')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_view_credit_import_report_raw(credential_id):
+    """View raw downloaded credit report HTML"""
     db = get_db()
     try:
         cred = db.query(CreditMonitoringCredential).filter_by(id=credential_id).first()
