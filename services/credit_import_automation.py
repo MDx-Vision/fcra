@@ -449,6 +449,34 @@ class CreditImportAutomation:
         """Navigate to credit report and download/save it."""
         try:
             flow = config.get('report_download_flow', '')
+            captured_data = {'responses': []}
+            
+            async def capture_response(response):
+                """Capture XHR responses that might contain credit data."""
+                try:
+                    url = response.url
+                    content_type = response.headers.get('content-type', '')
+                    
+                    if 'json' in content_type or url.endswith('.json') or 'api' in url.lower() or 'data' in url.lower():
+                        try:
+                            body = await response.text()
+                            if body and len(body) > 100:
+                                import json
+                                try:
+                                    json_data = json.loads(body)
+                                    captured_data['responses'].append({
+                                        'url': url,
+                                        'data': json_data
+                                    })
+                                    logger.info(f"Captured JSON response from: {url[:100]}")
+                                except:
+                                    pass
+                        except:
+                            pass
+                except Exception as e:
+                    pass
+            
+            self.page.on('response', capture_response)
             
             if flow == 'myscoreiq':
                 logger.info("Navigating to MyScoreIQ credit report page...")
@@ -521,10 +549,17 @@ class CreditImportAutomation:
             
             await asyncio.sleep(5)
             
+            logger.info(f"Captured {len(captured_data['responses'])} XHR responses")
+            for resp in captured_data['responses']:
+                logger.info(f"  - {resp['url'][:80]}")
+            
             html_content = await self.page.content()
             
             scores = await self._extract_scores()
-            accounts = await self._extract_accounts_data()
+            accounts = self._extract_accounts_from_xhr(captured_data['responses'])
+            
+            if not accounts:
+                accounts = await self._extract_accounts_data()
             
             timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
             safe_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in client_name)
@@ -535,6 +570,13 @@ class CreditImportAutomation:
                 f.write(html_content)
             
             import json
+            
+            xhr_filename = f"{client_id}_{safe_name}_{timestamp}_xhr.json"
+            xhr_filepath = REPORTS_DIR / xhr_filename
+            with open(xhr_filepath, 'w', encoding='utf-8') as f:
+                json.dump(captured_data['responses'], f, indent=2)
+            logger.info(f"Saved XHR data to {xhr_filepath}")
+            
             json_filename = f"{client_id}_{safe_name}_{timestamp}.json"
             json_filepath = REPORTS_DIR / json_filename
             extracted_data = {
@@ -652,6 +694,110 @@ class CreditImportAutomation:
             logger.info(f"Extracted scores from td.info pattern: {scores}")
         
         return scores
+    
+    def _extract_accounts_from_xhr(self, responses: List[Dict]) -> List[Dict]:
+        """Extract accounts from captured XHR responses."""
+        accounts = []
+        
+        for resp in responses:
+            try:
+                data = resp.get('data', {})
+                
+                if isinstance(data, dict):
+                    for key in ['tradelines', 'accounts', 'tradeLines', 'Accounts', 'TradeLines', 
+                                'creditAccounts', 'CreditAccounts', 'tpartitions', 'TPartitions']:
+                        if key in data:
+                            items = data[key]
+                            if isinstance(items, list):
+                                for item in items:
+                                    account = self._parse_account_item(item)
+                                    if account:
+                                        accounts.append(account)
+                    
+                    if 'reportData' in data or 'ReportData' in data:
+                        report_data = data.get('reportData') or data.get('ReportData', {})
+                        if isinstance(report_data, dict):
+                            for key in ['tradelines', 'accounts', 'tradeLines']:
+                                if key in report_data:
+                                    items = report_data[key]
+                                    if isinstance(items, list):
+                                        for item in items:
+                                            account = self._parse_account_item(item)
+                                            if account:
+                                                accounts.append(account)
+                
+                elif isinstance(data, list):
+                    for item in data:
+                        account = self._parse_account_item(item)
+                        if account:
+                            accounts.append(account)
+                            
+            except Exception as e:
+                logger.warning(f"Error parsing XHR response: {e}")
+        
+        logger.info(f"Extracted {len(accounts)} accounts from XHR data")
+        return accounts
+    
+    def _parse_account_item(self, item: Dict) -> Optional[Dict]:
+        """Parse a single account/tradeline item from XHR data."""
+        if not isinstance(item, dict):
+            return None
+        
+        name_keys = ['name', 'creditorName', 'creditor', 'Name', 'CreditorName', 'accountName']
+        name = None
+        for key in name_keys:
+            if key in item and item[key]:
+                name = str(item[key]).strip()
+                break
+        
+        if not name:
+            return None
+        
+        account = {
+            'creditor': name,
+            'account_number': None,
+            'account_type': None,
+            'status': None,
+            'balance': None,
+            'credit_limit': None,
+            'payment_status': None,
+            'date_opened': None,
+            'bureaus': {}
+        }
+        
+        number_keys = ['number', 'accountNumber', 'AccountNumber', 'acctNumber']
+        for key in number_keys:
+            if key in item and item[key]:
+                account['account_number'] = str(item[key]).strip()
+                break
+        
+        type_keys = ['type', 'accountType', 'AccountType', 'classification']
+        for key in type_keys:
+            if key in item and item[key]:
+                account['account_type'] = str(item[key]).strip()
+                break
+        
+        status_keys = ['status', 'paymentStatus', 'Status', 'PaymentStatus', 'condition']
+        for key in status_keys:
+            if key in item and item[key]:
+                account['status'] = str(item[key]).strip()
+                break
+        
+        balance_keys = ['balance', 'currentBalance', 'Balance', 'CurrentBalance']
+        for key in balance_keys:
+            if key in item and item[key]:
+                try:
+                    account['balance'] = float(str(item[key]).replace('$', '').replace(',', ''))
+                except:
+                    account['balance'] = str(item[key])
+                break
+        
+        for bureau in ['TUC', 'EXP', 'EQF', 'transunion', 'experian', 'equifax']:
+            if bureau in item and isinstance(item[bureau], dict):
+                bureau_key = bureau.lower().replace('tuc', 'transunion').replace('exp', 'experian').replace('eqf', 'equifax')
+                account['bureaus'][bureau_key] = item[bureau]
+        
+        return account
     
     async def _extract_accounts_data(self) -> List[Dict]:
         """Extract account/tradeline data from the credit report page."""

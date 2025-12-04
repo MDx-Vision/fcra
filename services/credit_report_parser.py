@@ -257,27 +257,36 @@ def parse_credit_report(html_path: str, service_name: str = 'unknown') -> Dict:
         if extracted_data:
             if extracted_data.get('scores'):
                 for bureau, score in extracted_data['scores'].items():
-                    if score and (not parsed['scores'].get(bureau)):
+                    if score:
                         parsed['scores'][bureau] = score
             
-            if extracted_data.get('accounts'):
+            if extracted_data.get('accounts') and len(extracted_data['accounts']) > 0:
+                parsed['accounts'] = []
                 for acct in extracted_data['accounts']:
-                    if acct not in parsed['accounts']:
-                        parsed['accounts'].append({
-                            'creditor': acct.get('creditor', 'Unknown'),
-                            'account_number': acct.get('account_number', 'N/A'),
-                            'account_type': acct.get('account_type', 'Unknown'),
-                            'status': acct.get('status', 'Unknown'),
-                            'balance': acct.get('balance'),
-                            'credit_limit': acct.get('credit_limit'),
-                            'payment_status': acct.get('payment_status'),
-                            'date_opened': acct.get('date_opened'),
-                            'bureaus': acct.get('bureaus', {
-                                'transunion': True,
-                                'experian': True,
-                                'equifax': True,
-                            })
+                    parsed['accounts'].append({
+                        'creditor': acct.get('creditor', 'Unknown'),
+                        'account_number': acct.get('account_number', 'N/A'),
+                        'account_type': acct.get('account_type', 'Unknown'),
+                        'status': acct.get('status', 'Unknown'),
+                        'balance': acct.get('balance'),
+                        'credit_limit': acct.get('credit_limit'),
+                        'payment_status': acct.get('payment_status'),
+                        'date_opened': acct.get('date_opened'),
+                        'bureaus': acct.get('bureaus', {
+                            'transunion': True,
+                            'experian': True,
+                            'equifax': True,
                         })
+                    })
+            
+            if extracted_data.get('inquiries') and len(extracted_data['inquiries']) > 0:
+                parsed['inquiries'] = extracted_data['inquiries']
+            
+            if extracted_data.get('collections') and len(extracted_data['collections']) > 0:
+                parsed['collections'] = extracted_data['collections']
+            
+            if extracted_data.get('public_records') and len(extracted_data['public_records']) > 0:
+                parsed['public_records'] = extracted_data['public_records']
         
         parsed['summary'] = {
             'total_accounts': len(parsed.get('accounts', [])),
