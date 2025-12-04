@@ -23918,12 +23918,16 @@ def credit_import_dashboard():
         
         credentials_data = [c.to_dict() for c in credentials]
         
-        return render_template('credit_import.html',
+        response = make_response(render_template('credit_import.html',
             credentials=credentials_data,
             clients=clients,
             services=CREDIT_MONITORING_SERVICES,
             stats=stats
-        )
+        ))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
     finally:
         db.close()
 
