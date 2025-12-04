@@ -5,7 +5,7 @@ integrations = ["stripe:1.0.0", "twilio:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["alsa-lib", "at-spi2-atk", "at-spi2-core", "atk", "cairo", "cargo", "cups", "cypress", "dbus", "expat", "freetype", "gdk-pixbuf", "gitFull", "glibcLocales", "gtk3", "imagemagick_light", "libdrm", "libiconv", "libnotify", "libxcrypt", "libxkbcommon", "mesa", "nss", "openssl", "pango", "pkg-config", "playwright-driver", "poppler-utils", "rustc", "systemd", "xorg.libXScrnSaver", "xorg.libXcomposite", "xorg.libXcursor", "xorg.libXdamage", "xorg.libXi", "xorg.libXrandr", "xorg.libXtst", "xorg.libxkbfile", "xvfb-run"]
+packages = ["alsa-lib", "at-spi2-atk", "at-spi2-core", "atk", "cairo", "cargo", "cups", "cypress", "dbus", "expat", "freetype", "gdk-pixbuf", "gitFull", "glibcLocales", "gtk3", "imagemagick_light", "libdrm", "libiconv", "libnotify", "libxcrypt", "libxkbcommon", "mesa", "nss", "openssl", "pango", "pkg-config", "playwright-driver", "poppler-utils", "rustc", "systemd", "xorg.libXScrnSaver", "xorg.libXcomposite", "xorg.libXcursor", "xorg.libXdamage", "xorg.libXi", "xorg.libXrandr", "xorg.libXtst", "xorg.libxkbfile", "xvfb-run", "xorg.libX11", "xorg.libXext", "xorg.libXfixes", "xorg.libxcb", "glib", "nspr", "xorg.libxshmfence"]
 
 [workflows]
 runButton = "Project"
