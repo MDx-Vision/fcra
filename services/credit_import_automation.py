@@ -807,29 +807,110 @@ class CreditImportAutomation:
             js_accounts = await self.page.evaluate('''() => {
                 const accounts = [];
                 
-                // Look for account rows in tables
-                const rows = document.querySelectorAll('tr[class*="account"], tr[class*="tradeline"], .account-row, .tradeline');
-                rows.forEach(row => {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 2) {
-                        accounts.push({
-                            creditor: cells[0]?.textContent?.trim() || 'Unknown',
-                            account_type: cells[1]?.textContent?.trim() || 'Unknown',
-                            status: cells[2]?.textContent?.trim() || 'Unknown',
+                // MyScoreIQ uses Angular with sub_header divs for account names
+                const headers = document.querySelectorAll('.sub_header.ng-binding, div.sub_header');
+                
+                headers.forEach((header) => {
+                    const creditorName = header.textContent.trim()
+                        .replace(/\\s+/g, ' ')
+                        .replace(/\\(Original Creditor:.*\\)/gi, '')
+                        .trim();
+                    
+                    // Skip empty or template-only entries
+                    if (!creditorName || creditorName.includes('{{') || creditorName.length < 2) {
+                        return;
+                    }
+                    
+                    // Find the associated data table
+                    const table = header.closest('ng-include')?.querySelector('table.rpt_content_table') 
+                               || header.nextElementSibling;
+                    
+                    const account = {
+                        creditor: creditorName,
+                        account_number: null,
+                        account_type: null,
+                        status: null,
+                        balance: null,
+                        credit_limit: null,
+                        bureaus: {
+                            transunion: { present: false },
+                            experian: { present: false },
+                            equifax: { present: false }
+                        }
+                    };
+                    
+                    if (table && table.tagName === 'TABLE') {
+                        const rows = table.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            const label = row.querySelector('td.label');
+                            const infoCells = row.querySelectorAll('td.info');
+                            
+                            if (label && infoCells.length >= 1) {
+                                const labelText = label.textContent.trim().toLowerCase();
+                                
+                                // Get values from bureau columns (TU, EXP, EQF)
+                                const values = Array.from(infoCells).map(cell => 
+                                    cell.textContent.trim().replace(/\\s+/g, ' ')
+                                );
+                                
+                                if (labelText.includes('account number') || labelText.includes('number')) {
+                                    account.account_number = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.number = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.number = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.number = values[2];
+                                }
+                                
+                                if (labelText.includes('classification') || labelText.includes('type')) {
+                                    account.account_type = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.type = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.type = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.type = values[2];
+                                }
+                                
+                                if (labelText.includes('status') || labelText.includes('condition')) {
+                                    account.status = values.find(v => v && v !== '-') || null;
+                                    if (values[0] && values[0] !== '-') account.bureaus.transunion.status = values[0];
+                                    if (values[1] && values[1] !== '-') account.bureaus.experian.status = values[1];
+                                    if (values[2] && values[2] !== '-') account.bureaus.equifax.status = values[2];
+                                }
+                                
+                                if (labelText.includes('balance')) {
+                                    const balVal = values.find(v => v && v !== '-' && /\\$|\\d/.test(v));
+                                    if (balVal) {
+                                        account.balance = balVal;
+                                        if (values[0] && values[0] !== '-') account.bureaus.transunion.balance = values[0];
+                                        if (values[1] && values[1] !== '-') account.bureaus.experian.balance = values[1];
+                                        if (values[2] && values[2] !== '-') account.bureaus.equifax.balance = values[2];
+                                    }
+                                }
+                                
+                                if (labelText.includes('credit limit') || labelText.includes('high credit')) {
+                                    const limVal = values.find(v => v && v !== '-' && /\\$|\\d/.test(v));
+                                    if (limVal) {
+                                        account.credit_limit = limVal;
+                                    }
+                                }
+                                
+                                if (labelText.includes('payment status')) {
+                                    account.payment_status = values.find(v => v && v !== '-') || null;
+                                }
+                                
+                                // Check bureau presence
+                                if (values[0] && values[0] !== '-') account.bureaus.transunion.present = true;
+                                if (values[1] && values[1] !== '-') account.bureaus.experian.present = true;
+                                if (values[2] && values[2] !== '-') account.bureaus.equifax.present = true;
+                            }
                         });
                     }
+                    
+                    accounts.push(account);
                 });
-                
-                // Look for credit card/loan mentions
-                const text = document.body.textContent;
-                const patterns = [
-                    /([A-Z][A-Z\s]+(?:BANK|CARD|AUTO|CREDIT|FINANCIAL))/gi
-                ];
                 
                 return accounts;
             }''')
             
             if js_accounts:
+                logger.info(f"Extracted {len(js_accounts)} accounts from DOM")
                 accounts.extend(js_accounts)
                 
         except Exception as e:

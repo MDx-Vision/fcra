@@ -483,9 +483,9 @@
                         </td>
                         <td>
                             <div class="bureau-dots">
-                                <span class="bureau-dot {% if account.bureaus.transunion %}tu{% else %}inactive{% endif %}">TU</span>
-                                <span class="bureau-dot {% if account.bureaus.experian %}ex{% else %}inactive{% endif %}">EX</span>
-                                <span class="bureau-dot {% if account.bureaus.equifax %}eq{% else %}inactive{% endif %}">EQ</span>
+                                <span class="bureau-dot {% if account.bureaus.transunion == true or (account.bureaus.transunion and account.bureaus.transunion.present) %}tu{% else %}inactive{% endif %}">TU</span>
+                                <span class="bureau-dot {% if account.bureaus.experian == true or (account.bureaus.experian and account.bureaus.experian.present) %}ex{% else %}inactive{% endif %}">EX</span>
+                                <span class="bureau-dot {% if account.bureaus.equifax == true or (account.bureaus.equifax and account.bureaus.equifax.present) %}eq{% else %}inactive{% endif %}">EQ</span>
                             </div>
                         </td>
                     </tr>
