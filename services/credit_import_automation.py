@@ -339,10 +339,74 @@ class CreditImportAutomation:
             
             current_url = self.page.url.lower()
             page_content = await self.page.content()
+            page_lower = page_content.lower()
             
             screenshot_path = REPORTS_DIR / f"login_debug_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
             await self.page.screenshot(path=str(screenshot_path))
             logger.info(f"Saved login debug screenshot to {screenshot_path}")
+            
+            if 'security question' in page_lower or 'last four digits of your ssn' in page_lower:
+                logger.info("Security question page detected - entering SSN last 4")
+                if not ssn_last4:
+                    logger.error("No SSN last 4 provided for security question")
+                    return False
+                    
+                ssn_selectors = [
+                    '#FBfbforcechangesecurityanswer_txtSecurityAnswer',
+                    'input[name="userSecurityAnswer"]',
+                    'input[id*="SecurityAnswer"]',
+                    'input[id*="ssn"]',
+                ]
+                
+                ssn_entered = False
+                for selector in ssn_selectors:
+                    try:
+                        ssn_field = await self.page.query_selector(selector)
+                        if ssn_field:
+                            await ssn_field.click()
+                            await ssn_field.fill(ssn_last4)
+                            ssn_entered = True
+                            logger.info(f"Entered SSN with selector: {selector}")
+                            break
+                    except Exception as e:
+                        logger.debug(f"Selector {selector} failed: {e}")
+                        continue
+                
+                if not ssn_entered:
+                    logger.error("Could not find SSN input field")
+                    return False
+                
+                await asyncio.sleep(1)
+                
+                submit_selectors = [
+                    '#FBfbforcechangesecurityanswer_ibtSubmit',
+                    'button[type="submit"]:not([disabled])',
+                    'button:has-text("Submit")',
+                ]
+                
+                for selector in submit_selectors:
+                    try:
+                        submit_btn = await self.page.query_selector(selector)
+                        if submit_btn:
+                            await submit_btn.click()
+                            logger.info(f"Clicked submit with selector: {selector}")
+                            break
+                    except:
+                        continue
+                
+                await asyncio.sleep(5)
+                try:
+                    await self.page.wait_for_load_state('networkidle', timeout=30000)
+                except:
+                    pass
+                
+                await asyncio.sleep(3)
+                screenshot_path2 = REPORTS_DIR / f"after_security_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
+                await self.page.screenshot(path=str(screenshot_path2))
+                logger.info(f"Saved post-security screenshot to {screenshot_path2}")
+                
+                current_url = self.page.url.lower()
+                logger.info(f"After security question, URL: {current_url}")
             
             error_indicators = [
                 'invalid login',
@@ -354,7 +418,9 @@ class CreditImportAutomation:
                 'access denied',
             ]
             
+            page_content = await self.page.content()
             page_lower = page_content.lower()
+            
             for indicator in error_indicators:
                 if indicator in page_lower:
                     logger.error(f"Login failed - found error indicator: {indicator}")
@@ -364,42 +430,13 @@ class CreditImportAutomation:
                 logger.info("Login successful - redirected to member area")
                 return True
             
-            if 'creditreport' in current_url or 'credit-report' in current_url or 'report' in current_url:
+            if 'creditreport' in current_url or 'credit-report' in current_url:
                 logger.info("Login successful - on credit report page")
                 return True
             
             if 'member' in current_url and 'login' not in current_url:
-                logger.info("Login successful - in member area")
+                logger.info("Login appears successful - in member area")
                 return True
-            
-            if 'security' in page_lower or 'ssn' in page_lower or 'last four' in page_lower:
-                logger.info("Security question detected - entering SSN last 4")
-                ssn_selectors = [
-                    '#FBfbforcechangesecurityanswer_txtSecurityAnswer',
-                    'input[name="userSecurityAnswer"]',
-                    'input[id*="SecurityAnswer"]',
-                    'input[id*="ssn"]',
-                ]
-                
-                for selector in ssn_selectors:
-                    try:
-                        ssn_field = await self.page.query_selector(selector)
-                        if ssn_field:
-                            await ssn_field.type(ssn_last4, delay=50)
-                            logger.info(f"Entered SSN with selector: {selector}")
-                            
-                            submit_btn = await self.page.query_selector('#FBfbforcechangesecurityanswer_ibtSubmit, button[type="submit"]')
-                            if submit_btn:
-                                await submit_btn.click()
-                                await asyncio.sleep(5)
-                                try:
-                                    await self.page.wait_for_load_state('networkidle', timeout=30000)
-                                except:
-                                    pass
-                                logger.info("Security question submitted")
-                            break
-                    except:
-                        continue
             
             logger.info(f"Login status unclear, URL: {current_url} - proceeding anyway")
             return True
