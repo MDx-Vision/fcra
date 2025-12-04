@@ -340,19 +340,39 @@ class CreditImportAutomation:
             current_url = self.page.url.lower()
             page_content = await self.page.content()
             
-            if 'invalid' in page_content.lower() or 'incorrect' in page_content.lower():
-                logger.error("Login failed - invalid credentials detected")
-                return False
+            screenshot_path = REPORTS_DIR / f"login_debug_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
+            await self.page.screenshot(path=str(screenshot_path))
+            logger.info(f"Saved login debug screenshot to {screenshot_path}")
             
-            if 'dashboard' in current_url or 'member' in current_url or 'account' in current_url:
+            error_indicators = [
+                'invalid login',
+                'invalid username',
+                'invalid password', 
+                'incorrect password',
+                'login failed',
+                'authentication failed',
+                'access denied',
+            ]
+            
+            page_lower = page_content.lower()
+            for indicator in error_indicators:
+                if indicator in page_lower:
+                    logger.error(f"Login failed - found error indicator: {indicator}")
+                    return False
+            
+            if 'dashboard' in current_url or 'account' in current_url or 'home' in current_url:
                 logger.info("Login successful - redirected to member area")
                 return True
             
-            if 'creditreport' in current_url or 'credit-report' in current_url:
-                logger.info("Login successful - already on credit report page")
+            if 'creditreport' in current_url or 'credit-report' in current_url or 'report' in current_url:
+                logger.info("Login successful - on credit report page")
                 return True
             
-            logger.info(f"Login result unclear, current URL: {current_url}")
+            if 'member' in current_url and 'login' not in current_url:
+                logger.info("Login successful - in member area")
+                return True
+            
+            logger.info(f"Login status unclear, URL: {current_url} - proceeding anyway")
             return True
             
         except Exception as e:
