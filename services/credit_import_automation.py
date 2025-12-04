@@ -453,13 +453,36 @@ class CreditImportAutomation:
             if flow == 'myscoreiq':
                 logger.info("Navigating to MyScoreIQ credit report page...")
                 await self.page.goto('https://member.myscoreiq.com/CreditReport.aspx', wait_until='networkidle', timeout=60000)
-                await asyncio.sleep(5)
+                
+                logger.info("Waiting for Angular to render scores...")
+                try:
+                    await self.page.wait_for_function("""
+                        () => {
+                            // Check if Angular has finished loading
+                            const ng = window.angular;
+                            if (ng) {
+                                try {
+                                    const injector = ng.element(document.body).injector();
+                                    if (injector) {
+                                        const http = injector.get('$http');
+                                        return http && http.pendingRequests && http.pendingRequests.length === 0;
+                                    }
+                                } catch(e) {}
+                            }
+                            // Fallback: check for score canvas elements
+                            return document.querySelectorAll('canvas[id*="Score"]').length >= 3;
+                        }
+                    """, timeout=30000)
+                except Exception as e:
+                    logger.warning(f"Angular wait failed: {e}")
+                
+                await asyncio.sleep(8)
                 
                 try:
                     show_all = await self.page.query_selector('a:has-text("Show All")')
                     if show_all:
                         await show_all.click()
-                        await asyncio.sleep(2)
+                        await asyncio.sleep(3)
                 except:
                     pass
             else:
@@ -537,62 +560,73 @@ class CreditImportAutomation:
         scores = {}
         
         try:
-            await asyncio.sleep(3)
-            
             try:
                 js_scores = await self.page.evaluate('''() => {
                     const scores = {};
                     
-                    // Try to get Angular scope data
+                    // Try to get Angular scope data from the FICO scores section
                     if (window.angular) {
-                        const scope = angular.element(document.body).scope();
-                        if (scope && scope.ScoreModelData) {
-                            scope.ScoreModelData.forEach(model => {
-                                if (model.bureau && model.score) {
-                                    scores[model.bureau.toLowerCase()] = parseInt(model.score);
+                        try {
+                            const ficoDiv = document.querySelector('#tabFICO, [ng-controller*="Score"], .fico-scores');
+                            if (ficoDiv) {
+                                const scope = angular.element(ficoDiv).scope();
+                                if (scope) {
+                                    // Try different possible variable names
+                                    const scoreData = scope.ScoreModelData || scope.scoreModelData || scope.scores;
+                                    if (scoreData && Array.isArray(scoreData)) {
+                                        scoreData.forEach(model => {
+                                            const bureau = (model.bureau || model.Bureau || '').toLowerCase();
+                                            const score = parseInt(model.score || model.Score || model.scoreValue || 0);
+                                            if (bureau && score >= 300 && score <= 850) {
+                                                if (bureau.includes('trans')) scores.transunion = score;
+                                                else if (bureau.includes('exp')) scores.experian = score;
+                                                else if (bureau.includes('equi')) scores.equifax = score;
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        } catch(e) { console.log('Angular scope error:', e); }
+                    }
+                    
+                    // Method 2: Look for score values in specific MyScoreIQ elements
+                    const scoreColumns = document.querySelectorAll('.column_33_percent');
+                    scoreColumns.forEach(col => {
+                        const html = col.innerHTML.toLowerCase();
+                        const text = col.textContent;
+                        
+                        // Look for 3-digit score numbers
+                        const matches = text.match(/\\b([3-8]\\d{2})\\b/g);
+                        if (matches) {
+                            matches.forEach(match => {
+                                const score = parseInt(match);
+                                if (score >= 300 && score <= 850) {
+                                    if (html.includes('transunion') || html.includes('fs_transunion') || html.includes('tuc')) {
+                                        scores.transunion = scores.transunion || score;
+                                    } else if (html.includes('experian') || html.includes('fs_experian')) {
+                                        scores.experian = scores.experian || score;
+                                    } else if (html.includes('equifax') || html.includes('fs_equifax') || html.includes('eqf')) {
+                                        scores.equifax = scores.equifax || score;
+                                    }
                                 }
                             });
                         }
-                    }
+                    });
                     
-                    // Fallback: look for score elements in rendered DOM
-                    const scoreContainers = document.querySelectorAll('[class*="score"], [id*="score"]');
-                    scoreContainers.forEach(container => {
-                        const text = container.textContent || '';
-                        const match = text.match(/\\b([5-8]\\d{2})\\b/);
+                    // Method 3: Look in score info spans
+                    const infoSpans = document.querySelectorAll('.dashboard_score_info2, .score-value, [class*="score"]');
+                    infoSpans.forEach(span => {
+                        const text = span.textContent;
+                        const match = text.match(/\\b([3-8]\\d{2})\\b/);
                         if (match) {
                             const score = parseInt(match[1]);
                             if (score >= 300 && score <= 850) {
-                                const containerText = container.outerHTML.toLowerCase();
-                                if (containerText.includes('transunion') || containerText.includes('tuc')) {
-                                    scores.transunion = scores.transunion || score;
-                                } else if (containerText.includes('experian') || containerText.includes('exp')) {
-                                    scores.experian = scores.experian || score;
-                                } else if (containerText.includes('equifax') || containerText.includes('eqf')) {
-                                    scores.equifax = scores.equifax || score;
-                                }
-                            }
-                        }
-                    });
-                    
-                    // Look for canvas-based scores (gauge charts)
-                    const canvases = document.querySelectorAll('canvas[id*="score"], canvas[id*="Score"]');
-                    canvases.forEach(canvas => {
-                        const parent = canvas.closest('[class*="column"]');
-                        if (parent) {
-                            const parentText = parent.textContent;
-                            const match = parentText.match(/\\b([5-8]\\d{2})\\b/);
-                            if (match) {
-                                const score = parseInt(match[1]);
-                                if (score >= 300 && score <= 850) {
+                                const parent = span.closest('.column_33_percent, [class*="transunion"], [class*="experian"], [class*="equifax"]');
+                                if (parent) {
                                     const html = parent.innerHTML.toLowerCase();
-                                    if (html.includes('transunion')) {
-                                        scores.transunion = scores.transunion || score;
-                                    } else if (html.includes('experian')) {
-                                        scores.experian = scores.experian || score;
-                                    } else if (html.includes('equifax')) {
-                                        scores.equifax = scores.equifax || score;
-                                    }
+                                    if (html.includes('transunion')) scores.transunion = scores.transunion || score;
+                                    else if (html.includes('experian')) scores.experian = scores.experian || score;
+                                    else if (html.includes('equifax')) scores.equifax = scores.equifax || score;
                                 }
                             }
                         }
@@ -607,18 +641,29 @@ class CreditImportAutomation:
             except Exception as e:
                 logger.warning(f"JS score extraction failed: {e}")
             
-            if not scores:
+            if not scores or len(scores) < 3:
                 page_text = await self.page.text_content('body')
                 import re
                 
-                for bureau in ['experian', 'equifax', 'transunion']:
-                    pattern = rf'{bureau}[:\s]*(\d{{3}})'
-                    match = re.search(pattern, page_text, re.IGNORECASE)
-                    if match:
-                        score = int(match.group(1))
-                        if 300 <= score <= 850:
-                            scores[bureau] = score
+                tu_match = re.search(r'transunion[^0-9]*(\d{3})', page_text, re.IGNORECASE)
+                if tu_match:
+                    score = int(tu_match.group(1))
+                    if 300 <= score <= 850:
+                        scores['transunion'] = scores.get('transunion') or score
+                
+                exp_match = re.search(r'experian[^0-9]*(\d{3})', page_text, re.IGNORECASE)
+                if exp_match:
+                    score = int(exp_match.group(1))
+                    if 300 <= score <= 850:
+                        scores['experian'] = scores.get('experian') or score
+                
+                eq_match = re.search(r'equifax[^0-9]*(\d{3})', page_text, re.IGNORECASE)
+                if eq_match:
+                    score = int(eq_match.group(1))
+                    if 300 <= score <= 850:
+                        scores['equifax'] = scores.get('equifax') or score
             
+            logger.info(f"Final extracted scores: {scores}")
             return scores if scores else None
             
         except Exception as e:
