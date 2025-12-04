@@ -1,4 +1,4 @@
-Cypress.Commands.add('login', (email = 'test@example.com', password = 'password123') => {
+Cypress.Commands.add('login', (email = 'test@example.com', password = 'testpass123') => {
   cy.clearCookies();
   cy.visit('/staff/login');
   cy.get('input[type="email"]:visible, input[name="email"]:visible').first().type(email);
