@@ -74,6 +74,9 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
 if os.getenv('CI') == 'true' and os.getenv('FLASK_ENV') != 'production' and os.getenv('REPLIT_DEPLOYMENT') != '1':
     @app.before_request
     def ci_mock_auth():
+        # Skip for login page so Cypress can test the login form
+        if request.path == '/staff/login':
+            return
         if 'staff_id' not in session:
             session['staff_id'] = 1
             session['staff_email'] = 'test@example.com'
