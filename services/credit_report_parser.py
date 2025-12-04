@@ -129,7 +129,9 @@ class CreditReportParser:
                 continue
             
             skip_texts = ['THE', 'AND', 'FOR', 'CREDIT REPORT', 'WATCH', 'KNOW', 
-                          'FICO', 'PLAN', 'YOUR', 'SCORE', 'REPORT', 'SUMMARY']
+                          'FICO', 'PLAN', 'YOUR', 'SCORE', 'REPORT', 'SUMMARY',
+                          'SCORE FACTORS', 'FACTORS', 'INQUIRIES', 'COLLECTIONS',
+                          'PUBLIC RECORDS', 'PERSONAL INFORMATION', 'SUBSCRIBER']
             if text.upper() in skip_texts or any(text.upper().startswith(s) for s in skip_texts):
                 continue
             
@@ -237,23 +239,44 @@ class CreditReportParser:
                 })
     
     def _extract_inquiries(self) -> List[Dict]:
-        """Extract credit inquiries."""
+        """Extract credit inquiries from Angular-rendered HTML."""
         inquiries = []
+        seen = set()
         
-        text = self.soup.get_text()
-        inquiry_section = re.search(r'inquir(?:y|ies)(.*?)(?:public records|collections|$)', text, re.I | re.S)
-        
+        inquiry_section = self.soup.find('div', id='Inquiries')
         if inquiry_section:
-            section_text = inquiry_section.group(1)
-            date_pattern = r'(\d{1,2}/\d{1,2}/\d{2,4})'
-            dates = re.findall(date_pattern, section_text)
-            
-            for date in dates[:20]:
-                inquiries.append({
-                    'date': date,
-                    'creditor': 'Unknown',
-                    'type': 'Hard Inquiry',
-                })
+            rows = inquiry_section.find_all('tr', class_=re.compile(r'ng-scope'))
+            for row in rows:
+                cells = row.find_all('td', class_=re.compile(r'info'))
+                if len(cells) >= 3:
+                    creditor = cells[0].get_text(strip=True)
+                    inquiry_type = cells[1].get_text(strip=True) if len(cells) > 1 else 'Hard Inquiry'
+                    date = cells[2].get_text(strip=True) if len(cells) > 2 else None
+                    bureau = cells[3].get_text(strip=True) if len(cells) > 3 else None
+                    
+                    key = f"{creditor}_{date}"
+                    if key not in seen and creditor:
+                        seen.add(key)
+                        inquiries.append({
+                            'creditor': creditor,
+                            'type': inquiry_type,
+                            'date': date,
+                            'bureau': bureau,
+                        })
+        
+        if not inquiries:
+            text = self.soup.get_text()
+            inquiry_section = re.search(r'inquir(?:y|ies)(.*?)(?:public records|collections|creditor contacts|$)', text, re.I | re.S)
+            if inquiry_section:
+                section_text = inquiry_section.group(1)
+                date_pattern = r'(\d{1,2}/\d{1,2}/\d{2,4})'
+                dates = re.findall(date_pattern, section_text)
+                for date in dates[:20]:
+                    inquiries.append({
+                        'date': date,
+                        'creditor': 'Unknown',
+                        'type': 'Hard Inquiry',
+                    })
         
         return inquiries
     
