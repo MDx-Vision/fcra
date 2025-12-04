@@ -1775,10 +1775,12 @@ class CreditMonitoringCredential(Base):
     service_name = Column(String(100), nullable=False)
     username = Column(String(255), nullable=False)
     password_encrypted = Column(Text, nullable=False)
+    ssn_last4_encrypted = Column(Text, nullable=True)  # Last 4 of SSN or security word
     is_active = Column(Boolean, default=True)
     last_import_at = Column(DateTime, nullable=True)
     last_import_status = Column(String(50), default='pending')
     last_import_error = Column(Text, nullable=True)
+    last_report_path = Column(Text, nullable=True)  # Path to last imported report
     import_frequency = Column(String(50), default='manual')
     next_scheduled_import = Column(DateTime, nullable=True)
     
@@ -1788,17 +1790,19 @@ class CreditMonitoringCredential(Base):
     client = relationship('Client', backref='credit_monitoring_credentials')
     
     def to_dict(self):
-        """Return dictionary representation (excluding password)"""
+        """Return dictionary representation (excluding sensitive data)"""
         return {
             'id': self.id,
             'client_id': self.client_id,
             'client_name': self.client.name if self.client else None,
             'service_name': self.service_name,
             'username': self.username,
+            'has_ssn_last4': bool(self.ssn_last4_encrypted),
             'is_active': self.is_active,
             'last_import_at': self.last_import_at.isoformat() if self.last_import_at else None,
             'last_import_status': self.last_import_status,
             'last_import_error': self.last_import_error,
+            'last_report_path': self.last_report_path,
             'import_frequency': self.import_frequency,
             'next_scheduled_import': self.next_scheduled_import.isoformat() if self.next_scheduled_import else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,

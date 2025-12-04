@@ -23972,12 +23972,14 @@ def api_create_credit_import_credential():
             return jsonify({'success': False, 'error': 'Credential already exists for this client and service'}), 400
         
         encrypted_password = encrypt_value(data['password'])
+        encrypted_ssn_last4 = encrypt_value(data['ssn_last4']) if data.get('ssn_last4') else None
         
         credential = CreditMonitoringCredential(
             client_id=data['client_id'],
             service_name=data['service_name'],
             username=data['username'],
             password_encrypted=encrypted_password,
+            ssn_last4_encrypted=encrypted_ssn_last4,
             is_active=True,
             import_frequency=data.get('import_frequency', 'manual'),
             last_import_status='pending'
@@ -24023,6 +24025,8 @@ def api_update_credit_import_credential(id):
             credential.username = data['username']
         if 'password' in data and data['password']:
             credential.password_encrypted = encrypt_value(data['password'])
+        if 'ssn_last4' in data and data['ssn_last4']:
+            credential.ssn_last4_encrypted = encrypt_value(data['ssn_last4'])
         if 'is_active' in data:
             credential.is_active = data['is_active']
         if 'import_frequency' in data:
