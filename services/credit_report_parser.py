@@ -233,12 +233,61 @@ class CreditReportParser:
 
 def parse_credit_report(html_path: str, service_name: str = 'unknown') -> Dict:
     """Parse a credit report file and return structured data."""
+    import json
+    import os
+    
     try:
+        json_path = html_path.replace('.html', '.json')
+        extracted_data = None
+        
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    extracted_data = json.load(f)
+                logger.info(f"Loaded extracted data from {json_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load JSON data: {e}")
+        
         with open(html_path, 'r', encoding='utf-8') as f:
             html_content = f.read()
         
         parser = CreditReportParser(html_content, service_name)
-        return parser.parse()
+        parsed = parser.parse()
+        
+        if extracted_data:
+            if extracted_data.get('scores'):
+                for bureau, score in extracted_data['scores'].items():
+                    if score and (not parsed['scores'].get(bureau)):
+                        parsed['scores'][bureau] = score
+            
+            if extracted_data.get('accounts'):
+                for acct in extracted_data['accounts']:
+                    if acct not in parsed['accounts']:
+                        parsed['accounts'].append({
+                            'creditor': acct.get('creditor', 'Unknown'),
+                            'account_number': acct.get('account_number', 'N/A'),
+                            'account_type': acct.get('account_type', 'Unknown'),
+                            'status': acct.get('status', 'Unknown'),
+                            'balance': acct.get('balance'),
+                            'credit_limit': acct.get('credit_limit'),
+                            'payment_status': acct.get('payment_status'),
+                            'date_opened': acct.get('date_opened'),
+                            'bureaus': acct.get('bureaus', {
+                                'transunion': True,
+                                'experian': True,
+                                'equifax': True,
+                            })
+                        })
+        
+        parsed['summary'] = {
+            'total_accounts': len(parsed.get('accounts', [])),
+            'total_inquiries': len(parsed.get('inquiries', [])),
+            'total_collections': len(parsed.get('collections', [])),
+            'total_public_records': len(parsed.get('public_records', [])),
+        }
+        
+        return parsed
+        
     except Exception as e:
         logger.error(f"Failed to parse credit report: {e}")
         return {

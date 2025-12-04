@@ -489,9 +489,12 @@ class CreditImportAutomation:
                     except:
                         continue
             
+            await asyncio.sleep(5)
+            
             html_content = await self.page.content()
             
             scores = await self._extract_scores()
+            accounts = await self._extract_accounts_data()
             
             timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
             safe_name = "".join(c if c.isalnum() or c in ('-', '_') else '_' for c in client_name)
@@ -501,12 +504,28 @@ class CreditImportAutomation:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(html_content)
             
+            import json
+            json_filename = f"{client_id}_{safe_name}_{timestamp}.json"
+            json_filepath = REPORTS_DIR / json_filename
+            extracted_data = {
+                'client_id': client_id,
+                'client_name': client_name,
+                'extracted_at': datetime.utcnow().isoformat(),
+                'scores': scores or {},
+                'accounts': accounts or [],
+            }
+            with open(json_filepath, 'w', encoding='utf-8') as f:
+                json.dump(extracted_data, f, indent=2)
+            
             logger.info(f"Saved report to {filepath}")
+            logger.info(f"Saved extracted data to {json_filepath}")
             
             return {
                 'path': str(filepath),
+                'json_path': str(json_filepath),
                 'html': html_content,
-                'scores': scores
+                'scores': scores,
+                'accounts': accounts
             }
             
         except Exception as e:
@@ -514,35 +533,79 @@ class CreditImportAutomation:
             return None
     
     async def _extract_scores(self) -> Optional[Dict]:
-        """Extract credit scores from the current page."""
+        """Extract credit scores from the current page after JS rendering."""
         scores = {}
         
         try:
-            score_patterns = [
-                ('.experian-score', 'experian'),
-                ('.equifax-score', 'equifax'),
-                ('.transunion-score', 'transunion'),
-                ('#experian-score', 'experian'),
-                ('#equifax-score', 'equifax'),
-                ('#transunion-score', 'transunion'),
-                ('[data-bureau="experian"]', 'experian'),
-                ('[data-bureau="equifax"]', 'equifax'),
-                ('[data-bureau="transunion"]', 'transunion'),
-            ]
+            await asyncio.sleep(3)
             
-            for selector, bureau in score_patterns:
-                try:
-                    element = await self.page.query_selector(selector)
-                    if element:
-                        text = await element.text_content()
-                        import re
-                        match = re.search(r'(\d{3})', text)
-                        if match:
-                            score = int(match.group(1))
-                            if 300 <= score <= 850:
-                                scores[bureau] = score
-                except:
-                    continue
+            try:
+                js_scores = await self.page.evaluate('''() => {
+                    const scores = {};
+                    
+                    // Try to get Angular scope data
+                    if (window.angular) {
+                        const scope = angular.element(document.body).scope();
+                        if (scope && scope.ScoreModelData) {
+                            scope.ScoreModelData.forEach(model => {
+                                if (model.bureau && model.score) {
+                                    scores[model.bureau.toLowerCase()] = parseInt(model.score);
+                                }
+                            });
+                        }
+                    }
+                    
+                    // Fallback: look for score elements in rendered DOM
+                    const scoreContainers = document.querySelectorAll('[class*="score"], [id*="score"]');
+                    scoreContainers.forEach(container => {
+                        const text = container.textContent || '';
+                        const match = text.match(/\\b([5-8]\\d{2})\\b/);
+                        if (match) {
+                            const score = parseInt(match[1]);
+                            if (score >= 300 && score <= 850) {
+                                const containerText = container.outerHTML.toLowerCase();
+                                if (containerText.includes('transunion') || containerText.includes('tuc')) {
+                                    scores.transunion = scores.transunion || score;
+                                } else if (containerText.includes('experian') || containerText.includes('exp')) {
+                                    scores.experian = scores.experian || score;
+                                } else if (containerText.includes('equifax') || containerText.includes('eqf')) {
+                                    scores.equifax = scores.equifax || score;
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Look for canvas-based scores (gauge charts)
+                    const canvases = document.querySelectorAll('canvas[id*="score"], canvas[id*="Score"]');
+                    canvases.forEach(canvas => {
+                        const parent = canvas.closest('[class*="column"]');
+                        if (parent) {
+                            const parentText = parent.textContent;
+                            const match = parentText.match(/\\b([5-8]\\d{2})\\b/);
+                            if (match) {
+                                const score = parseInt(match[1]);
+                                if (score >= 300 && score <= 850) {
+                                    const html = parent.innerHTML.toLowerCase();
+                                    if (html.includes('transunion')) {
+                                        scores.transunion = scores.transunion || score;
+                                    } else if (html.includes('experian')) {
+                                        scores.experian = scores.experian || score;
+                                    } else if (html.includes('equifax')) {
+                                        scores.equifax = scores.equifax || score;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    return scores;
+                }''')
+                
+                if js_scores:
+                    scores.update(js_scores)
+                    logger.info(f"Extracted scores via JS: {scores}")
+            except Exception as e:
+                logger.warning(f"JS score extraction failed: {e}")
             
             if not scores:
                 page_text = await self.page.text_content('body')
@@ -561,6 +624,44 @@ class CreditImportAutomation:
         except Exception as e:
             logger.error(f"Failed to extract scores: {e}")
             return None
+    
+    async def _extract_accounts_data(self) -> List[Dict]:
+        """Extract account/tradeline data from the credit report page."""
+        accounts = []
+        
+        try:
+            js_accounts = await self.page.evaluate('''() => {
+                const accounts = [];
+                
+                // Look for account rows in tables
+                const rows = document.querySelectorAll('tr[class*="account"], tr[class*="tradeline"], .account-row, .tradeline');
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length >= 2) {
+                        accounts.push({
+                            creditor: cells[0]?.textContent?.trim() || 'Unknown',
+                            account_type: cells[1]?.textContent?.trim() || 'Unknown',
+                            status: cells[2]?.textContent?.trim() || 'Unknown',
+                        });
+                    }
+                });
+                
+                // Look for credit card/loan mentions
+                const text = document.body.textContent;
+                const patterns = [
+                    /([A-Z][A-Z\s]+(?:BANK|CARD|AUTO|CREDIT|FINANCIAL))/gi
+                ];
+                
+                return accounts;
+            }''')
+            
+            if js_accounts:
+                accounts.extend(js_accounts)
+                
+        except Exception as e:
+            logger.warning(f"Account extraction failed: {e}")
+        
+        return accounts
 
 
 def run_import_sync(
