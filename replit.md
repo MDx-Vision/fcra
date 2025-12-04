@@ -75,6 +75,7 @@ The platform is built on Flask and employs a two-stage, section-based analysis a
 - **Enhanced Knowledge Base with Training Content** (`/dashboard/knowledge-base`): Legal education system with credit repair and Metro 2® courses.
 - **Standard Operating Procedures (SOPs)** (`/dashboard/sops`): Step-by-step workflow guides for staff.
 - **ChexSystems/EWS Dispute Helper** (`/dashboard/chexsystems`): Specialty bureau dispute tracking.
+- **Unified Specialty Bureau Disputes Dashboard** (`/dashboard/specialty-bureaus`): Comprehensive dispute tracking across all 9 specialty consumer reporting agencies (Innovis, ChexSystems, Clarity Services, LexisNexis, CoreLogic Teletrack, Factor Trust, MicroBilt/PRBC, LexisNexis Risk Solutions, DataX Ltd) with bureau cards, response tracking, and escalation management.
 - **Metro 2® Field Validation System** (`metro2_validator.py`): Comprehensive 2025 CRRG compliance validation with AI prompt integration.
 - **Frivolousness Defense Tracker** (`/dashboard/frivolousness`): Track CRA frivolous claim defenses with evidence requirements, legal theory documentation, and re-dispute workflow management.
 - **Suspense Account Detection** (`/dashboard/suspense-accounts`): Mortgage payment ledger analysis identifying misapplied payments in suspense accounts that cause false late payment reporting.
