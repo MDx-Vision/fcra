@@ -25,12 +25,13 @@ SERVICE_CONFIGS = {
         'report_download_flow': 'identityiq',
     },
     'MyScoreIQ.com': {
-        'login_url': 'https://member.myscoreiq.com/login.aspx',
-        'username_selector': '#txtUserName',
+        'login_url': 'https://member.myscoreiq.com/',
+        'username_selector': '#txtUsername',
         'password_selector': '#txtPassword',
-        'ssn_last4_selector': '#txtSSN',
-        'login_button_selector': '#btnLogin',
+        'ssn_last4_selector': None,
+        'login_button_selector': '#imgBtnLogin',
         'report_download_flow': 'myscoreiq',
+        'post_login_url': 'https://member.myscoreiq.com/CreditReport/Index',
     },
     'SmartCredit.com': {
         'login_url': 'https://member.smartcredit.com/login',
@@ -230,68 +231,132 @@ class CreditImportAutomation:
     async def _login(self, config: Dict, username: str, password: str, ssn_last4: str) -> bool:
         """Perform login to credit monitoring service."""
         try:
-            await self.page.goto(config['login_url'], wait_until='networkidle', timeout=30000)
+            logger.info(f"Navigating to {config['login_url']}")
+            await self.page.goto(config['login_url'], wait_until='domcontentloaded', timeout=60000)
+            await asyncio.sleep(3)
+            
+            await self.page.wait_for_selector('input', timeout=15000)
             await asyncio.sleep(2)
             
-            username_field = await self.page.query_selector(config['username_selector'])
-            if username_field:
-                await username_field.fill(username)
-            else:
-                for selector in ['input[type="email"]', 'input[name="email"]', 'input[name="username"]', '#email', '#username']:
-                    username_field = await self.page.query_selector(selector)
-                    if username_field:
-                        await username_field.fill(username)
-                        break
+            username_selectors = [
+                config['username_selector'],
+                '#txtUsername',
+                'input[name="username"]',
+                'input[type="email"]',
+                'input[name="email"]',
+                'input[id*="user"]',
+                'input[id*="User"]',
+            ]
             
-            password_field = await self.page.query_selector(config['password_selector'])
-            if password_field:
-                await password_field.fill(password)
-            else:
-                for selector in ['input[type="password"]', 'input[name="password"]', '#password']:
-                    password_field = await self.page.query_selector(selector)
-                    if password_field:
-                        await password_field.fill(password)
+            username_filled = False
+            for selector in username_selectors:
+                if not selector:
+                    continue
+                try:
+                    field = await self.page.query_selector(selector)
+                    if field:
+                        await field.click()
+                        await field.fill('')
+                        await field.type(username, delay=50)
+                        username_filled = True
+                        logger.info(f"Filled username with selector: {selector}")
                         break
+                except Exception as e:
+                    continue
             
-            if config.get('ssn_last4_selector') and ssn_last4:
-                ssn_field = await self.page.query_selector(config['ssn_last4_selector'])
-                if ssn_field:
-                    await ssn_field.fill(ssn_last4)
-                else:
-                    for selector in ['input[name="ssn"]', 'input[name="ssn4"]', 'input[name="ssn_last4"]', '#ssn', '#ssn4']:
-                        ssn_field = await self.page.query_selector(selector)
-                        if ssn_field:
-                            await ssn_field.fill(ssn_last4)
-                            break
+            if not username_filled:
+                logger.error("Could not find username field")
+                return False
             
             await asyncio.sleep(1)
             
-            login_button = await self.page.query_selector(config['login_button_selector'])
-            if login_button:
-                await login_button.click()
-            else:
-                for selector in ['button[type="submit"]', 'input[type="submit"]', '.login-button', '#login-btn']:
-                    login_button = await self.page.query_selector(selector)
-                    if login_button:
-                        await login_button.click()
-                        break
+            password_selectors = [
+                config['password_selector'],
+                '#txtPassword',
+                'input[type="password"]',
+                'input[name="password"]',
+            ]
             
-            await self.page.wait_for_load_state('networkidle', timeout=30000)
+            password_filled = False
+            for selector in password_selectors:
+                if not selector:
+                    continue
+                try:
+                    field = await self.page.query_selector(selector)
+                    if field:
+                        await field.click()
+                        await field.fill('')
+                        await field.type(password, delay=50)
+                        password_filled = True
+                        logger.info(f"Filled password with selector: {selector}")
+                        break
+                except Exception as e:
+                    continue
+            
+            if not password_filled:
+                logger.error("Could not find password field")
+                return False
+            
+            if config.get('ssn_last4_selector') and ssn_last4:
+                try:
+                    ssn_field = await self.page.query_selector(config['ssn_last4_selector'])
+                    if ssn_field:
+                        await ssn_field.type(ssn_last4, delay=50)
+                except:
+                    pass
+            
+            await asyncio.sleep(1)
+            
+            login_selectors = [
+                config['login_button_selector'],
+                '#imgBtnLogin',
+                'button[type="submit"]',
+                'button:has-text("Login")',
+                'button:has-text("Sign In")',
+                'input[type="submit"]',
+            ]
+            
+            for selector in login_selectors:
+                if not selector:
+                    continue
+                try:
+                    button = await self.page.query_selector(selector)
+                    if button:
+                        logger.info(f"Clicking login button: {selector}")
+                        await button.click()
+                        break
+                except:
+                    continue
+            
+            await asyncio.sleep(5)
+            
+            try:
+                await self.page.wait_for_load_state('networkidle', timeout=30000)
+            except:
+                pass
+            
             await asyncio.sleep(3)
             
             current_url = self.page.url.lower()
-            if 'login' in current_url and 'dashboard' not in current_url and 'member' not in current_url:
-                error_element = await self.page.query_selector('.error, .alert-danger, .login-error, #error-message')
-                if error_element:
-                    error_text = await error_element.text_content()
-                    logger.error(f"Login error: {error_text}")
-                    return False
+            page_content = await self.page.content()
+            
+            if 'invalid' in page_content.lower() or 'incorrect' in page_content.lower():
+                logger.error("Login failed - invalid credentials detected")
                 return False
             
+            if 'dashboard' in current_url or 'member' in current_url or 'account' in current_url:
+                logger.info("Login successful - redirected to member area")
+                return True
+            
+            if 'creditreport' in current_url or 'credit-report' in current_url:
+                logger.info("Login successful - already on credit report page")
+                return True
+            
+            logger.info(f"Login result unclear, current URL: {current_url}")
             return True
             
         except Exception as e:
-            logger.error(f"Login failed: {e}")
+            logger.error(f"Login failed with exception: {e}")
             return False
     
     async def _download_report(self, config: Dict, client_id: int, client_name: str) -> Optional[Dict]:
