@@ -24323,6 +24323,7 @@ def api_view_credit_import_report(credential_id):
             inquiries=parsed_data.get('inquiries', []),
             collections=parsed_data.get('collections', []),
             public_records=parsed_data.get('public_records', []),
+            creditor_contacts=parsed_data.get('creditor_contacts', []),
             summary=parsed_data.get('summary', {}),
         )
     finally:

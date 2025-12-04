@@ -108,17 +108,9 @@
             box-shadow: 0 12px 24px rgba(0,0,0,0.3);
         }
         
-        .score-card.transunion {
-            border-top: 4px solid #3b82f6;
-        }
-        
-        .score-card.experian {
-            border-top: 4px solid #ef4444;
-        }
-        
-        .score-card.equifax {
-            border-top: 4px solid #f59e0b;
-        }
+        .score-card.transunion { border-top: 4px solid #3b82f6; }
+        .score-card.experian { border-top: 4px solid #ef4444; }
+        .score-card.equifax { border-top: 4px solid #f59e0b; }
         
         .bureau-logo {
             font-size: 14px;
@@ -185,42 +177,37 @@
             margin-bottom: 32px;
         }
         
-        .accounts-table {
-            width: 100%;
-            border-collapse: collapse;
+        .account-card {
             background: #1e293b;
+            border: 1px solid #334155;
             border-radius: 12px;
+            margin-bottom: 16px;
             overflow: hidden;
         }
         
-        .accounts-table th {
+        .account-header {
             background: #0f172a;
-            padding: 16px;
-            text-align: left;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #94a3b8;
-            border-bottom: 1px solid #334155;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
         }
         
-        .accounts-table td {
-            padding: 16px;
-            border-bottom: 1px solid #334155;
-            font-size: 14px;
+        .account-header:hover {
+            background: #1e293b;
         }
         
-        .accounts-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .accounts-table tr:hover {
-            background: #334155;
+        .creditor-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
         
         .creditor-name {
             font-weight: 600;
             color: white;
+            font-size: 16px;
         }
         
         .account-number {
@@ -229,9 +216,15 @@
             font-family: monospace;
         }
         
+        .account-meta {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
         .bureau-dots {
             display: flex;
-            gap: 8px;
+            gap: 6px;
         }
         
         .bureau-dot {
@@ -241,7 +234,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 600;
         }
         
@@ -261,17 +254,153 @@
         .status-open { background: #10b981; color: white; }
         .status-closed { background: #6b7280; color: white; }
         .status-collection { background: #ef4444; color: white; }
-        .status-late { background: #f59e0b; color: white; }
+        .status-late { background: #f59e0b; color: #000; }
+        .status-current { background: #10b981; color: white; }
+        
+        .account-details {
+            padding: 20px;
+            display: none;
+            border-top: 1px solid #334155;
+        }
+        
+        .account-details.show {
+            display: block;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .detail-item {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .detail-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .detail-value {
+            font-size: 14px;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .payment-history-section {
+            margin-top: 20px;
+        }
+        
+        .payment-history-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+        
+        .payment-timeline {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        
+        .payment-month {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 36px;
+        }
+        
+        .month-label {
+            font-size: 9px;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        
+        .payment-status {
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 600;
+        }
+        
+        .payment-ok { background: #10b981; color: white; }
+        .payment-30 { background: #f59e0b; color: #000; }
+        .payment-60 { background: #f97316; color: white; }
+        .payment-90 { background: #ef4444; color: white; }
+        .payment-co { background: #7f1d1d; color: white; }
+        .payment-na { background: #374151; color: #6b7280; }
+        
+        .late-summary {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+        }
+        
+        .late-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+        
+        .late-count {
+            font-weight: 600;
+        }
+        
+        .contacts-section {
+            margin-bottom: 32px;
+        }
+        
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .contact-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        
+        .contact-name {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 8px;
+        }
+        
+        .contact-address {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .contact-phone {
+            font-size: 13px;
+            color: #3b82f6;
+        }
         
         .empty-state {
             text-align: center;
             padding: 48px;
             color: #6b7280;
-        }
-        
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
         }
         
         .print-btn {
@@ -331,10 +460,20 @@
             border-bottom: 1px solid #334155;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         
         .item-list li:last-child {
             border-bottom: none;
+        }
+        
+        .inquiry-bureau {
+            font-size: 11px;
+            color: #6b7280;
+            background: #334155;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
         }
         
         @media print {
@@ -346,12 +485,15 @@
                 background: white;
                 border-bottom: 2px solid #000;
             }
-            .score-card, .summary-card, .card {
+            .score-card, .summary-card, .card, .account-card, .contact-card {
                 background: white;
                 border: 1px solid #ccc;
             }
             .print-btn, .back-link {
                 display: none;
+            }
+            .account-details {
+                display: block !important;
             }
         }
         
@@ -361,6 +503,12 @@
             }
             .summary-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            .details-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .contacts-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -460,41 +608,105 @@
         {% if accounts %}
         <section class="accounts-section">
             <h2 class="section-title">Trade Lines ({{ accounts|length }})</h2>
-            <table class="accounts-table">
-                <thead>
-                    <tr>
-                        <th>Creditor</th>
-                        <th>Account #</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Bureaus</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for account in accounts[:25] %}
-                    <tr>
-                        <td>
-                            <div class="creditor-name">{{ account.creditor }}</div>
-                        </td>
-                        <td><span class="account-number">{{ account.account_number }}</span></td>
-                        <td>{{ account.account_type }}</td>
-                        <td>
-                            <span class="status-badge status-open">{{ account.status }}</span>
-                        </td>
-                        <td>
-                            <div class="bureau-dots">
-                                <span class="bureau-dot {% if account.bureaus.transunion == true or (account.bureaus.transunion and account.bureaus.transunion.present) %}tu{% else %}inactive{% endif %}">TU</span>
-                                <span class="bureau-dot {% if account.bureaus.experian == true or (account.bureaus.experian and account.bureaus.experian.present) %}ex{% else %}inactive{% endif %}">EX</span>
-                                <span class="bureau-dot {% if account.bureaus.equifax == true or (account.bureaus.equifax and account.bureaus.equifax.present) %}eq{% else %}inactive{% endif %}">EQ</span>
+            {% for account in accounts %}
+            <div class="account-card">
+                <div class="account-header" onclick="toggleDetails(this)">
+                    <div class="creditor-info">
+                        <div class="creditor-name">{{ account.creditor }}</div>
+                        {% if account.account_number %}
+                        <div class="account-number">Account #: {{ account.account_number }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="account-meta">
+                        <span class="status-badge {% if 'past due' in (account.status|lower) or 'late' in (account.status|lower) %}status-late{% elif 'paid' in (account.status|lower) or 'agreed' in (account.status|lower) %}status-current{% else %}status-open{% endif %}">
+                            {{ account.status or 'Unknown' }}
+                        </span>
+                        <div class="bureau-dots">
+                            <span class="bureau-dot {% if account.bureaus.transunion.present %}tu{% else %}inactive{% endif %}">TU</span>
+                            <span class="bureau-dot {% if account.bureaus.experian.present %}ex{% else %}inactive{% endif %}">EX</span>
+                            <span class="bureau-dot {% if account.bureaus.equifax.present %}eq{% else %}inactive{% endif %}">EQ</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="account-details">
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Account Type</div>
+                            <div class="detail-value">{{ account.account_type_detail or account.account_type or 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Balance</div>
+                            <div class="detail-value">{{ account.balance or 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Credit Limit</div>
+                            <div class="detail-value">{{ account.credit_limit or 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Monthly Payment</div>
+                            <div class="detail-value">{{ account.monthly_payment or 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Date Opened</div>
+                            <div class="detail-value">{{ account.date_opened or 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">High Balance</div>
+                            <div class="detail-value">{{ account.high_balance or 'N/A' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Past Due</div>
+                            <div class="detail-value" style="color: {% if account.past_due_amount and account.past_due_amount != '$0.00' %}#ef4444{% else %}#10b981{% endif %}">{{ account.past_due_amount or '$0.00' }}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Date Reported</div>
+                            <div class="detail-value">{{ account.date_reported or 'N/A' }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if account.payment_history %}
+                    <div class="payment-history-section">
+                        <div class="payment-history-title">Payment History ({{ account.payment_history|length }} months)</div>
+                        <div class="payment-timeline">
+                            {% for entry in account.payment_history[:24] %}
+                            <div class="payment-month">
+                                <div class="month-label">{{ entry.month[:3] }} {{ entry.year[-2:] if entry.year else '' }}</div>
+                                <div class="payment-status 
+                                    {% if entry.experian == 'OK' or entry.transunion == 'OK' or entry.equifax == 'OK' %}payment-ok
+                                    {% elif entry.experian == '30' or entry.transunion == '30' or entry.equifax == '30' %}payment-30
+                                    {% elif entry.experian == '60' or entry.transunion == '60' or entry.equifax == '60' %}payment-60
+                                    {% elif entry.experian == '90' or entry.transunion == '90' or entry.equifax == '90' %}payment-90
+                                    {% elif 'CO' in (entry.experian or '') or 'CO' in (entry.transunion or '') %}payment-co
+                                    {% else %}payment-na{% endif %}">
+                                    {% if entry.experian == 'OK' or entry.transunion == 'OK' or entry.equifax == 'OK' %}OK
+                                    {% elif entry.experian == '30' or entry.transunion == '30' or entry.equifax == '30' %}30
+                                    {% elif entry.experian == '60' or entry.transunion == '60' or entry.equifax == '60' %}60
+                                    {% elif entry.experian == '90' or entry.transunion == '90' or entry.equifax == '90' %}90
+                                    {% elif 'CO' in (entry.experian or '') or 'CO' in (entry.transunion or '') %}CO
+                                    {% else %}-{% endif %}
+                                </div>
                             </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% if accounts|length > 25 %}
-            <p style="text-align: center; padding: 16px; color: #6b7280;">Showing 25 of {{ accounts|length }} accounts</p>
-            {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="late-summary">
+                            <div class="late-item">
+                                <span class="payment-status payment-30" style="width:20px;height:20px;font-size:8px;">30</span>
+                                <span>30 Days Late: <span class="late-count">{{ account.times_30_late or '0' }}</span></span>
+                            </div>
+                            <div class="late-item">
+                                <span class="payment-status payment-60" style="width:20px;height:20px;font-size:8px;">60</span>
+                                <span>60 Days Late: <span class="late-count">{{ account.times_60_late or '0' }}</span></span>
+                            </div>
+                            <div class="late-item">
+                                <span class="payment-status payment-90" style="width:20px;height:20px;font-size:8px;">90</span>
+                                <span>90+ Days Late: <span class="late-count">{{ account.times_90_late or '0' }}</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
         </section>
         {% endif %}
         
@@ -505,13 +717,37 @@
                     <h3 class="card-title">Recent Inquiries ({{ inquiries|length }})</h3>
                 </div>
                 <ul class="item-list">
-                    {% for inquiry in inquiries[:10] %}
+                    {% for inquiry in inquiries %}
                     <li>
-                        <span>{{ inquiry.creditor or 'Unknown Creditor' }}</span>
+                        <span>
+                            {{ inquiry.creditor or 'Unknown Creditor' }}
+                            {% if inquiry.bureau %}
+                            <span class="inquiry-bureau">{{ inquiry.bureau }}</span>
+                            {% endif %}
+                        </span>
                         <span style="color: #6b7280;">{{ inquiry.date }}</span>
                     </li>
                     {% endfor %}
                 </ul>
+            </div>
+        </section>
+        {% endif %}
+        
+        {% if creditor_contacts %}
+        <section class="contacts-section">
+            <h2 class="section-title">Creditor Contacts ({{ creditor_contacts|length }})</h2>
+            <div class="contacts-grid">
+                {% for contact in creditor_contacts %}
+                <div class="contact-card">
+                    <div class="contact-name">{{ contact.creditor }}</div>
+                    {% if contact.address %}
+                    <div class="contact-address">{{ contact.address }}</div>
+                    {% endif %}
+                    {% if contact.phone %}
+                    <div class="contact-phone">{{ contact.phone }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
         </section>
         {% endif %}
@@ -525,7 +761,12 @@
                 <ul class="item-list">
                     {% for collection in collections %}
                     <li>
-                        <span>{{ collection.agency }}</span>
+                        <div>
+                            <div style="font-weight: 600;">{{ collection.agency }}</div>
+                            {% if collection.original_creditor and collection.original_creditor != 'Unknown' %}
+                            <div style="font-size: 12px; color: #6b7280;">Original: {{ collection.original_creditor }}</div>
+                            {% endif %}
+                        </div>
                         <span style="color: #ef4444; font-weight: 600;">{{ collection.amount }}</span>
                     </li>
                     {% endfor %}
@@ -544,7 +785,7 @@
                     {% for record in public_records %}
                     <li>
                         <span>{{ record.type }}</span>
-                        <span style="color: #6b7280;">{{ record.status }}</span>
+                        <span style="color: #6b7280;">{{ record.date or record.status }}</span>
                     </li>
                     {% endfor %}
                 </ul>
@@ -557,5 +798,20 @@
             <p>Brightpath Ascend FCRA Platform</p>
         </div>
     </div>
+    
+    <script>
+        function toggleDetails(header) {
+            const details = header.nextElementSibling;
+            details.classList.toggle('show');
+        }
+        
+        // Auto-expand first account
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstAccount = document.querySelector('.account-details');
+            if (firstAccount) {
+                firstAccount.classList.add('show');
+            }
+        });
+    </script>
 </body>
 </html>
