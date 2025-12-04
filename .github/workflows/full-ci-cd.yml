@@ -49,7 +49,15 @@ jobs:
       
       - name: Wait for app
         run: sleep 15
-      
+        
+      - name: Debug staff login page
+        run: |
+          echo "=== Checking what /staff/login returns ==="
+          curl -s http://localhost:5000/staff/login | head -100
+          echo ""
+          echo "=== Checking for data-testid ==="
+          curl -s http://localhost:5000/staff/login | grep -o 'data-testid="[^"]*"' || echo "NO DATA-TESTID FOUND"   
+          
       - name: Run Cypress
         id: cypress
         uses: cypress-io/github-action@v6
