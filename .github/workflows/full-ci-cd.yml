@@ -58,6 +58,13 @@ jobs:
           echo "=== Checking for data-testid ==="
           curl -s http://localhost:5000/staff/login | grep -o 'data-testid="[^"]*"' || echo "NO DATA-TESTID FOUND"   
           
+      - name: Debug test user
+        run: |
+          echo "=== Checking if test user exists ==="
+          curl -s -X POST http://localhost:5000/staff/login \
+            -d "email=test@example.com&password=testpass123" \
+            -c cookies.txt -L -v 2>&1 | head -50  
+            
       - name: Run Cypress
         id: cypress
         uses: cypress-io/github-action@v6
