@@ -409,6 +409,9 @@
                             <td>
                                 <div class="actions-cell">
                                     <button class="action-btn primary" onclick="triggerImport({{ cred.client_id }})" data-testid="import-btn-{{ cred.id }}">Import Now</button>
+                                    {% if cred.last_report_path %}
+                                    <a href="/api/credit-import/report/{{ cred.id }}" target="_blank" class="action-btn" style="background: #10b981; color: white;" data-testid="view-btn-{{ cred.id }}">View Report</a>
+                                    {% endif %}
                                     <button class="action-btn" onclick="openEditModal({{ cred.id }})" data-testid="edit-btn-{{ cred.id }}">Edit</button>
                                     <button class="action-btn btn-danger btn-sm" onclick="deleteCredential({{ cred.id }})" data-testid="delete-btn-{{ cred.id }}">Delete</button>
                                 </div>

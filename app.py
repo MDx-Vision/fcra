@@ -24289,6 +24289,25 @@ def api_credit_import_browser_status():
     })
 
 
+@app.route('/api/credit-import/report/<int:credential_id>')
+@require_staff(roles=['admin', 'paralegal', 'attorney'])
+def api_view_credit_import_report(credential_id):
+    """View downloaded credit report"""
+    db = get_db()
+    try:
+        cred = db.query(CreditMonitoringCredential).filter_by(id=credential_id).first()
+        if not cred or not cred.last_report_path:
+            return jsonify({'success': False, 'error': 'No report found'}), 404
+        
+        report_path = cred.last_report_path
+        if os.path.exists(report_path):
+            return send_file(report_path, mimetype='text/html')
+        else:
+            return jsonify({'success': False, 'error': 'Report file not found'}), 404
+    finally:
+        db.close()
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
