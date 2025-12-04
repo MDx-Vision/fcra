@@ -79,15 +79,19 @@ class CreditReportParser:
             
             if 'collection' in label and 'chargeoff' not in label:
                 for v in values:
-                    if v and v != '-' and v.isdigit():
-                        counts['collections'] = max(counts['collections'], int(v))
-                        break
+                    if v and v != '-':
+                        digits = re.sub(r'\D', '', v)
+                        if digits:
+                            counts['collections'] = max(counts['collections'], int(digits))
+                            break
             
             elif 'public record' in label:
                 for v in values:
-                    if v and v != '-' and v.isdigit():
-                        counts['public_records'] = max(counts['public_records'], int(v))
-                        break
+                    if v and v != '-':
+                        digits = re.sub(r'\D', '', v)
+                        if digits:
+                            counts['public_records'] = max(counts['public_records'], int(digits))
+                            break
         
         logger.info(f"Summary counts extracted: {counts}")
         return counts
@@ -225,9 +229,26 @@ class CreditReportParser:
             if not self._is_valid_creditor_name(text):
                 continue
             
-            if text in seen_creditors:
+            account_key = text
+            
+            parent_for_key = header.find_parent('table', class_='crPrint')
+            if parent_for_key:
+                table_for_key = parent_for_key.find('table', class_=re.compile(r'rpt_content_table'))
+                if table_for_key:
+                    for row in table_for_key.find_all('tr')[:5]:
+                        label_cell = row.find('td', class_='label')
+                        if label_cell and 'account' in label_cell.get_text(strip=True).lower() and '#' in label_cell.get_text(strip=True):
+                            info_cells = row.find_all('td', class_=re.compile(r'info'))
+                            for cell in info_cells:
+                                acct_num = cell.get_text(strip=True)
+                                if acct_num and acct_num != '-':
+                                    account_key = f"{text}_{acct_num}"
+                                    break
+                            break
+            
+            if account_key in seen_creditors:
                 continue
-            seen_creditors.add(text)
+            seen_creditors.add(account_key)
             
             account = {
                 'creditor': text,
