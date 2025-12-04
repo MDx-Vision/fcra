@@ -114,26 +114,115 @@ class CreditReportParser:
         return info
     
     def _extract_accounts(self) -> List[Dict]:
-        """Extract all tradeline accounts."""
+        """Extract all tradeline accounts from Angular-rendered HTML."""
         accounts = []
+        seen_creditors = set()
         
-        account_patterns = [
-            ('table', {'class': re.compile(r'account|tradeline', re.I)}),
-            ('div', {'class': re.compile(r'account-row|tradeline', re.I)}),
-            ('tr', {'class': re.compile(r'account|tradeline', re.I)}),
-        ]
+        sub_headers = self.soup.find_all('div', class_=re.compile(r'sub_header'))
         
+        for header in sub_headers:
+            text = header.get_text(strip=True)
+            text = re.sub(r'\s+', ' ', text)
+            text = re.sub(r'\(Original Creditor:.*\)', '', text).strip()
+            
+            if not text or '{{' in text or len(text) < 3:
+                continue
+            
+            skip_texts = ['THE', 'AND', 'FOR', 'CREDIT REPORT', 'WATCH', 'KNOW', 
+                          'FICO', 'PLAN', 'YOUR', 'SCORE', 'REPORT', 'SUMMARY']
+            if text.upper() in skip_texts or any(text.upper().startswith(s) for s in skip_texts):
+                continue
+            
+            if text in seen_creditors:
+                continue
+            seen_creditors.add(text)
+            
+            account = {
+                'creditor': text,
+                'account_number': None,
+                'account_type': None,
+                'status': None,
+                'balance': None,
+                'credit_limit': None,
+                'payment_status': None,
+                'date_opened': None,
+                'bureaus': {
+                    'transunion': {'present': True},
+                    'experian': {'present': True},
+                    'equifax': {'present': True},
+                }
+            }
+            
+            parent = header.find_parent('ng-include') or header.parent
+            table = None
+            if parent:
+                table = parent.find('table', class_=re.compile(r'rpt_content'))
+            if not table:
+                table = header.find_next_sibling('table')
+            
+            if table:
+                rows = table.find_all('tr')
+                for row in rows:
+                    label_cell = row.find('td', class_='label')
+                    info_cells = row.find_all('td', class_=re.compile(r'info'))
+                    
+                    if label_cell and info_cells:
+                        label = label_cell.get_text(strip=True).lower()
+                        values = [cell.get_text(strip=True) for cell in info_cells]
+                        
+                        first_value = next((v for v in values if v and v != '-'), None)
+                        
+                        if 'account number' in label or label == 'number':
+                            account['account_number'] = first_value
+                            if len(values) >= 3:
+                                if values[0] and values[0] != '-':
+                                    account['bureaus']['transunion']['number'] = values[0]
+                                if values[1] and values[1] != '-':
+                                    account['bureaus']['experian']['number'] = values[1]
+                                if values[2] and values[2] != '-':
+                                    account['bureaus']['equifax']['number'] = values[2]
+                        
+                        elif 'classification' in label or 'type' in label:
+                            account['account_type'] = first_value
+                            if len(values) >= 3:
+                                if values[0] and values[0] != '-':
+                                    account['bureaus']['transunion']['type'] = values[0]
+                                if values[1] and values[1] != '-':
+                                    account['bureaus']['experian']['type'] = values[1]
+                                if values[2] and values[2] != '-':
+                                    account['bureaus']['equifax']['type'] = values[2]
+                        
+                        elif 'status' in label or 'condition' in label:
+                            account['status'] = first_value
+                        
+                        elif 'balance' in label:
+                            account['balance'] = first_value
+                        
+                        elif 'credit limit' in label or 'high credit' in label:
+                            account['credit_limit'] = first_value
+            
+            accounts.append(account)
+        
+        if not accounts:
+            self._extract_accounts_fallback(accounts)
+        
+        return accounts
+    
+    def _extract_accounts_fallback(self, accounts: List[Dict]) -> None:
+        """Fallback account extraction using generic patterns."""
         text = self.soup.get_text()
         
-        creditor_pattern = r'([A-Z][A-Z\s&\'\.]+(?:BANK|CARD|AUTO|MORTGAGE|LOAN|CREDIT|FINANCIAL|SERVICES)?)\s*(?:Account|#|Number)?[:\s]*([A-Z0-9\*]+)?'
+        creditor_pattern = r'(?:^|\n)([A-Z][A-Z\s&\'\./-]+(?:BANK|CARD|AUTO|MORTGAGE|LOAN|CREDIT|FINANCIAL|SERVICES|USA|NA))'
         matches = re.findall(creditor_pattern, text)
         
-        for creditor, account_num in matches[:50]:
+        seen = set()
+        for creditor in matches[:30]:
             creditor = creditor.strip()
-            if len(creditor) > 3 and creditor not in ['THE', 'AND', 'FOR']:
+            if len(creditor) > 5 and creditor not in seen:
+                seen.add(creditor)
                 accounts.append({
                     'creditor': creditor,
-                    'account_number': account_num if account_num else 'N/A',
+                    'account_number': 'N/A',
                     'account_type': 'Unknown',
                     'status': 'Unknown',
                     'balance': None,
@@ -141,13 +230,11 @@ class CreditReportParser:
                     'payment_status': None,
                     'date_opened': None,
                     'bureaus': {
-                        'transunion': True,
-                        'experian': True,
-                        'equifax': True,
+                        'transunion': {'present': True},
+                        'experian': {'present': True},
+                        'equifax': {'present': True},
                     }
                 })
-        
-        return accounts
     
     def _extract_inquiries(self) -> List[Dict]:
         """Extract credit inquiries."""
