@@ -27,7 +27,7 @@ except Exception as e:
     print(f"❌ Failed to initialize Anthropic client: {e}")
     # Still create a dummy client to prevent crashes
     client = None
-from flask import Flask, request, jsonify, render_template, send_file, session, redirect, url_for, g
+from flask import Flask, request, jsonify, render_template, send_file, session, redirect, url_for, g, make_response
 from flask_cors import CORS
 import os
 from datetime import datetime
