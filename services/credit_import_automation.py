@@ -560,108 +560,33 @@ class CreditImportAutomation:
         scores = {}
         
         try:
-            try:
-                js_scores = await self.page.evaluate('''() => {
-                    const scores = {};
-                    
-                    // Try to get Angular scope data from the FICO scores section
-                    if (window.angular) {
-                        try {
-                            const ficoDiv = document.querySelector('#tabFICO, [ng-controller*="Score"], .fico-scores');
-                            if (ficoDiv) {
-                                const scope = angular.element(ficoDiv).scope();
-                                if (scope) {
-                                    // Try different possible variable names
-                                    const scoreData = scope.ScoreModelData || scope.scoreModelData || scope.scores;
-                                    if (scoreData && Array.isArray(scoreData)) {
-                                        scoreData.forEach(model => {
-                                            const bureau = (model.bureau || model.Bureau || '').toLowerCase();
-                                            const score = parseInt(model.score || model.Score || model.scoreValue || 0);
-                                            if (bureau && score >= 300 && score <= 850) {
-                                                if (bureau.includes('trans')) scores.transunion = score;
-                                                else if (bureau.includes('exp')) scores.experian = score;
-                                                else if (bureau.includes('equi')) scores.equifax = score;
-                                            }
-                                        });
-                                    }
-                                }
-                            }
-                        } catch(e) { console.log('Angular scope error:', e); }
-                    }
-                    
-                    // Method 2: Look for score values in specific MyScoreIQ elements
-                    const scoreColumns = document.querySelectorAll('.column_33_percent');
-                    scoreColumns.forEach(col => {
-                        const html = col.innerHTML.toLowerCase();
-                        const text = col.textContent;
-                        
-                        // Look for 3-digit score numbers
-                        const matches = text.match(/\\b([3-8]\\d{2})\\b/g);
-                        if (matches) {
-                            matches.forEach(match => {
-                                const score = parseInt(match);
-                                if (score >= 300 && score <= 850) {
-                                    if (html.includes('transunion') || html.includes('fs_transunion') || html.includes('tuc')) {
-                                        scores.transunion = scores.transunion || score;
-                                    } else if (html.includes('experian') || html.includes('fs_experian')) {
-                                        scores.experian = scores.experian || score;
-                                    } else if (html.includes('equifax') || html.includes('fs_equifax') || html.includes('eqf')) {
-                                        scores.equifax = scores.equifax || score;
-                                    }
-                                }
-                            });
-                        }
-                    });
-                    
-                    // Method 3: Look in score info spans
-                    const infoSpans = document.querySelectorAll('.dashboard_score_info2, .score-value, [class*="score"]');
-                    infoSpans.forEach(span => {
-                        const text = span.textContent;
-                        const match = text.match(/\\b([3-8]\\d{2})\\b/);
-                        if (match) {
-                            const score = parseInt(match[1]);
-                            if (score >= 300 && score <= 850) {
-                                const parent = span.closest('.column_33_percent, [class*="transunion"], [class*="experian"], [class*="equifax"]');
-                                if (parent) {
-                                    const html = parent.innerHTML.toLowerCase();
-                                    if (html.includes('transunion')) scores.transunion = scores.transunion || score;
-                                    else if (html.includes('experian')) scores.experian = scores.experian || score;
-                                    else if (html.includes('equifax')) scores.equifax = scores.equifax || score;
-                                }
-                            }
-                        }
-                    });
-                    
-                    return scores;
-                }''')
-                
-                if js_scores:
-                    scores.update(js_scores)
-                    logger.info(f"Extracted scores via JS: {scores}")
-            except Exception as e:
-                logger.warning(f"JS score extraction failed: {e}")
+            html_content = await self.page.content()
+            scores = self._extract_scores_from_html(html_content)
             
-            if not scores or len(scores) < 3:
-                page_text = await self.page.text_content('body')
-                import re
-                
-                tu_match = re.search(r'transunion[^0-9]*(\d{3})', page_text, re.IGNORECASE)
-                if tu_match:
-                    score = int(tu_match.group(1))
-                    if 300 <= score <= 850:
-                        scores['transunion'] = scores.get('transunion') or score
-                
-                exp_match = re.search(r'experian[^0-9]*(\d{3})', page_text, re.IGNORECASE)
-                if exp_match:
-                    score = int(exp_match.group(1))
-                    if 300 <= score <= 850:
-                        scores['experian'] = scores.get('experian') or score
-                
-                eq_match = re.search(r'equifax[^0-9]*(\d{3})', page_text, re.IGNORECASE)
-                if eq_match:
-                    score = int(eq_match.group(1))
-                    if 300 <= score <= 850:
-                        scores['equifax'] = scores.get('equifax') or score
+            if not scores:
+                try:
+                    js_scores = await self.page.evaluate('''() => {
+                        const scores = {};
+                        const infoTds = document.querySelectorAll('td.info.ng-binding');
+                        const scoreValues = [];
+                        infoTds.forEach(td => {
+                            const text = td.textContent.trim();
+                            const match = text.match(/^([3-8]\\d{2})$/);
+                            if (match) {
+                                scoreValues.push(parseInt(match[1]));
+                            }
+                        });
+                        if (scoreValues.length >= 3) {
+                            scores.transunion = scoreValues[0];
+                            scores.experian = scoreValues[1];
+                            scores.equifax = scoreValues[2];
+                        }
+                        return scores;
+                    }''')
+                    if js_scores:
+                        scores.update(js_scores)
+                except Exception as e:
+                    logger.warning(f"JS fallback failed: {e}")
             
             logger.info(f"Final extracted scores: {scores}")
             return scores if scores else None
@@ -669,6 +594,57 @@ class CreditImportAutomation:
         except Exception as e:
             logger.error(f"Failed to extract scores: {e}")
             return None
+    
+    def _extract_scores_from_html(self, html_content: str) -> Dict:
+        """Extract scores directly from HTML content using regex patterns."""
+        import re
+        scores = {}
+        
+        pattern = r'<th[^>]*class="header(TUC|EXP|EQF)"[^>]*>.*?</th>'
+        header_pattern = re.compile(pattern, re.DOTALL | re.IGNORECASE)
+        
+        table_pattern = re.compile(
+            r'<th[^>]*class="headerTUC"[^>]*>.*?TransUnion.*?</th>\s*'
+            r'<th[^>]*class="headerEXP"[^>]*>.*?Experian.*?</th>\s*'
+            r'<th[^>]*class="headerEQF"[^>]*>.*?Equifax.*?</th>\s*'
+            r'.*?<tr[^>]*>.*?'
+            r'<td[^>]*class="info[^"]*"[^>]*>\s*(\d{3})\s*</td>\s*'
+            r'<td[^>]*class="info[^"]*"[^>]*>\s*(\d{3})\s*</td>\s*'
+            r'<td[^>]*class="info[^"]*"[^>]*>\s*(\d{3})\s*</td>',
+            re.DOTALL | re.IGNORECASE
+        )
+        
+        match = table_pattern.search(html_content)
+        if match:
+            tu_score = int(match.group(1))
+            exp_score = int(match.group(2))
+            eq_score = int(match.group(3))
+            
+            if 300 <= tu_score <= 850:
+                scores['transunion'] = tu_score
+            if 300 <= exp_score <= 850:
+                scores['experian'] = exp_score
+            if 300 <= eq_score <= 850:
+                scores['equifax'] = eq_score
+            
+            logger.info(f"Extracted scores from HTML table: {scores}")
+            return scores
+        
+        info_td_pattern = re.compile(
+            r'<td\s+class="info\s+ng-binding"[^>]*>\s*(\d{3})\s*</td>',
+            re.IGNORECASE
+        )
+        
+        matches = info_td_pattern.findall(html_content)
+        score_values = [int(m) for m in matches if 300 <= int(m) <= 850]
+        
+        if len(score_values) >= 3:
+            scores['transunion'] = score_values[0]
+            scores['experian'] = score_values[1]
+            scores['equifax'] = score_values[2]
+            logger.info(f"Extracted scores from td.info pattern: {scores}")
+        
+        return scores
     
     async def _extract_accounts_data(self) -> List[Dict]:
         """Extract account/tradeline data from the credit report page."""
