@@ -24160,7 +24160,10 @@ def api_trigger_credit_import(client_id):
 @app.route('/api/credit-import/trigger-all', methods=['POST'])
 @require_staff(roles=['admin', 'paralegal', 'attorney'])
 def api_trigger_all_credit_imports():
-    """Trigger all due credit report imports"""
+    """Trigger all due credit report imports using browser automation"""
+    from services.credit_import_automation import run_import_sync
+    from services.encryption import decrypt_value
+    
     db = get_db()
     try:
         now = datetime.utcnow()
@@ -24172,6 +24175,7 @@ def api_trigger_all_credit_imports():
             (CreditMonitoringCredential.next_scheduled_import == None)
         ).all()
         
+        results = []
         for cred in due_credentials:
             cred.last_import_status = 'pending'
             cred.last_import_error = None
@@ -24181,14 +24185,61 @@ def api_trigger_all_credit_imports():
             elif cred.import_frequency == 'weekly':
                 cred.next_scheduled_import = now + timedelta(weeks=1)
             
-            print(f"📥 Credit import queued for client {cred.client_id}, service: {cred.service_name}")
+            db.commit()
+            
+            print(f"📥 Starting credit import for client {cred.client_id}, service: {cred.service_name}")
+            
+            try:
+                password = decrypt_value(cred.password_encrypted)
+                ssn_last4 = decrypt_value(cred.ssn_last4_encrypted) if cred.ssn_last4_encrypted else ''
+                
+                result = run_import_sync(
+                    service_name=cred.service_name,
+                    username=cred.username,
+                    password=password,
+                    ssn_last4=ssn_last4,
+                    client_id=cred.client_id,
+                    client_name=cred.client.name if cred.client else f"Client {cred.client_id}"
+                )
+                
+                if result['success']:
+                    cred.last_import_status = 'success'
+                    cred.last_import_at = datetime.utcnow()
+                    cred.last_import_error = None
+                    cred.last_report_path = result.get('report_path')
+                    print(f"✅ Import successful for {cred.service_name}")
+                else:
+                    cred.last_import_status = 'failed'
+                    cred.last_import_error = result.get('error', 'Unknown error')
+                    print(f"❌ Import failed for {cred.service_name}: {result.get('error')}")
+                
+                results.append({
+                    'client_id': cred.client_id,
+                    'service': cred.service_name,
+                    'success': result['success'],
+                    'error': result.get('error')
+                })
+                
+            except Exception as e:
+                cred.last_import_status = 'failed'
+                cred.last_import_error = str(e)
+                results.append({
+                    'client_id': cred.client_id,
+                    'service': cred.service_name,
+                    'success': False,
+                    'error': str(e)
+                })
+            
+            db.commit()
         
-        db.commit()
+        success_count = sum(1 for r in results if r['success'])
         
         return jsonify({
             'success': True,
-            'message': f'{len(due_credentials)} import(s) queued. Note: Actual scraping requires browser automation (future feature).',
-            'queued_count': len(due_credentials)
+            'message': f'Import completed: {success_count}/{len(results)} successful',
+            'total_processed': len(results),
+            'successful': success_count,
+            'results': results
         })
     except Exception as e:
         db.rollback()
