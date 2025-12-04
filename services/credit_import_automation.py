@@ -454,29 +454,36 @@ class CreditImportAutomation:
                 logger.info("Navigating to MyScoreIQ credit report page...")
                 await self.page.goto('https://member.myscoreiq.com/CreditReport.aspx', wait_until='networkidle', timeout=60000)
                 
-                logger.info("Waiting for Angular to render scores...")
+                logger.info("Waiting for score elements to render...")
                 try:
-                    await self.page.wait_for_function("""
-                        () => {
-                            // Check if Angular has finished loading
-                            const ng = window.angular;
-                            if (ng) {
-                                try {
-                                    const injector = ng.element(document.body).injector();
-                                    if (injector) {
-                                        const http = injector.get('$http');
-                                        return http && http.pendingRequests && http.pendingRequests.length === 0;
-                                    }
-                                } catch(e) {}
-                            }
-                            // Fallback: check for score canvas elements
-                            return document.querySelectorAll('canvas[id*="Score"]').length >= 3;
-                        }
-                    """, timeout=30000)
+                    await self.page.wait_for_selector('td.info.ng-binding', state='visible', timeout=45000)
                 except Exception as e:
-                    logger.warning(f"Angular wait failed: {e}")
+                    logger.warning(f"Initial selector wait failed: {e}")
                 
-                await asyncio.sleep(8)
+                logger.info("Waiting for scores to populate with numeric values...")
+                max_attempts = 15
+                for attempt in range(max_attempts):
+                    try:
+                        score_count = await self.page.evaluate('''() => {
+                            const tds = document.querySelectorAll('td.info.ng-binding');
+                            let count = 0;
+                            tds.forEach(td => {
+                                const text = td.textContent.trim();
+                                if (/^[3-8]\\d{2}$/.test(text)) {
+                                    count++;
+                                }
+                            });
+                            return count;
+                        }''')
+                        logger.info(f"Attempt {attempt + 1}: Found {score_count} score values")
+                        if score_count >= 3:
+                            logger.info("All three bureau scores detected!")
+                            break
+                    except Exception as e:
+                        logger.warning(f"Score check attempt {attempt + 1} failed: {e}")
+                    await asyncio.sleep(3)
+                
+                await asyncio.sleep(3)
                 
                 try:
                     show_all = await self.page.query_selector('a:has-text("Show All")')
