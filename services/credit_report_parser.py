@@ -104,33 +104,61 @@ class CreditReportParser:
             'equifax': None,
         }
         
+        # Method 1: Look for CreditScore section with FICO Score 8 table row
         score_section = self.soup.find('div', id='CreditScore')
         if score_section:
+            tables = score_section.find_all('table', class_=re.compile(r'rpt_content_table'))
+            for table in tables:
+                rows = table.find_all('tr')
+                for row in rows:
+                    label_cell = row.find('td', class_='label')
+                    if label_cell:
+                        label_text = label_cell.get_text(strip=True).lower()
+                        # Look for "FICO Score 8:" row
+                        if 'fico' in label_text and 'score' in label_text and '8' in label_text:
+                            info_cells = row.find_all('td', class_=re.compile(r'info'))
+                            if len(info_cells) >= 3:
+                                # Order: TransUnion, Experian, Equifax
+                                for i, bureau in enumerate(['transunion', 'experian', 'equifax']):
+                                    if i < len(info_cells):
+                                        score_text = info_cells[i].get_text(strip=True)
+                                        if score_text and score_text != '-':
+                                            try:
+                                                score = int(score_text)
+                                                if 300 <= score <= 850:
+                                                    scores[bureau] = score
+                                            except ValueError:
+                                                pass
+                            break
+        
+        # Method 2: Fallback - search by bureau name in tables
+        if not any(scores.values()) and score_section:
             tables = score_section.find_all('table')
             for table in tables:
                 text = table.get_text()
                 
-                if 'transunion' in text.lower():
+                if 'transunion' in text.lower() and not scores['transunion']:
                     match = re.search(r'(\d{3})', text)
                     if match:
                         score = int(match.group(1))
                         if 300 <= score <= 850:
                             scores['transunion'] = score
                 
-                elif 'experian' in text.lower():
+                elif 'experian' in text.lower() and not scores['experian']:
                     match = re.search(r'(\d{3})', text)
                     if match:
                         score = int(match.group(1))
                         if 300 <= score <= 850:
                             scores['experian'] = score
                 
-                elif 'equifax' in text.lower():
+                elif 'equifax' in text.lower() and not scores['equifax']:
                     match = re.search(r'(\d{3})', text)
                     if match:
                         score = int(match.group(1))
                         if 300 <= score <= 850:
                             scores['equifax'] = score
         
+        # Method 3: Fallback - regex on full text
         if not any(scores.values()):
             text = self.soup.get_text()
             
@@ -364,9 +392,32 @@ class CreditReportParser:
                         elif '90' in label and 'late' in label:
                             account['times_90_late'] = first_value
             
-            payment_history = self._extract_payment_history_for_account(parent or header)
-            if payment_history:
-                account['payment_history'] = payment_history
+            # Extract payment history directly from crPrint table
+            crprint_table = header.find_parent('table', class_='crPrint')
+            if crprint_table:
+                history_table = crprint_table.find('table', class_=re.compile(r'addr_hsrty'))
+                if history_table:
+                    rows = history_table.find_all('tr')
+                    months, years, tu, exp, eqf = [], [], [], [], []
+                    for row in rows:
+                        cells = row.find_all('td')
+                        if len(cells) < 2:
+                            continue
+                        label = cells[0].get_text(strip=True).lower()
+                        values = [c.get_text(strip=True) for c in cells[1:]]
+                        if 'month' in label: months = values
+                        elif 'year' in label: years = values
+                        elif 'transunion' in label: tu = values
+                        elif 'experian' in label: exp = values
+                        elif 'equifax' in label: eqf = values
+                    for i in range(min(len(months), len(years))):
+                        account['payment_history'].append({
+                            'month': months[i],
+                            'year': years[i],
+                            'transunion': tu[i].strip() if i < len(tu) and tu[i].strip() else None,
+                            'experian': exp[i].strip() if i < len(exp) and exp[i].strip() else None,
+                            'equifax': eqf[i].strip() if i < len(eqf) and eqf[i].strip() else None,
+                        })
             
             accounts.append(account)
         
@@ -376,7 +427,19 @@ class CreditReportParser:
         """Extract 2-year payment history grid for an account."""
         history = []
         
+        # Try to find payment history tables within the parent element
         history_tables = parent_element.find_all('table', class_=re.compile(r'addr_hsrty'))
+        
+        # If not found in parent, try to find in the next sibling crPrint table
+        if not history_tables:
+            # Look for Extended Payment History section
+            ext_history = parent_element.find_all(string=re.compile(r'Extended Payment History'))
+            for eh in ext_history:
+                parent_td = eh.find_parent('td')
+                if parent_td:
+                    history_tables = parent_td.find_all('table', class_=re.compile(r'addr_hsrty'))
+                    if history_tables:
+                        break
         
         for table in history_tables:
             rows = table.find_all('tr')
@@ -394,27 +457,35 @@ class CreditReportParser:
                 if len(cells) < 2:
                     continue
                 
-                first_cell = cells[0].get_text(strip=True).lower()
+                # First cell contains the label (Month, Year, TransUnion, etc.)
+                first_cell_text = cells[0].get_text(strip=True).lower()
+                # Remaining cells contain the values
                 values = [cell.get_text(strip=True) for cell in cells[1:]]
                 
-                if 'month' in first_cell:
+                if 'month' in first_cell_text:
                     months = values
-                elif 'year' in first_cell:
+                elif 'year' in first_cell_text:
                     years = values
-                elif 'transunion' in first_cell:
+                elif 'transunion' in first_cell_text:
                     tu_status = values
-                elif 'experian' in first_cell:
+                elif 'experian' in first_cell_text:
                     exp_status = values
-                elif 'equifax' in first_cell:
+                elif 'equifax' in first_cell_text:
                     eqf_status = values
             
+            # Build history entries
             for i in range(min(len(months), len(years))):
+                # Get status, converting empty strings to None
+                tu_val = tu_status[i].strip() if i < len(tu_status) and tu_status[i].strip() else None
+                exp_val = exp_status[i].strip() if i < len(exp_status) and exp_status[i].strip() else None
+                eqf_val = eqf_status[i].strip() if i < len(eqf_status) and eqf_status[i].strip() else None
+                
                 entry = {
                     'month': months[i] if i < len(months) else None,
                     'year': years[i] if i < len(years) else None,
-                    'transunion': tu_status[i] if i < len(tu_status) else None,
-                    'experian': exp_status[i] if i < len(exp_status) else None,
-                    'equifax': eqf_status[i] if i < len(eqf_status) else None,
+                    'transunion': tu_val,
+                    'experian': exp_val,
+                    'equifax': eqf_val,
                 }
                 if entry['month'] and entry['year']:
                     history.append(entry)
@@ -594,34 +665,38 @@ def parse_credit_report(html_path: str, service_name: str = 'unknown') -> Dict:
                     if score:
                         parsed['scores'][bureau] = score
             
+            # Only use JSON accounts if they have payment_history, otherwise keep parsed accounts
             if extracted_data.get('accounts') and len(extracted_data['accounts']) > 0:
-                parsed['accounts'] = []
-                for acct in extracted_data['accounts']:
-                    parsed['accounts'].append({
-                        'creditor': acct.get('creditor', 'Unknown'),
-                        'original_creditor': acct.get('original_creditor'),
-                        'account_number': acct.get('account_number', 'N/A'),
-                        'account_type': acct.get('account_type', 'Unknown'),
-                        'account_type_detail': acct.get('account_type_detail'),
-                        'status': acct.get('status', 'Unknown'),
-                        'balance': acct.get('balance'),
-                        'credit_limit': acct.get('credit_limit'),
-                        'high_balance': acct.get('high_balance'),
-                        'monthly_payment': acct.get('monthly_payment'),
-                        'payment_status': acct.get('payment_status'),
-                        'date_opened': acct.get('date_opened'),
-                        'date_reported': acct.get('date_reported'),
-                        'past_due_amount': acct.get('past_due_amount'),
-                        'times_30_late': acct.get('times_30_late'),
-                        'times_60_late': acct.get('times_60_late'),
-                        'times_90_late': acct.get('times_90_late'),
-                        'payment_history': acct.get('payment_history', []),
-                        'bureaus': acct.get('bureaus', {
-                            'transunion': {'present': True},
-                            'experian': {'present': True},
-                            'equifax': {'present': True},
+                # Check if JSON has payment history
+                has_payment_history = any(acct.get('payment_history') for acct in extracted_data['accounts'])
+                if has_payment_history:
+                    parsed['accounts'] = []
+                    for acct in extracted_data['accounts']:
+                        parsed['accounts'].append({
+                            'creditor': acct.get('creditor', 'Unknown'),
+                            'original_creditor': acct.get('original_creditor'),
+                            'account_number': acct.get('account_number', 'N/A'),
+                            'account_type': acct.get('account_type', 'Unknown'),
+                            'account_type_detail': acct.get('account_type_detail'),
+                            'status': acct.get('status', 'Unknown'),
+                            'balance': acct.get('balance'),
+                            'credit_limit': acct.get('credit_limit'),
+                            'high_balance': acct.get('high_balance'),
+                            'monthly_payment': acct.get('monthly_payment'),
+                            'payment_status': acct.get('payment_status'),
+                            'date_opened': acct.get('date_opened'),
+                            'date_reported': acct.get('date_reported'),
+                            'past_due_amount': acct.get('past_due_amount'),
+                            'times_30_late': acct.get('times_30_late'),
+                            'times_60_late': acct.get('times_60_late'),
+                            'times_90_late': acct.get('times_90_late'),
+                            'payment_history': acct.get('payment_history', []),
+                            'bureaus': acct.get('bureaus', {
+                                'transunion': {'present': True},
+                                'experian': {'present': True},
+                                'equifax': {'present': True},
+                            })
                         })
-                    })
             
             if extracted_data.get('inquiries') and len(extracted_data['inquiries']) > 0:
                 parsed['inquiries'] = extracted_data['inquiries']
@@ -635,11 +710,72 @@ def parse_credit_report(html_path: str, service_name: str = 'unknown') -> Dict:
             if extracted_data.get('creditor_contacts'):
                 parsed['creditor_contacts'] = extracted_data['creditor_contacts']
         
+        # Count late payments from payment history
+        late_count = 0
+        on_time_count = 0
+        total_payments = 0
+        for acct in parsed.get('accounts', []):
+            for entry in acct.get('payment_history', []):
+                has_data = False
+                is_late = False
+                for bureau in ['transunion', 'experian', 'equifax']:
+                    val = entry.get(bureau, '')
+                    if val:
+                        has_data = True
+                        if val in ['30', '60', '90', '120', '150', '180']:
+                            is_late = True
+                            break
+                if has_data:
+                    total_payments += 1
+                    if is_late:
+                        late_count += 1
+                    elif val == 'OK':
+                        on_time_count += 1
+        
+        # Calculate credit utilization
+        total_balance = 0
+        total_limit = 0
+        for acct in parsed.get('accounts', []):
+            balance_str = acct.get('balance', '') or ''
+            limit_str = acct.get('credit_limit', '') or ''
+            # Parse dollar amounts
+            balance_clean = ''.join(c for c in balance_str if c.isdigit() or c == '.')
+            limit_clean = ''.join(c for c in limit_str if c.isdigit() or c == '.')
+            try:
+                if balance_clean:
+                    total_balance += float(balance_clean)
+                if limit_clean:
+                    total_limit += float(limit_clean)
+            except:
+                pass
+        
+        utilization = 0
+        if total_limit > 0:
+            utilization = round((total_balance / total_limit) * 100)
+        
+        # Payment score
+        payment_score = 100
+        if total_payments > 0:
+            payment_score = round((on_time_count / total_payments) * 100)
+        
+        # Account age (simplified - would need date parsing for accurate)
+        parsed['analytics'] = {
+            'utilization': utilization,
+            'total_balance': f"${total_balance:,.0f}",
+            'total_limit': f"${total_limit:,.0f}" if total_limit > 0 else "N/A",
+            'payment_score': payment_score,
+            'on_time_count': on_time_count,
+            'total_payments': total_payments,
+            'avg_account_age': "N/A",  # Would need date parsing
+            'oldest_account': "N/A",   # Would need date parsing
+        }
+        
         parsed['summary'] = {
             'total_accounts': len(parsed.get('accounts', [])),
             'total_inquiries': len(parsed.get('inquiries', [])),
             'total_collections': len(parsed.get('collections', [])),
             'total_public_records': len(parsed.get('public_records', [])),
+            'total_late_payments': late_count,
         }
         
         return parsed

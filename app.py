@@ -24325,6 +24325,7 @@ def api_view_credit_import_report(credential_id):
             public_records=parsed_data.get('public_records', []),
             creditor_contacts=parsed_data.get('creditor_contacts', []),
             summary=parsed_data.get('summary', {}),
+            analytics=parsed_data.get('analytics', {}),
         )
     finally:
         db.close()

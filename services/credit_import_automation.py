@@ -548,7 +548,23 @@ class CreditImportAutomation:
                         continue
             
             await asyncio.sleep(5)
-            
+            # Scroll to load all lazy-loaded accounts
+            logger.info("Scrolling page to load all accounts...")
+            try:
+                previous_height = 0
+                for attempt in range(10):
+                    await self.page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+                    await asyncio.sleep(2)
+                    new_height = await self.page.evaluate('document.body.scrollHeight')
+                    if new_height == previous_height:
+                        logger.info(f"Scrolling complete after {attempt + 1} attempts")
+                        break
+                    previous_height = new_height
+                    logger.info(f"Scroll attempt {attempt + 1}: page height {new_height}px")
+                await self.page.evaluate('window.scrollTo(0, 0)')
+                await asyncio.sleep(1)
+            except Exception as e:
+                logger.warning(f"Scroll failed: {e}")
             logger.info(f"Captured {len(captured_data['responses'])} XHR responses")
             for resp in captured_data['responses']:
                 logger.info(f"  - {resp['url'][:80]}")
@@ -818,6 +834,13 @@ class CreditImportAutomation:
                     
                     // Skip empty or template-only entries
                     if (!creditorName || creditorName.includes('{{') || creditorName.length < 2) {
+                        return;
+                    }
+                    // Skip section headers that aren't actual accounts
+                    const skipHeaders = ['SCORE FACTORS', 'FACTORS', 'SUMMARY', 'INQUIRIES', 
+                                        'COLLECTIONS', 'PUBLIC RECORDS', 'PERSONAL INFORMATION',
+                                        'ACCOUNT HISTORY', 'CREDITOR CONTACTS'];
+                    if (skipHeaders.includes(creditorName.toUpperCase())) {
                         return;
                     }
                     

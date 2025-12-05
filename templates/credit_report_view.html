@@ -602,12 +602,74 @@
                     <div class="summary-value" style="color: {% if summary.total_public_records > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.total_public_records or 0 }}</div>
                     <div class="summary-label">Public Records</div>
                 </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="color: {% if summary.total_late_payments > 0 %}#ef4444{% else %}#10b981{% endif %}">{{ summary.total_late_payments or 0 }}</div>
+                    <div class="summary-label">Late Payments</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Analytics Section -->
+        <section class="analytics-section" style="margin-bottom: 30px;">
+            <h2 class="section-title">Credit Analytics</h2>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-value" style="color: {% if analytics.utilization <= 30 %}#10b981{% elif analytics.utilization <= 50 %}#f59e0b{% else %}#ef4444{% endif %}">
+                        {{ analytics.utilization }}%
+                    </div>
+                    <div class="summary-label">Credit Utilization</div>
+                    <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
+                        {% if analytics.utilization <= 30 %}Excellent{% elif analytics.utilization <= 50 %}Fair{% else %}High{% endif %}
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="color: {% if analytics.payment_score >= 95 %}#10b981{% elif analytics.payment_score >= 80 %}#f59e0b{% else %}#ef4444{% endif %}">
+                        {{ analytics.payment_score }}%
+                    </div>
+                    <div class="summary-label">On-Time Payments</div>
+                    <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
+                        {{ analytics.on_time_count }} of {{ analytics.total_payments }} months
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="color: #3b82f6;">
+                        {{ analytics.avg_account_age }}
+                    </div>
+                    <div class="summary-label">Avg Account Age</div>
+                    <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
+                        Oldest: {{ analytics.oldest_account }}
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-value" style="color: #8b5cf6;">
+                        {{ analytics.total_balance }}
+                    </div>
+                    <div class="summary-label">Total Balance</div>
+                    <div style="font-size: 11px; color: #6b7280; margin-top: 5px;">
+                        Limit: {{ analytics.total_limit }}
+                    </div>
+                </div>
             </div>
         </section>
         
         {% if accounts %}
         <section class="accounts-section">
             <h2 class="section-title">Trade Lines ({{ accounts|length }})</h2>
+            
+            <!-- Filter Bar -->
+            <div class="filter-bar" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+                <input type="text" id="accountSearch" placeholder="Search creditors..." 
+                    style="padding: 10px 15px; border-radius: 8px; border: 1px solid #374151; background: #1f2937; color: white; width: 250px; font-size: 14px;"
+                    onkeyup="filterAccounts()">
+                <div class="status-filters" style="display: flex; gap: 8px;">
+                    <button class="filter-btn active" onclick="setStatusFilter('all', this)" style="padding: 8px 16px; border-radius: 6px; border: none; background: #3b82f6; color: white; cursor: pointer; font-size: 13px;">All</button>
+                    <button class="filter-btn" onclick="setStatusFilter('open', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Open</button>
+                    <button class="filter-btn" onclick="setStatusFilter('closed', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Closed</button>
+                    <button class="filter-btn" onclick="setStatusFilter('negative', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Negative</button>
+                </div>
+                <span id="filterCount" style="color: #9ca3af; font-size: 13px;"></span>
+            </div>
+            
             {% for account in accounts %}
             <div class="account-card">
                 <div class="account-header" onclick="toggleDetails(this)">
@@ -622,9 +684,9 @@
                             {{ account.status or 'Unknown' }}
                         </span>
                         <div class="bureau-dots">
-                            <span class="bureau-dot {% if account.bureaus.transunion.present %}tu{% else %}inactive{% endif %}">TU</span>
-                            <span class="bureau-dot {% if account.bureaus.experian.present %}ex{% else %}inactive{% endif %}">EX</span>
-                            <span class="bureau-dot {% if account.bureaus.equifax.present %}eq{% else %}inactive{% endif %}">EQ</span>
+                            <span class="bureau-dot {% if account.bureaus.transunion.present %}tu{% else %}inactive{% endif %}" onclick="event.stopPropagation(); filterBureau('tu', this)" style="cursor: pointer;">TU</span>
+                            <span class="bureau-dot {% if account.bureaus.experian.present %}ex{% else %}inactive{% endif %}" onclick="event.stopPropagation(); filterBureau('ex', this)" style="cursor: pointer;">EX</span>
+                            <span class="bureau-dot {% if account.bureaus.equifax.present %}eq{% else %}inactive{% endif %}" onclick="event.stopPropagation(); filterBureau('eq', this)" style="cursor: pointer;">EQ</span>
                         </div>
                     </div>
                 </div>
@@ -669,7 +731,7 @@
                         <div class="payment-history-title">Payment History ({{ account.payment_history|length }} months)</div>
                         <div class="payment-timeline">
                             {% for entry in account.payment_history[:24] %}
-                            <div class="payment-month">
+                            <div class="payment-month" data-tu="{{ entry.transunion or '' }}" data-ex="{{ entry.experian or '' }}" data-eq="{{ entry.equifax or '' }}">
                                 <div class="month-label">{{ entry.month[:3] }} {{ entry.year[-2:] if entry.year else '' }}</div>
                                 <div class="payment-status 
                                     {% if entry.experian == 'OK' or entry.transunion == 'OK' or entry.equifax == 'OK' %}payment-ok
@@ -677,7 +739,8 @@
                                     {% elif entry.experian == '60' or entry.transunion == '60' or entry.equifax == '60' %}payment-60
                                     {% elif entry.experian == '90' or entry.transunion == '90' or entry.equifax == '90' %}payment-90
                                     {% elif 'CO' in (entry.experian or '') or 'CO' in (entry.transunion or '') %}payment-co
-                                    {% else %}payment-na{% endif %}">
+                                    {% else %}payment-na{% endif %}"
+                                    data-tu="{{ entry.transunion or '' }}" data-ex="{{ entry.experian or '' }}" data-eq="{{ entry.equifax or '' }}">
                                     {% if entry.experian == 'OK' or entry.transunion == 'OK' or entry.equifax == 'OK' %}OK
                                     {% elif entry.experian == '30' or entry.transunion == '30' or entry.equifax == '30' %}30
                                     {% elif entry.experian == '60' or entry.transunion == '60' or entry.equifax == '60' %}60
@@ -800,18 +863,102 @@
     </div>
     
     <script>
-        function toggleDetails(header) {
-            const details = header.nextElementSibling;
-            details.classList.toggle('show');
-        }
-        
-        // Auto-expand first account
-        document.addEventListener('DOMContentLoaded', function() {
-            const firstAccount = document.querySelector('.account-details');
-            if (firstAccount) {
-                firstAccount.classList.add('show');
+            function toggleDetails(header) {
+                const details = header.nextElementSibling;
+                details.classList.toggle('show');
             }
-        });
+
+            function filterBureau(bureau, dot) {
+                const card = dot.closest('.account-card');
+                const details = card.querySelector('.account-details');
+                if (!details.classList.contains('show')) {
+                    details.classList.add('show');
+                }
+                const allDots = card.querySelectorAll('.bureau-dot');
+                allDots.forEach(d => d.style.outline = 'none');
+                dot.style.outline = '2px solid white';
+                
+                // Update payment history to show selected bureau
+                const paymentStatuses = card.querySelectorAll('.payment-status');
+                paymentStatuses.forEach(ps => {
+                    const val = ps.dataset[bureau] || '';
+                    // Update text
+                    ps.textContent = val || '-';
+                    // Update class
+                    ps.className = 'payment-status';
+                    if (val === 'OK') ps.classList.add('payment-ok');
+                    else if (val === '30') ps.classList.add('payment-30');
+                    else if (val === '60') ps.classList.add('payment-60');
+                    else if (val === '90') ps.classList.add('payment-90');
+                    else if (val.includes('CO')) ps.classList.add('payment-co');
+                    else ps.classList.add('payment-na');
+                });
+            }
+
+            // Filter state
+            let currentStatusFilter = 'all';
+            
+            function setStatusFilter(status, btn) {
+                currentStatusFilter = status;
+                // Update button styles
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.style.background = '#1f2937';
+                    b.style.color = '#9ca3af';
+                    b.style.border = '1px solid #374151';
+                });
+                btn.style.background = '#3b82f6';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+                filterAccounts();
+            }
+            
+            function filterAccounts() {
+                const searchTerm = document.getElementById('accountSearch').value.toLowerCase();
+                const cards = document.querySelectorAll('.account-card');
+                let visibleCount = 0;
+                
+                cards.forEach(card => {
+                    const creditor = card.querySelector('.creditor-name').textContent.toLowerCase();
+                    const statusBadge = card.querySelector('.status-badge');
+                    const status = statusBadge ? statusBadge.textContent.toLowerCase() : '';
+                    
+                    // Search match
+                    const matchesSearch = creditor.includes(searchTerm);
+                    
+                    // Status match
+                    let matchesStatus = true;
+                    if (currentStatusFilter === 'open') {
+                        matchesStatus = status.includes('open') || status.includes('current') || status.includes('pays');
+                    } else if (currentStatusFilter === 'closed') {
+                        matchesStatus = status.includes('closed') || status.includes('paid');
+                    } else if (currentStatusFilter === 'negative') {
+                        matchesStatus = status.includes('late') || status.includes('past due') || 
+                                       status.includes('collection') || status.includes('charge') ||
+                                       status.includes('delinq') || status.includes('30') ||
+                                       status.includes('60') || status.includes('90');
+                    }
+                    
+                    if (matchesSearch && matchesStatus) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Update count
+                const total = cards.length;
+                document.getElementById('filterCount').textContent = 
+                    visibleCount === total ? '' : `Showing ${visibleCount} of ${total}`;
+            }
+            
+            // Auto-expand ALL accounts
+            document.addEventListener('DOMContentLoaded', function() {
+                const allAccounts = document.querySelectorAll('.account-details');
+                allAccounts.forEach(account => {
+                    account.classList.add('show');
+                });
+            });
     </script>
 </body>
 </html>
