@@ -6400,26 +6400,38 @@ def api_complete_free_signup():
         referral_code = generate_referral_code()
         portal_token = str(uuid.uuid4())
         
+        dob_str = form_data.get('dateOfBirth', '')
+        dob = None
+        if dob_str:
+            try:
+                from datetime import date as dt_date
+                dob = dt_date.fromisoformat(dob_str)
+            except:
+                pass
+        
         client = Client(
             name=f"{form_data.get('firstName', '')} {form_data.get('lastName', '')}".strip(),
+            first_name=form_data.get('firstName', ''),
+            last_name=form_data.get('lastName', ''),
             email=form_data.get('email', ''),
             phone=form_data.get('phone', ''),
-            address=f"{form_data.get('addressStreet', '')}, {form_data.get('addressCity', '')} {form_data.get('addressState', '')} {form_data.get('addressZip', '')}".strip(' ,'),
-            credit_service=form_data.get('creditService', ''),
-            credit_username=form_data.get('creditUsername', ''),
-            credit_password=form_data.get('creditPassword', ''),
+            address_street=form_data.get('addressStreet', ''),
+            address_city=form_data.get('addressCity', ''),
+            address_state=form_data.get('addressState', ''),
+            address_zip=form_data.get('addressZip', ''),
+            ssn_last_four=form_data.get('ssnLast4', ''),
+            date_of_birth=dob,
+            credit_monitoring_service=form_data.get('creditService', ''),
+            credit_monitoring_username=form_data.get('creditUsername', ''),
+            credit_monitoring_password_encrypted=encrypt_value(form_data.get('creditPassword', '')) if form_data.get('creditPassword') else '',
             status='lead',
-            signup_plan='free',
-            signup_amount=0,
-            payment_status='paid',
-            payment_method='free',
-            payment_pending=False,
-            payment_received_at=datetime.utcnow(),
+            current_dispute_round=0,
+            dispute_status='new',
             referral_code=referral_code,
             portal_token=portal_token,
-            referred_by=form_data.get('referralCode', ''),
-            consent_signed=form_data.get('agreeTerms', False),
-            consent_date=datetime.utcnow() if form_data.get('agreeTerms') else None
+            signup_completed=True,
+            agreement_signed=form_data.get('agreeTerms', False),
+            agreement_signed_at=datetime.utcnow() if form_data.get('agreeTerms') else None
         )
         
         db.add(client)
