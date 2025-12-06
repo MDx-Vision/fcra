@@ -1,0 +1,21 @@
+[
+  {
+    "url": "https://api.identityiq.com/member-service/v2/current-user/credit-bureau-l3-status",
+    "data": {
+      "isL3Authenticated": true,
+      "attemptsLeft": null,
+      "l3AuthRequired": true,
+      "cncStatus": "AS",
+      "ssn": "7155",
+      "dateOfBirth": "1981-06-28T00:00:00Z"
+    }
+  },
+  {
+    "url": "https://member.myscoreiq.com/due-time-their-hee-But-we-so-let-wantainesse-in-?d=member.myscoreiq.com",
+    "data": {
+      "token": "3:EzmEqjDOt10WzfjWzqao9w==:RNiobqsR3DI8Ab6tZU8z1toO44Od8PbuMRnT3OxdsU1fYSPIfqKxtcOg4VaspMDb1UxzEoT2ey/ysROKs8WjNkEHPTDDFU2TKs8pMh357KFS+Qbf4ZZaasi6as1OJO188e9KmcE4fKhgE6ElF3ZhJQSDTUAyMkaL0KyQW2rc6i6uiovQVBTufv4s135wAJ7CVab2v+FEerAHdStbtqfiFnZrCWOYx7TWwsD0vDiD9wAivLA0kSPWt/qo2g8Ut6CryG71VGGiZtCr8LIh2iOAIaD2mPY/3x9fEk1oQaOqBrTusWXOhZJfjV7ilZfb2p5UjD7xzgmnIKAOPqBcUrkVEEQbjpTxt3svd9H/lwhVN5wBFJmDdHg1A4nlJsjF6nXVwTKyJPUSK4GVuAA0JJS40eYyychS6vvONaG1zPXOgqPUQdVcx6FjFigQoFEm6et2xbBbZCiZ/xnnAonwLjovJA8sSipb4Py+0QQRfcHvSUmJvx/z768bNW241+tQQGAi3FP/zhSofF4v+DNidjaauPwJF9Q/UWoNDgqUPydAwC7jN1b1h/5WlHslsGS/kOvGw7SOvwwlthSVmQECNDDMow==:C1QLV6biM1Es5WWvaugA+fGRshSfEOiUZ6Hp3F2XMYU=",
+      "renewInSec": 700,
+      "cookieDomain": "member.myscoreiq.com"
+    }
+  }
+]

@@ -6249,6 +6249,25 @@ def api_client_signup():
         
         db.commit()
         
+        # Auto-import if credentials provided
+        if data.get('creditService') and data.get('creditUsername') and data.get('creditPassword'):
+            try:
+                from services.credit_import_automation import run_import_sync
+                credit_password = decrypt_value(client.credit_monitoring_password_encrypted)
+                print(f"🚀 Auto-importing credit report for {client.name}...")
+                result = run_import_sync(
+                    service_name=data.get('creditService'),
+                    username=data.get('creditUsername'),
+                    password=credit_password,
+                    ssn_last4=data.get('ssnLast4', ''),
+                    client_id=client.id,
+                    client_name=client.name
+                )
+                if result['success']:
+                    print(f"✅ Auto-import successful for {client.name}")
+            except Exception as import_error:
+                print(f"⚠️  Auto-import error (non-fatal): {import_error}")
+        
         return jsonify({
             'success': True,
             'clientId': client.id,
@@ -6438,6 +6457,25 @@ def api_complete_free_signup():
         draft.status = 'completed'
         db.commit()
         
+        # Auto-import if credentials provided
+        if form_data.get('creditService') and form_data.get('creditUsername') and form_data.get('creditPassword'):
+            try:
+                from services.credit_import_automation import run_import_sync
+                credit_password = decrypt_value(client.credit_monitoring_password_encrypted)
+                print(f"🚀 Auto-importing credit report for {client.name}...")
+                result = run_import_sync(
+                    service_name=form_data.get('creditService'),
+                    username=form_data.get('creditUsername'),
+                    password=credit_password,
+                    ssn_last4=form_data.get('ssnLast4', ''),
+                    client_id=client.id,
+                    client_name=client.name
+                )
+                if result['success']:
+                    print(f"✅ Auto-import successful for {client.name}")
+            except Exception as import_error:
+                print(f"⚠️  Auto-import error (non-fatal): {import_error}")
+        
         try:
             from services.sms_automation import trigger_welcome_sms
             sms_result = trigger_welcome_sms(db, client.id)
@@ -6551,6 +6589,25 @@ def api_complete_manual_signup():
         db.add(client)
         draft.status = 'completed'
         db.commit()
+        
+        # Auto-import if credentials provided
+        if form_data.get('creditService') and form_data.get('creditUsername') and form_data.get('creditPassword'):
+            try:
+                from services.credit_import_automation import run_import_sync
+                credit_password = decrypt_value(client.credit_monitoring_password_encrypted)
+                print(f"🚀 Auto-importing credit report for {client.name}...")
+                result = run_import_sync(
+                    service_name=form_data.get('creditService'),
+                    username=form_data.get('creditUsername'),
+                    password=credit_password,
+                    ssn_last4=form_data.get('ssnLast4', ''),
+                    client_id=client.id,
+                    client_name=client.name
+                )
+                if result['success']:
+                    print(f"✅ Auto-import successful for {client.name}")
+            except Exception as import_error:
+                print(f"⚠️  Auto-import error (non-fatal): {import_error}")
         
         try:
             from services.sms_automation import trigger_welcome_sms

@@ -1,0 +1,646 @@
+{
+  "client_id": 87,
+  "client_name": "Jahnell Parkinson",
+  "extracted_at": "2025-12-06T04:18:44.778567",
+  "scores": {
+    "transunion": 696,
+    "experian": 708,
+    "equifax": 774
+  },
+  "accounts": [
+    {
+      "creditor": "DPT ED/AIDV",
+      "account_number": null,
+      "account_type": "Installment account",
+      "status": "Paid or paying as agreed",
+      "balance": "$14,501.00",
+      "credit_limit": "$0.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Installment account",
+          "status": "Paid or paying as agreed",
+          "balance": "$14,501.00"
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": false
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "FIVE STAR BANK",
+      "account_number": null,
+      "account_type": "Auto Loan",
+      "status": "Charge-off",
+      "balance": "$21,589.00",
+      "credit_limit": "$36,818.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": true,
+          "type": "Auto Loan",
+          "status": "Charge-off",
+          "balance": "$21,589.00"
+        },
+        "equifax": {
+          "present": false
+        }
+      },
+      "payment_status": "Charge-off"
+    },
+    {
+      "creditor": "VERIZON WIRELESS",
+      "account_number": null,
+      "account_type": "Cell Phone",
+      "status": "Legally paid in full for less than the full balance",
+      "balance": "$0.00",
+      "credit_limit": "$2,921.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": true,
+          "type": "Cell Phone",
+          "status": "Legally paid in full for less than the full balance",
+          "balance": "$0.00"
+        },
+        "equifax": {
+          "present": false
+        }
+      },
+      "payment_status": "Legally paid in full for less than the full balance"
+    },
+    {
+      "creditor": "FORD MOTOR CREDIT COMP",
+      "account_number": null,
+      "account_type": "Installment account",
+      "status": "Paid or paying as agreed",
+      "balance": "$27,753.00",
+      "credit_limit": "$0.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Installment account",
+          "status": "Paid or paying as agreed",
+          "balance": "$27,753.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Auto Loan",
+          "status": "Current",
+          "balance": "$27,753.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$27,753.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "GM FINANCIAL",
+      "account_number": null,
+      "account_type": "Installment account",
+      "status": "Paid or paying as agreed",
+      "balance": "$55,605.00",
+      "credit_limit": "$0.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Installment account",
+          "status": "Paid or paying as agreed",
+          "balance": "$55,605.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Auto Lease",
+          "status": "Current",
+          "balance": "$55,605.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$55,605.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "NISSAN MOTOR ACCEPTANC",
+      "account_number": null,
+      "account_type": "Installment account",
+      "status": "Paid or paying as agreed",
+      "balance": "$32,025.00",
+      "credit_limit": "$0.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Installment account",
+          "status": "Paid or paying as agreed",
+          "balance": "$32,025.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Auto Loan",
+          "status": "Current",
+          "balance": "$33,318.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$32,025.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "DEPT OF ED/AIDVANTAGE",
+      "account_number": null,
+      "account_type": "Education Loan",
+      "status": "Paid satisfactorily",
+      "balance": null,
+      "credit_limit": "$14,663.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": true,
+          "type": "Education Loan",
+          "status": "Paid satisfactorily"
+        },
+        "equifax": {
+          "present": false
+        }
+      },
+      "payment_status": "Paid satisfactorily"
+    },
+    {
+      "creditor": "EXETER FINANCE LLC",
+      "account_number": null,
+      "account_type": "Installment account",
+      "status": "Paid or paying as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Installment account",
+          "status": "Paid or paying as agreed",
+          "balance": "$0.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Auto Loan",
+          "status": "Paid satisfactorily"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "FED LOAN SERVICING",
+      "account_number": null,
+      "account_type": "Installment",
+      "status": "Pays account as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$2,625.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Pays account as agreed"
+    },
+    {
+      "creditor": "FED LOAN SERVICING",
+      "account_number": null,
+      "account_type": "Installment",
+      "status": "Pays account as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$1,750.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Pays account as agreed"
+    },
+    {
+      "creditor": "FED LOAN SERVICING",
+      "account_number": null,
+      "account_type": "Installment",
+      "status": "Pays account as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$2,667.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Pays account as agreed"
+    },
+    {
+      "creditor": "FED LOAN SERVICING",
+      "account_number": null,
+      "account_type": "Installment",
+      "status": "Pays account as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$1,569.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Pays account as agreed"
+    },
+    {
+      "creditor": "SANTANDER CONSUMER USA",
+      "account_number": null,
+      "account_type": "Installment account",
+      "status": "Paid or paying as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$0.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Installment account",
+          "status": "Paid or paying as agreed",
+          "balance": "$0.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Auto Loan",
+          "status": "Paid satisfactorily"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Installment",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "BROADVIEW FEDERAL CU",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$161.00",
+      "credit_limit": "$500.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$161.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Secured Credit Card",
+          "status": "Current",
+          "balance": "$161.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$161.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "CREDIT ONE BANK NA",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$254.00",
+      "credit_limit": "$1,000.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$254.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Credit Card",
+          "status": "Current",
+          "balance": "$104.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$104.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "CAPITAL ONE",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$213.00",
+      "credit_limit": "$700.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$213.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Credit Card",
+          "status": "Current",
+          "balance": "$213.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$213.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "CREDIT ONE BANK NA",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$371.00",
+      "credit_limit": "$650.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$371.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Credit Card",
+          "status": "Current",
+          "balance": "$371.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$371.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "CAPITAL ONE",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$100.00",
+      "credit_limit": "$500.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$100.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Credit Card",
+          "status": "Current",
+          "balance": "$100.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$100.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "PROSPER/COASTAL COMM",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$768.00",
+      "credit_limit": "$3,200.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$768.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Credit Card",
+          "status": "Current",
+          "balance": "$768.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$768.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "SYNCB/TJX CO DC",
+      "account_number": null,
+      "account_type": "Revolving",
+      "status": "Pays account as agreed",
+      "balance": "$234.00",
+      "credit_limit": "$1,400.00",
+      "bureaus": {
+        "transunion": {
+          "present": false
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$234.00"
+        }
+      },
+      "payment_status": "Pays account as agreed"
+    },
+    {
+      "creditor": "TBOM/ATLS/FORTIVA",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$636.00",
+      "credit_limit": "$4,000.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$636.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Credit Card",
+          "status": "Current",
+          "balance": "$636.00"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$636.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "CREDIT ONE BANK NA",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$993.00",
+      "credit_limit": "$1,000.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$993.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Credit Card",
+          "status": "No status"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$993.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "ONEUNITED BANK",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$550.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$0.00"
+        },
+        "experian": {
+          "present": true,
+          "type": "Secured Credit Card",
+          "status": "Paid satisfactorily"
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    },
+    {
+      "creditor": "ONEUNITED BK",
+      "account_number": null,
+      "account_type": "Revolving account",
+      "status": "Paid or paying as agreed",
+      "balance": "$0.00",
+      "credit_limit": "$300.00",
+      "bureaus": {
+        "transunion": {
+          "present": true,
+          "type": "Revolving account",
+          "status": "Paid or paying as agreed",
+          "balance": "$0.00"
+        },
+        "experian": {
+          "present": false
+        },
+        "equifax": {
+          "present": true,
+          "type": "Revolving",
+          "status": "Pays account as agreed",
+          "balance": "$0.00"
+        }
+      },
+      "payment_status": "Paid or paying as agreed"
+    }
+  ]
+}
