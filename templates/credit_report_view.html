@@ -666,6 +666,8 @@
                     <button class="filter-btn" onclick="setStatusFilter('open', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Open</button>
                     <button class="filter-btn" onclick="setStatusFilter('closed', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Closed</button>
                     <button class="filter-btn" onclick="setStatusFilter('negative', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Negative</button>
+                    <button class="filter-btn" onclick="setStatusFilter('au', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">AU</button>
+                    <button class="filter-btn" onclick="setStatusFilter('discrepancy', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #f59e0b; cursor: pointer; font-size: 13px;">⚠ Discrepancy</button>
                 </div>
                 <span id="filterCount" style="color: #9ca3af; font-size: 13px;"></span>
             </div>
@@ -674,7 +676,7 @@
             <div class="account-card">
                 <div class="account-header" onclick="toggleDetails(this)">
                     <div class="creditor-info">
-                        <div class="creditor-name">{{ account.creditor }}</div>
+                        <div class="creditor-name">{{ account.creditor }}{% if account.is_authorized_user %}<span style="background: #8b5cf6; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">AU</span>{% endif %}{% if 'closed' in (account.status|lower) or 'terminated' in (account.status|lower) or (account.status|lower) == 'paid' or 'paid satisf' in (account.status|lower) %}<span style="background: #6b7280; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">CLOSED</span>{% elif 'paying' in (account.status|lower) or 'current' in (account.status|lower) or 'open' in (account.status|lower) or 'agreed' in (account.status|lower) or 'past due' in (account.status|lower) or 'late' in (account.status|lower) %}<span style="background: #10b981; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">OPEN</span>{% endif %}{% if 'past due' in (account.status|lower) or 'late' in (account.status|lower) or 'collection' in (account.status|lower) or 'charge' in (account.status|lower) or 'delinq' in (account.status|lower) %}<span style="background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">NEGATIVE</span>{% endif %}{% if account.has_discrepancy %}<span style="background: #f59e0b; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">⚠ DISCREPANCY</span>{% endif %}</div>
                         {% if account.account_number %}
                         <div class="account-number">Account #: {{ account.account_number }}</div>
                         {% endif %}
@@ -698,11 +700,11 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Balance</div>
-                            <div class="detail-value">{{ account.balance or 'N/A' }}</div>
+                            <div class="detail-value bureau-value" data-field="balance" data-tu="{{ account.bureaus.transunion.balance or '' }}" data-ex="{{ account.bureaus.experian.balance or '' }}" data-eq="{{ account.bureaus.equifax.balance or '' }}">{{ account.balance or 'N/A' }}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Credit Limit</div>
-                            <div class="detail-value">{{ account.credit_limit or 'N/A' }}</div>
+                            <div class="detail-value bureau-value" data-field="credit_limit" data-tu="{{ account.bureaus.transunion.credit_limit or '' }}" data-ex="{{ account.bureaus.experian.credit_limit or '' }}" data-eq="{{ account.bureaus.equifax.credit_limit or '' }}">{{ account.credit_limit or 'N/A' }}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Monthly Payment</div>
@@ -710,7 +712,7 @@
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Date Opened</div>
-                            <div class="detail-value">{{ account.date_opened or 'N/A' }}</div>
+                            <div class="detail-value bureau-value" data-field="date_opened" data-tu="{{ account.bureaus.transunion.date_opened or '' }}" data-ex="{{ account.bureaus.experian.date_opened or '' }}" data-eq="{{ account.bureaus.equifax.date_opened or '' }}">{{ account.date_opened or 'N/A' }}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">High Balance</div>
@@ -765,6 +767,21 @@
                                 <span>90+ Days Late: <span class="late-count">{{ account.times_90_late or '0' }}</span></span>
                             </div>
                         </div>
+                        {% if account.has_discrepancy %}
+                        <div class="discrepancy-details" style="margin-top: 15px; padding: 12px; background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; border-radius: 8px;">
+                            <div style="color: #f59e0b; font-weight: 600; margin-bottom: 8px;">⚠ Bureau Discrepancies Detected</div>
+                            {% for disc in account.discrepancies %}
+                            <div style="margin-bottom: 8px;">
+                                <span style="color: #9ca3af;">{{ disc.field }}:</span>
+                                <div style="display: flex; gap: 15px; margin-top: 4px;">
+                                    {% if 'transunion' in disc.bureau_values %}<span style="color: #3b82f6;">TU: ${{ disc.bureau_values['transunion'] }}</span>{% endif %}
+                                    {% if 'experian' in disc.bureau_values %}<span style="color: #ef4444;">EX: ${{ disc.bureau_values['experian'] }}</span>{% endif %}
+                                    {% if 'equifax' in disc.bureau_values %}<span style="color: #10b981;">EQ: ${{ disc.bureau_values['equifax'] }}</span>{% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -893,6 +910,28 @@
                     else if (val.includes('CO')) ps.classList.add('payment-co');
                     else ps.classList.add('payment-na');
                 });
+                
+                // Update account detail fields (Balance, Credit Limit, Date Opened)
+                const bureauValues = card.querySelectorAll('.bureau-value');
+                bureauValues.forEach(bv => {
+                    const val = bv.dataset[bureau] || '';
+                    bv.textContent = val || 'N/A';
+                });
+                
+                // Highlight discrepancy values for selected bureau
+                const discSpans = card.querySelectorAll('.discrepancy-details span[style*="color"]');
+                discSpans.forEach(span => {
+                    span.style.fontWeight = 'normal';
+                    span.style.textDecoration = 'none';
+                });
+                const bureauColors = {'tu': '#3b82f6', 'ex': '#ef4444', 'eq': '#10b981'};
+                discSpans.forEach(span => {
+                    if (span.style.color === bureauColors[bureau] || 
+                        span.textContent.toLowerCase().startsWith(bureau.toUpperCase().substring(0,2))) {
+                        span.style.fontWeight = 'bold';
+                        span.style.textDecoration = 'underline';
+                    }
+                });
             }
 
             // Filter state
@@ -928,14 +967,23 @@
                     // Status match
                     let matchesStatus = true;
                     if (currentStatusFilter === 'open') {
-                        matchesStatus = status.includes('open') || status.includes('current') || status.includes('pays');
+                        matchesStatus = status.includes('open') || status.includes('current') || 
+                                       status.includes('pays') || status.includes('paying') ||
+                                       status.includes('past due') || status.includes('late');
                     } else if (currentStatusFilter === 'closed') {
-                        matchesStatus = status.includes('closed') || status.includes('paid');
+                        matchesStatus = status.includes('closed') || status.includes('terminated') || 
+                                       status === 'paid' || status.includes('paid satisf');
                     } else if (currentStatusFilter === 'negative') {
                         matchesStatus = status.includes('late') || status.includes('past due') || 
                                        status.includes('collection') || status.includes('charge') ||
                                        status.includes('delinq') || status.includes('30') ||
                                        status.includes('60') || status.includes('90');
+                    } else if (currentStatusFilter === 'au') {
+                        const auBadge = card.querySelector('.creditor-name span');
+                        matchesStatus = auBadge && auBadge.textContent === 'AU';
+                    } else if (currentStatusFilter === 'discrepancy') {
+                        const discBadge = card.querySelector('.creditor-name');
+                        matchesStatus = discBadge && discBadge.textContent.includes('DISCREPANCY');
                     }
                     
                     if (matchesSearch && matchesStatus) {

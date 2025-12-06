@@ -296,11 +296,15 @@ class CreditReportParser:
                 'times_30_late': None,
                 'times_60_late': None,
                 'times_90_late': None,
+                'is_authorized_user': False,
+                'responsibility': None,
                 'payment_history': [],
+                'discrepancies': [],
+                'has_discrepancy': False,
                 'bureaus': {
-                    'transunion': {'present': False},
-                    'experian': {'present': False},
-                    'equifax': {'present': False},
+                    'transunion': {'present': False, 'balance': None, 'credit_limit': None, 'date_opened': None, 'status': None},
+                    'experian': {'present': False, 'balance': None, 'credit_limit': None, 'date_opened': None, 'status': None},
+                    'equifax': {'present': False, 'balance': None, 'credit_limit': None, 'date_opened': None, 'status': None},
                 }
             }
             
@@ -364,9 +368,23 @@ class CreditReportParser:
                         
                         elif label == 'balance:' or label == 'balances:':
                             account['balance'] = first_value
+                            # Store bureau-specific balances
+                            if len(values) >= 1 and values[0] and values[0] != '-':
+                                account['bureaus']['transunion']['balance'] = values[0]
+                            if len(values) >= 2 and values[1] and values[1] != '-':
+                                account['bureaus']['experian']['balance'] = values[1]
+                            if len(values) >= 3 and values[2] and values[2] != '-':
+                                account['bureaus']['equifax']['balance'] = values[2]
                         
                         elif 'credit limit' in label:
                             account['credit_limit'] = first_value
+                            # Store bureau-specific limits
+                            if len(values) >= 1 and values[0] and values[0] != '-':
+                                account['bureaus']['transunion']['credit_limit'] = values[0]
+                            if len(values) >= 2 and values[1] and values[1] != '-':
+                                account['bureaus']['experian']['credit_limit'] = values[1]
+                            if len(values) >= 3 and values[2] and values[2] != '-':
+                                account['bureaus']['equifax']['credit_limit'] = values[2]
                         
                         elif 'high balance' in label or 'high credit' in label:
                             account['high_balance'] = first_value
@@ -376,6 +394,13 @@ class CreditReportParser:
                         
                         elif 'date opened' in label:
                             account['date_opened'] = first_value
+                            # Store bureau-specific dates
+                            if len(values) >= 1 and values[0] and values[0] != '-':
+                                account['bureaus']['transunion']['date_opened'] = values[0]
+                            if len(values) >= 2 and values[1] and values[1] != '-':
+                                account['bureaus']['experian']['date_opened'] = values[1]
+                            if len(values) >= 3 and values[2] and values[2] != '-':
+                                account['bureaus']['equifax']['date_opened'] = values[2]
                         
                         elif 'date reported' in label:
                             account['date_reported'] = first_value
@@ -391,6 +416,14 @@ class CreditReportParser:
                         
                         elif '90' in label and 'late' in label:
                             account['times_90_late'] = first_value
+                        
+                        elif 'bureau code' in label or 'responsibility' in label:
+                            account['responsibility'] = first_value
+                            # Check if any value indicates authorized user
+                            for v in values:
+                                if v and ('authorized' in v.lower() or 'auth user' in v.lower()):
+                                    account['is_authorized_user'] = True
+                                    break
             
             # Extract payment history directly from crPrint table
             crprint_table = header.find_parent('table', class_='crPrint')
@@ -710,6 +743,47 @@ def parse_credit_report(html_path: str, service_name: str = 'unknown') -> Dict:
             if extracted_data.get('creditor_contacts'):
                 parsed['creditor_contacts'] = extracted_data['creditor_contacts']
         
+        # Detect discrepancies between bureaus
+        def normalize_value(val):
+            if not val or val == '-':
+                return None
+            # Remove $ and commas for comparison
+            return val.replace('$', '').replace(',', '').strip()
+        
+        for acct in parsed.get('accounts', []):
+            discrepancies = []
+            bureaus = acct.get('bureaus', {})
+            
+            # Check balance discrepancy
+            balances = {}
+            for bureau in ['transunion', 'experian', 'equifax']:
+                bal = normalize_value(bureaus.get(bureau, {}).get('balance'))
+                if bal:
+                    balances[bureau] = bal
+            if len(set(balances.values())) > 1 and len(balances) > 1:
+                discrepancies.append({'field': 'Balance', 'bureau_values': balances})
+            
+            # Check credit limit discrepancy
+            limits = {}
+            for bureau in ['transunion', 'experian', 'equifax']:
+                lim = normalize_value(bureaus.get(bureau, {}).get('credit_limit'))
+                if lim:
+                    limits[bureau] = lim
+            if len(set(limits.values())) > 1 and len(limits) > 1:
+                discrepancies.append({'field': 'Credit Limit', 'bureau_values': limits})
+            
+            # Check date opened discrepancy
+            dates = {}
+            for bureau in ['transunion', 'experian', 'equifax']:
+                dt = bureaus.get(bureau, {}).get('date_opened')
+                if dt and dt != '-':
+                    dates[bureau] = dt
+            if len(set(dates.values())) > 1 and len(dates) > 1:
+                discrepancies.append({'field': 'Date Opened', 'bureau_values': dates})
+            
+            acct['discrepancies'] = discrepancies
+            acct['has_discrepancy'] = len(discrepancies) > 0
+        
         # Count late payments from payment history
         late_count = 0
         on_time_count = 0
@@ -718,18 +792,20 @@ def parse_credit_report(html_path: str, service_name: str = 'unknown') -> Dict:
             for entry in acct.get('payment_history', []):
                 has_data = False
                 is_late = False
+                is_ok = False
                 for bureau in ['transunion', 'experian', 'equifax']:
                     val = entry.get(bureau, '')
                     if val:
                         has_data = True
                         if val in ['30', '60', '90', '120', '150', '180']:
                             is_late = True
-                            break
+                        elif val == 'OK':
+                            is_ok = True
                 if has_data:
                     total_payments += 1
                     if is_late:
                         late_count += 1
-                    elif val == 'OK':
+                    elif is_ok:
                         on_time_count += 1
         
         # Calculate credit utilization

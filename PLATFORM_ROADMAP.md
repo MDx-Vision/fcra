@@ -1,4 +1,4 @@
-# Brightpath Ascend FCRA Platform - Complete Feature Roadmap
+rodm# Brightpath Ascend FCRA Platform - Complete Feature Roadmap
 
 ## Platform Overview
 The Brightpath Ascend FCRA Platform is the most comprehensive litigation automation system in the credit repair and consumer protection industry. Unlike competitors who focus on either credit repair (Credit Money Machine, DisputeBee) OR litigation (traditional law firms), Brightpath Ascend delivers both in a single, integrated platform.
@@ -151,6 +151,18 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 - [x] **Experian Connect Adapter** - Direct bureau API integration
 - [x] **Tri-Merge Report Support** - All 3 bureaus in single pull
 - [x] **Analysis Pipeline Integration** - Auto-import to AI analysis
+
+### Credit Monitoring Auto-Import System (`/dashboard/credit-import`) ✅ NEW
+- [x] **MyScoreIQ Integration** - Encrypted credential-based automatic credit report import
+- [x] **HTML Credit Report Parser** (`services/credit_report_parser.py`) - Structured HTML parsing
+- [x] **Credit Score Extraction** - TransUnion, Experian, Equifax scores
+- [x] **Full Account Details** - Balance, credit limit, high balance, monthly payment
+- [x] **24-Month Payment History** - Per-bureau status tracking (OK, 30, 60, 90, CO)
+- [x] **Late Payment Detection** - Automatic 30/60/90 day late counts
+- [x] **Creditor Contacts** - Full addresses and phone numbers extracted
+- [x] **Inquiries Extraction** - Hard inquiries with dates and bureaus
+- [x] **Smart Deduplication** - Account number-based to allow multiple accounts from same creditor
+- [x] **Enhanced Report View** - Expandable account cards with payment timeline visualization
 
 ### Legal Services
 - [x] **SendCertified Integration** (`services/sendcertified_service.py`) - Certified mail with tracking
@@ -312,6 +324,7 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 | Case Law | `/dashboard/case-law` | Staff |
 | Escalation | `/dashboard/escalation` | Staff |
 | Credit Tracker | `/dashboard/credit-tracker` | Staff |
+| Credit Auto-Import | `/dashboard/credit-import` | Staff |
 | Document Scanner | `/scanner` | Staff |
 | Integrations Hub | `/dashboard/integrations` | Staff |
 | Billing Management | `/dashboard/billing` | Admin |
@@ -418,4 +431,4 @@ Based on the comprehensive "Credit Repair Warfare" legal guide, the following ha
 
 ---
 
-*Document Last Updated: November 30, 2025*
+*Document Last Updated: December 6, 2025*
