@@ -668,6 +668,7 @@
                     <button class="filter-btn" onclick="setStatusFilter('negative', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Negative</button>
                     <button class="filter-btn" onclick="setStatusFilter('au', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">AU</button>
                     <button class="filter-btn" onclick="setStatusFilter('discrepancy', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #f59e0b; cursor: pointer; font-size: 13px;">⚠ Discrepancy</button>
+                    
                 </div>
                 <span id="filterCount" style="color: #9ca3af; font-size: 13px;"></span>
             </div>
@@ -934,6 +935,67 @@
                 });
             }
 
+            // Filter state (dispute functions removed) for flagged accounts
+            function generateDisputeLetters() {
+                const flaggedBtns = document.querySelectorAll('.flag-dispute-btn.flagged');
+                if (flaggedBtns.length === 0) {
+                    alert('No accounts flagged for dispute. Click the Flag button on accounts you want to dispute.');
+                    return;
+                }
+                
+                const accounts = [];
+                flaggedBtns.forEach(btn => {
+                    const card = btn.closest('.account-card');
+                    const creditorEl = card.querySelector('.creditor-name');
+                    let creditor = creditorEl.childNodes[0].textContent.trim();
+                    const accountNumEl = card.querySelector('.account-number');
+                    const accountNum = accountNumEl ? accountNumEl.textContent.replace('Account #:', '').trim() : 'N/A';
+                    const balanceEl = card.querySelector('.bureau-value[data-field="balance"]');
+                    const balance = balanceEl ? balanceEl.textContent.trim() : 'N/A';
+                    const statusEl = card.querySelector('.status-badge');
+                    const status = statusEl ? statusEl.textContent.trim() : 'N/A';
+                    
+                    accounts.push({ creditor, accountNum, balance, status });
+                });
+                
+                const clientName = document.querySelector('h1')?.textContent.replace('Credit Report -', '').trim() || 'Client';
+                const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                
+                let letter = 'DISPUTE LETTER - FAIR CREDIT REPORTING ACT\n\n';
+                letter += 'Date: ' + today + '\n';
+                letter += 'Client: ' + clientName + '\n\n';
+                letter += 'To: [Credit Bureau Name]\n';
+                letter += '    [Bureau Address]\n\n';
+                letter += 'Re: Dispute of Inaccurate Credit Information\n\n';
+                letter += 'Dear Sir/Madam,\n\n';
+                letter += 'I am writing pursuant to my rights under the Fair Credit Reporting Act, 15 U.S.C. § 1681 et seq., to dispute the following inaccurate information appearing on my credit report:\n\n';
+                letter += 'DISPUTED ACCOUNTS:\n';
+                letter += '==================\n';
+                
+                accounts.forEach((acct, i) => {
+                    letter += '\n' + (i + 1) + '. Creditor: ' + acct.creditor + '\n';
+                    letter += '   Account Number: ' + acct.accountNum + '\n';
+                    letter += '   Balance Reported: ' + acct.balance + '\n';
+                    letter += '   Status: ' + acct.status + '\n';
+                    letter += '   Reason for Dispute: [Please verify the accuracy of this account]\n';
+                });
+                
+                letter += '\n==================\n\n';
+                letter += 'Under the FCRA, you are required to conduct a reasonable investigation into this dispute within 30 days and provide me with the results. If you cannot verify this information, you must delete it from my credit file.\n\n';
+                letter += 'Please send me written notification of the results of your investigation.\n\n';
+                letter += 'Sincerely,\n\n';
+                letter += '_______________________\n';
+                letter += clientName + '\n';
+                
+                const win = window.open('', '_blank');
+                win.document.write('<html><head><title>Dispute Letter</title>');
+                win.document.write('<style>body{font-family:Courier,monospace;white-space:pre-wrap;padding:40px;line-height:1.6;max-width:800px;margin:0 auto;}@media print{body{padding:20px;}}</style>');
+                win.document.write('</head><body>');
+                win.document.write(letter);
+                win.document.write('</body></html>');
+                win.document.close();
+            }
+            
             // Filter state
             let currentStatusFilter = 'all';
             
