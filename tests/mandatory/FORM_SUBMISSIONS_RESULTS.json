@@ -1,0 +1,152 @@
+{
+  "timestamp": "2025-12-07T17:51:30.374211",
+  "forms_tested": 12,
+  "forms_passed": 7,
+  "forms_failed": 5,
+  "submissions": [
+    {
+      "name": "Client Signup",
+      "url": "/signup",
+      "priority": "critical",
+      "page_loaded": true,
+      "modal_opened": false,
+      "fields_filled": 12,
+      "submitted": false,
+      "success_detected": false,
+      "status": "FAIL",
+      "notes": ""
+    },
+    {
+      "name": "Staff Login",
+      "url": "/staff/login",
+      "priority": "critical",
+      "page_loaded": true,
+      "modal_opened": false,
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "FILL_FAILED",
+      "notes": "Could not fill any fields"
+    },
+    {
+      "name": "Portal Login",
+      "url": "/portal/login",
+      "priority": "critical",
+      "page_loaded": true,
+      "modal_opened": false,
+      "fields_filled": 2,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "name": "Add Staff Member",
+      "url": "/dashboard/staff",
+      "priority": "critical",
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 5,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "name": "Save Settings",
+      "url": "/dashboard/settings",
+      "priority": "critical",
+      "page_loaded": true,
+      "modal_opened": false,
+      "fields_filled": 2,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "name": "Add Affiliate",
+      "url": "/dashboard/affiliates",
+      "priority": "important",
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 7,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "name": "Add Case Law",
+      "url": "/dashboard/case-law",
+      "priority": "important",
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 8,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "name": "Create Pattern",
+      "url": "/dashboard/patterns",
+      "priority": "important",
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 3,
+      "submitted": false,
+      "success_detected": false,
+      "status": "SUBMIT_FAILED",
+      "notes": "Could not click submit button"
+    },
+    {
+      "name": "Create Organization (Franchise)",
+      "url": "/dashboard/franchise",
+      "priority": "important",
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 9,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "name": "Create Billing Plan",
+      "url": "/dashboard/billing",
+      "priority": "important",
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 4,
+      "submitted": true,
+      "success_detected": false,
+      "status": "ERROR_SHOWN",
+      "notes": "Error: Stripe Not Connected"
+    },
+    {
+      "name": "Import Client",
+      "url": "/dashboard/import",
+      "priority": "secondary",
+      "page_loaded": true,
+      "modal_opened": false,
+      "fields_filled": 4,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
+    },
+    {
+      "name": "Create White-Label Tenant",
+      "url": "/dashboard/white-label",
+      "priority": "secondary",
+      "page_loaded": false,
+      "modal_opened": false,
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "PAGE_LOAD_FAILED",
+      "notes": "HTTP 500"
+    }
+  ]
+}
