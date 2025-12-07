@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-12-06T23:18:49.678991",
+  "browsers_tested": 3,
+  "browsers_passed": 3,
+  "browsers_failed": 0,
+  "browser_results": {
+    "chromium": {
+      "pages_tested": 8,
+      "pages_passed": 8,
+      "actions_tested": 4,
+      "actions_passed": 4,
+      "issues": []
+    },
+    "firefox": {
+      "pages_tested": 8,
+      "pages_passed": 8,
+      "actions_tested": 4,
+      "actions_passed": 4,
+      "issues": []
+    },
+    "webkit": {
+      "pages_tested": 8,
+      "pages_passed": 8,
+      "actions_tested": 4,
+      "actions_passed": 4,
+      "issues": []
+    }
+  },
+  "issues": []
+}

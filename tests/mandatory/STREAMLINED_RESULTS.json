@@ -1,0 +1,377 @@
+{
+  "timestamp": "2025-12-07T00:22:25.338813",
+  "pages_tested": 47,
+  "pages_passed": 45,
+  "forms_found": 38,
+  "buttons_found": 426,
+  "links_found": 1822,
+  "modals_found": 58,
+  "security_tests": {
+    "xss": "BLOCKED",
+    "sqli": "PROTECTED"
+  },
+  "details": [
+    {
+      "url": "/",
+      "status": 200,
+      "forms": 1,
+      "buttons": 1,
+      "links": 0,
+      "modals": 0
+    },
+    {
+      "url": "/signup",
+      "status": 200,
+      "forms": 1,
+      "buttons": 7,
+      "links": 4,
+      "modals": 0
+    },
+    {
+      "url": "/staff/login",
+      "status": 200,
+      "forms": 1,
+      "buttons": 2,
+      "links": 1,
+      "modals": 0
+    },
+    {
+      "url": "/portal/login",
+      "status": 200,
+      "forms": 3,
+      "buttons": 5,
+      "links": 3,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard",
+      "status": 200,
+      "forms": 1,
+      "buttons": 13,
+      "links": 43,
+      "modals": 4
+    },
+    {
+      "url": "/dashboard/clients",
+      "status": 200,
+      "forms": 0,
+      "buttons": 0,
+      "links": 46,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/signups",
+      "status": 200,
+      "forms": 0,
+      "buttons": 12,
+      "links": 61,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/cases",
+      "status": 200,
+      "forms": 0,
+      "buttons": 0,
+      "links": 46,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/settlements",
+      "status": 200,
+      "forms": 0,
+      "buttons": 15,
+      "links": 43,
+      "modals": 8
+    },
+    {
+      "url": "/dashboard/staff",
+      "status": 200,
+      "forms": 2,
+      "buttons": 12,
+      "links": 42,
+      "modals": 4
+    },
+    {
+      "url": "/dashboard/analytics",
+      "status": 200,
+      "forms": 0,
+      "buttons": 0,
+      "links": 44,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/credit-tracker",
+      "status": 200,
+      "forms": 0,
+      "buttons": 7,
+      "links": 42,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/calendar",
+      "status": 200,
+      "forms": 0,
+      "buttons": 4,
+      "links": 43,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/contacts",
+      "status": 200,
+      "forms": 0,
+      "buttons": 21,
+      "links": 97,
+      "modals": 4
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "status": 200,
+      "forms": 0,
+      "buttons": 50,
+      "links": 43,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/letter-queue",
+      "status": 200,
+      "forms": 0,
+      "buttons": 7,
+      "links": 42,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/demand-generator",
+      "status": 200,
+      "forms": 0,
+      "buttons": 2,
+      "links": 43,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/import",
+      "status": 200,
+      "forms": 1,
+      "buttons": 2,
+      "links": 43,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/documents",
+      "status": 200,
+      "forms": 1,
+      "buttons": 12,
+      "links": 53,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/settings",
+      "status": 200,
+      "forms": 1,
+      "buttons": 2,
+      "links": 44,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/integrations",
+      "status": 200,
+      "forms": 1,
+      "buttons": 12,
+      "links": 43,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/billing",
+      "status": 200,
+      "forms": 1,
+      "buttons": 5,
+      "links": 42,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/tasks",
+      "status": 200,
+      "forms": 2,
+      "buttons": 40,
+      "links": 42,
+      "modals": 3
+    },
+    {
+      "url": "/dashboard/workflows",
+      "status": 200,
+      "forms": 1,
+      "buttons": 39,
+      "links": 42,
+      "modals": 3
+    },
+    {
+      "url": "/dashboard/ml-insights",
+      "status": 200,
+      "forms": 1,
+      "buttons": 6,
+      "links": 42,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/white-label",
+      "status": 200,
+      "forms": 1,
+      "buttons": 12,
+      "links": 42,
+      "modals": 3
+    },
+    {
+      "url": "/dashboard/whitelabel",
+      "status": 200,
+      "forms": 1,
+      "buttons": 5,
+      "links": 42,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/franchise",
+      "status": 200,
+      "forms": 4,
+      "buttons": 18,
+      "links": 42,
+      "modals": 5
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "status": 200,
+      "forms": 1,
+      "buttons": 9,
+      "links": 42,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/triage",
+      "status": 200,
+      "forms": 0,
+      "buttons": 8,
+      "links": 43,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/escalation",
+      "status": 200,
+      "forms": 0,
+      "buttons": 0,
+      "links": 43,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/case-law",
+      "status": 200,
+      "forms": 1,
+      "buttons": 12,
+      "links": 42,
+      "modals": 2
+    },
+    {
+      "url": "/dashboard/knowledge-base",
+      "status": 200,
+      "forms": 1,
+      "buttons": 0,
+      "links": 48,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/sops",
+      "status": 200,
+      "forms": 1,
+      "buttons": 1,
+      "links": 43,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "status": 200,
+      "forms": 1,
+      "buttons": 5,
+      "links": 49,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "status": 200,
+      "forms": 1,
+      "buttons": 23,
+      "links": 48,
+      "modals": 2
+    },
+    {
+      "url": "/dashboard/furnishers",
+      "status": 200,
+      "forms": 0,
+      "buttons": 5,
+      "links": 42,
+      "modals": 1
+    },
+    {
+      "url": "/dashboard/patterns",
+      "status": 200,
+      "forms": 2,
+      "buttons": 15,
+      "links": 42,
+      "modals": 3
+    },
+    {
+      "url": "/dashboard/sol",
+      "status": 200,
+      "forms": 0,
+      "buttons": 5,
+      "links": 43,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/cfpb",
+      "status": 200,
+      "forms": 0,
+      "buttons": 5,
+      "links": 44,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/frivolousness",
+      "status": 200,
+      "forms": 1,
+      "buttons": 8,
+      "links": 42,
+      "modals": 2
+    },
+    {
+      "url": "/dashboard/predictive",
+      "status": 200,
+      "forms": 0,
+      "buttons": 4,
+      "links": 43,
+      "modals": 0
+    },
+    {
+      "url": "/dashboard/credit-import",
+      "status": 200,
+      "forms": 1,
+      "buttons": 5,
+      "links": 43,
+      "modals": 2
+    },
+    {
+      "url": "/dashboard/performance",
+      "status": 200,
+      "forms": 1,
+      "buttons": 5,
+      "links": 42,
+      "modals": 1
+    },
+    null,
+    null,
+    {
+      "url": "/portal/dashboard",
+      "status": 200,
+      "forms": 3,
+      "buttons": 5,
+      "links": 3,
+      "modals": 0
+    }
+  ]
+}

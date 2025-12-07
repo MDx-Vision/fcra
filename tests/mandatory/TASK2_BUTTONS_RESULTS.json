@@ -1,0 +1,3672 @@
+{
+  "timestamp": "2025-12-06T23:07:43.579116",
+  "buttons_found": 867,
+  "buttons_clicked": 66,
+  "buttons_skipped": 95,
+  "errors": [
+    {
+      "url": "/staff/login",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 22,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/staff/login",
+      "button_index": 23,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 22,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard",
+      "button_index": 23,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/signups",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settlements",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/staff",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 22,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 23,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 24,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 25,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 26,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 27,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 28,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 29,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 30,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 31,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 32,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 33,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 34,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 35,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 36,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 37,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 38,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 39,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 40,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 41,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 42,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 43,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 44,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 45,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 46,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 47,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 48,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 49,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 50,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 51,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 52,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 53,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 54,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 55,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 56,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 57,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 58,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 59,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 60,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 61,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 62,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 63,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 64,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 65,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 66,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 67,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 68,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 69,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 70,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 71,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 72,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 73,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 74,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 75,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 76,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 77,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 78,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 79,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 80,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 81,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 82,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 83,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 84,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 85,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 86,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 87,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 88,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 89,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 90,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 91,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 92,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 93,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 94,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 95,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 96,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 97,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 98,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 99,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 100,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 101,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 102,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 103,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 104,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 105,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 106,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 107,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 108,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 109,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 110,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 111,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 112,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 113,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 114,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 115,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 116,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 117,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 118,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 119,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 120,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 121,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 122,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 123,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 124,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 125,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 126,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 127,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 128,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 129,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 130,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 131,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 132,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 133,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 134,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 135,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 136,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 137,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 138,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 139,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 140,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 141,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 142,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 143,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 144,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 145,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 146,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 147,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 148,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 149,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 150,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 151,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 152,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 153,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 154,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 155,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 156,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 157,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 158,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 159,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 160,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 161,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 162,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 163,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 164,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 165,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 166,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 167,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 168,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 169,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 170,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 171,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 172,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 173,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 174,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 175,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 176,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 177,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 178,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 179,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 180,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 181,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 182,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 183,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 184,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 185,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 186,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 187,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 188,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 189,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 190,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 191,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 192,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 193,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 194,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 195,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 196,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 197,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 198,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 199,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 200,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 201,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 202,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 203,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 204,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 205,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 206,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 207,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 208,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 209,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 210,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 211,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 212,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 213,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 214,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 215,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 216,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 217,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 218,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 219,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 220,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 221,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 222,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 223,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 224,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 225,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 226,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 227,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 228,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 229,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 230,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 231,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 232,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 233,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 234,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 235,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 236,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 237,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 238,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 239,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 240,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 241,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 242,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 243,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 244,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 245,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 246,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 247,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 248,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 249,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 250,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 251,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 252,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 253,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 254,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 255,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 256,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 257,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 258,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 259,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 260,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 261,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 262,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 263,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 264,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 265,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 266,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 267,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 268,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 269,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 270,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 271,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 272,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 273,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 274,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 275,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 276,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 277,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 278,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 279,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 280,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 281,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 282,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 283,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 284,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 285,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 286,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 287,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 288,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 289,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 290,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 291,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 292,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 293,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 294,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 295,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 296,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 297,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 298,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 299,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 300,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 301,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 302,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 303,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 304,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 305,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 306,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 307,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 308,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 309,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 310,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 311,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 312,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 313,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 314,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 315,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/contacts",
+      "button_index": 316,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 22,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 23,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 24,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 25,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 26,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 27,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 28,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 29,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 30,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 31,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 32,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 33,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 34,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 35,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 36,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 37,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 38,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 39,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 40,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 41,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 42,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 43,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/automation-tools",
+      "button_index": 44,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settings",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settings",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/settings",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/integrations",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/billing",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/billing",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/billing",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/billing",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 2,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 22,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 23,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 24,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 25,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 26,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 27,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 28,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 29,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 30,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 31,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 32,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 33,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 34,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 35,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 36,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 37,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 38,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 39,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 40,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/tasks",
+      "button_index": 41,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 22,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 23,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 24,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 25,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 26,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 27,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 28,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 29,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 30,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 31,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 32,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 33,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 34,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 35,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 36,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 37,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 38,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 39,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 40,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 41,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 42,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/workflows",
+      "button_index": 43,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/ml-insights",
+      "button_index": 2,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/ml-insights",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/ml-insights",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/ml-insights",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/white-label",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/franchise",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/affiliates",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/triage",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 2,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/case-law",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/chexsystems",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 15,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 16,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 17,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 18,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 19,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 20,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 21,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 22,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 23,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 24,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 25,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 26,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 27,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 28,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 29,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 30,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 31,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/specialty-bureaus",
+      "button_index": 32,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 13,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/patterns",
+      "button_index": 14,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/sol",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/sol",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/sol",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/sol",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/sol",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/cfpb",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/cfpb",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/cfpb",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/cfpb",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/cfpb",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/predictive",
+      "button_index": 1,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/predictive",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/predictive",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/predictive",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/credit-import",
+      "button_index": 2,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/credit-import",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/credit-import",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/credit-import",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 1,
+      "error": "ElementHandle.click: Timeout 3000ms exceeded.\nCall"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 2,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 3,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 4,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 5,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 6,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 7,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 8,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 9,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 10,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 11,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    },
+    {
+      "url": "/dashboard/suspense-accounts",
+      "button_index": 12,
+      "error": "ElementHandle.get_attribute: Execution context was"
+    }
+  ],
+  "log": [
+    "\n=== Scanning: / ===",
+    "  Found 1 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /signup ===",
+    "  Found 8 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /staff/login ===",
+    "  Found 24 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /portal/login ===",
+    "  Found 8 buttons",
+    "  Clicked 4 buttons",
+    "\n=== Scanning: /dashboard ===",
+    "  Found 24 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/clients ===",
+    "  Found 1 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/signups ===",
+    "  Found 13 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/cases ===",
+    "  Found 1 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/settlements ===",
+    "  Found 22 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/staff ===",
+    "  Found 12 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/analytics ===",
+    "  Found 1 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/credit-tracker ===",
+    "  Found 53 buttons",
+    "  Clicked 3 buttons",
+    "\n=== Scanning: /dashboard/calendar ===",
+    "  Found 11 buttons",
+    "  Clicked 7 buttons",
+    "\n=== Scanning: /dashboard/contacts ===",
+    "  Found 317 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/automation-tools ===",
+    "  Found 45 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/letter-queue ===",
+    "  Found 4 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/demand-generator ===",
+    "  Found 3 buttons",
+    "  Clicked 0 buttons",
+    "\n=== Scanning: /dashboard/import ===",
+    "  Found 6 buttons",
+    "  Clicked 4 buttons",
+    "\n=== Scanning: /dashboard/documents ===",
+    "  Found 10 buttons",
+    "  Clicked 2 buttons",
+    "\n=== Scanning: /dashboard/settings ===",
+    "  Found 4 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/integrations ===",
+    "  Found 13 buttons",
+    "  Clicked 2 buttons",
+    "\n=== Scanning: /dashboard/billing ===",
+    "  Found 5 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/tasks ===",
+    "  Found 42 buttons",
+    "  Clicked 2 buttons",
+    "\n=== Scanning: /dashboard/workflows ===",
+    "  Found 44 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/ml-insights ===",
+    "  Found 6 buttons",
+    "  Clicked 2 buttons",
+    "\n=== Scanning: /dashboard/white-label ===",
+    "  Found 15 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/franchise ===",
+    "  Found 17 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/affiliates ===",
+    "  Found 9 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/triage ===",
+    "  Found 14 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/escalation ===",
+    "  Found 1 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/case-law ===",
+    "  Found 14 buttons",
+    "  Clicked 2 buttons",
+    "\n=== Scanning: /dashboard/knowledge-base ===",
+    "  Found 0 buttons",
+    "  Clicked 0 buttons",
+    "\n=== Scanning: /dashboard/sops ===",
+    "  Found 1 buttons",
+    "  Clicked 0 buttons",
+    "\n=== Scanning: /dashboard/chexsystems ===",
+    "  Found 13 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/specialty-bureaus ===",
+    "  Found 33 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/furnishers ===",
+    "  Found 5 buttons",
+    "  Clicked 3 buttons",
+    "\n=== Scanning: /dashboard/patterns ===",
+    "  Found 15 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/sol ===",
+    "  Found 6 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/cfpb ===",
+    "  Found 6 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/frivolousness ===",
+    "  Found 11 buttons",
+    "  Clicked 2 buttons",
+    "\n=== Scanning: /dashboard/predictive ===",
+    "  Found 5 buttons",
+    "  Clicked 1 buttons",
+    "\n=== Scanning: /dashboard/credit-import ===",
+    "  Found 6 buttons",
+    "  Clicked 2 buttons",
+    "\n=== Scanning: /dashboard/performance ===",
+    "  Found 5 buttons",
+    "  Clicked 3 buttons",
+    "\n=== Scanning: /dashboard/suspense-accounts ===",
+    "  Found 13 buttons",
+    "  Clicked 1 buttons"
+  ]
+}

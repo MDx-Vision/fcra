@@ -1,0 +1,50 @@
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/affiliates.html:428:            <form id="addAffiliateForm" onsubmit="submitAddAffiliate(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/credit_import.html:442:            <form id="credentialForm" onsubmit="saveCredential(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/performance_dashboard.html:609:            <form onsubmit="clearCache(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/violation_patterns.html:311:                <form id="createPatternForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/violation_patterns.html:472:                    <form id="updatePatternForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/franchise_dashboard.html:675:            <form id="createOrgForm" onsubmit="createOrganization(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/franchise_dashboard.html:797:            <form id="editOrgForm" onsubmit="updateOrganization(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/franchise_dashboard.html:913:                <form id="addMemberForm" onsubmit="addMember(event)" style="display:flex;gap:12px;margin-bottom:20px;">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/franchise_dashboard.html:1013:            <form id="transferForm" onsubmit="createTransfer(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/task_queue.html:600:                <form id="task-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/task_queue.html:637:                <form id="schedule-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/admin.html:254:        <form id="analysisForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/client_import.html:272:            <form id="singleImportForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/frivolousness_tracker.html:752:            <form id="addForm" onsubmit="submitAddForm(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/api_management.html:544:            <form id="createKeyForm" onsubmit="createApiKey(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/api_management.html:607:            <form id="createWebhookForm" onsubmit="createWebhook(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/specialty_bureaus.html:612:                <form id="disputeForm" onsubmit="submitDispute(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/analysis_review.html:173:                <form id="standingForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/analysis_review.html:223:                <form id="damagesForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/analysis_review.html:327:            <form id="violationForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/documents.html:606:                <form id="uploadForm" enctype="multipart/form-data">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/suspense_accounts.html:634:                <form id="uploadForm" onsubmit="submitUpload(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/client_signup.html:685:            <form id="signupForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/knowledge_base_enhanced.html:337:            <form class="search-box" method="GET">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/chexsystems.html:616:                <form id="disputeForm" onsubmit="submitDispute(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/sops.html:370:            <form class="search-box" method="GET">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/integrations_hub.html:577:                <form id="configForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/dashboard.html:788:            <form id="intakeForm" onsubmit="submitIntake(event)" data-testid="intake-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/admin_simple.html:20:    <form id="form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/whitelabel_admin.html:697:                    <form id="configForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/white_label_dashboard.html:739:                <form id="tenantForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/ml_insights.html:507:                        <form id="outcomeForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/case_law.html:588:                <form id="addCaseForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/portal_login.html:275:                <form id="loginForm" method="POST" action="/portal/login" data-testid="portal-login-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/portal_login.html:311:                <form id="forgotForm" onsubmit="handleForgotPassword(event)" data-testid="forgot-password-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/portal_login.html:327:                <form id="resetForm" onsubmit="handleResetPassword(event)" data-testid="reset-password-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/affiliate_detail.html:693:            <form id="payoutForm" onsubmit="submitPayout(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/affiliate_detail.html:731:            <form id="editForm" onsubmit="submitEdit(event)">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/cfpb_generator.html:432:            <form id="editComplaintForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/workflow_triggers.html:678:                <form id="workflow-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/settings.html:255:        <form id="settingsForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/billing_management.html:506:            <form id="createPlanForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/staff_login.html:231:            <form id="changePasswordForm" method="POST" action="/staff/change-password" data-testid="change-password-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/staff_login.html:248:            <form id="loginForm" method="POST" action="/staff/login" data-testid="login-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/staff_management.html:484:            <form action="/api/staff/add" method="POST" id="addForm" data-testid="add-staff-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/staff_management.html:531:            <form action="/api/staff/update" method="POST" id="editForm" data-testid="edit-staff-form">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/sms_settings.html:375:        <form id="smsSettingsForm" method="POST" action="/dashboard/settings/sms">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/client_portal.html:1304:                <form id="contactForm">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/client_portal.html:1450:                        <form id="docUploadForm" enctype="multipart/form-data">
+/Users/rafaelrodriguez/Documents/GitHub/fcra/templates/client_portal.html:1507:                <form id="referralForm">

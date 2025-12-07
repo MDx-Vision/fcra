@@ -1,0 +1,77 @@
+{
+  "timestamp": "2025-12-06T23:16:26.604763",
+  "flows_tested": 6,
+  "flows_passed": 5,
+  "flows_failed": 1,
+  "steps_total": 12,
+  "steps_passed": 11,
+  "issues": [
+    {
+      "flow": "Staff Login",
+      "error": "ElementHandle.fill: Timeout 30000ms exceeded.\nCall log:\n    - fill(\"admin@test.com\")\n  - attempting "
+    }
+  ],
+  "flow_details": {
+    "Client Signup": [
+      {
+        "step": "Load signup page",
+        "status": "PASS"
+      },
+      {
+        "step": "Fill personal info",
+        "status": "PASS"
+      },
+      {
+        "step": "Navigate to step 2",
+        "status": "PASS"
+      }
+    ],
+    "Staff Login": [
+      {
+        "step": "Load login page",
+        "status": "PASS"
+      },
+      {
+        "step": "Error",
+        "status": "FAIL",
+        "error": "ElementHandle.fill: Timeout 30000ms exceeded.\nCall log:\n    - fill(\"admin@test.com\")\n  - attempting "
+      }
+    ],
+    "Client Management": [
+      {
+        "step": "Load clients page",
+        "status": "PASS"
+      }
+    ],
+    "Case Management": [
+      {
+        "step": "Load cases page",
+        "status": "PASS"
+      },
+      {
+        "step": "View case list (0 items)",
+        "status": "PASS"
+      }
+    ],
+    "Settlement Flow": [
+      {
+        "step": "Load settlements page",
+        "status": "PASS"
+      },
+      {
+        "step": "View settlements (1 items)",
+        "status": "PASS"
+      }
+    ],
+    "Client Portal": [
+      {
+        "step": "Load portal login",
+        "status": "PASS"
+      },
+      {
+        "step": "Portal form exists",
+        "status": "PASS"
+      }
+    ]
+  }
+}
