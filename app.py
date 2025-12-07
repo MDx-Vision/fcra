@@ -7,7 +7,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.attributes import flag_modified
 
 # API Configuration
-ANTHROPIC_API_KEY = os.environ.get('FCRA Automation Secure', '')
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '') or os.environ.get('FCRA Automation Secure', '')
 if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHROPIC_API_KEY) < 20:
     print(f"⚠️  WARNING: Invalid or missing Anthropic API key!")
     print(f"   Expected: Secret 'FCRA Automation Secure' with valid sk-ant-... key")
@@ -5763,6 +5763,12 @@ def dashboard_case_detail(case_id):
         db.close()
 
 
+@app.route('/portal')
+def portal_redirect():
+    """Redirect /portal to /portal/login"""
+    return redirect(url_for('portal_login'))
+
+
 @app.route('/portal/<token>')
 def client_portal(token):
     """Client-facing portal to view their case"""
@@ -6161,14 +6167,28 @@ def api_client_signup():
     db = get_db()
     try:
         data = request.json
-        
-        first_name = data.get('firstName', '').strip()
-        last_name = data.get('lastName', '').strip()
-        email = data.get('email', '').strip()
-        phone = data.get('phone', '').strip()
-        
+
+        # Sanitize input - remove HTML tags and limit length
+        import re
+        def sanitize(value, max_length=255):
+            if not value:
+                return ''
+            # Remove HTML tags
+            clean = re.sub(r'<[^>]+>', '', str(value))
+            return clean.strip()[:max_length]
+
+        first_name = sanitize(data.get('firstName', ''), 100)
+        last_name = sanitize(data.get('lastName', ''), 100)
+        email = data.get('email', '').strip().lower()[:255]
+        phone = sanitize(data.get('phone', ''), 50)
+
         if not first_name or not last_name or not email:
             return jsonify({'success': False, 'error': 'Name and email are required'}), 400
+
+        # Validate email format
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return jsonify({'success': False, 'error': 'Please enter a valid email address'}), 400
         
         existing = db.query(Client).filter_by(email=email).first()
         if existing:
@@ -6186,6 +6206,18 @@ def api_client_signup():
             except:
                 pass
         
+        # Get plan tier and calculate amount
+        plan_tier = data.get('planTier', 'free')
+        tier_prices = {
+            'free': 0,
+            'tier1': 300,
+            'tier2': 600,
+            'tier3': 900,
+            'tier4': 1200,
+            'tier5': 1500
+        }
+        plan_amount = tier_prices.get(plan_tier, 0)
+
         client = Client(
             name=f"{first_name} {last_name}",
             first_name=first_name,
@@ -6208,7 +6240,11 @@ def api_client_signup():
             status='signup',
             signup_completed=True,
             agreement_signed=data.get('agreeTerms', False),
-            agreement_signed_at=datetime.utcnow() if data.get('agreeTerms') else None
+            agreement_signed_at=datetime.utcnow() if data.get('agreeTerms') else None,
+            signup_plan=plan_tier,
+            signup_amount=plan_amount,
+            payment_method=data.get('paymentMethod', ''),
+            payment_status='pending' if plan_amount > 0 else 'free'
         )
         
         ref_code = data.get('referralCode', '').strip()
@@ -6653,6 +6689,45 @@ def api_complete_manual_signup():
             'paymentPending': True
         }), 201
         
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client/set-password', methods=['POST'])
+def api_set_client_password():
+    """Set password for a newly signed up client"""
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get('clientId')
+        portal_token = data.get('portalToken')
+        password = data.get('password')
+
+        if not client_id or not portal_token or not password:
+            return jsonify({'success': False, 'error': 'Client ID, portal token, and password are required'}), 400
+
+        if len(password) < 8:
+            return jsonify({'success': False, 'error': 'Password must be at least 8 characters'}), 400
+
+        client = db.query(Client).filter_by(id=client_id, portal_token=portal_token).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Invalid client or token'}), 404
+
+        # Hash and save the password
+        client.portal_password_hash = generate_password_hash(password)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Password created successfully',
+            'portalToken': portal_token
+        }), 200
+
     except Exception as e:
         db.rollback()
         import traceback
