@@ -1,0 +1,51 @@
+{
+  "routes_tested": 44,
+  "routes_passed": 42,
+  "routes_failed": [
+    {
+      "path": "/login",
+      "expected": 200,
+      "actual": 404
+    },
+    {
+      "path": "/dashboard/credit-imports",
+      "expected": 200,
+      "actual": 404
+    }
+  ],
+  "forms_tested": 0,
+  "api_tested": 30,
+  "api_passed": 25,
+  "api_failed": [
+    {
+      "path": "/api/clients/18",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/api/clients/18/timeline",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/api/clients/24",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/api/clients/24/timeline",
+      "method": "GET",
+      "status": 404
+    },
+    {
+      "path": "/api/clients/24/uploads",
+      "method": "GET",
+      "status": 404
+    }
+  ],
+  "security_tests": 11,
+  "security_passed": 11,
+  "security_issues": [],
+  "issues_found": [],
+  "issues_fixed": []
+}

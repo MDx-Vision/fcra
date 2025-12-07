@@ -1,0 +1,73 @@
+{
+  "timestamp": "2025-12-06T22:37:00.568754",
+  "total_requests": 102,
+  "successful": 102,
+  "failed": 0,
+  "avg_time": 0.1627898566863116,
+  "max_time": 0.21389317512512207,
+  "min_time": 0.07994198799133301,
+  "total_time": 0.21703290939331055,
+  "requests_per_second": 469.9748083603024,
+  "sample_requests": [
+    {
+      "url": "http://localhost:5001/",
+      "status": 200,
+      "time": 0.14979195594787598,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/dashboard",
+      "status": 200,
+      "time": 0.1544170379638672,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/dashboard/clients",
+      "status": 200,
+      "time": 0.15325021743774414,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/dashboard/cases",
+      "status": 200,
+      "time": 0.10340499877929688,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/api/clients",
+      "status": 200,
+      "time": 0.09318804740905762,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/api/settlements",
+      "status": 200,
+      "time": 0.1314558982849121,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/",
+      "status": 200,
+      "time": 0.08200383186340332,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/dashboard",
+      "status": 200,
+      "time": 0.1716010570526123,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/dashboard/clients",
+      "status": 200,
+      "time": 0.15385222434997559,
+      "success": true
+    },
+    {
+      "url": "http://localhost:5001/dashboard/cases",
+      "status": 200,
+      "time": 0.119354248046875,
+      "success": true
+    }
+  ]
+}

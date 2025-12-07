@@ -952,12 +952,12 @@ def home():
 
         <form id="form">
             <div class="form-group">
-                <label>CLIENT NAME <span class="required">*</span></label>
+                <label for="clientName">CLIENT NAME <span class="required">*</span></label>
                 <input type="text" id="clientName" required>
             </div>
 
             <div class="form-group">
-                <label>CMM CONTACT ID <span class="required">*</span></label>
+                <label for="cmmContactId">CMM CONTACT ID <span class="required">*</span></label>
                 <input type="text" id="cmmContactId" required>
             </div>
 

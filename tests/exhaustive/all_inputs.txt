@@ -1,0 +1,740 @@
+templates/contacts.html:708:                    <input type="text" placeholder="Search by name, email, phone..." id="searchInput" onkeyup="searchContacts()">
+templates/contacts.html:712:                    <select id="rowsPerPage" onchange="changeRowsPerPage()">
+templates/contacts.html:727:                            <th style="width: 40px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
+templates/contacts.html:747:                            <td><input type="checkbox" class="contact-checkbox" value="{{ contact.id }}"></td>
+templates/contacts.html:872:                            <input type="text" id="contactId" readonly>
+templates/contacts.html:876:                            <select id="clientType">
+templates/contacts.html:887:                            <input type="text" id="firstName">
+templates/contacts.html:891:                            <input type="text" id="lastName">
+templates/contacts.html:895:                            <input type="text" id="company">
+templates/contacts.html:899:                            <input type="email" id="email">
+templates/contacts.html:909:                            <input type="text" id="addressStreet">
+templates/contacts.html:913:                            <input type="text" id="addressCity">
+templates/contacts.html:917:                            <input type="text" id="addressState">
+templates/contacts.html:921:                            <input type="text" id="addressZip">
+templates/contacts.html:925:                            <input type="text" id="website">
+templates/contacts.html:935:                            <input type="text" id="phone">
+templates/contacts.html:939:                            <input type="text" id="phone2">
+templates/contacts.html:943:                            <input type="text" id="mobile">
+templates/contacts.html:953:                            <select id="status1">
+templates/contacts.html:964:                            <input type="text" id="status2">
+templates/contacts.html:968:                            <input type="date" id="followUpDate">
+templates/contacts.html:972:                            <select id="isAffiliate">
+templates/contacts.html:979:                            <input type="text" id="groups" placeholder="e.g., VIP, Round 2, Priority">
+templates/contacts.html:995:                            <input type="text" id="createdOn" readonly>
+templates/contacts.html:999:                            <input type="text" id="updatedOn" readonly>
+templates/contacts.html:1020:                    <textarea id="newNote" class="note-input" rows="3" placeholder="Enter your note here..."></textarea>
+templates/contacts.html:1042:                    <input type="text" id="taskTitle" placeholder="e.g., Follow up call">
+templates/contacts.html:1046:                    <select id="taskType">
+templates/contacts.html:1058:                        <input type="date" id="taskDueDate">
+templates/contacts.html:1062:                        <input type="time" id="taskDueTime">
+templates/contacts.html:1067:                    <textarea id="taskDescription" class="note-input" rows="3" placeholder="Additional details..."></textarea>
+templates/contacts.html:1071:                    <input type="text" id="taskAssignee" placeholder="Team member name">
+templates/document_scanner.html:527:                        <input type="file" id="file-input" accept="image/*" multiple class="d-none" onchange="handleFileSelect(event)">
+templates/affiliates.html:367:                <input type="text" placeholder="Search affiliates..." id="searchInput" onkeyup="searchAffiliates()">
+templates/affiliates.html:433:                            <input type="text" name="name" required>
+templates/affiliates.html:437:                            <input type="email" name="email" required>
+templates/affiliates.html:443:                            <input type="tel" name="phone">
+templates/affiliates.html:447:                            <input type="text" name="company_name">
+templates/affiliates.html:453:                            <input type="number" name="commission_rate_1" value="10" min="0" max="100" step="0.1">
+templates/affiliates.html:457:                            <input type="number" name="commission_rate_2" value="5" min="0" max="100" step="0.1">
+templates/affiliates.html:463:                            <select name="parent_affiliate_id">
+templates/affiliates.html:474:                            <select name="status">
+templates/affiliates.html:483:                            <select name="payout_method">
+templates/affiliates.html:493:                            <input type="text" name="payout_email" placeholder="PayPal email or bank details">
+templates/credit_import.html:444:                    <input type="hidden" id="credentialId" name="id">
+templates/credit_import.html:448:                        <select id="clientSelect" name="client_id" required data-testid="client-select">
+templates/credit_import.html:458:                        <select id="serviceSelect" name="service_name" required data-testid="service-select">
+templates/credit_import.html:468:                        <input type="text" id="usernameInput" name="username" required placeholder="Enter username or email" data-testid="username-input">
+templates/credit_import.html:473:                        <input type="password" id="passwordInput" name="password" placeholder="Enter password" data-testid="password-input">
+templates/credit_import.html:479:                        <input type="text" id="ssnLast4Input" name="ssn_last4" maxlength="20" placeholder="e.g., 6343" data-testid="ssn-last4-input">
+templates/credit_import.html:485:                        <select id="frequencySelect" name="import_frequency" data-testid="frequency-select">
+templates/instant_preview.html:76:                    <input type="file" id="fileInput" accept=".pdf,.html,.htm,.txt" class="hidden">
+templates/performance_dashboard.html:612:                    <input type="text" class="form-input" id="cachePattern" placeholder="e.g., clients_* or leave empty for all">
+templates/violation_patterns.html:204:                    <input type="text" id="searchInput" class="filter-input" placeholder="Search patterns..." oninput="filterTable()">
+templates/violation_patterns.html:205:                    <select id="furnisherFilter" class="filter-select" onchange="filterTable()">
+templates/violation_patterns.html:211:                    <select id="craFilter" class="filter-select" onchange="filterTable()">
+templates/violation_patterns.html:217:                    <select id="statusFilter" class="filter-select" onchange="filterTable()">
+templates/violation_patterns.html:314:                        <input type="text" name="pattern_name" class="form-input" placeholder="e.g., Capital One Systematic Metro 2 Violations" required>
+templates/violation_patterns.html:320:                            <select name="pattern_type" class="form-select">
+templates/violation_patterns.html:328:                            <select name="target_type" class="form-select" onchange="toggleTargetFields(this.value)">
+templates/violation_patterns.html:339:                            <select name="furnisher_name" class="form-select">
+templates/violation_patterns.html:348:                            <select name="cra_name" class="form-select">
+templates/violation_patterns.html:360:                            <input type="text" name="violation_code" class="form-input" placeholder="e.g., § 1681s-2(a)">
+templates/violation_patterns.html:364:                            <input type="text" name="violation_type" class="form-input" placeholder="e.g., Failure to report max delinquency date">
+templates/violation_patterns.html:370:                        <textarea name="violation_description" class="form-textarea" placeholder="Describe the systemic violation pattern..."></textarea>
+templates/violation_patterns.html:376:                            <select name="evidence_strength" class="form-select">
+templates/violation_patterns.html:385:                            <select name="recommended_strategy" class="form-select">
+templates/violation_patterns.html:393:                            <select name="priority" class="form-select">
+templates/violation_patterns.html:404:                        <textarea name="strategy_notes" class="form-textarea" placeholder="Notes on recommended legal approach..."></textarea>
+templates/violation_patterns.html:473:                        <input type="hidden" name="pattern_id" id="updatePatternId">
+templates/violation_patterns.html:478:                                <select name="status" id="updateStatus" class="form-select">
+templates/violation_patterns.html:487:                                <select name="priority" id="updatePriority" class="form-select">
+templates/violation_patterns.html:499:                                <select name="evidence_strength" id="updateEvidence" class="form-select">
+templates/violation_patterns.html:508:                                <select name="recommended_strategy" id="updateStrategy" class="form-select">
+templates/violation_patterns.html:518:                            <textarea name="admin_notes" id="updateNotes" class="form-textarea"></textarea>
+templates/violation_patterns.html:537:                    <input type="text" id="violationSearchInput" class="form-input" placeholder="Type to search..." oninput="searchViolations()">
+templates/franchise_dashboard.html:610:                    <select class="form-select" style="width: auto;" onchange="loadRevenueReport(this.value)">
+templates/franchise_dashboard.html:679:                        <input type="text" name="name" class="form-input" required>
+templates/franchise_dashboard.html:684:                            <select name="org_type" class="form-select">
+templates/franchise_dashboard.html:692:                            <select name="parent_org_id" class="form-select">
+templates/franchise_dashboard.html:702:                        <input type="text" name="address" class="form-input">
+templates/franchise_dashboard.html:707:                            <input type="text" name="city" class="form-input">
+templates/franchise_dashboard.html:711:                            <input type="text" name="state" class="form-input">
+templates/franchise_dashboard.html:717:                            <input type="text" name="zip_code" class="form-input">
+templates/franchise_dashboard.html:721:                            <input type="text" name="phone" class="form-input">
+templates/franchise_dashboard.html:726:                        <input type="email" name="email" class="form-input">
+templates/franchise_dashboard.html:731:                            <select name="manager_staff_id" class="form-select">
+templates/franchise_dashboard.html:740:                            <input type="number" name="revenue_share_percent" class="form-input" value="0" min="0" max="100" step="0.1">
+templates/franchise_dashboard.html:749:                            <input type="text" name="contact_name" class="form-input" placeholder="Primary contact person">
+templates/franchise_dashboard.html:753:                            <input type="text" name="license_number" class="form-input" placeholder="e.g., BAR-12345">
+templates/franchise_dashboard.html:759:                            <select name="subscription_tier" class="form-select">
+templates/franchise_dashboard.html:768:                            <input type="email" name="billing_contact_email" class="form-input" placeholder="billing@example.com">
+templates/franchise_dashboard.html:774:                            <input type="number" name="max_users" class="form-input" value="10" min="1" max="1000">
+templates/franchise_dashboard.html:778:                            <input type="number" name="max_clients" class="form-input" value="100" min="1" max="10000">
+templates/franchise_dashboard.html:798:                <input type="hidden" name="org_id" id="editOrgId">
+templates/franchise_dashboard.html:802:                        <input type="text" name="name" id="editOrgName" class="form-input" required>
+templates/franchise_dashboard.html:807:                            <select name="org_type" id="editOrgType" class="form-select">
+templates/franchise_dashboard.html:815:                            <input type="number" name="revenue_share_percent" id="editOrgRevShare" class="form-input" value="0" min="0" max="100" step="0.1">
+templates/franchise_dashboard.html:820:                        <input type="text" name="address" id="editOrgAddress" class="form-input">
+templates/franchise_dashboard.html:825:                            <input type="text" name="city" id="editOrgCity" class="form-input">
+templates/franchise_dashboard.html:829:                            <input type="text" name="state" id="editOrgState" class="form-input">
+templates/franchise_dashboard.html:835:                            <input type="text" name="phone" id="editOrgPhone" class="form-input">
+templates/franchise_dashboard.html:839:                            <input type="email" name="email" id="editOrgEmail" class="form-input">
+templates/franchise_dashboard.html:848:                            <input type="text" name="contact_name" id="editOrgContactName" class="form-input">
+templates/franchise_dashboard.html:852:                            <input type="text" name="license_number" id="editOrgLicense" class="form-input">
+templates/franchise_dashboard.html:858:                            <select name="subscription_tier" id="editOrgTier" class="form-select">
+templates/franchise_dashboard.html:867:                            <input type="email" name="billing_contact_email" id="editOrgBillingEmail" class="form-input">
+templates/franchise_dashboard.html:873:                            <input type="number" name="max_users" id="editOrgMaxUsers" class="form-input" min="1" max="1000">
+templates/franchise_dashboard.html:877:                            <input type="number" name="max_clients" id="editOrgMaxClients" class="form-input" min="1" max="10000">
+templates/franchise_dashboard.html:914:                    <input type="hidden" name="org_id" id="membersOrgId">
+templates/franchise_dashboard.html:915:                    <select name="staff_id" class="form-select" style="flex:1;" required>
+templates/franchise_dashboard.html:921:                    <select name="role" class="form-select" style="width:150px;" required>
+templates/franchise_dashboard.html:1017:                        <select name="client_id" class="form-select" required>
+templates/franchise_dashboard.html:1027:                            <select name="from_org_id" class="form-select" required>
+templates/franchise_dashboard.html:1036:                            <select name="to_org_id" class="form-select" required>
+templates/franchise_dashboard.html:1046:                        <select name="transfer_type" class="form-select">
+templates/franchise_dashboard.html:1054:                        <textarea name="reason" class="form-textarea" placeholder="Explain the reason for this transfer..."></textarea>
+templates/furnisher_detail.html:363:                    <input type="text" id="editName" class="form-input" value="{{ furnisher.name }}">
+templates/furnisher_detail.html:368:                        <select id="editIndustry" class="form-input">
+templates/furnisher_detail.html:377:                        <input type="text" id="editParent" class="form-input" value="{{ furnisher.parent_company or '' }}">
+templates/furnisher_detail.html:382:                    <textarea id="editAddress" class="form-input" rows="2">{{ furnisher.address or '' }}</textarea>
+templates/furnisher_detail.html:386:                    <textarea id="editDisputeAddress" class="form-input" rows="2">{{ furnisher.dispute_address or '' }}</textarea>
+templates/furnisher_detail.html:391:                        <input type="text" id="editPhone" class="form-input" value="{{ furnisher.phone or '' }}">
+templates/furnisher_detail.html:395:                        <input type="text" id="editFax" class="form-input" value="{{ furnisher.fax or '' }}">
+templates/furnisher_detail.html:401:                        <input type="email" id="editEmail" class="form-input" value="{{ furnisher.email or '' }}">
+templates/furnisher_detail.html:405:                        <input type="text" id="editWebsite" class="form-input" value="{{ furnisher.website or '' }}">
+templates/furnisher_detail.html:410:                    <textarea id="editNotes" class="form-input" rows="3">{{ furnisher.notes or '' }}</textarea>
+templates/knowledge_base.html:314:                <input type="text" id="searchInput" placeholder="Search statutes, codes, timelines...">
+templates/task_queue.html:490:                    <select class="filter-select" id="type-filter" onchange="loadTasks()">
+templates/task_queue.html:603:                        <select id="task-type" required>
+templates/task_queue.html:611:                        <input type="number" id="task-priority" min="1" max="10" value="5">
+templates/task_queue.html:615:                        <input type="datetime-local" id="task-scheduled">
+templates/task_queue.html:619:                        <textarea id="task-payload" rows="4" placeholder='{"key": "value"}'>{}</textarea>
+templates/task_queue.html:638:                    <input type="hidden" id="schedule-id">
+templates/task_queue.html:641:                        <input type="text" id="schedule-name" placeholder="Daily Report Generation" required>
+templates/task_queue.html:645:                        <select id="schedule-task-type" required>
+templates/task_queue.html:664:                                <input type="text" id="cron-minute" value="0" onchange="updateCronExpression()">
+templates/task_queue.html:668:                                <input type="text" id="cron-hour" value="*" onchange="updateCronExpression()">
+templates/task_queue.html:672:                                <input type="text" id="cron-day" value="*" onchange="updateCronExpression()">
+templates/task_queue.html:676:                                <input type="text" id="cron-month" value="*" onchange="updateCronExpression()">
+templates/task_queue.html:680:                                <input type="text" id="cron-weekday" value="*" onchange="updateCronExpression()">
+templates/task_queue.html:689:                        <textarea id="schedule-payload" rows="4" placeholder='{"key": "value"}'>{}</textarea>
+templates/task_queue.html:709:                    <input type="number" id="process-limit" min="1" max="100" value="1">
+templates/audit_dashboard.html:473:                            <select id="filter-event-type" onchange="applyFilters()">
+templates/audit_dashboard.html:482:                            <select id="filter-resource-type" onchange="applyFilters()">
+templates/audit_dashboard.html:491:                            <select id="filter-severity" onchange="applyFilters()">
+templates/audit_dashboard.html:500:                            <select id="filter-user-type" onchange="applyFilters()">
+templates/audit_dashboard.html:510:                            <input type="date" id="filter-start-date" onchange="applyFilters()">
+templates/audit_dashboard.html:514:                            <input type="date" id="filter-end-date" onchange="applyFilters()">
+templates/audit_dashboard.html:519:                                <input type="text" id="filter-search" placeholder="Search by user, IP, action..." onkeyup="debounceSearch()">
+templates/audit_dashboard.html:626:                    <input type="date" id="export-start-date">
+templates/audit_dashboard.html:630:                    <input type="date" id="export-end-date">
+templates/audit_dashboard.html:634:                    <select id="export-event-type">
+templates/calendar.html:380:                    <input type="text" id="filterClient" placeholder="Search by client name...">
+templates/calendar.html:385:                    <select id="filterBureau">
+templates/calendar.html:395:                    <select id="filterType">
+templates/admin.html:256:            <input type="text" id="name" placeholder="John Doe" required>
+templates/admin.html:259:            <input type="email" id="email" placeholder="john@example.com">
+templates/admin.html:262:            <select id="provider">
+templates/admin.html:283:                <textarea id="report" placeholder="Paste full HTML from credit report..."></textarea>
+templates/admin.html:292:                    <input type="file" id="pdfFile" accept=".pdf">
+templates/admin.html:346:                    <input type="hidden" id="parsedText" value="">
+templates/admin.html:351:            <select id="round">
+templates/admin.html:359:            <select id="mode">
+templates/client_import.html:276:                        <input type="text" id="firstName" required>
+templates/client_import.html:280:                        <input type="text" id="lastName" required>
+templates/client_import.html:287:                        <input type="email" id="email">
+templates/client_import.html:291:                        <input type="tel" id="phone" placeholder="(xxx) xxx-xxxx">
+templates/client_import.html:298:                        <input type="text" id="addressStreet">
+templates/client_import.html:302:                        <input type="text" id="addressCity">
+templates/client_import.html:309:                        <select id="addressState">
+templates/client_import.html:366:                        <input type="text" id="addressZip" maxlength="5">
+templates/client_import.html:370:                        <input type="date" id="dateOfBirth">
+templates/client_import.html:377:                        <input type="text" id="ssnLast4" maxlength="4" placeholder="XXXX">
+templates/client_import.html:381:                        <select id="creditService">
+templates/client_import.html:398:                        <select id="currentRound" required>
+templates/client_import.html:407:                        <select id="currentStep">
+templates/client_import.html:416:                        <select id="disputeStatus">
+templates/client_import.html:430:                        <input type="text" id="legacySystemId" placeholder="CMM Contact ID, LMR ID, etc.">
+templates/client_import.html:435:                        <input type="text" id="legacyCaseNumber" placeholder="Previous case number">
+templates/client_import.html:441:                    <textarea id="importNotes" placeholder="Any notes about this client's history, previous disputes, special circumstances..."></textarea>
+templates/client_import.html:471:            <input type="file" id="csvUpload" accept=".csv" style="display: none;">
+templates/frivolousness_tracker.html:673:                <input type="text" placeholder="Search by client name or bureau..." id="searchInput" onkeyup="searchCases()">
+templates/frivolousness_tracker.html:757:                            <select name="client_id" required>
+templates/frivolousness_tracker.html:766:                            <select name="bureau" required>
+templates/frivolousness_tracker.html:778:                            <select name="dispute_round">
+templates/frivolousness_tracker.html:787:                            <input type="date" name="claim_date">
+templates/frivolousness_tracker.html:791:                            <input type="date" name="follow_up_due">
+templates/frivolousness_tracker.html:797:                        <textarea name="claim_reason" placeholder="Enter the CRA's stated reason for the frivolous determination..."></textarea>
+templates/frivolousness_tracker.html:805:                                <input type="checkbox" name="required_evidence" value="{{ etype.id }}">
+templates/frivolousness_tracker.html:814:                        <textarea name="new_legal_theory" placeholder="Enter the new legal theory or argument to overcome the frivolous claim..."></textarea>
+templates/frivolousness_tracker.html:819:                        <textarea name="defense_strategy" placeholder="Describe the planned strategy for overcoming the frivolous claim..."></textarea>
+templates/frivolousness_tracker.html:847:                            <input type="text" id="view_client_name" readonly style="background: #f8fafc;">
+templates/frivolousness_tracker.html:851:                            <select id="view_bureau">
+templates/frivolousness_tracker.html:862:                            <select id="view_status">
+templates/frivolousness_tracker.html:870:                            <input type="date" id="view_claim_date">
+templates/frivolousness_tracker.html:874:                            <input type="date" id="view_follow_up_due">
+templates/frivolousness_tracker.html:880:                        <textarea id="view_claim_reason"></textarea>
+templates/frivolousness_tracker.html:885:                        <textarea id="view_new_legal_theory"></textarea>
+templates/frivolousness_tracker.html:890:                        <textarea id="view_defense_strategy"></textarea>
+templates/frivolousness_tracker.html:896:                            <input type="date" id="view_redispute_date">
+templates/frivolousness_tracker.html:900:                            <select id="view_redispute_outcome">
+templates/frivolousness_tracker.html:920:                    <input type="file" id="evidenceFileInput" style="display: none;" onchange="handleEvidenceUpload(this)">
+templates/frivolousness_tracker.html:925:                            <select id="evidenceType">
+templates/frivolousness_tracker.html:933:                            <input type="text" id="evidenceDescription" placeholder="Brief description of the document...">
+templates/frivolousness_tracker.html:944:                        <textarea id="view_admin_notes" rows="6" placeholder="Internal notes about this case..."></textarea>
+templates/frivolousness_tracker.html:948:                        <textarea id="view_escalation_notes" rows="4" placeholder="Notes about escalation if needed..."></textarea>
+templates/settlements.html:529:                    <select id="filterStatus" data-testid="filter-status" onchange="applyFilters()">
+templates/settlements.html:541:                    <input type="date" id="filterDateFrom" data-testid="filter-date-from" onchange="applyFilters()">
+templates/settlements.html:545:                    <input type="date" id="filterDateTo" data-testid="filter-date-to" onchange="applyFilters()">
+templates/settlements.html:631:                        <input type="text" id="modalClientName" data-testid="modal-client-name" readonly>
+templates/settlements.html:635:                        <select id="modalStatus" data-testid="modal-status">
+templates/settlements.html:648:                        <input type="number" id="modalTargetAmount" data-testid="modal-target-amount" step="0.01">
+templates/settlements.html:652:                        <input type="number" id="modalMinimumAcceptable" data-testid="modal-minimum-acceptable" step="0.01">
+templates/settlements.html:658:                        <input type="number" id="modalInitialDemand" data-testid="modal-initial-demand" step="0.01">
+templates/settlements.html:662:                        <input type="number" id="modalFinalAmount" data-testid="modal-final-amount" step="0.01">
+templates/settlements.html:667:                    <textarea id="modalNotes" data-testid="modal-notes" rows="3" placeholder="Settlement notes..."></textarea>
+templates/settlements.html:691:                    <input type="number" id="offerAmount" data-testid="offer-amount-input" step="0.01" placeholder="Enter offer amount">
+templates/settlements.html:695:                    <textarea id="offerNotes" data-testid="offer-notes-input" rows="3" placeholder="Add notes about this offer..."></textarea>
+templates/settlements.html:714:                    <input type="number" id="settleAmount" data-testid="settle-amount-input" step="0.01" placeholder="Enter final amount">
+templates/settlements.html:718:                    <textarea id="settleNotes" data-testid="settle-notes-input" rows="3" placeholder="Add settlement notes..."></textarea>
+templates/settlements.html:737:                    <input type="number" id="paymentAmount" data-testid="payment-amount-input" step="0.01" placeholder="Enter payment amount">
+templates/settlements.html:741:                    <textarea id="paymentNotes" data-testid="payment-notes-input" rows="3" placeholder="Add payment notes..."></textarea>
+templates/api_management.html:547:                    <input type="text" name="name" class="form-input" placeholder="e.g., Production Integration" required>
+templates/api_management.html:555:                            <input type="checkbox" name="scopes" value="{{ scope }}" id="scope_{{ loop.index }}">
+templates/api_management.html:564:                    <input type="number" name="rate_limit_per_minute" class="form-input" value="60" min="1" max="1000">
+templates/api_management.html:569:                    <input type="number" name="rate_limit_per_day" class="form-input" value="10000" min="1" max="1000000">
+templates/api_management.html:574:                    <input type="number" name="expires_in_days" class="form-input" placeholder="e.g., 365" min="1">
+templates/api_management.html:610:                    <input type="text" name="name" class="form-input" placeholder="e.g., Slack Notifications" required>
+templates/api_management.html:615:                    <input type="url" name="url" class="form-input" placeholder="https://your-server.com/webhook" required>
+templates/api_management.html:623:                            <input type="checkbox" name="events" value="{{ event }}" id="event_{{ loop.index }}">
+templates/demand_generator.html:96:                        <input type="text" id="clientSearch" placeholder="Search clients..." class="form-input">
+templates/demand_generator.html:125:                            <input type="hidden" id="selectedClientId">
+templates/demand_generator.html:131:                                <select id="demandTarget" class="form-select">
+templates/demand_generator.html:141:                                <select id="deadlineDays" class="form-select">
+templates/demand_generator.html:154:                                <input type="number" id="demandAmount" placeholder="Auto-calculated from analysis" class="form-input">
+templates/credit_tracker_client.html:155:                    <input type="number" id="inputEquifax" placeholder="e.g., 620" min="300" max="850">
+templates/credit_tracker_client.html:159:                    <input type="number" id="inputExperian" placeholder="e.g., 615" min="300" max="850">
+templates/credit_tracker_client.html:163:                    <input type="number" id="inputTransunion" placeholder="e.g., 610" min="300" max="850">
+templates/credit_tracker_client.html:167:                    <input type="number" id="inputNegatives" placeholder="e.g., 12" min="0">
+templates/credit_tracker_client.html:171:                    <input type="number" id="inputRemoved" placeholder="e.g., 4" min="0">
+templates/credit_tracker_client.html:175:                    <select id="inputRound">
+templates/credit_tracker_client.html:185:                    <select id="inputMilestone">
+templates/credit_tracker_client.html:202:                    <input type="text" id="inputNotes" placeholder="Any additional notes...">
+templates/specialty_bureaus.html:523:            <select class="select-filter" onchange="filterByClient(this.value)" data-testid="client-filter">
+templates/specialty_bureaus.html:613:                    <input type="hidden" id="disputeId" name="dispute_id">
+templates/specialty_bureaus.html:618:                            <select name="client_id" id="clientSelect" required data-testid="modal-client">
+templates/specialty_bureaus.html:627:                            <select name="bureau_name" id="bureauSelect" required data-testid="modal-bureau">
+templates/specialty_bureaus.html:639:                            <select name="dispute_type" required data-testid="modal-type">
+templates/specialty_bureaus.html:648:                            <select name="letter_type" data-testid="modal-letter-type">
+templates/specialty_bureaus.html:660:                            <input type="text" name="account_name" placeholder="e.g., Checking Account" required data-testid="modal-account-name">
+templates/specialty_bureaus.html:664:                            <input type="text" name="account_number" placeholder="e.g., XXXX1234" data-testid="modal-account-number">
+templates/specialty_bureaus.html:670:                        <textarea name="dispute_reason" placeholder="Explain why this information is inaccurate or should be removed..." required data-testid="modal-reason"></textarea>
+templates/specialty_bureaus.html:676:                            <input type="date" name="letter_sent_date" data-testid="modal-sent-date">
+templates/specialty_bureaus.html:680:                            <input type="text" name="tracking_number" placeholder="e.g., 9400111899223..." data-testid="modal-tracking">
+templates/specialty_bureaus.html:686:                        <textarea name="notes" placeholder="Any additional notes..." rows="3" data-testid="modal-notes"></textarea>
+templates/analysis_review.html:175:                        <input type="checkbox" id="has_concrete_harm" name="has_concrete_harm" {% if standing and standing.has_concrete_harm %}checked{% endif %}>
+templates/analysis_review.html:180:                        <input type="text" id="concrete_harm_type" name="concrete_harm_type" value="{{ standing.concrete_harm_type if standing else '' }}" placeholder="e.g., Credit denial, higher interest rates">
+templates/analysis_review.html:184:                        <textarea id="concrete_harm_details" name="concrete_harm_details" placeholder="Describe the specific harm experienced...">{{ standing.concrete_harm_details if standing else '' }}</textarea>
+templates/analysis_review.html:188:                        <input type="checkbox" id="has_dissemination" name="has_dissemination" {% if standing and standing.has_dissemination %}checked{% endif %}>
+templates/analysis_review.html:193:                        <textarea id="dissemination_details" name="dissemination_details" placeholder="Describe third-party access to the report...">{{ standing.dissemination_details if standing else '' }}</textarea>
+templates/analysis_review.html:197:                        <input type="checkbox" id="has_causation" name="has_causation" {% if standing and standing.has_causation %}checked{% endif %}>
+templates/analysis_review.html:202:                        <textarea id="causation_details" name="causation_details" placeholder="Describe how errors caused the harm...">{{ standing.causation_details if standing else '' }}</textarea>
+templates/analysis_review.html:208:                            <input type="number" id="denial_letters_count" name="denial_letters_count" value="{{ standing.denial_letters_count if standing else 0 }}" min="0">
+templates/analysis_review.html:212:                            <input type="number" id="adverse_action_notices_count" name="adverse_action_notices_count" value="{{ standing.adverse_action_notices_count if standing else 0 }}" min="0">
+templates/analysis_review.html:228:                            <input type="number" id="credit_denials_amount" name="credit_denials_amount" value="{{ damages.credit_denials_amount if damages else 0 }}" min="0" step="0.01">
+templates/analysis_review.html:232:                            <input type="number" id="higher_interest_amount" name="higher_interest_amount" value="{{ damages.higher_interest_amount if damages else 0 }}" min="0" step="0.01">
+templates/analysis_review.html:238:                            <input type="number" id="credit_monitoring_amount" name="credit_monitoring_amount" value="{{ damages.credit_monitoring_amount if damages else 0 }}" min="0" step="0.01">
+templates/analysis_review.html:242:                            <input type="number" id="time_stress_amount" name="time_stress_amount" value="{{ damages.time_stress_amount if damages else 0 }}" min="0" step="0.01">
+templates/analysis_review.html:247:                        <input type="number" id="other_actual_amount" name="other_actual_amount" value="{{ damages.other_actual_amount if damages else 0 }}" min="0" step="0.01">
+templates/analysis_review.html:274:                        <textarea id="damages_notes" name="damages_notes" placeholder="Additional notes about damages calculation...">{{ damages.notes if damages else '' }}</textarea>
+templates/analysis_review.html:328:                <input type="hidden" id="violation_id" name="violation_id">
+templates/analysis_review.html:332:                        <select id="v_bureau" name="bureau" required>
+templates/analysis_review.html:340:                        <select id="v_fcra_section" name="fcra_section" required>
+templates/analysis_review.html:351:                    <input type="text" id="v_account_name" name="account_name" required placeholder="e.g., Capital One Credit Card">
+templates/analysis_review.html:355:                    <input type="text" id="v_violation_type" name="violation_type" required placeholder="e.g., Balance discrepancy">
+templates/analysis_review.html:359:                    <textarea id="v_description" name="description" required placeholder="Detailed description of the violation..."></textarea>
+templates/analysis_review.html:364:                        <input type="number" id="v_statutory_damages_min" name="statutory_damages_min" value="100" min="0">
+templates/analysis_review.html:368:                        <input type="number" id="v_statutory_damages_max" name="statutory_damages_max" value="1000" min="0">
+templates/analysis_review.html:373:                            <input type="checkbox" id="v_is_willful" name="is_willful">
+templates/analysis_review.html:380:                    <textarea id="v_willfulness_notes" name="willfulness_notes" placeholder="Evidence of willful noncompliance..."></textarea>
+templates/scanned_documents.html:687:                                <select class="form-select form-select-sm" style="width:auto" data-item-idx="${idx}" ${data.reviewed ? 'disabled' : ''}>
+templates/documents.html:607:                    <input type="hidden" name="category" id="selectedCategory">
+templates/documents.html:608:                    <input type="hidden" name="document_type" id="selectedType">
+templates/documents.html:654:                            <select name="client_id" id="clientSelect" class="form-select" required>
+templates/documents.html:661:                            <input type="file" name="file" id="fileInput" style="display: none" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt">
+templates/documents.html:667:                                <input type="date" name="document_date" class="form-input">
+templates/documents.html:671:                                <input type="date" name="received_date" class="form-input">
+templates/documents.html:676:                            <textarea name="notes" class="form-textarea" rows="3" placeholder="Any additional notes about this document..."></textarea>
+templates/documents.html:681:                                <select name="priority" class="form-select">
+templates/documents.html:690:                                    <input type="checkbox" name="requires_action" value="true"> Requires Action
+templates/documents.html:846:                            <select name="bureau" class="form-select" required>
+templates/documents.html:855:                            <select name="dispute_round" class="form-select">
+templates/documents.html:866:                        <select name="response_type" class="form-select">
+templates/documents.html:879:                        <input type="text" name="sender_name" class="form-input" placeholder="e.g., Midland Credit Management">
+templates/documents.html:884:                            <input type="text" name="account_number" class="form-input" placeholder="Account/Reference number">
+templates/documents.html:888:                            <input type="number" step="0.01" name="amount_claimed" class="form-input" placeholder="0.00">
+templates/documents.html:896:                        <input type="text" name="sender_name" class="form-input" placeholder="e.g., Smith & Associates">
+templates/documents.html:901:                            <input type="number" step="0.01" name="amount_claimed" class="form-input" placeholder="0.00">
+templates/documents.html:905:                            <input type="date" name="action_deadline" class="form-input">
+templates/documents.html:913:                        <select name="bureau" class="form-select">
+templates/signups.html:347:                <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()">
+templates/suspense_accounts.html:541:                <input type="text" id="searchInput" placeholder="Search findings..." onkeyup="filterTable()">
+templates/suspense_accounts.html:637:                        <select id="uploadClientId" required>
+templates/suspense_accounts.html:653:                        <input type="file" id="csvFile" accept=".csv" style="display: none;" onchange="handleFileSelect(this)">
+templates/suspense_accounts.html:678:                    <select id="analyzeClientId" required>
+templates/clients.html:214:                <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()" data-testid="search-input">
+templates/client_signup.html:693:                            <input type="text" id="firstName" name="firstName" required>
+templates/client_signup.html:698:                            <input type="text" id="lastName" name="lastName" required>
+templates/client_signup.html:706:                            <input type="email" id="email" name="email" required>
+templates/client_signup.html:711:                            <input type="tel" id="phone" name="phone" placeholder="(xxx) xxx-xxxx" required>
+templates/client_signup.html:719:                            <input type="text" id="addressStreet" name="addressStreet" required>
+templates/client_signup.html:726:                            <input type="text" id="addressCity" name="addressCity" required>
+templates/client_signup.html:730:                            <select id="addressState" name="addressState" required>
+templates/client_signup.html:790:                            <input type="text" id="addressZip" name="addressZip" pattern="[0-9]{5}" maxlength="5" required>
+templates/client_signup.html:794:                            <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+templates/client_signup.html:801:                            <input type="text" id="ssnLast4" name="ssnLast4" pattern="[0-9]{4}" maxlength="4" placeholder="XXXX" required>
+templates/client_signup.html:806:                            <input type="text" id="referralCode" name="referralCode" placeholder="Optional">
+templates/client_signup.html:824:                            <input type="radio" name="creditService" value="IdentityIQ.com">
+templates/client_signup.html:828:                            <input type="radio" name="creditService" value="MyScoreIQ.com">
+templates/client_signup.html:832:                            <input type="radio" name="creditService" value="SmartCredit.com">
+templates/client_signup.html:836:                            <input type="radio" name="creditService" value="PrivacyGuard.com">
+templates/client_signup.html:840:                            <input type="radio" name="creditService" value="MyFreeScoreNow.com">
+templates/client_signup.html:844:                            <input type="radio" name="creditService" value="Other">
+templates/client_signup.html:852:                            <input type="text" id="creditUsername" name="creditUsername" required>
+templates/client_signup.html:856:                            <input type="password" id="creditPassword" name="creditPassword" required>
+templates/client_signup.html:875:                            <input type="radio" name="planTier" value="free">
+templates/client_signup.html:885:                            <input type="radio" name="planTier" value="tier1">
+templates/client_signup.html:894:                            <input type="radio" name="planTier" value="tier2">
+templates/client_signup.html:903:                            <input type="radio" name="planTier" value="tier3" checked>
+templates/client_signup.html:913:                            <input type="radio" name="planTier" value="tier4">
+templates/client_signup.html:922:                            <input type="radio" name="planTier" value="tier5">
+templates/client_signup.html:935:                                <input type="radio" name="paymentMethod" value="stripe" checked>
+templates/client_signup.html:940:                                <input type="radio" name="paymentMethod" value="paypal">
+templates/client_signup.html:945:                                <input type="radio" name="paymentMethod" value="cashapp">
+templates/client_signup.html:950:                                <input type="radio" name="paymentMethod" value="venmo">
+templates/client_signup.html:955:                                <input type="radio" name="paymentMethod" value="zelle">
+templates/client_signup.html:960:                                <input type="radio" name="paymentMethod" value="paylater">
+templates/client_signup.html:1040:                            <input type="checkbox" id="agreeTerms" name="agreeTerms" required>
+templates/client_signup.html:1046:                        <input type="checkbox" id="agreeComms" name="agreeComms">
+templates/knowledge_base_enhanced.html:339:                <input type="hidden" name="course" value="{{ current_course }}">
+templates/knowledge_base_enhanced.html:340:                <input type="text" name="search" placeholder="Search content, statutes, codes..." value="{{ search_query or '' }}">
+templates/chexsystems.html:483:            <select class="select-filter" onchange="filterByClient(this.value)">
+templates/chexsystems.html:620:                            <select name="client_id" required>
+templates/chexsystems.html:629:                            <select name="bureau_type" required>
+templates/chexsystems.html:641:                            <select name="dispute_type" id="disputeType" required>
+templates/chexsystems.html:654:                            <select name="account_type">
+templates/chexsystems.html:666:                        <input type="text" name="reported_by" placeholder="e.g., Chase Bank, Wells Fargo">
+templates/chexsystems.html:671:                        <textarea name="dispute_reason" placeholder="Explain why this information is inaccurate or should be removed..." required></textarea>
+templates/chexsystems.html:676:                        <textarea name="notes" placeholder="Any additional information or context..." rows="3"></textarea>
+templates/credit_report_view.html:661:                <input type="text" id="accountSearch" placeholder="Search creditors..." 
+templates/sops.html:372:                <input type="hidden" name="category" value="{{ current_category }}">
+templates/sops.html:373:                <input type="text" name="search" placeholder="Search procedures..." value="{{ search_query or '' }}">
+templates/integrations_hub.html:578:                    <input type="hidden" id="configService" name="service">
+templates/integrations_hub.html:582:                        <input type="password" class="form-input" id="apiKey" name="api_key" placeholder="Enter API key">
+templates/integrations_hub.html:588:                        <input type="password" class="form-input" id="apiSecret" name="api_secret" placeholder="Enter API secret">
+templates/integrations_hub.html:595:                                <input type="checkbox" id="sandboxMode" name="sandbox" checked>
+templates/dashboard.html:627:                    <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()" data-testid="search-input">
+templates/dashboard.html:770:                            <input type="text" name="clientName" required data-testid="intake-client-name">
+templates/dashboard.html:774:                            <input type="email" name="clientEmail" data-testid="intake-client-email">
+templates/dashboard.html:780:                            <input type="tel" name="clientPhone" data-testid="intake-client-phone">
+templates/dashboard.html:784:                            <select name="creditProvider" required data-testid="intake-credit-provider">
+templates/dashboard.html:797:                            <select name="disputeRound" data-testid="intake-dispute-round">
+templates/dashboard.html:806:                            <select name="pricingTier" data-testid="intake-pricing-tier">
+templates/dashboard.html:816:                            <input type="file" name="creditReportFile" accept=".html,.htm,.txt" onchange="handleFileSelect(event)" data-testid="file-input">
+templates/dashboard.html:828:                        <textarea name="creditReportHTML" placeholder="Paste the full credit report HTML here..." data-testid="intake-html-textarea"></textarea>
+templates/dashboard.html:848:                    <input type="file" name="batchFiles" multiple accept=".html,.htm,.txt" onchange="handleBatchFiles(event)" data-testid="batch-file-input">
+templates/admin_simple.html:22:        <input type="text" id="name" placeholder="John Doe" required>
+templates/admin_simple.html:25:        <input type="email" id="email" placeholder="john@example.com">
+templates/admin_simple.html:28:        <select id="provider">
+templates/admin_simple.html:35:        <textarea id="report" placeholder="Paste HTML here" required style="min-height: 200px;"></textarea>
+templates/admin_simple.html:38:        <select id="round">
+templates/email_settings.html:425:                        <input type="email" id="testEmail" placeholder="test@example.com">
+templates/email_settings.html:522:                <select id="templateType" onchange="loadTemplate()">
+templates/email_settings.html:533:                    <input type="text" id="templateSubject" placeholder="Email Subject Line">
+templates/triage_dashboard.html:655:                <input type="hidden" id="reviewTriageId">
+templates/triage_dashboard.html:670:                    <textarea id="reviewNotes" placeholder="Add notes about this case review..."></textarea>
+templates/whitelabel_admin.html:698:                        <input type="hidden" id="configId" name="id">
+templates/whitelabel_admin.html:710:                                <input type="text" id="organization_name" name="organization_name" required placeholder="Partner Law Firm Name">
+templates/whitelabel_admin.html:714:                                <select id="organization_id" name="organization_id">
+templates/whitelabel_admin.html:726:                                <input type="text" id="subdomain" name="subdomain" required placeholder="partner-name" oninput="validateDomain(this.value)">
+templates/whitelabel_admin.html:732:                                <input type="text" id="custom_domain" name="custom_domain" placeholder="portal.partnerfirm.com">
+templates/whitelabel_admin.html:747:                                <input type="url" id="logo_url" name="logo_url" placeholder="https://example.com/logo.png" oninput="updatePreview()">
+templates/whitelabel_admin.html:752:                                <input type="url" id="favicon_url" name="favicon_url" placeholder="https://example.com/favicon.ico">
+templates/whitelabel_admin.html:768:                                    <input type="color" id="primary_color_picker" value="#319795" onchange="document.getElementById('primary_color').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:769:                                    <input type="text" id="primary_color" name="primary_color" value="#319795" placeholder="#319795" oninput="document.getElementById('primary_color_picker').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:775:                                    <input type="color" id="secondary_color_picker" value="#1a1a2e" onchange="document.getElementById('secondary_color').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:776:                                    <input type="text" id="secondary_color" name="secondary_color" value="#1a1a2e" placeholder="#1a1a2e" oninput="document.getElementById('secondary_color_picker').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:782:                                    <input type="color" id="accent_color_picker" value="#84cc16" onchange="document.getElementById('accent_color').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:783:                                    <input type="text" id="accent_color" name="accent_color" value="#84cc16" placeholder="#84cc16" oninput="document.getElementById('accent_color_picker').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:792:                                    <input type="color" id="header_bg_color_picker" value="#1a1a2e" onchange="document.getElementById('header_bg_color').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:793:                                    <input type="text" id="header_bg_color" name="header_bg_color" value="#1a1a2e" placeholder="#1a1a2e" oninput="document.getElementById('header_bg_color_picker').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:799:                                    <input type="color" id="sidebar_bg_color_picker" value="#1a1a2e" onchange="document.getElementById('sidebar_bg_color').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:800:                                    <input type="text" id="sidebar_bg_color" name="sidebar_bg_color" value="#1a1a2e" placeholder="#1a1a2e" oninput="document.getElementById('sidebar_bg_color_picker').value = this.value; updatePreview();">
+templates/whitelabel_admin.html:807:                            <select id="font_family" name="font_family" onchange="updatePreview()">
+templates/whitelabel_admin.html:831:                                <input type="text" id="email_from_name" name="email_from_name" placeholder="Partner Law Firm">
+templates/whitelabel_admin.html:835:                                <input type="email" id="email_from_address" name="email_from_address" placeholder="noreply@partnerfirm.com">
+templates/whitelabel_admin.html:848:                            <textarea id="company_address" name="company_address" placeholder="123 Legal Street, Suite 100&#10;City, State 12345"></textarea>
+templates/whitelabel_admin.html:854:                                <input type="tel" id="company_phone" name="company_phone" placeholder="(555) 123-4567">
+templates/whitelabel_admin.html:858:                                <input type="email" id="company_email" name="company_email" placeholder="contact@partnerfirm.com">
+templates/whitelabel_admin.html:871:                            <input type="text" id="footer_text" name="footer_text" placeholder="© 2024 Partner Law Firm. All rights reserved." oninput="updatePreview()">
+templates/whitelabel_admin.html:877:                                <input type="url" id="terms_url" name="terms_url" placeholder="https://partnerfirm.com/terms">
+templates/whitelabel_admin.html:881:                                <input type="url" id="privacy_url" name="privacy_url" placeholder="https://partnerfirm.com/privacy">
+templates/whitelabel_admin.html:894:                            <textarea id="custom_css" name="custom_css" class="css-editor" placeholder="/* Add custom CSS here */&#10;.header {&#10;  /* Your styles */&#10;}"></textarea>
+templates/whitelabel_admin.html:910:                                    <input type="checkbox" id="is_active" name="is_active" checked>
+templates/white_label_dashboard.html:740:                    <input type="hidden" id="tenantId" name="id">
+templates/white_label_dashboard.html:746:                                <input type="text" id="tenantName" name="name" required placeholder="e.g., Smith Law Firm">
+templates/white_label_dashboard.html:750:                                <input type="text" id="tenantSlug" name="slug" required placeholder="e.g., smith-law" pattern="[a-z0-9-]+">
+templates/white_label_dashboard.html:758:                                <input type="text" id="tenantDomain" name="domain" placeholder="e.g., portal.smithlaw.com">
+templates/white_label_dashboard.html:762:                                <select id="subscriptionTier" name="subscription_tier">
+templates/white_label_dashboard.html:773:                                <input type="number" id="maxUsers" name="max_users" value="5" min="1">
+templates/white_label_dashboard.html:777:                                <input type="number" id="maxClients" name="max_clients" value="100" min="1">
+templates/white_label_dashboard.html:783:                                <input type="checkbox" id="isActive" name="is_active" checked>
+templates/white_label_dashboard.html:793:                                <input type="text" id="companyName" name="company_name" placeholder="e.g., Smith Law Firm PLLC">
+templates/white_label_dashboard.html:797:                                <input type="email" id="supportEmail" name="support_email" placeholder="support@example.com">
+templates/white_label_dashboard.html:804:                                <input type="tel" id="companyPhone" name="company_phone" placeholder="(555) 123-4567">
+templates/white_label_dashboard.html:808:                                <input type="email" id="companyEmail" name="company_email" placeholder="info@example.com">
+templates/white_label_dashboard.html:814:                            <textarea id="companyAddress" name="company_address" placeholder="123 Main St, Suite 100, City, ST 12345"></textarea>
+templates/white_label_dashboard.html:820:                                <input type="url" id="logoUrl" name="logo_url" placeholder="https://example.com/logo.png">
+templates/white_label_dashboard.html:824:                                <input type="url" id="faviconUrl" name="favicon_url" placeholder="https://example.com/favicon.ico">
+templates/white_label_dashboard.html:832:                                    <input type="color" id="primaryColorPicker" value="#319795" onchange="updateColorInput('primaryColor', this.value)">
+templates/white_label_dashboard.html:833:                                    <input type="text" id="primaryColor" name="primary_color" value="#319795" onchange="updateColorPicker('primaryColorPicker', this.value)">
+templates/white_label_dashboard.html:839:                                    <input type="color" id="secondaryColorPicker" value="#1a1a2e" onchange="updateColorInput('secondaryColor', this.value)">
+templates/white_label_dashboard.html:840:                                    <input type="text" id="secondaryColor" name="secondary_color" value="#1a1a2e" onchange="updateColorPicker('secondaryColorPicker', this.value)">
+templates/white_label_dashboard.html:849:                                    <input type="color" id="accentColorPicker" value="#84cc16" onchange="updateColorInput('accentColor', this.value)">
+templates/white_label_dashboard.html:850:                                    <input type="text" id="accentColor" name="accent_color" value="#84cc16" onchange="updateColorPicker('accentColorPicker', this.value)">
+templates/white_label_dashboard.html:855:                                <input type="url" id="termsUrl" name="terms_url" placeholder="https://example.com/terms">
+templates/white_label_dashboard.html:861:                            <input type="url" id="privacyUrl" name="privacy_url" placeholder="https://example.com/privacy">
+templates/white_label_dashboard.html:875:                                <input type="checkbox" id="feature_dispute_letters" checked>
+templates/white_label_dashboard.html:879:                                <input type="checkbox" id="feature_credit_analysis" checked>
+templates/white_label_dashboard.html:883:                                <input type="checkbox" id="feature_client_portal" checked>
+templates/white_label_dashboard.html:887:                                <input type="checkbox" id="feature_case_management" checked>
+templates/white_label_dashboard.html:891:                                <input type="checkbox" id="feature_document_scanner">
+templates/white_label_dashboard.html:895:                                <input type="checkbox" id="feature_cfpb_complaints">
+templates/white_label_dashboard.html:899:                                <input type="checkbox" id="feature_automation">
+templates/white_label_dashboard.html:903:                                <input type="checkbox" id="feature_analytics">
+templates/white_label_dashboard.html:907:                                <input type="checkbox" id="feature_ai_analysis">
+templates/white_label_dashboard.html:911:                                <input type="checkbox" id="feature_api_access">
+templates/white_label_dashboard.html:920:                            <input type="url" id="webhookUrl" name="webhook_url" placeholder="https://example.com/webhooks/fcra">
+templates/white_label_dashboard.html:926:                            <textarea id="customCss" name="custom_css" placeholder=".custom-class { /* your styles */ }"></textarea>
+templates/white_label_dashboard.html:932:                            <textarea id="customJs" name="custom_js" placeholder="// Your custom JavaScript"></textarea>
+templates/white_label_dashboard.html:939:                                <input type="text" id="apiKey" readonly style="flex: 1; font-family: monospace;">
+templates/white_label_dashboard.html:974:                            <select id="staffSelect">
+templates/white_label_dashboard.html:982:                            <select id="userRole">
+templates/ml_insights.html:511:                                    <input type="number" class="form-control" name="client_id" required>
+templates/ml_insights.html:515:                                    <select class="form-select" name="final_outcome" required>
+templates/ml_insights.html:527:                                        <input type="number" class="form-control" name="settlement_amount" step="0.01" min="0">
+templates/ml_insights.html:534:                                        <input type="number" class="form-control" name="actual_damages" step="0.01" min="0">
+templates/ml_insights.html:539:                                    <input type="number" class="form-control" name="time_to_resolution_days" min="0">
+templates/ml_insights.html:543:                                    <select class="form-select" name="case_type">
+templates/ml_insights.html:552:                                    <input type="number" class="form-control" name="furnisher_id">
+templates/ml_insights.html:556:                                    <input type="number" class="form-control" name="attorney_id">
+templates/ml_insights.html:560:                                    <input type="text" class="form-control" name="violation_types" placeholder="e.g., reinsertion, 611_failure, inaccurate_reporting">
+templates/ml_insights.html:564:                                    <input type="number" class="form-control" name="dispute_rounds_completed" min="0" max="10">
+templates/ml_insights.html:568:                                    <input type="number" class="form-control" name="violation_count" min="0">
+templates/case_law.html:455:                    <input type="text" id="searchInput" placeholder="Search cases..." onkeyup="filterCases()">
+templates/case_law.html:460:                    <select id="courtFilter" onchange="filterCases()">
+templates/case_law.html:470:                    <select id="violationFilter" onchange="filterCases()">
+templates/case_law.html:480:                    <select id="sectionFilter" onchange="filterCases()">
+templates/case_law.html:592:                            <input type="text" name="case_name" required placeholder="e.g., Safeco Insurance Co. v. Burr">
+templates/case_law.html:596:                            <input type="text" name="citation" required placeholder="e.g., 551 U.S. 47 (2007)">
+templates/case_law.html:602:                            <input type="text" name="court" placeholder="e.g., Supreme Court, 9th Circuit">
+templates/case_law.html:606:                            <input type="number" name="year" placeholder="e.g., 2007">
+templates/case_law.html:612:                            <input type="text" name="fcra_sections" placeholder="e.g., 611, 623, 605B">
+templates/case_law.html:616:                            <input type="text" name="violation_types" placeholder="e.g., reinsertion, willfulness">
+templates/case_law.html:621:                        <textarea name="key_holding" placeholder="Main legal principle established by this case"></textarea>
+templates/case_law.html:625:                        <textarea name="full_summary" placeholder="Detailed case summary"></textarea>
+templates/case_law.html:630:                            <input type="number" name="damages_awarded" step="0.01" placeholder="e.g., 50000.00">
+templates/case_law.html:634:                            <select name="plaintiff_won">
+templates/case_law.html:644:                            <select name="relevance_score">
+templates/case_law.html:654:                            <input type="text" name="tags" placeholder="e.g., willfulness, punitive, supreme_court">
+templates/case_law.html:659:                        <textarea name="notes" placeholder="Additional notes about this case"></textarea>
+templates/portal_login.html:278:                        <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email" data-testid="portal-email-input">
+templates/portal_login.html:284:                            <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password" data-testid="portal-password-input">
+templates/portal_login.html:314:                        <input type="email" id="forgotEmail" name="email" placeholder="your@email.com" required data-testid="forgot-email-input">
+templates/portal_login.html:328:                    <input type="hidden" id="resetToken" value="{{ reset_token or '' }}">
+templates/portal_login.html:333:                            <input type="password" id="newPassword" name="password" placeholder="At least 8 characters" required minlength="8" data-testid="new-password-input">
+templates/portal_login.html:340:                        <input type="password" id="confirmPassword" name="confirm_password" placeholder="Confirm your password" required data-testid="confirm-password-input">
+templates/affiliate_detail.html:700:                        <input type="number" name="amount" step="0.01" max="{{ stats.pending_earnings or 0 }}" required>
+templates/affiliate_detail.html:704:                        <select name="payout_method">
+templates/affiliate_detail.html:714:                        <textarea name="notes" rows="3" placeholder="Optional notes about this payout..."></textarea>
+templates/affiliate_detail.html:735:                        <input type="text" name="name" value="{{ affiliate.name }}">
+templates/affiliate_detail.html:739:                        <input type="email" name="email" value="{{ affiliate.email }}">
+templates/affiliate_detail.html:743:                        <input type="tel" name="phone" value="{{ affiliate.phone or '' }}">
+templates/affiliate_detail.html:747:                        <input type="text" name="company_name" value="{{ affiliate.company_name or '' }}">
+templates/affiliate_detail.html:751:                        <select name="status">
+templates/affiliate_detail.html:760:                        <input type="number" name="commission_rate_1" value="{{ (affiliate.commission_rate_1 * 100)|round(1) }}" min="0" max="100" step="0.1">
+templates/affiliate_detail.html:764:                        <input type="number" name="commission_rate_2" value="{{ (affiliate.commission_rate_2 * 100)|round(1) }}" min="0" max="100" step="0.1">
+templates/affiliate_detail.html:768:                        <select name="payout_method">
+templates/credit_tracker.html:135:                        <input type="number" id="currentScore" placeholder="e.g., 580" min="300" max="850">
+templates/credit_tracker.html:139:                        <input type="number" id="numNegatives" placeholder="e.g., 8" min="0" max="50">
+templates/credit_tracker.html:173:                    <input type="number" id="detailedCurrentScore" placeholder="e.g., 580" min="300" max="850" value="550">
+templates/credit_tracker.html:232:                    <input type="text" id="searchClients" placeholder="Search clients..." onkeyup="filterClients()">
+templates/credit_tracker.html:353:                    <input type="number" class="count-input" value="${item.count}" min="1" max="20" 
+templates/cfpb_generator.html:433:                <input type="hidden" id="complaintId" value="{{ complaint.id }}">
+templates/cfpb_generator.html:438:                        <input type="text" class="form-input" value="{{ complaint.client_name }}" disabled>
+templates/cfpb_generator.html:442:                        <input type="text" class="form-input" id="editTargetCompany" value="{{ complaint.target_company }}">
+templates/cfpb_generator.html:449:                        <input type="text" class="form-input" value="{{ complaint.product_type }}" disabled>
+templates/cfpb_generator.html:453:                        <input type="text" class="form-input" id="editIssueType" value="{{ complaint.issue_type }}">
+templates/cfpb_generator.html:459:                    <textarea class="form-textarea" id="editNarrative" rows="12">{{ complaint.narrative }}</textarea>
+templates/cfpb_generator.html:464:                    <textarea class="form-textarea" id="editResolution" rows="6">{{ complaint.desired_resolution }}</textarea>
+templates/cfpb_generator.html:470:                    <input type="text" class="form-input" id="editCfpbId" value="{{ complaint.cfpb_complaint_id or '' }}" placeholder="Enter CFPB complaint number">
+templates/cfpb_generator.html:477:                    <textarea class="form-textarea" id="editCompanyResponse" rows="6">{{ complaint.company_response or '' }}</textarea>
+templates/cfpb_generator.html:506:                    <select class="form-select" id="clientSelect" onchange="loadClientCases()">
+templates/cfpb_generator.html:516:                    <select class="form-select" id="caseSelect">
+templates/cfpb_generator.html:525:                            <input type="radio" name="targetType" value="cra">
+templates/cfpb_generator.html:530:                            <input type="radio" name="targetType" value="furnisher">
+templates/cfpb_generator.html:549:                        <input type="text" class="form-input" id="furnisherName" placeholder="Enter company name...">
+templates/cfpb_generator.html:564:                    <select class="form-select" id="productSelect" onchange="updateIssueTypes()">
+templates/cfpb_generator.html:578:                    <select class="form-select" id="subIssueSelect">
+templates/cfpb_generator.html:598:                        <textarea class="form-textarea" id="narrativeText" placeholder="Your complaint narrative will be generated automatically based on case data..." style="border: none; padding: 0; min-height: 300px;"></textarea>
+templates/cfpb_generator.html:604:                    <textarea class="form-textarea" id="resolutionText" style="min-height: 150px;"></textarea>
+templates/cfpb_generator.html:745:                                <input type="radio" name="issue">
+templates/automation_tools.html:506:                    <select id="freezeClientSelect">
+templates/automation_tools.html:521:                            <input type="checkbox" name="bureau" value="equifax"> <span>Equifax</span>
+templates/automation_tools.html:524:                            <input type="checkbox" name="bureau" value="experian"> <span>Experian</span>
+templates/automation_tools.html:527:                            <input type="checkbox" name="bureau" value="transunion"> <span>TransUnion</span>
+templates/automation_tools.html:539:                            <input type="checkbox" name="bureau" value="innovis"> <span>Innovis</span>
+templates/automation_tools.html:542:                            <input type="checkbox" name="bureau" value="chexsystems"> <span>ChexSystems</span>
+templates/automation_tools.html:545:                            <input type="checkbox" name="bureau" value="clarity_services"> <span>Clarity Services</span>
+templates/automation_tools.html:548:                            <input type="checkbox" name="bureau" value="lexisnexis"> <span>LexisNexis</span>
+templates/automation_tools.html:551:                            <input type="checkbox" name="bureau" value="corelogic"> <span>CoreLogic</span>
+templates/automation_tools.html:554:                            <input type="checkbox" name="bureau" value="factor_trust"> <span>Factor Trust</span>
+templates/automation_tools.html:557:                            <input type="checkbox" name="bureau" value="microbilt"> <span>MicroBilt</span>
+templates/automation_tools.html:560:                            <input type="checkbox" name="bureau" value="lexisnexis_risk"> <span>LexisNexis Risk</span>
+templates/automation_tools.html:563:                            <input type="checkbox" name="bureau" value="datax"> <span>DataX</span>
+templates/automation_tools.html:615:                        <select id="validationClientSelect">
+templates/automation_tools.html:624:                        <select id="validationCaseSelect">
+templates/automation_tools.html:634:                        <select id="commonAgencySelect" onchange="fillCommonAgency()" style="margin-left: 10px; padding: 5px; border-radius: 4px; border: 1px solid #e2e8f0;">
+templates/automation_tools.html:641:                            <input type="text" id="collectionCreditorName" placeholder="Portfolio Recovery Associates">
+templates/automation_tools.html:645:                            <input type="text" id="collectionAddress" placeholder="123 Collection St">
+templates/automation_tools.html:649:                            <input type="text" id="collectionCityStateZip" placeholder="City, ST 12345">
+templates/automation_tools.html:653:                            <input type="text" id="collectionOriginalCreditor" placeholder="Original bank or creditor name">
+templates/automation_tools.html:657:                            <input type="text" id="collectionAccountNumber" placeholder="Account reference number">
+templates/automation_tools.html:661:                            <input type="number" id="collectionBalance" placeholder="0.00" step="0.01">
+templates/automation_tools.html:845:                        <select id="advanceRoundClientSelect">
+templates/automation_tools.html:854:                        <select id="newRoundSelect">
+templates/automation_tools.html:879:                        <select id="settlementClientSelect">
+templates/automation_tools.html:888:                        <input type="number" id="totalViolations" min="0" value="0" onchange="updateViolationFields()">
+templates/automation_tools.html:892:                        <input type="number" id="willfulViolations" min="0" value="0">
+templates/automation_tools.html:896:                        <input type="number" id="negligentViolations" min="0" value="0">
+templates/automation_tools.html:1085:                        <select id="respaClientSelect">
+templates/automation_tools.html:1094:                        <input type="text" id="respaServicerName" placeholder="e.g., Wells Fargo Home Mortgage">
+templates/automation_tools.html:1098:                        <input type="text" id="respaServicerAddress" placeholder="Street Address">
+templates/automation_tools.html:1102:                        <input type="text" id="respaServicerCityStateZip" placeholder="City, ST 12345">
+templates/automation_tools.html:1106:                        <input type="text" id="respaLoanNumber" placeholder="Loan account number">
+templates/automation_tools.html:1110:                        <input type="text" id="respaPropertyAddress" placeholder="Property address for the mortgage">
+templates/automation_tools.html:1114:                        <textarea id="respaDisputeReason" rows="4" placeholder="Describe the payment crediting issues, escrow discrepancies, or other account errors you are disputing..."></textarea>
+templates/automation_tools.html:1118:                        <textarea id="respaReliefRequested" rows="3" placeholder="e.g., Correct payment history, remove late payment notations, provide complete payment application history..."></textarea>
+templates/automation_tools.html:1146:                        <select id="regzClientSelect">
+templates/automation_tools.html:1155:                        <input type="text" id="regzCreditorName" placeholder="e.g., Chase Bank, N.A.">
+templates/automation_tools.html:1159:                        <input type="text" id="regzCreditorAddress" placeholder="Street Address">
+templates/automation_tools.html:1163:                        <input type="text" id="regzCreditorCityStateZip" placeholder="City, ST 12345">
+templates/automation_tools.html:1167:                        <input type="text" id="regzAccountNumber" placeholder="Account number">
+templates/automation_tools.html:1171:                        <select id="regzAccountType">
+templates/automation_tools.html:1183:                        <input type="text" id="regzPaymentDates" placeholder="e.g., March 15, 2024; April 14, 2024">
+templates/automation_tools.html:1187:                        <input type="text" id="regzLateMonths" placeholder="e.g., March 2024, April 2024">
+templates/automation_tools.html:1191:                        <textarea id="regzPaymentEvidence" rows="3" placeholder="Describe evidence of on-time payment: bank statement confirmation numbers, payment receipts, etc."></textarea>
+templates/automation_tools.html:1219:                        <select id="fdcpaClientSelect">
+templates/automation_tools.html:1228:                        <input type="text" id="fdcpaCollectorName" placeholder="e.g., Portfolio Recovery Associates">
+templates/automation_tools.html:1232:                        <input type="text" id="fdcpaCollectorAddress" placeholder="Street Address">
+templates/automation_tools.html:1236:                        <input type="text" id="fdcpaCollectorCityStateZip" placeholder="City, ST 12345">
+templates/automation_tools.html:1240:                        <input type="text" id="fdcpaAccountNumber" placeholder="Their reference number">
+templates/automation_tools.html:1244:                        <input type="text" id="fdcpaOriginalCreditor" placeholder="Original creditor if known">
+templates/automation_tools.html:1248:                        <input type="number" id="fdcpaAmountClaimed" placeholder="0.00" step="0.01">
+templates/automation_tools.html:1252:                        <input type="date" id="fdcpaFirstContactDate">
+templates/automation_tools.html:1256:                        <textarea id="fdcpaDisputeBasis" rows="3" placeholder="Explain why you dispute this debt: not my account, wrong amount, statute of limitations, etc."></textarea>
+templates/automation_tools.html:1293:                        <select id="block605bClientSelect">
+templates/automation_tools.html:1302:                        <select id="block605bBureau">
+templates/automation_tools.html:1311:                        <input type="text" id="block605bPoliceReport" placeholder="Report number">
+templates/automation_tools.html:1315:                        <input type="date" id="block605bPoliceDate">
+templates/automation_tools.html:1319:                        <input type="text" id="block605bFtcReport" placeholder="FTC Identity Theft Report number">
+templates/automation_tools.html:1323:                        <input type="date" id="block605bDiscoveryDate">
+templates/automation_tools.html:1327:                        <textarea id="block605bFraudAccounts" rows="4" placeholder="List each fraudulent account:
+templates/automation_tools.html:1357:                        <select id="furnisher623ClientSelect">
+templates/automation_tools.html:1366:                        <input type="text" id="furnisher623Name" placeholder="e.g., Capital One, N.A.">
+templates/automation_tools.html:1370:                        <input type="text" id="furnisher623Address" placeholder="Street Address">
+templates/automation_tools.html:1374:                        <input type="text" id="furnisher623CityStateZip" placeholder="City, ST 12345">
+templates/automation_tools.html:1378:                        <input type="text" id="furnisher623AccountNumber" placeholder="Account number">
+templates/automation_tools.html:1382:                        <input type="date" id="furnisher623PriorDisputeDate">
+templates/automation_tools.html:1386:                        <select id="furnisher623CraResult">
+templates/automation_tools.html:1395:                        <select id="furnisher623Bureau">
+templates/automation_tools.html:1404:                        <textarea id="furnisher623Inaccuracy" rows="4" placeholder="Describe the specific inaccurate information: wrong balance, incorrect payment history, account doesn't belong to me, etc."></textarea>
+templates/automation_tools.html:1408:                        <textarea id="furnisher623Evidence" rows="3" placeholder="Describe any documentation you have: statements, payment records, correspondence, etc."></textarea>
+templates/automation_tools.html:1443:                        <select id="reinsertionClientSelect">
+templates/automation_tools.html:1452:                        <select id="reinsertionBureau">
+templates/automation_tools.html:1461:                        <input type="date" id="reinsertionDeletedDate">
+templates/automation_tools.html:1465:                        <input type="date" id="reinsertionReinsertedDate">
+templates/automation_tools.html:1469:                        <input type="text" id="reinsertionCreditorName" placeholder="Name of creditor for reinserted item">
+templates/automation_tools.html:1473:                        <input type="text" id="reinsertionAccountNumber" placeholder="Account number">
+templates/automation_tools.html:1477:                        <input type="text" id="reinsertionConfirmation" placeholder="Original dispute confirmation number">
+templates/automation_tools.html:1481:                        <select id="reinsertionNoticeReceived">
+templates/automation_tools.html:1488:                        <textarea id="reinsertionDescription" rows="3" placeholder="Describe the information that was deleted and then reinserted..."></textarea>
+templates/automation_tools.html:1523:                        <select id="movClientSelect">
+templates/automation_tools.html:1532:                        <select id="movBureau">
+templates/automation_tools.html:1541:                        <input type="date" id="movDisputeDate">
+templates/automation_tools.html:1545:                        <input type="text" id="movConfirmationNumber" placeholder="CRA confirmation number">
+templates/automation_tools.html:1549:                        <input type="date" id="movResultDate">
+templates/automation_tools.html:1553:                        <select id="movResult">
+templates/automation_tools.html:1562:                        <input type="text" id="movCreditorName" placeholder="Name of creditor for disputed item">
+templates/automation_tools.html:1566:                        <input type="text" id="movAccountNumber" placeholder="Account number">
+templates/automation_tools.html:1570:                        <textarea id="movDisputeReason" rows="3" placeholder="What was disputed in the original dispute?"></textarea>
+templates/automation_tools.html:2273:                <select name="damageType">
+templates/automation_tools.html:2281:                <input type="number" name="damageAmount" placeholder="Amount ($)" min="0" step="0.01">
+templates/automation_tools.html:2282:                <input type="text" name="damageDescription" placeholder="Description">
+templates/letter_queue.html:431:                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+templates/letter_queue.html:437:                <select id="filterPriority" onchange="loadQueue()">
+templates/letter_queue.html:444:                <select id="filterLetterType" onchange="loadQueue()">
+templates/letter_queue.html:466:            <textarea id="dismissReason" placeholder="Enter reason for dismissal..."></textarea>
+templates/letter_queue.html:554:                                <input type="checkbox" id="check_${entry.id}" onchange="toggleSelect(${entry.id})">
+templates/furnishers.html:160:                    <input type="text" id="searchInput" class="filter-input" placeholder="Search furnishers..." oninput="filterTable()">
+templates/furnishers.html:161:                    <select id="industryFilter" class="filter-select" onchange="filterTable()">
+templates/furnishers.html:237:                    <input type="text" id="furnisherName" class="form-input" placeholder="e.g., Capital One">
+templates/furnishers.html:242:                        <select id="furnisherIndustry" class="form-input">
+templates/furnishers.html:251:                        <input type="text" id="furnisherParent" class="form-input" placeholder="Optional">
+templates/furnishers.html:256:                    <textarea id="furnisherAddress" class="form-input" rows="2" placeholder="Dispute mailing address"></textarea>
+templates/furnishers.html:261:                        <input type="text" id="furnisherPhone" class="form-input" placeholder="(000) 000-0000">
+templates/furnishers.html:265:                        <input type="text" id="furnisherFax" class="form-input" placeholder="(000) 000-0000">
+templates/furnishers.html:271:                        <input type="email" id="furnisherEmail" class="form-input" placeholder="disputes@company.com">
+templates/furnishers.html:275:                        <input type="text" id="furnisherWebsite" class="form-input" placeholder="www.company.com">
+templates/furnishers.html:280:                    <textarea id="furnisherNotes" class="form-input" rows="3" placeholder="Special notes about this furnisher..."></textarea>
+templates/workflow_triggers.html:556:                                    <input type="checkbox" {% if trigger.is_active %}checked{% endif %} onchange="toggleTrigger({{ trigger.id }})">
+templates/workflow_triggers.html:679:                    <input type="hidden" id="edit-trigger-id">
+templates/workflow_triggers.html:683:                        <input type="text" id="trigger-name" placeholder="e.g., Welcome New Client" required>
+templates/workflow_triggers.html:688:                        <textarea id="trigger-description" rows="2" placeholder="What does this workflow do?"></textarea>
+templates/workflow_triggers.html:693:                        <select id="trigger-type" required onchange="updateTriggerFields()">
+templates/workflow_triggers.html:703:                        <input type="number" id="trigger-priority" value="5" min="1" max="10">
+templates/workflow_triggers.html:708:                        <textarea id="trigger-conditions" rows="3" placeholder='{"field": "value", "field_min": 10}'></textarea>
+templates/workflow_triggers.html:735:                    <textarea id="test-event-data" rows="8">{
+templates/workflow_triggers.html:814:                        <select id="action-type-${actionId}" required onchange="updateActionParams(${actionId})">
+templates/workflow_triggers.html:844:                        <input type="text" id="action-${actionId}-${param}" placeholder="${param}">
+templates/settings.html:267:                            <select name="field_name" class="setting-select">
+templates/settings.html:279:                            <select name="field_email" class="setting-select">
+templates/settings.html:291:                            <select name="field_phone" class="setting-select">
+templates/settings.html:303:                            <select name="field_address" class="setting-select">
+templates/settings.html:318:                            <select name="field_dob" class="setting-select">
+templates/settings.html:331:                            <select name="field_ssn" class="setting-select">
+templates/settings.html:344:                            <select name="field_credit_login" class="setting-select">
+templates/settings.html:357:                            <select name="field_referral" class="setting-select">
+templates/settings.html:379:                                <input type="checkbox" name="tier_free_enabled" {% if settings.tier_free_enabled %}checked{% endif %}>
+templates/settings.html:386:                            <input type="text" name="tier_free_desc" class="setting-input" style="width: 200px;" value="{{ settings.tier_free_desc or 'Basic Analysis - Free' }}" placeholder="Basic Analysis">
+templates/settings.html:399:                                <input type="checkbox" name="tier1_enabled" {% if settings.tier1_enabled %}checked{% endif %}>
+templates/settings.html:406:                            <input type="number" name="tier1_price" class="setting-input" value="{{ settings.tier1_price or 300 }}" min="0">
+templates/settings.html:410:                            <input type="text" name="tier1_desc" class="setting-input" style="width: 200px;" value="{{ settings.tier1_desc or 'Initial credit analysis' }}">
+templates/settings.html:423:                                <input type="checkbox" name="tier2_enabled" {% if settings.tier2_enabled %}checked{% endif %}>
+templates/settings.html:430:                            <input type="number" name="tier2_price" class="setting-input" value="{{ settings.tier2_price or 600 }}" min="0">
+templates/settings.html:434:                            <input type="text" name="tier2_desc" class="setting-input" style="width: 200px;" value="{{ settings.tier2_desc or 'Two rounds of disputes' }}">
+templates/settings.html:447:                                <input type="checkbox" name="tier3_enabled" {% if settings.tier3_enabled %}checked{% endif %}>
+templates/settings.html:454:                            <input type="number" name="tier3_price" class="setting-input" value="{{ settings.tier3_price or 900 }}" min="0">
+templates/settings.html:458:                            <input type="text" name="tier3_desc" class="setting-input" style="width: 200px;" value="{{ settings.tier3_desc or 'Three rounds comprehensive' }}">
+templates/settings.html:471:                                <input type="checkbox" name="tier4_enabled" {% if settings.tier4_enabled %}checked{% endif %}>
+templates/settings.html:478:                            <input type="number" name="tier4_price" class="setting-input" value="{{ settings.tier4_price or 1200 }}" min="0">
+templates/settings.html:482:                            <input type="text" name="tier4_desc" class="setting-input" style="width: 200px;" value="{{ settings.tier4_desc or 'Litigation preparation' }}">
+templates/settings.html:495:                                <input type="checkbox" name="tier5_enabled" {% if settings.tier5_enabled %}checked{% endif %}>
+templates/settings.html:502:                            <input type="number" name="tier5_price" class="setting-input" value="{{ settings.tier5_price or 1500 }}" min="0">
+templates/settings.html:506:                            <input type="text" name="tier5_desc" class="setting-input" style="width: 200px;" value="{{ settings.tier5_desc or 'Complete package' }}">
+templates/settings.html:518:                            <input type="checkbox" name="allow_pay_later" {% if settings.allow_pay_later %}checked{% endif %}>
+templates/settings.html:532:                        <input type="text" name="payment_cashapp" placeholder="$YourCashtag" value="{{ settings.payment_cashapp or '' }}">
+templates/settings.html:537:                        <input type="text" name="payment_venmo" placeholder="@YourUsername" value="{{ settings.payment_venmo or '' }}">
+templates/settings.html:542:                        <input type="text" name="payment_zelle" placeholder="phone or email" value="{{ settings.payment_zelle or '' }}">
+templates/settings.html:547:                        <input type="text" name="payment_paypal" placeholder="your@email.com" value="{{ settings.payment_paypal or '' }}">
+templates/settings.html:564:                                <input type="checkbox" name="payment_stripe_enabled" {% if settings.payment_stripe_enabled != false %}checked{% endif %}>
+templates/settings.html:575:                                <input type="checkbox" name="payment_paypal_enabled" {% if settings.payment_paypal_enabled %}checked{% endif %}>
+templates/settings.html:586:                                <input type="checkbox" name="payment_cashapp_enabled" {% if settings.payment_cashapp_enabled %}checked{% endif %}>
+templates/settings.html:599:                                <input type="checkbox" name="payment_venmo_enabled" {% if settings.payment_venmo_enabled %}checked{% endif %}>
+templates/settings.html:610:                                <input type="checkbox" name="payment_zelle_enabled" {% if settings.payment_zelle_enabled %}checked{% endif %}>
+templates/billing_management.html:509:                    <input type="text" id="planName" name="name" placeholder="e.g., basic, premium, enterprise" required>
+templates/billing_management.html:514:                    <input type="text" id="planDisplayName" name="display_name" placeholder="e.g., Basic Plan, Premium Package">
+templates/billing_management.html:519:                    <input type="number" id="planPrice" name="price" min="1" step="0.01" placeholder="299.00" required>
+templates/billing_management.html:523:                    <select id="planInterval" name="interval">
+templates/billing_management.html:530:                    <textarea id="planFeatures" name="features" placeholder="Standard credit repair&#10;Round 1 dispute letters&#10;Email support"></textarea>
+templates/case_detail.html:472:                                <input type="number" id="settlementTarget" value="${suggestedTarget || 0}" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/case_detail.html:476:                                <input type="number" id="settlementMinimum" value="${suggestedMinimum || 0}" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/case_detail.html:481:                            <input type="number" id="settlementDemand" placeholder="Leave blank to use target amount" step="0.01" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/case_detail.html:485:                            <textarea id="settlementNotes" rows="2" placeholder="Settlement notes..." style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;"></textarea>
+templates/case_detail.html:947:                            <input type="date" id="solViolationDate" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/case_detail.html:951:                            <input type="date" id="solDiscoveryDate" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/staff_login.html:235:                        <input type="password" id="new_password" name="new_password" placeholder="At least 8 characters" required minlength="8" data-testid="new-password-input">
+templates/staff_login.html:242:                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm your password" required data-testid="confirm-password-input">
+templates/staff_login.html:251:                    <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email" value="{{ email or '' }}" data-testid="email-input">
+templates/staff_login.html:257:                        <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password" data-testid="password-input">
+templates/staff_management.html:414:                <input type="text" placeholder="Search staff by name or email..." id="searchInput" onkeyup="searchStaff()" data-testid="search-input">
+templates/staff_management.html:489:                            <input type="text" name="first_name" required data-testid="add-first-name">
+templates/staff_management.html:493:                            <input type="text" name="last_name" required data-testid="add-last-name">
+templates/staff_management.html:498:                        <input type="email" name="email" required data-testid="add-email">
+templates/staff_management.html:502:                        <select name="role" required data-testid="add-role">
+templates/staff_management.html:511:                        <input type="password" name="password" required minlength="8" placeholder="At least 8 characters" data-testid="add-password">
+templates/staff_management.html:532:                <input type="hidden" name="staff_id" id="edit_staff_id">
+templates/staff_management.html:537:                            <input type="text" name="first_name" id="edit_first_name" required data-testid="edit-first-name">
+templates/staff_management.html:541:                            <input type="text" name="last_name" id="edit_last_name" required data-testid="edit-last-name">
+templates/staff_management.html:546:                        <input type="email" name="email" id="edit_email" required data-testid="edit-email">
+templates/staff_management.html:550:                        <select name="role" id="edit_role" required data-testid="edit-role">
+templates/staff_management.html:559:                        <select name="is_active" id="edit_is_active" data-testid="edit-status">
+templates/sms_settings.html:391:                        <input type="checkbox" name="sms_enabled" {{ 'checked' if settings.sms_enabled else '' }}>
+templates/sms_settings.html:409:                        <input type="checkbox" name="welcome_sms_enabled" {{ 'checked' if settings.welcome_sms_enabled else '' }}>
+templates/sms_settings.html:420:                        <input type="checkbox" name="document_reminder_enabled" {{ 'checked' if settings.document_reminder_enabled else '' }}>
+templates/sms_settings.html:431:                        <input type="checkbox" name="case_update_enabled" {{ 'checked' if settings.case_update_enabled else '' }}>
+templates/sms_settings.html:442:                        <input type="checkbox" name="dispute_sent_enabled" {{ 'checked' if settings.dispute_sent_enabled else '' }}>
+templates/sms_settings.html:453:                        <input type="checkbox" name="cra_response_enabled" {{ 'checked' if settings.cra_response_enabled else '' }}>
+templates/sms_settings.html:464:                        <input type="checkbox" name="payment_reminder_enabled" {{ 'checked' if settings.payment_reminder_enabled else '' }}>
+templates/sms_settings.html:474:                    <input type="number" class="setting-input" name="reminder_delay_hours" 
+templates/sms_settings.html:491:                        <input type="tel" id="testPhone" placeholder="+1 (555) 123-4567" 
+templates/sms_settings.html:496:                        <input type="text" id="testMessage" placeholder="Custom message or leave empty for default">
+templates/client_portal.html:883:                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>
+templates/client_portal.html:935:                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>
+templates/client_portal.html:987:                                    <td style="padding: 10px;"><input type="text" class="comment-input" data-id="{{ item.id }}" value="{{ item.comments or '' }}" placeholder="Add comment"></td>
+templates/client_portal.html:1034:                                        <select class="freeze-status-select" data-id="{{ freeze.id }}" style="padding: 5px; border-radius: 4px; border: 1px solid #e5e7eb; font-size: 12px;">
+templates/client_portal.html:1041:                                    <td style="padding: 10px;"><input type="text" class="freeze-comment-input" data-id="{{ freeze.id }}" value="{{ freeze.comments or '' }}" placeholder="Add comment" style="width: 100%; padding: 5px; border: 1px solid #e5e7eb; border-radius: 4px;"></td>
+templates/client_portal.html:1044:                                            <input type="file" class="freeze-upload-input" data-id="{{ freeze.id }}" data-bureau="{{ freeze.bureau_name }}" style="display: none;" accept=".pdf,.jpg,.jpeg,.png" onchange="uploadFreezeDoc(this)">
+templates/client_portal.html:1148:                <input type="file" id="fileUpload" style="display: none;" accept=".pdf,.jpg,.jpeg,.png">
+templates/client_portal.html:1190:                        <input type="file" id="avatarUpload" style="display: none;" accept="image/*">
+templates/client_portal.html:1197:                        <input type="text" value="{{ client.name if client else '' }}" readonly style="background: #f8fafc;">
+templates/client_portal.html:1201:                        <input type="text" value="{{ client.email if client else '' }}" readonly style="background: #f8fafc;">
+templates/client_portal.html:1205:                        <input type="text" value="{{ client.phone if client else '' }}" readonly style="background: #f8fafc;">
+templates/client_portal.html:1209:                        <input type="text" value="Round {{ client.current_dispute_round if client and client.current_dispute_round else 1 }}" readonly style="background: #f8fafc;">
+templates/client_portal.html:1232:                        <input type="password" id="currentPassword" placeholder="Enter current password" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+templates/client_portal.html:1238:                        <input type="password" id="newPassword" placeholder="At least 8 characters" minlength="8" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+templates/client_portal.html:1243:                        <input type="password" id="confirmPassword" placeholder="Confirm your password" style="width: 100%; max-width: 350px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+templates/client_portal.html:1307:                        <input type="text" placeholder="How can we help you?" required>
+templates/client_portal.html:1311:                        <textarea placeholder="Type your message here..." required></textarea>
+templates/client_portal.html:1451:                            <input type="hidden" id="docCategory" name="category">
+templates/client_portal.html:1452:                            <input type="hidden" id="docType" name="document_type">
+templates/client_portal.html:1456:                                <input type="file" id="docFileInput" name="file" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt" style="display: none;">
+templates/client_portal.html:1462:                                    <input type="date" name="document_date" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/client_portal.html:1466:                                    <input type="date" name="received_date" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/client_portal.html:1471:                                <textarea name="notes" rows="3" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="Any additional notes..."></textarea>
+templates/client_portal.html:1511:                            <input type="text" id="refName" placeholder="Friend's full name" required>
+templates/client_portal.html:1515:                            <input type="tel" id="refPhone" placeholder="(xxx) xxx-xxxx">
+templates/client_portal.html:1521:                            <input type="email" id="refEmail" placeholder="friend@email.com" required>
+templates/client_portal.html:1525:                            <input type="text" value="{{ client.name if client else '' }}" readonly>
+templates/client_portal.html:1530:                        <textarea id="refComments" placeholder="Any additional information about your referral..."></textarea>
+templates/client_portal.html:2018:                            <select name="bureau" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/client_portal.html:2027:                            <select name="dispute_round" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/client_portal.html:2042:                        <input type="text" name="sender_name" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="e.g., Midland Credit Management">
+templates/client_portal.html:2047:                            <input type="text" name="account_number" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="Account/Reference #">
+templates/client_portal.html:2051:                            <input type="number" step="0.01" name="amount_claimed" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="0.00">
+templates/client_portal.html:2060:                        <input type="text" name="sender_name" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="e.g., Smith & Associates">
+templates/client_portal.html:2065:                            <input type="number" step="0.01" name="amount_claimed" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="0.00">
+templates/client_portal.html:2069:                            <input type="date" name="action_deadline" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">
+templates/client_portal.html:2078:                        <select name="bureau" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;">

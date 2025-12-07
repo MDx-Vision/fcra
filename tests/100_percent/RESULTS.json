@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-12-06T22:36:34.292494",
+  "pages_tested": 45,
+  "forms_tested": 2,
+  "fields_tested": 3,
+  "buttons_clicked": 11,
+  "links_checked": 30,
+  "modals_tested": 0,
+  "edge_cases_tested": 23,
+  "responsive_tests": 12,
+  "accessibility_tests": 3,
+  "issues_found": [],
+  "issues_fixed": [],
+  "passed": 48,
+  "failed": 0,
+  "console_errors": [
+    "Error loading doc status for client 24 TypeError: Failed to fetch\n    at loadAllDocumentStatuses (http://localhost:5001/dashboard/contacts:2883:44)",
+    "Error loading common agencies: TypeError: Failed to fetch\n    at loadCommonAgencies (http://localhost:5001/dashboard/automation-tools:2967:40)\n    at http://localhost:5001/dashboard/automation-tools:3110:9"
+  ],
+  "page_errors": []
+}

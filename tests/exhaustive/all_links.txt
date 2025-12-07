@@ -1,0 +1,323 @@
+templates/contacts.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/contacts.html:675:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/contacts.html:694:                <a href="/dashboard/contacts?filter=mark1" class="filter-btn mark1 {% if filter == 'mark1' %}active{% endif %}">Mark 1</a>
+templates/contacts.html:695:                <a href="/dashboard/contacts?filter=mark2" class="filter-btn mark2 {% if filter == 'mark2' %}active{% endif %}">Mark 2</a>
+templates/contacts.html:696:                <a href="/dashboard/contacts?filter=affiliates" class="filter-btn affiliate {% if filter == 'affiliates' %}active{% endif %}">Affiliates</a>
+templates/contacts.html:697:                <a href="/dashboard/contacts?filter=active" class="filter-btn {% if filter == 'active' %}active{% endif %}">Active</a>
+templates/contacts.html:698:                <a href="/dashboard/contacts?filter=leads" class="filter-btn {% if filter == 'leads' %}active{% endif %}">Leads</a>
+templates/contacts.html:699:                <a href="/dashboard/contacts?filter=follow_up" class="filter-btn {% if filter == 'follow_up' %}active{% endif %}">Follow Up</a>
+templates/contacts.html:700:                <a href="/dashboard/contacts?filter=signups" class="filter-btn {% if filter == 'signups' %}active{% endif %}">Signups</a>
+templates/contacts.html:701:                <a href="/dashboard/contacts?filter=last25" class="filter-btn {% if filter == 'last25' %}active{% endif %}">Last 25</a>
+templates/contacts.html:702:                <a href="/dashboard/contacts" class="filter-btn {% if not filter or filter == 'all' %}active{% endif %}">Show All</a>
+templates/contacts.html:764:                                            <a href="/dashboard/documents?client={{ contact.id }}" class="docs-dropdown-link">📁 Go to this client's documents</a>
+templates/contacts.html:765:                                            <a href="#" class="docs-dropdown-link" onclick="openUploadModal({{ contact.id }}); return false;">📤 Upload document for this client</a>
+templates/contacts.html:835:                    <a href="/dashboard/contacts?page={{ page - 1 }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn">Previous</a>
+templates/contacts.html:839:                        <a href="/dashboard/contacts?page={{ p }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+templates/contacts.html:845:                    <a href="/dashboard/contacts?page={{ page + 1 }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn">Next</a>
+templates/contacts.html:1091:                    <a href="#" id="docsModalGoToLink" class="docs-dropdown-link" style="display: block; padding: 10px; background: #f8fafc; border-radius: 6px; text-align: center;">📁 Go to this client's full document center</a>
+templates/document_scanner.html:7:    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+templates/document_scanner.html:8:    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+templates/document_scanner.html:352:                <a href="/portal/{{ portal_token }}" class="btn btn-sm btn-light">
+templates/document_scanner.html:571:                    <a href="#" id="download-pdf-link" class="btn btn-outline-primary w-100 mb-2">
+templates/document_scanner.html:574:                    <a href="#" id="download-text-link" class="btn btn-outline-secondary w-100">
+templates/affiliates.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/credit_import.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/credit_import.html:334:                <a href="/dashboard" class="btn btn-secondary" data-testid="back-btn">Back to Dashboard</a>
+templates/credit_import.html:413:                                    <a href="/api/credit-import/report/{{ cred.id }}" target="_blank" class="action-btn" style="background: #10b981; color: white;" data-testid="view-btn-{{ cred.id }}">View Report</a>
+templates/instant_preview.html:7:    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+templates/instant_preview.html:8:    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+templates/instant_preview.html:189:                    <a href="/signup" class="inline-block bg-green-600 hover:bg-green-700 text-white px-10 py-4 rounded-xl text-xl font-bold transition transform hover:scale-105 pulse-animation">
+templates/escalation_dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/escalation_dashboard.html:308:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/escalation_dashboard.html:362:                            <a href="/dashboard/case/{{ case.client_id }}" class="btn btn-sm btn-secondary" style="margin-left: 10px;">View</a>
+templates/performance_dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/violation_patterns.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/sol_dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/sol_dashboard.html:285:                <a href="/dashboard/analytics" class="btn btn-secondary">Back to Analytics</a>
+templates/sol_dashboard.html:345:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/sol_dashboard.html:378:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/sol_dashboard.html:411:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/sol_dashboard.html:444:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/franchise_dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/furnisher_detail.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/furnisher_detail.html:145:                <a href="/dashboard/furnishers" class="btn btn-secondary">
+templates/furnisher_detail.html:266:                        <a href="{{ furnisher.website if furnisher.website.startswith('http') else 'https://' + furnisher.website }}" target="_blank" style="color: #319795;">{{ furnisher.website }}</a>
+templates/furnisher_detail.html:332:                <div class="client-item" onclick="window.location.href='/dashboard/client/{{ client.id }}'">
+templates/knowledge_base.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/knowledge_base.html:907:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:929:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:951:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:973:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:995:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:1041:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:1063:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:1090:                        <a href="https://www.consumerfinance.gov/complaint/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File CFPB Complaint</a>
+templates/knowledge_base.html:1135:                        <a href="https://www.helpwithmybank.gov/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File OCC Complaint</a>
+templates/knowledge_base.html:1156:                        <a href="https://www.mycreditunion.gov/consumer-assistance-center" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File NCUA Complaint</a>
+templates/knowledge_base.html:1178:                        <a href="https://reportfraud.ftc.gov/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">Report to FTC</a>
+templates/knowledge_base.html:1199:                        <a href="https://ask.fdic.gov/fdicinformationandsupportcenter/s/article/How-do-I-file-a-complaint-against-a-bank" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File FDIC Complaint</a>
+templates/task_queue.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/audit_dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/calendar.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/calendar.html:8:    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+templates/calendar.html:488:                <a href="#" id="viewClientBtn" class="btn btn-primary">View Client</a>
+templates/admin.html:485:                    errorMsg += '<br><br>💡 Tip: <a href="/dashboard/documents/scanner">Use the OCR Scanner</a> for image-based PDFs.';
+templates/client_import.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/client_import.html:463:                <a href="/api/import/template" class="btn btn-secondary">Download Template</a>
+templates/frivolousness_tracker.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/settlements.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/settlements.html:456:            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
+templates/api_management.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/api_management.html:357:                <a href="/dashboard/api-docs" class="btn btn-secondary">
+templates/demand_generator.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/demand_generator.html:8:    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+templates/demand_generator.html:170:                                <a id="downloadPdfBtn" href="#" target="_blank" class="btn btn-download">
+templates/credit_tracker_client.html:72:            <a href="/dashboard/credit-tracker">&larr; All Clients</a>
+templates/credit_tracker_client.html:73:            <a href="/dashboard/client/{{ client.id }}">Client Details</a>
+templates/specialty_bureaus.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/specialty_bureaus.html:449:                <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
+templates/specialty_bureaus.html:517:            <a href="?status=all{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'all' %}active{% endif %}" data-testid="filter-all">All</a>
+templates/specialty_bureaus.html:518:            <a href="?status=pending{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'pending' %}active{% endif %}" data-testid="filter-pending">Pending</a>
+templates/specialty_bureaus.html:519:            <a href="?status=awaiting_response{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'awaiting_response' %}active{% endif %}" data-testid="filter-awaiting">Awaiting Response</a>
+templates/specialty_bureaus.html:520:            <a href="?status=resolved{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'resolved' %}active{% endif %}" data-testid="filter-resolved">Resolved</a>
+templates/specialty_bureaus.html:521:            <a href="?status=escalated{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'escalated' %}active{% endif %}" data-testid="filter-escalated">Escalated</a>
+templates/specialty_bureaus.html:531:            <a href="?status={{ current_status }}{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="btn btn-sm btn-secondary" data-testid="clear-bureau-filter">
+templates/analysis_review.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/analysis_review.html:104:        <a href="/dashboard" class="nav-item">Dashboard</a>
+templates/analysis_review.html:105:        <a href="/dashboard/clients" class="nav-item">Clients</a>
+templates/analysis_review.html:124:                <a href="/dashboard/case/{{ analysis.id }}" class="btn btn-secondary">Back to Case</a>
+templates/scanned_documents.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/scanned_documents.html:8:    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+templates/scanned_documents.html:9:    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+templates/scanned_documents.html:221:                <a href="/scanner" class="btn btn-primary btn-sm me-2" style="background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none;">
+templates/scanned_documents.html:224:                <a href="/dashboard" class="btn btn-secondary btn-sm">
+templates/scanned_documents.html:371:                        <a href="/scanner" class="btn btn-gradient">
+templates/scanned_documents.html:419:                        <a href="/api/scanner/download?path=${encodeURIComponent(doc.pdf_path)}" class="btn btn-sm btn-outline-primary">
+templates/scanned_documents.html:423:                            <a href="/api/scanner/download?path=${encodeURIComponent(doc.text_path)}" class="btn btn-sm btn-outline-secondary">
+templates/scanned_documents.html:543:                                <a href="/${resp.filePath}" target="_blank" class="btn btn-sm btn-outline-primary">
+templates/documents.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/documents.html:481:                    <a href="/dashboard/documents?status=pending&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'pending' else '' }}">Pending Review</a>
+templates/documents.html:482:                    <a href="/dashboard/documents?status=reviewed&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'reviewed' else '' }}">Reviewed</a>
+templates/documents.html:483:                    <a href="/dashboard/documents?status=urgent&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'urgent' else '' }}">Urgent</a>
+templates/documents.html:484:                    <a href="/dashboard/documents?status=action&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'action' else '' }}">Needs Action</a>
+templates/documents.html:485:                    <a href="/dashboard/documents?status=all&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'all' else '' }}">All</a>
+templates/documents.html:489:                    <a href="/dashboard/documents?status={{ status_filter }}&category=all" class="filter-btn {{ 'active' if category_filter == 'all' else '' }}">All Types</a>
+templates/documents.html:490:                    <a href="/dashboard/documents?status={{ status_filter }}&category=cra_response" class="filter-btn {{ 'active' if category_filter == 'cra_response' else '' }}">CRA Response</a>
+templates/documents.html:491:                    <a href="/dashboard/documents?status={{ status_filter }}&category=collection" class="filter-btn {{ 'active' if category_filter == 'collection' else '' }}">Collection</a>
+templates/documents.html:492:                    <a href="/dashboard/documents?status={{ status_filter }}&category=legal" class="filter-btn {{ 'active' if category_filter == 'legal' else '' }}">Legal</a>
+templates/documents.html:493:                    <a href="/dashboard/documents?status={{ status_filter }}&category=credit_report" class="filter-btn {{ 'active' if category_filter == 'credit_report' else '' }}">Credit Report</a>
+templates/documents.html:494:                    <a href="/dashboard/documents?status={{ status_filter }}&category=identity" class="filter-btn {{ 'active' if category_filter == 'identity' else '' }}">Identity</a>
+templates/documents.html:515:                            <a href="/dashboard/clients" class="client-name">{{ upload.client_name }}</a>
+templates/documents.html:556:                            <a href="/{{ upload.file_path }}" target="_blank" class="action-btn">View</a>
+templates/signature_capture.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/signups.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/signups.html:263:            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/signups.html:338:                <a href="/dashboard/signups" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
+templates/signups.html:339:                <a href="/dashboard/signups?status=paid" class="filter-btn {% if status_filter == 'paid' %}active{% endif %}">Paid</a>
+templates/signups.html:340:                <a href="/dashboard/signups?status=pending" class="filter-btn {% if status_filter == 'pending' %}active{% endif %}">Pending</a>
+templates/signups.html:341:                <a href="/dashboard/signups?status=pending_manual" class="filter-btn {% if status_filter == 'pending_manual' %}active{% endif %}">Awaiting Confirmation</a>
+templates/signups.html:342:                <a href="/dashboard/signups?status=free" class="filter-btn {% if status_filter == 'free' %}active{% endif %}">Free Tier</a>
+templates/signups.html:343:                <a href="/dashboard/signups?status=failed" class="filter-btn {% if status_filter == 'failed' %}active{% endif %}">Failed</a>
+templates/signups.html:390:                            <a href="/portal/{{ client.portal_token }}" class="action-btn" target="_blank" title="View client portal">
+templates/api_docs.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/api_docs.html:365:                <a href="/dashboard/api-keys" class="btn btn-primary">
+templates/api_docs.html:375:                <li><a href="#overview">API Overview</a></li>
+templates/api_docs.html:376:                <li><a href="#authentication">Authentication</a></li>
+templates/api_docs.html:377:                <li><a href="#rate-limiting">Rate Limiting</a></li>
+templates/api_docs.html:378:                <li><a href="#endpoints">Endpoints</a>
+templates/api_docs.html:380:                        <li class="sub-item"><a href="#clients">Clients</a></li>
+templates/api_docs.html:381:                        <li class="sub-item"><a href="#disputes">Disputes</a></li>
+templates/api_docs.html:382:                        <li class="sub-item"><a href="#violations">Violations</a></li>
+templates/api_docs.html:383:                        <li class="sub-item"><a href="#webhooks">Webhooks</a></li>
+templates/api_docs.html:386:                <li><a href="#errors">Error Codes</a></li>
+templates/api_docs.html:387:                <li><a href="#examples">Code Examples</a></li>
+templates/api_docs.html:424:                        Generate your API key from the <a href="/dashboard/api-keys" style="color: #15803d; font-weight: 500;">API Keys Management</a> page. 
+templates/api_docs.html:1173:                <a href="/dashboard/api-keys" class="btn btn-primary" style="background: linear-gradient(135deg, #84cc16 0%, #22c55e 100%);">
+templates/includes/tenant_branding.html:70:<link rel="icon" type="image/x-icon" href="{{ tenant_branding.favicon_url }}">
+templates/includes/tenant_branding.html:71:<link rel="shortcut icon" href="{{ tenant_branding.favicon_url }}">
+templates/includes/tenant_branding.html:113:            <a href="tel:{{ tenant_branding.company_phone }}" style="color: inherit; text-decoration: none;">{{ tenant_branding.company_phone }}</a>
+templates/includes/tenant_branding.html:117:            <a href="mailto:{{ tenant_branding.support_email }}" style="color: inherit; text-decoration: none;">{{ tenant_branding.support_email }}</a>
+templates/includes/tenant_branding.html:121:            <a href="{{ tenant_branding.terms_url }}" target="_blank" style="color: inherit; text-decoration: none;">Terms of Service</a>
+templates/includes/tenant_branding.html:125:            <a href="{{ tenant_branding.privacy_url }}" target="_blank" style="color: inherit; text-decoration: none;">Privacy Policy</a>
+templates/includes/whitelabel_branding.html:98:<link rel="icon" type="image/x-icon" href="{{ whitelabel_branding.favicon_url }}">
+templates/includes/whitelabel_branding.html:99:<link rel="shortcut icon" href="{{ whitelabel_branding.favicon_url }}">
+templates/includes/whitelabel_branding.html:139:            <a href="tel:{{ whitelabel_branding.company_phone }}" style="color: inherit; text-decoration: none;">{{ whitelabel_branding.company_phone }}</a>
+templates/includes/whitelabel_branding.html:143:            <a href="mailto:{{ whitelabel_branding.company_email }}" style="color: inherit; text-decoration: none;">{{ whitelabel_branding.company_email }}</a>
+templates/includes/whitelabel_branding.html:147:            <a href="{{ whitelabel_branding.terms_url }}" target="_blank" style="color: inherit; text-decoration: none;">Terms of Service</a>
+templates/includes/whitelabel_branding.html:151:            <a href="{{ whitelabel_branding.privacy_url }}" target="_blank" style="color: inherit; text-decoration: none;">Privacy Policy</a>
+templates/includes/dashboard_sidebar.html:16:                <a href="/dashboard" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:20:                <a href="/dashboard/analytics" class="nav-item {% if active_page == 'analytics' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:24:                <a href="/dashboard/calendar" class="nav-item {% if active_page == 'calendar' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:28:                <a href="/dashboard/contacts" class="nav-item {% if active_page == 'contacts' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:32:                <a href="/dashboard/clients" class="nav-item {% if active_page == 'clients' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:37:                <a href="/dashboard/signups" class="nav-item {% if active_page == 'signups' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:42:                <a href="/dashboard/queue" class="nav-item {% if active_page == 'queue' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:46:                <a href="/dashboard/documents" class="nav-item {% if active_page == 'documents' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:51:                <a href="/dashboard/credit-import" class="nav-item {% if active_page == 'credit-import' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:65:                <a href="/dashboard/cases?status=stage1_complete" class="nav-item {% if active_page == 'pending_review' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:69:                <a href="/dashboard/cases?status=stage2_complete" class="nav-item {% if active_page == 'ready_deliver' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:73:                <a href="/dashboard/settlements" class="nav-item {% if active_page == 'settlements' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:77:                <a href="/dashboard/furnishers" class="nav-item {% if active_page == 'furnishers' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:82:                <a href="/dashboard/patterns" class="nav-item {% if active_page == 'patterns' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:88:                <a href="/dashboard/triage" class="nav-item {% if active_page == 'triage' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:94:                <a href="/dashboard/escalation" class="nav-item {% if active_page == 'escalation' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:109:                <a href="/dashboard/case-law" class="nav-item {% if active_page == 'case-law' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:113:                <a href="/dashboard/knowledge-base" class="nav-item {% if active_page == 'knowledge-base' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:117:                <a href="/dashboard/sops" class="nav-item {% if active_page == 'sops' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:121:                <a href="/dashboard/chexsystems" class="nav-item {% if active_page == 'chexsystems' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:125:                <a href="/dashboard/specialty-bureaus" class="nav-item {% if active_page == 'specialty-bureaus' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:129:                <a href="/dashboard/suspense-accounts" class="nav-item {% if active_page == 'suspense-accounts' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:133:                <a href="/dashboard/frivolousness" class="nav-item {% if active_page == 'frivolousness' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:137:                <a href="/dashboard/letter-queue" class="nav-item {% if active_page == 'letter-queue' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:142:                <a href="/dashboard/demand-generator" class="nav-item {% if active_page == 'demand-generator' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:158:                <a href="/dashboard/affiliates" class="nav-item {% if active_page == 'affiliates' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:162:                <a href="/dashboard/predictive" class="nav-item {% if active_page == 'predictive' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:166:                <a href="/dashboard/ml-insights" class="nav-item {% if active_page == 'ml-insights' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:181:                <a href="/dashboard/cfpb" class="nav-item {% if active_page == 'cfpb' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:185:                <a href="/dashboard/sol" class="nav-item {% if active_page == 'sol' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:200:                <a href="/dashboard/automation-tools" class="nav-item {% if active_page == 'automation-tools' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:204:                <a href="/dashboard/workflows" class="nav-item {% if active_page == 'workflows' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:208:                <a href="/dashboard/tasks" class="nav-item {% if active_page == 'tasks' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:223:                <a href="/dashboard/whitelabel" class="nav-item {% if active_page == 'whitelabel' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:227:                <a href="/dashboard/franchise" class="nav-item {% if active_page == 'franchise' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:231:                <a href="/dashboard/api-keys" class="nav-item {% if active_page == 'api-keys' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:246:                <a href="/dashboard/analytics" class="nav-item {% if active_page == 'analytics' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:251:                <a href="/dashboard/settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:256:                <a href="/dashboard/staff" class="nav-item {% if active_page == 'staff' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:260:                <a href="/dashboard/audit" class="nav-item {% if active_page == 'audit' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:264:                <a href="/dashboard/performance" class="nav-item {% if active_page == 'performance' %}active{% endif %}">
+templates/includes/dashboard_sidebar.html:283:                <a href="/staff/logout" style="display: block; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; color: #94a3b8; font-size: 12px; text-align: center; text-decoration: none; transition: all 0.2s;">Sign Out</a>
+templates/suspense_accounts.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/clients.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/clients.html:203:            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">Back to Dashboard</a>
+templates/clients.html:208:                <a href="/dashboard/clients" class="filter-btn {% if status_filter == 'all' %}active{% endif %}" data-testid="filter-all">All</a>
+templates/clients.html:209:                <a href="/dashboard/clients?status=stage1_complete" class="filter-btn {% if status_filter == 'stage1_complete' %}active{% endif %}" data-testid="filter-needs-review">Needs Review</a>
+templates/clients.html:210:                <a href="/dashboard/clients?status=stage2_complete" class="filter-btn {% if status_filter == 'stage2_complete' %}active{% endif %}" data-testid="filter-ready-to-deliver">Ready to Deliver</a>
+templates/clients.html:265:                            <a href="/analysis/{{ case.analysis_id }}/review" class="action-btn primary" data-testid="review-btn-{{ case.id }}">Review</a>
+templates/clients.html:267:                            <a href="/dashboard/case/{{ case.id }}" class="action-btn" data-testid="view-btn-{{ case.id }}">View</a>
+templates/client_signup.html:7:    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+templates/client_signup.html:8:    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+templates/client_signup.html:9:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/client_signup.html:651:            <a href="/">Home</a>
+templates/client_signup.html:652:            <a href="/login">Client Login</a>
+templates/client_signup.html:653:            <a href="tel:9179094051">Call Us</a>
+templates/client_signup.html:1075:                    <a href="/portal" class="btn btn-primary" style="display: inline-block; text-decoration: none;">Go to Client Portal</a>
+templates/knowledge_base_enhanced.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/knowledge_base_enhanced.html:366:            <a href="/dashboard/sops" class="quick-link">
+templates/knowledge_base_enhanced.html:370:            <a href="/dashboard/chexsystems" class="quick-link">
+templates/knowledge_base_enhanced.html:374:            <a href="/dashboard/knowledge-base" class="quick-link">
+templates/knowledge_base_enhanced.html:381:            <a href="?course=all{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'all' %}active{% endif %}">All Content</a>
+templates/knowledge_base_enhanced.html:382:            <a href="?course=credit_repair{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'credit_repair' %}active{% endif %}">Credit Repair Course</a>
+templates/knowledge_base_enhanced.html:383:            <a href="?course=metro2{% if search_query %}&search={{ search_query }}{% endif %}" class="tab {% if current_course == 'metro2' %}active{% endif %}">Metro 2 Course</a>
+templates/chexsystems.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/chexsystems.html:477:            <a href="?status=all{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'all' %}active{% endif %}">All</a>
+templates/chexsystems.html:478:            <a href="?status=pending{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'pending' %}active{% endif %}">Pending</a>
+templates/chexsystems.html:479:            <a href="?status=sent{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'sent' %}active{% endif %}">Sent</a>
+templates/chexsystems.html:480:            <a href="?status=responded{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'responded' %}active{% endif %}">Responded</a>
+templates/chexsystems.html:481:            <a href="?status=resolved{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'resolved' %}active{% endif %}">Resolved</a>
+templates/chexsystems.html:593:                        <a href="/dashboard/knowledge-base" class="btn btn-secondary" style="justify-content: center;">
+templates/chexsystems.html:597:                        <a href="/dashboard/sops" class="btn btn-secondary" style="justify-content: center;">
+templates/cfpb_complaints.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/cfpb_complaints.html:264:            <a href="/dashboard/cfpb/generator" class="btn btn-primary">
+templates/cfpb_complaints.html:344:                            <a href="/dashboard/cfpb/complaint/{{ c.id }}" class="action-btn primary">View</a>
+templates/cfpb_complaints.html:346:                            <a href="/{{ c.file_path }}" target="_blank" class="action-btn">PDF</a>
+templates/cfpb_complaints.html:363:                <a href="/dashboard/cfpb/generator" class="btn btn-primary">Create First Complaint</a>
+templates/credit_report_view.html:532:            <a href="/dashboard/credit-import" class="back-link">&larr; Back to Credit Import</a>
+templates/sops.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/sops.html:397:            <a href="?category=all{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-btn {% if current_category == 'all' %}active{% endif %}">
+templates/sops.html:401:            <a href="?category={{ category }}{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-btn {% if current_category == category %}active{% endif %}">
+templates/integrations_hub.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/integrations_hub.html:412:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/dashboard.html:616:                    <a href="/dashboard/clients" class="btn btn-secondary" data-testid="view-all-button">View All</a>
+templates/admin_simple.html:82:            status.innerHTML = '<p class="success">✅ Analysis created! ID: ' + data.analysis_id + '<br><a href="/analysis/' + data.analysis_id + '/review">View Results</a></p>';
+templates/email_settings.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/email_settings.html:375:                <a href="/dashboard/settings" class="btn btn-secondary">Back to Settings</a>
+templates/triage_dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/triage_dashboard.html:353:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/whitelabel_admin.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:8:    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:9:    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:10:    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:11:    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:12:    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:13:    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:14:    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:15:    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/whitelabel_admin.html:16:    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+templates/white_label_dashboard.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/predictive_analytics.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/predictive_analytics.html:372:                <a href="/dashboard/analytics" class="btn btn-secondary">
+templates/ml_insights.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/ml_insights.html:8:    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+templates/ml_insights.html:9:    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+templates/case_law.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/portal_login.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/portal_login.html:8:    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/portal_login.html:9:    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+templates/portal_login.html:292:                <a href="#" class="forgot-link" onclick="showForgotForm(); return false;" data-testid="forgot-password-link">Forgot your password?</a>
+templates/portal_login.html:297:                    Have an access link? <a href="#" onclick="promptTokenAccess(); return false;" data-testid="token-access-link">Use direct link access</a>
+templates/portal_login.html:302:                <a href="#" class="back-link" onclick="showLoginForm(); return false;" data-testid="back-to-login-link">
+templates/affiliate_detail.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/affiliate_detail.html:450:                <a href="/dashboard/affiliates" class="back-btn">
+templates/affiliate_detail.html:506:                        <a href="/dashboard/affiliate/{{ affiliate.parent.id }}" class="detail-value" style="color: #319795; text-decoration: none;">{{ affiliate.parent.name }}</a>
+templates/affiliate_detail.html:666:                                <a href="/dashboard/affiliate/{{ child.affiliate_id }}" style="color: #1a1a2e; text-decoration: none;">{{ child.name }}</a>
+templates/credit_tracker.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/cfpb_generator.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/cfpb_generator.html:394:            <a href="/dashboard/cfpb" class="btn btn-secondary">Back to Complaints</a>
+templates/cfpb_generator.html:495:                        <a href="/{{ complaint.file_path }}" target="_blank" class="btn btn-secondary">Download PDF</a>
+templates/analytics.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/analytics.html:387:            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
+templates/analytics.html:605:                <a href="/dashboard/settlements" style="color: #84cc16; text-decoration: none; font-size: 14px; font-weight: 500;" data-testid="view-all-settlements-link">View All Settlements →</a>
+templates/signature_error.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/signature_error.html:233:                    <a href="mailto:support@brightpathascend.com?subject=Request New Signing Link" class="btn btn-primary">
+templates/signature_error.html:239:                    <a href="/" class="btn btn-secondary">
+templates/signature_error.html:253:                        <a href="mailto:support@brightpathascend.com">support@brightpathascend.com</a>
+templates/automation_tools.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/automation_tools.html:486:            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/letter_queue.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/furnishers.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/workflow_triggers.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/settings.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/settings.html:252:            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/settings.html:628:                    <a href="/dashboard/settings/sms" class="btn btn-primary" style="background: #166534;">
+templates/billing_management.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/case_detail.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/case_detail.html:66:                <a href="/analysis/{{ analysis.id }}/review" class="btn btn-primary" data-testid="review-approve-btn">Review & Approve</a>
+templates/case_detail.html:68:                <a href="/analysis/{{ analysis.id }}/download" class="btn btn-primary" data-testid="download-package-btn">Download Package</a>
+templates/case_detail.html:70:                <a href="/dashboard/clients" class="btn btn-secondary" data-testid="back-button">Back</a>
+templates/case_detail.html:174:                    <a href="/static/generated_letters/{{ letter.file_path|replace('static/generated_letters/', '') }}" class="download-btn" target="_blank">Download</a>
+templates/case_detail.html:185:                    <a href="/dashboard/sol" style="font-size: 12px; color: #319795; text-decoration: none;">View All SOL Deadlines →</a>
+templates/case_detail.html:237:                        <a href="/dashboard/escalation" style="font-size: 12px; color: #319795; text-decoration: none; padding: 6px 12px;">View All →</a>
+templates/case_detail.html:411:                                ${event.file_path ? `<div style="margin-top: 8px;"><a href="/static/generated_letters/${event.file_path.replace('static/generated_letters/', '')}" target="_blank" style="color: #3b82f6; text-decoration: underline; font-size: 11px;">View Letter</a></div>` : ''}
+templates/case_detail.html:578:                <a href="/dashboard/settlements" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;">View All Settlements</a>
+templates/staff_login.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/staff_login.html:267:                Looking for client portal? <a href="/portal/login" data-testid="client-portal-link">Client Login</a>
+templates/staff_management.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/error.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/error.html:78:        <a href="/dashboard" class="btn">Go to Dashboard</a>
+templates/sms_settings.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/sms_settings.html:327:                <a href="/dashboard/settings" class="btn btn-secondary">← Back to Settings</a>
+templates/client_portal.html:7:    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/client_portal.html:8:    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/client_portal.html:9:    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+templates/client_portal.html:10:    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/client_portal.html:11:    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+templates/client_portal.html:671:            <a href="/portal/logout" style="margin-left: 15px; padding: 8px 16px; background: #f1f5f9; color: #475569; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 500; transition: all 0.2s;">Logout</a>
+templates/client_portal.html:676:        <a href="javascript:void(0)" class="nav-tab active" onclick="switchTab('summary', this)">Summary</a>
+templates/client_portal.html:677:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('progress', this)">Score Progress</a>
+templates/client_portal.html:678:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('timeline', this)">Dispute Timeline</a>
+templates/client_portal.html:679:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('status', this)">Status</a>
+templates/client_portal.html:680:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('attachments', this)">Attachments</a>
+templates/client_portal.html:681:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('documents', this)">Upload Documents</a>
+templates/client_portal.html:682:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('profile', this)">My Profile</a>
+templates/client_portal.html:683:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('contact', this)">Contact Us</a>
+templates/client_portal.html:684:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('referral', this)">Refer a Friend</a>
+templates/client_portal.html:846:                <a href="#legend" style="color: #3b82f6; font-size: 13px; text-decoration: underline;">How to use the Status Area?</a>
+templates/client_portal.html:1126:                        <a href="/static/generated_letters/{{ letter.file_path|replace('static/generated_letters/', '') }}" class="download-btn" target="_blank">Download</a>
+templates/client_portal.html:1161:                            <a href="/{{ response.file_path }}" class="download-btn" target="_blank">View</a>
+templates/client_portal.html:1255:                        <strong>Login URL:</strong> <a href="/portal/login" style="color: #3b82f6;">/portal/login</a>
+templates/client_portal.html:1287:                        <a href="tel:9179094051" class="contact-value">(917) 909-4051</a>
+templates/client_portal.html:1292:                        <a href="mailto:support@brightpathascendgroup.com" class="contact-value">support@brightpathascendgroup.com</a>
+templates/client_portal.html:1297:                        <a href="https://brightpathascendgroup.com" target="_blank" class="contact-value">brightpathascendgroup.com</a>
+templates/client_portal.html:1394:                    <a href="/portal/{{ token }}/scanner" style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #008080, #32CD32); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; white-space: nowrap;">

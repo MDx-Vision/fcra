@@ -1,0 +1,1584 @@
+templates/contacts.html:31:        .btn {
+templates/contacts.html:44:        .btn-primary {
+templates/contacts.html:48:        .btn-secondary {
+templates/contacts.html:53:        .btn-secondary:hover { border-color: #84cc16; }
+templates/contacts.html:64:        .top-nav-btn {
+templates/contacts.html:77:        .top-nav-btn:hover { background: white; color: #1a1a2e; }
+templates/contacts.html:78:        .top-nav-btn.active { background: #1a1a2e; color: white; }
+templates/contacts.html:93:        .filter-btn {
+templates/contacts.html:105:        .filter-btn.active { background: #1a1a2e; color: white; }
+templates/contacts.html:106:        .filter-btn:hover { background: #e2e8f0; }
+templates/contacts.html:107:        .filter-btn.active:hover { background: #1a1a2e; }
+templates/contacts.html:108:        .filter-btn.mark1.active { background: #ef4444; }
+templates/contacts.html:109:        .filter-btn.mark2.active { background: #f97316; }
+templates/contacts.html:110:        .filter-btn.affiliate.active { background: #eab308; color: #1a1a2e; }
+templates/contacts.html:302:        .pagination-btns { display: flex; gap: 5px; }
+templates/contacts.html:303:        .page-btn {
+templates/contacts.html:311:        .page-btn:hover { border-color: #84cc16; }
+templates/contacts.html:312:        .page-btn.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
+templates/contacts.html:671:                <button class="btn btn-secondary" onclick="openAddContactModal()">
+templates/contacts.html:675:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/contacts.html:680:            <button class="top-nav-btn active" onclick="openAddContactModal()">Add Contact</button>
+templates/contacts.html:681:            <button class="top-nav-btn" onclick="selectAllContacts()">Select Contacts</button>
+templates/contacts.html:682:            <button class="top-nav-btn" onclick="bulkUpdateContacts()">Change Contacts</button>
+templates/contacts.html:683:            <button class="top-nav-btn" onclick="goToInvoices()">Go To Invoices</button>
+templates/contacts.html:684:            <button class="top-nav-btn">Marketing</button>
+templates/contacts.html:685:            <button class="top-nav-btn">VA Manager</button>
+templates/contacts.html:686:            <button class="top-nav-btn">Tools</button>
+templates/contacts.html:687:            <button class="top-nav-btn">E-mails Related</button>
+templates/contacts.html:688:            <button class="top-nav-btn">Post Portals</button>
+templates/contacts.html:689:            <button class="top-nav-btn" onclick="openMyNotes()">My Notes</button>
+templates/contacts.html:694:                <a href="/dashboard/contacts?filter=mark1" class="filter-btn mark1 {% if filter == 'mark1' %}active{% endif %}">Mark 1</a>
+templates/contacts.html:695:                <a href="/dashboard/contacts?filter=mark2" class="filter-btn mark2 {% if filter == 'mark2' %}active{% endif %}">Mark 2</a>
+templates/contacts.html:696:                <a href="/dashboard/contacts?filter=affiliates" class="filter-btn affiliate {% if filter == 'affiliates' %}active{% endif %}">Affiliates</a>
+templates/contacts.html:697:                <a href="/dashboard/contacts?filter=active" class="filter-btn {% if filter == 'active' %}active{% endif %}">Active</a>
+templates/contacts.html:698:                <a href="/dashboard/contacts?filter=leads" class="filter-btn {% if filter == 'leads' %}active{% endif %}">Leads</a>
+templates/contacts.html:699:                <a href="/dashboard/contacts?filter=follow_up" class="filter-btn {% if filter == 'follow_up' %}active{% endif %}">Follow Up</a>
+templates/contacts.html:700:                <a href="/dashboard/contacts?filter=signups" class="filter-btn {% if filter == 'signups' %}active{% endif %}">Signups</a>
+templates/contacts.html:701:                <a href="/dashboard/contacts?filter=last25" class="filter-btn {% if filter == 'last25' %}active{% endif %}">Last 25</a>
+templates/contacts.html:702:                <a href="/dashboard/contacts" class="filter-btn {% if not filter or filter == 'all' %}active{% endif %}">Show All</a>
+templates/contacts.html:727:                            <th style="width: 40px;"><input type="checkbox" onclick="toggleSelectAll(this)"></th>
+templates/contacts.html:750:                                    <span class="action-icon delete" title="Delete" onclick="deleteContact({{ contact.id }})">🗑</span>
+templates/contacts.html:751:                                    <span class="action-icon task" title="Add Task" onclick="openTaskModal({{ contact.id }})">📅</span>
+templates/contacts.html:752:                                    <span class="action-icon charge" title="Charge Client" onclick="chargeClient({{ contact.id }})">💵</span>
+templates/contacts.html:753:                                    <span class="action-icon ai" title="Generate Credit Action Plan" onclick="generatePlan({{ contact.id }})">🤖</span>
+templates/contacts.html:754:                                    <span class="action-icon workflow" title="Workflow Manager" onclick="openWorkflow({{ contact.id }})">⚙️</span>
+templates/contacts.html:755:                                    <span class="action-icon notes" title="Client Notes" onclick="openNotesModal({{ contact.id }})">📝</span>
+templates/contacts.html:757:                                        <span class="action-icon docs" title="Documents" onclick="toggleDocsDropdown(event, {{ contact.id }})">📄</span>
+templates/contacts.html:765:                                            <a href="#" class="docs-dropdown-link" onclick="openUploadModal({{ contact.id }}); return false;">📤 Upload document for this client</a>
+templates/contacts.html:768:                                    <span class="action-icon dispute" title="Dispute Center" onclick="openDisputeCenter({{ contact.id }})">⚖️</span>
+templates/contacts.html:769:                                    <span class="action-icon portal" title="Client Portal" onclick="viewPortal('{{ contact.portal_token }}')">🌐</span>
+templates/contacts.html:782:                            <td><span class="client-name" onclick="openContactModal({{ contact.id }})">{{ contact.first_name or '-' }}</span></td>
+templates/contacts.html:818:                                    <span class="mark-toggle mark1 {% if contact.mark_1 %}active{% endif %}" onclick="toggleMark({{ contact.id }}, 1, this)" title="Mark 1"></span>
+templates/contacts.html:819:                                    <span class="mark-toggle mark2 {% if contact.mark_2 %}active{% endif %}" onclick="toggleMark({{ contact.id }}, 2, this)" title="Mark 2"></span>
+templates/contacts.html:833:                <div class="pagination-btns">
+templates/contacts.html:835:                    <a href="/dashboard/contacts?page={{ page - 1 }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn">Previous</a>
+templates/contacts.html:839:                        <a href="/dashboard/contacts?page={{ p }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+templates/contacts.html:841:                        <span class="page-btn" style="border: none;">...</span>
+templates/contacts.html:845:                    <a href="/dashboard/contacts?page={{ page + 1 }}&filter={{ filter }}&rows={{ rows_per_page }}" class="page-btn">Next</a>
+templates/contacts.html:854:                <button class="btn btn-primary" onclick="openAddContactModal()">Add Contact</button>
+templates/contacts.html:860:    <div id="contactModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'contactModal')">
+templates/contacts.html:861:        <div class="modal" onclick="event.stopPropagation()">
+templates/contacts.html:864:                <button class="modal-close" onclick="closeModal('contactModal')">&times;</button>
+templates/contacts.html:1005:                <button class="btn btn-secondary" onclick="closeModal('contactModal')">Cancel</button>
+templates/contacts.html:1006:                <button class="btn btn-primary" onclick="saveContact()">Save Changes</button>
+templates/contacts.html:1011:    <div id="notesModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'notesModal')">
+templates/contacts.html:1012:        <div class="modal" style="width: 500px;" onclick="event.stopPropagation()">
+templates/contacts.html:1015:                <button class="modal-close" onclick="closeModal('notesModal')">&times;</button>
+templates/contacts.html:1022:                <button class="btn btn-primary" onclick="saveNote()" style="margin-bottom: 15px;">Add Note</button>
+templates/contacts.html:1033:    <div id="taskModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'taskModal')">
+templates/contacts.html:1034:        <div class="modal" style="width: 500px;" onclick="event.stopPropagation()">
+templates/contacts.html:1037:                <button class="modal-close" onclick="closeModal('taskModal')">&times;</button>
+templates/contacts.html:1075:                <button class="btn btn-secondary" onclick="closeModal('taskModal')">Cancel</button>
+templates/contacts.html:1076:                <button class="btn btn-primary" onclick="saveTask()">Create Task</button>
+templates/contacts.html:1081:    <div id="docsModal" class="modal-overlay" onclick="closeModalOnOverlay(event, 'docsModal')">
+templates/contacts.html:1082:        <div class="modal" style="width: 550px;" onclick="event.stopPropagation()">
+templates/contacts.html:1085:                <button class="modal-close" onclick="closeModal('docsModal')">&times;</button>
+templates/contacts.html:1095:                <button class="btn btn-secondary" onclick="closeModal('docsModal')">Close</button>
+templates/contacts.html:1194:                        html += `<div class="docs-dropdown-item" onclick="toggleDocFromDropdown(${clientId}, '${doc.document_type}', this)">
+templates/contacts.html:1382:                return `<div class="doc-toggle-item" onclick="toggleDocInModal('${dt.key}', this)" data-doc-type="${dt.key}">
+templates/contacts.html:1632:                        return `<div class="doc-toggle-item" onclick="toggleDocInDocsModal('${dt.key}', ${id}, this)" data-doc-type="${dt.key}">
+templates/document_scanner.html:88:        .capture-btn {
+templates/document_scanner.html:98:        .capture-btn:active {
+templates/document_scanner.html:102:        .capture-btn-inner {
+templates/document_scanner.html:167:        .page-thumbnail .remove-btn {
+templates/document_scanner.html:205:        .add-more-btn {
+templates/document_scanner.html:222:        .add-more-btn:hover {
+templates/document_scanner.html:227:        .add-more-btn:active {
+templates/document_scanner.html:231:        .add-more-btn i {
+templates/document_scanner.html:235:        .page-thumbnail:hover .remove-btn {
+templates/document_scanner.html:251:        .btn-gradient {
+templates/document_scanner.html:257:        .btn-gradient:hover {
+templates/document_scanner.html:352:                <a href="/portal/{{ portal_token }}" class="btn btn-sm btn-light">
+templates/document_scanner.html:511:                                <button class="capture-btn" id="btn-capture" onclick="capturePhoto()">
+templates/document_scanner.html:512:                                    <div class="capture-btn-inner"></div>
+templates/document_scanner.html:522:                        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+templates/document_scanner.html:539:                        <button class="add-more-btn" id="add-more-btn" onclick="addMorePages()">
+templates/document_scanner.html:571:                    <a href="#" id="download-pdf-link" class="btn btn-outline-primary w-100 mb-2">
+templates/document_scanner.html:574:                    <a href="#" id="download-text-link" class="btn btn-outline-secondary w-100">
+templates/document_scanner.html:579:                <button class="btn btn-gradient w-100" onclick="startNewScan()">
+templates/document_scanner.html:587:        <button class="btn btn-outline-secondary flex-grow-1" id="btn-back" onclick="goBack()">
+templates/document_scanner.html:590:        <button class="btn btn-gradient flex-grow-1" id="btn-next" onclick="goNext()" disabled>
+templates/document_scanner.html:622:                document.getElementById('btn-next').disabled = false;
+templates/document_scanner.html:632:                document.getElementById('btn-next').disabled = false;
+templates/document_scanner.html:664:                    document.getElementById('btn-next').disabled = true;
+templates/document_scanner.html:673:                document.getElementById('btn-next').innerHTML = '<i class="bi bi-gear"></i> Process Document';
+templates/document_scanner.html:674:                document.getElementById('btn-next').disabled = true;
+templates/document_scanner.html:692:                document.getElementById('btn-next').disabled = false;
+templates/document_scanner.html:700:                document.getElementById('btn-next').innerHTML = 'Next <i class="bi bi-arrow-right"></i>';
+templates/document_scanner.html:701:                document.getElementById('btn-next').disabled = !selectedDocType;
+templates/document_scanner.html:814:                    <button class="remove-btn" onclick="removePage(${idx + 1})">
+templates/document_scanner.html:824:            document.getElementById('btn-next').disabled = pages.length === 0;
+templates/document_scanner.html:930:            document.getElementById('btn-next').innerHTML = 'Next <i class="bi bi-arrow-right"></i>';
+templates/document_scanner.html:931:            document.getElementById('btn-next').disabled = true;
+templates/affiliates.html:31:        .btn {
+templates/affiliates.html:43:        .btn-primary {
+templates/affiliates.html:47:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/affiliates.html:48:        .btn-secondary {
+templates/affiliates.html:53:        .btn-secondary:hover { border-color: #84cc16; }
+templates/affiliates.html:54:        .btn-sm { padding: 8px 16px; font-size: 13px; }
+templates/affiliates.html:118:        .filter-btn {
+templates/affiliates.html:128:        .filter-btn.active { background: #1a1a2e; color: white; }
+templates/affiliates.html:129:        .filter-btn:hover { background: #e2e8f0; }
+templates/affiliates.html:130:        .filter-btn.active:hover { background: #1a1a2e; }
+templates/affiliates.html:221:        .action-btn {
+templates/affiliates.html:230:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/affiliates.html:231:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/affiliates.html:323:                <button class="btn btn-primary" onclick="openAddModal()">
+templates/affiliates.html:359:                <button class="filter-btn active" onclick="filterAffiliates('all')">All</button>
+templates/affiliates.html:360:                <button class="filter-btn" onclick="filterAffiliates('active')">Active</button>
+templates/affiliates.html:361:                <button class="filter-btn" onclick="filterAffiliates('pending')">Pending</button>
+templates/affiliates.html:362:                <button class="filter-btn" onclick="filterAffiliates('suspended')">Suspended</button>
+templates/affiliates.html:404:                            <button class="action-btn primary" onclick="viewAffiliate({{ affiliate.id }})">View</button>
+templates/affiliates.html:405:                            <button class="action-btn" onclick="editAffiliate({{ affiliate.id }})">Edit</button>
+templates/affiliates.html:416:                <button class="btn btn-primary" onclick="openAddModal()">Add Affiliate</button>
+templates/affiliates.html:426:                <button class="modal-close" onclick="closeModal('addAffiliateModal')">&times;</button>
+templates/affiliates.html:498:                    <button type="button" class="btn btn-secondary" onclick="closeModal('addAffiliateModal')">Cancel</button>
+templates/affiliates.html:499:                    <button type="submit" class="btn btn-primary">Create Affiliate</button>
+templates/affiliates.html:523:            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+templates/credit_import.html:35:        .btn {
+templates/credit_import.html:48:        .btn-primary {
+templates/credit_import.html:52:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/credit_import.html:53:        .btn-secondary {
+templates/credit_import.html:58:        .btn-secondary:hover { border-color: #84cc16; }
+templates/credit_import.html:59:        .btn-danger {
+templates/credit_import.html:64:        .btn-danger:hover { background: #fecaca; }
+templates/credit_import.html:65:        .btn-sm {
+templates/credit_import.html:189:        .action-btn {
+templates/credit_import.html:198:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/credit_import.html:199:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/credit_import.html:326:                <button class="btn btn-secondary" onclick="triggerAllDue()" data-testid="import-all-due-btn">
+templates/credit_import.html:330:                <button class="btn btn-primary" onclick="openAddModal()" data-testid="add-credential-btn">
+templates/credit_import.html:334:                <a href="/dashboard" class="btn btn-secondary" data-testid="back-btn">Back to Dashboard</a>
+templates/credit_import.html:411:                                    <button class="action-btn primary" onclick="triggerImport({{ cred.client_id }})" data-testid="import-btn-{{ cred.id }}">Import Now</button>
+templates/credit_import.html:413:                                    <a href="/api/credit-import/report/{{ cred.id }}" target="_blank" class="action-btn" style="background: #10b981; color: white;" data-testid="view-btn-{{ cred.id }}">View Report</a>
+templates/credit_import.html:415:                                    <button class="action-btn" onclick="openEditModal({{ cred.id }})" data-testid="edit-btn-{{ cred.id }}">Edit</button>
+templates/credit_import.html:416:                                    <button class="action-btn btn-danger btn-sm" onclick="deleteCredential({{ cred.id }})" data-testid="delete-btn-{{ cred.id }}">Delete</button>
+templates/credit_import.html:440:                <button class="modal-close" onclick="closeModal()">&times;</button>
+templates/credit_import.html:493:                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+templates/credit_import.html:494:                    <button type="submit" class="btn btn-primary" id="saveBtn" data-testid="save-credential-btn">Save Credential</button>
+templates/credit_import.html:622:            const btn = event.target;
+templates/credit_import.html:623:            const originalText = btn.textContent;
+templates/credit_import.html:624:            btn.innerHTML = '<span class="loading-spinner"></span> Importing...';
+templates/credit_import.html:625:            btn.disabled = true;
+templates/credit_import.html:640:                    btn.textContent = originalText;
+templates/credit_import.html:641:                    btn.disabled = false;
+templates/credit_import.html:645:                btn.textContent = originalText;
+templates/credit_import.html:646:                btn.disabled = false;
+templates/credit_import.html:651:            const btn = event.target;
+templates/credit_import.html:652:            const originalHTML = btn.innerHTML;
+templates/credit_import.html:653:            btn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+templates/credit_import.html:654:            btn.disabled = true;
+templates/credit_import.html:671:                btn.innerHTML = originalHTML;
+templates/credit_import.html:672:                btn.disabled = false;
+templates/instant_preview.html:223:                <button onclick="location.reload()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold">
+templates/escalation_dashboard.html:31:        .btn {
+templates/escalation_dashboard.html:44:        .btn-primary {
+templates/escalation_dashboard.html:48:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/escalation_dashboard.html:49:        .btn-secondary {
+templates/escalation_dashboard.html:54:        .btn-secondary:hover { border-color: #84cc16; }
+templates/escalation_dashboard.html:55:        .btn-sm {
+templates/escalation_dashboard.html:308:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/escalation_dashboard.html:362:                            <a href="/dashboard/case/{{ case.client_id }}" class="btn btn-sm btn-secondary" style="margin-left: 10px;">View</a>
+templates/escalation_dashboard.html:363:                            <button onclick="generateRecommendation({{ case.client_id }})" class="btn btn-sm btn-primary" style="margin-left: 5px;">Analyze</button>
+templates/performance_dashboard.html:39:        .btn {
+templates/performance_dashboard.html:51:        .btn-primary {
+templates/performance_dashboard.html:55:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/performance_dashboard.html:56:        .btn-secondary {
+templates/performance_dashboard.html:61:        .btn-secondary:hover { border-color: #84cc16; }
+templates/performance_dashboard.html:62:        .btn-danger {
+templates/performance_dashboard.html:66:        .btn-danger:hover { background: #dc2626; }
+templates/performance_dashboard.html:376:                <button class="btn btn-secondary" onclick="refreshData()">
+templates/performance_dashboard.html:380:                <button class="btn btn-danger" onclick="showClearCacheModal()">
+templates/performance_dashboard.html:607:                <button class="modal-close" onclick="hideClearCacheModal()">&times;</button>
+templates/performance_dashboard.html:618:                    <button type="button" class="btn btn-secondary" onclick="hideClearCacheModal()">Cancel</button>
+templates/performance_dashboard.html:619:                    <button type="submit" class="btn btn-danger">Clear Cache</button>
+templates/violation_patterns.html:20:        .btn {
+templates/violation_patterns.html:25:        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; }
+templates/violation_patterns.html:26:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/violation_patterns.html:27:        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+templates/violation_patterns.html:28:        .btn-secondary:hover { border-color: #84cc16; }
+templates/violation_patterns.html:29:        .btn-sm { padding: 8px 16px; font-size: 13px; }
+templates/violation_patterns.html:30:        .btn-danger { background: #ef4444; color: white; }
+templates/violation_patterns.html:132:        .action-btn {
+templates/violation_patterns.html:136:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/violation_patterns.html:138:        .tab-btn {
+templates/violation_patterns.html:143:        .tab-btn:hover { color: #1a1a2e; }
+templates/violation_patterns.html:144:        .tab-btn.active { color: #319795; border-bottom-color: #319795; }
+templates/violation_patterns.html:169:            <button class="btn btn-primary" onclick="openCreateModal()">
+templates/violation_patterns.html:249:                        <td onclick="viewPattern({{ p.id }})">
+templates/violation_patterns.html:253:                        <td onclick="viewPattern({{ p.id }})">
+templates/violation_patterns.html:264:                        <td onclick="viewPattern({{ p.id }})">{{ p.occurrences_count or 0 }}</td>
+templates/violation_patterns.html:265:                        <td onclick="viewPattern({{ p.id }})">{{ p.clients_affected or 0 }}</td>
+templates/violation_patterns.html:266:                        <td onclick="viewPattern({{ p.id }})">${{ "{:,.0f}".format(p.total_damages_estimate or 0) }}</td>
+templates/violation_patterns.html:267:                        <td onclick="viewPattern({{ p.id }})">
+templates/violation_patterns.html:270:                        <td onclick="viewPattern({{ p.id }})">
+templates/violation_patterns.html:278:                        <td onclick="viewPattern({{ p.id }})">
+templates/violation_patterns.html:282:                            <button class="action-btn" onclick="event.stopPropagation(); generatePacket({{ p.id }})" title="Generate Evidence Packet">
+templates/violation_patterns.html:285:                            <button class="action-btn" onclick="event.stopPropagation(); viewPattern({{ p.id }})" title="View Details">
+templates/violation_patterns.html:298:                <button class="btn btn-primary" style="margin-top: 20px;" onclick="openCreateModal()">Create First Pattern</button>
+templates/violation_patterns.html:308:                <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+templates/violation_patterns.html:409:                <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+templates/violation_patterns.html:410:                <button class="btn btn-primary" onclick="createPattern()">Create Pattern</button>
+templates/violation_patterns.html:419:                <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+templates/violation_patterns.html:423:                    <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+templates/violation_patterns.html:424:                    <button class="tab-btn" onclick="switchTab('violations')">Linked Violations</button>
+templates/violation_patterns.html:425:                    <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
+templates/violation_patterns.html:443:                            <button class="btn btn-primary btn-sm" onclick="generatePacketFromModal()">
+templates/violation_patterns.html:447:                            <button class="btn btn-secondary btn-sm" onclick="updatePatternStatus('ready_for_action')">Mark Ready for Action</button>
+templates/violation_patterns.html:448:                            <button class="btn btn-secondary btn-sm" onclick="updatePatternStatus('active_litigation')">Mark Active Litigation</button>
+templates/violation_patterns.html:457:                            <button class="btn btn-primary btn-sm" onclick="openAddViolationModal()">+ Link Violation</button>
+templates/violation_patterns.html:521:                        <button type="button" class="btn btn-primary" onclick="savePatternSettings()">Save Changes</button>
+templates/violation_patterns.html:532:                <button class="modal-close" onclick="closeAddViolationModal()">&times;</button>
+templates/violation_patterns.html:611:            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+templates/violation_patterns.html:614:            document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`).classList.add('active');
+templates/violation_patterns.html:838:                html += `<div class="violations-list-item" onclick="linkViolation(${v.id})" style="cursor: pointer;">
+templates/sol_dashboard.html:39:        .btn {
+templates/sol_dashboard.html:52:        .btn-primary {
+templates/sol_dashboard.html:56:        .btn-secondary {
+templates/sol_dashboard.html:61:        .btn-secondary:hover { border-color: #84cc16; }
+templates/sol_dashboard.html:189:        .action-btn {
+templates/sol_dashboard.html:201:        .action-btn:hover {
+templates/sol_dashboard.html:281:                <button class="btn btn-primary" onclick="checkDeadlines()">
+templates/sol_dashboard.html:285:                <a href="/dashboard/analytics" class="btn btn-secondary">Back to Analytics</a>
+templates/sol_dashboard.html:319:            <button class="tab active" onclick="showTab('critical')">Critical (30 Days)</button>
+templates/sol_dashboard.html:320:            <button class="tab" onclick="showTab('warning')">Warning (60 Days)</button>
+templates/sol_dashboard.html:321:            <button class="tab" onclick="showTab('all')">All Upcoming (90 Days)</button>
+templates/sol_dashboard.html:322:            <button class="tab" onclick="showTab('expired')">Expired</button>
+templates/sol_dashboard.html:345:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/sol_dashboard.html:378:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/sol_dashboard.html:411:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/sol_dashboard.html:444:                        <a href="/dashboard/case/{{ v.analysis_id }}" class="action-btn">View Case</a>
+templates/franchise_dashboard.html:35:        .btn {
+templates/franchise_dashboard.html:48:        .btn-primary {
+templates/franchise_dashboard.html:52:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/franchise_dashboard.html:53:        .btn-secondary {
+templates/franchise_dashboard.html:58:        .btn-secondary:hover { border-color: #84cc16; }
+templates/franchise_dashboard.html:59:        .btn-success { background: #22c55e; color: white; }
+templates/franchise_dashboard.html:60:        .btn-success:hover { background: #16a34a; }
+templates/franchise_dashboard.html:61:        .btn-danger { background: #ef4444; color: white; }
+templates/franchise_dashboard.html:62:        .btn-danger:hover { background: #dc2626; }
+templates/franchise_dashboard.html:63:        .btn-sm { padding: 8px 16px; font-size: 13px; }
+templates/franchise_dashboard.html:441:                <button class="btn btn-primary" onclick="openModal('createOrgModal')">
+templates/franchise_dashboard.html:506:                    <button class="btn btn-primary" style="margin-top: 20px;" onclick="openModal('createOrgModal')">Create Organization</button>
+templates/franchise_dashboard.html:547:                        <button class="btn btn-secondary btn-sm" onclick="viewOrganization({{ org.id }})">View</button>
+templates/franchise_dashboard.html:548:                        <button class="btn btn-secondary btn-sm" onclick="editOrganization({{ org.id }})">Edit</button>
+templates/franchise_dashboard.html:549:                        <button class="btn btn-secondary btn-sm" onclick="manageMembers({{ org.id }})">Members</button>
+templates/franchise_dashboard.html:550:                        <button class="btn btn-secondary btn-sm" onclick="viewConsolidatedReport({{ org.id }})" title="Consolidated Report">📊</button>
+templates/franchise_dashboard.html:562:                    <button class="btn btn-primary btn-sm" onclick="openModal('transferModal')">New Transfer</button>
+templates/franchise_dashboard.html:588:                                <button class="btn btn-success btn-sm" onclick="approveTransfer({{ transfer.id }}, true)">Approve</button>
+templates/franchise_dashboard.html:589:                                <button class="btn btn-danger btn-sm" onclick="approveTransfer({{ transfer.id }}, false)">Reject</button>
+templates/franchise_dashboard.html:673:                <button class="modal-close" onclick="closeModal('createOrgModal')">&times;</button>
+templates/franchise_dashboard.html:783:                    <button type="button" class="btn btn-secondary" onclick="closeModal('createOrgModal')">Cancel</button>
+templates/franchise_dashboard.html:784:                    <button type="submit" class="btn btn-primary">Create Organization</button>
+templates/franchise_dashboard.html:795:                <button class="modal-close" onclick="closeModal('editOrgModal')">&times;</button>
+templates/franchise_dashboard.html:895:                    <button type="button" class="btn btn-secondary" onclick="closeModal('editOrgModal')">Cancel</button>
+templates/franchise_dashboard.html:896:                    <button type="submit" class="btn btn-primary">Save Changes</button>
+templates/franchise_dashboard.html:907:                <button class="modal-close" onclick="closeModal('membersModal')">&times;</button>
+templates/franchise_dashboard.html:926:                    <button type="submit" class="btn btn-primary btn-sm">Add</button>
+templates/franchise_dashboard.html:942:                <button type="button" class="btn btn-secondary" onclick="closeModal('membersModal')">Close</button>
+templates/franchise_dashboard.html:952:                <button class="modal-close" onclick="closeModal('consolidatedReportModal')">&times;</button>
+templates/franchise_dashboard.html:1001:                <button type="button" class="btn btn-secondary" onclick="closeModal('consolidatedReportModal')">Close</button>
+templates/franchise_dashboard.html:1011:                <button class="modal-close" onclick="closeModal('transferModal')">&times;</button>
+templates/franchise_dashboard.html:1058:                    <button type="button" class="btn btn-secondary" onclick="closeModal('transferModal')">Cancel</button>
+templates/franchise_dashboard.html:1059:                    <button type="submit" class="btn btn-primary">Submit Transfer Request</button>
+templates/franchise_dashboard.html:1070:            <div class="org-tree-toggle expanded" onclick="toggleOrgChildren(this)">
+templates/franchise_dashboard.html:1087:            <button class="btn btn-secondary btn-sm" style="margin-left:16px;" onclick="event.stopPropagation();viewOrganization({{ org.id }})">View</button>
+templates/franchise_dashboard.html:1264:                                <button class="btn btn-danger btn-sm" onclick="removeMember(${orgId}, ${member.staff_id})">Remove</button>
+templates/furnisher_detail.html:19:        .btn {
+templates/furnisher_detail.html:24:        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; }
+templates/furnisher_detail.html:25:        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+templates/furnisher_detail.html:26:        .btn-secondary:hover { border-color: #84cc16; }
+templates/furnisher_detail.html:141:                <button class="btn btn-secondary" onclick="openEditModal()">
+templates/furnisher_detail.html:145:                <a href="/dashboard/furnishers" class="btn btn-secondary">
+templates/furnisher_detail.html:332:                <div class="client-item" onclick="window.location.href='/dashboard/client/{{ client.id }}'">
+templates/furnisher_detail.html:358:                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+templates/furnisher_detail.html:414:                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+templates/furnisher_detail.html:415:                <button class="btn btn-primary" onclick="saveFurnisher()">Save Changes</button>
+templates/knowledge_base.html:254:        .btn {
+templates/knowledge_base.html:267:        .btn-primary {
+templates/knowledge_base.html:271:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/knowledge_base.html:907:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:929:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:951:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:973:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:995:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:1041:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:1063:                        <a href="/dashboard/automation-tools" class="btn btn-primary" style="margin-top: 15px;">Generate Letter</a>
+templates/knowledge_base.html:1090:                        <a href="https://www.consumerfinance.gov/complaint/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File CFPB Complaint</a>
+templates/knowledge_base.html:1135:                        <a href="https://www.helpwithmybank.gov/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File OCC Complaint</a>
+templates/knowledge_base.html:1156:                        <a href="https://www.mycreditunion.gov/consumer-assistance-center" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File NCUA Complaint</a>
+templates/knowledge_base.html:1178:                        <a href="https://reportfraud.ftc.gov/" target="_blank" class="btn btn-primary" style="margin-top: 15px;">Report to FTC</a>
+templates/knowledge_base.html:1199:                        <a href="https://ask.fdic.gov/fdicinformationandsupportcenter/s/article/How-do-I-file-a-complaint-against-a-bank" target="_blank" class="btn btn-primary" style="margin-top: 15px;">File FDIC Complaint</a>
+templates/task_queue.html:35:        .btn {
+templates/task_queue.html:47:        .btn-primary {
+templates/task_queue.html:51:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/task_queue.html:52:        .btn-secondary {
+templates/task_queue.html:57:        .btn-secondary:hover { border-color: #84cc16; }
+templates/task_queue.html:58:        .btn-sm { padding: 8px 16px; font-size: 13px; }
+templates/task_queue.html:59:        .btn-danger { background: #ef4444; color: white; }
+templates/task_queue.html:60:        .btn-danger:hover { background: #dc2626; }
+templates/task_queue.html:219:        .action-btn {
+templates/task_queue.html:228:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/task_queue.html:229:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/task_queue.html:230:        .action-btn.danger { border-color: #ef4444; color: #ef4444; }
+templates/task_queue.html:231:        .action-btn.danger:hover { background: #fee2e2; }
+templates/task_queue.html:341:        .preset-btn {
+templates/task_queue.html:351:        .preset-btn:hover { background: #e2e8f0; color: #1a1a2e; }
+templates/task_queue.html:352:        .preset-btn.active { background: #319795; color: white; }
+templates/task_queue.html:395:        .refresh-btn {
+templates/task_queue.html:407:        .refresh-btn:hover { background: #e2e8f0; }
+templates/task_queue.html:429:                <button class="btn btn-secondary" onclick="refreshData()">
+templates/task_queue.html:433:                <button class="btn btn-secondary" onclick="openProcessModal()">
+templates/task_queue.html:437:                <button class="btn btn-primary" onclick="openTaskModal()">
+templates/task_queue.html:474:                <button class="tab active" data-tab="active" onclick="switchTab('active')">
+templates/task_queue.html:477:                <button class="tab" data-tab="completed" onclick="switchTab('completed')">
+templates/task_queue.html:480:                <button class="tab" data-tab="failed" onclick="switchTab('failed')">
+templates/task_queue.html:483:                <button class="tab" data-tab="schedules" onclick="switchTab('schedules')">
+templates/task_queue.html:564:                    <button class="btn btn-primary btn-sm" onclick="openScheduleModal()">
+templates/task_queue.html:587:                    <button class="btn btn-primary" onclick="openScheduleModal()">Create Schedule</button>
+templates/task_queue.html:597:                <button class="modal-close" onclick="closeTaskModal()">&times;</button>
+templates/task_queue.html:624:                <button class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+templates/task_queue.html:625:                <button class="btn btn-primary" onclick="createTask()">Create Task</button>
+templates/task_queue.html:634:                <button class="modal-close" onclick="closeScheduleModal()">&times;</button>
+templates/task_queue.html:655:                            <button type="button" class="preset-btn" onclick="setCronPreset('{{ preset.expression }}')">{{ preset.label }}</button>
+templates/task_queue.html:694:                <button class="btn btn-secondary" onclick="closeScheduleModal()">Cancel</button>
+templates/task_queue.html:695:                <button class="btn btn-primary" onclick="saveSchedule()">Save Schedule</button>
+templates/task_queue.html:704:                <button class="modal-close" onclick="closeProcessModal()">&times;</button>
+templates/task_queue.html:714:                <button class="btn btn-secondary" onclick="closeProcessModal()">Cancel</button>
+templates/task_queue.html:715:                <button class="btn btn-primary" onclick="processTasks()">Process</button>
+templates/task_queue.html:813:                        ${task.status === 'pending' ? `<button class="action-btn danger" onclick="cancelTask(${task.id})">Cancel</button>` : ''}
+templates/task_queue.html:814:                        <button class="action-btn" onclick="viewTaskDetails(${task.id})">Details</button>
+templates/task_queue.html:840:                        <button class="action-btn" onclick="viewTaskDetails(${task.id})">Details</button>
+templates/task_queue.html:865:                        <button class="action-btn primary" onclick="retryTask(${task.id})">Retry</button>
+templates/task_queue.html:866:                        <button class="action-btn" onclick="viewTaskDetails(${task.id})">Details</button>
+templates/task_queue.html:892:                        <button class="action-btn primary" onclick="runScheduleNow(${schedule.id})">Run Now</button>
+templates/task_queue.html:894:                            ? `<button class="action-btn" onclick="pauseSchedule(${schedule.id})">Pause</button>`
+templates/task_queue.html:895:                            : `<button class="action-btn" onclick="resumeSchedule(${schedule.id})">Resume</button>`
+templates/task_queue.html:897:                        <button class="action-btn" onclick="editSchedule(${schedule.id})">Edit</button>
+templates/task_queue.html:898:                        <button class="action-btn danger" onclick="deleteSchedule(${schedule.id})">Delete</button>
+templates/audit_dashboard.html:35:        .btn {
+templates/audit_dashboard.html:47:        .btn-primary {
+templates/audit_dashboard.html:51:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/audit_dashboard.html:52:        .btn-secondary {
+templates/audit_dashboard.html:57:        .btn-secondary:hover { border-color: #84cc16; }
+templates/audit_dashboard.html:58:        .btn-danger { background: #ef4444; color: white; }
+templates/audit_dashboard.html:59:        .btn-danger:hover { background: #dc2626; }
+templates/audit_dashboard.html:60:        .btn-sm { padding: 8px 16px; font-size: 12px; }
+templates/audit_dashboard.html:265:        .compliance-btn {
+templates/audit_dashboard.html:278:        .compliance-btn:hover { border-color: #319795; transform: translateY(-2px); }
+templates/audit_dashboard.html:279:        .compliance-btn .icon {
+templates/audit_dashboard.html:287:        .compliance-btn .icon.soc2 { background: #dbeafe; color: #1e40af; }
+templates/audit_dashboard.html:288:        .compliance-btn .icon.hipaa { background: #fce7f3; color: #be185d; }
+templates/audit_dashboard.html:289:        .compliance-btn .text { text-align: left; }
+templates/audit_dashboard.html:290:        .compliance-btn .text h3 { font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 3px; }
+templates/audit_dashboard.html:291:        .compliance-btn .text p { font-size: 12px; color: #64748b; }
+templates/audit_dashboard.html:421:                <button class="btn btn-secondary" onclick="refreshLogs()">
+templates/audit_dashboard.html:425:                <button class="btn btn-primary" onclick="showExportModal()">
+templates/audit_dashboard.html:532:                        <button id="prev-btn" onclick="changePage(-1)" disabled>Previous</button>
+templates/audit_dashboard.html:534:                        <button id="next-btn" onclick="changePage(1)">Next</button>
+templates/audit_dashboard.html:546:                        <button class="compliance-btn" onclick="generateReport('soc2')">
+templates/audit_dashboard.html:556:                        <button class="compliance-btn" onclick="generateReport('hipaa')">
+templates/audit_dashboard.html:620:                <button class="modal-close" onclick="closeModal('export-modal')">&times;</button>
+templates/audit_dashboard.html:644:                <button class="btn btn-primary" onclick="exportLogs('csv')">
+templates/audit_dashboard.html:648:                <button class="btn btn-secondary" onclick="exportLogs('json')">
+templates/audit_dashboard.html:660:                <button class="modal-close" onclick="closeModal('report-modal')">&times;</button>
+templates/audit_dashboard.html:794:            const prevBtn = document.getElementById('prev-btn');
+templates/audit_dashboard.html:795:            const nextBtn = document.getElementById('next-btn');
+templates/audit_dashboard.html:1040:                    <button class="btn btn-secondary" onclick="printReport()">
+templates/calendar.html:145:        .btn {
+templates/calendar.html:159:        .btn-primary {
+templates/calendar.html:163:        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/calendar.html:164:        .btn-secondary {
+templates/calendar.html:169:        .btn-secondary:hover { background: #e2e8f0; }
+templates/calendar.html:324:        .modal-footer .btn {
+templates/calendar.html:405:                <button class="btn btn-primary" onclick="applyFilters()">
+templates/calendar.html:409:                <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+templates/calendar.html:442:                <button class="modal-close" onclick="closeModal()">&times;</button>
+templates/calendar.html:487:                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+templates/calendar.html:488:                <a href="#" id="viewClientBtn" class="btn btn-primary">View Client</a>
+templates/admin.html:50:        .btn-primary {
+templates/admin.html:54:        .btn-secondary {
+templates/admin.html:58:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(49,151,149,0.4); }
+templates/admin.html:59:        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(108,117,125,0.4); }
+templates/admin.html:60:        .btn-primary:disabled, .btn-secondary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+templates/admin.html:93:        .toggle-btn {
+templates/admin.html:103:        .toggle-btn:hover {
+templates/admin.html:106:        .toggle-btn.active {
+templates/admin.html:111:        .toggle-btn .icon {
+templates/admin.html:271:                <div class="toggle-btn active" data-type="html" onclick="setInputType('html')">
+templates/admin.html:275:                <div class="toggle-btn" data-type="pdf" onclick="setInputType('pdf')">
+templates/admin.html:296:                    <span class="remove-file" onclick="removePdfFile()">✕ Remove</span>
+templates/admin.html:300:                    <button type="button" class="btn-secondary" id="parseBtn" onclick="parsePdf()">
+templates/admin.html:365:                <button type="submit" class="btn-primary" id="submitBtn">🔍 Generate Analysis</button>
+templates/admin.html:394:        document.querySelectorAll('.toggle-btn').forEach(btn => {
+templates/admin.html:395:            btn.classList.toggle('active', btn.dataset.type === type);
+templates/client_import.html:125:        .btn {
+templates/client_import.html:134:        .btn-primary {
+templates/client_import.html:138:        .btn-primary:hover {
+templates/client_import.html:142:        .btn-secondary {
+templates/client_import.html:146:        .btn-secondary:hover {
+templates/client_import.html:258:            <div class="import-option active" data-type="single" onclick="selectImportType('single')">
+templates/client_import.html:262:            <div class="import-option" data-type="bulk" onclick="selectImportType('bulk')">
+templates/client_import.html:445:                    <button type="submit" class="btn btn-primary">Import Client</button>
+templates/client_import.html:446:                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('singleImportForm').reset()">Clear Form</button>
+templates/client_import.html:463:                <a href="/api/import/template" class="btn btn-secondary">Download Template</a>
+templates/client_import.html:466:            <div class="upload-area" onclick="document.getElementById('csvUpload').click()">
+templates/frivolousness_tracker.html:39:        .btn {
+templates/frivolousness_tracker.html:52:        .btn-primary {
+templates/frivolousness_tracker.html:56:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/frivolousness_tracker.html:57:        .btn-secondary {
+templates/frivolousness_tracker.html:62:        .btn-secondary:hover { border-color: #84cc16; }
+templates/frivolousness_tracker.html:63:        .btn-danger {
+templates/frivolousness_tracker.html:67:        .btn-sm {
+templates/frivolousness_tracker.html:313:        .action-btn {
+templates/frivolousness_tracker.html:322:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/frivolousness_tracker.html:612:            <button class="btn btn-primary" onclick="openAddModal()">
+templates/frivolousness_tracker.html:729:                            <button class="action-btn" onclick="viewCase({{ defense.id }})">View</button>
+templates/frivolousness_tracker.html:730:                            <button class="action-btn" onclick="uploadEvidence({{ defense.id }})">Upload</button>
+templates/frivolousness_tracker.html:750:                <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+templates/frivolousness_tracker.html:823:                    <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+templates/frivolousness_tracker.html:824:                    <button type="submit" class="btn btn-primary">Add Case</button>
+templates/frivolousness_tracker.html:834:                <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+templates/frivolousness_tracker.html:838:                    <div class="tab active" onclick="switchTab('details')">Details</div>
+templates/frivolousness_tracker.html:839:                    <div class="tab" onclick="switchTab('evidence')">Evidence</div>
+templates/frivolousness_tracker.html:840:                    <div class="tab" onclick="switchTab('notes')">Notes</div>
+templates/frivolousness_tracker.html:916:                    <div class="evidence-upload-area" onclick="document.getElementById('evidenceFileInput').click()">
+templates/frivolousness_tracker.html:953:                <button type="button" class="btn btn-secondary" onclick="closeModal('viewModal')">Cancel</button>
+templates/frivolousness_tracker.html:954:                <button type="button" class="btn btn-primary" onclick="saveCase()">Save Changes</button>
+templates/frivolousness_tracker.html:1115:                            ${doc.verified ? '<span class="evidence-verified">✓ Verified</span>' : `<button class="action-btn" onclick="verifyEvidence(${doc.id})">Verify</button>`}
+templates/frivolousness_tracker.html:1131:            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+templates/settlements.html:39:        .btn {
+templates/settlements.html:52:        .btn-primary {
+templates/settlements.html:56:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/settlements.html:57:        .btn-secondary {
+templates/settlements.html:62:        .btn-secondary:hover { border-color: #84cc16; }
+templates/settlements.html:63:        .btn-sm {
+templates/settlements.html:271:        .action-btn {
+templates/settlements.html:281:        .action-btn:hover { background: #e2e8f0; }
+templates/settlements.html:282:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: white; }
+templates/settlements.html:456:            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
+templates/settlements.html:494:                <div class="pipeline-stage pending" data-status="pending" data-testid="stage-pending" onclick="filterByStatus('pending')">
+templates/settlements.html:498:                <div class="pipeline-stage demand_sent" data-status="demand_sent" data-testid="stage-demand-sent" onclick="filterByStatus('demand_sent')">
+templates/settlements.html:502:                <div class="pipeline-stage negotiating" data-status="negotiating" data-testid="stage-negotiating" onclick="filterByStatus('negotiating')">
+templates/settlements.html:506:                <div class="pipeline-stage accepted" data-status="accepted" data-testid="stage-accepted" onclick="filterByStatus('accepted')">
+templates/settlements.html:510:                <div class="pipeline-stage rejected" data-status="rejected" data-testid="stage-rejected" onclick="filterByStatus('rejected')">
+templates/settlements.html:514:                <div class="pipeline-stage litigated" data-status="litigated" data-testid="stage-litigated" onclick="filterByStatus('litigated')">
+templates/settlements.html:547:                <button class="btn btn-sm btn-secondary" data-testid="clear-filters-button" onclick="clearFilters()">Clear Filters</button>
+templates/settlements.html:596:                                <button class="action-btn primary" data-testid="view-settlement-{{ s.id }}" onclick="openSettlementModal({{ s.id }})">View</button>
+templates/settlements.html:598:                                <button class="action-btn" data-testid="add-offer-{{ s.id }}" onclick="openOfferModal({{ s.id }})">+ Offer</button>
+templates/settlements.html:601:                                <button class="action-btn" data-testid="record-payment-{{ s.id }}" onclick="openPaymentModal({{ s.id }})">Payment</button>
+templates/settlements.html:625:                <button class="modal-close" data-testid="settlement-modal-close" onclick="closeModal('settlementModal')">&times;</button>
+templates/settlements.html:676:                <button class="btn btn-secondary" data-testid="settlement-modal-cancel" onclick="closeModal('settlementModal')">Cancel</button>
+templates/settlements.html:677:                <button class="btn btn-primary" data-testid="settlement-modal-save" onclick="saveSettlement()">Save Changes</button>
+templates/settlements.html:686:                <button class="modal-close" data-testid="offer-modal-close" onclick="closeModal('offerModal')">&times;</button>
+templates/settlements.html:699:                <button class="btn btn-secondary" data-testid="offer-modal-cancel" onclick="closeModal('offerModal')">Cancel</button>
+templates/settlements.html:700:                <button class="btn btn-primary" data-testid="offer-modal-submit" onclick="submitOffer()">Add Offer</button>
+templates/settlements.html:709:                <button class="modal-close" data-testid="settle-modal-close" onclick="closeModal('settleModal')">&times;</button>
+templates/settlements.html:722:                <button class="btn btn-secondary" data-testid="settle-modal-cancel" onclick="closeModal('settleModal')">Cancel</button>
+templates/settlements.html:723:                <button class="btn btn-primary" data-testid="settle-modal-submit" onclick="submitSettle()">Confirm Settlement</button>
+templates/settlements.html:732:                <button class="modal-close" data-testid="payment-modal-close" onclick="closeModal('paymentModal')">&times;</button>
+templates/settlements.html:745:                <button class="btn btn-secondary" data-testid="payment-modal-cancel" onclick="closeModal('paymentModal')">Cancel</button>
+templates/settlements.html:746:                <button class="btn btn-primary" data-testid="payment-modal-submit" onclick="submitPayment()">Record Payment</button>
+templates/api_management.html:35:        .btn {
+templates/api_management.html:47:        .btn-primary {
+templates/api_management.html:51:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/api_management.html:52:        .btn-secondary {
+templates/api_management.html:57:        .btn-secondary:hover { border-color: #84cc16; }
+templates/api_management.html:58:        .btn-danger {
+templates/api_management.html:62:        .btn-danger:hover { background: #dc2626; }
+templates/api_management.html:63:        .btn-sm { padding: 8px 16px; font-size: 13px; }
+templates/api_management.html:261:        .copy-btn {
+templates/api_management.html:357:                <a href="/dashboard/api-docs" class="btn btn-secondary">
+templates/api_management.html:361:                <button class="btn btn-primary" onclick="openModal('createKeyModal')">
+templates/api_management.html:388:            <button class="tab active" onclick="switchTab('keys')">API Keys</button>
+templates/api_management.html:389:            <button class="tab" onclick="switchTab('webhooks')">Webhooks</button>
+templates/api_management.html:390:            <button class="tab" onclick="switchTab('usage')">Usage Analytics</button>
+templates/api_management.html:436:                                <button class="btn btn-secondary btn-sm" onclick="viewKeyUsage({{ key.id }})">Usage</button>
+templates/api_management.html:438:                                <button class="btn btn-danger btn-sm" onclick="revokeKey({{ key.id }}, '{{ key.name }}')">Revoke</button>
+templates/api_management.html:459:                    <button class="btn btn-primary btn-sm" onclick="openModal('createWebhookModal')">
+templates/api_management.html:506:                                <button class="btn btn-danger btn-sm" onclick="deleteWebhook({{ webhook.id }}, '{{ webhook.name }}')">Delete</button>
+templates/api_management.html:542:                <button class="modal-close" onclick="closeModal('createKeyModal')">&times;</button>
+templates/api_management.html:577:                <button type="submit" class="btn btn-primary" style="width: 100%;">Generate API Key</button>
+templates/api_management.html:586:                <button class="modal-close" onclick="closeModal('keyCreatedModal'); location.reload();">&times;</button>
+templates/api_management.html:594:            <button class="copy-btn" onclick="copyApiKey()">
+templates/api_management.html:605:                <button class="modal-close" onclick="closeModal('createWebhookModal')">&times;</button>
+templates/api_management.html:630:                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Webhook</button>
+templates/demand_generator.html:40:        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; text-decoration: none; }
+templates/demand_generator.html:41:        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; width: 100%; justify-content: center; }
+templates/demand_generator.html:42:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/demand_generator.html:43:        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+templates/demand_generator.html:44:        .btn-download { background: #dc2626; color: white; }
+templates/demand_generator.html:45:        .btn-copy { background: #2563eb; color: white; }
+templates/demand_generator.html:159:                        <button id="generateBtn" class="btn btn-primary">
+templates/demand_generator.html:170:                                <a id="downloadPdfBtn" href="#" target="_blank" class="btn btn-download">
+templates/demand_generator.html:173:                                <button id="copyBtn" class="btn btn-copy">
+templates/demand_generator.html:308:                const btn = document.getElementById('copyBtn');
+templates/demand_generator.html:309:                btn.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
+templates/demand_generator.html:311:                    btn.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy Text';
+templates/credit_tracker_client.html:44:        .btn-save { background: linear-gradient(135deg, #008080, #32CD32); color: white; border: none; padding: 14px 30px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; grid-column: 1 / -1; }
+templates/credit_tracker_client.html:45:        .btn-save:hover { transform: translateY(-2px); }
+templates/credit_tracker_client.html:204:                <button class="btn-save" onclick="saveSnapshot()">Save Score Snapshot</button>
+templates/specialty_bureaus.html:36:        .btn {
+templates/specialty_bureaus.html:49:        .btn-primary {
+templates/specialty_bureaus.html:53:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/specialty_bureaus.html:54:        .btn-secondary {
+templates/specialty_bureaus.html:59:        .btn-secondary:hover { border-color: #319795; }
+templates/specialty_bureaus.html:60:        .btn-sm {
+templates/specialty_bureaus.html:64:        .btn-danger {
+templates/specialty_bureaus.html:69:        .btn-danger:hover { background: #fecaca; }
+templates/specialty_bureaus.html:178:        .filter-btn {
+templates/specialty_bureaus.html:190:        .filter-btn:hover { border-color: #319795; }
+templates/specialty_bureaus.html:191:        .filter-btn.active { 
+templates/specialty_bureaus.html:401:        .action-btns {
+templates/specialty_bureaus.html:405:        .action-btn {
+templates/specialty_bureaus.html:416:        .action-btn.edit {
+templates/specialty_bureaus.html:420:        .action-btn.edit:hover { background: #bfdbfe; }
+templates/specialty_bureaus.html:421:        .action-btn.delete {
+templates/specialty_bureaus.html:425:        .action-btn.delete:hover { background: #fecaca; }
+templates/specialty_bureaus.html:426:        .action-btn svg {
+templates/specialty_bureaus.html:449:                <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
+templates/specialty_bureaus.html:453:                <button class="btn btn-primary" onclick="openNewDisputeModal()" data-testid="add-dispute-btn">
+templates/specialty_bureaus.html:491:            <div class="bureau-card {% if current_bureau == bureau %}active{% endif %}" onclick="filterByBureau('{{ bureau }}')" data-testid="bureau-card-{{ loop.index }}">
+templates/specialty_bureaus.html:509:                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); filterByBureau('{{ bureau }}')" data-testid="view-disputes-{{ loop.index }}">View Disputes</button>
+templates/specialty_bureaus.html:510:                    <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); openNewDisputeModal('{{ bureau }}')" data-testid="add-dispute-{{ loop.index }}">Add Dispute</button>
+templates/specialty_bureaus.html:517:            <a href="?status=all{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'all' %}active{% endif %}" data-testid="filter-all">All</a>
+templates/specialty_bureaus.html:518:            <a href="?status=pending{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'pending' %}active{% endif %}" data-testid="filter-pending">Pending</a>
+templates/specialty_bureaus.html:519:            <a href="?status=awaiting_response{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'awaiting_response' %}active{% endif %}" data-testid="filter-awaiting">Awaiting Response</a>
+templates/specialty_bureaus.html:520:            <a href="?status=resolved{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'resolved' %}active{% endif %}" data-testid="filter-resolved">Resolved</a>
+templates/specialty_bureaus.html:521:            <a href="?status=escalated{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}{% if current_bureau %}&bureau={{ current_bureau }}{% endif %}" class="filter-btn {% if current_status == 'escalated' %}active{% endif %}" data-testid="filter-escalated">Escalated</a>
+templates/specialty_bureaus.html:531:            <a href="?status={{ current_status }}{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="btn btn-sm btn-secondary" data-testid="clear-bureau-filter">
+templates/specialty_bureaus.html:579:                            <div class="action-btns">
+templates/specialty_bureaus.html:580:                                <button class="action-btn edit" onclick="editDispute({{ dispute.id }})" data-testid="edit-{{ dispute.id }}">
+templates/specialty_bureaus.html:583:                                <button class="action-btn delete" onclick="deleteDispute({{ dispute.id }})" data-testid="delete-{{ dispute.id }}">
+templates/specialty_bureaus.html:597:                <button class="btn btn-primary" onclick="openNewDisputeModal()" data-testid="empty-add-btn">Create First Dispute</button>
+templates/specialty_bureaus.html:607:                <button class="modal-close" onclick="closeModal()" data-testid="modal-close">
+templates/specialty_bureaus.html:690:                        <button type="button" class="btn btn-secondary" onclick="closeModal()" data-testid="modal-cancel">Cancel</button>
+templates/specialty_bureaus.html:691:                        <button type="submit" class="btn btn-primary" data-testid="modal-submit">Save Dispute</button>
+templates/analysis_review.html:36:        .btn {
+templates/analysis_review.html:41:        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; }
+templates/analysis_review.html:42:        .btn-primary:hover { opacity: 0.9; }
+templates/analysis_review.html:43:        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+templates/analysis_review.html:44:        .btn-danger { background: #ef4444; color: white; }
+templates/analysis_review.html:45:        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+templates/analysis_review.html:61:        .edit-btn, .delete-btn { padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; border: none; }
+templates/analysis_review.html:62:        .edit-btn { background: #dbeafe; color: #1e40af; }
+templates/analysis_review.html:63:        .delete-btn { background: #fee2e2; color: #991b1b; }
+templates/analysis_review.html:89:        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #64748b; }
+templates/analysis_review.html:97:        .add-btn { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; }
+templates/analysis_review.html:98:        .add-btn:hover { background: #84cc16; }
+templates/analysis_review.html:120:                <button id="saveBtn" class="btn btn-secondary" onclick="saveAllChanges()">Save Changes</button>
+templates/analysis_review.html:121:                <button id="approveBtn" class="btn btn-primary" onclick="approveAnalysis()" {% if analysis.approved_at %}disabled{% endif %}>
+templates/analysis_review.html:124:                <a href="/dashboard/case/{{ analysis.id }}" class="btn btn-secondary">Back to Case</a>
+templates/analysis_review.html:131:            <div class="tab active" onclick="showTab('violations')">Violations ({{ violations|length }})</div>
+templates/analysis_review.html:132:            <div class="tab" onclick="showTab('standing')">Standing</div>
+templates/analysis_review.html:133:            <div class="tab" onclick="showTab('damages')">Damages</div>
+templates/analysis_review.html:134:            <div class="tab" onclick="showTab('score')">Case Score</div>
+templates/analysis_review.html:141:                    <button class="add-btn" onclick="openAddViolationModal()">+ Add Violation</button>
+templates/analysis_review.html:148:                        <button class="edit-btn" onclick="openEditViolationModal({{ v.id }})">Edit</button>
+templates/analysis_review.html:149:                        <button class="delete-btn" onclick="deleteViolation({{ v.id }})">Delete</button>
+templates/analysis_review.html:325:                <button class="close-btn" onclick="closeViolationModal()">&times;</button>
+templates/analysis_review.html:383:                    <button type="button" class="btn btn-secondary" onclick="closeViolationModal()">Cancel</button>
+templates/analysis_review.html:384:                    <button type="submit" class="btn btn-primary">Save Violation</button>
+templates/scanned_documents.html:73:        .btn-gradient {
+templates/scanned_documents.html:79:        .btn-gradient:hover {
+templates/scanned_documents.html:221:                <a href="/scanner" class="btn btn-primary btn-sm me-2" style="background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none;">
+templates/scanned_documents.html:224:                <a href="/dashboard" class="btn btn-secondary btn-sm">
+templates/scanned_documents.html:306:                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+templates/scanned_documents.html:315:                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+templates/scanned_documents.html:316:                    <button type="button" class="btn btn-gradient" id="applyAnalysisBtn" disabled>
+templates/scanned_documents.html:371:                        <a href="/scanner" class="btn btn-gradient">
+templates/scanned_documents.html:419:                        <a href="/api/scanner/download?path=${encodeURIComponent(doc.pdf_path)}" class="btn btn-sm btn-outline-primary">
+templates/scanned_documents.html:423:                            <a href="/api/scanner/download?path=${encodeURIComponent(doc.text_path)}" class="btn btn-sm btn-outline-secondary">
+templates/scanned_documents.html:543:                                <a href="/${resp.filePath}" target="_blank" class="btn btn-sm btn-outline-primary">
+templates/scanned_documents.html:548:                                <button class="btn btn-sm btn-gradient" onclick="analyzeResponse(${resp.id})">
+templates/scanned_documents.html:552:                                <button class="btn btn-sm btn-outline-info" onclick="viewAnalysis(${resp.id})">
+templates/scanned_documents.html:556:                                    <button class="btn btn-sm btn-gradient" onclick="reviewAnalysis(${resp.id})">
+templates/documents.html:31:        .btn {
+templates/documents.html:44:        .btn-primary {
+templates/documents.html:48:        .btn-secondary {
+templates/documents.html:100:        .filter-btn {
+templates/documents.html:111:        .filter-btn.active { background: #1a1a2e; color: white; }
+templates/documents.html:112:        .filter-btn:hover { background: #e2e8f0; }
+templates/documents.html:113:        .filter-btn.active:hover { background: #1a1a2e; }
+templates/documents.html:179:        .action-btn {
+templates/documents.html:190:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/documents.html:191:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/documents.html:192:        .action-btn.danger { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+templates/documents.html:313:        .category-btn {
+templates/documents.html:322:        .category-btn:hover { border-color: #84cc16; background: #f0fdf4; }
+templates/documents.html:323:        .category-btn.selected { border-color: #84cc16; background: #dcfce7; }
+templates/documents.html:324:        .category-btn svg {
+templates/documents.html:330:        .category-btn.selected svg { color: #319795; }
+templates/documents.html:331:        .category-btn-label {
+templates/documents.html:341:        .type-btn {
+templates/documents.html:351:        .type-btn:hover { border-color: #84cc16; }
+templates/documents.html:352:        .type-btn.selected { border-color: #84cc16; background: #dcfce7; }
+templates/documents.html:453:            <button class="btn btn-primary" onclick="openUploadModal()">
+templates/documents.html:481:                    <a href="/dashboard/documents?status=pending&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'pending' else '' }}">Pending Review</a>
+templates/documents.html:482:                    <a href="/dashboard/documents?status=reviewed&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'reviewed' else '' }}">Reviewed</a>
+templates/documents.html:483:                    <a href="/dashboard/documents?status=urgent&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'urgent' else '' }}">Urgent</a>
+templates/documents.html:484:                    <a href="/dashboard/documents?status=action&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'action' else '' }}">Needs Action</a>
+templates/documents.html:485:                    <a href="/dashboard/documents?status=all&category={{ category_filter }}" class="filter-btn {{ 'active' if status_filter == 'all' else '' }}">All</a>
+templates/documents.html:489:                    <a href="/dashboard/documents?status={{ status_filter }}&category=all" class="filter-btn {{ 'active' if category_filter == 'all' else '' }}">All Types</a>
+templates/documents.html:490:                    <a href="/dashboard/documents?status={{ status_filter }}&category=cra_response" class="filter-btn {{ 'active' if category_filter == 'cra_response' else '' }}">CRA Response</a>
+templates/documents.html:491:                    <a href="/dashboard/documents?status={{ status_filter }}&category=collection" class="filter-btn {{ 'active' if category_filter == 'collection' else '' }}">Collection</a>
+templates/documents.html:492:                    <a href="/dashboard/documents?status={{ status_filter }}&category=legal" class="filter-btn {{ 'active' if category_filter == 'legal' else '' }}">Legal</a>
+templates/documents.html:493:                    <a href="/dashboard/documents?status={{ status_filter }}&category=credit_report" class="filter-btn {{ 'active' if category_filter == 'credit_report' else '' }}">Credit Report</a>
+templates/documents.html:494:                    <a href="/dashboard/documents?status={{ status_filter }}&category=identity" class="filter-btn {{ 'active' if category_filter == 'identity' else '' }}">Identity</a>
+templates/documents.html:556:                            <a href="/{{ upload.file_path }}" target="_blank" class="action-btn">View</a>
+templates/documents.html:558:                            <button class="action-btn primary" onclick="markReviewed({{ upload.id }})">Review</button>
+templates/documents.html:560:                            <button class="action-btn danger" onclick="deleteUpload({{ upload.id }})">Delete</button>
+templates/documents.html:585:                <button class="modal-close" onclick="closeUploadModal()">&times;</button>
+templates/documents.html:613:                            <button type="button" class="category-btn" data-category="cra_response">
+templates/documents.html:615:                                <div class="category-btn-label">CRA Response</div>
+templates/documents.html:617:                            <button type="button" class="category-btn" data-category="collection">
+templates/documents.html:619:                                <div class="category-btn-label">Collection Letter</div>
+templates/documents.html:621:                            <button type="button" class="category-btn" data-category="legal">
+templates/documents.html:623:                                <div class="category-btn-label">Legal/Lawsuit</div>
+templates/documents.html:625:                            <button type="button" class="category-btn" data-category="credit_report">
+templates/documents.html:627:                                <div class="category-btn-label">Credit Report</div>
+templates/documents.html:629:                            <button type="button" class="category-btn" data-category="identity">
+templates/documents.html:631:                                <div class="category-btn-label">ID/Proof</div>
+templates/documents.html:633:                            <button type="button" class="category-btn" data-category="other">
+templates/documents.html:635:                                <div class="category-btn-label">Other</div>
+templates/documents.html:698:                <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" style="display: none;">Back</button>
+templates/documents.html:700:                <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next</button>
+templates/documents.html:772:            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
+templates/documents.html:824:                `<button type="button" class="type-btn" data-type="${t.value}">${t.label}</button>`
+templates/documents.html:827:            grid.querySelectorAll('.type-btn').forEach(btn => {
+templates/documents.html:828:                btn.addEventListener('click', () => {
+templates/documents.html:829:                    grid.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+templates/documents.html:830:                    btn.classList.add('selected');
+templates/documents.html:831:                    selectedType = btn.dataset.type;
+templates/documents.html:1012:        document.querySelectorAll('.category-btn').forEach(btn => {
+templates/documents.html:1013:            btn.addEventListener('click', () => {
+templates/documents.html:1014:                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('selected'));
+templates/documents.html:1015:                btn.classList.add('selected');
+templates/documents.html:1016:                selectedCategory = btn.dataset.category;
+templates/documents.html:1054:                    <button type="button" class="file-preview-remove" onclick="removeFile()">✕</button>
+templates/signature_capture.html:152:        .btn {
+templates/signature_capture.html:166:        .btn:disabled {
+templates/signature_capture.html:170:        .btn-secondary {
+templates/signature_capture.html:175:        .btn-secondary:hover:not(:disabled) {
+templates/signature_capture.html:179:        .btn-primary {
+templates/signature_capture.html:183:        .btn-primary:hover:not(:disabled) {
+templates/signature_capture.html:187:        .btn svg {
+templates/signature_capture.html:275:            .btn { width: 100%; }
+templates/signature_capture.html:334:                            <button type="button" class="btn btn-secondary" id="clearBtn">
+templates/signature_capture.html:340:                            <button type="button" class="btn btn-primary" id="signBtn" disabled>
+templates/signups.html:31:        .btn {
+templates/signups.html:44:        .btn-primary {
+templates/signups.html:48:        .btn-secondary {
+templates/signups.html:53:        .btn-secondary:hover { border-color: #84cc16; }
+templates/signups.html:109:        .filter-btn {
+templates/signups.html:120:        .filter-btn.active { background: #1a1a2e; color: white; }
+templates/signups.html:121:        .filter-btn:hover { background: #e2e8f0; }
+templates/signups.html:122:        .filter-btn.active:hover { background: #1a1a2e; }
+templates/signups.html:210:        .confirm-btn { background: #84cc16; border-color: #84cc16; color: white; }
+templates/signups.html:211:        .confirm-btn:hover { background: #65a30d; }
+templates/signups.html:212:        .action-btn {
+templates/signups.html:224:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/signups.html:225:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/signups.html:226:        .action-btn.contacted { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
+templates/signups.html:263:            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/signups.html:323:                            <button class="action-btn" onclick="markContacted('draft', {{ draft.id }}, this)" title="Mark as contacted">
+templates/signups.html:338:                <a href="/dashboard/signups" class="filter-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
+templates/signups.html:339:                <a href="/dashboard/signups?status=paid" class="filter-btn {% if status_filter == 'paid' %}active{% endif %}">Paid</a>
+templates/signups.html:340:                <a href="/dashboard/signups?status=pending" class="filter-btn {% if status_filter == 'pending' %}active{% endif %}">Pending</a>
+templates/signups.html:341:                <a href="/dashboard/signups?status=pending_manual" class="filter-btn {% if status_filter == 'pending_manual' %}active{% endif %}">Awaiting Confirmation</a>
+templates/signups.html:342:                <a href="/dashboard/signups?status=free" class="filter-btn {% if status_filter == 'free' %}active{% endif %}">Free Tier</a>
+templates/signups.html:343:                <a href="/dashboard/signups?status=failed" class="filter-btn {% if status_filter == 'failed' %}active{% endif %}">Failed</a>
+templates/signups.html:390:                            <a href="/portal/{{ client.portal_token }}" class="action-btn" target="_blank" title="View client portal">
+templates/signups.html:395:                            <button class="action-btn confirm-btn" 
+templates/signups.html:396:                                    onclick="confirmPayment({{ client.id }}, this)" 
+templates/signups.html:401:                            <button class="action-btn {% if client.contacted %}contacted{% endif %}" 
+templates/signups.html:402:                                    onclick="markContacted('client', {{ client.id }}, this)" 
+templates/signups.html:431:        async function markContacted(type, id, btn) {
+templates/signups.html:442:                    btn.classList.add('contacted');
+templates/signups.html:443:                    btn.innerHTML = '📞 Contacted';
+templates/signups.html:444:                    btn.title = 'Already contacted';
+templates/signups.html:446:                    const nameEl = btn.closest('tr').querySelector('.client-name');
+templates/signups.html:458:        async function confirmPayment(clientId, btn) {
+templates/signups.html:473:                    const row = btn.closest('tr');
+templates/signups.html:477:                    btn.remove();
+templates/api_docs.html:36:        .btn {
+templates/api_docs.html:49:        .btn-primary {
+templates/api_docs.html:53:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/api_docs.html:54:        .btn-secondary {
+templates/api_docs.html:59:        .btn-secondary:hover { border-color: #84cc16; }
+templates/api_docs.html:365:                <a href="/dashboard/api-keys" class="btn btn-primary">
+templates/api_docs.html:1173:                <a href="/dashboard/api-keys" class="btn btn-primary" style="background: linear-gradient(135deg, #84cc16 0%, #22c55e 100%);">
+templates/includes/tenant_branding.html:24:    .btn-primary {
+templates/includes/tenant_branding.html:28:    .btn-primary:hover {
+templates/includes/whitelabel_branding.html:35:    .btn-primary {
+templates/includes/whitelabel_branding.html:39:    .btn-primary:hover {
+templates/suspense_accounts.html:40:        .btn {
+templates/suspense_accounts.html:53:        .btn-primary {
+templates/suspense_accounts.html:57:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/suspense_accounts.html:58:        .btn-secondary {
+templates/suspense_accounts.html:63:        .btn-secondary:hover { border-color: #84cc16; }
+templates/suspense_accounts.html:64:        .btn-danger {
+templates/suspense_accounts.html:68:        .btn-sm {
+templates/suspense_accounts.html:209:        .action-btns {
+templates/suspense_accounts.html:213:        .action-btn {
+templates/suspense_accounts.html:225:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/suspense_accounts.html:226:        .action-btn.dispute { background: #fef3c7; border-color: #f59e0b; color: #b45309; }
+templates/suspense_accounts.html:227:        .action-btn.dispute:hover { background: #fde68a; }
+templates/suspense_accounts.html:495:                <button class="btn btn-secondary" onclick="openUploadModal()">
+templates/suspense_accounts.html:499:                <button class="btn btn-primary" onclick="openAnalyzeModal()">
+templates/suspense_accounts.html:591:                            <div class="action-btns">
+templates/suspense_accounts.html:592:                                <button class="action-btn" onclick="viewFinding({{ item.finding.id }})" title="View Details">
+templates/suspense_accounts.html:596:                                <button class="action-btn dispute" onclick="createDispute({{ item.finding.id }})" title="Create Dispute">
+templates/suspense_accounts.html:614:                <button class="btn btn-primary" style="margin-top: 20px;" onclick="openUploadModal()">
+templates/suspense_accounts.html:626:                <button class="modal-close" onclick="closeModal('uploadModal')">&times;</button>
+templates/suspense_accounts.html:647:                        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('csvFile').click()">
+templates/suspense_accounts.html:658:                <button class="btn btn-secondary" onclick="closeModal('uploadModal')">Cancel</button>
+templates/suspense_accounts.html:659:                <button class="btn btn-primary" onclick="submitUpload(event)">Upload & Process</button>
+templates/suspense_accounts.html:668:                <button class="modal-close" onclick="closeModal('analyzeModal')">&times;</button>
+templates/suspense_accounts.html:687:                <button class="btn btn-secondary" onclick="closeModal('analyzeModal')">Cancel</button>
+templates/suspense_accounts.html:688:                <button class="btn btn-primary" onclick="analyzeClient()">
+templates/suspense_accounts.html:700:                <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+templates/suspense_accounts.html:705:                <button class="btn btn-secondary" onclick="closeModal('detailModal')">Close</button>
+templates/suspense_accounts.html:706:                <button class="btn btn-primary" id="detailDisputeBtn" onclick="createDisputeFromDetail()" style="display: none;">
+templates/clients.html:31:        .btn {
+templates/clients.html:44:        .btn-primary {
+templates/clients.html:48:        .btn-secondary {
+templates/clients.html:65:        .filter-btn {
+templates/clients.html:76:        .filter-btn.active { background: #1a1a2e; color: white; }
+templates/clients.html:77:        .filter-btn:hover { background: #e2e8f0; }
+templates/clients.html:78:        .filter-btn.active:hover { background: #1a1a2e; }
+templates/clients.html:176:        .action-btn {
+templates/clients.html:187:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/clients.html:188:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/clients.html:203:            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">Back to Dashboard</a>
+templates/clients.html:208:                <a href="/dashboard/clients" class="filter-btn {% if status_filter == 'all' %}active{% endif %}" data-testid="filter-all">All</a>
+templates/clients.html:209:                <a href="/dashboard/clients?status=stage1_complete" class="filter-btn {% if status_filter == 'stage1_complete' %}active{% endif %}" data-testid="filter-needs-review">Needs Review</a>
+templates/clients.html:210:                <a href="/dashboard/clients?status=stage2_complete" class="filter-btn {% if status_filter == 'stage2_complete' %}active{% endif %}" data-testid="filter-ready-to-deliver">Ready to Deliver</a>
+templates/clients.html:265:                            <a href="/analysis/{{ case.analysis_id }}/review" class="action-btn primary" data-testid="review-btn-{{ case.id }}">Review</a>
+templates/clients.html:267:                            <a href="/dashboard/case/{{ case.id }}" class="action-btn" data-testid="view-btn-{{ case.id }}">View</a>
+templates/client_signup.html:352:        .btn {
+templates/client_signup.html:361:        .btn-secondary {
+templates/client_signup.html:365:        .btn-secondary:hover {
+templates/client_signup.html:368:        .btn-primary {
+templates/client_signup.html:373:        .btn-primary:hover {
+templates/client_signup.html:377:        .btn-primary:disabled {
+templates/client_signup.html:812:                        <button type="button" class="btn btn-primary" onclick="nextStep(2)">Continue to Credit Access</button>
+templates/client_signup.html:862:                        <button type="button" class="btn btn-secondary" onclick="prevStep(1)">Back</button>
+templates/client_signup.html:863:                        <button type="button" class="btn btn-primary" onclick="nextStep(3)">Continue to Plan Selection</button>
+templates/client_signup.html:1008:                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)">Back</button>
+templates/client_signup.html:1009:                        <button type="button" class="btn btn-primary" onclick="nextStep(4)">Continue to Agreement</button>
+templates/client_signup.html:1051:                        <button type="button" class="btn btn-secondary" onclick="prevStep(3)">Back</button>
+templates/client_signup.html:1052:                        <button type="submit" class="btn btn-primary" id="submitBtn">
+templates/client_signup.html:1075:                    <a href="/portal" class="btn btn-primary" style="display: inline-block; text-decoration: none;">Go to Client Portal</a>
+templates/knowledge_base_enhanced.html:183:        .expand-btn {
+templates/knowledge_base_enhanced.html:195:        .expand-btn:hover {
+templates/knowledge_base_enhanced.html:403:                    <button class="expand-btn" onclick="toggleContent({{ item.id }})">Show More</button>
+templates/knowledge_base_enhanced.html:454:            const btn = content.nextElementSibling;
+templates/knowledge_base_enhanced.html:458:                btn.textContent = 'Show More';
+templates/knowledge_base_enhanced.html:461:                btn.textContent = 'Show Less';
+templates/chexsystems.html:36:        .btn {
+templates/chexsystems.html:49:        .btn-primary {
+templates/chexsystems.html:53:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/chexsystems.html:54:        .btn-secondary {
+templates/chexsystems.html:59:        .btn-secondary:hover { border-color: #319795; }
+templates/chexsystems.html:96:        .filter-btn {
+templates/chexsystems.html:108:        .filter-btn:hover { border-color: #319795; }
+templates/chexsystems.html:109:        .filter-btn.active { 
+templates/chexsystems.html:440:                <button class="btn btn-primary" onclick="openNewDisputeModal()">
+templates/chexsystems.html:477:            <a href="?status=all{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'all' %}active{% endif %}">All</a>
+templates/chexsystems.html:478:            <a href="?status=pending{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'pending' %}active{% endif %}">Pending</a>
+templates/chexsystems.html:479:            <a href="?status=sent{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'sent' %}active{% endif %}">Sent</a>
+templates/chexsystems.html:480:            <a href="?status=responded{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'responded' %}active{% endif %}">Responded</a>
+templates/chexsystems.html:481:            <a href="?status=resolved{% if current_client_id %}&client_id={{ current_client_id }}{% endif %}" class="filter-btn {% if current_status == 'resolved' %}active{% endif %}">Resolved</a>
+templates/chexsystems.html:548:                        <button class="btn btn-primary" onclick="openNewDisputeModal()">Create First Dispute</button>
+templates/chexsystems.html:561:                        <div class="template-item" onclick="selectTemplate('{{ template.id }}', '{{ template.name }}')">
+templates/chexsystems.html:593:                        <a href="/dashboard/knowledge-base" class="btn btn-secondary" style="justify-content: center;">
+templates/chexsystems.html:597:                        <a href="/dashboard/sops" class="btn btn-secondary" style="justify-content: center;">
+templates/chexsystems.html:611:                <button class="modal-close" onclick="closeModal()">
+templates/chexsystems.html:680:                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+templates/chexsystems.html:681:                        <button type="submit" class="btn btn-primary">Create Dispute</button>
+templates/cfpb_complaints.html:39:        .btn {
+templates/cfpb_complaints.html:52:        .btn-primary {
+templates/cfpb_complaints.html:56:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/cfpb_complaints.html:57:        .btn-secondary {
+templates/cfpb_complaints.html:62:        .btn-secondary:hover { border-color: #84cc16; }
+templates/cfpb_complaints.html:171:        .action-btn {
+templates/cfpb_complaints.html:184:        .action-btn:hover { background: #cbd5e1; }
+templates/cfpb_complaints.html:185:        .action-btn.primary { background: #319795; color: white; }
+templates/cfpb_complaints.html:186:        .action-btn.primary:hover { background: #2c7a7b; }
+templates/cfpb_complaints.html:234:        .filter-btn {
+templates/cfpb_complaints.html:245:        .filter-btn.active {
+templates/cfpb_complaints.html:249:        .filter-btn:hover:not(.active) {
+templates/cfpb_complaints.html:264:            <a href="/dashboard/cfpb/generator" class="btn btn-primary">
+templates/cfpb_complaints.html:307:                <button class="filter-btn active" onclick="filterComplaints('all')">All</button>
+templates/cfpb_complaints.html:308:                <button class="filter-btn" onclick="filterComplaints('draft')">Draft</button>
+templates/cfpb_complaints.html:309:                <button class="filter-btn" onclick="filterComplaints('ready')">Ready</button>
+templates/cfpb_complaints.html:310:                <button class="filter-btn" onclick="filterComplaints('submitted')">Submitted</button>
+templates/cfpb_complaints.html:311:                <button class="filter-btn" onclick="filterComplaints('response_received')">Response Received</button>
+templates/cfpb_complaints.html:344:                            <a href="/dashboard/cfpb/complaint/{{ c.id }}" class="action-btn primary">View</a>
+templates/cfpb_complaints.html:346:                            <a href="/{{ c.file_path }}" target="_blank" class="action-btn">PDF</a>
+templates/cfpb_complaints.html:363:                <a href="/dashboard/cfpb/generator" class="btn btn-primary">Create First Complaint</a>
+templates/cfpb_complaints.html:372:            const buttons = document.querySelectorAll('.filter-btn');
+templates/cfpb_complaints.html:374:            buttons.forEach(btn => btn.classList.remove('active'));
+templates/credit_report_view.html:406:        .print-btn {
+templates/credit_report_view.html:417:        .print-btn:hover {
+templates/credit_report_view.html:492:            .print-btn, .back-link {
+templates/credit_report_view.html:533:            <button class="print-btn" onclick="window.print()">Print Report</button>
+templates/credit_report_view.html:665:                    <button class="filter-btn active" onclick="setStatusFilter('all', this)" style="padding: 8px 16px; border-radius: 6px; border: none; background: #3b82f6; color: white; cursor: pointer; font-size: 13px;">All</button>
+templates/credit_report_view.html:666:                    <button class="filter-btn" onclick="setStatusFilter('open', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Open</button>
+templates/credit_report_view.html:667:                    <button class="filter-btn" onclick="setStatusFilter('closed', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Closed</button>
+templates/credit_report_view.html:668:                    <button class="filter-btn" onclick="setStatusFilter('negative', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">Negative</button>
+templates/credit_report_view.html:669:                    <button class="filter-btn" onclick="setStatusFilter('au', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #9ca3af; cursor: pointer; font-size: 13px;">AU</button>
+templates/credit_report_view.html:670:                    <button class="filter-btn" onclick="setStatusFilter('discrepancy', this)" style="padding: 8px 16px; border-radius: 6px; border: 1px solid #374151; background: #1f2937; color: #f59e0b; cursor: pointer; font-size: 13px;">⚠ Discrepancy</button>
+templates/credit_report_view.html:678:                <div class="account-header" onclick="toggleDetails(this)">
+templates/credit_report_view.html:690:                            <span class="bureau-dot {% if account.bureaus.transunion.present %}tu{% else %}inactive{% endif %}" onclick="event.stopPropagation(); filterBureau('tu', this)" style="cursor: pointer;">TU</span>
+templates/credit_report_view.html:691:                            <span class="bureau-dot {% if account.bureaus.experian.present %}ex{% else %}inactive{% endif %}" onclick="event.stopPropagation(); filterBureau('ex', this)" style="cursor: pointer;">EX</span>
+templates/credit_report_view.html:692:                            <span class="bureau-dot {% if account.bureaus.equifax.present %}eq{% else %}inactive{% endif %}" onclick="event.stopPropagation(); filterBureau('eq', this)" style="cursor: pointer;">EQ</span>
+templates/credit_report_view.html:940:                const flaggedBtns = document.querySelectorAll('.flag-dispute-btn.flagged');
+templates/credit_report_view.html:947:                flaggedBtns.forEach(btn => {
+templates/credit_report_view.html:948:                    const card = btn.closest('.account-card');
+templates/credit_report_view.html:1002:            function setStatusFilter(status, btn) {
+templates/credit_report_view.html:1005:                document.querySelectorAll('.filter-btn').forEach(b => {
+templates/credit_report_view.html:1010:                btn.style.background = '#3b82f6';
+templates/credit_report_view.html:1011:                btn.style.color = 'white';
+templates/credit_report_view.html:1012:                btn.style.border = 'none';
+templates/sops.html:80:        .filter-btn {
+templates/sops.html:92:        .filter-btn:hover { border-color: #319795; }
+templates/sops.html:93:        .filter-btn.active { 
+templates/sops.html:98:        .filter-btn .count {
+templates/sops.html:254:        .view-btn {
+templates/sops.html:265:        .view-btn:hover {
+templates/sops.html:397:            <a href="?category=all{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-btn {% if current_category == 'all' %}active{% endif %}">
+templates/sops.html:401:            <a href="?category={{ category }}{% if search_query %}&search={{ search_query }}{% endif %}" class="filter-btn {% if current_category == category %}active{% endif %}">
+templates/sops.html:472:                        <button class="view-btn" onclick="viewSOP({{ sop.id }})">View Full SOP</button>
+templates/sops.html:490:                <button class="modal-close" onclick="closeModal()">
+templates/integrations_hub.html:35:        .btn {
+templates/integrations_hub.html:48:        .btn-primary {
+templates/integrations_hub.html:52:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/integrations_hub.html:53:        .btn-secondary {
+templates/integrations_hub.html:58:        .btn-sm {
+templates/integrations_hub.html:62:        .btn-danger {
+templates/integrations_hub.html:187:        .integration-actions .btn {
+templates/integrations_hub.html:408:                <button class="btn btn-secondary" onclick="refreshStatuses()">
+templates/integrations_hub.html:412:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/integrations_hub.html:460:                    <button class="btn btn-secondary btn-sm" onclick="openConfigModal('sendcertified')">Configure</button>
+templates/integrations_hub.html:461:                    <button class="btn btn-primary btn-sm" onclick="testConnection('sendcertified')">Test Connection</button>
+templates/integrations_hub.html:485:                    <button class="btn btn-secondary btn-sm" onclick="openConfigModal('notarize')">Configure</button>
+templates/integrations_hub.html:486:                    <button class="btn btn-primary btn-sm" onclick="testConnection('notarize')">Test Connection</button>
+templates/integrations_hub.html:510:                    <button class="btn btn-secondary btn-sm" onclick="openConfigModal('creditpull')">Configure</button>
+templates/integrations_hub.html:511:                    <button class="btn btn-primary btn-sm" onclick="testConnection('creditpull')">Test Connection</button>
+templates/integrations_hub.html:535:                    <button class="btn btn-secondary btn-sm" onclick="openConfigModal('stripe')">Configure</button>
+templates/integrations_hub.html:536:                    <button class="btn btn-primary btn-sm" onclick="testConnection('stripe')">Test Connection</button>
+templates/integrations_hub.html:574:                <button class="modal-close" onclick="closeModal()">&times;</button>
+templates/integrations_hub.html:607:                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+templates/integrations_hub.html:608:                <button class="btn btn-primary" onclick="saveConfiguration()">Save Configuration</button>
+templates/dashboard.html:38:        .btn {
+templates/dashboard.html:50:        .btn-primary {
+templates/dashboard.html:54:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/dashboard.html:55:        .btn-secondary {
+templates/dashboard.html:60:        .btn-secondary:hover { border-color: #84cc16; }
+templates/dashboard.html:174:        .filter-btn {
+templates/dashboard.html:184:        .filter-btn.active { background: #1a1a2e; color: white; }
+templates/dashboard.html:185:        .filter-btn:hover { background: #e2e8f0; }
+templates/dashboard.html:186:        .filter-btn.active:hover { background: #1a1a2e; }
+templates/dashboard.html:293:        .action-btn {
+templates/dashboard.html:302:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/dashboard.html:303:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/dashboard.html:541:                <button class="btn btn-secondary" onclick="openBatchModal()" data-testid="batch-upload-button">
+templates/dashboard.html:545:                <button class="btn btn-primary" onclick="openIntakeModal()" data-testid="new-client-button">
+templates/dashboard.html:580:                <button class="btn btn-secondary" onclick="refreshDashboard()" data-testid="refresh-button">Refresh</button>
+templates/dashboard.html:583:                <div class="pipeline-stage" onclick="filterByStatus('intake')" data-testid="pipeline-intake">
+templates/dashboard.html:587:                <div class="pipeline-stage" onclick="filterByStatus('stage1_pending')" data-testid="pipeline-stage1-pending">
+templates/dashboard.html:591:                <div class="pipeline-stage" onclick="filterByStatus('stage1_complete')" data-testid="pipeline-stage1-complete">
+templates/dashboard.html:596:                <div class="pipeline-stage" onclick="filterByStatus('stage2_pending')" data-testid="pipeline-stage2-pending">
+templates/dashboard.html:600:                <div class="pipeline-stage" onclick="filterByStatus('stage2_complete')" data-testid="pipeline-stage2-complete">
+templates/dashboard.html:605:                <div class="pipeline-stage" onclick="filterByStatus('delivered')" data-testid="pipeline-delivered">
+templates/dashboard.html:616:                    <a href="/dashboard/clients" class="btn btn-secondary" data-testid="view-all-button">View All</a>
+templates/dashboard.html:620:                    <button class="filter-btn active" data-filter="all" data-testid="filter-all">All</button>
+templates/dashboard.html:621:                    <button class="filter-btn" data-filter="needs_action" data-testid="filter-needs-action">Needs Action</button>
+templates/dashboard.html:622:                    <button class="filter-btn" data-filter="high_value" data-testid="filter-high-value">High Value</button>
+templates/dashboard.html:682:                                <button class="action-btn primary" onclick="reviewCase({{ case.analysis_id }})" data-testid="review-btn-{{ case.id }}">Review</button>
+templates/dashboard.html:684:                                <button class="action-btn primary" onclick="deliverCase({{ case.id }})" data-testid="deliver-btn-{{ case.id }}">Deliver</button>
+templates/dashboard.html:686:                                <button class="action-btn" onclick="viewCase({{ case.id }})" data-testid="view-btn-{{ case.id }}">View</button>
+templates/dashboard.html:697:                    <button class="btn btn-primary" onclick="openIntakeModal()" data-testid="empty-add-client-button">Add New Client</button>
+templates/dashboard.html:706:                    <div class="quick-action-item" onclick="openIntakeModal()" data-testid="quick-action-new-client">
+templates/dashboard.html:714:                    <div class="quick-action-item" onclick="openBatchModal()" data-testid="quick-action-batch">
+templates/dashboard.html:722:                    <div class="quick-action-item" onclick="window.location='/dashboard/cases?status=stage1_complete'" data-testid="quick-action-review">
+templates/dashboard.html:730:                    <div class="quick-action-item" onclick="window.location='/dashboard/settlements'" data-testid="quick-action-settlements">
+templates/dashboard.html:763:                <button class="modal-close" onclick="closeModal('intakeModal')" data-testid="intake-modal-close">&times;</button>
+templates/dashboard.html:832:                    <button type="button" class="btn btn-secondary" onclick="closeModal('intakeModal')" data-testid="intake-cancel-button">Cancel</button>
+templates/dashboard.html:833:                    <button type="submit" class="btn btn-primary" data-testid="intake-submit-button">Start Analysis</button>
+templates/dashboard.html:843:                <button class="modal-close" onclick="closeModal('batchModal')" data-testid="batch-modal-close">&times;</button>
+templates/dashboard.html:856:                <button type="button" class="btn btn-secondary" onclick="closeModal('batchModal')" data-testid="batch-cancel-button">Cancel</button>
+templates/dashboard.html:857:                <button type="button" class="btn btn-primary" onclick="startBatchProcessing()" data-testid="batch-submit-button">Start Batch Analysis</button>
+templates/dashboard.html:977:                const btn = form.querySelector('button[type="submit"]');
+templates/dashboard.html:978:                btn.disabled = true;
+templates/dashboard.html:979:                btn.textContent = 'Processing...';
+templates/dashboard.html:999:                const btn = form.querySelector('button[type="submit"]');
+templates/dashboard.html:1000:                btn.disabled = false;
+templates/dashboard.html:1001:                btn.textContent = 'Start Analysis';
+templates/dashboard.html:1035:        document.querySelectorAll('.filter-btn').forEach(btn => {
+templates/dashboard.html:1036:            btn.addEventListener('click', function() {
+templates/dashboard.html:1037:                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+templates/admin_simple.html:45:        <button type="button" onclick="submitForm()">🚀 Analyze</button>
+templates/email_settings.html:35:        .btn {
+templates/email_settings.html:48:        .btn-primary {
+templates/email_settings.html:52:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/email_settings.html:53:        .btn-secondary {
+templates/email_settings.html:58:        .btn-test {
+templates/email_settings.html:340:        .btn-danger {
+templates/email_settings.html:344:        .btn-danger:hover {
+templates/email_settings.html:347:        .btn-preview {
+templates/email_settings.html:375:                <a href="/dashboard/settings" class="btn btn-secondary">Back to Settings</a>
+templates/email_settings.html:376:                <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+templates/email_settings.html:416:                <button class="btn btn-primary" style="margin-top: 12px;" onclick="setupSendGrid()">Connect SendGrid</button>
+templates/email_settings.html:427:                    <button class="btn btn-test" onclick="sendTestEmail()" {% if not sendgrid_configured %}disabled{% endif %}>
+templates/email_settings.html:446:                <div class="toggle-switch {{ 'active' if settings.email_enabled }}" id="toggle_email_enabled" onclick="toggleSetting('email_enabled')"></div>
+templates/email_settings.html:454:                <div class="toggle-switch {{ 'active' if settings.welcome_email_enabled }}" id="toggle_welcome_email_enabled" onclick="toggleSetting('welcome_email_enabled')"></div>
+templates/email_settings.html:462:                <div class="toggle-switch {{ 'active' if settings.document_reminder_enabled }}" id="toggle_document_reminder_enabled" onclick="toggleSetting('document_reminder_enabled')"></div>
+templates/email_settings.html:470:                <div class="toggle-switch {{ 'active' if settings.case_update_enabled }}" id="toggle_case_update_enabled" onclick="toggleSetting('case_update_enabled')"></div>
+templates/email_settings.html:478:                <div class="toggle-switch {{ 'active' if settings.dispute_sent_enabled }}" id="toggle_dispute_sent_enabled" onclick="toggleSetting('dispute_sent_enabled')"></div>
+templates/email_settings.html:486:                <div class="toggle-switch {{ 'active' if settings.cra_response_enabled }}" id="toggle_cra_response_enabled" onclick="toggleSetting('cra_response_enabled')"></div>
+templates/email_settings.html:494:                <div class="toggle-switch {{ 'active' if settings.payment_reminder_enabled }}" id="toggle_payment_reminder_enabled" onclick="toggleSetting('payment_reminder_enabled')"></div>
+templates/email_settings.html:502:                <div class="toggle-switch {{ 'active' if settings.analysis_ready_enabled }}" id="toggle_analysis_ready_enabled" onclick="toggleSetting('analysis_ready_enabled')"></div>
+templates/email_settings.html:510:                <div class="toggle-switch {{ 'active' if settings.letters_ready_enabled }}" id="toggle_letters_ready_enabled" onclick="toggleSetting('letters_ready_enabled')"></div>
+templates/email_settings.html:540:                    <div class="merge-tag" onclick="copyMergeTag('{{client_name}}')">
+templates/email_settings.html:544:                    <div class="merge-tag" onclick="copyMergeTag('{{client_email}}')">
+templates/email_settings.html:548:                    <div class="merge-tag" onclick="copyMergeTag('{{portal_link}}')">
+templates/email_settings.html:552:                    <div class="merge-tag" onclick="copyMergeTag('{{case_status}}')">
+templates/email_settings.html:556:                    <div class="merge-tag" onclick="copyMergeTag('{{missing_docs}}')">
+templates/email_settings.html:560:                    <div class="merge-tag" onclick="copyMergeTag('{{company_name}}')">
+templates/email_settings.html:564:                    <div class="merge-tag" onclick="copyMergeTag('{{support_email}}')">
+templates/email_settings.html:571:                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_name}}')">
+templates/email_settings.html:575:                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_address}}')">
+templates/email_settings.html:579:                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_phone}}')">
+templates/email_settings.html:583:                    <div class="merge-tag" onclick="copyMergeTag('{{experian_name}}')">
+templates/email_settings.html:587:                    <div class="merge-tag" onclick="copyMergeTag('{{experian_address}}')">
+templates/email_settings.html:591:                    <div class="merge-tag" onclick="copyMergeTag('{{experian_phone}}')">
+templates/email_settings.html:595:                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_name}}')">
+templates/email_settings.html:599:                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_address}}')">
+templates/email_settings.html:603:                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_phone}}')">
+templates/email_settings.html:611:                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_freeze_address}}')">
+templates/email_settings.html:615:                    <div class="merge-tag" onclick="copyMergeTag('{{equifax_freeze_phone}}')">
+templates/email_settings.html:619:                    <div class="merge-tag" onclick="copyMergeTag('{{experian_freeze_address}}')">
+templates/email_settings.html:623:                    <div class="merge-tag" onclick="copyMergeTag('{{experian_freeze_phone}}')">
+templates/email_settings.html:627:                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_freeze_address}}')">
+templates/email_settings.html:631:                    <div class="merge-tag" onclick="copyMergeTag('{{transunion_freeze_phone}}')">
+templates/email_settings.html:639:                    <div class="merge-tag" onclick="copyMergeTag('{{innovis_name}}')">
+templates/email_settings.html:643:                    <div class="merge-tag" onclick="copyMergeTag('{{innovis_address}}')">
+templates/email_settings.html:647:                    <div class="merge-tag" onclick="copyMergeTag('{{innovis_phone}}')">
+templates/email_settings.html:651:                    <div class="merge-tag" onclick="copyMergeTag('{{chexsystems_name}}')">
+templates/email_settings.html:655:                    <div class="merge-tag" onclick="copyMergeTag('{{chexsystems_address}}')">
+templates/email_settings.html:659:                    <div class="merge-tag" onclick="copyMergeTag('{{chexsystems_phone}}')">
+templates/email_settings.html:663:                    <div class="merge-tag" onclick="copyMergeTag('{{clarity_name}}')">
+templates/email_settings.html:667:                    <div class="merge-tag" onclick="copyMergeTag('{{clarity_address}}')">
+templates/email_settings.html:671:                    <div class="merge-tag" onclick="copyMergeTag('{{clarity_phone}}')">
+templates/email_settings.html:675:                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_name}}')">
+templates/email_settings.html:679:                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_address}}')">
+templates/email_settings.html:683:                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_phone}}')">
+templates/email_settings.html:687:                    <div class="merge-tag" onclick="copyMergeTag('{{corelogic_name}}')">
+templates/email_settings.html:691:                    <div class="merge-tag" onclick="copyMergeTag('{{corelogic_address}}')">
+templates/email_settings.html:695:                    <div class="merge-tag" onclick="copyMergeTag('{{corelogic_phone}}')">
+templates/email_settings.html:699:                    <div class="merge-tag" onclick="copyMergeTag('{{factortrust_name}}')">
+templates/email_settings.html:703:                    <div class="merge-tag" onclick="copyMergeTag('{{factortrust_address}}')">
+templates/email_settings.html:707:                    <div class="merge-tag" onclick="copyMergeTag('{{factortrust_phone}}')">
+templates/email_settings.html:711:                    <div class="merge-tag" onclick="copyMergeTag('{{microbilt_name}}')">
+templates/email_settings.html:715:                    <div class="merge-tag" onclick="copyMergeTag('{{microbilt_address}}')">
+templates/email_settings.html:719:                    <div class="merge-tag" onclick="copyMergeTag('{{microbilt_phone}}')">
+templates/email_settings.html:723:                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_risk_name}}')">
+templates/email_settings.html:727:                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_risk_address}}')">
+templates/email_settings.html:731:                    <div class="merge-tag" onclick="copyMergeTag('{{lexisnexis_risk_phone}}')">
+templates/email_settings.html:735:                    <div class="merge-tag" onclick="copyMergeTag('{{datax_name}}')">
+templates/email_settings.html:739:                    <div class="merge-tag" onclick="copyMergeTag('{{datax_address}}')">
+templates/email_settings.html:743:                    <div class="merge-tag" onclick="copyMergeTag('{{datax_phone}}')">
+templates/email_settings.html:759:                    <button class="btn btn-primary" onclick="saveTemplate()">
+templates/email_settings.html:763:                    <button class="btn btn-preview" onclick="previewTemplate()">
+templates/email_settings.html:769:                    <button class="btn btn-secondary" onclick="resetTemplate()">
+templates/triage_dashboard.html:35:        .btn {
+templates/triage_dashboard.html:47:        .btn-primary {
+templates/triage_dashboard.html:51:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/triage_dashboard.html:52:        .btn-secondary {
+templates/triage_dashboard.html:57:        .btn-secondary:hover { border-color: #84cc16; }
+templates/triage_dashboard.html:224:        .action-btns {
+templates/triage_dashboard.html:228:        .action-btn {
+templates/triage_dashboard.html:237:        .action-btn.view { background: #e2e8f0; color: #1a1a2e; }
+templates/triage_dashboard.html:238:        .action-btn.view:hover { background: #84cc16; color: #1a1a2e; }
+templates/triage_dashboard.html:239:        .action-btn.review { background: #3b82f6; color: white; }
+templates/triage_dashboard.html:240:        .action-btn.review:hover { background: #2563eb; }
+templates/triage_dashboard.html:349:                <button class="btn btn-secondary" onclick="refreshData()">
+templates/triage_dashboard.html:353:                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/triage_dashboard.html:408:                <button class="queue-tab active" onclick="showQueue('fast_track')">
+templates/triage_dashboard.html:411:                <button class="queue-tab" onclick="showQueue('standard')">
+templates/triage_dashboard.html:414:                <button class="queue-tab" onclick="showQueue('review_needed')">
+templates/triage_dashboard.html:417:                <button class="queue-tab" onclick="showQueue('hold')">
+templates/triage_dashboard.html:461:                                <div class="action-btns">
+templates/triage_dashboard.html:462:                                    <button class="action-btn view" onclick="viewAnalysis({{ case.analysis_id }})">View</button>
+templates/triage_dashboard.html:463:                                    <button class="action-btn review" onclick="openReviewModal({{ case.id }}, {{ case.priority_score }})">Review</button>
+templates/triage_dashboard.html:517:                                <div class="action-btns">
+templates/triage_dashboard.html:518:                                    <button class="action-btn view" onclick="viewAnalysis({{ case.analysis_id }})">View</button>
+templates/triage_dashboard.html:519:                                    <button class="action-btn review" onclick="openReviewModal({{ case.id }}, {{ case.priority_score }})">Review</button>
+templates/triage_dashboard.html:573:                                <div class="action-btns">
+templates/triage_dashboard.html:574:                                    <button class="action-btn view" onclick="viewAnalysis({{ case.analysis_id }})">View</button>
+templates/triage_dashboard.html:575:                                    <button class="action-btn review" onclick="openReviewModal({{ case.id }}, {{ case.priority_score }})">Review</button>
+templates/triage_dashboard.html:629:                                <div class="action-btns">
+templates/triage_dashboard.html:630:                                    <button class="action-btn view" onclick="viewAnalysis({{ case.analysis_id }})">View</button>
+templates/triage_dashboard.html:631:                                    <button class="action-btn review" onclick="openReviewModal({{ case.id }}, {{ case.priority_score }})">Review</button>
+templates/triage_dashboard.html:652:                <button class="modal-close" onclick="closeModal('reviewModal')">&times;</button>
+templates/triage_dashboard.html:660:                        <span class="star" data-value="1" onclick="setRating(1)">★</span>
+templates/triage_dashboard.html:661:                        <span class="star" data-value="2" onclick="setRating(2)">★</span>
+templates/triage_dashboard.html:662:                        <span class="star" data-value="3" onclick="setRating(3)">★</span>
+templates/triage_dashboard.html:663:                        <span class="star" data-value="4" onclick="setRating(4)">★</span>
+templates/triage_dashboard.html:664:                        <span class="star" data-value="5" onclick="setRating(5)">★</span>
+templates/triage_dashboard.html:674:                <button class="btn btn-secondary" onclick="closeModal('reviewModal')">Cancel</button>
+templates/triage_dashboard.html:675:                <button class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+templates/whitelabel_admin.html:47:        .btn {
+templates/whitelabel_admin.html:60:        .btn-primary {
+templates/whitelabel_admin.html:64:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/whitelabel_admin.html:65:        .btn-secondary {
+templates/whitelabel_admin.html:70:        .btn-secondary:hover { border-color: #84cc16; }
+templates/whitelabel_admin.html:71:        .btn-danger {
+templates/whitelabel_admin.html:75:        .btn-danger:hover { background: #dc2626; }
+templates/whitelabel_admin.html:76:        .btn-sm {
+templates/whitelabel_admin.html:567:                <button class="btn btn-primary" onclick="openModal()">
+templates/whitelabel_admin.html:647:                        <button class="btn btn-secondary btn-sm" onclick="editConfig({{ config.id }})">
+templates/whitelabel_admin.html:653:                        <button class="btn btn-secondary btn-sm" onclick="previewConfig({{ config.id }})">
+templates/whitelabel_admin.html:660:                        <button class="btn btn-danger btn-sm" onclick="deleteConfig({{ config.id }}, '{{ config.organization_name }}')">
+templates/whitelabel_admin.html:678:                <button class="btn btn-primary" onclick="openModal()">
+templates/whitelabel_admin.html:693:                <button class="modal-close" onclick="closeModal()">&times;</button>
+templates/whitelabel_admin.html:918:                            <button type="submit" class="btn btn-primary">
+templates/whitelabel_admin.html:924:                            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+templates/white_label_dashboard.html:38:        .btn {
+templates/white_label_dashboard.html:51:        .btn-primary {
+templates/white_label_dashboard.html:55:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/white_label_dashboard.html:56:        .btn-secondary {
+templates/white_label_dashboard.html:61:        .btn-secondary:hover { border-color: #84cc16; }
+templates/white_label_dashboard.html:62:        .btn-danger {
+templates/white_label_dashboard.html:66:        .btn-danger:hover { background: #dc2626; }
+templates/white_label_dashboard.html:67:        .btn-sm {
+templates/white_label_dashboard.html:221:        .action-btn {
+templates/white_label_dashboard.html:234:        .action-btn:hover {
+templates/white_label_dashboard.html:238:        .action-btn.danger:hover {
+templates/white_label_dashboard.html:242:        .action-btn svg {
+templates/white_label_dashboard.html:585:                <button class="btn btn-primary" onclick="openCreateModal()">
+templates/white_label_dashboard.html:665:                                <button class="action-btn" onclick="openEditModal({{ item.tenant|tojson|safe }})" title="Edit">
+templates/white_label_dashboard.html:671:                                <button class="action-btn" onclick="manageUsers({{ item.tenant.id }})" title="Manage Users">
+templates/white_label_dashboard.html:679:                                <button class="action-btn" onclick="viewStats({{ item.tenant.id }})" title="View Stats">
+templates/white_label_dashboard.html:686:                                <button class="action-btn danger" onclick="confirmDelete({{ item.tenant.id }}, '{{ item.tenant.name }}')" title="Delete">
+templates/white_label_dashboard.html:707:                <button class="btn btn-primary" onclick="openCreateModal()">
+templates/white_label_dashboard.html:723:                <button class="modal-close" onclick="closeModal()">
+templates/white_label_dashboard.html:733:                    <div class="tab active" onclick="switchTab('basic')">Basic Info</div>
+templates/white_label_dashboard.html:734:                    <div class="tab" onclick="switchTab('branding')">Branding</div>
+templates/white_label_dashboard.html:735:                    <div class="tab" onclick="switchTab('features')">Features</div>
+templates/white_label_dashboard.html:736:                    <div class="tab" onclick="switchTab('advanced')">Advanced</div>
+templates/white_label_dashboard.html:940:                                <button type="button" class="btn btn-secondary btn-sm" onclick="regenerateApiKey()">Regenerate</button>
+templates/white_label_dashboard.html:949:                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+templates/white_label_dashboard.html:950:                <button class="btn btn-primary" onclick="saveTenant()">Save Tenant</button>
+templates/white_label_dashboard.html:959:                <button class="modal-close" onclick="closeUsersModal()">
+templates/white_label_dashboard.html:989:                    <button class="btn btn-primary btn-sm" onclick="addUserToTenant()">Add User</button>
+templates/white_label_dashboard.html:1003:                <button class="btn btn-secondary" onclick="closeUsersModal()">Close</button>
+templates/white_label_dashboard.html:1012:                <button class="modal-close" onclick="closeStatsModal()">
+templates/white_label_dashboard.html:1027:                <button class="btn btn-secondary" onclick="closeStatsModal()">Close</button>
+templates/white_label_dashboard.html:1254:                            <button class="action-btn danger" onclick="removeUserFromTenant(${user.staff_id})">
+templates/predictive_analytics.html:40:        .btn {
+templates/predictive_analytics.html:53:        .btn-primary {
+templates/predictive_analytics.html:57:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/predictive_analytics.html:58:        .btn-secondary {
+templates/predictive_analytics.html:63:        .btn-secondary:hover { border-color: #84cc16; }
+templates/predictive_analytics.html:319:        .tab-btn {
+templates/predictive_analytics.html:330:        .tab-btn.active {
+templates/predictive_analytics.html:334:        .tab-btn:hover:not(.active) {
+templates/predictive_analytics.html:372:                <a href="/dashboard/analytics" class="btn btn-secondary">
+templates/predictive_analytics.html:380:                <button class="btn btn-primary" onclick="refreshData()">
+templates/predictive_analytics.html:535:                        <button class="tab-btn active" onclick="changeMetric('efficiency_score')">Efficiency</button>
+templates/predictive_analytics.html:536:                        <button class="tab-btn" onclick="changeMetric('total_settlements')">Settlements</button>
+templates/predictive_analytics.html:537:                        <button class="tab-btn" onclick="changeMetric('cases_handled')">Cases</button>
+templates/predictive_analytics.html:751:            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+templates/ml_insights.html:39:                    <button class="btn btn-outline-primary me-2" onclick="refreshPatterns()">
+templates/ml_insights.html:42:                    <button class="btn btn-primary" onclick="showRecordOutcomeModal()">
+templates/ml_insights.html:171:                                <button class="btn btn-primary" onclick="showRecordOutcomeModal()">
+templates/ml_insights.html:504:                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+templates/ml_insights.html:574:                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+templates/ml_insights.html:575:                        <button type="button" class="btn btn-primary" onclick="submitOutcome()">
+templates/case_law.html:38:        .btn {
+templates/case_law.html:50:        .btn-primary {
+templates/case_law.html:54:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/case_law.html:55:        .btn-secondary {
+templates/case_law.html:60:        .btn-secondary:hover { border-color: #84cc16; }
+templates/case_law.html:61:        .btn-sm { padding: 8px 16px; font-size: 12px; }
+templates/case_law.html:62:        .btn-danger { background: #ef4444; color: white; }
+templates/case_law.html:63:        .btn-danger:hover { background: #dc2626; }
+templates/case_law.html:387:        .copy-btn {
+templates/case_law.html:398:        .copy-btn:hover { background: #e2e8f0; }
+templates/case_law.html:399:        .copy-btn.copied { background: #dcfce7; border-color: #84cc16; color: #166534; }
+templates/case_law.html:416:                <button class="btn btn-secondary" onclick="populateDefaultCases()">
+templates/case_law.html:420:                <button class="btn btn-primary" onclick="openAddModal()">
+templates/case_law.html:505:                    <tr data-case='{{ case|tojson|safe }}' onclick="viewCase({{ case.id }})">
+templates/case_law.html:540:                        <td onclick="event.stopPropagation()">
+templates/case_law.html:541:                            <button class="copy-btn" onclick="copyCitation({{ case.id }}, 'short', this)">Copy Short</button>
+templates/case_law.html:542:                            <button class="copy-btn" onclick="copyCitation({{ case.id }}, 'full', this)">Copy Full</button>
+templates/case_law.html:554:                <button class="btn btn-primary" onclick="populateDefaultCases()">Populate Default Cases</button>
+templates/case_law.html:561:    <div id="viewModal" class="modal-overlay" onclick="if(event.target===this)closeModal('viewModal')">
+templates/case_law.html:565:                <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+templates/case_law.html:570:                <button class="copy-btn" onclick="copyCitationFromModal('short')">Copy Short Citation</button>
+templates/case_law.html:571:                <button class="copy-btn" onclick="copyCitationFromModal('full')">Copy Full Citation</button>
+templates/case_law.html:572:                <button class="copy-btn" onclick="copyCitationFromModal('with_holding')">Copy With Holding</button>
+templates/case_law.html:574:                <button class="btn btn-danger btn-sm" onclick="deleteCase()">Delete</button>
+templates/case_law.html:576:                <button class="btn btn-secondary" onclick="closeModal('viewModal')">Close</button>
+templates/case_law.html:581:    <div id="addModal" class="modal-overlay" onclick="if(event.target===this)closeModal('addModal')">
+templates/case_law.html:585:                <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+templates/case_law.html:664:                <button class="btn btn-secondary" onclick="closeModal('addModal')">Cancel</button>
+templates/case_law.html:665:                <button class="btn btn-primary" onclick="saveCase()">Save Citation</button>
+templates/case_law.html:777:        function copyCitation(id, format, btn) {
+templates/case_law.html:783:                        btn.classList.add('copied');
+templates/case_law.html:784:                        btn.textContent = 'Copied!';
+templates/case_law.html:786:                            btn.classList.remove('copied');
+templates/case_law.html:787:                            btn.textContent = format === 'short' ? 'Copy Short' : 'Copy Full';
+templates/portal_login.html:97:        .toggle-btn {
+templates/portal_login.html:108:        .login-btn {
+templates/portal_login.html:121:        .login-btn:hover {
+templates/portal_login.html:125:        .login-btn:disabled {
+templates/portal_login.html:285:                            <button type="button" class="toggle-btn" onclick="togglePassword()" data-testid="toggle-password-btn">👁</button>
+templates/portal_login.html:289:                    <button type="submit" class="login-btn" id="loginBtn" data-testid="portal-login-button">Sign In</button>
+templates/portal_login.html:292:                <a href="#" class="forgot-link" onclick="showForgotForm(); return false;" data-testid="forgot-password-link">Forgot your password?</a>
+templates/portal_login.html:297:                    Have an access link? <a href="#" onclick="promptTokenAccess(); return false;" data-testid="token-access-link">Use direct link access</a>
+templates/portal_login.html:302:                <a href="#" class="back-link" onclick="showLoginForm(); return false;" data-testid="back-to-login-link">
+templates/portal_login.html:317:                    <button type="submit" class="login-btn" id="forgotBtn" data-testid="send-reset-button">Send Reset Link</button>
+templates/portal_login.html:334:                            <button type="button" class="toggle-btn" onclick="toggleNewPassword()">👁</button>
+templates/portal_login.html:343:                    <button type="submit" class="login-btn" id="resetBtn" data-testid="reset-password-button">Reset Password</button>
+templates/portal_login.html:393:            const btn = document.getElementById('forgotBtn');
+templates/portal_login.html:397:            btn.disabled = true;
+templates/portal_login.html:398:            btn.innerHTML = '<span class="spinner"></span>Sending...';
+templates/portal_login.html:422:                btn.disabled = false;
+templates/portal_login.html:423:                btn.textContent = 'Send Reset Link';
+templates/portal_login.html:429:            const btn = document.getElementById('resetBtn');
+templates/portal_login.html:449:            btn.disabled = true;
+templates/portal_login.html:450:            btn.innerHTML = '<span class="spinner"></span>Resetting...';
+templates/portal_login.html:471:                    btn.disabled = false;
+templates/portal_login.html:472:                    btn.textContent = 'Reset Password';
+templates/portal_login.html:478:                btn.disabled = false;
+templates/portal_login.html:479:                btn.textContent = 'Reset Password';
+templates/portal_login.html:484:            const btn = document.getElementById('loginBtn');
+templates/portal_login.html:485:            btn.disabled = true;
+templates/portal_login.html:486:            btn.innerHTML = '<span class="spinner"></span>Signing in...';
+templates/affiliate_detail.html:33:        .back-btn {
+templates/affiliate_detail.html:46:        .back-btn:hover { border-color: #84cc16; color: #1a1a2e; }
+templates/affiliate_detail.html:54:        .btn {
+templates/affiliate_detail.html:66:        .btn-primary {
+templates/affiliate_detail.html:70:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/affiliate_detail.html:71:        .btn-secondary {
+templates/affiliate_detail.html:76:        .btn-secondary:hover { border-color: #84cc16; }
+templates/affiliate_detail.html:77:        .btn-danger { background: #ef4444; color: white; }
+templates/affiliate_detail.html:78:        .btn-sm { padding: 8px 16px; font-size: 13px; }
+templates/affiliate_detail.html:236:        .tab-btn {
+templates/affiliate_detail.html:247:        .tab-btn:hover { color: #1a1a2e; }
+templates/affiliate_detail.html:248:        .tab-btn.active {
+templates/affiliate_detail.html:450:                <a href="/dashboard/affiliates" class="back-btn">
+templates/affiliate_detail.html:457:                <button class="btn btn-secondary" onclick="openEditModal()">
+templates/affiliate_detail.html:462:                <button class="btn btn-primary" onclick="openPayoutModal()">
+templates/affiliate_detail.html:567:                <button class="tab-btn active" onclick="showTab('commissions')">Commission History</button>
+templates/affiliate_detail.html:568:                <button class="tab-btn" onclick="showTab('referrals')">Referred Clients</button>
+templates/affiliate_detail.html:569:                <button class="tab-btn" onclick="showTab('tree')">Referral Tree</button>
+templates/affiliate_detail.html:691:                <button class="modal-close" onclick="closeModal('payoutModal')">&times;</button>
+templates/affiliate_detail.html:718:                    <button type="button" class="btn btn-secondary" onclick="closeModal('payoutModal')">Cancel</button>
+templates/affiliate_detail.html:719:                    <button type="submit" class="btn btn-primary">Process Payout</button>
+templates/affiliate_detail.html:729:                <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+templates/affiliate_detail.html:778:                    <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+templates/affiliate_detail.html:779:                    <button type="submit" class="btn btn-primary">Save Changes</button>
+templates/affiliate_detail.html:789:            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+templates/credit_tracker.html:19:        .tab-btn { padding: 12px 24px; border: none; background: white; border-radius: 8px; cursor: pointer; font-weight: 600; color: #666; transition: all 0.2s; }
+templates/credit_tracker.html:20:        .tab-btn.active { background: linear-gradient(135deg, #008080, #32CD32); color: white; }
+templates/credit_tracker.html:21:        .tab-btn:hover:not(.active) { background: #e8f5f5; color: #008080; }
+templates/credit_tracker.html:32:        .btn-estimate { background: linear-gradient(135deg, #008080, #32CD32); color: white; border: none; padding: 14px 30px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+templates/credit_tracker.html:33:        .btn-estimate:hover { transform: translateY(-2px); }
+templates/credit_tracker.html:69:        .btn-add-item { background: #008080; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+templates/credit_tracker.html:70:        .btn-add-item:hover { background: #006666; }
+templates/credit_tracker.html:123:            <button class="tab-btn active" onclick="switchTab('quick')">Quick Estimate</button>
+templates/credit_tracker.html:124:            <button class="tab-btn" onclick="switchTab('detailed')">Detailed Calculator</button>
+templates/credit_tracker.html:125:            <button class="tab-btn" onclick="switchTab('clients')">Client Progress</button>
+templates/credit_tracker.html:141:                    <button class="btn-estimate" onclick="calculateEstimate()">Calculate Estimate</button>
+templates/credit_tracker.html:181:                <button class="btn-estimate" onclick="calculateDetailedEstimate()" style="margin-bottom: 30px;">Calculate Detailed Estimate</button>
+templates/credit_tracker.html:247:            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+templates/credit_tracker.html:250:            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+templates/credit_tracker.html:283:                        <div class="category-header" onclick="toggleCategory('${catKey}')">
+templates/credit_tracker.html:302:                                    <button class="btn-add-item" onclick="addItem('${item.key}', '${item.label}')">+ Add</button>
+templates/credit_tracker.html:355:                    <span class="remove" onclick="removeItem('${item.type}')">&times;</span>
+templates/credit_tracker.html:461:                        <div class="client-card" onclick="window.location='/dashboard/credit-tracker/${client.id}'">
+templates/credit_tracker.html:464:                            <button class="btn-estimate" style="width: 100%;">Add Score Data</button>
+templates/credit_tracker.html:474:                    <div class="client-card" onclick="window.location='/dashboard/credit-tracker/${client.id}'">
+templates/cfpb_generator.html:40:        .btn {
+templates/cfpb_generator.html:53:        .btn-primary {
+templates/cfpb_generator.html:57:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/cfpb_generator.html:58:        .btn-secondary {
+templates/cfpb_generator.html:63:        .btn-secondary:hover { border-color: #84cc16; }
+templates/cfpb_generator.html:64:        .btn-danger {
+templates/cfpb_generator.html:69:        .btn-danger:hover { background: #fecaca; }
+templates/cfpb_generator.html:228:        .cra-btn {
+templates/cfpb_generator.html:239:        .cra-btn:hover { border-color: #84cc16; }
+templates/cfpb_generator.html:240:        .cra-btn.selected { border-color: #319795; background: #f0fdfa; }
+templates/cfpb_generator.html:394:            <a href="/dashboard/cfpb" class="btn btn-secondary">Back to Complaints</a>
+templates/cfpb_generator.html:484:                        <button type="button" class="btn btn-primary" onclick="generatePDF()">Generate PDF</button>
+templates/cfpb_generator.html:486:                        <button type="button" class="btn btn-primary" onclick="markSubmitted()">Mark as Submitted</button>
+templates/cfpb_generator.html:487:                        <button type="button" class="btn btn-secondary" onclick="generatePDF()">Regenerate PDF</button>
+templates/cfpb_generator.html:489:                        <button type="button" class="btn btn-primary" onclick="recordResponse()">Record Response</button>
+templates/cfpb_generator.html:493:                        <button type="button" class="btn btn-secondary" onclick="saveChanges()">Save Changes</button>
+templates/cfpb_generator.html:495:                        <a href="/{{ complaint.file_path }}" target="_blank" class="btn btn-secondary">Download PDF</a>
+templates/cfpb_generator.html:524:                        <label class="target-option" onclick="selectTargetType('cra')">
+templates/cfpb_generator.html:529:                        <label class="target-option" onclick="selectTargetType('furnisher')">
+templates/cfpb_generator.html:540:                        <button type="button" class="cra-btn" onclick="selectCRA('equifax')">Equifax</button>
+templates/cfpb_generator.html:541:                        <button type="button" class="cra-btn" onclick="selectCRA('experian')">Experian</button>
+templates/cfpb_generator.html:542:                        <button type="button" class="cra-btn" onclick="selectCRA('transunion')">TransUnion</button>
+templates/cfpb_generator.html:555:                    <button type="button" class="btn btn-primary" onclick="nextStep()">Continue</button>
+templates/cfpb_generator.html:584:                    <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+templates/cfpb_generator.html:585:                    <button type="button" class="btn btn-primary" onclick="nextStep()">Continue</button>
+templates/cfpb_generator.html:595:                        <button type="button" class="btn btn-secondary" onclick="regenerateNarrative()" style="padding: 8px 16px; font-size: 12px;">Regenerate with AI</button>
+templates/cfpb_generator.html:608:                    <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+templates/cfpb_generator.html:609:                    <button type="button" class="btn btn-primary" onclick="nextStep()">Continue</button>
+templates/cfpb_generator.html:637:                    <button type="button" class="btn btn-secondary" onclick="prevStep()">Back</button>
+templates/cfpb_generator.html:638:                    <button type="button" class="btn btn-primary" onclick="createComplaint()">Create Complaint</button>
+templates/cfpb_generator.html:696:            document.querySelectorAll('.cra-btn').forEach(btn => btn.classList.remove('selected'));
+templates/cfpb_generator.html:738:                    <div class="issue-category" onclick="toggleIssue('${key}')">
+templates/cfpb_generator.html:744:                            <div class="issue-item" onclick="selectIssue('${key}', '${issue.label}', '${sub}')">
+templates/analytics.html:40:        .btn {
+templates/analytics.html:53:        .btn-secondary {
+templates/analytics.html:58:        .btn-secondary:hover { border-color: #84cc16; }
+templates/analytics.html:387:            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">
+templates/signature_error.html:109:        .btn {
+templates/signature_error.html:123:        .btn-primary {
+templates/signature_error.html:127:        .btn-primary:hover {
+templates/signature_error.html:131:        .btn-secondary {
+templates/signature_error.html:136:        .btn-secondary:hover {
+templates/signature_error.html:140:        .btn svg {
+templates/signature_error.html:233:                    <a href="mailto:support@brightpathascend.com?subject=Request New Signing Link" class="btn btn-primary">
+templates/signature_error.html:239:                    <a href="/" class="btn btn-secondary">
+templates/automation_tools.html:31:        .btn {
+templates/automation_tools.html:44:        .btn-primary {
+templates/automation_tools.html:48:        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3); }
+templates/automation_tools.html:49:        .btn-secondary {
+templates/automation_tools.html:54:        .btn-secondary:hover { border-color: #84cc16; }
+templates/automation_tools.html:55:        .btn-sm {
+templates/automation_tools.html:59:        .btn-danger {
+templates/automation_tools.html:64:        .btn-danger:hover { background: #fecaca; }
+templates/automation_tools.html:75:        .top-nav-btn {
+templates/automation_tools.html:88:        .top-nav-btn:hover { background: white; color: #1a1a2e; }
+templates/automation_tools.html:89:        .top-nav-btn.active { background: #1a1a2e; color: white; }
+templates/automation_tools.html:198:        .quick-select-btns {
+templates/automation_tools.html:288:        .filter-btn {
+templates/automation_tools.html:299:        .filter-btn.active { background: #1a1a2e; color: white; }
+templates/automation_tools.html:300:        .filter-btn:hover { background: #e2e8f0; }
+templates/automation_tools.html:301:        .filter-btn.active:hover { background: #1a1a2e; }
+templates/automation_tools.html:404:        .add-damage-btn {
+templates/automation_tools.html:417:        .add-damage-btn:hover {
+templates/automation_tools.html:486:            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/automation_tools.html:490:            <button class="top-nav-btn active" data-tab="freeze-letters" onclick="switchTab('freeze-letters')">Freeze Letters</button>
+templates/automation_tools.html:491:            <button class="top-nav-btn" data-tab="validation-letters" onclick="switchTab('validation-letters')">Validation Letters</button>
+templates/automation_tools.html:492:            <button class="top-nav-btn" data-tab="deadlines" onclick="switchTab('deadlines')">Deadlines</button>
+templates/automation_tools.html:493:            <button class="top-nav-btn" data-tab="dispute-rounds" onclick="switchTab('dispute-rounds')">Dispute Rounds</button>
+templates/automation_tools.html:494:            <button class="top-nav-btn" data-tab="settlement-calculator" onclick="switchTab('settlement-calculator')">Settlement Calculator</button>
+templates/automation_tools.html:495:            <button class="top-nav-btn" data-tab="certified-mail" onclick="switchTab('certified-mail')">Certified Mail</button>
+templates/automation_tools.html:496:            <button class="top-nav-btn" data-tab="notarization" onclick="switchTab('notarization')">Notarization</button>
+templates/automation_tools.html:497:            <button class="top-nav-btn" data-tab="advanced-letters" onclick="switchTab('advanced-letters')">Advanced Letters</button>
+templates/automation_tools.html:568:                <div class="quick-select-btns">
+templates/automation_tools.html:569:                    <button class="btn btn-secondary btn-sm" onclick="selectAllPrimary()">Select All Primary</button>
+templates/automation_tools.html:570:                    <button class="btn btn-secondary btn-sm" onclick="selectAllSecondary()">Select All Secondary</button>
+templates/automation_tools.html:571:                    <button class="btn btn-secondary btn-sm" onclick="clearAllBureaus()">Clear All</button>
+templates/automation_tools.html:574:                <button class="btn btn-primary" onclick="generateFreezeLetters()" id="generateFreezeBtn">
+templates/automation_tools.html:667:                    <button class="btn btn-primary" onclick="generateValidationLetter()" id="generateValidationBtn">
+templates/automation_tools.html:671:                    <button class="btn btn-secondary" onclick="autoGenerateFromCase()" id="autoGenerateBtn" disabled>
+templates/automation_tools.html:723:                    <button class="filter-btn active" data-deadline-filter="all" onclick="filterDeadlines('all')">All</button>
+templates/automation_tools.html:724:                    <button class="filter-btn" data-deadline-filter="overdue" onclick="filterDeadlines('overdue')">Overdue</button>
+templates/automation_tools.html:725:                    <button class="filter-btn" data-deadline-filter="week" onclick="filterDeadlines('week')">This Week</button>
+templates/automation_tools.html:726:                    <button class="filter-btn" data-deadline-filter="month" onclick="filterDeadlines('month')">This Month</button>
+templates/automation_tools.html:862:                <button class="btn btn-primary" onclick="advanceRoundManual()" id="advanceRoundBtn">
+templates/automation_tools.html:903:                <button class="add-damage-btn" onclick="addDamageItem()">
+templates/automation_tools.html:909:                    <button class="btn btn-primary" onclick="calculateSettlement()" id="calculateBtn">
+templates/automation_tools.html:1015:                    <div onclick="selectAdvancedLetterType('respa-qwr')" id="letter-card-respa-qwr" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+templates/automation_tools.html:1023:                    <div onclick="selectAdvancedLetterType('reg-z')" id="letter-card-reg-z" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+templates/automation_tools.html:1031:                    <div onclick="selectAdvancedLetterType('fdcpa-validation')" id="letter-card-fdcpa-validation" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+templates/automation_tools.html:1039:                    <div onclick="selectAdvancedLetterType('605b-block')" id="letter-card-605b-block" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+templates/automation_tools.html:1047:                    <div onclick="selectAdvancedLetterType('623-furnisher')" id="letter-card-623-furnisher" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+templates/automation_tools.html:1055:                    <div onclick="selectAdvancedLetterType('reinsertion')" id="letter-card-reinsertion" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+templates/automation_tools.html:1063:                    <div onclick="selectAdvancedLetterType('mov-request')" id="letter-card-mov-request" class="letter-type-card" style="padding: 15px; background: #f8fafc; border-radius: 10px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;">
+templates/automation_tools.html:1123:                    <button class="btn btn-primary" onclick="generateAdvancedLetter('respa-qwr')" id="generateRespaBtn">
+templates/automation_tools.html:1127:                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('respa-qwr')">
+templates/automation_tools.html:1196:                    <button class="btn btn-primary" onclick="generateAdvancedLetter('reg-z')" id="generateRegzBtn">
+templates/automation_tools.html:1200:                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('reg-z')">
+templates/automation_tools.html:1261:                    <button class="btn btn-primary" onclick="generateAdvancedLetter('fdcpa-validation')" id="generateFdcpaBtn">
+templates/automation_tools.html:1265:                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('fdcpa-validation')">
+templates/automation_tools.html:1334:                    <button class="btn btn-primary" onclick="generateAdvancedLetter('605b-block')" id="generate605bBtn">
+templates/automation_tools.html:1338:                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('605b-block')">
+templates/automation_tools.html:1413:                    <button class="btn btn-primary" onclick="generateAdvancedLetter('623-furnisher')" id="generate623Btn">
+templates/automation_tools.html:1417:                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('623-furnisher')">
+templates/automation_tools.html:1493:                    <button class="btn btn-primary" onclick="generateAdvancedLetter('reinsertion')" id="generateReinsertionBtn">
+templates/automation_tools.html:1497:                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('reinsertion')">
+templates/automation_tools.html:1575:                    <button class="btn btn-primary" onclick="generateAdvancedLetter('mov-request')" id="generateMovBtn">
+templates/automation_tools.html:1579:                    <button class="btn btn-secondary" onclick="previewAdvancedLetter('mov-request')">
+templates/automation_tools.html:1589:                    <button class="btn btn-secondary btn-sm" onclick="closeLetterPreview()">Close Preview</button>
+templates/automation_tools.html:1594:                    <button class="btn btn-primary" onclick="downloadPreviewAsPDF()">
+templates/automation_tools.html:1607:            document.querySelectorAll('.top-nav-btn').forEach(btn => btn.classList.remove('active'));
+templates/automation_tools.html:1688:                                `<button class="btn btn-primary btn-sm" onclick="advanceClientRound(${client.id}, ${nextRound})">
+templates/automation_tools.html:1693:                            <button class="btn btn-secondary btn-sm" onclick="viewRoundHistory(${client.id})" style="margin-left:5px;">
+templates/automation_tools.html:1721:                            <button class="btn btn-secondary btn-sm" onclick="viewRoundHistory(${client.id})">
+templates/automation_tools.html:1771:            const btn = document.getElementById('advanceRoundBtn');
+templates/automation_tools.html:1772:            btn.disabled = true;
+templates/automation_tools.html:1773:            btn.innerHTML = '<span class="loading-spinner"></span> Advancing...';
+templates/automation_tools.html:1796:                btn.disabled = false;
+templates/automation_tools.html:1797:                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg> Advance to Selected Round';
+templates/automation_tools.html:1861:                        <button onclick="document.getElementById('roundHistoryModal').remove();" style="background:none;border:none;font-size:24px;cursor:pointer;color:#64748b;">&times;</button>
+templates/automation_tools.html:1919:            const btn = document.getElementById('generateFreezeBtn');
+templates/automation_tools.html:1920:            btn.disabled = true;
+templates/automation_tools.html:1921:            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+templates/automation_tools.html:1944:                btn.disabled = false;
+templates/automation_tools.html:1945:                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate Freeze Letters';
+templates/automation_tools.html:1964:                                <button class="btn btn-secondary btn-sm" onclick="downloadFreezePDF('${batch.id}')">PDF</button>
+templates/automation_tools.html:1965:                                <button class="btn btn-secondary btn-sm" onclick="downloadFreezeDocx('${batch.id}')">Word</button>
+templates/automation_tools.html:2057:            const btn = document.getElementById('generateValidationBtn');
+templates/automation_tools.html:2058:            btn.disabled = true;
+templates/automation_tools.html:2059:            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+templates/automation_tools.html:2089:                btn.disabled = false;
+templates/automation_tools.html:2090:                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate Validation Letter';
+templates/automation_tools.html:2101:            const btn = document.getElementById('autoGenerateBtn');
+templates/automation_tools.html:2102:            btn.disabled = true;
+templates/automation_tools.html:2103:            btn.innerHTML = '<span class="loading-spinner"></span> Scanning case...';
+templates/automation_tools.html:2125:                btn.disabled = false;
+templates/automation_tools.html:2126:                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Auto-Generate from Case Analysis';
+templates/automation_tools.html:2145:                        ${pdfPath ? `<button onclick="window.open('/${pdfPath}','_blank');document.getElementById('downloadOptionsModal').remove();" class="btn btn-primary" style="flex:1;">
+templates/automation_tools.html:2149:                        ${docxPath ? `<button onclick="window.open('/${docxPath}','_blank');document.getElementById('downloadOptionsModal').remove();" class="btn btn-secondary" style="flex:1;">
+templates/automation_tools.html:2154:                    <button onclick="document.getElementById('downloadOptionsModal').remove();" style="margin-top:20px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:14px;">Cancel</button>
+templates/automation_tools.html:2198:                            <button class="btn btn-secondary btn-sm" onclick="completeDeadline('${deadline.id}')">Complete</button>
+templates/automation_tools.html:2199:                            <button class="btn btn-secondary btn-sm" onclick="extendDeadline('${deadline.id}', 15)">+15 days</button>
+templates/automation_tools.html:2200:                            <button class="btn btn-secondary btn-sm" onclick="extendDeadline('${deadline.id}', 30)">+30 days</button>
+templates/automation_tools.html:2229:            document.querySelectorAll('[data-deadline-filter]').forEach(btn => btn.classList.remove('active'));
+templates/automation_tools.html:2283:                <button class="remove-damage" onclick="removeDamageItem(${damageItemCount})">&times;</button>
+templates/automation_tools.html:2309:            const btn = document.getElementById('calculateBtn');
+templates/automation_tools.html:2310:            btn.disabled = true;
+templates/automation_tools.html:2311:            btn.innerHTML = '<span class="loading-spinner"></span> Calculating...';
+templates/automation_tools.html:2336:                btn.disabled = false;
+templates/automation_tools.html:2337:                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Calculate Settlement';
+templates/automation_tools.html:3290:            const btn = document.getElementById(buttonId[letterType]);
+templates/automation_tools.html:3291:            btn.disabled = true;
+templates/automation_tools.html:3292:            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+templates/automation_tools.html:3320:                btn.disabled = false;
+templates/automation_tools.html:3330:                btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${labels[letterType]}`;
+templates/letter_queue.html:35:        .btn {
+templates/letter_queue.html:48:        .btn-primary {
+templates/letter_queue.html:52:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/letter_queue.html:53:        .btn-secondary {
+templates/letter_queue.html:58:        .btn-secondary:hover { border-color: #84cc16; }
+templates/letter_queue.html:59:        .btn-success {
+templates/letter_queue.html:63:        .btn-success:hover { background: #059669; }
+templates/letter_queue.html:64:        .btn-danger {
+templates/letter_queue.html:68:        .btn-danger:hover { background: #dc2626; }
+templates/letter_queue.html:69:        .btn-sm {
+templates/letter_queue.html:73:        .btn:disabled {
+templates/letter_queue.html:393:                <button class="btn btn-secondary" onclick="runTriggerCheck()">
+templates/letter_queue.html:397:                <button class="btn btn-success" onclick="bulkApproveSelected()" id="btnBulkApprove" disabled>
+templates/letter_queue.html:468:                <button class="btn btn-secondary" onclick="closeDismissModal()">Cancel</button>
+templates/letter_queue.html:469:                <button class="btn btn-danger" onclick="confirmDismiss()">Dismiss Letter</button>
+templates/letter_queue.html:571:                        <button class="btn btn-secondary btn-sm" onclick="dismissEntry(${entry.id})">
+templates/letter_queue.html:574:                        <button class="btn btn-success btn-sm" onclick="approveEntry(${entry.id})">
+templates/letter_queue.html:578:                            <button class="btn btn-primary btn-sm" onclick="generateLetter(${entry.id})">
+templates/letter_queue.html:614:            const btn = document.getElementById('btnBulkApprove');
+templates/letter_queue.html:617:            btn.disabled = selectedEntries.size === 0;
+templates/furnishers.html:20:        .btn {
+templates/furnishers.html:25:        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; }
+templates/furnishers.html:26:        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+templates/furnishers.html:27:        .btn-secondary:hover { border-color: #84cc16; }
+templates/furnishers.html:122:                <button class="btn btn-secondary" onclick="populateFromExisting()">
+templates/furnishers.html:126:                <button class="btn btn-primary" onclick="openAddModal()">
+templates/furnishers.html:185:                    <tr onclick="viewFurnisher({{ f.id }})" data-name="{{ f.name|lower }}" data-industry="{{ f.industry or '' }}">
+templates/furnishers.html:232:                <button class="modal-close" onclick="closeAddModal()">&times;</button>
+templates/furnishers.html:284:                <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+templates/furnishers.html:285:                <button class="btn btn-primary" onclick="saveFurnisher()">Save Furnisher</button>
+templates/workflow_triggers.html:35:        .btn {
+templates/workflow_triggers.html:47:        .btn-primary {
+templates/workflow_triggers.html:51:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/workflow_triggers.html:52:        .btn-secondary {
+templates/workflow_triggers.html:57:        .btn-secondary:hover { border-color: #84cc16; }
+templates/workflow_triggers.html:58:        .btn-sm { padding: 8px 16px; font-size: 13px; }
+templates/workflow_triggers.html:59:        .btn-danger { background: #ef4444; color: white; }
+templates/workflow_triggers.html:60:        .btn-danger:hover { background: #dc2626; }
+templates/workflow_triggers.html:286:        .action-btn {
+templates/workflow_triggers.html:295:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/workflow_triggers.html:296:        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+templates/workflow_triggers.html:297:        .action-btn.danger { border-color: #ef4444; color: #ef4444; }
+templates/workflow_triggers.html:298:        .action-btn.danger:hover { background: #fee2e2; }
+templates/workflow_triggers.html:493:                <button class="btn btn-secondary" onclick="refreshData()">
+templates/workflow_triggers.html:497:                <button class="btn btn-primary" onclick="openCreateModal()">
+templates/workflow_triggers.html:534:                <button class="tab active" data-tab="triggers" onclick="switchTab('triggers')">
+templates/workflow_triggers.html:537:                <button class="tab" data-tab="executions" onclick="switchTab('executions')">
+templates/workflow_triggers.html:540:                <button class="tab" data-tab="templates" onclick="switchTab('templates')">
+templates/workflow_triggers.html:588:                            <button class="action-btn" onclick="testTrigger({{ trigger.id }})">Test</button>
+templates/workflow_triggers.html:589:                            <button class="action-btn" onclick="viewHistory({{ trigger.id }})">History</button>
+templates/workflow_triggers.html:590:                            <button class="action-btn" onclick="editTrigger({{ trigger.id }})">Edit</button>
+templates/workflow_triggers.html:591:                            <button class="action-btn danger" onclick="deleteTrigger({{ trigger.id }})">Delete</button>
+templates/workflow_triggers.html:599:                        <button class="btn btn-primary" onclick="openCreateModal()">Create Workflow</button>
+templates/workflow_triggers.html:642:                    <div class="quick-template" onclick="useTemplate('welcome')">
+templates/workflow_triggers.html:646:                    <div class="quick-template" onclick="useTemplate('sol_warning')">
+templates/workflow_triggers.html:650:                    <div class="quick-template" onclick="useTemplate('document_review')">
+templates/workflow_triggers.html:654:                    <div class="quick-template" onclick="useTemplate('payment_confirmation')">
+templates/workflow_triggers.html:658:                    <div class="quick-template" onclick="useTemplate('dispute_tracking')">
+templates/workflow_triggers.html:662:                    <div class="quick-template" onclick="useTemplate('response_alert')">
+templates/workflow_triggers.html:675:                <button class="modal-close" onclick="closeCreateModal()">&times;</button>
+templates/workflow_triggers.html:715:                        <button type="button" class="btn btn-secondary btn-sm" onclick="addAction()">+ Add Action</button>
+templates/workflow_triggers.html:720:                <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+templates/workflow_triggers.html:721:                <button class="btn btn-primary" onclick="saveTrigger()">Save Workflow</button>
+templates/workflow_triggers.html:730:                <button class="modal-close" onclick="closeTestModal()">&times;</button>
+templates/workflow_triggers.html:745:                <button class="btn btn-secondary" onclick="closeTestModal()">Close</button>
+templates/workflow_triggers.html:746:                <button class="btn btn-primary" onclick="runTest()">Run Test</button>
+templates/workflow_triggers.html:755:                <button class="modal-close" onclick="closeHistoryModal()">&times;</button>
+templates/workflow_triggers.html:761:                <button class="btn btn-secondary" onclick="closeHistoryModal()">Close</button>
+templates/workflow_triggers.html:810:                        <button type="button" class="action-btn danger" onclick="removeAction(${actionId})">Remove</button>
+templates/settings.html:31:        .btn {
+templates/settings.html:44:        .btn-primary {
+templates/settings.html:48:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/settings.html:49:        .btn-secondary {
+templates/settings.html:252:            <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+templates/settings.html:628:                    <a href="/dashboard/settings/sms" class="btn btn-primary" style="background: #166534;">
+templates/settings.html:637:                <button type="button" class="btn btn-secondary" onclick="window.location.reload()">Cancel</button>
+templates/settings.html:638:                <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+templates/billing_management.html:31:        .btn {
+templates/billing_management.html:44:        .btn-primary {
+templates/billing_management.html:48:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/billing_management.html:49:        .btn-secondary {
+templates/billing_management.html:54:        .btn-danger {
+templates/billing_management.html:58:        .btn-danger:hover { background: #dc2626; }
+templates/billing_management.html:59:        .btn-sm {
+templates/billing_management.html:363:                <button class="btn btn-primary" onclick="openCreatePlanModal()">
+templates/billing_management.html:394:                <button class="btn btn-secondary btn-sm" onclick="initializeDefaultPlans()">
+templates/billing_management.html:423:                        <button class="btn btn-secondary btn-sm" onclick="editPlan({{ plan.id }})">Edit</button>
+templates/billing_management.html:424:                        <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-primary{% endif %}" 
+templates/billing_management.html:425:                                onclick="togglePlanStatus({{ plan.id }}, {{ 'false' if plan.is_active else 'true' }})">
+templates/billing_management.html:437:                <button class="btn btn-primary" style="margin-top: 20px;" onclick="initializeDefaultPlans()">
+templates/billing_management.html:480:                            <button class="btn btn-secondary btn-sm" onclick="openPortal({{ sub.client_id }})">
+templates/billing_management.html:484:                            <button class="btn btn-danger btn-sm" onclick="cancelSubscription({{ sub.client_id }})">
+templates/billing_management.html:533:                    <button type="button" class="btn btn-secondary" onclick="closeCreatePlanModal()">Cancel</button>
+templates/billing_management.html:534:                    <button type="submit" class="btn btn-primary">Create Plan</button>
+templates/case_detail.html:19:        .btn {
+templates/case_detail.html:24:        .btn-primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; }
+templates/case_detail.html:25:        .btn-secondary { background: white; color: #1a1a2e; border: 2px solid #e2e8f0; }
+templates/case_detail.html:46:        .download-btn { padding: 6px 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; text-decoration: none; color: #1a1a2e; }
+templates/case_detail.html:66:                <a href="/analysis/{{ analysis.id }}/review" class="btn btn-primary" data-testid="review-approve-btn">Review & Approve</a>
+templates/case_detail.html:68:                <a href="/analysis/{{ analysis.id }}/download" class="btn btn-primary" data-testid="download-package-btn">Download Package</a>
+templates/case_detail.html:70:                <a href="/dashboard/clients" class="btn btn-secondary" data-testid="back-button">Back</a>
+templates/case_detail.html:174:                    <a href="/static/generated_letters/{{ letter.file_path|replace('static/generated_letters/', '') }}" class="download-btn" target="_blank">Download</a>
+templates/case_detail.html:236:                        <button onclick="generateEscalationRecommendations()" data-testid="generate-recommendations-btn" style="padding: 6px 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Generate Recommendations</button>
+templates/case_detail.html:251:                    <button onclick="openSolCalculator()" data-testid="calculate-sol-btn" style="padding: 6px 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Calculate SOL</button>
+templates/case_detail.html:395:                        <div style="background: #f8fafc; border: 1px solid #e5e7eb; border-left: 4px solid ${color}; border-radius: 8px; padding: 12px; cursor: pointer;" onclick="this.querySelector('.timeline-details').style.display = this.querySelector('.timeline-details').style.display === 'none' ? 'block' : 'none'">
+templates/case_detail.html:459:                <button class="btn btn-primary" onclick="showCreateSettlementForm()">
+templates/case_detail.html:488:                            <button class="btn btn-secondary" onclick="hideCreateSettlementForm()">Cancel</button>
+templates/case_detail.html:489:                            <button class="btn btn-primary" onclick="createSettlement()">Create Settlement</button>
+templates/case_detail.html:578:                <a href="/dashboard/settlements" class="btn btn-secondary" style="padding: 8px 16px; font-size: 12px;">View All Settlements</a>
+templates/case_detail.html:658:                            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="quickAddOffer(${s.id})">Add Counter-Offer</button>
+templates/case_detail.html:659:                            <button class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;" onclick="quickMarkSettled(${s.id})">Mark as Settled</button>
+templates/case_detail.html:662:                            <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="quickRecordPayment(${s.id})">Record Payment</button>
+templates/case_detail.html:787:                                        ${!rec.applied ? `<button onclick="applyRecommendation(${rec.id})" style="padding: 5px 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 11px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Apply</button>` : ''}
+templates/case_detail.html:788:                                        ${rec.applied && !rec.outcome_actual ? `<button onclick="recordOutcome(${rec.id})" style="padding: 5px 12px; background: #1a1a2e; border: none; border-radius: 6px; font-size: 11px; cursor: pointer; color: white; font-weight: 500;">Record Outcome</button>` : ''}
+templates/case_detail.html:803:                            <button onclick="generateEscalationRecommendations()" data-testid="generate-recommendations-btn" style="padding: 8px 16px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; color: #1a1a2e; font-weight: 500;">Generate Recommendations</button>
+templates/case_detail.html:943:                            <button onclick="document.getElementById('solCalculatorModal').remove()" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+templates/case_detail.html:954:                        <button onclick="calculateSol()" class="btn btn-primary" style="width: 100%;">Calculate</button>
+templates/staff_login.html:94:        .toggle-btn {
+templates/staff_login.html:105:        .login-btn {
+templates/staff_login.html:118:        .login-btn:hover {
+templates/staff_login.html:122:        .login-btn:disabled {
+templates/staff_login.html:236:                        <button type="button" class="toggle-btn" onclick="togglePassword('new_password')">👁</button>
+templates/staff_login.html:245:                <button type="submit" class="login-btn" id="changeBtn" data-testid="change-password-button">Change Password</button>
+templates/staff_login.html:258:                        <button type="button" class="toggle-btn" onclick="togglePassword('password')">👁</button>
+templates/staff_login.html:262:                <button type="submit" class="login-btn" id="loginBtn" data-testid="login-button">Sign In</button>
+templates/staff_login.html:279:            const btn = document.getElementById('loginBtn');
+templates/staff_login.html:280:            btn.disabled = true;
+templates/staff_login.html:281:            btn.innerHTML = '<span class="spinner"></span>Signing in...';
+templates/staff_login.html:300:            const btn = document.getElementById('changeBtn');
+templates/staff_login.html:301:            btn.disabled = true;
+templates/staff_login.html:302:            btn.innerHTML = '<span class="spinner"></span>Updating...';
+templates/staff_management.html:39:        .btn {
+templates/staff_management.html:52:        .btn-primary {
+templates/staff_management.html:56:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/staff_management.html:57:        .btn-secondary {
+templates/staff_management.html:62:        .btn-secondary:hover { border-color: #84cc16; }
+templates/staff_management.html:63:        .btn-danger {
+templates/staff_management.html:67:        .btn-sm {
+templates/staff_management.html:217:        .action-btn {
+templates/staff_management.html:226:        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+templates/staff_management.html:370:            <button class="btn btn-primary" onclick="openAddModal()" data-testid="add-staff-button">
+templates/staff_management.html:456:                            <button class="action-btn" onclick="openEditModal({{ staff.id }}, '{{ staff.email }}', '{{ staff.first_name or '' }}', '{{ staff.last_name or '' }}', '{{ staff.role }}', {{ 'true' if staff.is_active else 'false' }})" data-testid="edit-btn-{{ staff.id }}">Edit</button>
+templates/staff_management.html:457:                            <button class="action-btn" onclick="resetPassword({{ staff.id }})" data-testid="reset-pwd-btn-{{ staff.id }}">Reset Password</button>
+templates/staff_management.html:459:                            <button class="action-btn" onclick="toggleStatus({{ staff.id }}, {{ 'true' if staff.is_active else 'false' }})" data-testid="toggle-status-btn-{{ staff.id }}">
+templates/staff_management.html:482:                <button class="modal-close" onclick="closeModal('addModal')" data-testid="add-modal-close">&times;</button>
+templates/staff_management.html:518:                    <button type="button" class="btn btn-secondary" onclick="closeModal('addModal')" data-testid="add-cancel-button">Cancel</button>
+templates/staff_management.html:519:                    <button type="submit" class="btn btn-primary" data-testid="add-submit-button">Add Staff Member</button>
+templates/staff_management.html:529:                <button class="modal-close" onclick="closeModal('editModal')" data-testid="edit-modal-close">&times;</button>
+templates/staff_management.html:566:                    <button type="button" class="btn btn-secondary" onclick="closeModal('editModal')" data-testid="edit-cancel-button">Cancel</button>
+templates/staff_management.html:567:                    <button type="submit" class="btn btn-primary" data-testid="edit-submit-button">Save Changes</button>
+templates/error.html:50:        .btn {
+templates/error.html:61:        .btn:hover {
+templates/error.html:78:        <a href="/dashboard" class="btn">Go to Dashboard</a>
+templates/sms_settings.html:35:        .btn {
+templates/sms_settings.html:48:        .btn-primary {
+templates/sms_settings.html:52:        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4); }
+templates/sms_settings.html:53:        .btn-secondary {
+templates/sms_settings.html:58:        .btn-test {
+templates/sms_settings.html:327:                <a href="/dashboard/settings" class="btn btn-secondary">← Back to Settings</a>
+templates/sms_settings.html:498:                    <button type="button" class="btn btn-test" onclick="sendTestSMS()" {{ 'disabled' if not twilio_configured else '' }}>
+templates/sms_settings.html:540:                <button type="button" class="btn btn-secondary" onclick="window.location.reload()">Cancel</button>
+templates/sms_settings.html:541:                <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+templates/client_portal.html:139:        .btn-upload {
+templates/client_portal.html:149:        .btn-upload:hover { transform: scale(1.02); }
+templates/client_portal.html:150:        .btn-remove {
+templates/client_portal.html:159:        .btn-remove:hover { background: #e5e7eb; }
+templates/client_portal.html:379:        .download-btn {
+templates/client_portal.html:390:        .download-btn:hover {
+templates/client_portal.html:566:        .submit-btn {
+templates/client_portal.html:576:        .submit-btn:hover {
+templates/client_portal.html:658:            <div class="user-profile" onclick="switchTab('profile', document.querySelectorAll('.nav-tab')[5])">
+templates/client_portal.html:676:        <a href="javascript:void(0)" class="nav-tab active" onclick="switchTab('summary', this)">Summary</a>
+templates/client_portal.html:677:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('progress', this)">Score Progress</a>
+templates/client_portal.html:678:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('timeline', this)">Dispute Timeline</a>
+templates/client_portal.html:679:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('status', this)">Status</a>
+templates/client_portal.html:680:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('attachments', this)">Attachments</a>
+templates/client_portal.html:681:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('documents', this)">Upload Documents</a>
+templates/client_portal.html:682:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('profile', this)">My Profile</a>
+templates/client_portal.html:683:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('contact', this)">Contact Us</a>
+templates/client_portal.html:684:        <a href="javascript:void(0)" class="nav-tab" onclick="switchTab('referral', this)">Refer a Friend</a>
+templates/client_portal.html:839:                        <button onclick="showAllItems()" class="submit-btn" style="padding: 8px 15px; font-size: 12px;">Show all</button>
+templates/client_portal.html:840:                        <button onclick="submitStatusChanges()" class="submit-btn" style="padding: 8px 15px; font-size: 12px;">Submit changes</button>
+templates/client_portal.html:1058:                    <button onclick="submitFreezeChanges()" class="submit-btn" style="padding: 10px 25px;">Submit changes</button>
+templates/client_portal.html:1126:                        <a href="/static/generated_letters/{{ letter.file_path|replace('static/generated_letters/', '') }}" class="download-btn" target="_blank">Download</a>
+templates/client_portal.html:1143:                <div class="upload-area" onclick="document.getElementById('fileUpload').click()">
+templates/client_portal.html:1161:                            <a href="/{{ response.file_path }}" class="download-btn" target="_blank">View</a>
+templates/client_portal.html:1187:                            <button class="btn-upload" onclick="document.getElementById('avatarUpload').click()">Upload Photo</button>
+templates/client_portal.html:1188:                            <button class="btn-remove" onclick="removeAvatar()" id="removeAvatarBtn" style="{% if not client or not client.avatar_filename %}display: none;{% endif %}">Remove</button>
+templates/client_portal.html:1248:                    <button type="button" onclick="setPassword()" style="padding: 12px 24px; background: linear-gradient(135deg, #84cc16, #22c55e); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+templates/client_portal.html:1313:                    <button type="submit" class="submit-btn">Send Message</button>
+templates/client_portal.html:1409:                            <button type="button" class="doc-category-btn" data-category="cra_response" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+templates/client_portal.html:1413:                            <button type="button" class="doc-category-btn" data-category="collection" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+templates/client_portal.html:1417:                            <button type="button" class="doc-category-btn" data-category="legal" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+templates/client_portal.html:1421:                            <button type="button" class="doc-category-btn" data-category="credit_report" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+templates/client_portal.html:1425:                            <button type="button" class="doc-category-btn" data-category="identity" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+templates/client_portal.html:1429:                            <button type="button" class="doc-category-btn" data-category="other" style="padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; cursor: pointer; text-align: center;">
+templates/client_portal.html:1439:                        <button type="button" onclick="showCategoryStep()" style="margin-top: 15px; padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">← Back</button>
+templates/client_portal.html:1445:                        <button type="button" onclick="showTypeStep()" style="margin-top: 15px; padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 6px; cursor: pointer;">← Back</button>
+templates/client_portal.html:1474:                                <button type="button" onclick="showDetailsStep()" style="padding: 12px 24px; background: #f1f5f9; border: none; border-radius: 8px; cursor: pointer;">← Back</button>
+templates/client_portal.html:1532:                    <button type="submit" class="submit-btn">Submit Referral</button>
+templates/client_portal.html:1993:                `<button type="button" class="doc-type-btn" data-type="${t.value}" style="padding: 12px 15px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; cursor: pointer; text-align: left;">${t.label}</button>`
+templates/client_portal.html:1996:            grid.querySelectorAll('.doc-type-btn').forEach(btn => {
+templates/client_portal.html:1997:                btn.addEventListener('click', () => {
+templates/client_portal.html:1998:                    grid.querySelectorAll('.doc-type-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
+templates/client_portal.html:1999:                    btn.style.borderColor = '#4ade80';
+templates/client_portal.html:2000:                    btn.style.background = '#dcfce7';
+templates/client_portal.html:2001:                    docSelectedType = btn.dataset.type;
+templates/client_portal.html:2036:                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+templates/client_portal.html:2054:                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+templates/client_portal.html:2072:                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+templates/client_portal.html:2085:                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+templates/client_portal.html:2090:                    <button type="button" onclick="showUploadStep()" style="width: 100%; padding: 12px; background: #4ade80; color: #1a1a2e; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Continue to Upload</button>
+templates/client_portal.html:2096:        document.querySelectorAll('.doc-category-btn').forEach(btn => {
+templates/client_portal.html:2097:            btn.addEventListener('click', () => {
+templates/client_portal.html:2098:                document.querySelectorAll('.doc-category-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
+templates/client_portal.html:2099:                btn.style.borderColor = '#4ade80';
+templates/client_portal.html:2100:                btn.style.background = '#dcfce7';
+templates/client_portal.html:2101:                docSelectedCategory = btn.dataset.category;
+templates/client_portal.html:2144:                    <button type="button" onclick="removeDocFile()" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px;">✕</button>
+templates/client_portal.html:2186:                    document.querySelectorAll('.doc-category-btn').forEach(b => { b.style.borderColor = '#e2e8f0'; b.style.background = '#f8fafc'; });
+templates/client_portal.html:2497:                        <div style="background: white; border: 1px solid #e5e7eb; border-left: 4px solid ${color}; border-radius: 8px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer;" onclick="toggleTimelineDetails(this)">
+templates/client_portal.html:2528:            const timelineTab = document.querySelector('[onclick*="timeline"]');

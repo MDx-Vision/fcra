@@ -1,0 +1,242 @@
+templates/contacts.html:1123:                    const response = await fetch('/api/clients/' + clientId + '/documents');
+templates/contacts.html:1180:                const response = await fetch('/api/clients/' + clientId + '/documents');
+templates/contacts.html:1214:                const response = await fetch('/api/clients/' + clientId + '/documents/toggle', {
+templates/contacts.html:1223:                    const docsResponse = await fetch('/api/clients/' + clientId + '/documents');
+templates/contacts.html:1329:                const response = await fetch('/api/clients/' + id + '/details');
+templates/contacts.html:1402:                const response = await fetch('/api/clients/' + currentContactId + '/documents/toggle', {
+templates/contacts.html:1425:            const response = await fetch('/api/clients/' + clientId + '/documents');
+templates/contacts.html:1453:                const response = await fetch(url, {
+templates/contacts.html:1472:                const response = await fetch('/api/clients/' + id + '/status', {
+templates/contacts.html:1495:                const response = await fetch('/api/clients/' + id + '/delete', { method: 'POST' });
+templates/contacts.html:1532:                const response = await fetch('/api/clients/' + currentTaskClientId + '/tasks', {
+templates/contacts.html:1554:                const response = await fetch('/api/clients/' + id + '/notes');
+templates/contacts.html:1577:                const response = await fetch('/api/clients/' + currentNotesClientId + '/notes', {
+templates/contacts.html:1600:                const response = await fetch('/api/clients/' + id + '/documents');
+templates/contacts.html:1657:                const response = await fetch('/api/clients/' + clientId + '/documents/toggle', {
+templates/contacts.html:1667:                    const docsResponse = await fetch('/api/clients/' + clientId + '/documents');
+templates/document_scanner.html:712:                const response = await fetch('/api/scanner/session/start', {
+templates/document_scanner.html:782:                const response = await fetch('/api/scanner/session/add-image', {
+templates/document_scanner.html:829:                await fetch('/api/scanner/session/remove-image', {
+templates/document_scanner.html:855:                const response = await fetch('/api/scanner/session/finalize', {
+templates/affiliates.html:564:                const response = await fetch('/api/affiliates', {
+templates/credit_import.html:578:                const response = await fetch(url, {
+templates/credit_import.html:605:                const response = await fetch(`/api/credit-import/credentials/${id}`, {
+templates/credit_import.html:628:                const response = await fetch(`/api/credit-import/trigger/${clientId}`, {
+templates/credit_import.html:657:                const response = await fetch('/api/credit-import/trigger-all', {
+templates/instant_preview.html:293:                const response = await fetch('/api/instant-preview', {
+templates/escalation_dashboard.html:495:                const response = await fetch(`/api/escalation/recommend/${clientId}`, {
+templates/performance_dashboard.html:719:                    fetch('/api/performance/metrics?period=60'),
+templates/performance_dashboard.html:720:                    fetch('/api/performance/cache-stats'),
+templates/performance_dashboard.html:721:                    fetch('/api/performance/slow-endpoints?threshold=100')
+templates/performance_dashboard.html:839:                const response = await fetch('/api/performance/cache/clear', {
+templates/violation_patterns.html:586:                const response = await fetch('/api/patterns/create', {
+templates/violation_patterns.html:622:                const response = await fetch(`/api/patterns/${patternId}`);
+templates/violation_patterns.html:738:                const response = await fetch(`/api/patterns/${patternId}/generate-packet`, {
+templates/violation_patterns.html:764:                const response = await fetch(`/api/patterns/${currentPatternId}/update`, {
+templates/violation_patterns.html:788:                const response = await fetch(`/api/patterns/${currentPatternId}/update`, {
+templates/violation_patterns.html:810:                const response = await fetch(`/api/patterns/${currentPatternId}/available-violations`);
+templates/violation_patterns.html:868:                const response = await fetch(`/api/patterns/${currentPatternId}/add-instance`, {
+templates/sol_dashboard.html:469:                const response = await fetch('/api/sol/check-deadlines', {
+templates/franchise_dashboard.html:1136:                const response = await fetch('/api/organizations', {
+templates/franchise_dashboard.html:1156:                const response = await fetch(`/api/organizations/${orgId}`);
+templates/franchise_dashboard.html:1173:                const response = await fetch(`/api/franchise/organizations/${orgId}`);
+templates/franchise_dashboard.html:1223:                const response = await fetch(`/api/organizations/${orgId}`, {
+templates/franchise_dashboard.html:1244:                    fetch(`/api/organizations/${orgId}`),
+templates/franchise_dashboard.html:1245:                    fetch(`/api/organizations/${orgId}/members`)
+templates/franchise_dashboard.html:1293:                const response = await fetch(`/api/organizations/${orgId}/members`, {
+templates/franchise_dashboard.html:1317:                const response = await fetch(`/api/organizations/${orgId}/members/${staffId}`, {
+templates/franchise_dashboard.html:1340:                const response = await fetch('/api/transfers', {
+templates/franchise_dashboard.html:1363:                const response = await fetch(`/api/transfers/${transferId}/approve`, {
+templates/franchise_dashboard.html:1388:                const response = await fetch(`/api/franchise/organizations/${orgId}/consolidated-report`);
+templates/furnisher_detail.html:452:                const response = await fetch(`/api/furnishers/${furnisherId}`, {
+templates/task_queue.html:742:                const response = await fetch(url);
+templates/task_queue.html:757:                const response = await fetch('/api/schedules');
+templates/task_queue.html:962:                const response = await fetch('/api/tasks', {
+templates/task_queue.html:990:                const response = await fetch(`/api/tasks/${taskId}`, { method: 'DELETE' });
+templates/task_queue.html:1005:                const response = await fetch(`/api/tasks/${taskId}/retry`, { method: 'POST' });
+templates/task_queue.html:1085:                const response = await fetch(url, {
+templates/task_queue.html:1117:                const response = await fetch(`/api/schedules/${scheduleId}`, { method: 'DELETE' });
+templates/task_queue.html:1132:                const response = await fetch(`/api/schedules/${scheduleId}/run`, { method: 'POST' });
+templates/task_queue.html:1149:                const response = await fetch(`/api/schedules/${scheduleId}/pause`, { method: 'POST' });
+templates/task_queue.html:1164:                const response = await fetch(`/api/schedules/${scheduleId}/resume`, { method: 'POST' });
+templates/task_queue.html:1189:                const response = await fetch('/api/tasks/process', {
+templates/audit_dashboard.html:711:            fetch('/api/audit/logs?' + params.toString())
+templates/audit_dashboard.html:832:            fetch('/api/audit/security?days=7')
+templates/audit_dashboard.html:889:            fetch('/api/audit/export', {
+templates/audit_dashboard.html:921:            fetch(`/api/audit/compliance/${reportType}?days=30`)
+templates/calendar.html:502:            fetch('/api/calendar/stats')
+templates/admin.html:469:            const response = await fetch('/api/credit-report/parse-pdf', {
+templates/admin.html:632:            const response = await fetch('/api/analyze', {
+templates/client_import.html:524:                const response = await fetch('/api/client/import', {
+templates/client_import.html:552:                const response = await fetch('/api/client/import/bulk', {
+templates/frivolousness_tracker.html:1024:                const response = await fetch('/api/frivolousness/add', {
+templates/frivolousness_tracker.html:1048:                const response = await fetch(`/api/frivolousness/${defenseId}`);
+templates/frivolousness_tracker.html:1153:                const response = await fetch(`/api/frivolousness/${currentDefenseId}/update`, {
+templates/frivolousness_tracker.html:1193:                const response = await fetch(`/api/frivolousness/${currentDefenseId}/evidence`, {
+templates/frivolousness_tracker.html:1218:                const response = await fetch(`/api/frivolousness/${currentDefenseId}/evidence/${evidenceId}/verify`, {
+templates/settlements.html:787:            fetch(`/api/settlements/${id}`)
+templates/settlements.html:864:            fetch(`/api/settlements/${currentSettlementId}`, {
+templates/settlements.html:896:            fetch(`/api/settlements/${currentSettlementId}/offer`, {
+templates/settlements.html:931:            fetch(`/api/settlements/${currentSettlementId}/settle`, {
+templates/settlements.html:966:            fetch(`/api/settlements/${currentSettlementId}/payment`, {
+templates/api_management.html:672:                const response = await fetch('/api/keys', {
+templates/api_management.html:706:                const response = await fetch(`/api/keys/${keyId}`, {
+templates/api_management.html:731:                const response = await fetch(`/api/keys/${keyId}/usage?days=30`);
+templates/api_management.html:809:                const response = await fetch('/api/webhooks', {
+templates/api_management.html:835:                const response = await fetch(`/api/webhooks/${webhookId}`, {
+templates/demand_generator.html:265:                const response = await fetch(`/api/generate-demand/${clientId}`, {
+templates/credit_tracker_client.html:245:                const response = await fetch(`/api/credit-score/summary/${clientId}`);
+templates/credit_tracker_client.html:272:                const response = await fetch(`/api/credit-score/projection/${clientId}`);
+templates/credit_tracker_client.html:292:                const response = await fetch(`/api/credit-score/timeline/${clientId}`);
+templates/credit_tracker_client.html:305:                const response = await fetch(`/api/credit-score/history/${clientId}`);
+templates/credit_tracker_client.html:440:                const response = await fetch('/api/credit-score/snapshot', {
+templates/specialty_bureaus.html:768:            fetch(`/api/specialty-bureaus/disputes/${id}`, {
+templates/specialty_bureaus.html:797:            fetch(url, {
+templates/analysis_review.html:423:                const resp = await fetch(`/api/violation/${id}`);
+templates/analysis_review.html:471:                const resp = await fetch(url, {
+templates/analysis_review.html:495:                const resp = await fetch(`/api/violation/${id}`, { method: 'DELETE' });
+templates/analysis_review.html:527:                const standingResp = await fetch(`/api/analysis/${analysisId}/standing`, {
+templates/analysis_review.html:542:                const damagesResp = await fetch(`/api/analysis/${analysisId}/damages`, {
+templates/analysis_review.html:570:                const resp = await fetch(`/api/approve/${analysisId}`, {
+templates/scanned_documents.html:335:                const response = await fetch('/api/scanner/scanned-documents');
+templates/scanned_documents.html:454:                const response = await fetch('/api/cra-response/list');
+templates/scanned_documents.html:572:                const response = await fetch(`/api/cra-response/${responseId}/analyze`, {
+templates/scanned_documents.html:598:                const response = await fetch(`/api/cra-response/${responseId}/analysis`);
+templates/scanned_documents.html:740:                const response = await fetch(`/api/cra-response/${currentResponseId}/apply-analysis`, {
+templates/documents.html:930:                const response = await fetch('/api/clients');
+templates/documents.html:960:                const response = await fetch('/api/client/upload', {
+templates/documents.html:980:                const response = await fetch(`/api/upload/${uploadId}/review`, {
+templates/documents.html:1000:                const response = await fetch(`/api/upload/${uploadId}`, { method: 'DELETE' });
+templates/signature_capture.html:508:                    const response = await fetch('/api/esignature/capture', {
+templates/signups.html:433:                const response = await fetch('/api/signups/mark-contacted', {
+templates/signups.html:464:                const response = await fetch('/api/signups/confirm-payment', {
+templates/api_docs.html:1091:    <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">`${BASE_URL}${endpoint}`</span>, {
+templates/suspense_accounts.html:794:                const response = await fetch('/api/mortgage-ledger/upload', {
+templates/suspense_accounts.html:821:                const response = await fetch(`/api/suspense-accounts/analyze/${clientId}`, {
+templates/suspense_accounts.html:841:                const response = await fetch(`/api/suspense-accounts/${id}`);
+templates/suspense_accounts.html:954:                const response = await fetch(`/api/suspense-accounts/${id}/create-dispute`, {
+templates/client_signup.html:1165:                const response = await fetch('/api/settings/get');
+templates/client_signup.html:1403:                const draftResponse = await fetch('/api/client/signup/draft', {
+templates/client_signup.html:1421:                    const completeResponse = await fetch('/api/client/signup/complete-free', {
+templates/client_signup.html:1438:                    const completeResponse = await fetch('/api/client/signup/complete-manual', {
+templates/client_signup.html:1458:                    const checkoutResponse = await fetch('/api/stripe/checkout-session', {
+templates/chexsystems.html:719:            fetch('/api/chexsystems/disputes', {
+templates/sops.html:509:            fetch(`/api/sops/${sopId}`)
+templates/integrations_hub.html:660:                const response = await fetch(`/api/integrations/${service}/configure`, {
+templates/integrations_hub.html:688:                const response = await fetch(`/api/integrations/${service}/test`, {
+templates/integrations_hub.html:721:                const response = await fetch('/api/integrations/status');
+templates/dashboard.html:981:                const response = await fetch('/api/intake', {
+templates/admin_simple.html:67:    fetch('/api/analyze', {
+templates/email_settings.html:835:                const response = await fetch('/api/email/settings', {
+templates/email_settings.html:866:                const response = await fetch('/api/email/test', {
+templates/email_settings.html:978:                const response = await fetch(`/api/email-templates/${templateType}`);
+templates/email_settings.html:1028:                    fetch(`/api/email-templates/${templateType}`, {
+templates/email_settings.html:1069:                const response = await fetch(`/api/email-templates/${templateType}/reset`, {
+templates/email_settings.html:1100:                fetch(`/api/email-templates/${templateType}/preview`, {
+templates/litigation_review.html:122:    const resp = await fetch("/api/analysis/" + id + "/data");
+templates/litigation_review.html:144:      const resp = await fetch("/api/approve/" + id, {
+templates/triage_dashboard.html:722:                const response = await fetch('/api/triage/' + triageId + '/review', {
+templates/whitelabel_admin.html:1091:                    const response = await fetch(url);
+templates/whitelabel_admin.html:1119:                const response = await fetch(`/api/whitelabel/${configId}`);
+templates/whitelabel_admin.html:1178:                const response = await fetch(`/api/whitelabel/${configId}`, {
+templates/whitelabel_admin.html:1206:                const response = await fetch(url, {
+templates/white_label_dashboard.html:1186:                const response = await fetch(url, {
+templates/white_label_dashboard.html:1209:                    const response = await fetch(`/api/tenants/${tenantId}`, {
+templates/white_label_dashboard.html:1239:                const response = await fetch(`/api/tenants/${tenantId}/users`);
+templates/white_label_dashboard.html:1280:                const response = await fetch(`/api/tenants/${currentTenantId}/users`, {
+templates/white_label_dashboard.html:1304:                const response = await fetch(`/api/tenants/${currentTenantId}/users/${staffId}`, {
+templates/white_label_dashboard.html:1326:                const response = await fetch(`/api/tenants/${tenantId}/stats`);
+templates/white_label_dashboard.html:1376:                const response = await fetch(`/api/tenants/${currentTenantId}/regenerate-api-key`, {
+templates/predictive_analytics.html:753:            fetch(`/api/analytics/attorney-leaderboard?metric=${metric}`)
+templates/ml_insights.html:609:        fetch('/api/ml/outcomes', {
+templates/ml_insights.html:631:        fetch('/api/ml/refresh-patterns', {method: 'POST'})
+templates/case_law.html:697:            fetch(`/api/case-law/${id}`)
+templates/case_law.html:778:            fetch(`/api/case-law/format/${id}?format=${format}`)
+templates/case_law.html:795:            fetch(`/api/case-law/format/${currentCase.id}?format=${format}`)
+templates/case_law.html:833:            fetch('/api/case-law', {
+templates/case_law.html:853:            fetch(`/api/case-law/${currentCase.id}`, {method: 'DELETE'})
+templates/case_law.html:868:            fetch('/api/case-law/populate', {method: 'POST'})
+templates/portal_login.html:401:                const response = await fetch('/api/portal/forgot-password', {
+templates/portal_login.html:453:                const response = await fetch('/api/portal/reset-password', {
+templates/affiliate_detail.html:820:                const response = await fetch('/api/affiliates/' + affiliateId + '/payout', {
+templates/affiliate_detail.html:856:                const response = await fetch('/api/affiliates/' + affiliateId, {
+templates/credit_tracker.html:260:                const response = await fetch('/api/credit-score/item-types');
+templates/credit_tracker.html:369:                const response = await fetch('/api/credit-score/estimate-detailed', {
+templates/credit_tracker.html:428:                const response = await fetch('/api/clients');
+templates/credit_tracker.html:450:                    const response = await fetch(`/api/credit-score/summary/${client.id}`);
+templates/credit_tracker.html:525:                const response = await fetch('/api/credit-score/estimate', {
+templates/cfpb_generator.html:708:                fetch(`/api/cases?client_id=${clientId}`)
+templates/cfpb_generator.html:833:            fetch('/api/cfpb/generate', {
+templates/cfpb_generator.html:884:            fetch(`/api/cfpb/complaints/${selectedData.complaintId}`, {
+templates/cfpb_generator.html:924:            fetch(`/api/cfpb/complaints/{{ complaint.id }}`, {
+templates/cfpb_generator.html:947:            fetch(`/api/cfpb/complaints/{{ complaint.id }}/pdf`, {
+templates/cfpb_generator.html:971:            fetch(`/api/cfpb/complaints/{{ complaint.id }}/submit`, {
+templates/cfpb_generator.html:1002:            fetch(`/api/cfpb/complaints/{{ complaint.id }}/response`, {
+templates/analytics.html:821:                const response = await fetch('/api/settlements/stats');
+templates/automation_tools.html:1623:                const response = await fetch('/api/dispute/round-summary');
+templates/automation_tools.html:1736:                const response = await fetch('/api/dispute/advance-round', {
+templates/automation_tools.html:1776:                const response = await fetch('/api/dispute/advance-round', {
+templates/automation_tools.html:1803:                const response = await fetch(`/api/dispute/client/${clientId}/round-history`);
+templates/automation_tools.html:1924:                const response = await fetch('/api/freeze-letters/generate', {
+templates/automation_tools.html:1951:                const response = await fetch('/api/freeze-letters/recent');
+templates/automation_tools.html:1987:                const response = await fetch('/api/validation-letters/agencies');
+templates/automation_tools.html:2022:                    const response = await fetch(`/api/cases/client/${clientId}`);
+templates/automation_tools.html:2062:                const response = await fetch('/api/validation-letters/single', {
+templates/automation_tools.html:2106:                const response = await fetch(`/api/validation-letters/auto-generate/${caseId}`, {
+templates/automation_tools.html:2167:                const response = await fetch('/api/deadlines/upcoming');
+templates/automation_tools.html:2236:                const response = await fetch(`/api/deadlines/${id}/complete`, { method: 'POST' });
+templates/automation_tools.html:2249:                const response = await fetch(`/api/deadlines/${id}/extend`, {
+templates/automation_tools.html:2314:                const response = await fetch('/api/settlement/calculate', {
+templates/automation_tools.html:3295:                const response = await fetch('/api/advanced-letters/generate', {
+templates/letter_queue.html:512:                const response = await fetch(url);
+templates/letter_queue.html:622:                const response = await fetch(`/api/letter-queue/${id}/approve`, {
+templates/letter_queue.html:643:                const response = await fetch('/api/letter-queue/bulk-approve', {
+templates/letter_queue.html:681:                const response = await fetch(`/api/letter-queue/${currentDismissId}/dismiss`, {
+templates/letter_queue.html:702:                const response = await fetch(`/api/letter-queue/${id}/generate`, {
+templates/letter_queue.html:726:                const response = await fetch('/api/letter-queue/run-triggers', {
+templates/furnishers.html:348:                const response = await fetch('/api/furnishers', {
+templates/furnishers.html:372:                const response = await fetch('/api/furnishers/populate', {
+templates/workflow_triggers.html:908:                const response = await fetch(url, {
+templates/workflow_triggers.html:928:                const response = await fetch(`/api/workflows/${triggerId}/toggle`, { method: 'POST' });
+templates/workflow_triggers.html:942:                const response = await fetch(`/api/workflows/${triggerId}`);
+templates/workflow_triggers.html:985:                const response = await fetch(`/api/workflows/${triggerId}`, { method: 'DELETE' });
+templates/workflow_triggers.html:1021:                const response = await fetch(`/api/workflows/${currentTriggerId}/test`, {
+templates/workflow_triggers.html:1057:                const response = await fetch(`/api/workflows/${triggerId}/history`);
+templates/settings.html:661:                const response = await fetch('/api/settings/save', {
+templates/billing_management.html:557:                const response = await fetch('/api/billing/test-connection');
+templates/billing_management.html:594:                const response = await fetch('/api/billing/plans', {
+templates/billing_management.html:626:                const response = await fetch('/api/billing/plans/initialize', {
+templates/billing_management.html:651:                const response = await fetch(`/api/billing/plans/${planId}`, {
+templates/billing_management.html:676:                const response = await fetch(`/api/billing/portal/${clientId}`);
+templates/billing_management.html:697:                const response = await fetch(`/api/billing/cancel/${clientId}`, {
+templates/case_detail.html:345:                const response = await fetch(`/api/client/${clientId}/timeline`);
+templates/case_detail.html:435:                const response = await fetch(`/api/case/${caseId}/settlement`);
+templates/case_detail.html:529:                const response = await fetch('/api/settlements', {
+templates/case_detail.html:678:            fetch(`/api/settlements/${settlementId}/offer`, {
+templates/case_detail.html:698:            fetch(`/api/settlements/${settlementId}/settle`, {
+templates/case_detail.html:718:            fetch(`/api/settlements/${settlementId}/payment`, {
+templates/case_detail.html:756:                const response = await fetch(`/api/escalation/recommendations/${clientId}`);
+templates/case_detail.html:820:                const response = await fetch(`/api/escalation/recommend/${clientId}`, {
+templates/case_detail.html:842:                const response = await fetch(`/api/escalation/${recId}/apply`, { method: 'PUT' });
+templates/case_detail.html:860:                const response = await fetch(`/api/escalation/${recId}/outcome`, {
+templates/case_detail.html:883:                const response = await fetch(`/api/sol/client/${clientId}`);
+templates/case_detail.html:972:                const response = await fetch('/api/sol/calculate', {
+templates/staff_management.html:613:                const response = await fetch('/api/staff/reset-password', {
+templates/staff_management.html:639:                const response = await fetch('/api/staff/toggle-status', {
+templates/sms_settings.html:566:                const response = await fetch('/api/sms/test', {
+templates/sms_settings.html:600:                const response = await fetch('/api/sms/settings', {
+templates/client_portal.html:1599:                const response = await fetch('/api/portal/set-password', {
+templates/client_portal.html:1670:                const response = await fetch(`/api/portal/${portalToken}/avatar`, {
+templates/client_portal.html:1691:                const response = await fetch(`/api/portal/${portalToken}/avatar`, {
+templates/client_portal.html:1736:                const response = await fetch('/api/referral', {
+templates/client_portal.html:1773:                const response = await fetch('/api/cra-response/upload', {
+templates/client_portal.html:1814:                const response = await fetch('/api/dispute-items/batch-update', {
+templates/client_portal.html:1853:                const response = await fetch('/api/portal/{{ case.portal_token if case else "" }}/upload', {
+templates/client_portal.html:1895:                const response = await fetch('/api/secondary-freezes/batch-update', {
+templates/client_portal.html:2177:                const response = await fetch('/api/portal/' + portalToken + '/upload', {
+templates/client_portal.html:2200:                const response = await fetch('/api/portal/' + portalToken + '/uploads');
+templates/client_portal.html:2251:                const response = await fetch(`/api/credit-score/summary/${clientId}`);
+templates/client_portal.html:2307:                const response = await fetch(`/api/credit-score/projection/${clientId}`);
+templates/client_portal.html:2349:                const response = await fetch(`/api/credit-score/timeline/${clientId}`);
+templates/client_portal.html:2433:                const response = await fetch(`/api/client/${clientId}/timeline`);
+templates/client_portal.html:2542:                const response = await fetch(`/api/client/${clientId}/roi-summary`);

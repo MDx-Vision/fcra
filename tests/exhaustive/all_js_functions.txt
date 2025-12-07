@@ -1,0 +1,736 @@
+templates/contacts.html:1107:        document.addEventListener('DOMContentLoaded', function() {
+templates/contacts.html:1111:        document.addEventListener('click', function(e) {
+templates/contacts.html:1118:        async function loadAllDocumentStatuses() {
+templates/contacts.html:1134:        function updateDocIcons(clientId, docs) {
+templates/contacts.html:1160:        async function toggleDocsDropdown(event, clientId) {
+templates/contacts.html:1177:        async function loadDocsDropdownContent(clientId) {
+templates/contacts.html:1212:        async function toggleDocFromDropdown(clientId, docType, element) {
+templates/contacts.html:1234:        function openUploadModal(clientId) {
+templates/contacts.html:1242:        function searchContacts() {
+templates/contacts.html:1251:        function changeRowsPerPage() {
+templates/contacts.html:1259:        function toggleSelectAll(checkbox) {
+templates/contacts.html:1265:        function selectAllContacts() {
+templates/contacts.html:1271:        function bulkUpdateContacts() {
+templates/contacts.html:1280:        function goToInvoices() {
+templates/contacts.html:1284:        function openMyNotes() {
+templates/contacts.html:1288:        function closeModal(modalId) {
+templates/contacts.html:1292:        function closeModalOnOverlay(event, modalId) {
+templates/contacts.html:1298:        function openAddContactModal() {
+templates/contacts.html:1326:        async function openContactModal(id) {
+templates/contacts.html:1365:        function renderDocChecklist(docs) {
+templates/contacts.html:1393:        async function toggleDocInModal(docType, element) {
+templates/contacts.html:1424:        async function getDocumentsForClient(clientId) {
+templates/contacts.html:1430:        async function saveContact() {
+templates/contacts.html:1470:        async function toggleMark(id, markNum, el) {
+templates/contacts.html:1492:        async function deleteContact(id) {
+templates/contacts.html:1507:        function openTaskModal(id) {
+templates/contacts.html:1518:        async function saveTask() {
+templates/contacts.html:1549:        async function openNotesModal(id) {
+templates/contacts.html:1570:        async function saveNote() {
+templates/contacts.html:1594:        async function openDocsModal(id) {
+templates/contacts.html:1649:        async function toggleDocInDocsModal(docType, clientId, element) {
+templates/contacts.html:1691:        function chargeClient(id) {
+templates/contacts.html:1695:        function generatePlan(id) {
+templates/contacts.html:1700:        function openWorkflow(id) {
+templates/contacts.html:1704:        function openDisputeCenter(id) {
+templates/contacts.html:1708:        function viewPortal(token) {
+templates/document_scanner.html:617:            card.addEventListener('click', () => {
+templates/document_scanner.html:627:            card.addEventListener('click', () => {
+templates/document_scanner.html:637:        uploadZone.addEventListener('dragover', (e) => {
+templates/document_scanner.html:641:        uploadZone.addEventListener('dragleave', () => {
+templates/document_scanner.html:644:        uploadZone.addEventListener('drop', (e) => {
+templates/document_scanner.html:650:        function updateStepIndicator() {
+templates/document_scanner.html:659:        async function goNext() {
+templates/document_scanner.html:683:        function goBack() {
+templates/document_scanner.html:710:        async function startSession() {
+templates/document_scanner.html:730:        async function startCamera() {
+templates/document_scanner.html:742:        function stopCamera() {
+templates/document_scanner.html:749:        async function capturePhoto() {
+templates/document_scanner.html:764:        function handleFileSelect(event) {
+templates/document_scanner.html:768:        async function handleFiles(files) {
+templates/document_scanner.html:776:        async function uploadImage(blob, filename) {
+templates/document_scanner.html:808:        function renderPageQueue() {
+templates/document_scanner.html:821:        function updatePageCount() {
+templates/document_scanner.html:827:        async function removePage(pageNumber) {
+templates/document_scanner.html:847:        async function processDocument() {
+templates/document_scanner.html:877:        function showResults(data) {
+templates/document_scanner.html:912:        function startNewScan() {
+templates/document_scanner.html:936:        function addMorePages() {
+templates/affiliates.html:506:        function openAddModal() {
+templates/affiliates.html:510:        function closeModal(id) {
+templates/affiliates.html:514:        function viewAffiliate(id) {
+templates/affiliates.html:518:        function editAffiliate(id) {
+templates/affiliates.html:522:        function filterAffiliates(status) {
+templates/affiliates.html:536:        function searchAffiliates() {
+templates/affiliates.html:545:        async function submitAddAffiliate(e) {
+templates/credit_import.html:503:        function showAlert(message, type) {
+templates/credit_import.html:513:        function openAddModal() {
+templates/credit_import.html:521:        function openEditModal(id) {
+templates/credit_import.html:537:        function closeModal() {
+templates/credit_import.html:541:        async function saveCredential(event) {
+templates/credit_import.html:601:        async function deleteCredential(id) {
+templates/credit_import.html:621:        async function triggerImport(clientId) {
+templates/credit_import.html:650:        async function triggerAllDue() {
+templates/credit_import.html:676:        document.getElementById('credentialModal').addEventListener('click', function(e) {
+templates/credit_import.html:680:        document.addEventListener('keydown', function(e) {
+templates/instant_preview.html:240:        dropZone.addEventListener('click', () => fileInput.click());
+templates/instant_preview.html:242:        dropZone.addEventListener('dragover', (e) => {
+templates/instant_preview.html:247:        dropZone.addEventListener('dragleave', () => {
+templates/instant_preview.html:251:        dropZone.addEventListener('drop', (e) => {
+templates/instant_preview.html:260:        fileInput.addEventListener('change', (e) => {
+templates/instant_preview.html:266:        function handleFile(file) {
+templates/instant_preview.html:273:        analyzeBtn.addEventListener('click', async () => {
+templates/instant_preview.html:310:        function showResults(data) {
+templates/instant_preview.html:358:        function showError(message) {
+templates/escalation_dashboard.html:493:        async function generateRecommendation(clientId) {
+templates/performance_dashboard.html:629:        document.addEventListener('DOMContentLoaded', function() {
+templates/performance_dashboard.html:634:        function initCharts() {
+templates/performance_dashboard.html:710:        function startAutoRefresh() {
+templates/performance_dashboard.html:714:        async function refreshData() {
+templates/performance_dashboard.html:750:        function updateMetrics(summary) {
+templates/performance_dashboard.html:770:        function updateCacheStats(stats) {
+templates/performance_dashboard.html:789:        function updateSlowEndpoints(endpoints) {
+templates/performance_dashboard.html:825:        function showClearCacheModal() {
+templates/performance_dashboard.html:829:        function hideClearCacheModal() {
+templates/performance_dashboard.html:834:        async function clearCache(event) {
+templates/violation_patterns.html:549:        function showAlert(message, type = 'success') {
+templates/violation_patterns.html:555:        function openCreateModal() {
+templates/violation_patterns.html:559:        function closeCreateModal() {
+templates/violation_patterns.html:564:        function toggleTargetFields(value) {
+templates/violation_patterns.html:580:        async function createPattern() {
+templates/violation_patterns.html:605:        function closeDetailModal() {
+templates/violation_patterns.html:610:        function switchTab(tabName) {
+templates/violation_patterns.html:618:        async function viewPattern(patternId) {
+templates/violation_patterns.html:736:        async function generatePacket(patternId) {
+templates/violation_patterns.html:754:        function generatePacketFromModal() {
+templates/violation_patterns.html:760:        async function updatePatternStatus(status) {
+templates/violation_patterns.html:782:        async function savePatternSettings() {
+templates/violation_patterns.html:806:        async function openAddViolationModal() {
+templates/violation_patterns.html:822:        function closeAddViolationModal() {
+templates/violation_patterns.html:828:        function renderAvailableViolations(violations) {
+templates/violation_patterns.html:856:        function searchViolations() {
+templates/violation_patterns.html:866:        async function linkViolation(violationId) {
+templates/violation_patterns.html:887:        function filterTable() {
+templates/sol_dashboard.html:459:        function showTab(tabName) {
+templates/sol_dashboard.html:467:        async function checkDeadlines() {
+templates/franchise_dashboard.html:1102:            tab.addEventListener('click', function() {
+templates/franchise_dashboard.html:1111:        function openModal(id) {
+templates/franchise_dashboard.html:1115:        function closeModal(id) {
+templates/franchise_dashboard.html:1120:        function toggleOrgChildren(toggle) {
+templates/franchise_dashboard.html:1129:        async function createOrganization(event) {
+templates/franchise_dashboard.html:1154:        async function viewOrganization(orgId) {
+templates/franchise_dashboard.html:1171:        async function editOrganization(orgId) {
+templates/franchise_dashboard.html:1214:        async function updateOrganization(event) {
+templates/franchise_dashboard.html:1241:        async function manageMembers(orgId) {
+templates/franchise_dashboard.html:1284:        async function addMember(event) {
+templates/franchise_dashboard.html:1313:        async function removeMember(orgId, staffId) {
+templates/franchise_dashboard.html:1333:        async function createTransfer(event) {
+templates/franchise_dashboard.html:1358:        async function approveTransfer(transferId, approve) {
+templates/franchise_dashboard.html:1381:        async function loadRevenueReport(period) {
+templates/franchise_dashboard.html:1386:        async function viewConsolidatedReport(orgId) {
+templates/franchise_dashboard.html:1432:            overlay.addEventListener('click', function(e) {
+templates/furnisher_detail.html:423:        function openEditModal() {
+templates/furnisher_detail.html:427:        function closeEditModal() {
+templates/furnisher_detail.html:431:        async function saveFurnisher() {
+templates/knowledge_base.html:1341:            tab.addEventListener('click', () => {
+templates/knowledge_base.html:1364:        searchInput.addEventListener('input', (e) => {
+templates/knowledge_base.html:1389:        searchInput.addEventListener('blur', () => {
+templates/task_queue.html:725:        document.addEventListener('DOMContentLoaded', () => {
+templates/task_queue.html:730:        function switchTab(tab) {
+templates/task_queue.html:738:        async function loadTasks() {
+templates/task_queue.html:755:        async function loadSchedules() {
+templates/task_queue.html:771:        function updateStats(stats) {
+templates/task_queue.html:783:        function renderTasks() {
+templates/task_queue.html:793:        function renderActiveTable(tasks) {
+templates/task_queue.html:820:        function renderCompletedTable(tasks) {
+templates/task_queue.html:846:        function renderFailedTable(tasks) {
+templates/task_queue.html:872:        function renderSchedules() {
+templates/task_queue.html:904:        function getPriorityClass(priority) {
+templates/task_queue.html:910:        function formatTime(isoString) {
+templates/task_queue.html:916:        function calculateDuration(start, end) {
+templates/task_queue.html:927:        function truncate(str, len) {
+templates/task_queue.html:932:        function escapeHtml(text) {
+templates/task_queue.html:939:        function refreshData() {
+templates/task_queue.html:944:        function openTaskModal() {
+templates/task_queue.html:948:        function closeTaskModal() {
+templates/task_queue.html:953:        async function createTask() {
+templates/task_queue.html:986:        async function cancelTask(taskId) {
+templates/task_queue.html:1003:        async function retryTask(taskId) {
+templates/task_queue.html:1019:        function viewTaskDetails(taskId) {
+templates/task_queue.html:1026:        function openScheduleModal(scheduleId = null) {
+templates/task_queue.html:1043:        function closeScheduleModal() {
+templates/task_queue.html:1049:        function setCronPreset(expression) {
+templates/task_queue.html:1061:        function updateCronExpression() {
+templates/task_queue.html:1072:        async function saveSchedule() {
+templates/task_queue.html:1109:        function editSchedule(scheduleId) {
+templates/task_queue.html:1113:        async function deleteSchedule(scheduleId) {
+templates/task_queue.html:1130:        async function runScheduleNow(scheduleId) {
+templates/task_queue.html:1147:        async function pauseSchedule(scheduleId) {
+templates/task_queue.html:1162:        async function resumeSchedule(scheduleId) {
+templates/task_queue.html:1177:        function openProcessModal() {
+templates/task_queue.html:1181:        function closeProcessModal() {
+templates/task_queue.html:1185:        async function processTasks() {
+templates/audit_dashboard.html:677:        document.addEventListener('DOMContentLoaded', function() {
+templates/audit_dashboard.html:686:        function loadLogs() {
+templates/audit_dashboard.html:727:        function renderLogs(logs) {
+templates/audit_dashboard.html:791:        function updatePagination(page, pages, total) {
+templates/audit_dashboard.html:807:        function changePage(delta) {
+templates/audit_dashboard.html:814:        function applyFilters() {
+templates/audit_dashboard.html:819:        function debounceSearch() {
+templates/audit_dashboard.html:826:        function refreshLogs() {
+templates/audit_dashboard.html:831:        function loadSecurityEvents() {
+templates/audit_dashboard.html:841:        function renderSecurityEvents(events) {
+templates/audit_dashboard.html:869:        function showExportModal() {
+templates/audit_dashboard.html:873:        function closeModal(modalId) {
+templates/audit_dashboard.html:877:        function exportLogs(format) {
+templates/audit_dashboard.html:912:        function generateReport(reportType) {
+templates/audit_dashboard.html:935:        function renderReport(report, reportType) {
+templates/audit_dashboard.html:1050:        function printReport() {
+templates/calendar.html:496:        document.addEventListener('DOMContentLoaded', function() {
+templates/calendar.html:501:        function loadStats() {
+templates/calendar.html:515:        function initCalendar() {
+templates/calendar.html:540:        function applyFilters() {
+templates/calendar.html:555:        function clearFilters() {
+templates/calendar.html:564:        function showDeadlineDetails(event) {
+templates/calendar.html:591:        function closeModal() {
+templates/calendar.html:595:        document.getElementById('deadlineModal').addEventListener('click', function(e) {
+templates/calendar.html:601:        document.addEventListener('keydown', function(e) {
+templates/admin.html:403:    pdfDropZone.addEventListener('click', () => pdfFileInput.click());
+templates/admin.html:405:    pdfDropZone.addEventListener('dragover', (e) => {
+templates/admin.html:410:    pdfDropZone.addEventListener('dragleave', () => {
+templates/admin.html:414:    pdfDropZone.addEventListener('drop', (e) => {
+templates/admin.html:425:    pdfFileInput.addEventListener('change', (e) => {
+templates/admin.html:431:    function handleFileSelect(file) {
+templates/admin.html:447:    function formatFileSize(bytes) {
+templates/admin.html:498:    function displayParsedPreview(data) {
+templates/admin.html:587:    function showStatus(msg, type) {
+templates/admin.html:592:    form.addEventListener('submit', async function(e) {
+templates/client_import.html:481:        function selectImportType(type) {
+templates/client_import.html:494:        document.getElementById('phone')?.addEventListener('input', function(e) {
+templates/client_import.html:499:        document.getElementById('singleImportForm')?.addEventListener('submit', async function(e) {
+templates/client_import.html:544:        document.getElementById('csvUpload')?.addEventListener('change', async function(e) {
+templates/frivolousness_tracker.html:969:        function openAddModal() {
+templates/frivolousness_tracker.html:974:        function closeModal(id) {
+templates/frivolousness_tracker.html:978:        function showAlert(message, type = 'success') {
+templates/frivolousness_tracker.html:988:        function searchCases() {
+templates/frivolousness_tracker.html:1003:        async function submitAddForm(e) {
+templates/frivolousness_tracker.html:1044:        async function viewCase(defenseId) {
+templates/frivolousness_tracker.html:1063:        function populateViewModal(defense) {
+templates/frivolousness_tracker.html:1127:        function switchTab(tabName) {
+templates/frivolousness_tracker.html:1135:        async function saveCase() {
+templates/frivolousness_tracker.html:1173:        function uploadEvidence(defenseId) {
+templates/frivolousness_tracker.html:1180:        async function handleEvidenceUpload(input) {
+templates/frivolousness_tracker.html:1214:        async function verifyEvidence(evidenceId) {
+templates/settlements.html:754:        function filterByStatus(status) {
+templates/settlements.html:761:        function applyFilters() {
+templates/settlements.html:777:        function clearFilters() {
+templates/settlements.html:785:        function openSettlementModal(id) {
+templates/settlements.html:848:        function closeModal(id) {
+templates/settlements.html:853:        function saveSettlement() {
+templates/settlements.html:880:        function openOfferModal(id) {
+templates/settlements.html:887:        function submitOffer() {
+templates/settlements.html:915:        function openSettleModal(id) {
+templates/settlements.html:922:        function submitSettle() {
+templates/settlements.html:950:        function openPaymentModal(id) {
+templates/settlements.html:957:        function submitPayment() {
+templates/api_management.html:636:        function openModal(id) {
+templates/api_management.html:640:        function closeModal(id) {
+templates/api_management.html:644:        function switchTab(tab) {
+templates/api_management.html:652:        async function createApiKey(e) {
+templates/api_management.html:693:        function copyApiKey() {
+templates/api_management.html:700:        async function revokeKey(keyId, keyName) {
+templates/api_management.html:722:        async function viewKeyUsage(keyId) {
+templates/api_management.html:790:        async function createWebhook(e) {
+templates/api_management.html:829:        async function deleteWebhook(webhookId, webhookName) {
+templates/demand_generator.html:220:        clientSearch.addEventListener('input', (e) => {
+templates/demand_generator.html:229:            item.addEventListener('click', () => {
+templates/demand_generator.html:241:        generateBtn.addEventListener('click', async () => {
+templates/demand_generator.html:305:        document.getElementById('copyBtn').addEventListener('click', () => {
+templates/credit_tracker_client.html:234:        async function loadData() {
+templates/credit_tracker_client.html:243:        async function loadSummary() {
+templates/credit_tracker_client.html:270:        async function loadProjection() {
+templates/credit_tracker_client.html:290:        async function loadTimeline() {
+templates/credit_tracker_client.html:303:        async function loadHistory() {
+templates/credit_tracker_client.html:337:        function formatMilestone(milestone) {
+templates/credit_tracker_client.html:354:        function renderChart(timeline) {
+templates/credit_tracker_client.html:424:        async function saveSnapshot() {
+templates/specialty_bureaus.html:702:        function openNewDisputeModal(bureau = null) {
+templates/specialty_bureaus.html:713:        function closeModal() {
+templates/specialty_bureaus.html:719:        function filterByClient(clientId) {
+templates/specialty_bureaus.html:729:        function filterByBureau(bureau) {
+templates/specialty_bureaus.html:739:        function editDispute(id) {
+templates/specialty_bureaus.html:765:        function deleteDispute(id) {
+templates/specialty_bureaus.html:784:        function submitDispute(e) {
+templates/specialty_bureaus.html:817:        document.getElementById('disputeModal').addEventListener('click', function(e) {
+templates/analysis_review.html:393:        function showTab(tabId) {
+templates/analysis_review.html:401:        function showAlert(message, type = 'success') {
+templates/analysis_review.html:412:        function openAddViolationModal() {
+templates/analysis_review.html:419:        async function openEditViolationModal(id) {
+templates/analysis_review.html:446:        function closeViolationModal() {
+templates/analysis_review.html:450:        document.getElementById('violationForm').addEventListener('submit', async function(e) {
+templates/analysis_review.html:491:        async function deleteViolation(id) {
+templates/analysis_review.html:509:        async function saveAllChanges() {
+templates/analysis_review.html:562:        async function approveAnalysis() {
+templates/analysis_review.html:593:            cb.addEventListener('change', function() {
+templates/scanned_documents.html:333:        async function loadDocuments() {
+templates/scanned_documents.html:349:        function updateStats(documents) {
+templates/scanned_documents.html:362:        function renderDocuments(documents) {
+templates/scanned_documents.html:432:        function escapeHtml(text) {
+templates/scanned_documents.html:438:        function showError(message) {
+templates/scanned_documents.html:452:        async function loadCRAResponses() {
+templates/scanned_documents.html:472:        function updateCRAStats(responses) {
+templates/scanned_documents.html:486:        function renderCRAResponses(responses) {
+templates/scanned_documents.html:567:        async function analyzeResponse(responseId) {
+templates/scanned_documents.html:593:        async function viewAnalysis(responseId) {
+templates/scanned_documents.html:615:        function reviewAnalysis(responseId) {
+templates/scanned_documents.html:619:        function showAnalysisModal(data, isReview = false) {
+templates/scanned_documents.html:720:        document.getElementById('applyAnalysisBtn').addEventListener('click', async function() {
+templates/scanned_documents.html:765:        function showSpinner(text) {
+templates/scanned_documents.html:770:        function hideSpinner() {
+templates/documents.html:754:        function openUploadModal() {
+templates/documents.html:760:        function closeUploadModal() {
+templates/documents.html:765:        function resetForm() {
+templates/documents.html:775:        function updateStepIndicators() {
+templates/documents.html:784:        function showStep(step) {
+templates/documents.html:792:        function nextStep() {
+templates/documents.html:812:        function prevStep() {
+templates/documents.html:820:        function populateTypes() {
+templates/documents.html:828:                btn.addEventListener('click', () => {
+templates/documents.html:837:        function populateDetails() {
+templates/documents.html:928:        async function loadClients() {
+templates/documents.html:944:        async function submitUpload() {
+templates/documents.html:978:        async function markReviewed(uploadId) {
+templates/documents.html:996:        async function deleteUpload(uploadId) {
+templates/documents.html:1013:            btn.addEventListener('click', () => {
+templates/documents.html:1024:        dropzone.addEventListener('click', () => fileInput.click());
+templates/documents.html:1025:        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+templates/documents.html:1026:        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+templates/documents.html:1027:        dropzone.addEventListener('drop', (e) => {
+templates/documents.html:1036:        fileInput.addEventListener('change', (e) => {
+templates/documents.html:1042:        function showFilePreview(file) {
+templates/documents.html:1061:        function removeFile() {
+templates/signature_capture.html:393:            function resizeCanvas() {
+templates/signature_capture.html:407:            function getPosition(e) {
+templates/signature_capture.html:425:            function startDrawing(e) {
+templates/signature_capture.html:435:            function draw(e) {
+templates/signature_capture.html:455:            function stopDrawing(e) {
+templates/signature_capture.html:463:            function clearCanvas() {
+templates/signature_capture.html:471:            function showError(message) {
+templates/signature_capture.html:476:            function hideError() {
+templates/signature_capture.html:480:            function setLoading(loading) {
+templates/signature_capture.html:494:            function showSuccess() {
+templates/signature_capture.html:499:            async function submitSignature() {
+templates/signature_capture.html:534:            canvas.addEventListener('mousedown', startDrawing);
+templates/signature_capture.html:535:            canvas.addEventListener('mousemove', draw);
+templates/signature_capture.html:536:            canvas.addEventListener('mouseup', stopDrawing);
+templates/signature_capture.html:537:            canvas.addEventListener('mouseleave', stopDrawing);
+templates/signature_capture.html:539:            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+templates/signature_capture.html:540:            canvas.addEventListener('touchmove', draw, { passive: false });
+templates/signature_capture.html:541:            canvas.addEventListener('touchend', stopDrawing, { passive: false });
+templates/signature_capture.html:542:            canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+templates/signature_capture.html:544:            clearBtn.addEventListener('click', clearCanvas);
+templates/signature_capture.html:545:            signBtn.addEventListener('click', submitSignature);
+templates/signature_capture.html:547:            window.addEventListener('resize', resizeCanvas);
+templates/signups.html:421:        function searchClients() {
+templates/signups.html:431:        async function markContacted(type, id, btn) {
+templates/signups.html:458:        async function confirmPayment(clientId, btn) {
+templates/api_docs.html:1089:<span class="comment">// Helper function for API calls</span>
+templates/api_docs.html:1183:            anchor.addEventListener('click', function (e) {
+templates/includes/dashboard_sidebar.html:293:    function getSavedState() {
+templates/includes/dashboard_sidebar.html:302:    function saveState(state) {
+templates/includes/dashboard_sidebar.html:310:    function toggleSection(section) {
+templates/includes/dashboard_sidebar.html:325:    function initSidebar() {
+templates/includes/dashboard_sidebar.html:333:        sidebarNav.addEventListener('click', function(e) {
+templates/includes/dashboard_sidebar.html:379:        document.addEventListener('DOMContentLoaded', initSidebar);
+templates/suspense_accounts.html:716:        function showAlert(type, message) {
+templates/suspense_accounts.html:725:        function filterTable() {
+templates/suspense_accounts.html:734:        function openUploadModal() {
+templates/suspense_accounts.html:738:        function openAnalyzeModal() {
+templates/suspense_accounts.html:742:        function closeModal(id) {
+templates/suspense_accounts.html:746:        function handleFileSelect(input) {
+templates/suspense_accounts.html:756:            uploadZone.addEventListener('dragover', (e) => {
+templates/suspense_accounts.html:760:            uploadZone.addEventListener('dragleave', () => {
+templates/suspense_accounts.html:763:            uploadZone.addEventListener('drop', (e) => {
+templates/suspense_accounts.html:774:        async function submitUpload(e) {
+templates/suspense_accounts.html:812:        async function analyzeClient() {
+templates/suspense_accounts.html:838:        async function viewFinding(id) {
+templates/suspense_accounts.html:948:        async function createDispute(id) {
+templates/suspense_accounts.html:970:        function createDisputeFromDetail() {
+templates/clients.html:283:        function searchClients() {
+templates/client_signup.html:1163:        async function loadPaymentSettings() {
+templates/client_signup.html:1177:        function updateFreeTierVisibility() {
+templates/client_signup.html:1184:        function updatePaymentMethodsVisibility() {
+templates/client_signup.html:1209:        function updatePaymentAmounts() {
+templates/client_signup.html:1222:        function hideAllPaymentInfos() {
+templates/client_signup.html:1228:        function showPaymentInfo(method) {
+templates/client_signup.html:1238:            option.addEventListener('click', function() {
+templates/client_signup.html:1247:            option.addEventListener('click', function() {
+templates/client_signup.html:1270:            option.addEventListener('click', function() {
+templates/client_signup.html:1288:        document.getElementById('phone').addEventListener('input', function(e) {
+templates/client_signup.html:1293:        function validateStep(step) {
+templates/client_signup.html:1336:        function nextStep(step) {
+templates/client_signup.html:1351:        function prevStep(step) {
+templates/client_signup.html:1366:        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+templates/client_signup.html:1482:        function showSuccessMessage(referralCode, isPending = false) {
+templates/knowledge_base_enhanced.html:452:        function toggleContent(id) {
+templates/chexsystems.html:689:        function openNewDisputeModal() {
+templates/chexsystems.html:693:        function closeModal() {
+templates/chexsystems.html:698:        function filterByClient(clientId) {
+templates/chexsystems.html:708:        function selectTemplate(templateId, templateName) {
+templates/chexsystems.html:713:        function submitDispute(e) {
+templates/chexsystems.html:739:        document.getElementById('newDisputeModal').addEventListener('click', function(e) {
+templates/cfpb_complaints.html:370:        function filterComplaints(status) {
+templates/credit_report_view.html:884:            function toggleDetails(header) {
+templates/credit_report_view.html:889:            function filterBureau(bureau, dot) {
+templates/credit_report_view.html:939:            function generateDisputeLetters() {
+templates/credit_report_view.html:1002:            function setStatusFilter(status, btn) {
+templates/credit_report_view.html:1016:            function filterAccounts() {
+templates/credit_report_view.html:1066:            document.addEventListener('DOMContentLoaded', function() {
+templates/sops.html:501:        function viewSOP(sopId) {
+templates/sops.html:573:        function closeModal() {
+templates/sops.html:577:        document.getElementById('sopModal').addEventListener('click', function(e) {
+templates/integrations_hub.html:623:        function showToast(message, isError = false) {
+templates/integrations_hub.html:630:        function openConfigModal(service) {
+templates/integrations_hub.html:643:        function closeModal() {
+templates/integrations_hub.html:648:        async function saveConfiguration() {
+templates/integrations_hub.html:680:        async function testConnection(service) {
+templates/integrations_hub.html:719:        async function refreshStatuses() {
+templates/integrations_hub.html:752:        document.getElementById('configModal').addEventListener('click', function(e) {
+templates/dashboard.html:869:        function getSidebarState() {
+templates/dashboard.html:878:        function saveSidebarState(state) {
+templates/dashboard.html:886:        function toggleSection(titleElement) {
+templates/dashboard.html:897:        function initSidebarAccordion() {
+templates/dashboard.html:909:        document.addEventListener('DOMContentLoaded', initSidebarAccordion);
+templates/dashboard.html:911:        function openIntakeModal() {
+templates/dashboard.html:915:        function openBatchModal() {
+templates/dashboard.html:919:        function closeModal(id) {
+templates/dashboard.html:923:        function handleFileSelect(e) {
+templates/dashboard.html:933:        function handleBatchFiles(e) {
+templates/dashboard.html:943:        function formatBytes(bytes) {
+templates/dashboard.html:949:        async function submitIntake(e) {
+templates/dashboard.html:1005:        function reviewCase(analysisId) {
+templates/dashboard.html:1009:        function viewCase(caseId) {
+templates/dashboard.html:1013:        function deliverCase(caseId) {
+templates/dashboard.html:1017:        function filterByStatus(status) {
+templates/dashboard.html:1021:        function searchClients() {
+templates/dashboard.html:1031:        function refreshDashboard() {
+templates/dashboard.html:1036:            btn.addEventListener('click', function() {
+templates/dashboard.html:1044:            fileUpload.addEventListener('dragover', e => { e.preventDefault(); fileUpload.classList.add('dragover'); });
+templates/dashboard.html:1045:            fileUpload.addEventListener('dragleave', e => { e.preventDefault(); fileUpload.classList.remove('dragover'); });
+templates/dashboard.html:1046:            fileUpload.addEventListener('drop', e => {
+templates/dashboard.html:1056:            fileUpload.addEventListener('click', () => fileUpload.querySelector('input').click());
+templates/admin_simple.html:52:function submitForm() {
+templates/email_settings.html:827:        function toggleSetting(key) {
+templates/email_settings.html:833:        async function saveSettings() {
+templates/email_settings.html:851:        async function sendTestEmail() {
+templates/email_settings.html:886:        function setupSendGrid() {
+templates/email_settings.html:893:        document.addEventListener('DOMContentLoaded', function() {
+templates/email_settings.html:897:        function initUnlayerEditor() {
+templates/email_settings.html:967:            unlayer.addEventListener('editor:ready', function() {
+templates/email_settings.html:974:        async function loadTemplate() {
+templates/email_settings.html:1011:        function saveTemplate() {
+templates/email_settings.html:1051:        async function resetTemplate() {
+templates/email_settings.html:1085:        function previewTemplate() {
+templates/email_settings.html:1123:        function copyMergeTag(tag) {
+templates/litigation_review.html:89:(function () {
+templates/litigation_review.html:96:  function log(msg) {
+templates/litigation_review.html:105:  function getAnalysisId() {
+templates/litigation_review.html:112:  async function loadAnalysis() {
+templates/litigation_review.html:131:  async function handleApproveClick() {
+templates/litigation_review.html:178:  function handleDownloadClick() {
+templates/litigation_review.html:189:  window.addEventListener("load", function () {
+templates/litigation_review.html:197:    refreshBtn.addEventListener("click", loadAnalysis);
+templates/litigation_review.html:198:    acceptBtn.addEventListener("click", handleApproveClick);
+templates/litigation_review.html:199:    downloadBtn.addEventListener("click", handleDownloadClick);
+templates/triage_dashboard.html:683:        function showQueue(queueName) {
+templates/triage_dashboard.html:691:        function viewAnalysis(analysisId) {
+templates/triage_dashboard.html:695:        function openReviewModal(triageId, currentPriority) {
+templates/triage_dashboard.html:702:        function closeModal(modalId) {
+templates/triage_dashboard.html:706:        function setRating(rating) {
+templates/triage_dashboard.html:717:        async function submitReview() {
+templates/triage_dashboard.html:745:        function refreshData() {
+templates/whitelabel_admin.html:992:        function openModal(configId = null) {
+templates/whitelabel_admin.html:1000:        function closeModal() {
+templates/whitelabel_admin.html:1005:        function resetForm() {
+templates/whitelabel_admin.html:1026:        function updatePreview() {
+templates/whitelabel_admin.html:1062:        function darkenColor(color, percent) {
+templates/whitelabel_admin.html:1071:        function validateDomain(domain) {
+templates/whitelabel_admin.html:1108:        function updateStatusLabel() {
+templates/whitelabel_admin.html:1115:        document.getElementById('is_active').addEventListener('change', updateStatusLabel);
+templates/whitelabel_admin.html:1117:        async function editConfig(configId) {
+templates/whitelabel_admin.html:1168:        async function previewConfig(configId) {
+templates/whitelabel_admin.html:1172:        async function deleteConfig(configId, name) {
+templates/whitelabel_admin.html:1193:        document.getElementById('configForm').addEventListener('submit', async function(e) {
+templates/whitelabel_admin.html:1226:        document.getElementById('organization_name').addEventListener('input', updatePreview);
+templates/white_label_dashboard.html:1037:        function showToast(message, type = 'success') {
+templates/white_label_dashboard.html:1044:        function switchTab(tabName) {
+templates/white_label_dashboard.html:1051:        function openCreateModal() {
+templates/white_label_dashboard.html:1064:        function openEditModal(tenant) {
+templates/white_label_dashboard.html:1117:        function closeModal() {
+templates/white_label_dashboard.html:1122:        function updateColorInput(inputId, value) {
+templates/white_label_dashboard.html:1127:        function updateColorPicker(pickerId, value) {
+templates/white_label_dashboard.html:1134:        function updatePreview() {
+templates/white_label_dashboard.html:1145:        function getFeatures() {
+templates/white_label_dashboard.html:1154:        async function saveTenant() {
+templates/white_label_dashboard.html:1206:        async function confirmDelete(tenantId, tenantName) {
+templates/white_label_dashboard.html:1227:        function manageUsers(tenantId) {
+templates/white_label_dashboard.html:1233:        function closeUsersModal() {
+templates/white_label_dashboard.html:1237:        async function loadTenantUsers(tenantId) {
+templates/white_label_dashboard.html:1270:        async function addUserToTenant() {
+templates/white_label_dashboard.html:1300:        async function removeUserFromTenant(staffId) {
+templates/white_label_dashboard.html:1321:        async function viewStats(tenantId) {
+templates/white_label_dashboard.html:1367:        function closeStatsModal() {
+templates/white_label_dashboard.html:1371:        async function regenerateApiKey() {
+templates/white_label_dashboard.html:1393:        document.getElementById('tenantName').addEventListener('input', function() {
+templates/white_label_dashboard.html:1401:        document.getElementById('companyName').addEventListener('input', updatePreview);
+templates/predictive_analytics.html:746:        function refreshData() {
+templates/predictive_analytics.html:750:        function changeMetric(metric) {
+templates/ml_insights.html:586:    function showRecordOutcomeModal() {
+templates/ml_insights.html:591:    function submitOutcome() {
+templates/ml_insights.html:628:    function refreshPatterns() {
+templates/case_law.html:673:        function filterCases() {
+templates/case_law.html:696:        function viewCase(id) {
+templates/case_law.html:707:        function showCaseDetails(c) {
+templates/case_law.html:777:        function copyCitation(id, format, btn) {
+templates/case_law.html:793:        function copyCitationFromModal(format) {
+templates/case_law.html:805:        function openAddModal() {
+templates/case_law.html:810:        function closeModal(id) {
+templates/case_law.html:814:        function saveCase() {
+templates/case_law.html:849:        function deleteCase() {
+templates/case_law.html:865:        function populateDefaultCases() {
+templates/portal_login.html:350:        function togglePassword() {
+templates/portal_login.html:355:        function toggleNewPassword() {
+templates/portal_login.html:360:        function showForgotForm() {
+templates/portal_login.html:366:        function showLoginForm() {
+templates/portal_login.html:372:        function showResetForm() {
+templates/portal_login.html:378:        function promptTokenAccess() {
+templates/portal_login.html:391:        async function handleForgotPassword(e) {
+templates/portal_login.html:427:        async function handleResetPassword(e) {
+templates/portal_login.html:483:        document.getElementById('loginForm').addEventListener('submit', function(e) {
+templates/affiliate_detail.html:788:        function showTab(tabName) {
+templates/affiliate_detail.html:796:        function openPayoutModal() {
+templates/affiliate_detail.html:800:        function openEditModal() {
+templates/affiliate_detail.html:804:        function closeModal(id) {
+templates/affiliate_detail.html:808:        async function submitPayout(e) {
+templates/affiliate_detail.html:839:        async function submitEdit(e) {
+templates/credit_tracker.html:246:        function switchTab(tabName) {
+templates/credit_tracker.html:258:        async function loadItemTypes() {
+templates/credit_tracker.html:271:        function renderItemCategories() {
+templates/credit_tracker.html:313:        function toggleCategory(catKey) {
+templates/credit_tracker.html:320:        function addItem(key, label) {
+templates/credit_tracker.html:330:        function removeItem(key) {
+templates/credit_tracker.html:335:        function updateItemCount(key, count) {
+templates/credit_tracker.html:343:        function renderSelectedItems() {
+templates/credit_tracker.html:360:        async function calculateDetailedEstimate() {
+templates/credit_tracker.html:415:        function getSeverityColor(severity) {
+templates/credit_tracker.html:426:        async function loadClients() {
+templates/credit_tracker.html:440:        async function loadClientScores() {
+templates/credit_tracker.html:502:        function getScoreClass(score) {
+templates/credit_tracker.html:511:        function filterClients() {
+templates/credit_tracker.html:520:        async function calculateEstimate() {
+templates/cfpb_generator.html:670:        function showLoading(text) {
+templates/cfpb_generator.html:675:        function hideLoading() {
+templates/cfpb_generator.html:679:        function showAlert(message, type) {
+templates/cfpb_generator.html:686:        function selectTargetType(type) {
+templates/cfpb_generator.html:695:        function selectCRA(cra) {
+templates/cfpb_generator.html:701:        function loadClientCases() {
+templates/cfpb_generator.html:722:        function updateIssueTypes() {
+templates/cfpb_generator.html:757:        function toggleIssue(key) {
+templates/cfpb_generator.html:762:        function selectIssue(key, label, subIssue) {
+templates/cfpb_generator.html:770:        function updateStep(step) {
+templates/cfpb_generator.html:785:        function nextStep() {
+templates/cfpb_generator.html:826:        function prevStep() {
+templates/cfpb_generator.html:830:        function generateNarrative() {
+templates/cfpb_generator.html:865:        function regenerateNarrative() {
+templates/cfpb_generator.html:869:        function updatePreview() {
+templates/cfpb_generator.html:876:        function createComplaint() {
+templates/cfpb_generator.html:908:        function saveChanges() {
+templates/cfpb_generator.html:944:        function generatePDF() {
+templates/cfpb_generator.html:966:        function markSubmitted() {
+templates/cfpb_generator.html:992:        function recordResponse() {
+templates/analytics.html:819:        async function loadSettlementAnalytics() {
+templates/analytics.html:855:        document.addEventListener('DOMContentLoaded', loadSettlementAnalytics);
+templates/automation_tools.html:1606:        function switchTab(tabId) {
+templates/automation_tools.html:1621:        async function loadDisputeRoundSummary() {
+templates/automation_tools.html:1641:        function getRoundLabel(roundNum) {
+templates/automation_tools.html:1651:        function getBureauBadges(bureaus) {
+templates/automation_tools.html:1663:        function renderReadyToAdvanceTable(clients) {
+templates/automation_tools.html:1702:        function renderIncompleteRoundsTable(clients) {
+templates/automation_tools.html:1730:        async function advanceClientRound(clientId, newRound) {
+templates/automation_tools.html:1758:        async function advanceRoundManual() {
+templates/automation_tools.html:1801:        async function viewRoundHistory(clientId) {
+templates/automation_tools.html:1816:        function showRoundHistoryModal(data) {
+templates/automation_tools.html:1870:            modal.addEventListener('click', function(e) {
+templates/automation_tools.html:1877:        function selectAllPrimary() {
+templates/automation_tools.html:1884:        function selectAllSecondary() {
+templates/automation_tools.html:1891:        function clearAllBureaus() {
+templates/automation_tools.html:1899:            checkbox.addEventListener('change', function() {
+templates/automation_tools.html:1904:        async function generateFreezeLetters() {
+templates/automation_tools.html:1949:        async function loadFreezeLetterBatches() {
+templates/automation_tools.html:1975:        function downloadFreezePDF(batchId) {
+templates/automation_tools.html:1979:        function downloadFreezeDocx(batchId) {
+templates/automation_tools.html:1985:        async function loadCommonAgencies() {
+templates/automation_tools.html:2004:        function fillCommonAgency() {
+templates/automation_tools.html:2015:        document.getElementById('validationClientSelect').addEventListener('change', async function() {
+templates/automation_tools.html:2038:        document.getElementById('validationCaseSelect').addEventListener('change', function() {
+templates/automation_tools.html:2044:        async function generateValidationLetter() {
+templates/automation_tools.html:2094:        async function autoGenerateFromCase() {
+templates/automation_tools.html:2132:        function showDownloadOptions(pdfPath, docxPath) {
+templates/automation_tools.html:2158:            modal.addEventListener('click', function(e) {
+templates/automation_tools.html:2165:        async function loadDeadlines() {
+templates/automation_tools.html:2179:        function renderDeadlines(deadlines) {
+templates/automation_tools.html:2207:        function getUrgencyClass(daysLeft) {
+templates/automation_tools.html:2214:        function updateDeadlineStats(deadlines) {
+templates/automation_tools.html:2228:        function filterDeadlines(filter) {
+templates/automation_tools.html:2234:        async function completeDeadline(id) {
+templates/automation_tools.html:2247:        async function extendDeadline(id, days) {
+templates/automation_tools.html:2266:        function addDamageItem() {
+templates/automation_tools.html:2288:        function removeDamageItem(id) {
+templates/automation_tools.html:2293:        async function calculateSettlement() {
+templates/automation_tools.html:2341:        function displaySettlementResults(data) {
+templates/automation_tools.html:2365:        function formatNumber(num) {
+templates/automation_tools.html:2369:        function showToast(message, isError = false) {
+templates/automation_tools.html:2378:        document.addEventListener('DOMContentLoaded', function() {
+templates/automation_tools.html:2389:        function selectAdvancedLetterType(letterType) {
+templates/automation_tools.html:2415:        function getClientInfo(clientId) {
+templates/automation_tools.html:2423:        function formatDate(date) {
+templates/automation_tools.html:2431:        function generateLetterContent(letterType) {
+templates/automation_tools.html:2462:        function generateRespaQwrLetter(today) {
+templates/automation_tools.html:2562:        function generateRegZLetter(today) {
+templates/automation_tools.html:2662:        function generateFdcpaLetter(today) {
+templates/automation_tools.html:2782:        function generate605bLetter(today) {
+templates/automation_tools.html:2892:        function generate623Letter(today) {
+templates/automation_tools.html:2993:        function generateReinsertionLetter(today) {
+templates/automation_tools.html:3116:        function generateMovLetter(today) {
+templates/automation_tools.html:3243:        function previewAdvancedLetter(letterType) {
+templates/automation_tools.html:3257:        function closeLetterPreview() {
+templates/automation_tools.html:3262:        async function generateAdvancedLetter(letterType) {
+templates/automation_tools.html:3334:        function downloadPreviewAsPDF() {
+templates/letter_queue.html:500:        async function loadQueue() {
+templates/letter_queue.html:526:        function updateStats(stats) {
+templates/letter_queue.html:533:        function renderQueue(queue) {
+templates/letter_queue.html:587:        function toggleSelect(id) {
+templates/letter_queue.html:596:        function toggleSelectAll() {
+templates/letter_queue.html:613:        function updateBulkButton() {
+templates/letter_queue.html:620:        async function approveEntry(id) {
+templates/letter_queue.html:639:        async function bulkApproveSelected() {
+templates/letter_queue.html:664:        function dismissEntry(id) {
+templates/letter_queue.html:670:        function closeDismissModal() {
+templates/letter_queue.html:675:        async function confirmDismiss() {
+templates/letter_queue.html:700:        async function generateLetter(id) {
+templates/letter_queue.html:722:        async function runTriggerCheck() {
+templates/letter_queue.html:743:        function showToast(message, type = 'success') {
+templates/letter_queue.html:753:        document.addEventListener('DOMContentLoaded', loadQueue);
+templates/furnishers.html:291:        function viewFurnisher(id) {
+templates/furnishers.html:295:        function filterTable() {
+templates/furnishers.html:311:        function openAddModal() {
+templates/furnishers.html:315:        function closeAddModal() {
+templates/furnishers.html:328:        async function saveFurnisher() {
+templates/furnishers.html:366:        async function populateFromExisting() {
+templates/workflow_triggers.html:772:        function switchTab(tabName) {
+templates/workflow_triggers.html:779:        function refreshData() {
+templates/workflow_triggers.html:783:        function openCreateModal() {
+templates/workflow_triggers.html:793:        function closeCreateModal() {
+templates/workflow_triggers.html:797:        function addAction() {
+templates/workflow_triggers.html:824:        function removeAction(actionId) {
+templates/workflow_triggers.html:828:        function updateActionParams(actionId) {
+templates/workflow_triggers.html:852:        function updateTriggerFields() {
+templates/workflow_triggers.html:861:        async function saveTrigger() {
+templates/workflow_triggers.html:926:        async function toggleTrigger(triggerId) {
+templates/workflow_triggers.html:940:        async function editTrigger(triggerId) {
+templates/workflow_triggers.html:981:        async function deleteTrigger(triggerId) {
+templates/workflow_triggers.html:998:        function testTrigger(triggerId) {
+templates/workflow_triggers.html:1004:        function closeTestModal() {
+templates/workflow_triggers.html:1009:        async function runTest() {
+templates/workflow_triggers.html:1055:        async function viewHistory(triggerId) {
+templates/workflow_triggers.html:1095:        function closeHistoryModal() {
+templates/workflow_triggers.html:1099:        function useTemplate(template) {
+templates/settings.html:646:        document.getElementById('settingsForm').addEventListener('submit', async function(e) {
+templates/billing_management.html:541:        document.addEventListener('DOMContentLoaded', function() {
+templates/billing_management.html:545:        function showAlert(message, type = 'success') {
+templates/billing_management.html:554:        async function checkStripeConnection() {
+templates/billing_management.html:572:        function openCreatePlanModal() {
+templates/billing_management.html:576:        function closeCreatePlanModal() {
+templates/billing_management.html:581:        document.getElementById('createPlanForm').addEventListener('submit', async function(e) {
+templates/billing_management.html:620:        async function initializeDefaultPlans() {
+templates/billing_management.html:644:        async function togglePlanStatus(planId, activate) {
+templates/billing_management.html:670:        function editPlan(planId) {
+templates/billing_management.html:674:        async function openPortal(clientId) {
+templates/billing_management.html:689:        async function cancelSubscription(clientId) {
+templates/billing_management.html:716:        document.getElementById('createPlanModal').addEventListener('click', function(e) {
+templates/case_detail.html:325:        function getTimelineColor(color) {
+templates/case_detail.html:336:        async function loadAdminTimeline() {
+templates/case_detail.html:373:        function renderAdminTimeline(events) {
+templates/case_detail.html:421:        document.addEventListener('DOMContentLoaded', loadAdminTimeline);
+templates/case_detail.html:426:        async function loadSettlementData() {
+templates/case_detail.html:457:        function renderCreateSettlement(canCreate, suggestedTarget, suggestedMinimum) {
+templates/case_detail.html:512:        function showCreateSettlementForm() {
+templates/case_detail.html:517:        function hideCreateSettlementForm() {
+templates/case_detail.html:522:        async function createSettlement() {
+templates/case_detail.html:554:        function renderExistingSettlement(settlement) {
+templates/case_detail.html:674:        function quickAddOffer(settlementId) {
+templates/case_detail.html:694:        function quickMarkSettled(settlementId) {
+templates/case_detail.html:714:        function quickRecordPayment(settlementId) {
+templates/case_detail.html:734:        document.addEventListener('DOMContentLoaded', loadSettlementData);
+templates/case_detail.html:751:        async function loadEscalationRecommendations() {
+templates/case_detail.html:813:        async function generateEscalationRecommendations() {
+templates/case_detail.html:838:        async function applyRecommendation(recId) {
+templates/case_detail.html:855:        async function recordOutcome(recId) {
+templates/case_detail.html:877:        document.addEventListener('DOMContentLoaded', loadEscalationRecommendations);
+templates/case_detail.html:879:        async function loadSolStatus() {
+templates/case_detail.html:935:        function openSolCalculator() {
+templates/case_detail.html:962:        async function calculateSol() {
+templates/case_detail.html:1015:        document.addEventListener('DOMContentLoaded', loadSolStatus);
+templates/staff_login.html:273:        function togglePassword(inputId) {
+templates/staff_login.html:278:        document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+templates/staff_login.html:284:        document.getElementById('changePasswordForm')?.addEventListener('submit', function(e) {
+templates/staff_management.html:574:        function openAddModal() {
+templates/staff_management.html:578:        function openEditModal(id, email, firstName, lastName, role, isActive) {
+templates/staff_management.html:588:        function closeModal(id) {
+templates/staff_management.html:592:        function searchStaff() {
+templates/staff_management.html:607:        async function resetPassword(staffId) {
+templates/staff_management.html:632:        async function toggleStatus(staffId, currentlyActive) {
+templates/staff_management.html:658:            modal.addEventListener('click', function(e) {
+templates/sms_settings.html:549:        function showToast(message, isError = false) {
+templates/sms_settings.html:556:        async function sendTestSMS() {
+templates/sms_settings.html:585:        document.getElementById('smsSettingsForm').addEventListener('submit', async (e) => {
+templates/client_portal.html:1540:        function switchTab(tabId, clickedTab) {
+templates/client_portal.html:1551:        document.getElementById('contactForm')?.addEventListener('submit', function(e) {
+templates/client_portal.html:1558:        async function setPassword() {
+templates/client_portal.html:1631:        document.getElementById('avatarUpload')?.addEventListener('change', async function(e) {
+templates/client_portal.html:1687:        async function removeAvatar() {
+templates/client_portal.html:1724:        document.getElementById('referralForm')?.addEventListener('submit', async function(e) {
+templates/client_portal.html:1754:        document.getElementById('fileUpload')?.addEventListener('change', async function(e) {
+templates/client_portal.html:1792:        function showAllItems() {
+templates/client_portal.html:1798:        async function submitStatusChanges() {
+templates/client_portal.html:1833:        async function uploadFreezeDoc(input) {
+templates/client_portal.html:1876:        async function submitFreezeChanges() {
+templates/client_portal.html:1961:        function showCategoryStep() {
+templates/client_portal.html:1968:        function showTypeStep() {
+templates/client_portal.html:1975:        function showDetailsStep() {
+templates/client_portal.html:1982:        function showUploadStep() {
+templates/client_portal.html:1989:        function populateDocTypes() {
+templates/client_portal.html:1997:                btn.addEventListener('click', () => {
+templates/client_portal.html:2009:        function populateDocDetails() {
+templates/client_portal.html:2097:            btn.addEventListener('click', () => {
+templates/client_portal.html:2112:            docDropzone.addEventListener('click', () => docFileInput.click());
+templates/client_portal.html:2113:            docDropzone.addEventListener('dragover', (e) => { e.preventDefault(); docDropzone.style.borderColor = '#4ade80'; docDropzone.style.background = '#f0fdf4'; });
+templates/client_portal.html:2114:            docDropzone.addEventListener('dragleave', () => { docDropzone.style.borderColor = '#e2e8f0'; docDropzone.style.background = 'transparent'; });
+templates/client_portal.html:2115:            docDropzone.addEventListener('drop', (e) => {
+templates/client_portal.html:2126:            docFileInput.addEventListener('change', (e) => {
+templates/client_portal.html:2133:        function showDocFilePreview(file) {
+templates/client_portal.html:2151:        function removeDocFile() {
+templates/client_portal.html:2157:        document.getElementById('docUploadForm')?.addEventListener('submit', async function(e) {
+templates/client_portal.html:2198:        async function loadMyUploads() {
+templates/client_portal.html:2247:        async function loadScoreProgress() {
+templates/client_portal.html:2303:        async function loadScoreProjection() {
+templates/client_portal.html:2345:        async function loadScoreTimeline() {
+templates/client_portal.html:2360:        function renderClientScoreChart(timeline) {
+templates/client_portal.html:2429:        async function loadDisputeTimeline() {
+templates/client_portal.html:2462:        function getTimelineColor(color) {
+templates/client_portal.html:2473:        function renderTimeline(events) {
+templates/client_portal.html:2519:        function toggleTimelineDetails(element) {
+templates/client_portal.html:2527:        document.addEventListener('DOMContentLoaded', function() {
+templates/client_portal.html:2530:                timelineTab.addEventListener('click', loadDisputeTimeline);
+templates/client_portal.html:2538:        async function loadROIDashboard() {
+templates/client_portal.html:2565:        function renderROIDashboard(data) {
