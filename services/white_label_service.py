@@ -435,6 +435,13 @@ class WhiteLabelService:
             'tenant_id': tenant_id,
             'tenant_name': tenant.name,
             'subscription_tier': tenant.subscription_tier,
+            # Flat attributes for template compatibility
+            'user_count': user_count,
+            'max_users': tenant.max_users,
+            'client_count': client_count,
+            'max_clients': tenant.max_clients,
+            'active_clients': active_clients,
+            # Nested structure for API use
             'users': {
                 'current': user_count,
                 'max': tenant.max_users,
