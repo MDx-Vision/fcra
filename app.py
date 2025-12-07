@@ -7180,7 +7180,15 @@ def api_cra_response_upload():
         file = request.files.get('file')
         if not file:
             return jsonify({'success': False, 'error': 'File is required'}), 400
-        
+
+        # Security check: block dangerous file extensions
+        if is_blocked_extension(file.filename):
+            return jsonify({'success': False, 'error': 'File type not allowed for security reasons'}), 400
+
+        # Only allow PDF files for CRA responses
+        if not file.filename.lower().endswith('.pdf'):
+            return jsonify({'success': False, 'error': 'Only PDF files are allowed for CRA responses'}), 400
+
         os.makedirs('static/cra_responses', exist_ok=True)
         filename = f"{client_id}_{bureau}_round{dispute_round}_{secrets.token_hex(4)}.pdf"
         file_path = f"static/cra_responses/{filename}"
@@ -10005,11 +10013,27 @@ def api_toggle_client_document(client_id):
 # DOCUMENT CENTER - Client Upload Management
 # ============================================================
 
-ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png', 'gif', 'doc', 'docx', 'txt'}
+ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png', 'gif', 'doc', 'docx', 'txt', 'csv'}
+BLOCKED_EXTENSIONS = {'exe', 'php', 'sh', 'bat', 'cmd', 'ps1', 'js', 'vbs', 'py', 'rb', 'pl', 'cgi', 'asp', 'aspx', 'jsp', 'war', 'jar', 'dll', 'so', 'dylib', 'msi', 'com', 'scr', 'pif', 'hta', 'wsf', 'vbe', 'jse'}
 UPLOAD_FOLDER = 'static/client_uploads'
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    """Check if file extension is allowed (whitelist approach with explicit blocklist)"""
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    # Explicitly block dangerous extensions first
+    if ext in BLOCKED_EXTENSIONS:
+        return False
+    # Then check against whitelist
+    return ext in ALLOWED_EXTENSIONS
+
+def is_blocked_extension(filename):
+    """Check if file has a blocked/dangerous extension"""
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    return ext in BLOCKED_EXTENSIONS
 
 
 @app.route('/api/client/upload', methods=['POST'])
@@ -17243,7 +17267,15 @@ def api_upload_frivolous_evidence(defense_id):
         file = request.files['file']
         if file.filename == '':
             return jsonify({'success': False, 'error': 'No file selected'}), 400
-        
+
+        # Security check: block dangerous file extensions
+        if is_blocked_extension(file.filename):
+            return jsonify({'success': False, 'error': 'File type not allowed for security reasons'}), 400
+
+        # Only allow safe document types
+        if not allowed_file(file.filename):
+            return jsonify({'success': False, 'error': 'Only PDF, image, and document files are allowed'}), 400
+
         evidence_type = request.form.get('evidence_type', 'other')
         description = request.form.get('description', '')
         
