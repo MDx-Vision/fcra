@@ -414,8 +414,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
                 </div>
+                {% if pending %}
+                <h2>Almost There!</h2>
+                <p>Your signup is being processed. Once we confirm your payment, we'll begin working on your credit analysis.</p>
+                {% else %}
                 <h2>Welcome to Brightpath Ascend Group!</h2>
                 <p>Your registration is complete. We'll pull your credit report and send your personalized credit analysis within 24-48 hours.</p>
+                {% endif %}
 
                 <div class="referral-box">
                     <label>Your Referral Code</label>

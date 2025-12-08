@@ -7069,7 +7069,8 @@ def signup_success():
 def signup_welcome():
     """Welcome page after successful signup - standalone page"""
     referral_code = request.args.get('ref', '')
-    return render_template('signup_welcome.html', referral_code=referral_code)
+    pending = request.args.get('pending', '') == 'true'
+    return render_template('signup_welcome.html', referral_code=referral_code, pending=pending)
 
 
 @app.route('/api/client/import', methods=['POST'])
