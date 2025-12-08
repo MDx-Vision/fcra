@@ -1447,7 +1447,7 @@
                     const completeResult = await completeResponse.json();
                     
                     if (completeResult.success) {
-                        showSuccessMessage(completeResult.referralCode);
+                        showSuccessMessage(completeResult.referralCode, false, completeResult.passwordResetToken);
                     } else {
                         alert('Error: ' + (completeResult.error || 'Failed to complete signup'));
                         submitBtn.disabled = false;
@@ -1467,7 +1467,7 @@
                     const completeResult = await completeResponse.json();
                     
                     if (completeResult.success) {
-                        showSuccessMessage(completeResult.referralCode, true);
+                        showSuccessMessage(completeResult.referralCode, true, completeResult.passwordResetToken);
                     } else {
                         alert('Error: ' + (completeResult.error || 'Failed to complete signup'));
                         submitBtn.disabled = false;
@@ -1499,14 +1499,21 @@
             }
         });
         
-        function showSuccessMessage(referralCode, isPending = false) {
+        function showSuccessMessage(referralCode, isPending = false, passwordResetToken = null) {
             // Redirect to the welcome page instead of showing inline success
             let welcomeUrl = '/signup/welcome';
+            let params = [];
             if (referralCode) {
-                welcomeUrl += '?ref=' + encodeURIComponent(referralCode);
+                params.push('ref=' + encodeURIComponent(referralCode));
             }
             if (isPending) {
-                welcomeUrl += (referralCode ? '&' : '?') + 'pending=true';
+                params.push('pending=true');
+            }
+            if (passwordResetToken) {
+                params.push('token=' + encodeURIComponent(passwordResetToken));
+            }
+            if (params.length > 0) {
+                welcomeUrl += '?' + params.join('&');
             }
             window.location.href = welcomeUrl;
         }

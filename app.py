@@ -6439,22 +6439,23 @@ def api_complete_free_signup():
     try:
         data = request.json
         draft_id = data.get('draftId')
-        
+
         if not draft_id:
             return jsonify({'success': False, 'error': 'Draft ID is required'}), 400
-        
+
         draft = db.query(SignupDraft).filter_by(draft_uuid=draft_id).first()
         if not draft:
             return jsonify({'success': False, 'error': 'Signup draft not found'}), 404
-        
+
         if draft.status != 'pending':
             return jsonify({'success': False, 'error': f'Draft is not pending (status: {draft.status})'}), 400
-        
+
         form_data = draft.form_data or {}
-        
+
         referral_code = generate_referral_code()
         portal_token = str(uuid.uuid4())
-        
+        password_reset_token = secrets.token_urlsafe(32)
+
         dob_str = form_data.get('dateOfBirth', '')
         dob = None
         if dob_str:
@@ -6484,15 +6485,17 @@ def api_complete_free_signup():
             dispute_status='new',
             referral_code=referral_code,
             portal_token=portal_token,
+            password_reset_token=password_reset_token,
+            password_reset_expires=datetime.utcnow() + timedelta(days=7),
             signup_completed=True,
             agreement_signed=form_data.get('agreeTerms', False),
             agreement_signed_at=datetime.utcnow() if form_data.get('agreeTerms') else None
         )
-        
+
         db.add(client)
         draft.status = 'completed'
         db.commit()
-        
+
         # Auto-import if credentials provided
         if form_data.get('creditService') and form_data.get('creditUsername') and form_data.get('creditPassword'):
             try:
@@ -6552,9 +6555,10 @@ def api_complete_free_signup():
             'success': True,
             'clientId': client.id,
             'referralCode': referral_code,
-            'portalToken': portal_token
+            'portalToken': portal_token,
+            'passwordResetToken': password_reset_token
         }), 201
-        
+
     except Exception as e:
         db.rollback()
         import traceback
@@ -6584,10 +6588,11 @@ def api_complete_manual_signup():
             return jsonify({'success': False, 'error': f'Draft is not pending (status: {draft.status})'}), 400
         
         form_data = draft.form_data or {}
-        
+
         referral_code = generate_referral_code()
         portal_token = str(uuid.uuid4())
-        
+        password_reset_token = secrets.token_urlsafe(32)
+
         dob_str = form_data.get('dateOfBirth', '')
         dob = None
         if dob_str:
@@ -6617,15 +6622,17 @@ def api_complete_manual_signup():
             dispute_status='new',
             referral_code=referral_code,
             portal_token=portal_token,
+            password_reset_token=password_reset_token,
+            password_reset_expires=datetime.utcnow() + timedelta(days=7),
             signup_completed=True,
             agreement_signed=form_data.get('agreeTerms', False),
             agreement_signed_at=datetime.utcnow() if form_data.get('agreeTerms') else None
         )
-        
+
         db.add(client)
         draft.status = 'completed'
         db.commit()
-        
+
         # Auto-import if credentials provided
         if form_data.get('creditService') and form_data.get('creditUsername') and form_data.get('creditPassword'):
             try:
@@ -6686,6 +6693,7 @@ def api_complete_manual_signup():
             'clientId': client.id,
             'referralCode': referral_code,
             'portalToken': portal_token,
+            'passwordResetToken': password_reset_token,
             'paymentPending': True
         }), 201
         
@@ -7070,7 +7078,8 @@ def signup_welcome():
     """Welcome page after successful signup - standalone page"""
     referral_code = request.args.get('ref', '')
     pending = request.args.get('pending', '') == 'true'
-    return render_template('signup_welcome.html', referral_code=referral_code, pending=pending)
+    password_token = request.args.get('token', '')
+    return render_template('signup_welcome.html', referral_code=referral_code, pending=pending, password_token=password_token)
 
 
 @app.route('/api/client/import', methods=['POST'])

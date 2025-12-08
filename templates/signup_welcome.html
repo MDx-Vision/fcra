@@ -428,7 +428,11 @@
                     <p class="note">Share this code with friends and family</p>
                 </div>
 
+                {% if password_token %}
+                <a href="/portal/login?token={{ password_token }}" class="cta-button">Create Your Password</a>
+                {% else %}
                 <a href="/portal/login" class="cta-button">Go to Client Portal</a>
+                {% endif %}
             </div>
 
             <!-- Info Panel -->
