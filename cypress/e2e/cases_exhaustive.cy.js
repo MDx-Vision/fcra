@@ -59,7 +59,6 @@ describe('Cases - Full QA Suite', () => {
     });
 
     it.skip('should show validation errors - modal not visible', () => {});
-    });
   });
 
   // ==========================================
