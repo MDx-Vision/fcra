@@ -7065,6 +7065,13 @@ def signup_success():
         db.close()
 
 
+@app.route('/signup/welcome')
+def signup_welcome():
+    """Welcome page after successful signup - standalone page"""
+    referral_code = request.args.get('ref', '')
+    return render_template('signup_welcome.html', referral_code=referral_code)
+
+
 @app.route('/api/client/import', methods=['POST'])
 def api_client_import():
     """Import existing client at their current dispute round"""

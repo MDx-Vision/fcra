@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Brightpath Ascend Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .logo-text span {
+            color: #84cc16;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .page-title h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #22c55e, #84cc16);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+        }
+
+        .step.completed {
+            color: #22c55e;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .step.completed .step-number {
+            background: #22c55e;
+            color: white;
+        }
+
+        /* Two Column Layout */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Welcome Card */
+        .welcome-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            color: #1e293b;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #22c55e, #84cc16);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        .welcome-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #1e293b;
+        }
+
+        .welcome-card p {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        /* Referral Code Box */
+        .referral-box {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .referral-box label {
+            display: block;
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .referral-code {
+            font-size: 24px;
+            font-weight: 700;
+            color: #22c55e;
+            letter-spacing: 2px;
+        }
+
+        .referral-box .note {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #22c55e, #84cc16);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+        }
+
+        /* Right Side Panel */
+        .info-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .info-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #84cc16;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-card p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 15px;
+        }
+
+        /* Violations List */
+        .violation-item {
+            background: rgba(255,255,255,0.05);
+            border-left: 3px solid #f97316;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .violation-type {
+            font-size: 11px;
+            font-weight: 600;
+            color: #f97316;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .violation-desc {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* Damages Grid */
+        .damages-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .damage-box {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .damage-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .damage-amount {
+            font-size: 20px;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        .damage-amount.orange {
+            color: #f97316;
+        }
+
+        /* Estimate Box */
+        .estimate-box {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(132, 204, 22, 0.15));
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .estimate-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .estimate-amount {
+            font-size: 36px;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        .estimate-note {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 8px;
+        }
+
+        /* Summary Card */
+        .summary-card {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+        }
+
+        .summary-item {
+            font-size: 12px;
+            color: #86efac;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-item:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Logo" onerror="this.style.display='none'">
+            <div class="logo-text">Brightpath <span>Ascend</span> Group</div>
+        </div>
+        <nav class="nav-links">
+            <a href="/">Home</a>
+            <a href="/portal/login">Client Login</a>
+            <a href="/contact">Call Us</a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Title -->
+        <div class="page-title">
+            <h1>Start Your Credit Restoration Journey</h1>
+        </div>
+        <p class="page-subtitle">Complete the form below to begin working with our team. We'll review your credit and create a personalized plan of action.</p>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step completed">
+                <div class="step-number">1</div>
+                <span>Personal Info</span>
+            </div>
+            <div class="step completed">
+                <div class="step-number">2</div>
+                <span>Credit Access</span>
+            </div>
+            <div class="step completed">
+                <div class="step-number">3</div>
+                <span>Plan & Payment</span>
+            </div>
+            <div class="step completed">
+                <div class="step-number">4</div>
+                <span>Agreement</span>
+            </div>
+        </div>
+
+        <!-- Two Column Content -->
+        <div class="content-grid">
+            <!-- Welcome Card -->
+            <div class="welcome-card">
+                <div class="success-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h2>Welcome to Brightpath Ascend Group!</h2>
+                <p>Your registration is complete. We'll pull your credit report and send your personalized credit analysis within 24-48 hours.</p>
+
+                <div class="referral-box">
+                    <label>Your Referral Code</label>
+                    <div class="referral-code">{{ referral_code or 'REF-XXXXXXXX' }}</div>
+                    <p class="note">Share this code with friends and family</p>
+                </div>
+
+                <a href="/portal/login" class="cta-button">Go to Client Portal</a>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <!-- Sample Analysis -->
+                <div class="info-card">
+                    <div class="info-card-title">SAMPLE ANALYSIS</div>
+                    <p>See what your credit analysis could reveal</p>
+
+                    <div style="font-size: 12px; font-weight: 600; color: #f97316; margin-bottom: 12px;">VIOLATIONS DETECTED</div>
+
+                    <div class="violation-item">
+                        <div class="violation-type">FCRA &sect; 611 Dispute</div>
+                        <div class="violation-desc">Response period exceeded - Bureau failed to respond within 30 days</div>
+                    </div>
+                    <div class="violation-item">
+                        <div class="violation-type">FCRA &sect; 623 Furnisher</div>
+                        <div class="violation-desc">Account marked late despite payment verification</div>
+                    </div>
+                    <div class="violation-item">
+                        <div class="violation-type">FDCPA Collector</div>
+                        <div class="violation-desc">Collection account on credit report - potential statute of limitations</div>
+                    </div>
+                </div>
+
+                <!-- Potential Damages -->
+                <div class="info-card">
+                    <div class="info-card-title">POTENTIAL DAMAGES</div>
+                    <div class="damages-grid">
+                        <div class="damage-box">
+                            <div class="damage-label">Statutory</div>
+                            <div class="damage-amount">$3,000</div>
+                        </div>
+                        <div class="damage-box">
+                            <div class="damage-label">Actual</div>
+                            <div class="damage-amount">$850</div>
+                        </div>
+                    </div>
+                    <div class="damage-box" style="text-align: center;">
+                        <div class="damage-label">Punitive (if willful)</div>
+                        <div class="damage-amount orange">$2,500</div>
+                    </div>
+                </div>
+
+                <!-- Estimated Case Value -->
+                <div class="estimate-box">
+                    <div class="estimate-label">ESTIMATED CASE VALUE</div>
+                    <div class="estimate-amount">$6,350</div>
+                    <div class="estimate-note">Based on 3+ violations with willful conduct</div>
+                </div>
+
+                <!-- Summary -->
+                <div class="summary-card">
+                    <div class="summary-item">Disputed Items: 3</div>
+                    <div class="summary-item">Reinsertion Risk: High</div>
+                    <div class="summary-item">Timeline: 60-90 days</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
