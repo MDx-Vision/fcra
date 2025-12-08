@@ -458,6 +458,65 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 
 ---
 
+## PHASE 10: BAG CRM FEATURE PARITY (NEW - December 2025)
+
+Based on comprehensive gap analysis comparing BAG CRM (Credit Money Machine competitor) with our platform.
+See `DEEP_DIVE_GAP_ANALYSIS.md` for full comparison.
+
+### Phase 10A: Critical UI Gaps (Week 1) - HIGH PRIORITY
+- [ ] **Bulk Selection System** - Add checkboxes to client list for multi-select
+- [ ] **Bulk Action Toolbar** - Change status, assign staff, delete for selected clients
+- [ ] **Row-Level Action Icons** - Delete, Flag, View, WF, Notes, Docs, Star icons per row
+- [ ] **Inline Status Editing** - Click status badge to change without opening full form
+- [ ] **Follow-Up Color Coding** - Green (future), Yellow (soon), Red (overdue) dates
+
+### Phase 10B: Important Features (Week 2) - MEDIUM PRIORITY
+- [ ] **Quick Filter Buttons** - ACTIVE, LEADS, FOLLOW UP, SIGNUPS, LAST 25, SHOW ALL
+- [ ] **Workflow Selector Popup** - Visual popup per client with Go/Pending/Trigger buttons
+- [ ] **Hover Quick Info Popup** - Show client details on row hover (300ms delay)
+- [ ] **Priority Flags** - MARK 1 / MARK 2 visual flags for prioritization
+- [ ] **Portal Post (PP) Column** - Gray (not posted) / Green (posted) with one-click publish
+- [ ] **TYPE Column Visual Codes** - C/L/I/X letter badges with color circles
+
+### Phase 10C: Nice-to-Have Features (Week 3) - LOW PRIORITY
+- [ ] **Version Badge** - Show system version in header (e.g., "v12.08.25")
+- [ ] **Tags/Groups System** - Many-to-many client tagging with colors
+- [ ] **Secondary Status (STATUS 2)** - Additional status field for sub-categorization
+- [ ] **Custom Quick Links (1-8)** - User-configurable shortcut buttons in header
+- [ ] **Phone Verified Checkbox** - Track verified phone numbers
+- [ ] **Star/Favorite Toggle** - Mark clients as favorites
+- [ ] **Affiliate Visual Badges** - Show referrer name badge on client rows
+- [ ] **Pagination Controls** - Rows per page dropdown + First/Prev/Next/Last buttons
+
+### Database Schema Additions Required
+```sql
+-- New columns for clients table
+ALTER TABLE clients ADD COLUMN priority_flag INTEGER DEFAULT 0;
+ALTER TABLE clients ADD COLUMN starred BOOLEAN DEFAULT false;
+ALTER TABLE clients ADD COLUMN employer_company VARCHAR(255);
+ALTER TABLE clients ADD COLUMN status_2 VARCHAR(50);
+ALTER TABLE clients ADD COLUMN next_follow_up DATE;
+ALTER TABLE clients ADD COLUMN phone_verified BOOLEAN DEFAULT false;
+ALTER TABLE clients ADD COLUMN portal_posted BOOLEAN DEFAULT false;
+ALTER TABLE clients ADD COLUMN portal_posted_at TIMESTAMP;
+
+-- New tables for tags and quick links
+CREATE TABLE client_tags (id, name, color, created_at);
+CREATE TABLE client_tag_assignments (client_id, tag_id);
+CREATE TABLE user_quick_links (id, user_id, slot_number, link_url, link_label);
+```
+
+### Gap Summary Scorecard
+| Category | % Complete Before | Target After Phase 10 |
+|----------|-------------------|----------------------|
+| Row-Level Icons | 30% | 100% |
+| Quick Filters | 40% | 100% |
+| Bulk Operations | 20% | 100% |
+| Interactive Elements | 25% | 90% |
+| **Overall BAG Parity** | **53%** | **95%** |
+
+---
+
 ## FUTURE ENHANCEMENTS (BACKLOG)
 
 ### Client Education Center with Interactive FCRA Litigation Map
