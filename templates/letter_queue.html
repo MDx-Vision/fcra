@@ -578,6 +578,18 @@
                             <button class="btn btn-primary btn-sm" onclick="generateLetter(${entry.id})">
                                 Generate PDF
                             </button>
+                            <button class="btn btn-secondary btn-sm" onclick="downloadPDF(${entry.id})">
+                                Download PDF
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="printLetter(${entry.id})">
+                                Print
+                            </button>
+                            <button class="btn btn-success btn-sm" onclick="markAsSent(${entry.id})">
+                                Mark as Sent
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="resendLetter(${entry.id})">
+                                Resend
+                            </button>
                         ` : ''}
                     </div>
                 </div>
