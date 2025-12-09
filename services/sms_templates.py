@@ -170,6 +170,42 @@ def custom_sms(client_name, message):
     return f"Hi {first_name}, {COMPANY_NAME}: {message} {REPLY_STOP}"
 
 
+def dispute_mailed_sms(client_name, bureau, round_number, tracking_number):
+    """
+    Notification when dispute letter has been mailed via certified mail.
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+    return (
+        f"Hi {first_name}, your Round {round_number} dispute to {bureau} "
+        f"was mailed via certified mail. Tracking: {tracking_number}. "
+        f"Response expected in 30 days. {REPLY_STOP}"
+    )
+
+
+def cra_response_received_sms(client_name, bureau, items_deleted):
+    """
+    Short notification when CRA responds with results.
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+    item_word = "item" if items_deleted == 1 else "items"
+    return (
+        f"Hi {first_name}, {bureau} responded! "
+        f"{items_deleted} {item_word} deleted from your credit report. "
+        f"Check your portal for full details. {REPLY_STOP}"
+    )
+
+
+def reinsertion_alert_sms(client_name, bureau):
+    """
+    URGENT alert for reinsertion violation.
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+    return (
+        f"URGENT: {first_name}, {bureau} illegally reinserted a deleted item - "
+        f"this is an FCRA violation! Check your email immediately for details. {REPLY_STOP}"
+    )
+
+
 TEMPLATE_TYPES = {
     'welcome': welcome_sms,
     'document_reminder': document_reminder_sms,
@@ -182,7 +218,10 @@ TEMPLATE_TYPES = {
     'document_uploaded': document_uploaded_sms,
     'analysis_ready': analysis_ready_sms,
     'letters_ready': letters_ready_sms,
-    'custom': custom_sms
+    'custom': custom_sms,
+    'dispute_mailed': dispute_mailed_sms,
+    'cra_response_received': cra_response_received_sms,
+    'reinsertion_alert': reinsertion_alert_sms
 }
 
 

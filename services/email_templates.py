@@ -491,6 +491,222 @@ def letters_ready_email(client_name, letter_count, bureaus=None, portal_url=None
     return get_base_template(content, "Dispute Letters Ready")
 
 
+def cra_response_received_email(client_name, bureau, items_deleted, items_verified, portal_url=None):
+    """
+    Notification when CRA has responded to dispute.
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+
+    portal_section = ""
+    if portal_url:
+        portal_section = f'''
+            <p style="margin: 25px 0; text-align: center;">
+                <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    View Full Response
+                </a>
+            </p>
+        '''
+
+    content = f'''
+        <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">{bureau} Has Responded to Your Dispute</h2>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            Hi {first_name},
+        </p>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            Great news! {bureau} has responded to your dispute. Here's a summary of the results:
+        </p>
+
+        <div style="background-color: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <div style="margin-bottom: 15px;">
+                <div style="background-color: #d1fae5; border-left: 4px solid #10b981; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 12px;">
+                    <p style="color: #065f46; margin: 0; font-size: 16px; font-weight: 600;">
+                        ✅ Items Deleted: {items_deleted}
+                    </p>
+                </div>
+                <div style="background-color: #fed7aa; border-left: 4px solid #f97316; padding: 15px; border-radius: 0 8px 8px 0;">
+                    <p style="color: #9a3412; margin: 0; font-size: 16px; font-weight: 600;">
+                        ⚠️ Items Verified: {items_verified}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            Our team is currently reviewing the response in detail. We'll analyze which items were successfully removed and determine the best strategy for any verified items that remain.
+        </p>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            <strong>What happens next:</strong>
+        </p>
+
+        <ul style="color: #334155; line-height: 1.8; font-size: 15px; padding-left: 20px;">
+            <li>We'll review the complete response for any FCRA violations</li>
+            <li>For verified items, we'll prepare escalation letters if warranted</li>
+            <li>You'll receive a detailed analysis within 2-3 business days</li>
+            <li>We'll proceed to the next round of disputes if needed</li>
+        </ul>
+
+        {portal_section}
+
+        <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
+            If you have questions about the response, feel free to reply to this email.
+        </p>
+    '''
+
+    return get_base_template(content, f"{bureau} Has Responded to Your Dispute")
+
+
+def cra_no_response_violation_email(client_name, bureau, portal_url=None):
+    """
+    Alert email when CRA fails to respond within 30 days (FCRA violation).
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+
+    portal_section = ""
+    if portal_url:
+        portal_section = f'''
+            <p style="margin: 25px 0; text-align: center;">
+                <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    View Case Details
+                </a>
+            </p>
+        '''
+
+    content = f'''
+        <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">FCRA Violation: {bureau} Failed to Respond</h2>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            Hi {first_name},
+        </p>
+
+        <div style="background-color: #fee2e2; border: 2px solid #ef4444; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <p style="color: #991b1b; margin: 0 0 10px 0; font-size: 18px; font-weight: 700;">
+                ⚠️ FCRA Violation Detected
+            </p>
+            <p style="color: #7f1d1d; margin: 0; font-size: 15px; line-height: 1.6;">
+                {bureau} has failed to respond to your dispute within the legally required 30-day period mandated by FCRA §611(a)(1). This is a serious violation of federal law.
+            </p>
+        </div>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            <strong>What this means for your case:</strong>
+        </p>
+
+        <ul style="color: #334155; line-height: 1.8; font-size: 15px; padding-left: 20px;">
+            <li><strong>Stronger Legal Position:</strong> This violation significantly strengthens your case and may support claims for statutory damages</li>
+            <li><strong>Immediate Action Required:</strong> Under FCRA law, {bureau} must delete the disputed items or provide a valid explanation</li>
+            <li><strong>Escalation Protocol:</strong> We are immediately escalating this matter with a formal notice of violation</li>
+            <li><strong>Documentation:</strong> All correspondence is being preserved for potential legal action</li>
+        </ul>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            Our legal team is preparing an escalated demand letter citing this FCRA violation. We will also document this for any potential legal claims, as willful violations can result in statutory damages.
+        </p>
+
+        <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+            <p style="color: #065f46; margin: 0; font-size: 14px; line-height: 1.6;">
+                <strong>Legal Reference:</strong> 15 U.S.C. §1681i(a)(1) requires credit reporting agencies to investigate disputes within 30 days. Failure to comply is a violation of federal law.
+            </p>
+        </div>
+
+        {portal_section}
+
+        <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
+            We're handling this violation aggressively on your behalf. If you have questions, please don't hesitate to reach out.
+        </p>
+    '''
+
+    return get_base_template(content, f"FCRA Violation: {bureau} Failed to Respond")
+
+
+def reinsertion_violation_alert_email(client_name, bureau, account_name, portal_url=None):
+    """
+    URGENT alert when a previously deleted item is reinserted without notification.
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+
+    portal_section = ""
+    if portal_url:
+        portal_section = f'''
+            <p style="margin: 25px 0; text-align: center;">
+                <a href="{portal_url}" style="display: inline-block; background: #ef4444; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    View Case Details - Action Required
+                </a>
+            </p>
+        '''
+
+    content = f'''
+        <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 20px; margin: -40px -30px 30px -30px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700;">🚨 URGENT: FCRA Violation Detected</h2>
+            <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 15px;">Immediate Action Required</p>
+        </div>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            Hi {first_name},
+        </p>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            <strong>We have detected a serious FCRA violation regarding your credit report with {bureau}.</strong>
+        </p>
+
+        <div style="background-color: #fee2e2; border: 3px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <p style="color: #991b1b; margin: 0 0 15px 0; font-size: 17px; font-weight: 700;">
+                Reinsertion Violation - FCRA §1681i(a)(5)(B)
+            </p>
+            <p style="color: #7f1d1d; margin: 0; font-size: 15px; line-height: 1.6;">
+                <strong>Account:</strong> {account_name}
+            </p>
+            <p style="color: #7f1d1d; margin: 10px 0 0 0; font-size: 15px; line-height: 1.6;">
+                This item was previously deleted from your credit report following our dispute. {bureau} has now illegally reinserted this item <strong>without providing you the required 5-day advance notice</strong> as mandated by federal law.
+            </p>
+        </div>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            <strong>What this violation means:</strong>
+        </p>
+
+        <ul style="color: #334155; line-height: 1.8; font-size: 15px; padding-left: 20px;">
+            <li><strong>Federal Law Violation:</strong> FCRA §1681i(a)(5)(B) requires 5-day advance written notice before reinserting any deleted information</li>
+            <li><strong>Statutory Damages:</strong> This violation entitles you to potential damages of <span style="background-color: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600;">$100 - $1,000 per violation</span></li>
+            <li><strong>Punitive Damages:</strong> If willful, additional punitive damages may apply</li>
+            <li><strong>Attorney Fees:</strong> {bureau} may be liable for your attorney fees and costs</li>
+        </ul>
+
+        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+            <p style="color: #78350f; margin: 0; font-size: 14px; line-height: 1.6;">
+                <strong>Priority Case Status:</strong> Your case has been flagged as high-priority due to this violation. Our legal team is immediately preparing a formal demand letter and documenting this violation for potential litigation.
+            </p>
+        </div>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            <strong>Our immediate actions:</strong>
+        </p>
+
+        <ul style="color: #334155; line-height: 1.8; font-size: 15px; padding-left: 20px;">
+            <li>Formal demand letter citing FCRA §1681i(a)(5)(B) violation</li>
+            <li>Request for immediate removal of reinserted item</li>
+            <li>Preservation of all evidence for potential legal claims</li>
+            <li>Evaluation for statutory damages claim</li>
+        </ul>
+
+        {portal_section}
+
+        <div style="background-color: #f8fafc; padding: 15px; margin-top: 30px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.5;">
+                <strong>Legal Citation:</strong> 15 U.S.C. §1681i(a)(5)(B) - "A consumer reporting agency shall provide written notice to a consumer of the results of a reinvestigation... not later than 5 business days after the completion of the reinvestigation, by mail or, if authorized by the consumer for that purpose, by other means available to the agency."
+            </p>
+        </div>
+
+        <p style="color: #64748b; font-size: 14px; margin-top: 25px;">
+            This is a serious violation and we are treating it with the highest priority. Our team will contact you within 24 hours to discuss next steps.
+        </p>
+    '''
+
+    return get_base_template(content, "🚨 URGENT: Reinsertion Violation Detected")
+
+
 TEMPLATE_TYPES = {
     'welcome': welcome_email,
     'document_reminder': document_reminder_email,
@@ -499,7 +715,10 @@ TEMPLATE_TYPES = {
     'cra_response': cra_response_email,
     'payment_reminder': payment_reminder_email,
     'analysis_ready': analysis_ready_email,
-    'letters_ready': letters_ready_email
+    'letters_ready': letters_ready_email,
+    'cra_response_received': cra_response_received_email,
+    'cra_no_response_violation': cra_no_response_violation_email,
+    'reinsertion_violation_alert': reinsertion_violation_alert_email
 }
 
 
