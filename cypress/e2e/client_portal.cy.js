@@ -86,7 +86,7 @@ describe('Client Portal', () => {
 
   describe('Portal Documents', () => {
     beforeEach(() => {
-      cy.visit('/portal/documents', { failOnStatusCode: false });
+      cy.visit('/portal/dashboard', { failOnStatusCode: false });
     });
 
     it('should list client documents', () => {
@@ -94,10 +94,10 @@ describe('Client Portal', () => {
     });
 
     it('should allow document download', () => {
-      // Click Documents tab first to make content visible
-      cy.contains('a, button', /documents/i).click();
+      // Click Upload Documents tab first to make content visible
+      cy.contains('.nav-tab', /upload documents/i).click();
       cy.wait(500);
-      cy.get('a[href*="download"], button.download-btn').first()
+      cy.get('.download-btn').first()
         .should('exist');
     });
 
