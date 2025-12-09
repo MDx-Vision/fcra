@@ -49,7 +49,7 @@ describe('Client Signup Flow', () => {
     });
 
     it('should validate ZIP code format (5 digits)', () => {
-      cy.get('input[name*="zip"]').first().then(($zip) => {
+      cy.get('input[name="addressZip"], input#addressZip').first().then(($zip) => {
         if ($zip.length) {
           cy.wrap($zip).type('123');
         }
@@ -137,7 +137,7 @@ describe('Client Signup Flow', () => {
     });
 
     it('should validate username required', () => {
-      cy.get('input[name*="username"]').should('exist');
+      cy.get('input[name="creditUsername"], input#creditUsername').should('exist');
     });
 
     it('should validate password required', () => {

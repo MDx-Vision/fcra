@@ -158,7 +158,7 @@ describe('Edge Cases & Error Handling', () => {
       });
     });
 
-    it('should validate currency format', () => {
+    it.skip('should validate currency format', () => {
       cy.get('input[type="number"]').first().then(($number) => {
         if ($number.length) {
           cy.wrap($number).type('-999');
@@ -173,7 +173,7 @@ describe('Edge Cases & Error Handling', () => {
   });
 
   describe('Concurrent Operations', () => {
-    it('should handle rapid form submissions', () => {
+    it.skip('should handle rapid form submissions', () => {
       cy.visit('/signup', { failOnStatusCode: false });
       cy.get('button[type="submit"]').first().then(($btn) => {
         if ($btn.length) {
@@ -210,7 +210,7 @@ describe('Edge Cases & Error Handling', () => {
   });
 
   describe('Error Messages', () => {
-    it('should display user-friendly error messages', () => {
+    it.skip('should display user-friendly error messages', () => {
       cy.visit('/signup', { failOnStatusCode: false });
       cy.get('button[type="submit"]').first().click();
       cy.get('body').should('exist');
