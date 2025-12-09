@@ -9006,6 +9006,12 @@ def dashboard_contacts():
             query = query.filter(Client.client_type == 'C')
         elif filter_type == 'leads':
             query = query.filter(Client.client_type == 'L')
+        elif filter_type == 'cancelled':
+            query = query.filter(Client.client_type == 'X')
+        elif filter_type == 'paused':
+            query = query.filter(Client.client_type == 'I')
+        elif filter_type == 'PLACEHOLDER':
+            query = query.filter(Client.client_type == 'L')
         elif filter_type == 'follow_up':
             query = query.filter(Client.follow_up_date != None)
         elif filter_type == 'signups':
