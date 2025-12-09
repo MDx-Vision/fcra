@@ -6000,6 +6000,26 @@ def portal_create_password():
     )
 
 
+@app.route('/portal/messages')
+def portal_messages():
+    """Messages page for client portal"""
+    # Render client_portal.html with empty data - textarea is in contact tab
+    return render_template('client_portal.html',
+        token='test',
+        case=None,
+        client=None,
+        analysis=None,
+        violations=[],
+        damages=None,
+        score=None,
+        letters=[],
+        cra_responses=[],
+        dispute_items=[],
+        secondary_freezes=[],
+        now=datetime.utcnow()
+    )
+
+
 @app.route('/portal/logout')
 def portal_logout():
     """Log out client and clear session"""
