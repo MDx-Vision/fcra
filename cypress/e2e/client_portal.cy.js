@@ -94,7 +94,11 @@ describe('Client Portal', () => {
     });
 
     it('should allow document download', () => {
-      cy.get('a[href*="download"], button').first().should('exist');
+      // Click Documents tab first to make content visible
+      cy.contains('a, button', /documents/i).click();
+      cy.wait(500);
+      cy.get('a[href*="download"], button.download-btn').first()
+        .should('exist');
     });
 
     it('should display document dates', () => {
