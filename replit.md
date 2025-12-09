@@ -81,6 +81,7 @@ The platform is built on Flask and employs a two-stage, section-based analysis a
 - **Frivolousness Defense Tracker** (`/dashboard/frivolousness`): Track CRA frivolous claim defenses with evidence requirements, legal theory documentation, and re-dispute workflow management.
 - **Suspense Account Detection** (`/dashboard/suspense-accounts`): Mortgage payment ledger analysis identifying misapplied payments in suspense accounts that cause false late payment reporting.
 - **Violation Pattern Documentation** (`/dashboard/patterns`): Cross-client pattern tracking for systemic FCRA violations with evidence packet PDF generation for class action preparation.
+- **VA Letter Automation System** (`/dashboard/va-approval`): Complete certified mail automation workflow with SFTP integration to SendCertifiedMail.com ($11/letter). Features client-grouped letter display with avatars, filter by round/bureau/client, batch approval with live cost calculations, real-time SFTP status monitoring, 3 API routes (pending letters, approve batch, SFTP status), 3 database tables (AutomationMetrics, LetterBatch, TradelineStatus), 4 workflow automation triggers (30-day deadlines, auto-analyze CRA responses, 35-day escalation, reinsertion alerts), 6 new communication templates (3 email + 3 SMS), 2 scheduled jobs (daily tracking updates at 6 AM, deadline checks at 9 AM), and analytics dashboard integration with 10 automation metrics.
 
 ### Feature Specifications
 - Full FCRA violation detection with section identification.
