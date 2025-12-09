@@ -181,8 +181,8 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
     result = upload_batch(batch_letters)
     batch_id = result['batch_id']
 
-    # Calculate cost (SendCertified: $2.50 per letter)
-    cost_per_letter_cents = 250
+    # Calculate cost (SendCertified: $11.00 per letter - includes printing, certified mail, and return receipt electronic)
+    cost_per_letter_cents = 1100
     total_cost_cents = len(batch_letters) * cost_per_letter_cents
 
     # Create LetterBatch record
