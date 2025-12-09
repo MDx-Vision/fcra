@@ -17874,6 +17874,13 @@ def letter_queue_dashboard():
     return render_template('letter_queue.html')
 
 
+@app.route('/dashboard/va-approval')
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def va_letter_approval_dashboard():
+    """VA Letter Approval Dashboard - Review and approve letters for certified mail delivery"""
+    return render_template('va_letter_approval.html')
+
+
 @app.route('/api/letter-queue', methods=['GET'])
 @require_staff()
 def api_get_letter_queue():
