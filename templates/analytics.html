@@ -677,6 +677,96 @@
                 </div>
             </div>
         </div>
+
+        <!-- VA Letter Automation Analytics -->
+        <div class="dashboard-section" id="vaAutomationAnalytics" data-testid="va-automation-analytics-section">
+            <div class="section-header">
+                <h2 class="section-title">📬 VA Letter Automation</h2>
+                <a href="/dashboard/va-approval" style="color: #84cc16; text-decoration: none; font-size: 14px; font-weight: 500;" data-testid="view-va-approval-link">Approve Letters →</a>
+            </div>
+
+            <!-- Key Metrics Row -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px;" data-testid="va-metrics-grid">
+                <div class="stat-box" style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white;" data-testid="va-total-letters">
+                    <div class="stat-box-value" style="color: white;">{{ automation_stats.total_letters }}</div>
+                    <div class="stat-box-label" style="color: rgba(255,255,255,0.8);">Total Letters Sent</div>
+                </div>
+                <div class="stat-box" style="background: linear-gradient(135deg, #319795, #84cc16); color: white;" data-testid="va-total-cost">
+                    <div class="stat-box-value" style="color: white;">${{ "{:,.2f}".format(automation_stats.total_cost / 100) }}</div>
+                    <div class="stat-box-label" style="color: rgba(255,255,255,0.8);">Total Mail Cost</div>
+                </div>
+                <div class="stat-box" data-testid="va-pending-approval">
+                    <div class="stat-box-value">{{ automation_stats.pending_approval }}</div>
+                    <div class="stat-box-label">Pending Approval</div>
+                </div>
+                <div class="stat-box" data-testid="va-avg-cost-per-client">
+                    <div class="stat-box-value">${{ "{:,.2f}".format(automation_stats.avg_cost_per_client / 100) }}</div>
+                    <div class="stat-box-label">Avg Cost Per Client</div>
+                </div>
+            </div>
+
+            <!-- Recent Letter Batches Table -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 25px;" data-testid="recent-batches-container">
+                <div style="font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 15px;">Recent Letter Batches</div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #e2e8f0;">
+                                <th style="text-align: left; padding: 12px 8px; font-size: 13px; color: #64748b; font-weight: 600;">Batch ID</th>
+                                <th style="text-align: left; padding: 12px 8px; font-size: 13px; color: #64748b; font-weight: 600;">Date Sent</th>
+                                <th style="text-align: right; padding: 12px 8px; font-size: 13px; color: #64748b; font-weight: 600;">Letters</th>
+                                <th style="text-align: right; padding: 12px 8px; font-size: 13px; color: #64748b; font-weight: 600;">Cost</th>
+                                <th style="text-align: center; padding: 12px 8px; font-size: 13px; color: #64748b; font-weight: 600;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if automation_stats.recent_batches %}
+                                {% for batch in automation_stats.recent_batches %}
+                                <tr style="border-bottom: 1px solid #e2e8f0;" data-testid="batch-row-{{ batch.id }}">
+                                    <td style="padding: 12px 8px; font-size: 13px; color: #1a1a2e; font-family: monospace;">{{ batch.batch_id }}</td>
+                                    <td style="padding: 12px 8px; font-size: 13px; color: #64748b;">{{ batch.uploaded_at.strftime('%b %d, %Y') if batch.uploaded_at else 'N/A' }}</td>
+                                    <td style="padding: 12px 8px; font-size: 13px; color: #1a1a2e; text-align: right; font-weight: 600;">{{ batch.letter_count }}</td>
+                                    <td style="padding: 12px 8px; font-size: 13px; color: #1a1a2e; text-align: right; font-weight: 600;">${{ "{:,.2f}".format(batch.cost_cents / 100) }}</td>
+                                    <td style="padding: 12px 8px; text-align: center;">
+                                        {% if batch.status == 'uploaded' %}
+                                        <span style="background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Uploaded</span>
+                                        {% elif batch.status == 'complete' %}
+                                        <span style="background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">Complete</span>
+                                        {% else %}
+                                        <span style="background: #f3f4f6; color: #374151; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">{{ batch.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" style="padding: 20px; text-align: center; color: #64748b; font-size: 14px;">No letter batches sent yet</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Alert Stats Row -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;" data-testid="va-alert-stats">
+                <div style="background: #fee2e2; border-left: 4px solid #dc2626; border-radius: 12px; padding: 20px; text-align: center;" data-testid="va-overdue-responses">
+                    <div style="font-size: 32px; font-weight: 700; color: #991b1b;">{{ automation_stats.overdue_responses }}</div>
+                    <div style="font-size: 13px; color: #7f1d1d; font-weight: 600; margin-top: 5px;">CRA Responses Overdue</div>
+                    <div style="font-size: 11px; color: #991b1b; margin-top: 5px;">Past 35 days - FCRA violation</div>
+                </div>
+                <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 12px; padding: 20px; text-align: center;" data-testid="va-reinsertion-violations">
+                    <div style="font-size: 32px; font-weight: 700; color: #92400e;">{{ automation_stats.reinsertion_violations }}</div>
+                    <div style="font-size: 13px; color: #78350f; font-weight: 600; margin-top: 5px;">Reinsertion Violations</div>
+                    <div style="font-size: 11px; color: #92400e; margin-top: 5px;">§1681i(a)(5)(B) violations detected</div>
+                </div>
+                <div style="background: #dcfce7; border-left: 4px solid #16a34a; border-radius: 12px; padding: 20px; text-align: center;" data-testid="va-deletion-rate">
+                    <div style="font-size: 32px; font-weight: 700; color: #166534;">{{ automation_stats.deletion_rate }}%</div>
+                    <div style="font-size: 13px; color: #14532d; font-weight: 600; margin-top: 5px;">Item Deletion Rate</div>
+                    <div style="font-size: 11px; color: #166534; margin-top: 5px;">{{ automation_stats.items_deleted }} of {{ automation_stats.items_disputed }} items</div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>

@@ -4416,14 +4416,70 @@ def dashboard_analytics():
             'signups': signup_data,
             'revenue': revenue_data
         }
-        
+
+        # ========== VA LETTER AUTOMATION STATS ==========
+        # Total letters sent via automation
+        total_letters = db.query(func.sum(LetterBatch.letter_count)).scalar() or 0
+
+        # Total cost in cents from all batches
+        total_cost_cents = db.query(func.sum(LetterBatch.cost_cents)).scalar() or 0
+
+        # Pending approval (letters with PDF generated but not yet sent)
+        pending_approval = db.query(DisputeLetter).filter(
+            DisputeLetter.sent_via_letterstream == False,
+            DisputeLetter.file_path.isnot(None)
+        ).count()
+
+        # Average cost per client (based on clients with sent letters)
+        unique_clients_count = db.query(func.count(func.distinct(DisputeLetter.client_id))).filter(
+            DisputeLetter.sent_via_letterstream == True
+        ).scalar() or 0
+        avg_cost_per_client = (total_cost_cents / unique_clients_count) if unique_clients_count > 0 else 0
+
+        # Recent batches (last 10)
+        recent_batches = db.query(LetterBatch).order_by(
+            LetterBatch.uploaded_at.desc()
+        ).limit(10).all()
+
+        # Overdue CRA responses (35+ days past deadline)
+        thirty_five_days_ago = now - timedelta(days=35)
+        overdue_responses = db.query(CaseDeadline).filter(
+            CaseDeadline.deadline_type == 'cra_response',
+            CaseDeadline.deadline_date < thirty_five_days_ago,
+            CaseDeadline.status != 'completed'
+        ).count()
+
+        # Reinsertion violations detected
+        reinsertion_violations = db.query(TradelineStatus).filter(
+            TradelineStatus.current_status == 'reinsertion_violation'
+        ).count()
+
+        # Deletion metrics from automation_metrics table
+        items_deleted_sum = db.query(func.sum(AutomationMetrics.items_deleted)).scalar() or 0
+        items_disputed_sum = db.query(func.sum(AutomationMetrics.items_disputed)).scalar() or 0
+        deletion_rate = (items_deleted_sum / items_disputed_sum * 100) if items_disputed_sum > 0 else 0
+
+        automation_stats = {
+            'total_letters': total_letters,
+            'total_cost': total_cost_cents,
+            'pending_approval': pending_approval,
+            'avg_cost_per_client': avg_cost_per_client,
+            'recent_batches': recent_batches,
+            'overdue_responses': overdue_responses,
+            'reinsertion_violations': reinsertion_violations,
+            'deletion_rate': round(deletion_rate, 1),
+            'items_deleted': items_deleted_sum,
+            'items_disputed': items_disputed_sum
+        }
+
         return render_template('analytics.html',
             client_stats=client_stats,
             revenue_stats=revenue_stats,
             case_stats=case_stats,
             dispute_stats=dispute_stats,
             cra_stats=cra_stats,
-            timeline_data=timeline_data
+            timeline_data=timeline_data,
+            automation_stats=automation_stats
         )
         
     except Exception as e:
