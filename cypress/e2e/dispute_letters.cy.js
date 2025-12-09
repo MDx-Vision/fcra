@@ -84,8 +84,11 @@ describe('Dispute Letter Generation', () => {
   });
 
   describe('Bureau Targeting', () => {
-    it('should target Equifax', () => {
+    beforeEach(() => {
       cy.visit('/dashboard/automation', { failOnStatusCode: false });
+    });
+
+    it('should target Equifax', () => {
       cy.get('body').should('contain', 'Equifax');
     });
 
@@ -94,7 +97,7 @@ describe('Dispute Letter Generation', () => {
     });
 
     it('should target TransUnion', () => {
-      cy.get('body').should('exist');
+      cy.get('body').should('contain', 'TransUnion');
     });
 
     it('should target all three bureaus', () => {
@@ -154,8 +157,11 @@ describe('Dispute Letter Generation', () => {
   });
 
   describe('Letter History', () => {
-    it('should display sent letters', () => {
+    beforeEach(() => {
       cy.visit('/dashboard/letter-queue', { failOnStatusCode: false });
+    });
+
+    it('should display sent letters', () => {
       cy.get('body').should('exist');
     });
 
