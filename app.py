@@ -24765,6 +24765,120 @@ def api_automation_install_triggers():
         db.close()
 
 
+@app.route('/api/automation/sftp-status')
+@require_staff()
+def api_automation_sftp_status():
+    """Check SFTP connection status to SendCertifiedMail.com"""
+    from services.sendcertified_sftp_service import get_sftp_connection
+    import os
+
+    try:
+        # Try to establish connection
+        sftp, transport = get_sftp_connection()
+
+        # Get connection details
+        host = os.environ.get('SENDCERTIFIED_SFTP_HOST', 'Not configured')
+
+        # Close connection
+        if sftp:
+            sftp.close()
+        if transport:
+            transport.close()
+
+        return jsonify({
+            'success': True,
+            'connected': True,
+            'host': host,
+            'message': 'SFTP connection successful'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'connected': False,
+            'error': str(e),
+            'message': 'SFTP connection failed'
+        }), 200  # Return 200 to allow frontend to handle gracefully
+
+
+# VA LETTER APPROVAL API ROUTES
+# ============================================================
+
+@app.route('/api/va/pending-letters')
+@require_staff()
+def api_va_pending_letters():
+    """Get all pending VA dispute letters ready for approval"""
+    from database import DisputeLetter, Client
+
+    db = get_db()
+    try:
+        # Query letters that are ready but not yet sent
+        letters = db.query(DisputeLetter).filter(
+            DisputeLetter.sent_via_letterstream == False,
+            DisputeLetter.file_path.isnot(None)  # Has PDF generated
+        ).order_by(DisputeLetter.created_at.desc()).all()
+
+        letter_data = []
+        for letter in letters:
+            # Get client info
+            client = db.query(Client).filter_by(id=letter.client_id).first()
+
+            letter_data.append({
+                'id': letter.id,
+                'client_id': letter.client_id,
+                'client_name': f"{client.first_name} {client.last_name}" if client else 'Unknown',
+                'bureau': letter.bureau,
+                'round_number': letter.round_number or 0,
+                'letter_type': letter.letter_type or 'Dispute Letter',
+                'created_at': letter.created_at.isoformat() if letter.created_at else None,
+                'file_path': letter.file_path
+            })
+
+        return jsonify({
+            'success': True,
+            'letters': letter_data,
+            'total_count': len(letter_data),
+            'estimated_cost_cents': len(letter_data) * 1100,
+            'estimated_cost_dollars': len(letter_data) * 11
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/va/approve-batch', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def api_va_approve_batch():
+    """Approve batch of VA letters and send via SFTP"""
+    from services.sendcertified_sftp_service import send_letter_batch
+
+    data = request.json
+    letter_ids = data.get('letter_ids', [])
+
+    if not letter_ids:
+        return jsonify({'success': False, 'error': 'No letter_ids provided'}), 400
+
+    db = get_db()
+    try:
+        # Send batch via SFTP
+        result = send_letter_batch(db, letter_ids)
+
+        return jsonify({
+            'success': True,
+            'approved_count': result['letter_count'],
+            'batch_id': result['batch_id'],
+            'cost_cents': result['cost_cents'],
+            'cost_dollars': result['cost_cents'] / 100,
+            'deadline_ids': result['deadline_ids'],
+            'sent_at': result['sent_at'],
+            'message': f"Successfully approved and queued {result['letter_count']} letters for delivery"
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
