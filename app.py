@@ -24942,6 +24942,61 @@ def api_va_approve_batch():
         db.close()
 
 
+@app.route('/api/admin/validate-lrm-csv', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_validate_lrm_csv():
+    """Validate LRM CSV before import (Admin only)"""
+    from services.lrm_import_service import validate_lrm_csv
+
+    data = request.json
+    csv_path = data.get('csv_path', '/mnt/user-data/uploads/contacts__1_.csv')
+
+    try:
+        validation = validate_lrm_csv(csv_path)
+        return jsonify({
+            'success': True,
+            'validation': validation
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/admin/import-lrm-clients', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_import_lrm_clients():
+    """Import clients from LRM CSV (Admin only)"""
+    from services.lrm_import_service import import_lrm_contacts
+
+    data = request.json
+    csv_path = data.get('csv_path', '/mnt/user-data/uploads/contacts__1_.csv')
+
+    try:
+        # Run import
+        stats = import_lrm_contacts(csv_path)
+
+        return jsonify({
+            'success': True,
+            'stats': {
+                'total': stats['total'],
+                'imported': stats['imported'],
+                'skipped': stats['skipped'],
+                'errors': stats['errors']
+            },
+            'error_details': stats['error_details'][:10] if len(stats['error_details']) > 10 else stats['error_details'],  # Limit to first 10 errors
+            'message': f"Import complete: {stats['imported']} imported, {stats['skipped']} skipped, {stats['errors']} errors out of {stats['total']} total rows"
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
