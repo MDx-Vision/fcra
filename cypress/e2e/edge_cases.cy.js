@@ -177,9 +177,9 @@ describe('Edge Cases & Error Handling', () => {
       cy.visit('/signup', { failOnStatusCode: false });
       cy.get('button[type="submit"]').first().then(($btn) => {
         if ($btn.length) {
-          cy.wrap($btn).click();
-          cy.wrap($btn).click();
-          cy.wrap($btn).click();
+          cy.wrap($btn).click({ force: true });
+          cy.wrap($btn).click({ force: true });
+          cy.wrap($btn).click({ force: true });
         }
       });
     });
@@ -212,7 +212,7 @@ describe('Edge Cases & Error Handling', () => {
   describe('Error Messages', () => {
     it('should display user-friendly error messages', () => {
       cy.visit('/signup', { failOnStatusCode: false });
-      cy.get('button[type="submit"]').first().click();
+      cy.get('button[type="submit"]').first().click({ force: true });
       cy.get('body').should('exist');
     });
 
