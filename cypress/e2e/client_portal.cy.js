@@ -126,7 +126,9 @@ describe('Client Portal', () => {
 
   describe('Password Creation', () => {
     beforeEach(() => {
-      cy.visit('/portal/create-password', { failOnStatusCode: false });
+      cy.visit('/portal/dashboard', { failOnStatusCode: false });
+      cy.contains('.nav-tab', /my profile/i).click();
+      cy.wait(500);
     });
 
     it('should display password creation form', () => {
