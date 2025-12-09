@@ -24616,6 +24616,155 @@ def api_view_credit_import_report_raw(credential_id):
         db.close()
 
 
+# ============================================================
+# AUTOMATION API ROUTES
+# ============================================================
+
+@app.route('/api/automation/send-batch', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def api_automation_send_batch():
+    """Send batch of dispute letters via SendCertifiedMail.com SFTP"""
+    from services.sendcertified_sftp_service import send_letter_batch
+
+    data = request.json
+    letter_ids = data.get('letter_ids', [])
+
+    if not letter_ids:
+        return jsonify({'success': False, 'error': 'No letter_ids provided'}), 400
+
+    db = get_db()
+    try:
+        result = send_letter_batch(db, letter_ids)
+        return jsonify({
+            'success': True,
+            'batch_id': result['batch_id'],
+            'letter_count': result['letter_count'],
+            'cost_cents': result['cost_cents'],
+            'cost_dollars': result['cost_cents'] / 100,
+            'deadline_ids': result['deadline_ids'],
+            'sent_at': result['sent_at']
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/automation/batch-status/<batch_id>')
+@require_staff()
+def api_automation_batch_status(batch_id):
+    """Get status and tracking info for a letter batch"""
+    from services.sendcertified_sftp_service import check_tracking
+    from database import LetterBatch
+
+    db = get_db()
+    try:
+        # Get batch record
+        batch = db.query(LetterBatch).filter_by(batch_id=batch_id).first()
+
+        if not batch:
+            return jsonify({'success': False, 'error': 'Batch not found'}), 404
+
+        # Check for tracking updates
+        tracking_result = check_tracking(batch_id)
+
+        return jsonify({
+            'success': True,
+            'batch': {
+                'batch_id': batch.batch_id,
+                'letter_count': batch.letter_count,
+                'cost_cents': batch.cost_cents,
+                'status': batch.status,
+                'uploaded_at': batch.uploaded_at.isoformat() if batch.uploaded_at else None,
+                'tracking_received_at': batch.tracking_received_at.isoformat() if batch.tracking_received_at else None,
+                'error_message': batch.error_message
+            },
+            'tracking': tracking_result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/automation/metrics/<int:client_id>')
+@require_staff()
+def api_automation_metrics(client_id):
+    """Get automation metrics for a client"""
+    from database import AutomationMetrics
+
+    db = get_db()
+    try:
+        metrics = db.query(AutomationMetrics).filter_by(client_id=client_id).first()
+
+        if not metrics:
+            # Return empty metrics if none exist yet
+            return jsonify({
+                'success': True,
+                'metrics': {
+                    'client_id': client_id,
+                    'total_letters': 0,
+                    'total_cost_cents': 0,
+                    'items_disputed': 0,
+                    'items_deleted': 0,
+                    'items_verified': 0
+                }
+            })
+
+        return jsonify({
+            'success': True,
+            'metrics': {
+                'client_id': metrics.client_id,
+                'round_0_letters': metrics.round_0_letters,
+                'round_1_letters': metrics.round_1_letters,
+                'round_2_letters': metrics.round_2_letters,
+                'round_3_letters': metrics.round_3_letters,
+                'round_4_letters': metrics.round_4_letters,
+                'total_letters': metrics.total_letters,
+                'mail_cost_cents': metrics.mail_cost_cents,
+                'ai_cost_cents': metrics.ai_cost_cents,
+                'total_cost_cents': metrics.total_cost_cents,
+                'intake_to_analysis_minutes': metrics.intake_to_analysis_minutes,
+                'total_va_minutes': metrics.total_va_minutes,
+                'items_disputed': metrics.items_disputed,
+                'items_deleted': metrics.items_deleted,
+                'items_verified': metrics.items_verified,
+                'reinsertion_count': metrics.reinsertion_count,
+                'resolved_round': metrics.resolved_round,
+                'final_status': metrics.final_status,
+                'settlement_amount_cents': metrics.settlement_amount_cents,
+                'created_at': metrics.created_at.isoformat() if metrics.created_at else None,
+                'updated_at': metrics.updated_at.isoformat() if metrics.updated_at else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/automation/install-triggers', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_automation_install_triggers():
+    """Install automation workflow triggers - admin only"""
+    from services.workflow_triggers_service import install_automation_triggers
+
+    db = get_db()
+    try:
+        created_count = install_automation_triggers(db)
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully installed {created_count} automation triggers',
+            'created_count': created_count
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

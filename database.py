@@ -3657,6 +3657,99 @@ class PatternInstance(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class AutomationMetrics(Base):
+    """Track automation metrics and costs per client"""
+    __tablename__ = 'automation_metrics'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Letter counts by round
+    round_0_letters = Column(Integer, default=0)
+    round_1_letters = Column(Integer, default=0)
+    round_2_letters = Column(Integer, default=0)
+    round_3_letters = Column(Integer, default=0)
+    round_4_letters = Column(Integer, default=0)
+    total_letters = Column(Integer, default=0)
+
+    # Cost tracking (in cents)
+    mail_cost_cents = Column(Integer, default=0)
+    ai_cost_cents = Column(Integer, default=0)
+    total_cost_cents = Column(Integer, default=0)
+
+    # Time tracking
+    intake_to_analysis_minutes = Column(Integer, default=0)
+    total_va_minutes = Column(Integer, default=0)
+
+    # Dispute outcomes
+    items_disputed = Column(Integer, default=0)
+    items_deleted = Column(Integer, default=0)
+    items_verified = Column(Integer, default=0)
+    reinsertion_count = Column(Integer, default=0)
+
+    # Resolution
+    resolved_round = Column(Integer, nullable=True)
+    final_status = Column(String(50), nullable=True)
+    settlement_amount_cents = Column(Integer, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class LetterBatch(Base):
+    """Track SFTP batch uploads to SendCertifiedMail.com"""
+    __tablename__ = 'letter_batches'
+
+    id = Column(Integer, primary_key=True, index=True)
+    batch_id = Column(String(100), unique=True, nullable=False, index=True)
+
+    # Batch details
+    letter_count = Column(Integer, nullable=False)
+    cost_cents = Column(Integer, nullable=False)
+
+    # Status tracking
+    status = Column(String(50), default='uploaded')  # uploaded/processing/complete/failed
+    uploaded_at = Column(DateTime, nullable=False)
+    tracking_received_at = Column(DateTime, nullable=True)
+
+    # Error handling
+    error_message = Column(Text, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class TradelineStatus(Base):
+    """Track tradeline status across all three credit bureaus"""
+    __tablename__ = 'tradeline_statuses'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Account identification
+    account_name = Column(String(255), nullable=False)
+    account_number_masked = Column(String(50), nullable=True)
+    account_type = Column(String(50), nullable=True)
+
+    # Status per bureau
+    equifax_status = Column(String(50), default='not_disputed')
+    experian_status = Column(String(50), default='not_disputed')
+    transunion_status = Column(String(50), default='not_disputed')
+
+    # Dispute tracking
+    first_disputed_round = Column(Integer, nullable=True)
+    deleted_round = Column(Integer, nullable=True)
+    reinserted_round = Column(Integer, nullable=True)
+
+    # Current overall status
+    current_status = Column(String(50), default='active')  # active/disputed/deleted/reinserted
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)

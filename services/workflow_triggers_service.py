@@ -252,8 +252,158 @@ DEFAULT_TRIGGERS = [
             }
         ],
         'priority': 9
+    },
+    {
+        'name': 'Create Response Deadline on Dispute Sent',
+        'description': 'Schedules 30-day response deadline and sends tracking notification when dispute letter is mailed',
+        'trigger_type': 'dispute_sent',
+        'conditions': {},
+        'actions': [
+            {
+                'type': 'schedule_followup',
+                'params': {
+                    'days_from_now': 30,
+                    'deadline_type': 'cra_response',
+                    'description': 'CRA Response Deadline'
+                }
+            },
+            {
+                'type': 'send_sms',
+                'params': {
+                    'template': 'dispute_sent',
+                    'message': 'Your dispute letter has been sent via certified mail! Tracking: {tracking_number}'
+                }
+            }
+        ],
+        'priority': 8
+    },
+    {
+        'name': 'Analyze Response and Progress Round',
+        'description': 'Creates analysis task and logs deletion/verification counts when CRA response is received',
+        'trigger_type': 'response_received',
+        'conditions': {},
+        'actions': [
+            {
+                'type': 'create_task',
+                'params': {
+                    'task_type': 'analyze_cra_response',
+                    'payload': {
+                        'client_id': '{client_id}',
+                        'bureau': '{bureau}'
+                    },
+                    'priority': 2
+                }
+            },
+            {
+                'type': 'add_note',
+                'params': {
+                    'note_text': '{bureau} Response: {items_deleted} deleted, {items_verified} verified',
+                    'note_type': 'cra_response'
+                }
+            }
+        ],
+        'priority': 9
+    },
+    {
+        'name': 'No Response After 35 Days',
+        'description': 'Escalates when CRA fails to respond within required timeframe',
+        'trigger_type': 'deadline_approaching',
+        'conditions': {
+            'days_remaining_max': -5
+        },
+        'actions': [
+            {
+                'type': 'create_task',
+                'params': {
+                    'task_type': 'escalate_no_response',
+                    'payload': {
+                        'client_id': '{client_id}',
+                        'deadline_type': '{deadline_type}'
+                    },
+                    'priority': 1
+                }
+            },
+            {
+                'type': 'send_email',
+                'params': {
+                    'template': 'cra_no_response',
+                    'subject': 'URGENT: Credit Bureau Failed to Respond - Potential FCRA Violation'
+                }
+            }
+        ],
+        'priority': 10
+    },
+    {
+        'name': 'Reinsertion Detected',
+        'description': 'Alerts and escalates when previously deleted item reappears on credit report',
+        'trigger_type': 'response_received',
+        'conditions': {
+            'response_type': 'reinsertion'
+        },
+        'actions': [
+            {
+                'type': 'send_email',
+                'params': {
+                    'template': 'reinsertion_alert',
+                    'subject': '🚨 URGENT: Item Reinserted - FCRA Violation Detected'
+                }
+            },
+            {
+                'type': 'create_task',
+                'params': {
+                    'task_type': 'reinsertion_violation',
+                    'payload': {
+                        'client_id': '{client_id}',
+                        'bureau': '{bureau}'
+                    },
+                    'priority': 1
+                }
+            },
+            {
+                'type': 'add_note',
+                'params': {
+                    'note_text': 'FCRA §1681i(a)(5)(B) VIOLATION: Previously deleted item reinserted without proper notice',
+                    'note_type': 'violation'
+                }
+            }
+        ],
+        'priority': 10
     }
 ]
+
+
+def install_automation_triggers(db):
+    """Install automation triggers if they don't already exist"""
+    automation_trigger_names = [
+        'Create Response Deadline on Dispute Sent',
+        'Analyze Response and Progress Round',
+        'No Response After 35 Days',
+        'Reinsertion Detected'
+    ]
+
+    created_count = 0
+
+    for trigger_data in DEFAULT_TRIGGERS:
+        if trigger_data['name'] in automation_trigger_names:
+            existing = db.query(WorkflowTrigger).filter(
+                WorkflowTrigger.name == trigger_data['name']
+            ).first()
+
+            if not existing:
+                trigger = WorkflowTrigger(
+                    name=trigger_data['name'],
+                    description=trigger_data['description'],
+                    trigger_type=trigger_data['trigger_type'],
+                    conditions=trigger_data.get('conditions', {}),
+                    actions=trigger_data['actions'],
+                    priority=trigger_data.get('priority', 5),
+                    is_active=True
+                )
+                db.add(trigger)
+                created_count += 1
+
+    db.commit()
+    return created_count
 
 
 class WorkflowTriggersService:

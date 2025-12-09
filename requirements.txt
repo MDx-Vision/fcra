@@ -25,3 +25,4 @@ python-dateutil
 pdfplumber
 python-dateutil
 playwright
+paramiko
