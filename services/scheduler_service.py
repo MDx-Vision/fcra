@@ -157,6 +157,24 @@ class SchedulerService:
             'task_type': 'generate_report',
             'payload': {'report_type': 'sol_deadlines'},
             'cron_expression': '0 6 * * *'
+        },
+        # VA Letter Automation - Downloads tracking info from SFTP, updates letter status and deadlines
+        {
+            'name': 'Check SendCertified Tracking Updates',
+            'task_type': 'check_sendcertified_tracking',
+            'payload': {'update_deadlines': True},
+            'cron_expression': '0 6 * * *'
+        },
+        # VA Letter Automation - Finds overdue CRA responses (35+ days), sends alerts, creates escalation tasks
+        {
+            'name': 'Check CRA Response Deadlines',
+            'task_type': 'check_cra_response_deadlines',
+            'payload': {
+                'days_overdue_threshold': 35,
+                'send_notifications': True,
+                'create_escalation_tasks': True
+            },
+            'cron_expression': '0 9 * * *'
         }
     ]
     
