@@ -48,8 +48,8 @@ SERVICE_CONFIGS = {
         'ssn_last4_selector': 'input[name="ssn"]:visible, #ssn_last4, #ssn, input[placeholder*="SSN"]:visible',
         'login_button_selector': 'button[type="submit"]:visible, button:has-text("Sign In"), button:has-text("Log In")',
         'report_download_flow': 'myfreescorenow',
-        'post_login_url': 'https://member.myfreescorenow.com/credit-report',
-        'report_page_url': 'https://member.myfreescorenow.com/credit-report',
+        'post_login_url': 'https://member.myfreescorenow.com/dashboard',  # Dashboard after login
+        # Note: No hardcoded report_page_url - will search for link dynamically
     },
     'HighScoreNow.com': {
         'login_url': 'https://member.highscorenow.com/login',
@@ -562,9 +562,64 @@ class CreditImportAutomation:
                     pass
 
             elif flow == 'myfreescorenow':
-                logger.info("Navigating to MyFreeScoreNow credit report page...")
-                report_url = config.get('report_page_url', 'https://member.myfreescorenow.com/credit-report')
-                await self.page.goto(report_url, wait_until='networkidle', timeout=60000)
+                logger.info("MyFreeScoreNow: Looking for credit report link on dashboard...")
+
+                # Wait for dashboard to load after login
+                await asyncio.sleep(5)
+
+                # Try multiple link patterns to find credit report
+                report_link_selectors = [
+                    'a:has-text("Credit Report")',
+                    'a:has-text("View Report")',
+                    'a:has-text("My Credit Report")',
+                    'a:has-text("3 Bureau Report")',
+                    'a:has-text("View Credit")',
+                    'a:has-text("Credit Score")',
+                    'a[href*="credit-report"]:visible',
+                    'a[href*="creditreport"]:visible',
+                    'a[href*="/report"]:visible',
+                    'a[href*="/reports"]:visible',
+                    'a[href*="/credit"]:visible',
+                    'button:has-text("Credit Report")',
+                    'button:has-text("View Report")',
+                    '.credit-report-link',
+                    '[data-testid*="credit-report"]',
+                    '[data-testid*="view-report"]',
+                ]
+
+                report_link_found = False
+                for selector in report_link_selectors:
+                    try:
+                        link = await self.page.query_selector(selector)
+                        if link:
+                            logger.info(f"Found credit report link with selector: {selector}")
+                            await link.click()
+                            await self.page.wait_for_load_state('networkidle', timeout=30000)
+                            report_link_found = True
+                            break
+                    except Exception as e:
+                        logger.debug(f"Link selector {selector} failed: {e}")
+                        continue
+
+                if not report_link_found:
+                    logger.warning("Could not find credit report link, trying common URL patterns...")
+                    # Fallback: Try common URL patterns
+                    fallback_urls = [
+                        'https://member.myfreescorenow.com/dashboard',
+                        'https://member.myfreescorenow.com/reports',
+                        'https://member.myfreescorenow.com/credit',
+                        'https://member.myfreescorenow.com/my-credit',
+                    ]
+                    for url in fallback_urls:
+                        try:
+                            await self.page.goto(url, wait_until='networkidle', timeout=30000)
+                            # Check if page has scores
+                            page_text = await self.page.evaluate('document.body.innerText')
+                            if 'credit' in page_text.lower() or any(str(i) in page_text for i in range(300, 850)):
+                                logger.info(f"Found credit data at: {url}")
+                                break
+                        except:
+                            continue
 
                 logger.info("Waiting for credit report page to load...")
                 await asyncio.sleep(5)
