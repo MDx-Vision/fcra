@@ -9216,7 +9216,8 @@ def dashboard_contacts():
                             'bureau': 'Full Report',
                             'round_number': None,
                             'file_path': report_path,
-                            'filename': filename
+                            'filename': filename,
+                            'analysis_id': analysis.id
                         })
                 contact_letters[contact.id] = letters
 
@@ -9274,7 +9275,8 @@ def dashboard_contacts():
                         'bureau': 'Full Report',
                         'round_number': None,
                         'file_path': report_path,
-                        'filename': filename
+                        'filename': filename,
+                        'analysis_id': analysis.id
                     })
 
             contact_letters[contact.id] = letters

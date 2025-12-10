@@ -216,6 +216,8 @@
         .action-icon.portal:hover { background: #f0fdfa; border-color: #14b8a6; }
         .action-icon.download { color: #8b5cf6; }
         .action-icon.download:hover { background: #f5f3ff; border-color: #8b5cf6; }
+        .action-icon.preview { color: #8b5cf6; }
+        .action-icon.preview:hover { background: #f5f3ff; border-color: #8b5cf6; }
 
         .download-dropdown-container {
             position: relative;
@@ -715,6 +717,254 @@
         .doc-toggle-switch.on::after {
             left: 20px;
         }
+
+        /* Preview Modal Styles */
+        .preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-modal.active {
+            display: flex;
+        }
+        .preview-modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 1200px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .preview-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .preview-modal-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .preview-modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #64748b;
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .preview-modal-close:hover {
+            color: #1a1a2e;
+        }
+        .preview-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 12px 24px 0 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .preview-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preview-tab.active {
+            color: #1a1a2e;
+            border-bottom-color: #84cc16;
+        }
+        .preview-tab:hover {
+            color: #1a1a2e;
+        }
+        .preview-modal-body {
+            flex: 1;
+            overflow: auto;
+            padding: 24px;
+        }
+        .preview-tab-content {
+            display: none;
+        }
+        .preview-tab-content.active {
+            display: block;
+        }
+        .preview-email-content {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .preview-pdf-viewer {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+        .preview-pdf-viewer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+        }
+        .preview-modal-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .preview-modal-footer .btn {
+            padding: 10px 20px;
+        }
+        .preview-loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .preview-loading::after {
+            content: '...';
+            animation: loading 1.5s infinite;
+        }
+        @keyframes loading {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        .preview-error {
+            text-align: center;
+            padding: 60px 20px;
+            color: #dc2626;
+        }
+
+        /* Send Dialog Styles */
+        .send-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+        }
+        .send-dialog.active {
+            display: flex;
+        }
+        .send-dialog-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .send-dialog-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .send-dialog-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .send-dialog-body {
+            padding: 24px;
+        }
+        .send-form-group {
+            margin-bottom: 20px;
+        }
+        .send-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+        .send-form-group input[type="email"],
+        .send-form-group input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+        .send-form-group input:focus {
+            outline: none;
+            border-color: #84cc16;
+        }
+        .send-preview-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            color: #64748b;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .send-checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .send-checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .send-checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+        }
+        .send-dialog-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .send-dialog-footer .btn {
+            padding: 10px 20px;
+        }
+        .btn-cancel {
+            background: white;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        .btn-cancel:hover {
+            background: #f8fafc;
+        }
+        .btn-send {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+            border: none;
+        }
+        .btn-send:hover {
+            opacity: 0.9;
+        }
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -850,6 +1100,15 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% endif %}
+
+                                    {% if contact_letters.get(contact.id) %}
+                                        {% for letter in contact_letters[contact.id] %}
+                                            {% if 'Full_Report' in letter.filename and letter.analysis_id %}
+                                                <span class="action-icon preview" title="Preview & Send Report" onclick="openPreviewModal({{ letter.analysis_id }}, '{{ contact.name }}', {{ contact.id }})">👁️</span>
+                                                {% break %}
+                                            {% endif %}
+                                        {% endfor %}
                                     {% endif %}
                                 </div>
                             </td>
@@ -1821,6 +2080,232 @@
                 alert('No portal token available for this client');
             }
         }
+
+        // Preview Modal Functions
+        let currentAnalysisId = null;
+        let currentClientName = null;
+        let currentContactId = null;
+        let currentClientEmail = null;
+        let currentPdfPath = null;
+
+        function openPreviewModal(analysisId, clientName, contactId) {
+            currentAnalysisId = analysisId;
+            currentClientName = clientName;
+            currentContactId = contactId;
+
+            document.getElementById('previewModalTitle').textContent = clientName + ' - Analysis Preview';
+            document.getElementById('previewModal').classList.add('active');
+
+            // Reset tabs
+            switchPreviewTab('email');
+
+            // Fetch email preview
+            fetchEmailPreview(analysisId);
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.remove('active');
+            currentAnalysisId = null;
+            currentClientName = null;
+            currentContactId = null;
+            currentClientEmail = null;
+            currentPdfPath = null;
+        }
+
+        function switchPreviewTab(tab) {
+            // Update tab buttons
+            const tabs = document.querySelectorAll('.preview-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            const contents = document.querySelectorAll('.preview-tab-content');
+            contents.forEach(c => c.classList.remove('active'));
+
+            if (tab === 'email') {
+                document.getElementById('emailPreviewTab').classList.add('active');
+            } else if (tab === 'pdf') {
+                document.getElementById('pdfPreviewTab').classList.add('active');
+                loadPdfPreview();
+            }
+        }
+
+        function fetchEmailPreview(analysisId) {
+            const emailContent = document.getElementById('emailPreviewContent');
+            emailContent.innerHTML = '<div class="preview-loading">Loading email preview</div>';
+
+            fetch(`/api/analysis/${analysisId}/email-preview`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        emailContent.innerHTML = data.html;
+                        currentClientEmail = data.client_email;
+
+                        // Store subject for send dialog
+                        if (data.subject) {
+                            document.getElementById('sendSubject').value = data.subject;
+                        }
+                    } else {
+                        emailContent.innerHTML = `<div class="preview-error">Error: ${data.error || 'Failed to load preview'}</div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching email preview:', error);
+                    emailContent.innerHTML = '<div class="preview-error">Error loading preview. Please try again.</div>';
+                });
+        }
+
+        function loadPdfPreview() {
+            const pdfContent = document.getElementById('pdfPreviewContent');
+
+            if (currentPdfPath) {
+                // Already loaded
+                return;
+            }
+
+            // Find the PDF path from the download dropdown
+            const downloadDropdown = document.getElementById('downloadDropdown-' + currentContactId);
+            if (downloadDropdown) {
+                const pdfLinks = downloadDropdown.querySelectorAll('a[href*="Full_Report"]');
+                if (pdfLinks.length > 0) {
+                    currentPdfPath = pdfLinks[0].getAttribute('href');
+                    pdfContent.innerHTML = `<iframe src="${currentPdfPath}"></iframe>`;
+                    return;
+                }
+            }
+
+            pdfContent.innerHTML = '<div class="preview-error">PDF not found</div>';
+        }
+
+        function openSendDialog() {
+            // Populate email field
+            if (currentClientEmail) {
+                document.getElementById('sendToEmail').value = currentClientEmail;
+            }
+
+            document.getElementById('sendDialog').classList.add('active');
+        }
+
+        function closeSendDialog() {
+            document.getElementById('sendDialog').classList.remove('active');
+        }
+
+        function confirmSendEmail() {
+            const toEmail = document.getElementById('sendToEmail').value;
+            const subject = document.getElementById('sendSubject').value;
+            const attachPdf = document.getElementById('attachPdf').checked;
+            const sendBtn = document.getElementById('sendEmailBtn');
+
+            if (!toEmail) {
+                alert('Please enter a recipient email address');
+                return;
+            }
+
+            if (!currentAnalysisId) {
+                alert('No analysis selected');
+                return;
+            }
+
+            // Disable button and show loading
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            fetch(`/api/analysis/${currentAnalysisId}/send-email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to_email: toEmail,
+                    subject: subject,
+                    attach_pdf: attachPdf
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Email';
+
+                if (data.success) {
+                    alert('Email sent successfully!');
+                    closeSendDialog();
+                    closePreviewModal();
+                } else {
+                    alert('Error sending email: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error sending email:', error);
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Email';
+                alert('Error sending email. Please try again.');
+            });
+        }
     </script>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="preview-modal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <h2 id="previewModalTitle">Analysis Preview</h2>
+                <button class="preview-modal-close" onclick="closePreviewModal()">&times;</button>
+            </div>
+            <div class="preview-tabs">
+                <button class="preview-tab active" onclick="switchPreviewTab('email')">Email Preview</button>
+                <button class="preview-tab" onclick="switchPreviewTab('pdf')">Full Report PDF</button>
+            </div>
+            <div class="preview-modal-body">
+                <div id="emailPreviewTab" class="preview-tab-content active">
+                    <div id="emailPreviewContent" class="preview-email-content">
+                        <div class="preview-loading">Loading email preview</div>
+                    </div>
+                </div>
+                <div id="pdfPreviewTab" class="preview-tab-content">
+                    <div id="pdfPreviewContent" class="preview-pdf-viewer">
+                        <div class="preview-loading">Loading PDF</div>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-modal-footer">
+                <button class="btn btn-secondary" onclick="closePreviewModal()">Close</button>
+                <button class="btn btn-primary" onclick="openSendDialog()">Send to Client</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send Email Dialog -->
+    <div id="sendDialog" class="send-dialog">
+        <div class="send-dialog-content">
+            <div class="send-dialog-header">
+                <h3>Send Analysis Report</h3>
+            </div>
+            <div class="send-dialog-body">
+                <div class="send-form-group">
+                    <label for="sendToEmail">To:</label>
+                    <input type="email" id="sendToEmail" placeholder="client@example.com">
+                </div>
+                <div class="send-form-group">
+                    <label for="sendSubject">Subject:</label>
+                    <input type="text" id="sendSubject" value="Your FCRA Analysis Report from Brightpath Ascend">
+                </div>
+                <div class="send-form-group">
+                    <label>Preview:</label>
+                    <div class="send-preview-box">
+                        <p style="margin: 0; font-size: 12px;">Your comprehensive FCRA analysis report with violations, damages, and recommendations...</p>
+                    </div>
+                </div>
+                <div class="send-form-group">
+                    <div class="send-checkbox-group">
+                        <input type="checkbox" id="attachPdf" checked>
+                        <label for="attachPdf">Attach Full Report PDF (49 pages)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="send-dialog-footer">
+                <button class="btn btn-cancel" onclick="closeSendDialog()">Cancel</button>
+                <button class="btn btn-send" onclick="confirmSendEmail()" id="sendEmailBtn">Send Email</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
