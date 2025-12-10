@@ -43,10 +43,10 @@ SERVICE_CONFIGS = {
     },
     'MyFreeScoreNow.com': {
         'login_url': 'https://member.myfreescorenow.com/login',
-        'username_selector': 'input[name="email"], #email, input[type="email"]',
-        'password_selector': 'input[name="password"], #password, input[type="password"]',
-        'ssn_last4_selector': 'input[name="ssn"], #ssn_last4, #ssn, input[placeholder*="SSN"]',
-        'login_button_selector': 'button[type="submit"], button:has-text("Sign In"), button:has-text("Log In")',
+        'username_selector': 'input[type="email"]:visible, input[name="email"]:visible, #email',
+        'password_selector': 'input[type="password"]:visible, input[name="password"]:visible, #password',
+        'ssn_last4_selector': 'input[name="ssn"]:visible, #ssn_last4, #ssn, input[placeholder*="SSN"]:visible',
+        'login_button_selector': 'button[type="submit"]:visible, button:has-text("Sign In"), button:has-text("Log In")',
         'report_download_flow': 'myfreescorenow',
         'post_login_url': 'https://member.myfreescorenow.com/credit-report',
         'report_page_url': 'https://member.myfreescorenow.com/credit-report',
@@ -236,8 +236,13 @@ class CreditImportAutomation:
             logger.info(f"Navigating to {config['login_url']}")
             await self.page.goto(config['login_url'], wait_until='domcontentloaded', timeout=60000)
             await asyncio.sleep(3)
-            
-            await self.page.wait_for_selector('input', timeout=15000)
+
+            # Wait for visible input fields (not hidden CSRF tokens)
+            try:
+                await self.page.wait_for_selector('input[type="email"]:visible, input[type="password"]:visible, input[name="email"]:visible, input[name="username"]:visible', timeout=15000)
+            except:
+                # Fallback to any visible input
+                await self.page.wait_for_selector('input:visible', timeout=15000)
             await asyncio.sleep(2)
             
             # Handle comma-separated selectors in config
