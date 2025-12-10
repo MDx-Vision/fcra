@@ -707,6 +707,157 @@ def reinsertion_violation_alert_email(client_name, bureau, account_name, portal_
     return get_base_template(content, "🚨 URGENT: Reinsertion Violation Detected")
 
 
+def fcra_analysis_summary_email(client_name, violations, damages_info, case_strength, portal_url=None):
+    """
+    Comprehensive FCRA analysis summary email for clients.
+    This is the main email sent with the full report PDF attachment.
+
+    Args:
+        client_name: Client's full name
+        violations: List of violation dicts with keys: bureau, account_name, violation_type, description
+        damages_info: Dict with keys: total_exposure, settlement_target, violations_count
+        case_strength: String like "Strong", "Moderate", "Weak"
+        portal_url: Optional link to client portal
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+
+    # Determine case strength styling
+    strength_colors = {
+        'Strong': {'bg': '#dcfce7', 'text': '#166534', 'border': '#86efac'},
+        'Moderate': {'bg': '#fef3c7', 'text': '#92400e', 'border': '#fcd34d'},
+        'Weak': {'bg': '#fee2e2', 'text': '#991b1b', 'border': '#fca5a5'}
+    }
+    strength_style = strength_colors.get(case_strength, strength_colors['Moderate'])
+
+    # Group violations by bureau
+    violations_by_bureau = {}
+    for v in violations[:10]:  # Limit to first 10 for email
+        bureau = v.get('bureau', 'Unknown')
+        if bureau not in violations_by_bureau:
+            violations_by_bureau[bureau] = []
+        violations_by_bureau[bureau].append(v)
+
+    # Build violations summary HTML
+    violations_html = ""
+    for bureau, bureau_violations in violations_by_bureau.items():
+        violations_html += f'''
+        <div style="background-color: #f8fafc; border-left: 4px solid {PRIMARY_COLOR}; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0;">
+            <h3 style="color: {DARK_COLOR}; margin: 0 0 10px 0; font-size: 18px;">{bureau}</h3>
+        '''
+        for v in bureau_violations:
+            account = v.get('account_name', 'Account')
+            violation_type = v.get('violation_type', 'FCRA Violation')
+            description = v.get('description', '')[:150] + '...' if len(v.get('description', '')) > 150 else v.get('description', '')
+            violations_html += f'''
+            <div style="margin-bottom: 12px;">
+                <p style="color: #1e293b; margin: 0; font-size: 15px; font-weight: 600;">• {account}</p>
+                <p style="color: #64748b; margin: 5px 0 0 15px; font-size: 14px; line-height: 1.5;">{violation_type}</p>
+                <p style="color: #64748b; margin: 3px 0 0 15px; font-size: 13px; line-height: 1.4;">{description}</p>
+            </div>
+            '''
+        violations_html += "</div>"
+
+    # Portal section
+    portal_section = ""
+    if portal_url:
+        portal_section = f'''
+            <p style="margin: 30px 0; text-align: center;">
+                <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 16px 36px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    Access Your Client Portal
+                </a>
+            </p>
+        '''
+
+    content = f'''
+        <div style="background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); padding: 20px; margin: -40px -30px 30px -30px; text-align: center;">
+            <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700;">Your Credit Analysis is Complete</h2>
+            <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 15px;">Comprehensive FCRA Violations Report</p>
+        </div>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            Hi {first_name},
+        </p>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 16px;">
+            We've completed a comprehensive analysis of your credit report and identified significant FCRA (Fair Credit Reporting Act) violations. Please find your detailed 40+ page report attached to this email.
+        </p>
+
+        <!-- Case Summary Box -->
+        <div style="background-color: {strength_style['bg']}; border: 2px solid {strength_style['border']}; padding: 20px; margin: 25px 0; border-radius: 10px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td style="text-align: center; padding: 10px;">
+                        <div style="font-size: 36px; font-weight: 700; color: {strength_style['text']};">{damages_info.get('violations_count', 0)}</div>
+                        <div style="font-size: 13px; color: {strength_style['text']}; margin-top: 5px;">FCRA Violations</div>
+                    </td>
+                    <td style="text-align: center; padding: 10px; border-left: 1px solid {strength_style['border']};">
+                        <div style="font-size: 36px; font-weight: 700; color: {strength_style['text']};">${"{:,.0f}".format(damages_info.get('total_exposure', 0))}</div>
+                        <div style="font-size: 13px; color: {strength_style['text']}; margin-top: 5px;">Total Exposure</div>
+                    </td>
+                    <td style="text-align: center; padding: 10px; border-left: 1px solid {strength_style['border']};">
+                        <div style="font-size: 24px; font-weight: 700; color: {strength_style['text']};">{case_strength}</div>
+                        <div style="font-size: 13px; color: {strength_style['text']}; margin-top: 5px;">Case Strength</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <h3 style="color: {DARK_COLOR}; margin: 30px 0 15px 0; font-size: 20px;">Key Findings</h3>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 15px;">
+            Our analysis identified <strong>{damages_info.get('violations_count', 0)} FCRA violations</strong> across your credit reports. Here are some of the most significant issues:
+        </p>
+
+        {violations_html}
+
+        <h3 style="color: {DARK_COLOR}; margin: 30px 0 15px 0; font-size: 20px;">What This Means For You</h3>
+
+        <div style="background-color: #f0fdf4; border: 1px solid #86efac; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <p style="color: #166534; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">
+                Settlement Target: ${"{:,.0f}".format(damages_info.get('settlement_target', 0))}
+            </p>
+            <p style="color: #166534; margin: 0; font-size: 14px; line-height: 1.6;">
+                Based on the violations identified, case law precedents, and your documentation, we've calculated a realistic settlement target. The attached full report includes detailed breakdowns of:
+            </p>
+        </div>
+
+        <ul style="color: #334155; line-height: 1.8; font-size: 15px; padding-left: 20px;">
+            <li><strong>Actual Damages:</strong> Credit denials, higher interest rates, emotional distress</li>
+            <li><strong>Statutory Damages:</strong> $100-$1,000 per violation under FCRA §1681n and §1681o</li>
+            <li><strong>Punitive Damages:</strong> Available for willful violations</li>
+            <li><strong>Attorney Fees:</strong> Recoverable under FCRA §1681o(a)(2)</li>
+        </ul>
+
+        <h3 style="color: {DARK_COLOR}; margin: 30px 0 15px 0; font-size: 20px;">Next Steps</h3>
+
+        <ol style="color: #334155; line-height: 1.8; font-size: 15px; padding-left: 20px;">
+            <li><strong>Review Your Full Report:</strong> The attached PDF contains comprehensive details on each violation, legal citations, and your rights</li>
+            <li><strong>Schedule a Call:</strong> We'll discuss strategy, timeline, and answer your questions</li>
+            <li><strong>Bureau Dispute Letters:</strong> We'll prepare and send certified demand letters to all three bureaus</li>
+            <li><strong>Track Progress:</strong> Monitor updates in your secure client portal</li>
+        </ol>
+
+        {portal_section}
+
+        <div style="background-color: #fffbeb; border: 1px solid #fcd34d; padding: 15px 20px; margin: 25px 0; border-radius: 8px;">
+            <p style="color: #92400e; margin: 0; font-size: 14px; line-height: 1.6;">
+                <strong>Important:</strong> The full detailed report is attached as a PDF. Please review it carefully and keep it in a safe place. This document contains sensitive legal analysis and should be treated as confidential.
+            </p>
+        </div>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 15px;">
+            If you have any questions about your report or next steps, please don't hesitate to reach out. We're here to help you every step of the way.
+        </p>
+
+        <p style="color: #334155; line-height: 1.6; font-size: 15px; margin-top: 25px;">
+            Best regards,<br>
+            <strong>{COMPANY_NAME} Team</strong>
+        </p>
+    '''
+
+    return get_base_template(content, "Your Credit Analysis is Complete")
+
+
 TEMPLATE_TYPES = {
     'welcome': welcome_email,
     'document_reminder': document_reminder_email,

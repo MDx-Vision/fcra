@@ -8916,6 +8916,173 @@ def api_generate_round_letters(analysis_id):
 
 
 # ============================================================
+# EMAIL PREVIEW & SEND ENDPOINTS
+# ============================================================
+
+@app.route('/api/analysis/<int:analysis_id>/email-preview', methods=['GET'])
+def api_get_email_preview(analysis_id):
+    """Get HTML email preview for analysis"""
+    db = get_db()
+    try:
+        from services import email_templates
+
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        client = db.query(Client).filter_by(id=analysis.client_id).first()
+
+        # Prepare data for email template
+        violations_list = [{
+            'bureau': v.bureau,
+            'account_name': v.account_name,
+            'violation_type': v.violation_type,
+            'description': v.description
+        } for v in violations]
+
+        damages_info = {
+            'total_exposure': damages.total_exposure if damages else 0,
+            'settlement_target': damages.settlement_target if damages else 0,
+            'violations_count': len(violations)
+        }
+
+        case_strength = case_score.case_strength if case_score else 'Moderate'
+
+        # Get portal URL if client has one
+        portal_url = None
+        if client and client.portal_token:
+            portal_url = f"{request.host_url}portal/{client.portal_token}"
+
+        # Generate HTML email
+        html_content = email_templates.fcra_analysis_summary_email(
+            client_name=analysis.client_name,
+            violations=violations_list,
+            damages_info=damages_info,
+            case_strength=case_strength,
+            portal_url=portal_url
+        )
+
+        return jsonify({
+            'success': True,
+            'html': html_content,
+            'client_email': client.email if client else None,
+            'subject': 'Your Credit Analysis is Complete'
+        }), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/analysis/<int:analysis_id>/send-email', methods=['POST'])
+def api_send_analysis_email(analysis_id):
+    """Send FCRA analysis email to client"""
+    db = get_db()
+    try:
+        from services.email_automation import send_email
+        from services import email_templates
+        import os
+
+        data = request.json
+        to_email = data.get('to_email')
+        subject = data.get('subject', 'Your Credit Analysis is Complete')
+        attach_pdf = data.get('attach_pdf', True)
+
+        if not to_email:
+            return jsonify({'success': False, 'error': 'Email address is required'}), 400
+
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({'success': False, 'error': 'Analysis not found'}), 404
+
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        client = db.query(Client).filter_by(id=analysis.client_id).first()
+
+        # Prepare data for email template
+        violations_list = [{
+            'bureau': v.bureau,
+            'account_name': v.account_name,
+            'violation_type': v.violation_type,
+            'description': v.description
+        } for v in violations]
+
+        damages_info = {
+            'total_exposure': damages.total_exposure if damages else 0,
+            'settlement_target': damages.settlement_target if damages else 0,
+            'violations_count': len(violations)
+        }
+
+        case_strength = case_score.case_strength if case_score else 'Moderate'
+
+        # Get portal URL if client has one
+        portal_url = None
+        if client and client.portal_token:
+            portal_url = f"{request.host_url}portal/{client.portal_token}"
+
+        # Generate HTML email
+        html_content = email_templates.fcra_analysis_summary_email(
+            client_name=analysis.client_name,
+            violations=violations_list,
+            damages_info=damages_info,
+            case_strength=case_strength,
+            portal_url=portal_url
+        )
+
+        # Find full report PDF if attach_pdf is True
+        attachments = None
+        if attach_pdf:
+            import glob
+            import base64
+            safe_name = analysis.client_name.replace(' ', '_')
+            pattern = f"static/generated_letters/{safe_name}_Full_Report_*.pdf"
+            reports = glob.glob(pattern)
+            if reports:
+                # Get most recent report
+                pdf_path = sorted(reports)[-1]
+                # Read PDF and encode to base64
+                with open(pdf_path, 'rb') as f:
+                    pdf_data = f.read()
+                    pdf_base64 = base64.b64encode(pdf_data).decode()
+
+                pdf_filename = os.path.basename(pdf_path)
+                attachments = [{
+                    'content': pdf_base64,
+                    'filename': pdf_filename,
+                    'type': 'application/pdf'
+                }]
+
+        # Send email
+        result = send_email(to_email, subject, html_content, attachments=attachments)
+
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': f'Email sent successfully to {to_email}',
+                'message_id': result.get('message_id')
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Failed to send email')
+            }), 500
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
 # DISPUTE ITEM & SECONDARY FREEZE API ENDPOINTS
 # ============================================================
 
