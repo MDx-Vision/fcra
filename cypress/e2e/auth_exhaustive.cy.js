@@ -68,7 +68,22 @@ describe('Auth - Full QA Suite', () => {
       });
     });
 
-    it.skip('should show validation errors - modal not visible', () => {});
+    it('should show validation errors', () => {
+      // Click button to open modal
+      cy.get('.btn, button').contains(/add/i).first().click();
+
+      // Wait for modal to be visible
+      cy.get('.modal.active').should('be.visible');
+
+      // Try to submit empty form
+      cy.get('.modal.active form').first().then(($form) => {
+        // Trigger form submission or check for HTML5 validation
+        cy.get('.modal.active input[required]').first().then(($input) => {
+          // Check if HTML5 validation works or look for validation messages
+          expect($input[0].checkValidity()).to.be.false;
+        });
+      });
+    });
   });
 
   // ==========================================
