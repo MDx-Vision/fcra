@@ -1,0 +1,270 @@
+[
+  {
+    "route": "/staff/change-password",
+    "authType": "public"
+  },
+  {
+    "route": "/staff/logout",
+    "authType": "public"
+  },
+  {
+    "route": "/history",
+    "authType": "public"
+  },
+  {
+    "route": "/test",
+    "authType": "public"
+  },
+  {
+    "route": "/clear",
+    "authType": "public"
+  },
+  {
+    "route": "/admin",
+    "authType": "public"
+  },
+  {
+    "route": "/admin/clients",
+    "authType": "public"
+  },
+  {
+    "route": "/dashboard/predictive",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/signups",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/settings",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/settings/sms",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/settings/email",
+    "authType": "staff"
+  },
+  {
+    "route": "/portal",
+    "authType": "client"
+  },
+  {
+    "route": "/portal/dashboard",
+    "authType": "client"
+  },
+  {
+    "route": "/portal/create-password",
+    "authType": "client"
+  },
+  {
+    "route": "/portal/messages",
+    "authType": "client"
+  },
+  {
+    "route": "/portal/logout",
+    "authType": "client"
+  },
+  {
+    "route": "/signup",
+    "authType": "public"
+  },
+  {
+    "route": "/signup/success",
+    "authType": "public"
+  },
+  {
+    "route": "/signup/welcome",
+    "authType": "public"
+  },
+  {
+    "route": "/dashboard/import",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/contacts",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/automation-tools",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/automation",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/reports",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/queue",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/cases",
+    "authType": "staff"
+  },
+  {
+    "route": "/scanner",
+    "authType": "public"
+  },
+  {
+    "route": "/dashboard/scanned-documents",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/documents",
+    "authType": "staff"
+  },
+  {
+    "route": "/manifest.json",
+    "authType": "public"
+  },
+  {
+    "route": "/sw.js",
+    "authType": "public"
+  },
+  {
+    "route": "/dashboard/credit-tracker",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/calendar",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/furnishers",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/patterns",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/sol",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/cfpb",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/cfpb/generator",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/affiliates",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/triage",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/escalation",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/case-law",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/knowledge-base",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/sops",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/chexsystems",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/specialty-bureaus",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/frivolousness",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/letter-queue",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/va-approval",
+    "authType": "staff"
+  },
+  {
+    "route": "/preview",
+    "authType": "public"
+  },
+  {
+    "route": "/dashboard/demand-generator",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/integrations",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/billing",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/tasks",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/workflows",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/ml-insights",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/white-label",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/whitelabel",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/franchise",
+    "authType": "staff"
+  },
+  {
+    "route": "/api-docs",
+    "authType": "public"
+  },
+  {
+    "route": "/dashboard/api-docs",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/api-keys",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/audit",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/performance",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/suspense-accounts",
+    "authType": "staff"
+  },
+  {
+    "route": "/dashboard/credit-import",
+    "authType": "staff"
+  }
+]

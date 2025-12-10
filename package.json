@@ -5,7 +5,12 @@
   "scripts": {
     "test": "npm run test:e2e",
     "test:e2e": "CI=true CYPRESS_SKIP_VERIFY=true CYPRESS_RUN_BINARY=/nix/store/0ydb4ml5crpmir6nyv7xz2m63plby0cq-cypress-13.17.0/opt/cypress/Cypress npx cypress run",
-    "db:seed": "python seed.py"
+    "db:seed": "python seed.py",
+    "detect-routes": "node scripts/detect-new-routes.js",
+    "generate-test": "node scripts/generate-test.js",
+    "auto-fix": "node scripts/auto-fix-tests.js",
+    "generate-all": "node scripts/generate-all-missing.js",
+    "test:coverage-check": "node scripts/detect-new-routes.js && echo 'Run generate-all to create missing tests'"
   },
   "keywords": [
     "fcra",
