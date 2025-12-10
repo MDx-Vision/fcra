@@ -117,6 +117,7 @@ class CreditImportAutomation:
         self.browser = None
         self.context = None
         self.page = None
+        self.current_flow = None  # Track which service flow we're using for score extraction
     
     async def _init_browser(self):
         """Initialize headless browser."""
@@ -194,9 +195,10 @@ class CreditImportAutomation:
         if service_name not in SERVICE_CONFIGS:
             result['error'] = f"Unsupported service: {service_name}"
             return result
-        
+
         config = SERVICE_CONFIGS[service_name]
-        
+        self.current_flow = config.get('report_download_flow', '')  # Set flow for extraction
+
         try:
             if not await self._init_browser():
                 result['error'] = "Failed to initialize browser"
@@ -745,11 +747,48 @@ class CreditImportAutomation:
     async def _extract_scores(self) -> Optional[Dict]:
         """Extract credit scores from the current page after JS rendering."""
         scores = {}
-        
+
         try:
             html_content = await self.page.content()
-            scores = self._extract_scores_from_html(html_content)
-            
+
+            # Flow-aware extraction for MyFreeScoreNow
+            if self.current_flow == 'myfreescorenow':
+                logger.info("Using MyFreeScoreNow extraction method")
+                try:
+                    js_scores = await self.page.evaluate('''() => {
+                        // Extract all 3-digit numbers from page that look like credit scores
+                        const allText = document.body.innerText;
+                        const scorePattern = /\\b([3-8]\\d{2})\\b/g;
+                        const matches = allText.match(scorePattern) || [];
+
+                        // Filter to valid score range
+                        const validScores = matches
+                            .map(s => parseInt(s))
+                            .filter(num => num >= 300 && num <= 850);
+
+                        // Remove duplicates and take first 3
+                        const uniqueScores = [...new Set(validScores)].slice(0, 3);
+
+                        const scores = {};
+                        if (uniqueScores.length >= 3) {
+                            // Map to bureaus in order: TransUnion, Experian, Equifax
+                            scores.transunion = uniqueScores[0];
+                            scores.experian = uniqueScores[1];
+                            scores.equifax = uniqueScores[2];
+                        }
+                        return scores;
+                    }''')
+                    if js_scores and len(js_scores) > 0:
+                        scores.update(js_scores)
+                        logger.info(f"MyFreeScoreNow extraction successful: {scores}")
+                except Exception as e:
+                    logger.warning(f"MyFreeScoreNow JS extraction failed: {e}")
+
+            # Default extraction for MyScoreIQ and other Angular-based services
+            if not scores:
+                scores = self._extract_scores_from_html(html_content)
+
+            # Fallback to MyScoreIQ-specific JavaScript
             if not scores:
                 try:
                     js_scores = await self.page.evaluate('''() => {
@@ -773,11 +812,11 @@ class CreditImportAutomation:
                     if js_scores:
                         scores.update(js_scores)
                 except Exception as e:
-                    logger.warning(f"JS fallback failed: {e}")
-            
+                    logger.warning(f"MyScoreIQ JS fallback failed: {e}")
+
             logger.info(f"Final extracted scores: {scores}")
             return scores if scores else None
-            
+
         except Exception as e:
             logger.error(f"Failed to extract scores: {e}")
             return None
