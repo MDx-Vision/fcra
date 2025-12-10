@@ -102,13 +102,13 @@ async function capturePageContent(route, authType) {
         timeout: 30000
       });
 
-      // Fill login form
-      await page.type('input[name="email"], input[type="email"], #email', authConfig.email);
-      await page.type('input[name="password"], input[type="password"], #password', authConfig.password);
+      // Fill login form - using specific selectors from staff_login.html
+      await page.type('#email', authConfig.email);
+      await page.type('#password', authConfig.password);
 
       // Submit and wait for navigation
       await Promise.all([
-        page.click('button[type="submit"], input[type="submit"], .login-btn, .btn-login'),
+        page.click('#loginBtn'),
         page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 })
       ]);
 
