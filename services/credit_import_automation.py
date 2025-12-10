@@ -43,11 +43,13 @@ SERVICE_CONFIGS = {
     },
     'MyFreeScoreNow.com': {
         'login_url': 'https://member.myfreescorenow.com/login',
-        'username_selector': '#email',
-        'password_selector': '#password',
-        'ssn_last4_selector': '#ssn_last4',
-        'login_button_selector': 'button[type="submit"]',
+        'username_selector': 'input[name="email"], #email, input[type="email"]',
+        'password_selector': 'input[name="password"], #password, input[type="password"]',
+        'ssn_last4_selector': 'input[name="ssn"], #ssn_last4, #ssn, input[placeholder*="SSN"]',
+        'login_button_selector': 'button[type="submit"], button:has-text("Sign In"), button:has-text("Log In")',
         'report_download_flow': 'myfreescorenow',
+        'post_login_url': 'https://member.myfreescorenow.com/credit-report',
+        'report_page_url': 'https://member.myfreescorenow.com/credit-report',
     },
     'HighScoreNow.com': {
         'login_url': 'https://member.highscorenow.com/login',
@@ -238,8 +240,15 @@ class CreditImportAutomation:
             await self.page.wait_for_selector('input', timeout=15000)
             await asyncio.sleep(2)
             
-            username_selectors = [
-                config['username_selector'],
+            # Handle comma-separated selectors in config
+            config_username_selectors = []
+            if config['username_selector']:
+                if ',' in config['username_selector']:
+                    config_username_selectors = [s.strip() for s in config['username_selector'].split(',')]
+                else:
+                    config_username_selectors = [config['username_selector']]
+
+            username_selectors = config_username_selectors + [
                 '#txtUsername',
                 'input[name="username"]',
                 'input[type="email"]',
@@ -269,9 +278,16 @@ class CreditImportAutomation:
                 return False
             
             await asyncio.sleep(1)
-            
-            password_selectors = [
-                config['password_selector'],
+
+            # Handle comma-separated password selectors
+            config_password_selectors = []
+            if config['password_selector']:
+                if ',' in config['password_selector']:
+                    config_password_selectors = [s.strip() for s in config['password_selector'].split(',')]
+                else:
+                    config_password_selectors = [config['password_selector']]
+
+            password_selectors = config_password_selectors + [
                 '#txtPassword',
                 'input[type="password"]',
                 'input[name="password"]',
@@ -298,17 +314,34 @@ class CreditImportAutomation:
                 return False
             
             if config.get('ssn_last4_selector') and ssn_last4:
-                try:
-                    ssn_field = await self.page.query_selector(config['ssn_last4_selector'])
-                    if ssn_field:
-                        await ssn_field.type(ssn_last4, delay=50)
-                except:
-                    pass
+                # Handle comma-separated SSN selectors
+                ssn_selectors = []
+                if ',' in config['ssn_last4_selector']:
+                    ssn_selectors = [s.strip() for s in config['ssn_last4_selector'].split(',')]
+                else:
+                    ssn_selectors = [config['ssn_last4_selector']]
+
+                for selector in ssn_selectors:
+                    try:
+                        ssn_field = await self.page.query_selector(selector)
+                        if ssn_field:
+                            await ssn_field.type(ssn_last4, delay=50)
+                            logger.info(f"Filled SSN with selector: {selector}")
+                            break
+                    except:
+                        continue
             
             await asyncio.sleep(1)
-            
-            login_selectors = [
-                config['login_button_selector'],
+
+            # Handle comma-separated login button selectors
+            config_login_selectors = []
+            if config['login_button_selector']:
+                if ',' in config['login_button_selector']:
+                    config_login_selectors = [s.strip() for s in config['login_button_selector'].split(',')]
+                else:
+                    config_login_selectors = [config['login_button_selector']]
+
+            login_selectors = config_login_selectors + [
                 '#imgBtnLogin',
                 'button[type="submit"]',
                 'button:has-text("Login")',
@@ -520,6 +553,90 @@ class CreditImportAutomation:
                         await asyncio.sleep(3)
                 except:
                     pass
+
+            elif flow == 'myfreescorenow':
+                logger.info("Navigating to MyFreeScoreNow credit report page...")
+                report_url = config.get('report_page_url', 'https://member.myfreescorenow.com/credit-report')
+                await self.page.goto(report_url, wait_until='networkidle', timeout=60000)
+
+                logger.info("Waiting for credit report page to load...")
+                await asyncio.sleep(5)
+
+                # MyFreeScoreNow uses modern React/Vue, different selectors than Angular
+                score_selectors = [
+                    '.score-value',
+                    '.credit-score',
+                    '[class*="score"]',
+                    '.score-number',
+                    'div[class*="Score"]',
+                    'span[class*="score"]',
+                ]
+
+                logger.info("Waiting for score elements to render...")
+                score_found = False
+                for selector in score_selectors:
+                    try:
+                        await self.page.wait_for_selector(selector, state='visible', timeout=10000)
+                        logger.info(f"Found score elements with selector: {selector}")
+                        score_found = True
+                        break
+                    except Exception as e:
+                        logger.debug(f"Selector {selector} not found: {e}")
+                        continue
+
+                if not score_found:
+                    logger.warning("Could not find score elements with known selectors, continuing anyway...")
+
+                # Wait for scores to populate
+                logger.info("Waiting for scores to populate with numeric values...")
+                max_attempts = 15
+                for attempt in range(max_attempts):
+                    try:
+                        score_count = await self.page.evaluate('''() => {
+                            // Try multiple patterns to find scores
+                            const allText = document.body.innerText;
+                            const scorePattern = /\\b([3-8]\\d{2})\\b/g;
+                            const matches = allText.match(scorePattern) || [];
+                            // Look for exactly 3 scores in typical range
+                            const validScores = matches.filter(s => {
+                                const num = parseInt(s);
+                                return num >= 300 && num <= 850;
+                            });
+                            return validScores.length >= 3 ? 3 : validScores.length;
+                        }''')
+                        logger.info(f"Attempt {attempt + 1}: Found {score_count} score values")
+                        if score_count >= 3:
+                            logger.info("All three bureau scores detected!")
+                            break
+                    except Exception as e:
+                        logger.warning(f"Score check attempt {attempt + 1} failed: {e}")
+                    await asyncio.sleep(3)
+
+                await asyncio.sleep(3)
+
+                # Try to expand all account details
+                try:
+                    expand_buttons = [
+                        'button:has-text("Show All")',
+                        'button:has-text("View All")',
+                        'button:has-text("Expand")',
+                        'a:has-text("Show All")',
+                        '.expand-all',
+                        '[class*="expand"]',
+                    ]
+                    for btn_selector in expand_buttons:
+                        try:
+                            expand_btn = await self.page.query_selector(btn_selector)
+                            if expand_btn:
+                                await expand_btn.click()
+                                await asyncio.sleep(2)
+                                logger.info(f"Clicked expand button: {btn_selector}")
+                                break
+                        except:
+                            continue
+                except Exception as e:
+                    logger.debug(f"No expand button found: {e}")
+
             else:
                 report_selectors = [
                     'a[href*="credit-report"]',
