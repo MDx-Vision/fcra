@@ -186,6 +186,54 @@
         }
         .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
         .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 280px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 1000;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: #334155;
+            padding: 10px 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .dropdown-content a:last-child { border-bottom: none; }
+        .dropdown-content a:hover { background-color: #f8fafc; }
+        .dropdown-content a svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .dropdown.active .dropdown-content { display: block; }
+        .dropdown-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dropdown-badge {
+            background: #84cc16;
+            color: #1a1a2e;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: 600;
+        }
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -268,6 +316,30 @@
                             <a href="/analysis/{{ case.analysis_id }}/review" class="action-btn primary" data-testid="review-btn-{{ case.id }}">Review</a>
                             {% endif %}
                             <a href="/dashboard/case/{{ case.id }}" class="action-btn" data-testid="view-btn-{{ case.id }}">View</a>
+
+                            {% if case.dispute_letters %}
+                            <div class="dropdown" data-testid="download-dropdown-{{ case.id }}">
+                                <button class="action-btn dropdown-toggle" onclick="toggleDropdown(event, {{ case.id }})" data-testid="download-btn-{{ case.id }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    Download
+                                    <span class="dropdown-badge">{{ case.dispute_letters|length }}</span>
+                                </button>
+                                <div class="dropdown-content" id="dropdown-{{ case.id }}" data-testid="download-menu-{{ case.id }}">
+                                    {% for letter in case.dispute_letters %}
+                                    <a href="/{{ letter.file_path }}" download data-testid="download-link-{{ case.id }}-{{ letter.id }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                        <span>
+                                            {% if letter.bureau %}
+                                                {{ letter.bureau }} - Round {{ letter.round_number or 1 }}
+                                            {% else %}
+                                                {{ letter.filename }}
+                                            {% endif %}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -291,6 +363,27 @@
                 row.style.display = name.includes(query) ? '' : 'none';
             });
         }
+
+        function toggleDropdown(event, caseId) {
+            event.stopPropagation();
+            const dropdown = event.target.closest('.dropdown');
+            const isActive = dropdown.classList.contains('active');
+
+            // Close all dropdowns
+            document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active'));
+
+            // Toggle this dropdown
+            if (!isActive) {
+                dropdown.classList.add('active');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active'));
+            }
+        });
     </script>
 </body>
 </html>

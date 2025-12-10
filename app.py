@@ -4792,14 +4792,47 @@ def dashboard_clients():
             damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
             score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
             client = db.query(Client).filter_by(id=analysis.client_id).first()
-            
+
+            # Get dispute letters for this analysis
+            dispute_letters = db.query(DisputeLetter).filter_by(analysis_id=analysis.id).all()
+            letters = []
+            for letter in dispute_letters:
+                if letter.file_path:
+                    # Extract filename from path for display
+                    filename = letter.file_path.split('/')[-1] if '/' in letter.file_path else letter.file_path
+                    letters.append({
+                        'id': letter.id,
+                        'bureau': letter.bureau,
+                        'round_number': letter.round_number,
+                        'file_path': letter.file_path,
+                        'filename': filename,
+                        'created_at': letter.created_at
+                    })
+
+            # Also check for full reports in static/generated_letters
+            import os
+            import glob
+            client_name_normalized = analysis.client_name.replace(' ', '_')
+            full_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Full_Report_*.pdf')
+            full_reports = glob.glob(full_report_pattern)
+            for report_path in full_reports:
+                filename = os.path.basename(report_path)
+                letters.append({
+                    'id': f'full_report_{filename}',
+                    'bureau': 'Full Report',
+                    'round_number': None,
+                    'file_path': report_path,
+                    'filename': filename,
+                    'created_at': None
+                })
+
             if analysis.stage == 1 and not analysis.approved_at:
                 status = 'stage1_complete'
             elif analysis.stage == 2:
                 status = 'stage2_complete'
             else:
                 status = 'intake'
-            
+
             cases.append({
                 'id': analysis.id,
                 'analysis_id': analysis.id,
@@ -4811,7 +4844,8 @@ def dashboard_clients():
                 'score': score.total_score if score else None,
                 'exposure': damages.total_exposure if damages else None,
                 'violations': db.query(Violation).filter_by(analysis_id=analysis.id).count(),
-                'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M')
+                'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M'),
+                'dispute_letters': letters
             })
         
         return render_template('clients.html', cases=cases, status_filter=status_filter)
