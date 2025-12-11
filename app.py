@@ -3093,54 +3093,17 @@ def download_full_report(analysis_id):
         if not analysis:
             return jsonify({'error': 'Analysis not found'}), 404
         
-        # Get first letter from this analysis as template (all have same info)
-        letter = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).first()
-        if not letter:
-            return jsonify({'error': 'No letters generated yet. Click Accept Case first.'}), 404
-        
-        # Create comprehensive report combining violations, standing, damages + full Stage 2 analysis
+        # Query data needed for PDF generation
         violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
         standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
         damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
         case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
-        
-        # Start with header
-        report_content = f"""
-FCRA LITIGATION ANALYSIS REPORT
-Client: {analysis.client_name}
-Analysis ID: {analysis.id}
-Date: {analysis.created_at.strftime('%Y-%m-%d %H:%M:%S')}
 
-CASE STRENGTH SCORE: {case_score.total_score if case_score else 'N/A'}/10
+        # Check if analysis exists
+        if not violations:
+            return jsonify({'error': 'No analysis data found. Click Accept Case first.'}), 404
 
-VIOLATIONS IDENTIFIED: {len(violations)}
-"""
-        for v in violations:
-            report_content += f"\n* {v.fcra_section} - {v.violation_type} ({v.bureau})"
-            report_content += f"\n  {v.description}"
-            report_content += f"\n  Willful: {'Yes' if v.is_willful else 'No'}"
-            report_content += f"\n  Statutory Damages: ${v.statutory_damages_min}-${v.statutory_damages_max}\n"
-        
-        report_content += f"\nSTANDING ANALYSIS:\n"
-        if standing:
-            report_content += f"* Concrete Harm: {'Yes' if standing.has_concrete_harm else 'No'}\n"
-            report_content += f"* Dissemination: {'Yes' if standing.has_dissemination else 'No'}\n"
-            report_content += f"* Causation: {'Yes' if standing.has_causation else 'No'}\n"
-        
-        report_content += f"\nDAMAGES CALCULATION:\n"
-        if damages:
-            report_content += f"* Actual Damages: ${damages.actual_damages_total}\n"
-            report_content += f"* Statutory Damages: ${damages.statutory_damages_total}\n"
-            report_content += f"* Punitive Damages: ${damages.punitive_damages_amount}\n"
-            report_content += f"* Total Exposure: ${damages.total_exposure}\n"
-            report_content += f"* Settlement Target (65%): ${damages.settlement_target}\n"
-        
-        # Add full Stage 2 comprehensive analysis if available
-        if analysis.full_analysis:
-            report_content += f"\n\n{'='*80}\nCOMPREHENSIVE LITIGATION ANALYSIS\n{'='*80}\n\n"
-            report_content += analysis.full_analysis
-        
-        # Generate both Client and Legal PDFs using new service
+        # Generate both Client and Legal PDFs using new styled service
         from services.pdf_service import FCRAPDFGenerator
 
         pdf_generator = FCRAPDFGenerator()
@@ -9222,27 +9185,12 @@ def dashboard_contacts():
                         filename = os.path.basename(report_path)
                         letters.append({
                             'id': f'legal_report_{filename}',
-                            'bureau': 'Full Legal Analysis',
+                            'bureau': 'Legal Analysis',
                             'round_number': None,
                             'file_path': report_path,
                             'filename': filename,
                             'analysis_id': analysis.id,
                             'report_type': 'legal'
-                        })
-
-                    # Legacy Full Report (for backward compatibility)
-                    full_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Full_Report_*.pdf')
-                    full_reports = glob.glob(full_report_pattern)
-                    for report_path in full_reports:
-                        filename = os.path.basename(report_path)
-                        letters.append({
-                            'id': f'full_report_{filename}',
-                            'bureau': 'Legacy Full Report',
-                            'round_number': None,
-                            'file_path': report_path,
-                            'filename': filename,
-                            'analysis_id': analysis.id,
-                            'report_type': 'legacy'
                         })
                 contact_letters[contact.id] = letters
 
@@ -9314,27 +9262,12 @@ def dashboard_contacts():
                     filename = os.path.basename(report_path)
                     letters.append({
                         'id': f'legal_report_{filename}',
-                        'bureau': 'Full Legal Analysis',
+                        'bureau': 'Legal Analysis',
                         'round_number': None,
                         'file_path': report_path,
                         'filename': filename,
                         'analysis_id': analysis.id,
                         'report_type': 'legal'
-                    })
-
-                # Legacy Full Report (for backward compatibility)
-                full_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Full_Report_*.pdf')
-                full_reports = glob.glob(full_report_pattern)
-                for report_path in full_reports:
-                    filename = os.path.basename(report_path)
-                    letters.append({
-                        'id': f'full_report_{filename}',
-                        'bureau': 'Legacy Full Report',
-                        'round_number': None,
-                        'file_path': report_path,
-                        'filename': filename,
-                        'analysis_id': analysis.id,
-                        'report_type': 'legacy'
                     })
 
             contact_letters[contact.id] = letters
