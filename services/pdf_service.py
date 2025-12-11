@@ -66,24 +66,47 @@ class FCRAPDFGenerator:
             leading=15
         ))
 
-        # Legal report styles
+        # Legal report styles (formal serif fonts, no colors)
+        self.styles.add(ParagraphStyle(
+            name='LegalTitle',
+            parent=self.styles['Heading1'],
+            fontSize=14,
+            textColor=HexColor('#000000'),
+            spaceAfter=12,
+            spaceBefore=0,
+            fontName='Times-Bold',
+            alignment=TA_CENTER
+        ))
+
         self.styles.add(ParagraphStyle(
             name='LegalHeader',
             parent=self.styles['Heading1'],
-            fontSize=18,
-            textColor=HexColor('#1a1a8e'),
+            fontSize=12,
+            textColor=HexColor('#000000'),
             spaceAfter=10,
-            fontName='Helvetica-Bold'
+            spaceBefore=10,
+            fontName='Times-Bold'
+        ))
+
+        self.styles.add(ParagraphStyle(
+            name='LegalSubHeader',
+            parent=self.styles['Heading2'],
+            fontSize=11,
+            textColor=HexColor('#000000'),
+            spaceAfter=8,
+            spaceBefore=8,
+            fontName='Times-Bold'
         ))
 
         self.styles.add(ParagraphStyle(
             name='LegalBody',
             parent=self.styles['Normal'],
-            fontSize=10,
-            textColor=HexColor('#1a1a8e'),
+            fontSize=11,
+            textColor=HexColor('#000000'),
             spaceAfter=8,
-            fontName='Helvetica',
-            leading=12
+            fontName='Times-Roman',
+            leading=14,
+            firstLineIndent=0
         ))
 
     def _add_header(self, story, title, subtitle=None):
@@ -298,7 +321,44 @@ class FCRAPDFGenerator:
         ))
         story.append(Spacer(1, 0.3*inch))
 
-        # Footer
+        # Add page break before full analysis
+        story.append(PageBreak())
+
+        # FULL COMPREHENSIVE ANALYSIS (40-50 pages)
+        if analysis.full_analysis:
+            # Section header
+            story.append(Paragraph('COMPREHENSIVE LITIGATION ANALYSIS', self.styles['ClientHeader']))
+            story.append(Spacer(1, 0.2*inch))
+
+            # Render full analysis text with Brightpath styling
+            lines = analysis.full_analysis.split('\n')
+            for line in lines:
+                if line.strip():
+                    # Check if line is a heading (all caps or ends with colon)
+                    if line.strip().isupper() or (line.strip().endswith(':') and len(line.strip()) < 80):
+                        # Style as subheader
+                        try:
+                            story.append(Paragraph(self._sanitize_text(line), self.styles['ClientSubHeader']))
+                        except:
+                            pass
+                    else:
+                        # Chunk very long lines (>1000 chars) to avoid ReportLab errors
+                        if len(line) > 1000:
+                            chunks = [line[i:i+1000] for i in range(0, len(line), 1000)]
+                            for chunk in chunks:
+                                try:
+                                    story.append(Paragraph(self._sanitize_text(chunk), self.styles['ClientBody']))
+                                except:
+                                    pass
+                        else:
+                            try:
+                                story.append(Paragraph(self._sanitize_text(line), self.styles['ClientBody']))
+                            except:
+                                pass
+                else:
+                    story.append(Spacer(1, 0.1*inch))
+
+        # Footer on last page
         story.append(Spacer(1, 0.5*inch))
         footer_text = f'<i>This report is confidential and prepared for {client_name}. '
         footer_text += 'For questions, contact Brightpath Ascend.</i>'
@@ -335,26 +395,37 @@ class FCRAPDFGenerator:
             full_analysis_text: Full stage 2 analysis text
         """
         doc = SimpleDocTemplate(output_path, pagesize=letter,
-                              rightMargin=72, leftMargin=72,
-                              topMargin=72, bottomMargin=18)
+                              rightMargin=1*inch, leftMargin=1*inch,
+                              topMargin=1*inch, bottomMargin=1*inch)
         story = []
 
-        # Header
-        story.append(Paragraph('FCRA LITIGATION ANALYSIS REPORT', self.styles['LegalHeader']))
-        story.append(Paragraph(f'Client: {client_name}', self.styles['LegalBody']))
-        story.append(Paragraph(f'Analysis ID: {analysis.id}', self.styles['LegalBody']))
-        story.append(Paragraph(f'Date: {analysis.created_at.strftime("%Y-%m-%d %H:%M:%S")}',
+        # Formal Legal Document Header
+        story.append(Paragraph('FCRA LITIGATION ANALYSIS - CONFIDENTIAL', self.styles['LegalTitle']))
+        story.append(Spacer(1, 0.1*inch))
+        story.append(Paragraph(f'<b>Client:</b> {client_name}', self.styles['LegalBody']))
+        story.append(Paragraph(f'<b>Analysis ID:</b> {analysis.id}', self.styles['LegalBody']))
+        story.append(Paragraph(f'<b>Date:</b> {analysis.created_at.strftime("%B %d, %Y")}',
                              self.styles['LegalBody']))
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.3*inch))
+
+        # Confidentiality notice
+        story.append(Paragraph(
+            '<i>This document contains confidential attorney work product and privileged information. '
+            'It is prepared for internal legal review and potential submission to counsel. '
+            'Unauthorized disclosure is prohibited.</i>',
+            ParagraphStyle('notice', fontSize=9, textColor=HexColor('#000000'),
+                         fontName='Times-Italic', alignment=TA_CENTER, spaceAfter=12)
+        ))
+        story.append(Spacer(1, 0.3*inch))
 
         # Case Score
         if case_score:
-            story.append(Paragraph(f'CASE STRENGTH SCORE: {case_score.total_score}/10',
+            story.append(Paragraph(f'I. CASE STRENGTH SCORE: {case_score.total_score}/10',
                                  self.styles['LegalHeader']))
             story.append(Spacer(1, 0.2*inch))
 
         # Violations
-        story.append(Paragraph(f'VIOLATIONS IDENTIFIED: {len(violations)}', self.styles['LegalHeader']))
+        story.append(Paragraph(f'II. VIOLATIONS IDENTIFIED: {len(violations)}', self.styles['LegalHeader']))
         story.append(Spacer(1, 0.1*inch))
 
         for v in violations:
@@ -374,7 +445,7 @@ class FCRAPDFGenerator:
         story.append(Spacer(1, 0.2*inch))
 
         # Standing Analysis
-        story.append(Paragraph('STANDING ANALYSIS:', self.styles['LegalHeader']))
+        story.append(Paragraph('III. STANDING ANALYSIS', self.styles['LegalHeader']))
         if standing:
             story.append(Paragraph(f"• Concrete Harm: {'Yes' if standing.has_concrete_harm else 'No'}",
                                  self.styles['LegalBody']))
@@ -385,7 +456,7 @@ class FCRAPDFGenerator:
         story.append(Spacer(1, 0.2*inch))
 
         # Damages Calculation
-        story.append(Paragraph('DAMAGES CALCULATION:', self.styles['LegalHeader']))
+        story.append(Paragraph('IV. DAMAGES CALCULATION', self.styles['LegalHeader']))
         if damages:
             story.append(Paragraph(f"• Actual Damages: ${damages.actual_damages_total:,.0f}",
                                  self.styles['LegalBody']))
@@ -399,30 +470,37 @@ class FCRAPDFGenerator:
                                  self.styles['LegalBody']))
         story.append(Spacer(1, 0.3*inch))
 
-        # Full Analysis
+        # Full Analysis with page break
         if full_analysis_text:
-            story.append(Paragraph('='*80, self.styles['LegalBody']))
-            story.append(Paragraph('COMPREHENSIVE LITIGATION ANALYSIS', self.styles['LegalHeader']))
-            story.append(Paragraph('='*80, self.styles['LegalBody']))
+            story.append(PageBreak())
+            story.append(Paragraph('V. COMPREHENSIVE LITIGATION ANALYSIS', self.styles['LegalHeader']))
             story.append(Spacer(1, 0.2*inch))
 
-            # Split and add analysis text with better formatting
+            # Split and add analysis text with formal legal formatting
             lines = full_analysis_text.split('\n')
             for line in lines:
                 if line.strip():
-                    # Chunk long lines
-                    if len(line) > 1000:
-                        chunks = [line[i:i+1000] for i in range(0, len(line), 1000)]
-                        for chunk in chunks:
-                            try:
-                                story.append(Paragraph(self._sanitize_text(chunk), self.styles['LegalBody']))
-                            except:
-                                pass  # Skip problematic chunks
-                    else:
+                    # Check if line is a heading (all caps or ends with colon)
+                    if line.strip().isupper() or (line.strip().endswith(':') and len(line.strip()) < 80):
+                        # Style as subheader
                         try:
-                            story.append(Paragraph(self._sanitize_text(line), self.styles['LegalBody']))
+                            story.append(Paragraph(self._sanitize_text(line), self.styles['LegalSubHeader']))
                         except:
-                            pass  # Skip problematic lines
+                            pass
+                    else:
+                        # Chunk long lines
+                        if len(line) > 1000:
+                            chunks = [line[i:i+1000] for i in range(0, len(line), 1000)]
+                            for chunk in chunks:
+                                try:
+                                    story.append(Paragraph(self._sanitize_text(chunk), self.styles['LegalBody']))
+                                except:
+                                    pass
+                        else:
+                            try:
+                                story.append(Paragraph(self._sanitize_text(line), self.styles['LegalBody']))
+                            except:
+                                pass
                 else:
                     story.append(Spacer(1, 0.1*inch))
 
