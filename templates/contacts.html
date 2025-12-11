@@ -1106,7 +1106,7 @@
                                     {% if contact_letters.get(contact.id) %}
                                         {% set ns = namespace(shown=false) %}
                                         {% for letter in contact_letters[contact.id] %}
-                                            {% if 'Full_Report' in letter.filename and letter.analysis_id and not ns.shown %}
+                                            {% if ('Client_Report' in letter.filename or 'Full_Report' in letter.filename) and letter.analysis_id and not ns.shown %}
                                                 <span class="action-icon preview" title="Preview & Send Report" onclick="openPreviewModal({{ letter.analysis_id }}, '{{ contact.name }}', {{ contact.id }})">👁️</span>
                                                 {% set ns.shown = true %}
                                             {% endif %}
@@ -2164,10 +2164,15 @@
                 return;
             }
 
-            // Find the PDF path from the download dropdown
+            // Find the PDF path from the download dropdown (prefer Client Report)
             const downloadDropdown = document.getElementById('downloadDropdown-' + currentContactId);
             if (downloadDropdown) {
-                const pdfLinks = downloadDropdown.querySelectorAll('a[href*="Full_Report"]');
+                // Try Client Report first (new professional PDF)
+                let pdfLinks = downloadDropdown.querySelectorAll('a[href*="Client_Report"]');
+                if (pdfLinks.length === 0) {
+                    // Fall back to legacy Full Report
+                    pdfLinks = downloadDropdown.querySelectorAll('a[href*="Full_Report"]');
+                }
                 if (pdfLinks.length > 0) {
                     currentPdfPath = pdfLinks[0].getAttribute('href');
                     pdfContent.innerHTML = `<iframe src="${currentPdfPath}"></iframe>`;

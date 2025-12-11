@@ -3140,65 +3140,57 @@ VIOLATIONS IDENTIFIED: {len(violations)}
             report_content += f"\n\n{'='*80}\nCOMPREHENSIVE LITIGATION ANALYSIS\n{'='*80}\n\n"
             report_content += analysis.full_analysis
         
-        # Sanitize before PDF generation
-        from pdf_generator import LetterPDFGenerator
-        sanitizer = LetterPDFGenerator()
-        report_content = sanitizer.sanitize_text_for_pdf(report_content)
-        
-        # Generate PDF using ReportLab (proven to work)
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-        from reportlab.lib.colors import HexColor
-        from reportlab.lib.enums import TA_LEFT
-        
-        filename = f"{analysis.client_name.replace(' ', '_')}_Full_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        output_path = os.path.join('static', 'generated_letters', filename)
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
-        doc = SimpleDocTemplate(output_path, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
-        story = []
-        styles = getSampleStyleSheet()
-        
-        # Custom style with dark blue color
-        custom_style = ParagraphStyle(
-            'Custom',
-            parent=styles['Normal'],
-            fontSize=10,
-            textColor=HexColor('#1a1a8e'),
-            spaceAfter=8,
-            fontName='Helvetica',
-            leading=12
+        # Generate both Client and Legal PDFs using new service
+        from services.pdf_service import FCRAPDFGenerator
+
+        pdf_generator = FCRAPDFGenerator()
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        client_name_safe = analysis.client_name.replace(' ', '_')
+
+        # Generate Client PDF (professional, branded)
+        client_filename = f"{client_name_safe}_Client_Report_{timestamp}.pdf"
+        client_output_path = os.path.join('static', 'generated_letters', client_filename)
+        os.makedirs(os.path.dirname(client_output_path), exist_ok=True)
+
+        pdf_generator.generate_client_report(
+            client_output_path,
+            analysis.client_name,
+            violations,
+            damages,
+            case_score,
+            analysis
         )
-        
-        # Split content into lines and add to story (with chunking for large content)
-        lines = report_content.split('\n')
-        for i, line in enumerate(lines):
-            if line.strip():
-                # Chunk very long lines (>1000 chars) to avoid ReportLab errors
-                if len(line) > 1000:
-                    chunks = [line[j:j+1000] for j in range(0, len(line), 1000)]
-                    for chunk in chunks:
-                        try:
-                            story.append(Paragraph(chunk, custom_style))
-                        except Exception as e:
-                            print(f"⚠️ Skipping line {i} (too complex for PDF): {str(e)[:100]}")
-                else:
-                    try:
-                        story.append(Paragraph(line, custom_style))
-                    except Exception as e:
-                        print(f"⚠️ Skipping line {i}: {str(e)[:50]}")
-            else:
-                story.append(Spacer(1, 6))
-        
-        # Build PDF
-        doc.build(story)
-        
-        return send_file(
-            output_path,
-            as_attachment=True,
-            download_name=filename
+
+        # Generate Legal PDF (detailed internal analysis)
+        legal_filename = f"{client_name_safe}_Legal_Analysis_{timestamp}.pdf"
+        legal_output_path = os.path.join('static', 'generated_letters', legal_filename)
+
+        pdf_generator.generate_legal_analysis(
+            legal_output_path,
+            analysis.client_name,
+            violations,
+            standing,
+            damages,
+            case_score,
+            analysis,
+            analysis.full_analysis or ''
         )
+
+        # Return the requested PDF type (default to client)
+        pdf_type = request.args.get('type', 'client')
+
+        if pdf_type == 'legal':
+            return send_file(
+                legal_output_path,
+                as_attachment=True,
+                download_name=legal_filename
+            )
+        else:
+            return send_file(
+                client_output_path,
+                as_attachment=True,
+                download_name=client_filename
+            )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -9207,17 +9199,50 @@ def dashboard_contacts():
                                 'filename': filename
                             })
                     client_name_normalized = contact.name.replace(' ', '_')
+
+                    # Client Report (new professional PDF)
+                    client_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Client_Report_*.pdf')
+                    client_reports = glob.glob(client_report_pattern)
+                    for report_path in client_reports:
+                        filename = os.path.basename(report_path)
+                        letters.append({
+                            'id': f'client_report_{filename}',
+                            'bureau': 'Client Report',
+                            'round_number': None,
+                            'file_path': report_path,
+                            'filename': filename,
+                            'analysis_id': analysis.id,
+                            'report_type': 'client'
+                        })
+
+                    # Legal Analysis (detailed internal)
+                    legal_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Legal_Analysis_*.pdf')
+                    legal_reports = glob.glob(legal_report_pattern)
+                    for report_path in legal_reports:
+                        filename = os.path.basename(report_path)
+                        letters.append({
+                            'id': f'legal_report_{filename}',
+                            'bureau': 'Full Legal Analysis',
+                            'round_number': None,
+                            'file_path': report_path,
+                            'filename': filename,
+                            'analysis_id': analysis.id,
+                            'report_type': 'legal'
+                        })
+
+                    # Legacy Full Report (for backward compatibility)
                     full_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Full_Report_*.pdf')
                     full_reports = glob.glob(full_report_pattern)
                     for report_path in full_reports:
                         filename = os.path.basename(report_path)
                         letters.append({
                             'id': f'full_report_{filename}',
-                            'bureau': 'Full Report',
+                            'bureau': 'Legacy Full Report',
                             'round_number': None,
                             'file_path': report_path,
                             'filename': filename,
-                            'analysis_id': analysis.id
+                            'analysis_id': analysis.id,
+                            'report_type': 'legacy'
                         })
                 contact_letters[contact.id] = letters
 
@@ -9264,19 +9289,52 @@ def dashboard_contacts():
                             'filename': filename
                         })
 
-                # Also check for full reports
+                # Also check for Client and Legal reports
                 client_name_normalized = contact.name.replace(' ', '_')
+
+                # Client Report (new professional PDF)
+                client_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Client_Report_*.pdf')
+                client_reports = glob.glob(client_report_pattern)
+                for report_path in client_reports:
+                    filename = os.path.basename(report_path)
+                    letters.append({
+                        'id': f'client_report_{filename}',
+                        'bureau': 'Client Report',
+                        'round_number': None,
+                        'file_path': report_path,
+                        'filename': filename,
+                        'analysis_id': analysis.id,
+                        'report_type': 'client'
+                    })
+
+                # Legal Analysis (detailed internal)
+                legal_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Legal_Analysis_*.pdf')
+                legal_reports = glob.glob(legal_report_pattern)
+                for report_path in legal_reports:
+                    filename = os.path.basename(report_path)
+                    letters.append({
+                        'id': f'legal_report_{filename}',
+                        'bureau': 'Full Legal Analysis',
+                        'round_number': None,
+                        'file_path': report_path,
+                        'filename': filename,
+                        'analysis_id': analysis.id,
+                        'report_type': 'legal'
+                    })
+
+                # Legacy Full Report (for backward compatibility)
                 full_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Full_Report_*.pdf')
                 full_reports = glob.glob(full_report_pattern)
                 for report_path in full_reports:
                     filename = os.path.basename(report_path)
                     letters.append({
                         'id': f'full_report_{filename}',
-                        'bureau': 'Full Report',
+                        'bureau': 'Legacy Full Report',
                         'round_number': None,
                         'file_path': report_path,
                         'filename': filename,
-                        'analysis_id': analysis.id
+                        'analysis_id': analysis.id,
+                        'report_type': 'legacy'
                     })
 
             contact_letters[contact.id] = letters
