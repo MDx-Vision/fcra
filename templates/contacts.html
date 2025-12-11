@@ -1103,10 +1103,11 @@
                                     {% endif %}
 
                                     {% if contact_letters.get(contact.id) %}
+                                        {% set ns = namespace(shown=false) %}
                                         {% for letter in contact_letters[contact.id] %}
-                                            {% if 'Full_Report' in letter.filename and letter.analysis_id %}
+                                            {% if 'Full_Report' in letter.filename and letter.analysis_id and not ns.shown %}
                                                 <span class="action-icon preview" title="Preview & Send Report" onclick="openPreviewModal({{ letter.analysis_id }}, '{{ contact.name }}', {{ contact.id }})">👁️</span>
-                                                {% break %}
+                                                {% set ns.shown = true %}
                                             {% endif %}
                                         {% endfor %}
                                     {% endif %}
