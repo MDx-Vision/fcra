@@ -1087,16 +1087,31 @@
                                             <div class="download-dropdown-header">Available Documents</div>
                                             <div class="download-dropdown-content">
                                                 {% for letter in contact_letters[contact.id] %}
-                                                <a href="/{{ letter.file_path }}" download>
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                                    <span>
-                                                        {% if letter.bureau %}
-                                                            {{ letter.bureau }} - Round {{ letter.round_number or 1 }}
-                                                        {% else %}
-                                                            {{ letter.filename }}
-                                                        {% endif %}
-                                                    </span>
-                                                </a>
+                                                {% if letter.report_type == 'client' %}
+                                                    {# Client Report - Generate fresh styled PDF #}
+                                                    <a href="/api/download/analysis/{{ letter.analysis_id }}/full_report" download>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                        <span>{{ letter.bureau }}</span>
+                                                    </a>
+                                                {% elif letter.report_type == 'legal' %}
+                                                    {# Legal Analysis - Generate fresh formal PDF #}
+                                                    <a href="/api/download/analysis/{{ letter.analysis_id }}/full_report?type=legal" download>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                        <span>{{ letter.bureau }}</span>
+                                                    </a>
+                                                {% else %}
+                                                    {# Bureau dispute letters - Use cached file #}
+                                                    <a href="/{{ letter.file_path }}" download>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                                        <span>
+                                                            {% if letter.bureau %}
+                                                                {{ letter.bureau }} - Round {{ letter.round_number or 1 }}
+                                                            {% else %}
+                                                                {{ letter.filename }}
+                                                            {% endif %}
+                                                        </span>
+                                                    </a>
+                                                {% endif %}
                                                 {% endfor %}
                                             </div>
                                         </div>

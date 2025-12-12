@@ -9161,34 +9161,27 @@ def dashboard_contacts():
                                 'file_path': letter.file_path,
                                 'filename': filename
                             })
-                    client_name_normalized = contact.name.replace(' ', '_')
-
-                    # Client Report (new professional PDF)
-                    client_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Client_Report_*.pdf')
-                    client_reports = glob.glob(client_report_pattern)
-                    for report_path in client_reports:
-                        filename = os.path.basename(report_path)
+                    # Check if analysis has violations (means reports can be generated)
+                    violations = db.query(Violation).filter_by(analysis_id=analysis.id).first()
+                    if violations:
+                        # Add Client Report option (generates on-demand)
                         letters.append({
-                            'id': f'client_report_{filename}',
+                            'id': f'client_report_{analysis.id}',
                             'bureau': 'Client Report',
                             'round_number': None,
-                            'file_path': report_path,
-                            'filename': filename,
+                            'file_path': None,  # Not used - generates on-demand
+                            'filename': 'Client_Report.pdf',
                             'analysis_id': analysis.id,
                             'report_type': 'client'
                         })
 
-                    # Legal Analysis (detailed internal)
-                    legal_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Legal_Analysis_*.pdf')
-                    legal_reports = glob.glob(legal_report_pattern)
-                    for report_path in legal_reports:
-                        filename = os.path.basename(report_path)
+                        # Add Legal Analysis option (generates on-demand)
                         letters.append({
-                            'id': f'legal_report_{filename}',
+                            'id': f'legal_report_{analysis.id}',
                             'bureau': 'Legal Analysis',
                             'round_number': None,
-                            'file_path': report_path,
-                            'filename': filename,
+                            'file_path': None,  # Not used - generates on-demand
+                            'filename': 'Legal_Analysis.pdf',
                             'analysis_id': analysis.id,
                             'report_type': 'legal'
                         })
@@ -9237,35 +9230,27 @@ def dashboard_contacts():
                             'filename': filename
                         })
 
-                # Also check for Client and Legal reports
-                client_name_normalized = contact.name.replace(' ', '_')
-
-                # Client Report (new professional PDF)
-                client_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Client_Report_*.pdf')
-                client_reports = glob.glob(client_report_pattern)
-                for report_path in client_reports:
-                    filename = os.path.basename(report_path)
+                # Check if analysis has violations (means reports can be generated)
+                violations = db.query(Violation).filter_by(analysis_id=analysis.id).first()
+                if violations:
+                    # Add Client Report option (generates on-demand)
                     letters.append({
-                        'id': f'client_report_{filename}',
+                        'id': f'client_report_{analysis.id}',
                         'bureau': 'Client Report',
                         'round_number': None,
-                        'file_path': report_path,
-                        'filename': filename,
+                        'file_path': None,  # Not used - generates on-demand
+                        'filename': 'Client_Report.pdf',
                         'analysis_id': analysis.id,
                         'report_type': 'client'
                     })
 
-                # Legal Analysis (detailed internal)
-                legal_report_pattern = os.path.join('static', 'generated_letters', f'{client_name_normalized}_Legal_Analysis_*.pdf')
-                legal_reports = glob.glob(legal_report_pattern)
-                for report_path in legal_reports:
-                    filename = os.path.basename(report_path)
+                    # Add Legal Analysis option (generates on-demand)
                     letters.append({
-                        'id': f'legal_report_{filename}',
+                        'id': f'legal_report_{analysis.id}',
                         'bureau': 'Legal Analysis',
                         'round_number': None,
-                        'file_path': report_path,
-                        'filename': filename,
+                        'file_path': None,  # Not used - generates on-demand
+                        'filename': 'Legal_Analysis.pdf',
                         'analysis_id': analysis.id,
                         'report_type': 'legal'
                     })
