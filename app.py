@@ -8991,28 +8991,49 @@ def api_send_analysis_email(analysis_id):
             portal_url=portal_url
         )
 
-        # Find full report PDF if attach_pdf is True
+        # Generate fresh Client Report PDF if attach_pdf is True
         attachments = None
         if attach_pdf:
-            import glob
             import base64
-            safe_name = analysis.client_name.replace(' ', '_')
-            pattern = f"static/generated_letters/{safe_name}_Full_Report_*.pdf"
-            reports = glob.glob(pattern)
-            if reports:
-                # Get most recent report
-                pdf_path = sorted(reports)[-1]
-                # Read PDF and encode to base64
-                with open(pdf_path, 'rb') as f:
+            import tempfile
+            from services.pdf_service import FCRAPDFGenerator
+
+            try:
+                # Generate fresh Client Report PDF (49 pages with Brightpath styling)
+                pdf_generator = FCRAPDFGenerator()
+
+                # Create temporary file for PDF
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+                    tmp_path = tmp.name
+
+                # Generate PDF with all violations data
+                pdf_generator.generate_client_report(
+                    tmp_path,
+                    analysis.client_name,
+                    violations,
+                    damages,
+                    case_score,
+                    analysis
+                )
+
+                # Read and encode PDF to base64
+                with open(tmp_path, 'rb') as f:
                     pdf_data = f.read()
                     pdf_base64 = base64.b64encode(pdf_data).decode()
 
-                pdf_filename = os.path.basename(pdf_path)
+                # Clean up temporary file
+                os.unlink(tmp_path)
+
+                # Attach PDF to email
+                pdf_filename = f'{analysis.client_name.replace(" ", "_")}_Client_Report.pdf'
                 attachments = [{
                     'content': pdf_base64,
                     'filename': pdf_filename,
                     'type': 'application/pdf'
                 }]
+            except Exception as pdf_error:
+                print(f"Error generating PDF attachment: {pdf_error}")
+                # Continue without attachment if PDF generation fails
 
         # Send email
         result = send_email(to_email, subject, html_content, attachments=attachments)
@@ -9147,8 +9168,11 @@ def dashboard_contacts():
             import glob
             contact_letters = {}
             for contact in contacts:
-                analyses = db.query(Analysis).filter_by(client_id=contact.id).all()
+                # Get all analyses ordered by most recent first
+                analyses = db.query(Analysis).filter_by(client_id=contact.id).order_by(Analysis.created_at.desc()).all()
                 letters = []
+
+                # Collect dispute letters from ALL analyses
                 for analysis in analyses:
                     dispute_letters = db.query(DisputeLetter).filter_by(analysis_id=analysis.id).all()
                     for letter in dispute_letters:
@@ -9161,30 +9185,34 @@ def dashboard_contacts():
                                 'file_path': letter.file_path,
                                 'filename': filename
                             })
-                    # Check if analysis has violations (means reports can be generated)
-                    violations = db.query(Violation).filter_by(analysis_id=analysis.id).first()
+
+                # Add Client/Legal reports ONCE from most recent analysis only (no duplicates)
+                if analyses:
+                    latest_analysis = analyses[0]  # Most recent analysis
+                    violations = db.query(Violation).filter_by(analysis_id=latest_analysis.id).first()
                     if violations:
                         # Add Client Report option (generates on-demand)
                         letters.append({
-                            'id': f'client_report_{analysis.id}',
+                            'id': f'client_report_{latest_analysis.id}',
                             'bureau': 'Client Report',
                             'round_number': None,
                             'file_path': None,  # Not used - generates on-demand
                             'filename': 'Client_Report.pdf',
-                            'analysis_id': analysis.id,
+                            'analysis_id': latest_analysis.id,
                             'report_type': 'client'
                         })
 
                         # Add Legal Analysis option (generates on-demand)
                         letters.append({
-                            'id': f'legal_report_{analysis.id}',
+                            'id': f'legal_report_{latest_analysis.id}',
                             'bureau': 'Legal Analysis',
                             'round_number': None,
                             'file_path': None,  # Not used - generates on-demand
                             'filename': 'Legal_Analysis.pdf',
-                            'analysis_id': analysis.id,
+                            'analysis_id': latest_analysis.id,
                             'report_type': 'legal'
                         })
+
                 contact_letters[contact.id] = letters
 
             return render_template('contacts.html',
@@ -9213,10 +9241,11 @@ def dashboard_contacts():
         import glob
         contact_letters = {}
         for contact in contacts:
-            # Query DisputeLetter table for letters associated with this client
-            analyses = db.query(Analysis).filter_by(client_id=contact.id).all()
+            # Get all analyses ordered by most recent first
+            analyses = db.query(Analysis).filter_by(client_id=contact.id).order_by(Analysis.created_at.desc()).all()
             letters = []
 
+            # Collect dispute letters from ALL analyses
             for analysis in analyses:
                 dispute_letters = db.query(DisputeLetter).filter_by(analysis_id=analysis.id).all()
                 for letter in dispute_letters:
@@ -9230,28 +9259,30 @@ def dashboard_contacts():
                             'filename': filename
                         })
 
-                # Check if analysis has violations (means reports can be generated)
-                violations = db.query(Violation).filter_by(analysis_id=analysis.id).first()
+            # Add Client/Legal reports ONCE from most recent analysis only (no duplicates)
+            if analyses:
+                latest_analysis = analyses[0]  # Most recent analysis
+                violations = db.query(Violation).filter_by(analysis_id=latest_analysis.id).first()
                 if violations:
                     # Add Client Report option (generates on-demand)
                     letters.append({
-                        'id': f'client_report_{analysis.id}',
+                        'id': f'client_report_{latest_analysis.id}',
                         'bureau': 'Client Report',
                         'round_number': None,
                         'file_path': None,  # Not used - generates on-demand
                         'filename': 'Client_Report.pdf',
-                        'analysis_id': analysis.id,
+                        'analysis_id': latest_analysis.id,
                         'report_type': 'client'
                     })
 
                     # Add Legal Analysis option (generates on-demand)
                     letters.append({
-                        'id': f'legal_report_{analysis.id}',
+                        'id': f'legal_report_{latest_analysis.id}',
                         'bureau': 'Legal Analysis',
                         'round_number': None,
                         'file_path': None,  # Not used - generates on-demand
                         'filename': 'Legal_Analysis.pdf',
-                        'analysis_id': analysis.id,
+                        'analysis_id': latest_analysis.id,
                         'report_type': 'legal'
                     })
 

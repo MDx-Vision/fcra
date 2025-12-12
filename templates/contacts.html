@@ -2179,23 +2179,13 @@
                 return;
             }
 
-            // Find the PDF path from the download dropdown (prefer Client Report)
-            const downloadDropdown = document.getElementById('downloadDropdown-' + currentContactId);
-            if (downloadDropdown) {
-                // Try Client Report first (new professional PDF)
-                let pdfLinks = downloadDropdown.querySelectorAll('a[href*="Client_Report"]');
-                if (pdfLinks.length === 0) {
-                    // Fall back to legacy Full Report
-                    pdfLinks = downloadDropdown.querySelectorAll('a[href*="Full_Report"]');
-                }
-                if (pdfLinks.length > 0) {
-                    currentPdfPath = pdfLinks[0].getAttribute('href');
-                    pdfContent.innerHTML = `<iframe src="${currentPdfPath}"></iframe>`;
-                    return;
-                }
+            // Generate fresh PDF using API route (no cached files)
+            if (currentAnalysisId) {
+                currentPdfPath = `/api/download/analysis/${currentAnalysisId}/full_report`;
+                pdfContent.innerHTML = `<iframe src="${currentPdfPath}"></iframe>`;
+            } else {
+                pdfContent.innerHTML = '<div class="preview-error">Analysis not found</div>';
             }
-
-            pdfContent.innerHTML = '<div class="preview-error">PDF not found</div>';
         }
 
         function openSendDialog() {
