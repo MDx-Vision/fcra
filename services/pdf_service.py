@@ -14,6 +14,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from datetime import datetime
 import os
+import re
 from weasyprint import HTML
 
 # Brightpath Ascend brand colors (matching email template)
@@ -256,17 +257,21 @@ class FCRAPDFGenerator:
             analysis: Analysis object
         """
         # Parse full_analysis and STOP before dispute letters
-        analysis_content = ""
+        analysis_text = ""
         if analysis.full_analysis:
             lines = analysis.full_analysis.split('\n')
             for line in lines:
                 # Stop if we hit dispute letter sections
                 if any(marker in line.upper() for marker in [
                     'DISPUTE LETTER', 'START OF DISPUTE', 'ROUND 1 LETTER',
-                    'CERTIFIED MAIL', 'DEAR SIR/MADAM', '--- DISPUTE LETTER ---'
+                    'CERTIFIED MAIL', 'DEAR SIR/MADAM', '--- DISPUTE LETTER ---',
+                    'LETTER TO', 'RE: DISPUTE'
                 ]):
                     break
-                analysis_content += self._escape_html(line) + '<br/>'
+                analysis_text += line + '\n'
+
+        # Convert markdown to HTML
+        analysis_content = self._markdown_to_html(analysis_text)
 
         # Extract data
         violations_count = len(violations) if violations else 0
@@ -274,7 +279,7 @@ class FCRAPDFGenerator:
         settlement_target = damages.settlement_target if damages else 0
         case_strength = self._get_case_strength_label(case_score.total_score if case_score else 0)
 
-        # Build HTML with full styling from reference template
+        # Build HTML with COMPLETE styling from reference template
         html_content = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -381,6 +386,7 @@ class FCRAPDFGenerator:
       text-align: right;
     }}
 
+    /* SECTION HEADERS */
     h1 {{
       font-size: 20pt;
       color: #1e3a5f;
@@ -399,6 +405,56 @@ class FCRAPDFGenerator:
       font-size: 12pt;
       color: #0d9488;
       margin: 20px 0 10px 0;
+    }}
+
+    /* CALL-OUT BOXES */
+    .callout {{
+      background-color: #f8f9fa;
+      border-left: 4px solid #0d9488;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }}
+    .callout.warning {{
+      background-color: #fff8e1;
+      border-color: #ffc107;
+    }}
+    .callout.danger {{
+      background-color: #ffebee;
+      border-color: #dc3545;
+    }}
+    .callout.success {{
+      background-color: #e8f5e9;
+      border-color: #28a745;
+    }}
+    .callout-title {{
+      font-weight: bold;
+      color: #1e3a5f;
+      margin-bottom: 8px;
+      font-size: 11pt;
+    }}
+
+    /* TABLES */
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      font-size: 10pt;
+    }}
+    th {{
+      background-color: #1e3a5f;
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+    }}
+    td {{
+      border: 1px solid #ddd;
+      padding: 10px 12px;
+      vertical-align: top;
+    }}
+    tr:nth-child(even) {{
+      background-color: #f9f9f9;
     }}
 
     /* SUMMARY BOX */
@@ -425,25 +481,104 @@ class FCRAPDFGenerator:
       font-weight: bold;
     }}
 
-    /* CALLOUTS */
-    .callout {{
-      background-color: #f8f9fa;
-      border-left: 4px solid #0d9488;
-      padding: 15px 20px;
-      margin: 20px 0;
+    /* LISTS */
+    ul, ol {{
+      margin: 10px 0 10px 20px;
+      padding: 0;
     }}
-    .callout-title {{
-      font-weight: bold;
-      color: #1e3a5f;
-      margin-bottom: 8px;
+    li {{
+      margin: 8px 0;
     }}
 
+    /* ACCOUNT CARD */
+    .account-card {{
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin: 20px 0;
+      overflow: hidden;
+    }}
+    .account-header {{
+      background-color: #1e3a5f;
+      color: white;
+      padding: 12px 15px;
+      font-weight: bold;
+    }}
+    .account-body {{
+      padding: 15px;
+    }}
+    .violation-badge {{
+      display: inline-block;
+      background-color: #dc3545;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 9pt;
+      font-weight: bold;
+    }}
+
+    /* TIMELINE */
+    .timeline {{
+      position: relative;
+      padding-left: 30px;
+      margin: 20px 0;
+    }}
+    .timeline:before {{
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background-color: #0d9488;
+    }}
+    .timeline-item {{
+      position: relative;
+      margin: 20px 0;
+    }}
+    .timeline-item:before {{
+      content: '';
+      position: absolute;
+      left: -24px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      background-color: #0d9488;
+      border-radius: 50%;
+    }}
+    .timeline-title {{
+      font-weight: bold;
+      color: #1e3a5f;
+    }}
+
+    /* TEXT FORMATTING */
     p {{
       margin: 12px 0;
       text-align: justify;
     }}
+    strong {{
+      font-weight: 600;
+      color: #1e3a5f;
+    }}
+    em {{
+      font-style: italic;
+    }}
+    code {{
+      font-family: 'Courier New', monospace;
+      background: #f4f4f4;
+      padding: 2px 4px;
+      border-radius: 3px;
+    }}
+    hr {{
+      border: 0;
+      border-top: 1px solid #ccc;
+      margin: 20px 0;
+    }}
 
     .text-center {{ text-align: center; }}
+    .highlight {{
+      background-color: #fff3cd;
+      padding: 2px 5px;
+    }}
   </style>
 </head>
 <body>
@@ -581,6 +716,96 @@ class FCRAPDFGenerator:
         }
         for old, new in replacements.items():
             text = text.replace(old, new)
+        return text
+
+    def _markdown_to_html(self, text):
+        """Convert markdown to styled HTML"""
+        if not text:
+            return ""
+
+        # Split into lines for processing
+        lines = text.split('\n')
+        html_lines = []
+        in_list = False
+        in_table = False
+        table_rows = []
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Skip empty lines
+            if not stripped:
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
+                html_lines.append('<br/>')
+                continue
+
+            # Headers
+            if stripped.startswith('###'):
+                text = stripped[3:].strip()
+                html_lines.append(f'<h3>{self._escape_html(text)}</h3>')
+            elif stripped.startswith('##'):
+                text = stripped[2:].strip()
+                html_lines.append(f'<h2>{self._escape_html(text)}</h2>')
+            elif stripped.startswith('#'):
+                text = stripped[1:].strip()
+                html_lines.append(f'<h1>{self._escape_html(text)}</h1>')
+
+            # Horizontal rules
+            elif stripped.startswith('---') or stripped.startswith('___'):
+                html_lines.append('<hr style="border: 1px solid #ccc; margin: 20px 0;">')
+
+            # Lists
+            elif stripped.startswith('- ') or stripped.startswith('* '):
+                if not in_list:
+                    html_lines.append('<ul>')
+                    in_list = True
+                text = stripped[2:].strip()
+                # Apply inline formatting
+                text = self._apply_inline_formatting(text)
+                html_lines.append(f'<li>{text}</li>')
+
+            # Numbered lists
+            elif re.match(r'^\d+\.\s', stripped):
+                text = re.sub(r'^\d+\.\s', '', stripped)
+                text = self._apply_inline_formatting(text)
+                html_lines.append(f'<li>{text}</li>')
+
+            # Tables (simple detection)
+            elif '|' in stripped:
+                # Skip for now, handle simple cases
+                continue
+
+            # Regular paragraphs
+            else:
+                if in_list:
+                    html_lines.append('</ul>')
+                    in_list = False
+                text = self._apply_inline_formatting(stripped)
+                html_lines.append(f'<p>{text}</p>')
+
+        if in_list:
+            html_lines.append('</ul>')
+
+        return '\n'.join(html_lines)
+
+    def _apply_inline_formatting(self, text):
+        """Apply bold, italic, and other inline markdown formatting"""
+        # Escape HTML first
+        text = self._escape_html(text)
+
+        # Bold: **text** or __text__
+        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+        text = re.sub(r'__(.+?)__', r'<strong>\1</strong>', text)
+
+        # Italic: *text* or _text_ (but not inside words)
+        text = re.sub(r'\*([^*]+?)\*', r'<em>\1</em>', text)
+        text = re.sub(r'\b_([^_]+?)_\b', r'<em>\1</em>', text)
+
+        # Code: `code`
+        text = re.sub(r'`([^`]+?)`', r'<code style="background: #f4f4f4; padding: 2px 4px; border-radius: 3px;">\1</code>', text)
+
         return text
 
     def _get_case_strength_label(self, score):
