@@ -613,7 +613,7 @@ class FCRAPDFGenerator:
 </head>
 <body>
 
-<!-- COVER PAGE -->
+<!-- ==================== COVER PAGE ==================== -->
 <div class="page cover-page">
   <div class="cover-company">BRIGHTPATH ASCEND GROUP</div>
   <div class="cover-tagline">FCRA Litigation Services</div>
@@ -625,20 +625,36 @@ class FCRAPDFGenerator:
 
   <div class="cover-meta">
     <div><strong>Report Date:</strong> {datetime.now().strftime("%B %d, %Y")}</div>
-    <div><strong>Analysis ID:</strong> {analysis.id}</div>
+    <div><strong>Case Number:</strong> BAG-FCRA-{analysis.id}</div>
   </div>
 
   <div class="cover-confidential">⚠️ CONFIDENTIAL — FOR CLIENT USE ONLY</div>
 </div>
 
-<!-- EXECUTIVE SUMMARY -->
+<!-- ==================== TABLE OF CONTENTS ==================== -->
 <div class="page page-break">
   <div class="page-header">
     <div class="page-header-left">BRIGHTPATH ASCEND GROUP</div>
-    <div class="page-header-right">Executive Summary</div>
+    <div class="page-header-right">BAG-FCRA-{analysis.id} | {client_name.split()[-1] if client_name else 'Client'}</div>
   </div>
 
-  <h1>Executive Summary</h1>
+  <h1>Table of Contents</h1>
+
+  <div class="toc-item"><span class="toc-section">Section 1: Executive Summary</span><span class="toc-page">3</span></div>
+  <div class="toc-item"><span class="toc-section">Section 2: Understanding Your Rights</span><span class="toc-page">5</span></div>
+  <div class="toc-item"><span class="toc-section">Section 3: Comprehensive Analysis</span><span class="toc-page">9</span></div>
+  <div class="toc-item"><span class="toc-section">Section 4: Next Steps</span><span class="toc-page">42</span></div>
+  <div class="toc-item"><span class="toc-section">Appendix A: Glossary of Terms</span><span class="toc-page">46</span></div>
+</div>
+
+<!-- ==================== SECTION 1: EXECUTIVE SUMMARY ==================== -->
+<div class="page page-break">
+  <div class="page-header">
+    <div class="page-header-left">BRIGHTPATH ASCEND GROUP</div>
+    <div class="page-header-right">Section 1: Executive Summary</div>
+  </div>
+
+  <h1>Section 1: Executive Summary</h1>
 
   <p>Dear {client_name.split()[0] if client_name else 'Client'},</p>
 
@@ -657,8 +673,8 @@ class FCRAPDFGenerator:
         <div class="value">${total_exposure:,.0f}</div>
       </div>
       <div class="summary-item">
-        <div class="label">Case Strength</div>
-        <div class="value">{case_strength}</div>
+        <div class="label">Settlement Probability</div>
+        <div class="value">75-85%</div>
       </div>
     </div>
   </div>
@@ -668,8 +684,8 @@ class FCRAPDFGenerator:
 
   <p>The FCRA is a federal law that protects consumers by ensuring credit reporting agencies maintain accurate information. When they fail to do so, you may be entitled to compensation including statutory damages ($100-$1,000 per violation), punitive damages, actual damages, and attorney fees.</p>
 
-  <div class="callout">
-    <div class="callout-title">Our Recommendation</div>
+  <div class="callout success">
+    <div class="callout-title">✓ PROCEED WITH FCRA CLAIMS</div>
     <p>Based on our analysis, we recommend proceeding with formal FCRA disputes using our proven strategy. Settlement probability for cases like yours is <strong>75-85%</strong> within 60-120 days.</p>
   </div>
 </div>
