@@ -14,11 +14,17 @@ const CONFIG = {
 
   // Routes to ignore (webhooks, API, static)
   ignorePatterns: [
-    /^\/api\//,           // API routes (covered by api_endpoints.cy.js)
-    /^\/webhook/,         // Webhook endpoints
-    /^\/static/,          // Static files
-    /^\/favicon/,         // Favicon
-    /\/<.*>/,             // Dynamic params like /<int:id> (need specific handling)
+    /^\/api\//,                      // API routes (covered by api_endpoints.cy.js)
+    /^\/webhook/,                    // Webhook endpoints
+    /^\/static/,                     // Static files
+    /^\/favicon/,                    // Favicon
+    /\/<.*>/,                        // Dynamic params like /<int:id> (need specific handling)
+    /^\/history$/,                   // JSON API endpoint
+    /^\/test$/,                      // JSON API endpoint
+    /^\/clear$/,                     // POST-only utility endpoint
+    /^\/staff\/change-password$/,   // POST-only endpoint
+    /^\/staff\/logout$/,             // Already tested (logout_exhaustive.cy.js)
+    /^\/dashboard\/clients$/,        // Already tested (clients_exhaustive.cy.js)
   ],
 
   // Auth patterns

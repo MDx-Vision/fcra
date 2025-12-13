@@ -22,12 +22,12 @@ engine = create_engine(
     max_overflow=20,
     pool_recycle=1800,  # Recycle every 30 min instead of 1 hour
     connect_args={
-        "connect_timeout": 180,  # 180 seconds connection timeout
+        # Note: connect_timeout removed - not supported by all PostgreSQL providers
+        # Timeouts are handled via statement_timeout in the event listener below
         "keepalives": 1,
         "keepalives_idle": 10,  # Start keepalives after 10s idle
         "keepalives_interval": 5,  # Send keepalive every 5s
         "keepalives_count": 10,  # Need 10 failed keepalives to fail
-        "tcp_user_timeout": 180000,  # 180 seconds TCP user timeout (ms)
     }
 )
 

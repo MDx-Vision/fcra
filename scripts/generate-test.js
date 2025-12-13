@@ -25,7 +25,7 @@ if (!CLAUDE_API_KEY) {
 
 const CONFIG = {
   testDir: 'cypress/e2e',
-  baseUrl: 'http://localhost:5000',
+  baseUrl: 'http://localhost:5001',
   claudeModel: 'claude-sonnet-4-20250514',
 
   // Auth credentials (should match your test fixtures)
@@ -130,7 +130,7 @@ async function capturePageContent(route, authType) {
     }
 
     // Wait for dynamic content
-    await page.waitForTimeout(1000);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Capture page data
     const pageData = await page.evaluate(() => {
