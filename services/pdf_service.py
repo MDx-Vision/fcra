@@ -322,6 +322,11 @@ class FCRAPDFGenerator:
       min-height: 10in;
       padding: 1in;
     }}
+    .cover-logo {{
+      width: 120px;
+      height: 120px;
+      margin-bottom: 20px;
+    }}
     .cover-company {{
       font-size: 18pt;
       font-weight: bold;
@@ -413,7 +418,6 @@ class FCRAPDFGenerator:
       border-left: 4px solid #0d9488;
       padding: 15px 20px;
       margin: 20px 0;
-      border-radius: 4px;
     }}
     .callout.warning {{
       background-color: #fff8e1;
@@ -431,7 +435,6 @@ class FCRAPDFGenerator:
       font-weight: bold;
       color: #1e3a5f;
       margin-bottom: 8px;
-      font-size: 11pt;
     }}
 
     /* TABLES */
@@ -490,6 +493,32 @@ class FCRAPDFGenerator:
       margin: 8px 0;
     }}
 
+    /* PAGE FOOTER */
+    .page-footer {{
+      margin-top: auto;
+      padding-top: 20px;
+      border-top: 1px solid #ddd;
+      font-size: 9pt;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+    }}
+
+    /* TOC */
+    .toc-item {{
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px dotted #ccc;
+    }}
+    .toc-section {{
+      font-weight: bold;
+      color: #1e3a5f;
+    }}
+    .toc-page {{
+      color: #666;
+    }}
+
     /* ACCOUNT CARD */
     .account-card {{
       border: 1px solid #ddd;
@@ -506,6 +535,19 @@ class FCRAPDFGenerator:
     .account-body {{
       padding: 15px;
     }}
+    .account-grid {{
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0;
+    }}
+    .account-field {{
+      font-size: 10pt;
+    }}
+    .account-field .label {{
+      color: #666;
+      font-size: 9pt;
+    }}
     .violation-badge {{
       display: inline-block;
       background-color: #dc3545;
@@ -520,7 +562,6 @@ class FCRAPDFGenerator:
     .timeline {{
       position: relative;
       padding-left: 30px;
-      margin: 20px 0;
     }}
     .timeline:before {{
       content: '';
@@ -549,36 +590,25 @@ class FCRAPDFGenerator:
       font-weight: bold;
       color: #1e3a5f;
     }}
+    .timeline-date {{
+      font-size: 10pt;
+      color: #666;
+    }}
 
-    /* TEXT FORMATTING */
     p {{
       margin: 12px 0;
       text-align: justify;
     }}
-    strong {{
-      font-weight: 600;
-      color: #1e3a5f;
-    }}
-    em {{
-      font-style: italic;
-    }}
-    code {{
-      font-family: 'Courier New', monospace;
-      background: #f4f4f4;
-      padding: 2px 4px;
-      border-radius: 3px;
-    }}
-    hr {{
-      border: 0;
-      border-top: 1px solid #ccc;
-      margin: 20px 0;
-    }}
 
-    .text-center {{ text-align: center; }}
     .highlight {{
       background-color: #fff3cd;
       padding: 2px 5px;
     }}
+
+    .text-center {{ text-align: center; }}
+    .text-right {{ text-align: right; }}
+    .mt-20 {{ margin-top: 20px; }}
+    .mb-20 {{ margin-bottom: 20px; }}
   </style>
 </head>
 <body>
