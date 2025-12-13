@@ -1880,7 +1880,7 @@ NO templates or placeholders. Extract real account names, bureaus, violations.
         
         try:
             message = client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model="claude-opus-4-5-20251101",  # Highest quality for comprehensive analysis
                 max_tokens=50000,
                 temperature=0,
                 timeout=900.0,

@@ -142,9 +142,46 @@ class PromptLoader:
         """Get the 3-5 page staff analysis prompt"""
         return self.load_prompt('internalanalysis')
 
-    def get_lawyer_package_prompt(self):
-        """Get the complete 4-document lawyer-ready package prompt"""
-        return self.load_prompt('lawyerpackage')
+    def get_lawyer_package_prompt(self, include_templates=True):
+        """
+        Get the complete 4-document lawyer-ready package prompt
+
+        Args:
+            include_templates: If True, embeds the actual HTML reference templates
+        """
+        prompt = self.load_prompt('lawyerpackage')
+
+        if include_templates:
+            # Embed the reference HTML templates into the prompt
+            template_files = [
+                'templates/reference/Internal_Analysis_PERDOMO_WE_12122025.html',
+                'templates/reference/Email_Client_PERDOMO_WE_12122025.html',
+                'templates/reference/Client_Report_PERDOMO_WE_12122025.html',
+                'templates/reference/Legal_Memorandum_PERDOMO_WE_12122025.html'
+            ]
+
+            embedded_templates = "\n\n## REFERENCE HTML TEMPLATES\n\n"
+            embedded_templates += "Use these as styling and structure references:\n\n"
+
+            for template_path in template_files:
+                try:
+                    # Try to read from project root
+                    full_path = Path(template_path)
+                    if not full_path.exists():
+                        # Try relative to knowledge folder
+                        full_path = self.knowledge_path.parent / template_path
+
+                    if full_path.exists():
+                        with open(full_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        template_name = full_path.name
+                        embedded_templates += f"\n### {template_name}\n\n```html\n{content}\n```\n\n"
+                except Exception as e:
+                    print(f"⚠️ Could not load template {template_path}: {e}")
+
+            prompt += embedded_templates
+
+        return prompt
 
     def get_litigation_framework(self):
         """Get the 36K word litigation framework with 210+ cases"""
