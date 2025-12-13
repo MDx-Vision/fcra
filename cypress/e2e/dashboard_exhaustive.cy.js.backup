@@ -1,0 +1,538 @@
+// Exhaustive test for /portal/dashboard
+describe('Client Portal Dashboard', () => {
+  beforeEach(() => {
+    cy.visit('/portal/login');
+    cy.get('input[name="email"]').type('client@example.com');
+    cy.get('input[name="password"]').type('password123');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('include', '/portal');
+  });
+
+  // Page Load Tests
+  describe('Page Load Tests', () => {
+    it('should load the dashboard page without errors', () => {
+      cy.visit('/portal/dashboard');
+      cy.url().should('include', '/portal/dashboard');
+      cy.get('body').should('be.visible');
+    });
+
+    it('should have correct page title', () => {
+      cy.visit('/portal/dashboard');
+      cy.title().should('contain', 'Client Portal - Brightpath Ascend');
+    });
+
+    it('should not have console errors', () => {
+      cy.visit('/portal/dashboard', {
+        onBeforeLoad(win) {
+          cy.stub(win.console, 'error').as('consoleError');
+        },
+      });
+      cy.get('@consoleError').should('not.have.been.called');
+    });
+
+    it('should return 200 status code', () => {
+      cy.request('/portal/dashboard').its('status').should('eq', 200);
+    });
+  });
+
+  // UI Element Tests
+  describe('UI Element Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    it('should display header with logo and user profile', () => {
+      cy.get('.header').should('be.visible');
+      cy.get('.logo').should('be.visible');
+      cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend');
+      cy.get('.portal-title').should('contain', 'Client Portal');
+      cy.get('.user-profile').should('be.visible');
+      cy.get('.greeting').should('contain', 'Hello, Client');
+      cy.get('[href="/portal/logout"]').should('be.visible').and('contain', 'Logout');
+    });
+
+    it('should display main heading', () => {
+      cy.get('h2').should('contain', 'Welcome to Your Portal');
+    });
+
+    it('should display status banner', () => {
+      cy.get('.status-banner.pending').should('be.visible');
+      cy.get('.status-banner p').should('contain', 'We\'re getting started on your case');
+    });
+
+    it('should display stats grid', () => {
+      cy.get('.stats-grid').should('be.visible');
+      cy.get('.stat-box').should('have.length', 4);
+      cy.get('.stat-box').first().find('.stat-label').should('contain', 'Violations Found');
+      cy.get('.stat-box').eq(1).find('.stat-label').should('contain', 'Case Strength');
+      cy.get('.stat-box').eq(2).find('.stat-label').should('contain', 'Dispute Round');
+      cy.get('.stat-box').last().find('.stat-label').should('contain', 'Potential Recovery');
+    });
+
+    it('should display all navigation tabs', () => {
+      cy.get('.nav-tabs').should('be.visible');
+      cy.get('.nav-tab').should('have.length', 9);
+      cy.get('.nav-tab').eq(0).should('contain', 'Summary').and('have.class', 'active');
+      cy.get('.nav-tab').eq(1).should('contain', 'Score Progress');
+      cy.get('.nav-tab').eq(2).should('contain', 'Dispute Timeline');
+      cy.get('.nav-tab').eq(3).should('contain', 'Status');
+      cy.get('.nav-tab').eq(4).should('contain', 'Attachments');
+      cy.get('.nav-tab').eq(5).should('contain', 'Upload Documents');
+      cy.get('.nav-tab').eq(6).should('contain', 'My Profile');
+      cy.get('.nav-tab').eq(7).should('contain', 'Contact Us');
+      cy.get('.nav-tab').eq(8).should('contain', 'Refer a Friend');
+    });
+
+    it('should display all cards/panels', () => {
+      cy.get('.card').should('have.length.at.least', 1);
+      cy.get('.card').first().should('contain', 'Your Case Value Analysis');
+    });
+  });
+
+  // Form Tests
+  describe('Form Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    describe('Contact Form', () => {
+      beforeEach(() => {
+        cy.get('.nav-tab').contains('Contact Us').click();
+      });
+
+      it('should display contact form', () => {
+        cy.get('#contactForm').should('be.visible');
+      });
+
+      it('should have required text input', () => {
+        cy.get('#contactForm input[type="text"]').should('be.visible');
+        cy.get('#contactForm input[type="text"]').should('have.attr', 'placeholder', 'How can we help you?');
+        cy.get('#contactForm input[type="text"]').should('have.attr', 'required');
+      });
+
+      it('should have required textarea', () => {
+        cy.get('#contactForm textarea').should('be.visible');
+        cy.get('#contactForm textarea').should('have.attr', 'placeholder', 'Type your message here...');
+        cy.get('#contactForm textarea').should('have.attr', 'required');
+      });
+
+      it('should allow text input in fields', () => {
+        cy.get('#contactForm input[type="text"]').type('Test subject');
+        cy.get('#contactForm input[type="text"]').should('have.value', 'Test subject');
+        cy.get('#contactForm textarea').type('Test message content');
+        cy.get('#contactForm textarea').should('have.value', 'Test message content');
+      });
+
+      it('should have submit button', () => {
+        cy.get('#contactForm .submit-btn').should('contain', 'Send Message');
+      });
+
+      it('should submit form with valid data', () => {
+        cy.get('#contactForm input[type="text"]').type('Test subject');
+        cy.get('#contactForm textarea').type('Test message content');
+        cy.get('#contactForm .submit-btn').click();
+      });
+    });
+
+    describe('Document Upload Form', () => {
+      beforeEach(() => {
+        cy.get('.nav-tab').contains('Upload Documents').click();
+      });
+
+      it('should display document upload form', () => {
+        cy.get('#docUploadForm').should('be.visible');
+      });
+
+      it('should have hidden category and type fields', () => {
+        cy.get('#docCategory').should('exist').and('have.attr', 'type', 'hidden');
+        cy.get('#docType').should('exist').and('have.attr', 'type', 'hidden');
+      });
+
+      it('should have file input', () => {
+        cy.get('#docFileInput').should('exist').and('have.attr', 'type', 'file');
+      });
+
+      it('should have date inputs', () => {
+        cy.get('#docUploadForm input[type="date"]').should('have.length', 2);
+        cy.get('#docUploadForm input[name="document_date"]').should('be.visible');
+        cy.get('#docUploadForm input[name="received_date"]').should('be.visible');
+      });
+
+      it('should have notes textarea', () => {
+        cy.get('#docUploadForm textarea[name="notes"]').should('be.visible');
+        cy.get('#docUploadForm textarea[name="notes"]').should('have.attr', 'placeholder', 'Any additional notes...');
+      });
+
+      it('should have document category buttons', () => {
+        cy.get('.doc-category-btn').should('have.length', 6);
+        cy.get('.doc-category-btn').contains('CRA Response').should('be.visible');
+        cy.get('.doc-category-btn').contains('Collection Letter').should('be.visible');
+        cy.get('.doc-category-btn').contains('Legal/Lawsuit').should('be.visible');
+        cy.get('.doc-category-btn').contains('Credit Report').should('be.visible');
+        cy.get('.doc-category-btn').contains('ID/Proof').should('be.visible');
+        cy.get('.doc-category-btn').contains('Other').should('be.visible');
+      });
+
+      it('should allow date selection', () => {
+        const today = new Date().toISOString().split('T')[0];
+        cy.get('#docUploadForm input[name="document_date"]').type(today);
+        cy.get('#docUploadForm input[name="document_date"]').should('have.value', today);
+      });
+
+      it('should allow notes input', () => {
+        cy.get('#docUploadForm textarea[name="notes"]').type('Test notes for document');
+        cy.get('#docUploadForm textarea[name="notes"]').should('have.value', 'Test notes for document');
+      });
+
+      it('should have upload button', () => {
+        cy.get('button').contains('Upload Document').should('be.visible');
+      });
+    });
+
+    describe('Referral Form', () => {
+      beforeEach(() => {
+        cy.get('.nav-tab').contains('Refer a Friend').click();
+      });
+
+      it('should display referral form', () => {
+        cy.get('#referralForm').should('be.visible');
+      });
+
+      it('should have required name field', () => {
+        cy.get('#refName').should('be.visible').and('have.attr', 'required');
+        cy.get('#refName').should('have.attr', 'placeholder', 'Friend\'s full name');
+      });
+
+      it('should have phone field', () => {
+        cy.get('#refPhone').should('be.visible').and('have.attr', 'type', 'tel');
+        cy.get('#refPhone').should('have.attr', 'placeholder', '(xxx) xxx-xxxx');
+      });
+
+      it('should have required email field', () => {
+        cy.get('#refEmail').should('be.visible').and('have.attr', 'required');
+        cy.get('#refEmail').should('have.attr', 'type', 'email');
+        cy.get('#refEmail').should('have.attr', 'placeholder', 'friend@email.com');
+      });
+
+      it('should have comments textarea', () => {
+        cy.get('#refComments').should('be.visible');
+        cy.get('#refComments').should('have.attr', 'placeholder', 'Any additional information about your referral...');
+      });
+
+      it('should allow text input in all fields', () => {
+        cy.get('#refName').type('John Doe');
+        cy.get('#refName').should('have.value', 'John Doe');
+        cy.get('#refPhone').type('(555) 123-4567');
+        cy.get('#refPhone').should('have.value', '(555) 123-4567');
+        cy.get('#refEmail').type('john@example.com');
+        cy.get('#refEmail').should('have.value', 'john@example.com');
+        cy.get('#refComments').type('Great person to work with');
+        cy.get('#refComments').should('have.value', 'Great person to work with');
+      });
+
+      it('should have submit button', () => {
+        cy.get('#referralForm .submit-btn').should('contain', 'Submit Referral');
+      });
+
+      it('should submit form with valid data', () => {
+        cy.get('#refName').type('John Doe');
+        cy.get('#refEmail').type('john@example.com');
+        cy.get('#referralForm .submit-btn').click();
+      });
+    });
+  });
+
+  // Table Tests
+  describe('Table Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+      cy.get('.nav-tab').contains('Status').click();
+    });
+
+    it('should display status tables', () => {
+      cy.get('.status-table').should('have.length.at.least', 2);
+    });
+
+    it('should have correct headers in Equifax table', () => {
+      cy.get('.status-table').first().within(() => {
+        cy.get('th').should('contain', 'Follow up');
+        cy.get('th').should('contain', 'Type');
+        cy.get('th').should('contain', 'R');
+        cy.get('th').should('contain', 'Creditor');
+        cy.get('th').should('contain', 'Account ID');
+        cy.get('th').should('contain', 'Status');
+        cy.get('th').should('contain', 'Reason');
+        cy.get('th').should('contain', 'Comments');
+      });
+    });
+
+    it('should display empty state when no data', () => {
+      cy.get('.status-table tbody td').should('contain', 'No items tracked yet');
+    });
+
+    it('should have bureau section headers', () => {
+      cy.get('span').should('contain', 'EQUIFAX');
+      cy.get('span').should('contain', 'Experian');
+    });
+  });
+
+  // Interactive Element Tests
+  describe('Interactive Element Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    it('should switch tabs when clicked', () => {
+      cy.get('.nav-tab').contains('Score Progress').click();
+      cy.get('#progress').should('be.visible');
+      cy.get('#summary').should('not.be.visible');
+      
+      cy.get('.nav-tab').contains('Dispute Timeline').click();
+      cy.get('#timeline').should('be.visible');
+      cy.get('#progress').should('not.be.visible');
+      
+      cy.get('.nav-tab').contains('Status').click();
+      cy.get('#status').should('be.visible');
+      cy.get('#timeline').should('not.be.visible');
+    });
+
+    it('should handle all button clicks', () => {
+      // Test status buttons
+      cy.get('.nav-tab').contains('Status').click();
+      cy.get('button').contains('Show all').should('be.visible').click();
+      cy.get('button').contains('Submit changes').should('be.visible').click();
+      
+      // Test profile buttons
+      cy.get('.nav-tab').contains('My Profile').click();
+      cy.get('button').contains('Upload Photo').should('be.visible');
+      cy.get('#removeAvatarBtn').should('be.visible');
+      cy.get('button').contains('Set Password').should('be.visible').click();
+      
+      // Test document category buttons
+      cy.get('.nav-tab').contains('Upload Documents').click();
+      cy.get('.doc-category-btn').contains('CRA Response').click();
+      cy.get('.doc-category-btn').contains('Collection Letter').click();
+      cy.get('.doc-category-btn').contains('Legal/Lawsuit').click();
+      cy.get('.doc-category-btn').contains('Credit Report').click();
+      cy.get('.doc-category-btn').contains('ID/Proof').click();
+      cy.get('.doc-category-btn').contains('Other').click();
+    });
+
+    it('should handle back buttons', () => {
+      cy.get('.nav-tab').contains('Upload Documents').click();
+      cy.get('button').contains('← Back').should('have.length.at.least', 1);
+      cy.get('button').contains('← Back').first().click();
+    });
+
+    it('should handle user profile click', () => {
+      cy.get('.user-profile').click();
+      cy.get('.nav-tab').contains('My Profile').should('have.class', 'active');
+    });
+
+    it('should handle logout link', () => {
+      cy.get('[href="/portal/logout"]').should('have.attr', 'href', '/portal/logout');
+    });
+  });
+
+  // File Upload Tests
+  describe('File Upload Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+      cy.get('.nav-tab').contains('Upload Documents').click();
+    });
+
+    it('should have file input for document upload', () => {
+      cy.get('#docFileInput').should('exist').and('have.attr', 'type', 'file');
+    });
+
+    it('should handle file selection', () => {
+      const fileName = 'test-document.pdf';
+      cy.fixture(fileName, { encoding: null }).as('testFile');
+      cy.get('#docFileInput').selectFile('@testFile', { force: true });
+    });
+  });
+
+  // Date Picker Tests
+  describe('Date Picker Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+      cy.get('.nav-tab').contains('Upload Documents').click();
+    });
+
+    it('should have date inputs', () => {
+      cy.get('input[type="date"]').should('have.length', 2);
+    });
+
+    it('should accept date values', () => {
+      const today = new Date().toISOString().split('T')[0];
+      cy.get('input[name="document_date"]').type(today);
+      cy.get('input[name="document_date"]').should('have.value', today);
+      
+      cy.get('input[name="received_date"]').type(today);
+      cy.get('input[name="received_date"]').should('have.value', today);
+    });
+  });
+
+  // Chart Tests
+  describe('Chart Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    it('should display ROI dashboard chart area', () => {
+      cy.get('#roiDashboard').should('be.visible');
+      cy.get('#roiDashboard').should('contain', 'Loading your case value');
+    });
+
+    it('should display score progress chart', () => {
+      cy.get('.nav-tab').contains('Score Progress').click();
+      cy.get('#clientScoreChart').should('exist');
+    });
+
+    it('should display timeline content', () => {
+      cy.get('.nav-tab').contains('Dispute Timeline').click();
+      cy.get('#timelineContainer').should('be.visible');
+      cy.get('#timelineSummary').should('be.visible');
+      cy.get('#lettersSentCount').should('contain', '-');
+      cy.get('#responsesCount').should('contain', '-');
+      cy.get('#deletedCount').should('contain', '-');
+      cy.get('#overdueCount').should('contain', '-');
+    });
+  });
+
+  // Responsive Tests
+  describe('Responsive Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    it('should be responsive on desktop', () => {
+      cy.viewport(1280, 720);
+      cy.get('.header').should('be.visible');
+      cy.get('.nav-tabs').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
+    });
+
+    it('should be responsive on tablet', () => {
+      cy.viewport(768, 1024);
+      cy.get('.header').should('be.visible');
+      cy.get('.nav-tabs').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
+    });
+
+    it('should be responsive on mobile', () => {
+      cy.viewport(375, 667);
+      cy.get('.header').should('be.visible');
+      cy.get('.nav-tabs').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
+    });
+  });
+
+  // Error Handling Tests
+  describe('Error Handling Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    it('should handle form submission with missing required fields', () => {
+      cy.get('.nav-tab').contains('Contact Us').click();
+      cy.get('#contactForm .submit-btn').click();
+      cy.get('#contactForm input[required]').should('be.invalid');
+    });
+
+    it('should handle referral form with invalid email', () => {
+      cy.get('.nav-tab').contains('Refer a Friend').click();
+      cy.get('#refName').type('John Doe');
+      cy.get('#refEmail').type('invalid-email');
+      cy.get('#referralForm .submit-btn').click();
+      cy.get('#refEmail').should('be.invalid');
+    });
+
+    it('should display loading states', () => {
+      cy.get('#roiDashboard').should('contain', 'Loading');
+      
+      cy.get('.nav-tab').contains('Score Progress').click();
+      cy.get('#scoreProgressContent').should('contain', 'Loading');
+      
+      cy.get('.nav-tab').contains('Dispute Timeline').click();
+      cy.get('#timelineContainer').should('contain', 'Loading');
+    });
+
+    it('should handle empty states in tables', () => {
+      cy.get('.nav-tab').contains('Status').click();
+      cy.get('.status-table tbody').should('contain', 'No items tracked yet');
+    });
+  });
+
+  // Navigation Tests
+  describe('Navigation Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    it('should have working navigation tabs', () => {
+      const tabs = [
+        { name: 'Summary', id: 'summary' },
+        { name: 'Score Progress', id: 'progress' },
+        { name: 'Dispute Timeline', id: 'timeline' },
+        { name: 'Status', id: 'status' },
+        { name: 'Attachments', id: 'attachments' },
+        { name: 'Upload Documents', id: 'documents' },
+        { name: 'My Profile', id: 'profile' },
+        { name: 'Contact Us', id: 'contact' },
+        { name: 'Refer a Friend', id: 'referral' }
+      ];
+
+      tabs.forEach(tab => {
+        cy.get('.nav-tab').contains(tab.name).click();
+        cy.get('.nav-tab').contains(tab.name).should('have.class', 'active');
+      });
+    });
+
+    it('should maintain proper tab states', () => {
+      cy.get('.nav-tab').first().should('have.class', 'active');
+      cy.get('.nav-tab').eq(1).click();
+      cy.get('.nav-tab').first().should('not.have.class', 'active');
+      cy.get('.nav-tab').eq(1).should('have.class', 'active');
+    });
+  });
+
+  // Content Loading Tests
+  describe('Content Loading Tests', () => {
+    beforeEach(() => {
+      cy.visit('/portal/dashboard');
+    });
+
+    it('should load all tab content properly', () => {
+      // Summary tab content
+      cy.get('#summary').should('be.visible');
+      cy.get('.status-banner').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
+      
+      // Score Progress tab content
+      cy.get('.nav-tab').contains('Score Progress').click();
+      cy.get('#scoreProgressContent').should('be.visible');
+      cy.get('#projectionContent').should('be.visible');
+      
+      // Timeline tab content
+      cy.get('.nav-tab').contains('Dispute Timeline').click();
+      cy.get('#timelineSummary').should('be.visible');
+      cy.get('#timelineContainer').should('be.visible');
+      
+      // Status tab content
+      cy.get('.nav-tab').contains('Status').click();
+      cy.get('.bureau-section').should('have.length.at.least', 2);
+    });
+
+    it('should display proper loading messages', () => {
+      cy.get('#roiDashboard').should('contain', 'Loading your case value');
+      
+      cy.get('.nav-tab').contains('Score Progress').click();
+      cy.get('#scoreProgressContent').should('contain', 'Loading your progress');
+      cy.get('#projectionContent').should('contain', 'Loading projections');
+      
+      cy.get('.nav-tab').contains('Dispute Timeline').click();
+      cy.get('#timelineContainer').should('contain', 'Loading timeline');
+    });
+  });
+});

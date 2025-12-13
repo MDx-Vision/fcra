@@ -2,8 +2,8 @@
 PDF Generation Service for FCRA Analysis Reports
 
 Generates two types of PDFs:
-1. Client Report - Professional, branded PDF for clients
-2. Legal Analysis - Detailed internal analysis for legal team
+1. Client Report - Professional, branded PDF for clients (using WeasyPrint)
+2. Legal Analysis - Detailed internal analysis for legal team (using ReportLab)
 """
 
 from reportlab.lib.pagesizes import letter
@@ -14,6 +14,7 @@ from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from datetime import datetime
 import os
+from weasyprint import HTML
 
 # Brightpath Ascend brand colors (matching email template)
 PRIMARY_COLOR = "#319795"  # Teal/cyan
@@ -244,7 +245,7 @@ class FCRAPDFGenerator:
 
     def generate_client_report(self, output_path, client_name, violations, damages, case_score, analysis):
         """
-        Generate client-facing PDF report
+        Generate client-facing PDF report using WeasyPrint (40-50 pages, NO dispute letters)
 
         Args:
             output_path: Path to save PDF
@@ -254,148 +255,333 @@ class FCRAPDFGenerator:
             case_score: CaseScore object
             analysis: Analysis object
         """
-        doc = SimpleDocTemplate(output_path, pagesize=letter,
-                              rightMargin=0.75*inch, leftMargin=0.75*inch,
-                              topMargin=0.75*inch, bottomMargin=0.75*inch)
-        story = []
-
-        # Brightpath Ascend branded header banner (matching email template)
-        self._add_branded_header(story, 'Your Credit Analysis Report',
-                                f'Comprehensive FCRA Violations Analysis')
-
-        # Client name and date
-        story.append(Paragraph(f'<b>Prepared for:</b> {client_name}', self.styles['ClientBody']))
-        story.append(Paragraph(f'<b>Report Date:</b> {datetime.now().strftime("%B %d, %Y")}',
-                             self.styles['ClientBody']))
-        story.append(Spacer(1, 0.25*inch))
-
-        # Summary box
-        violations_count = len(violations)
-        total_exposure = damages.total_exposure if damages else 0
-        case_strength = self._get_case_strength_label(case_score.total_score if case_score else 0)
-
-        self._add_summary_box(story, violations_count, total_exposure, case_strength)
-
-        # Executive Summary
-        story.append(Paragraph('What This Means', self.styles['ClientSubHeader']))
-        story.append(Paragraph(
-            f'Our analysis has identified <b>{violations_count} violations</b> of the Fair Credit '
-            f'Reporting Act (FCRA) in your credit reports. These violations represent potential legal '
-            f'claims with a total exposure of <b>${total_exposure:,.0f}</b>.',
-            self.styles['ClientBody']
-        ))
-        story.append(Spacer(1, 0.1*inch))
-        story.append(Paragraph(
-            'The FCRA is a federal law that protects consumers by ensuring credit reporting agencies '
-            'maintain accurate information. When they fail to do so, you may be entitled to compensation.',
-            self.styles['ClientBody']
-        ))
-        story.append(Spacer(1, 0.3*inch))
-
-        # Violations table
-        if violations:
-            self._add_violations_table(story, violations)
-
-        # Damages breakdown
-        if damages:
-            story.append(Paragraph('Damages Breakdown', self.styles['ClientSubHeader']))
-            story.append(Spacer(1, 0.1*inch))
-
-            damages_data = [
-                [Paragraph('<b>Damage Type</b>', self.styles['ClientBody']),
-                 Paragraph('<b>Amount</b>', self.styles['ClientBody'])],
-                [Paragraph('Statutory Damages', self.styles['ClientBody']),
-                 Paragraph(f'${damages.statutory_damages_total:,.0f}', self.styles['ClientBody'])],
-                [Paragraph('Actual Damages', self.styles['ClientBody']),
-                 Paragraph(f'${damages.actual_damages_total:,.0f}', self.styles['ClientBody'])],
-                [Paragraph('Punitive Damages (if willful)', self.styles['ClientBody']),
-                 Paragraph(f'${damages.punitive_damages_amount:,.0f}', self.styles['ClientBody'])],
-                [Paragraph('<b>Total Exposure</b>', self.styles['ClientHighlight']),
-                 Paragraph(f'<b>${damages.total_exposure:,.0f}</b>', self.styles['ClientHighlight'])],
-                [Paragraph('Settlement Target (65%)', self.styles['ClientBody']),
-                 Paragraph(f'${damages.settlement_target:,.0f}', self.styles['ClientBody'])]
-            ]
-
-            damages_table = Table(damages_data, colWidths=[4*inch, 2*inch])
-            damages_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), HexColor('#1a5276')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), white),
-                ('BACKGROUND', (0, 1), (-1, -2), HexColor('#f8f9fa')),
-                ('BACKGROUND', (0, -2), (-1, -2), HexColor('#e8f4f8')),
-                ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('TOPPADDING', (0, 0), (-1, -1), 8),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                ('BOX', (0, 0), (-1, -1), 1, HexColor('#1a5276')),
-                ('LINEABOVE', (0, -2), (-1, -2), 2, HexColor('#1a5276'))
-            ]))
-            story.append(damages_table)
-            story.append(Spacer(1, 0.3*inch))
-
-        # Next steps
-        story.append(Paragraph('Next Steps', self.styles['ClientSubHeader']))
-        story.append(Paragraph(
-            '1. <b>Review this report</b> carefully and note any questions you may have.',
-            self.styles['ClientBody']
-        ))
-        story.append(Paragraph(
-            '2. <b>Contact us</b> to discuss your case and potential legal action.',
-            self.styles['ClientBody']
-        ))
-        story.append(Paragraph(
-            '3. <b>Gather documentation</b> including credit reports, denial letters, and correspondence.',
-            self.styles['ClientBody']
-        ))
-        story.append(Spacer(1, 0.3*inch))
-
-        # Add page break before full analysis
-        story.append(PageBreak())
-
-        # FULL COMPREHENSIVE ANALYSIS (40-50 pages)
+        # Parse full_analysis and STOP before dispute letters
+        analysis_content = ""
         if analysis.full_analysis:
-            # Comprehensive analysis header with branding
-            self._add_branded_header(story, 'COMPREHENSIVE LITIGATION ANALYSIS',
-                                   'Detailed Legal Analysis & Case Documentation')
-
-            # Render full analysis text with Brightpath styling
             lines = analysis.full_analysis.split('\n')
             for line in lines:
-                if line.strip():
-                    # Check if line is a heading (all caps or ends with colon)
-                    if line.strip().isupper() or (line.strip().endswith(':') and len(line.strip()) < 80):
-                        # Style as subheader
-                        try:
-                            story.append(Paragraph(self._sanitize_text(line), self.styles['ClientSubHeader']))
-                        except:
-                            pass
-                    else:
-                        # Chunk very long lines (>1000 chars) to avoid ReportLab errors
-                        if len(line) > 1000:
-                            chunks = [line[i:i+1000] for i in range(0, len(line), 1000)]
-                            for chunk in chunks:
-                                try:
-                                    story.append(Paragraph(self._sanitize_text(chunk), self.styles['ClientBody']))
-                                except:
-                                    pass
-                        else:
-                            try:
-                                story.append(Paragraph(self._sanitize_text(line), self.styles['ClientBody']))
-                            except:
-                                pass
-                else:
-                    story.append(Spacer(1, 0.1*inch))
+                # Stop if we hit dispute letter sections
+                if any(marker in line.upper() for marker in [
+                    'DISPUTE LETTER', 'START OF DISPUTE', 'ROUND 1 LETTER',
+                    'CERTIFIED MAIL', 'DEAR SIR/MADAM', '--- DISPUTE LETTER ---'
+                ]):
+                    break
+                analysis_content += self._escape_html(line) + '<br/>'
 
-        # Footer on last page
-        story.append(Spacer(1, 0.5*inch))
-        footer_text = f'<i>This report is confidential and prepared for {client_name}. '
-        footer_text += 'For questions, contact Brightpath Ascend.</i>'
-        story.append(Paragraph(footer_text,
-                             ParagraphStyle('footer', fontSize=9, textColor=HexColor('#7f8c8d'),
-                                          alignment=TA_CENTER)))
+        # Extract data
+        violations_count = len(violations) if violations else 0
+        total_exposure = damages.total_exposure if damages else 0
+        settlement_target = damages.settlement_target if damages else 0
+        case_strength = self._get_case_strength_label(case_score.total_score if case_score else 0)
 
-        # Build PDF
-        doc.build(story)
+        # Build HTML with full styling from reference template
+        html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Credit Analysis Report - {client_name}</title>
+  <style>
+    @media print {{
+      .page-break {{ page-break-before: always; }}
+      .no-break {{ page-break-inside: avoid; }}
+      body {{ -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }}
+    }}
+
+    * {{ box-sizing: border-box; }}
+
+    body {{
+      margin: 0;
+      padding: 0;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 11pt;
+      line-height: 1.6;
+      color: #333;
+      background-color: #fff;
+    }}
+
+    .page {{
+      max-width: 8.5in;
+      margin: 0 auto;
+      padding: 0.75in 1in;
+      background-color: white;
+      min-height: 11in;
+    }}
+
+    /* COVER PAGE */
+    .cover-page {{
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 10in;
+      padding: 1in;
+    }}
+    .cover-company {{
+      font-size: 18pt;
+      font-weight: bold;
+      color: #0d9488;
+      letter-spacing: 2px;
+      margin-bottom: 5px;
+    }}
+    .cover-tagline {{
+      font-size: 11pt;
+      color: #666;
+      margin-bottom: 60px;
+    }}
+    .cover-title {{
+      font-size: 28pt;
+      font-weight: bold;
+      color: #1e3a5f;
+      margin-bottom: 10px;
+    }}
+    .cover-subtitle {{
+      font-size: 14pt;
+      color: #666;
+      margin-bottom: 60px;
+    }}
+    .cover-client {{
+      font-size: 16pt;
+      color: #333;
+      margin-bottom: 10px;
+    }}
+    .cover-meta {{
+      font-size: 11pt;
+      color: #666;
+    }}
+    .cover-meta div {{
+      margin: 5px 0;
+    }}
+    .cover-confidential {{
+      margin-top: 80px;
+      padding: 15px 30px;
+      border: 2px solid #c41e3a;
+      color: #c41e3a;
+      font-weight: bold;
+      font-size: 12pt;
+    }}
+
+    /* HEADERS */
+    .page-header {{
+      border-bottom: 2px solid #0d9488;
+      padding-bottom: 10px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }}
+    .page-header-left {{
+      font-size: 10pt;
+      color: #0d9488;
+      font-weight: bold;
+    }}
+    .page-header-right {{
+      font-size: 9pt;
+      color: #666;
+      text-align: right;
+    }}
+
+    h1 {{
+      font-size: 20pt;
+      color: #1e3a5f;
+      margin: 0 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 3px solid #0d9488;
+    }}
+    h2 {{
+      font-size: 14pt;
+      color: #1e3a5f;
+      margin: 25px 0 15px 0;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #ccc;
+    }}
+    h3 {{
+      font-size: 12pt;
+      color: #0d9488;
+      margin: 20px 0 10px 0;
+    }}
+
+    /* SUMMARY BOX */
+    .summary-box {{
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+      color: white;
+      padding: 25px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }}
+    .summary-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      text-align: center;
+    }}
+    .summary-item .label {{
+      font-size: 10pt;
+      opacity: 0.8;
+      text-transform: uppercase;
+    }}
+    .summary-item .value {{
+      font-size: 24pt;
+      font-weight: bold;
+    }}
+
+    /* CALLOUTS */
+    .callout {{
+      background-color: #f8f9fa;
+      border-left: 4px solid #0d9488;
+      padding: 15px 20px;
+      margin: 20px 0;
+    }}
+    .callout-title {{
+      font-weight: bold;
+      color: #1e3a5f;
+      margin-bottom: 8px;
+    }}
+
+    p {{
+      margin: 12px 0;
+      text-align: justify;
+    }}
+
+    .text-center {{ text-align: center; }}
+  </style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="page cover-page">
+  <div class="cover-company">BRIGHTPATH ASCEND GROUP</div>
+  <div class="cover-tagline">FCRA Litigation Services</div>
+
+  <div class="cover-title">Confidential Credit<br>Analysis Report</div>
+  <div class="cover-subtitle">Fair Credit Reporting Act Violation Assessment</div>
+
+  <div class="cover-client">Prepared for: <strong>{client_name}</strong></div>
+
+  <div class="cover-meta">
+    <div><strong>Report Date:</strong> {datetime.now().strftime("%B %d, %Y")}</div>
+    <div><strong>Analysis ID:</strong> {analysis.id}</div>
+  </div>
+
+  <div class="cover-confidential">⚠️ CONFIDENTIAL — FOR CLIENT USE ONLY</div>
+</div>
+
+<!-- EXECUTIVE SUMMARY -->
+<div class="page page-break">
+  <div class="page-header">
+    <div class="page-header-left">BRIGHTPATH ASCEND GROUP</div>
+    <div class="page-header-right">Executive Summary</div>
+  </div>
+
+  <h1>Executive Summary</h1>
+
+  <p>Dear {client_name.split()[0] if client_name else 'Client'},</p>
+
+  <p>Thank you for choosing Brightpath Ascend Group to analyze your credit reports. We have completed a comprehensive forensic examination of your credit files from all three major credit reporting agencies.</p>
+
+  <p><strong>Our analysis has identified significant violations of the Fair Credit Reporting Act (FCRA)</strong> that are negatively impacting your credit profile and potentially causing you financial harm.</p>
+
+  <div class="summary-box">
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="label">Violations Identified</div>
+        <div class="value">{violations_count}+</div>
+      </div>
+      <div class="summary-item">
+        <div class="label">Estimated Case Value</div>
+        <div class="value">${total_exposure:,.0f}</div>
+      </div>
+      <div class="summary-item">
+        <div class="label">Case Strength</div>
+        <div class="value">{case_strength}</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>What This Means</h2>
+  <p>Our analysis has identified <strong>{violations_count} violations</strong> of the Fair Credit Reporting Act (FCRA) in your credit reports. These violations represent potential legal claims with a total exposure of <strong>${total_exposure:,.0f}</strong>.</p>
+
+  <p>The FCRA is a federal law that protects consumers by ensuring credit reporting agencies maintain accurate information. When they fail to do so, you may be entitled to compensation including statutory damages ($100-$1,000 per violation), punitive damages, actual damages, and attorney fees.</p>
+
+  <div class="callout">
+    <div class="callout-title">Our Recommendation</div>
+    <p>Based on our analysis, we recommend proceeding with formal FCRA disputes using our proven strategy. Settlement probability for cases like yours is <strong>75-85%</strong> within 60-120 days.</p>
+  </div>
+</div>
+
+<!-- COMPREHENSIVE ANALYSIS -->
+<div class="page page-break">
+  <div class="page-header">
+    <div class="page-header-left">BRIGHTPATH ASCEND GROUP</div>
+    <div class="page-header-right">Comprehensive Analysis</div>
+  </div>
+
+  <h1>Comprehensive Litigation Analysis</h1>
+
+  <div style="line-height: 1.8;">
+    {analysis_content}
+  </div>
+</div>
+
+<!-- NEXT STEPS -->
+<div class="page page-break">
+  <div class="page-header">
+    <div class="page-header-left">BRIGHTPATH ASCEND GROUP</div>
+    <div class="page-header-right">Next Steps</div>
+  </div>
+
+  <h1>Next Steps</h1>
+
+  <h2>What We Need From You</h2>
+  <div class="callout">
+    <div class="callout-title">Action Items</div>
+    <ol>
+      <li><strong>Review this report</strong> — Make sure you understand the violations we've identified</li>
+      <li><strong>Provide approval</strong> — Reply to our email to confirm you want to proceed</li>
+      <li><strong>Gather denial letters</strong> — Any credit denial or adverse action notices strengthen your case</li>
+      <li><strong>Sign engagement documents</strong> — We'll send you our engagement letter</li>
+    </ol>
+  </div>
+
+  <h2>What Happens After You Approve</h2>
+  <p><strong>Within 48 hours:</strong> We prepare customized dispute letters for all defendants</p>
+  <p><strong>Within 5 business days:</strong> All letters sent via certified mail</p>
+  <p><strong>60-120 days:</strong> Expected resolution through settlement or formal proceedings</p>
+
+  <h2>Contact Information</h2>
+  <p><strong>Email:</strong> cases@brightpathascend.com</p>
+  <p><strong>Website:</strong> www.brightpathascend.com</p>
+
+  <div style="margin-top: 40px; padding: 20px; background-color: #1e3a5f; color: white; border-radius: 8px; text-align: center;">
+    <div style="font-size: 14pt; font-weight: bold;">BRIGHTPATH ASCEND GROUP</div>
+    <div style="font-size: 11pt; opacity: 0.9; margin-top: 5px;">Protecting Your Rights Under the Fair Credit Reporting Act</div>
+    <div style="margin-top: 15px; font-size: 10pt; opacity: 0.8;">
+      Report Date: {datetime.now().strftime("%B %d, %Y")} | Confidential
+    </div>
+  </div>
+</div>
+
+</body>
+</html>"""
+
+        # Convert HTML to PDF using WeasyPrint
+        HTML(string=html_content).write_pdf(output_path)
         return output_path
+
+    def _escape_html(self, text):
+        """Escape HTML special characters"""
+        if not text:
+            return ""
+        replacements = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        return text
 
     def _get_case_strength_label(self, score):
         """Convert numeric score to label"""

@@ -1,0 +1,316 @@
+// Exhaustive test for /dashboard/credit-import
+describe('Staff Login Page - /dashboard/credit-import', () => {
+  beforeEach(() => {
+    cy.visit('/dashboard/credit-import');
+  });
+
+  describe('Page Load Tests', () => {
+    it('should load the page without errors', () => {
+      cy.url().should('include', '/dashboard/credit-import');
+      cy.get('[data-testid="login-container"]').should('be.visible');
+    });
+
+    it('should have correct page title', () => {
+      cy.title().should('contain', 'Staff Login - Brightpath Ascend FCRA Platform');
+    });
+
+    it('should not have console errors', () => {
+      cy.window().then((win) => {
+        cy.stub(win.console, 'error').as('consoleError');
+      });
+      cy.get('@consoleError').should('not.have.been.called');
+    });
+
+    it('should return 200 status code', () => {
+      cy.request('/dashboard/credit-import').its('status').should('eq', 200);
+    });
+  });
+
+  describe('UI Element Tests - Headings', () => {
+    it('should display main H1 heading "Brightpath Ascend Group"', () => {
+      cy.contains('h1', 'Brightpath').should('be.visible');
+      cy.contains('h1', 'Ascend').should('be.visible');
+      cy.contains('h1', 'Group').should('be.visible');
+    });
+
+    it('should display H2 heading "Staff Login"', () => {
+      cy.get('[data-testid="login-title"]').should('contain', 'Staff Login');
+      cy.contains('h2', 'Staff Login').should('be.visible');
+    });
+  });
+
+  describe('UI Element Tests - Logo and Branding', () => {
+    it('should display logo image', () => {
+      cy.get('img[src="/static/images/logo.png"]').should('be.visible');
+      cy.get('img[alt="Brightpath Ascend Group"]').should('be.visible');
+    });
+
+    it('should display FCRA Litigation Platform subtitle', () => {
+      cy.contains('FCRA Litigation Platform').should('be.visible');
+    });
+
+    it('should display staff portal badge', () => {
+      cy.contains('Staff Portal').should('be.visible');
+      cy.get('.staff-badge svg').should('be.visible');
+    });
+
+    it('should display login subtitle', () => {
+      cy.contains('Sign in to access the admin dashboard').should('be.visible');
+    });
+  });
+
+  describe('UI Element Tests - Buttons', () => {
+    it('should display password toggle button', () => {
+      cy.get('.toggle-btn').should('be.visible');
+      cy.get('.toggle-btn').should('contain', '👁');
+    });
+
+    it('should display sign in button', () => {
+      cy.get('[data-testid="login-button"]').should('be.visible');
+      cy.get('#loginBtn').should('contain', 'Sign In');
+      cy.get('#loginBtn').should('have.attr', 'type', 'submit');
+    });
+
+    it('should have clickable buttons', () => {
+      cy.get('.toggle-btn').should('not.be.disabled');
+      cy.get('#loginBtn').should('not.be.disabled');
+    });
+  });
+
+  describe('UI Element Tests - Links', () => {
+    it('should display client portal link', () => {
+      cy.get('[data-testid="client-portal-link"]').should('be.visible');
+      cy.get('[data-testid="client-portal-link"]').should('have.attr', 'href', '/portal/login');
+      cy.contains('Looking for client portal?').should('be.visible');
+      cy.contains('Client Login').should('be.visible');
+    });
+
+    it('should have working client portal link', () => {
+      cy.get('[data-testid="client-portal-link"]').click();
+      cy.url().should('include', '/portal/login');
+    });
+  });
+
+  describe('Form Tests - Login Form Structure', () => {
+    it('should display login form with correct attributes', () => {
+      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('#loginForm').should('have.attr', 'method', 'POST');
+      cy.get('#loginForm').should('have.attr', 'action', '/staff/login');
+    });
+
+    it('should have email input with correct attributes', () => {
+      cy.get('[data-testid="email-input"]').should('be.visible');
+      cy.get('#email').should('have.attr', 'type', 'email');
+      cy.get('#email').should('have.attr', 'name', 'email');
+      cy.get('#email').should('have.attr', 'required');
+      cy.get('#email').should('have.attr', 'placeholder', 'your@email.com');
+      cy.get('#email').should('have.attr', 'autocomplete', 'email');
+    });
+
+    it('should have password input with correct attributes', () => {
+      cy.get('[data-testid="password-input"]').should('be.visible');
+      cy.get('#password').should('have.attr', 'type', 'password');
+      cy.get('#password').should('have.attr', 'name', 'password');
+      cy.get('#password').should('have.attr', 'required');
+      cy.get('#password').should('have.attr', 'placeholder', 'Enter your password');
+      cy.get('#password').should('have.attr', 'autocomplete', 'current-password');
+    });
+
+    it('should have proper form labels', () => {
+      cy.get('label[for="email"]').should('contain', 'Email Address');
+      cy.get('label[for="password"]').should('contain', 'Password');
+    });
+  });
+
+  describe('Form Tests - Input Functionality', () => {
+    it('should accept text input in email field', () => {
+      cy.get('#email').type('test@example.com');
+      cy.get('#email').should('have.value', 'test@example.com');
+    });
+
+    it('should accept text input in password field', () => {
+      cy.get('#password').type('password123');
+      cy.get('#password').should('have.value', 'password123');
+    });
+
+    it('should clear input fields', () => {
+      cy.get('#email').type('test@example.com').clear();
+      cy.get('#email').should('have.value', '');
+      cy.get('#password').type('password123').clear();
+      cy.get('#password').should('have.value', '');
+    });
+  });
+
+  describe('Form Tests - Password Toggle Functionality', () => {
+    it('should toggle password visibility', () => {
+      cy.get('#password').type('password123');
+      cy.get('#password').should('have.attr', 'type', 'password');
+      cy.get('.toggle-btn').click();
+      cy.get('#password').should('have.attr', 'type', 'text');
+      cy.get('.toggle-btn').click();
+      cy.get('#password').should('have.attr', 'type', 'password');
+    });
+  });
+
+  describe('Form Tests - Validation', () => {
+    it('should show validation for empty email field', () => {
+      cy.get('#password').type('password123');
+      cy.get('#loginBtn').click();
+      cy.get('#email:invalid').should('exist');
+    });
+
+    it('should show validation for empty password field', () => {
+      cy.get('#email').type('test@example.com');
+      cy.get('#loginBtn').click();
+      cy.get('#password:invalid').should('exist');
+    });
+
+    it('should show validation for invalid email format', () => {
+      cy.get('#email').type('invalid-email');
+      cy.get('#password').type('password123');
+      cy.get('#loginBtn').click();
+      cy.get('#email:invalid').should('exist');
+    });
+
+    it('should not submit form with empty fields', () => {
+      cy.get('#loginBtn').click();
+      cy.get('#email:invalid').should('exist');
+      cy.get('#password:invalid').should('exist');
+    });
+  });
+
+  describe('Form Tests - Submit Button Behavior', () => {
+    it('should change button state on form submission', () => {
+      cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('loginRequest');
+      cy.get('#email').type('test@example.com');
+      cy.get('#password').type('password123');
+      cy.get('#loginBtn').click();
+      cy.get('#loginBtn').should('be.disabled');
+      cy.get('#loginBtn').should('contain', 'Signing in...');
+    });
+  });
+
+  describe('Interactive Element Tests - Form Submission', () => {
+    it('should submit form with valid credentials', () => {
+      cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
+      cy.get('#email').type('test@example.com');
+      cy.get('#password').type('password123');
+      cy.get('#loginBtn').click();
+      cy.wait('@loginRequest');
+    });
+
+    it('should handle form submission with Enter key in email field', () => {
+      cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
+      cy.get('#email').type('test@example.com');
+      cy.get('#password').type('password123');
+      cy.get('#email').type('{enter}');
+      cy.wait('@loginRequest');
+    });
+
+    it('should handle form submission with Enter key in password field', () => {
+      cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
+      cy.get('#email').type('test@example.com');
+      cy.get('#password').type('password123');
+      cy.get('#password').type('{enter}');
+      cy.wait('@loginRequest');
+    });
+  });
+
+  describe('Responsive Tests', () => {
+    it('should display correctly on desktop (1280px)', () => {
+      cy.viewport(1280, 720);
+      cy.get('[data-testid="login-container"]').should('be.visible');
+      cy.get('[data-testid="login-card"]').should('be.visible');
+      cy.get('#loginForm').should('be.visible');
+    });
+
+    it('should display correctly on tablet (768px)', () => {
+      cy.viewport(768, 1024);
+      cy.get('[data-testid="login-container"]').should('be.visible');
+      cy.get('[data-testid="login-card"]').should('be.visible');
+      cy.get('#loginForm').should('be.visible');
+    });
+
+    it('should display correctly on mobile (375px)', () => {
+      cy.viewport(375, 667);
+      cy.get('[data-testid="login-container"]').should('be.visible');
+      cy.get('[data-testid="login-card"]').should('be.visible');
+      cy.get('#loginForm').should('be.visible');
+    });
+  });
+
+  describe('Error Handling Tests', () => {
+    it('should handle server errors gracefully', () => {
+      cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('serverError');
+      cy.get('#email').type('test@example.com');
+      cy.get('#password').type('password123');
+      cy.get('#loginBtn').click();
+      cy.wait('@serverError');
+    });
+
+    it('should handle authentication errors', () => {
+      cy.intercept('POST', '/staff/login', { statusCode: 401 }).as('authError');
+      cy.get('#email').type('invalid@example.com');
+      cy.get('#password').type('wrongpassword');
+      cy.get('#loginBtn').click();
+      cy.wait('@authError');
+    });
+
+    it('should handle network errors', () => {
+      cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
+      cy.get('#email').type('test@example.com');
+      cy.get('#password').type('password123');
+      cy.get('#loginBtn').click();
+      cy.wait('@networkError');
+    });
+  });
+
+  describe('Accessibility Tests', () => {
+    it('should have proper form labels associated with inputs', () => {
+      cy.get('label[for="email"]').should('exist');
+      cy.get('label[for="password"]').should('exist');
+      cy.get('#email').should('have.attr', 'id', 'email');
+      cy.get('#password').should('have.attr', 'id', 'password');
+    });
+
+    it('should support keyboard navigation', () => {
+      cy.get('#email').focus().should('be.focused');
+      cy.get('#email').tab();
+      cy.get('#password').should('be.focused');
+      cy.get('#password').tab();
+      cy.get('.toggle-btn').should('be.focused');
+      cy.get('.toggle-btn').tab();
+      cy.get('#loginBtn').should('be.focused');
+    });
+
+    it('should have proper alt text for logo', () => {
+      cy.get('img[src="/static/images/logo.png"]').should('have.attr', 'alt', 'Brightpath Ascend Group');
+    });
+  });
+
+  describe('Data TestID Coverage', () => {
+    it('should have all expected data-testid elements', () => {
+      cy.get('[data-testid="login-container"]').should('exist');
+      cy.get('[data-testid="login-card"]').should('exist');
+      cy.get('[data-testid="login-title"]').should('exist');
+      cy.get('[data-testid="login-form"]').should('exist');
+      cy.get('[data-testid="email-input"]').should('exist');
+      cy.get('[data-testid="password-input"]').should('exist');
+      cy.get('[data-testid="login-button"]').should('exist');
+      cy.get('[data-testid="client-portal-link"]').should('exist');
+    });
+  });
+
+  describe('Security Tests', () => {
+    it('should not expose sensitive information in DOM', () => {
+      cy.get('#password').type('secretpassword');
+      cy.get('#password').should('have.attr', 'type', 'password');
+      cy.get('body').should('not.contain', 'secretpassword');
+    });
+
+    it('should have proper autocomplete attributes', () => {
+      cy.get('#email').should('have.attr', 'autocomplete', 'email');
+      cy.get('#password').should('have.attr', 'autocomplete', 'current-password');
+    });
+  });
+});
