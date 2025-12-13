@@ -3141,18 +3141,22 @@ def download_full_report(analysis_id):
 
         # Return the requested PDF type (default to client)
         pdf_type = request.args.get('type', 'client')
+        # Check if request wants inline viewing (from iframe) or download
+        inline = request.args.get('inline', 'true').lower() == 'true'
 
         if pdf_type == 'legal':
             return send_file(
                 legal_output_path,
-                as_attachment=True,
-                download_name=legal_filename
+                as_attachment=not inline,  # False = inline, True = download
+                download_name=legal_filename,
+                mimetype='application/pdf'
             )
         else:
             return send_file(
                 client_output_path,
-                as_attachment=True,
-                download_name=client_filename
+                as_attachment=not inline,  # False = inline, True = download
+                download_name=client_filename,
+                mimetype='application/pdf'
             )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
