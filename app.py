@@ -3104,41 +3104,20 @@ def download_full_report(analysis_id):
         if not violations:
             return jsonify({'error': 'No analysis data found. Click Accept Case first.'}), 404
 
-        # Generate both Client and Legal PDFs using new styled service
-        from services.pdf_service import FCRAPDFGenerator
-
-        pdf_generator = FCRAPDFGenerator()
+        # Generate Apple-style Client Report PDF
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         client_name_safe = analysis.client_name.replace(' ', '_')
-
-        # Generate Client PDF (professional, branded)
         client_filename = f"{client_name_safe}_Client_Report_{timestamp}.pdf"
         client_output_path = os.path.join('static', 'generated_letters', client_filename)
         os.makedirs(os.path.dirname(client_output_path), exist_ok=True)
+        client_html = generate_client_report_html(analysis, violations, standing, damages, case_score)
+        html_to_pdf(client_html, client_output_path)
 
-        pdf_generator.generate_client_report(
-            client_output_path,
-            analysis.client_name,
-            violations,
-            damages,
-            case_score,
-            analysis
-        )
-
-        # Generate Legal PDF (detailed internal analysis)
+        # Generate Apple-style Internal Analysis PDF
         legal_filename = f"{client_name_safe}_Legal_Analysis_{timestamp}.pdf"
         legal_output_path = os.path.join('static', 'generated_letters', legal_filename)
-
-        pdf_generator.generate_legal_analysis(
-            legal_output_path,
-            analysis.client_name,
-            violations,
-            standing,
-            damages,
-            case_score,
-            analysis,
-            analysis.full_analysis or ''
-        )
+        legal_html = generate_internal_analysis_html(analysis, violations, standing, damages, case_score)
+        html_to_pdf(legal_html, legal_output_path)
 
         # Return the requested PDF type (default to client)
         pdf_type = request.args.get('type', 'client')
