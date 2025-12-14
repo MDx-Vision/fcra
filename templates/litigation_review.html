@@ -1,208 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Litigation Review</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 0 0 40px;
-    }
-    .page {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    h1 {
-      margin-bottom: 10px;
-    }
-    #logBox {
-      background: #ffecec;
-      border: 1px solid #f5c2c7;
-      color: #721c24;
-      padding: 10px;
-      border-radius: 4px;
-      font-family: Menlo, Monaco, monospace;
-      font-size: 12px;
-      height: 130px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-    }
-    .toolbar {
-      margin-top: 10px;
-      margin-bottom: 20px;
-    }
-    .toolbar button {
-      margin-right: 10px;
-      padding: 8px 16px;
-      font-size: 14px;
-      cursor: pointer;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      background: #e9ecef;
-    }
-    .toolbar button.primary {
-      background: linear-gradient(135deg, #319795, #84cc16);
-      border-color: #319795;
-      color: white;
-    }
-    .toolbar button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    #dataBox {
-      background: #ffffff;
-      border-radius: 6px;
-      padding: 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    pre {
-      margin: 0;
-      font-size: 12px;
-      font-family: Menlo, Monaco, monospace;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--brand-teal:#0d9488;--brand-teal-dark:#0f766e;--brand-navy:#1e3a5f;--brand-navy-dark:#0a2540;--text-primary:#1a1a2e;--text-secondary:#4a5568;--text-muted:#718096;--bg-cream:#faf9f7;--bg-white:#fff;--border-subtle:#e8e6e3}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,sans-serif;font-size:14px;line-height:1.6;color:var(--text-primary);background:var(--bg-cream)}
+.header{background:linear-gradient(135deg,var(--brand-navy-dark),var(--brand-navy));padding:20px 40px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:20px}
+.brand{font-size:14px;font-weight:700;letter-spacing:2px;color:var(--brand-teal);text-transform:uppercase}
+.header-title{font-family:'Playfair Display',serif;font-size:18px;color:#fff}
+.header-meta{font-size:12px;color:rgba(255,255,255,.6)}
+.main{max-width:1200px;margin:0 auto;padding:30px}
+.action-bar{background:#fff;border-radius:8px;padding:20px 25px;margin-bottom:25px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.action-buttons{display:flex;gap:12px}
+.btn{padding:12px 24px;font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;border:none;transition:.2s}
+.btn-primary{background:linear-gradient(135deg,var(--brand-teal),var(--brand-teal-dark));color:#fff;box-shadow:0 4px 12px rgba(13,148,136,.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(13,148,136,.4)}
+.btn-secondary{background:var(--bg-cream);color:var(--text-primary);border:1px solid var(--border-subtle)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600}
+.status-stage1{background:#fef3c7;color:#92400e}
+.status-stage2{background:#d1fae5;color:#065f46}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:25px}
+.grid-full{grid-column:1/-1}
+.card{background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
+.card-header{background:var(--brand-navy);padding:15px 20px;display:flex;align-items:center;gap:12px}
+.card-icon{width:28px;height:28px;background:rgba(255,255,255,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--brand-teal);font-size:14px}
+.card-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:#fff}
+.card-body{padding:20px}
+.exec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.exec-item{text-align:center;padding:20px 15px;background:var(--bg-cream);border-radius:6px}
+.exec-value{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--brand-teal)}
+.exec-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);margin-top:5px}
+.decision-box{padding:20px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-top:15px}
+.decision-box.proceed{background:linear-gradient(135deg,#059669,#10b981)}
+.decision-box.caution{background:linear-gradient(135deg,#d97706,#f59e0b)}
+.decision-box.reject{background:linear-gradient(135deg,#dc2626,#ef4444)}
+.decision-text{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#fff}
+.decision-sub{font-size:12px;color:rgba(255,255,255,.8);margin-top:3px}
+.decision-value{text-align:right;color:#fff}
+.decision-value-label{font-size:10px;opacity:.8}
+.decision-value-num{font-size:22px;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg-cream);padding:10px 12px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);border-bottom:2px solid var(--border-subtle)}
+td{padding:12px;border-bottom:1px solid var(--border-subtle)}
+tr:hover{background:var(--bg-cream)}
+.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase}
+.badge-critical{background:#fef2f2;color:#dc2626}
+.badge-medium{background:#fefce8;color:#ca8a04}
+.standing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.standing-item{padding:15px;background:var(--bg-cream);border-radius:6px;text-align:center}
+.standing-icon{font-size:24px;margin-bottom:8px}
+.standing-label{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+.standing-status{font-weight:600;font-size:13px}
+.standing-status.yes{color:#059669}
+.standing-status.no{color:#dc2626}
+.damages-total{background:var(--brand-navy);color:#fff;padding:20px;border-radius:6px;text-align:center;margin-bottom:15px}
+.damages-total-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--brand-teal);margin-bottom:5px}
+.damages-total-value{font-family:'Playfair Display',serif;font-size:36px;font-weight:700}
+.log-box{background:#1a1a2e;border-radius:6px;padding:15px;font-family:Monaco,Menlo,monospace;font-size:11px;color:#a0aec0;max-height:150px;overflow-y:auto}
+.log-box .success{color:#68d391}
+.log-box .error{color:#fc8181}
+.doc-links{display:flex;gap:10px;flex-wrap:wrap}
+.doc-link{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg-cream);border-radius:6px;text-decoration:none;color:var(--text-primary);font-size:12px;font-weight:500;transition:.2s}
+.doc-link:hover{background:var(--brand-teal);color:#fff}
+.empty-state{text-align:center;padding:30px;color:var(--text-muted)}
+</style>
 </head>
 <body>
-<div class="page">
-  <h1>Litigation Review - ID: <span id="analysisIdLabel">?</span></h1>
-
-  <div id="logBox"></div>
-
-  <div class="toolbar">
-    <button id="refreshBtn">Refresh Data</button>
-    <button id="acceptBtn" class="primary">Accept Case &amp; Generate Letters</button>
-    <button id="downloadBtn">Download Report</button>
-  </div>
-
-  <div id="dataBox">
-    <h2>Analysis Data</h2>
-    <pre id="dataPre">{}</pre>
-  </div>
-</div>
-
+<div class="header"><div class="header-left"><div class="brand">Brightpath Ascend</div><div><div class="header-title" id="clientName">Loading...</div><div class="header-meta">Case #<span id="caseId">---</span> • <span id="createdAt">---</span></div></div></div><div id="stageStatus" class="status-badge status-stage1"><span>●</span> Stage 1</div></div>
+<div class="main">
+<div class="action-bar"><div class="doc-links"><a href="#" class="doc-link" id="linkInternal" target="_blank">📋 Internal Analysis</a><a href="#" class="doc-link" id="linkEmail" target="_blank">✉️ Client Email</a></div><div class="action-buttons"><button class="btn btn-secondary" id="refreshBtn">↻ Refresh</button><button class="btn btn-primary" id="approveBtn">✓ Approve & Generate</button></div></div>
+<div class="grid">
+<div class="card grid-full"><div class="card-header"><div class="card-icon">📊</div><div class="card-title">Executive Summary</div></div><div class="card-body"><div class="exec-grid"><div class="exec-item"><div class="exec-value" id="totalScore">--</div><div class="exec-label">Case Score</div></div><div class="exec-item"><div class="exec-value" id="violationCount">--</div><div class="exec-label">Violations</div></div><div class="exec-item"><div class="exec-value" id="settlementProb">--%</div><div class="exec-label">Settlement</div></div><div class="exec-item"><div class="exec-value" id="totalExposure">$--</div><div class="exec-label">Exposure</div></div></div><div id="decisionBox" class="decision-box proceed"><div><div class="decision-text" id="decisionText">Loading...</div><div class="decision-sub" id="decisionSub">Analyzing</div></div><div class="decision-value"><div class="decision-value-label">Est. Value</div><div class="decision-value-num" id="estValue">$--</div></div></div></div></div>
+<div class="card"><div class="card-header"><div class="card-icon">⚖️</div><div class="card-title">Standing</div></div><div class="card-body"><div class="standing-grid"><div class="standing-item"><div class="standing-icon" id="dissIcon">❓</div><div class="standing-label">Dissemination</div><div class="standing-status" id="dissStatus">Unknown</div></div><div class="standing-item"><div class="standing-icon" id="harmIcon">❓</div><div class="standing-label">Concrete Harm</div><div class="standing-status" id="harmStatus">Unknown</div></div><div class="standing-item"><div class="standing-icon" id="causeIcon">❓</div><div class="standing-label">Causation</div><div class="standing-status" id="causeStatus">Unknown</div></div></div></div></div>
+<div class="card"><div class="card-header"><div class="card-icon">💰</div><div class="card-title">Damages</div></div><div class="card-body"><div class="damages-total"><div class="damages-total-label">Settlement Target</div><div class="damages-total-value" id="settlementTarget">$0</div></div><table><tr><td>§607b</td><td id="dmg607b" style="text-align:right;font-weight:600">$0</td></tr><tr><td>§611</td><td id="dmg611" style="text-align:right;font-weight:600">$0</td></tr><tr><td>§623</td><td id="dmg623" style="text-align:right;font-weight:600">$0</td></tr><tr><td>Actual</td><td id="dmgActual" style="text-align:right;font-weight:600">$0</td></tr><tr><td>Punitive</td><td id="dmgPunitive" style="text-align:right;font-weight:600">$0</td></tr></table></div></div>
+<div class="card grid-full"><div class="card-header"><div class="card-icon">🚨</div><div class="card-title">Violations (<span id="violationTotal">0</span>)</div></div><div class="card-body"><table><thead><tr><th>Type</th><th>Account</th><th>Bureau</th><th>Section</th><th>Willful</th><th>Damages</th></tr></thead><tbody id="violationsTable"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table></div></div>
+<div class="card grid-full"><div class="card-header"><div class="card-icon">📜</div><div class="card-title">Log</div></div><div class="card-body"><div class="log-box" id="logBox"></div></div></div>
+</div></div>
 <script>
-(function () {
-  const logBox      = document.getElementById('logBox');
-  const dataPre     = document.getElementById('dataPre');
-  const refreshBtn  = document.getElementById('refreshBtn');
-  const acceptBtn   = document.getElementById('acceptBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-
-  function log(msg) {
-    const ts = new Date().toLocaleTimeString();
-    const line = ts + " > " + msg + "\n";
-    logBox.textContent += line;
-    logBox.scrollTop = logBox.scrollHeight;
-    console.log(msg);
-  }
-
-  // ✅ Robust extraction of ID from /analysis/1/review or /analysis/1/
-  function getAnalysisId() {
-    const path = window.location.pathname;
-    const match = path.match(/\/analysis\/(\d+)/);
-    if (match) return match[1];
-    return null;
-  }
-
-  async function loadAnalysis() {
-    const id = getAnalysisId();
-    if (!id) {
-      log("❌ Could not determine analysis ID from URL");
-      alert("Could not determine analysis ID from URL");
-      return;
-    }
-
-    log("Analysis ID: " + id);
-    log("> Fetching analysis data...");
-    const resp = await fetch("/api/analysis/" + id + "/data");
-    log("> GET /api/analysis/" + id + "/data");
-    log("> Response status: " + resp.status);
-
-    const json = await resp.json();
-    dataPre.textContent = JSON.stringify(json, null, 2);
-    log("> Data loaded.");
-  }
-
-  async function handleApproveClick() {
-    const id = getAnalysisId();
-    if (!id) {
-      alert("No analysis ID found in URL.");
-      log("❌ No analysis ID in URL on Approve click");
-      return;
-    }
-
-    log("Accept Case button clicked for ID " + id);
-    acceptBtn.disabled = true;
-    acceptBtn.textContent = "Working...";
-
-    try {
-      const resp = await fetch("/api/approve/" + id, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-      });
-
-      let body = {};
-      try {
-        body = await resp.json();
-      } catch (e) {
-        // ignore JSON parse errors, but log
-        log("⚠️ Could not parse JSON body");
-      }
-
-      log("POST /api/approve/" + id + " -> " + resp.status);
-      log("Response body: " + JSON.stringify(body));
-
-      if (!resp.ok || body.success === false) {
-        const msg = body.error || ("Server returned status " + resp.status);
-        alert("Error: " + msg);
-      } else {
-        alert("Success: client documents generated.");
-        // Reload analysis so stage/letters update
-        await loadAnalysis();
-      }
-    } catch (err) {
-      console.error(err);
-      log("JS error: " + err.message);
-      alert("JS error: " + err.message);
-    } finally {
-      acceptBtn.disabled = false;
-      acceptBtn.textContent = "Accept Case & Generate Letters";
-    }
-  }
-
-  function handleDownloadClick() {
-    const id = getAnalysisId();
-    if (!id) {
-      alert("No analysis ID found in URL.");
-      log("❌ No analysis ID in URL on Download click");
-      return;
-    }
-    log("Download Report clicked for ID " + id);
-    window.location.href = "/api/download/analysis/" + id + "/full_report";
-  }
-
-  window.addEventListener("load", function () {
-    log("PAGE LOADED");
-
-    if (!refreshBtn || !acceptBtn || !downloadBtn) {
-      log("❌ One or more buttons not found in DOM");
-      return;
-    }
-
-    refreshBtn.addEventListener("click", loadAnalysis);
-    acceptBtn.addEventListener("click", handleApproveClick);
-    downloadBtn.addEventListener("click", handleDownloadClick);
-
-    log("Buttons are wired and enabled.");
-    log("Buttons wired, initial load starting...");
-    loadAnalysis();
-  });
-})();
+(function(){var logBox=document.getElementById('logBox'),approveBtn=document.getElementById('approveBtn'),refreshBtn=document.getElementById('refreshBtn');function log(m,t){t=t||'info';var l=document.createElement('div');l.className=t;l.textContent='['+new Date().toLocaleTimeString()+'] '+m;logBox.appendChild(l);logBox.scrollTop=logBox.scrollHeight}function getId(){var m=window.location.pathname.match(/\/analysis\/(\d+)/);return m?m[1]:null}function fmt(n){return n?'$'+Number(n).toLocaleString():'$0'}async function load(){var id=getId();if(!id){log('No ID','error');return}log('Loading #'+id);document.getElementById('linkInternal').href='/api/analysis/'+id+'/internal-analysis';document.getElementById('linkEmail').href='/api/analysis/'+id+'/client-email';try{var r=await fetch('/api/analysis/'+id+'/data'),d=await r.json();if(!d.success){log('Error: '+(d.error||'Unknown'),'error');return}log('Loaded','success');document.getElementById('clientName').textContent=d.analysis.client_name||'Unknown';document.getElementById('caseId').textContent='BAG-'+id;document.getElementById('createdAt').textContent=d.analysis.created_at;var st=document.getElementById('stageStatus');if(d.analysis.stage===2){st.className='status-badge status-stage2';st.innerHTML='<span>●</span> Stage 2';approveBtn.textContent='✓ Done';approveBtn.disabled=true}var v=d.violations||[],cs=d.case_score||{},dm=d.damages||{};document.getElementById('totalScore').textContent=(cs.total_score||0)+'/10';document.getElementById('violationCount').textContent=v.length;document.getElementById('settlementProb').textContent=Math.round((cs.settlement_probability||0)*100)+'%';document.getElementById('totalExposure').textContent=fmt(dm.total_exposure);var db=document.getElementById('decisionBox'),sc=cs.total_score||0,dc,dt,ds;if(sc>=7){dc='proceed';dt='✓ PROCEED';ds=cs.recommendation||'Strong case'}else if(sc>=5){dc='caution';dt='⚠ CONDITIONS';ds=cs.recommendation||'Need evidence'}else{dc='reject';dt='✕ DECLINE';ds=cs.recommendation||'Insufficient'}db.className='decision-box '+dc;document.getElementById('decisionText').textContent=dt;document.getElementById('decisionSub').textContent=ds;document.getElementById('estValue').textContent=fmt(dm.settlement_target);var stn=d.standing||{};function upd(p,h){var i=document.getElementById(p+'Icon'),s=document.getElementById(p+'Status');if(h){i.textContent='✅';s.textContent='Yes';s.className='standing-status yes'}else{i.textContent='❌';s.textContent='No';s.className='standing-status no'}}upd('diss',stn.has_dissemination);upd('harm',stn.has_concrete_harm);upd('cause',stn.has_causation);document.getElementById('settlementTarget').textContent=fmt(dm.settlement_target);document.getElementById('dmg607b').textContent=fmt(dm.section_607b_amount);document.getElementById('dmg611').textContent=fmt(dm.section_611_amount);document.getElementById('dmg623').textContent=fmt(dm.section_623_amount);document.getElementById('dmgActual').textContent=fmt(dm.actual_damages_total);document.getElementById('dmgPunitive').textContent=fmt(dm.punitive_damages_amount);var tb=document.getElementById('violationsTable');document.getElementById('violationTotal').textContent=v.length;if(v.length===0){tb.innerHTML='<tr><td colspan="6" class="empty-state">None</td></tr>'}else{tb.innerHTML=v.map(function(x){return'<tr><td><span class="badge badge-'+(x.is_willful?'critical':'medium')+'">'+(x.violation_type||'?')+'</span></td><td>'+(x.account_name||'-')+'</td><td>'+(x.bureau||'-')+'</td><td>'+(x.fcra_section||'-')+'</td><td>'+(x.is_willful?'✅':'❌')+'</td><td>'+fmt(x.statutory_damages_max)+'</td></tr>'}).join('')}}catch(e){log('Error: '+e.message,'error')}}async function approve(){var id=getId();if(!id){log('No ID','error');return}approveBtn.disabled=true;approveBtn.textContent='⏳...';log('Generating...');try{var r=await fetch('/api/approve/'+id,{method:'POST',headers:{'Content-Type':'application/json'}}),d=await r.json();if(d.success){log('Done!','success');alert('Generated!');await load()}else{log('Error: '+(d.error||'?'),'error');alert('Error: '+(d.error||'Failed'));approveBtn.disabled=false;approveBtn.textContent='✓ Approve & Generate'}}catch(e){log('Error: '+e.message,'error');approveBtn.disabled=false;approveBtn.textContent='✓ Approve & Generate'}}window.addEventListener('load',function(){log('Ready');refreshBtn.addEventListener('click',load);approveBtn.addEventListener('click',approve);load()})})();
 </script>
 </body>
 </html>
