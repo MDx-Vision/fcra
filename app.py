@@ -40,7 +40,7 @@ import uuid
 from datetime import timedelta
 from pdf_generator import LetterPDFGenerator, SectionPDFGenerator, CreditAnalysisPDFGenerator
 from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
-from document_generators import generate_internal_analysis_html, generate_client_email_html
+from document_generators import generate_internal_analysis_html, generate_client_email_html, generate_client_report_html, html_to_pdf
 from jwt_utils import require_jwt, create_token
 from services.encryption import encrypt_value, decrypt_value, migrate_plaintext_to_encrypted, is_encrypted
 from services import affiliate_service
@@ -3216,24 +3216,25 @@ def approve_analysis_stage_1(analysis_id):
             analysis.stage = 1
             db.commit()
 
-        # If Stage 2 already completed, return existing letters instead of error
+        # If Stage 2 already completed, return existing documents instead of error
         if analysis.stage == 2:
-            letters = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
-            letters_payload = [{
-                'letter_id': l.id,
-                'bureau': l.bureau,
-                'round': l.round_number,
-                'filepath': str(l.file_path)
-            } for l in letters]
+            documents = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
+            documents_payload = [{
+                'document_id': d.id,
+                'type': d.bureau.lower().replace(' ', '_'),  # Convert 'Internal Analysis' to 'internal_analysis'
+                'filepath': str(d.file_path)
+            } for d in documents]
 
             return jsonify({
                 'success': True,
                 'analysis_id': analysis_id,
                 'stage': 2,
                 'message': 'Client documents already generated',
-                'cost': analysis.cost or 0,
-                'tokens': analysis.tokens_used or 0,
-                'letters': letters_payload
+                'cost': 0,  # Stage 2 cost is always $0
+                'tokens': 0,  # Stage 2 tokens is always 0
+                'documents': documents_payload,
+                'total_cost': analysis.cost or 0,
+                'total_tokens': analysis.tokens_used or 0
             }), 200
 
         # Any other unexpected stage value
@@ -3250,190 +3251,164 @@ def approve_analysis_stage_1(analysis_id):
         if not credit_report:
             return jsonify({'success': False, 'error': 'Credit report not found'}), 404
 
-        # Run Stage 2 with Stage 1 results
-        result = analyze_with_claude(
-            client_name=analysis.client_name,
-            cmm_id='',
-            provider=credit_report.credit_provider,
-            credit_report_html=credit_report.report_html,
-            analysis_mode='auto',
-            dispute_round=analysis.dispute_round,
-            stage=2,  # STAGE 2: Generate client documents
-            stage_1_results=analysis.stage_1_analysis  # Pass Stage 1 results
-        )
+        # =====================================================================
+        # STAGE 2: Generate Apple-style documents (database-driven, no Claude API)
+        # =====================================================================
+        print(f"📄 Generating Apple-style documents (database-driven, no Claude API)...")
 
-        if not result.get('success'):
+        # Fetch database objects
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        credit_scores = None  # TODO: Extract if needed
+
+        if not violations:
             return jsonify({
                 'success': False,
-                'error': result.get('error', 'Stage 2 generation failed')
+                'error': 'No violations found in Stage 1 analysis. Cannot generate client documents.'
+            }), 400
+
+        # Generate 3 documents
+        documents_generated = []
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        client_filename_safe = analysis.client_name.replace(' ', '_')
+
+        try:
+            # 1. INTERNAL ANALYSIS (staff-facing, 3-5 pages)
+            print(f"  📊 Generating Internal Analysis...")
+            internal_filename = f"{client_filename_safe}_Internal_Analysis_{timestamp}.pdf"
+            internal_path = os.path.join('static', 'generated_letters', internal_filename)
+
+            internal_html = generate_internal_analysis_html(
+                analysis=analysis,
+                violations=violations,
+                standing=standing,
+                damages=damages,
+                case_score=case_score,
+                credit_scores=credit_scores
+            )
+            html_to_pdf(internal_html, internal_path)
+
+            internal_record = DisputeLetter(
+                analysis_id=analysis_id,
+                client_id=analysis.client_id,
+                client_name=analysis.client_name,
+                bureau='Internal Analysis',  # New bureau type for reports
+                round_number=analysis.dispute_round,
+                letter_content='Internal Analysis Report',
+                file_path=internal_path
+            )
+            db.add(internal_record)
+            db.commit()
+            db.refresh(internal_record)
+
+            documents_generated.append({
+                'document_id': internal_record.id,
+                'type': 'internal_analysis',
+                'filepath': internal_path
+            })
+            print(f"  ✅ Internal Analysis saved: {internal_path}")
+
+            # 2. CLIENT REPORT (7-page Apple-style report)
+            print(f"  📄 Generating 7-Page Client Report...")
+            client_report_filename = f"{client_filename_safe}_Client_Report_{timestamp}.pdf"
+            client_report_path = os.path.join('static', 'generated_letters', client_report_filename)
+
+            client_report_html = generate_client_report_html(
+                analysis=analysis,
+                violations=violations,
+                standing=standing,
+                damages=damages,
+                case_score=case_score,
+                credit_scores=credit_scores
+            )
+            html_to_pdf(client_report_html, client_report_path)
+
+            client_report_record = DisputeLetter(
+                analysis_id=analysis_id,
+                client_id=analysis.client_id,
+                client_name=analysis.client_name,
+                bureau='Client Report',  # New bureau type for reports
+                round_number=analysis.dispute_round,
+                letter_content='7-Page Client Report',
+                file_path=client_report_path
+            )
+            db.add(client_report_record)
+            db.commit()
+            db.refresh(client_report_record)
+
+            documents_generated.append({
+                'document_id': client_report_record.id,
+                'type': 'client_report',
+                'filepath': client_report_path
+            })
+            print(f"  ✅ Client Report saved: {client_report_path}")
+
+            # 3. CLIENT EMAIL (email-optimized, 2-3 pages)
+            print(f"  📧 Generating Client Email...")
+            client_email_filename = f"{client_filename_safe}_Client_Email_{timestamp}.pdf"
+            client_email_path = os.path.join('static', 'generated_letters', client_email_filename)
+
+            client_email_html = generate_client_email_html(
+                analysis=analysis,
+                violations=violations,
+                standing=standing,
+                damages=damages,
+                case_score=case_score
+            )
+            html_to_pdf(client_email_html, client_email_path)
+
+            client_email_record = DisputeLetter(
+                analysis_id=analysis_id,
+                client_id=analysis.client_id,
+                client_name=analysis.client_name,
+                bureau='Client Email',  # New bureau type for reports
+                round_number=analysis.dispute_round,
+                letter_content='Client Email Report',
+                file_path=client_email_path
+            )
+            db.add(client_email_record)
+            db.commit()
+            db.refresh(client_email_record)
+
+            documents_generated.append({
+                'document_id': client_email_record.id,
+                'type': 'client_email',
+                'filepath': client_email_path
+            })
+            print(f"  ✅ Client Email saved: {client_email_path}")
+
+        except Exception as e:
+            print(f"❌ Error generating documents: {e}")
+            db.rollback()
+            return jsonify({
+                'success': False,
+                'error': f'Document generation failed: {str(e)}'
             }), 500
 
-        # CRITICAL FIX: Split UPDATE into two operations to bypass Neon SSL timeout on large TEXT
-        # This solves "server closed the connection unexpectedly" on 90k+ character updates
-        
-        # STEP 1: Update metadata fields FIRST (no large text) - fast, reliable
-        print(f"📋 STEP 1: Committing metadata (stage, cost, tokens)...")
+        # Update analysis stage and metadata (no Claude API cost for Stage 2)
         analysis.stage = 2
         analysis.approved_at = datetime.now()
-        analysis.cost = (analysis.cost or 0) + result.get('cost', 0)
-        analysis.tokens_used = (analysis.tokens_used or 0) + result.get('tokens_used', 0)
-        
+        # Note: No cost/tokens added for Stage 2 (database-driven, $0 cost)
+
+        # Commit with retry logic
         retry_count = 0
         max_retries = 3
         while retry_count < max_retries:
             try:
                 db.commit()
-                print(f"✅ Metadata committed successfully (attempt {retry_count + 1})")
+                print(f"✅ Metadata committed successfully")
                 break
             except Exception as e:
                 retry_count += 1
                 if retry_count >= max_retries:
-                    print(f"❌ Metadata commit failed: {str(e)[:50]}")
-                    raise
+                    db.rollback()
+                    return jsonify({'success': False, 'error': f'Database commit failed: {str(e)}'}), 500
                 wait_time = 2 ** retry_count
-                print(f"⚠️  Retrying metadata commit in {wait_time}s...")
+                print(f"⚠️ Metadata commit failed, retrying in {wait_time}s")
                 db.rollback()
                 time.sleep(wait_time)
-        
-        # STEP 2: Update large text field SEPARATELY with streaming approach
-        print(f"📋 STEP 2: Streaming full_analysis ({len(result.get('analysis', ''))} chars)...")
-        analysis.full_analysis = result.get('analysis', '')
-        flag_modified(analysis, 'full_analysis')
-        
-        retry_count = 0
-        max_retries = 5
-        while retry_count < max_retries:
-            try:
-                db.commit()
-                print(f"✅ Full analysis committed successfully (attempt {retry_count + 1})")
-                # Verify it saved
-                db.refresh(analysis)
-                print(f"✅ VERIFIED: full_analysis saved ({len(analysis.full_analysis or '')} chars)")
-                break
-            except Exception as e:
-                retry_count += 1
-                error_str = str(e)
-                if retry_count >= max_retries:
-                    print(f"❌ Full analysis commit FAILED after {max_retries} retries: {error_str[:80]}")
-                    # Log the failure but continue - metadata is already saved
-                    raise
-                wait_time = 2 ** retry_count
-                print(f"⚠️  Full analysis commit failed, retrying in {wait_time}s (SSL/connection issue, attempt {retry_count}/{max_retries})")
-                db.rollback()
-                time.sleep(wait_time)
-
-        # Generate and save dispute letters from Stage 2 output
-        print(f"📝 Extracting letters from Stage 2 output...")
-        
-        stage_2_text = result.get('analysis', '')
-        bureau_letters = {}
-        
-        # Pattern 1: Scissor marker format (✂️ markers from FCRA v2.6 prompt)
-        scissor_pattern = r'✂️.*?(?:DISPUTE LETTER|MOV REQUEST):\s*([A-Za-z\s]+).*?✂️\n(.*?)\n✂️.*?END OF'
-        matches = re.findall(scissor_pattern, stage_2_text, re.DOTALL | re.IGNORECASE)
-        
-        if matches:
-            print(f"   ✅ Found {len(matches)} letters using scissor markers")
-        else:
-            # Fallback: Original pattern (extract bureau and content only)
-            print(f"   ⚠️  No scissor markers found, trying fallback pattern...")
-            letter_pattern = r'\[([^:]+):\s*[^\]]*\]\s*\n(.*?)(?=\[|$)'
-            fallback_matches = re.findall(letter_pattern, stage_2_text, re.DOTALL)
-            
-            if fallback_matches:
-                matches = fallback_matches
-                print(f"   ✅ Found {len(matches)} letters using fallback pattern")
-            else:
-                # Final fallback: Create comprehensive letter
-                print(f"   ⚠️  No letters found. Creating fallback comprehensive letter...")
-                matches = [('Comprehensive Analysis', stage_2_text[:10000])]
-        
-        print(f"📋 Total matches found: {len(matches)}")
-
-        for bureau_name, letter_content in matches:
-            bureau_name = bureau_name.strip().title()
-            account_name = 'Multiple Accounts'  # Default since scissor markers don't include account
-            letter_content = letter_content.strip()[:10000]  # Cap letter at 10k chars
-            
-            print(f"   Processing: bureau={bureau_name}, account={account_name}...")
-            
-            # Normalize bureau name to one of: Equifax, Experian, TransUnion, Comprehensive Analysis
-            valid_bureaus = ['Equifax', 'Experian', 'TransUnion', 'Comprehensive Analysis', 'Comprehensiveanalysis']
-            
-            if bureau_name not in valid_bureaus:
-                # Try to extract bureau name from content
-                found = False
-                for valid_bureau in ['Equifax', 'Experian', 'TransUnion']:
-                    if valid_bureau.lower() in bureau_name.lower():
-                        bureau_name = valid_bureau
-                        found = True
-                        break
-                
-                if not found:
-                    # Default to Comprehensive Analysis for unparseable content
-                    bureau_name = 'Comprehensive Analysis'
-            
-            # Final normalization
-            if bureau_name == 'Comprehensiveanalysis':
-                bureau_name = 'Comprehensive Analysis'
-            
-            if not bureau_name or len(bureau_name) == 0:
-                print(f"   ⚠️  Skipping: empty bureau name")
-                continue
-
-            bureau_letters.setdefault(bureau_name, []).append({
-                'account': account_name,
-                'content': letter_content
-            })
-            print(f"   ✅ Added to {bureau_name}")
-
-        letters_generated = []
-
-        for bureau, letters in bureau_letters.items():
-            if not letters:
-                continue
-
-            combined_content = f"\n\n{'='*80}\n\n".join(
-                [f"ACCOUNT: {l['account']}\n\n{l['content']}" for l in letters]
-            )
-
-            filename = f"{analysis.client_name.replace(' ', '_')}_{bureau}_Round{analysis.dispute_round}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-            output_path = os.path.join('static', 'generated_letters', filename)
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-            try:
-                pdf_gen.generate_dispute_letter_pdf(
-                    letter_content=combined_content,
-                    client_name=analysis.client_name,
-                    bureau=bureau,
-                    round_number=analysis.dispute_round,
-                    output_path=output_path
-                )
-
-                letter_record = DisputeLetter(
-                    analysis_id=analysis_id,
-                    client_id=analysis.client_id,
-                    client_name=analysis.client_name,
-                    bureau=bureau,
-                    round_number=analysis.dispute_round,
-                    letter_content=combined_content,
-                    file_path=output_path
-                )
-                db.add(letter_record)
-                db.commit()
-                db.refresh(letter_record)
-
-                letters_generated.append({
-                    'letter_id': letter_record.id,
-                    'bureau': bureau,
-                    'round': analysis.dispute_round,
-                    'filepath': output_path,
-                    'letter_count': len(letters)
-                })
-
-                print(f"✅ Generated PDF for {bureau} with {len(letters)} letter(s)")
-            except Exception as e:
-                print(f"❌ Error generating PDF for {bureau}: {e}")
 
         print(f"✅ Stage 2 complete! Analysis {analysis_id} ready for delivery")
 
@@ -3451,10 +3426,12 @@ def approve_analysis_stage_1(analysis_id):
             'success': True,
             'analysis_id': analysis_id,
             'stage': 2,
-            'message': 'Client documents generated successfully',
-            'cost': result.get('cost', 0),
-            'tokens': result.get('tokens_used', 0),
-            'letters': letters_generated,
+            'message': 'Apple-style documents generated successfully (no Claude API cost)',
+            'cost': 0,  # No Stage 2 cost (database-driven)
+            'tokens': 0,  # No Stage 2 tokens
+            'documents': documents_generated,  # Changed from 'letters'
+            'total_cost': analysis.cost or 0,  # Stage 1 cost only
+            'total_tokens': analysis.tokens_used or 0,  # Stage 1 tokens only
             'triage': triage_result if 'triage_result' in dir() and triage_result.get('success') else None
         }), 200
 
