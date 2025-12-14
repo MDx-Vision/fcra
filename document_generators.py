@@ -187,8 +187,6 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     for v in violations:
         if v.bureau:
             defendants.add(v.bureau)
-        if v.furnisher:
-            defendants.add(v.furnisher)
     defendant_count = len(defendants)
 
     # Get unique accounts
@@ -650,7 +648,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
 """.format(defendant_count=defendant_count)
 
     for defendant in sorted(defendants):
-        defendant_violations = [v for v in violations if v.bureau == defendant or v.furnisher == defendant]
+        defendant_violations = [v for v in violations if v.bureau == defendant]
         html += f"""
       <li><strong>{defendant}</strong> - {len(defendant_violations)} violations</li>
 """
@@ -757,8 +755,6 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
     for v in violations:
         if v.bureau:
             defendants.add(v.bureau)
-        if v.furnisher:
-            defendants.add(v.furnisher)
     defendant_count = len(defendants)
 
     # Settlement target
