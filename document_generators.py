@@ -211,7 +211,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     has_dissemination = standing.has_dissemination if standing else False
     has_concrete_harm = standing.has_concrete_harm if standing else False
     has_causation = standing.has_causation if standing else False
-    standing_score = standing.standing_score if standing else 0
+    standing_score = case_score.standing_score if case_score else 0
 
     # Case scores
     total_score = case_score.total_score if case_score else 0
@@ -620,9 +620,9 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
       </tr>
       <tr>
         <td>Actual Damages</td>
-        <td>${damages.actual_damages_amount or 0:,.0f}</td>
-        <td>${damages.actual_damages_amount or 0:,.0f}</td>
-        <td>${damages.actual_damages_amount or 0:,.0f}</td>
+        <td>${damages.actual_damages_total or 0:,.0f}</td>
+        <td>${damages.actual_damages_total or 0:,.0f}</td>
+        <td>${damages.actual_damages_total or 0:,.0f}</td>
       </tr>
       <tr>
         <td><strong>Total Settlement Target</strong></td>
@@ -763,7 +763,7 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
     settlement_max = int(settlement_target * 1.3)
 
     # Standing and scores
-    standing_score = standing.standing_score if standing else 0
+    standing_score = case_score.standing_score if case_score else 0
     total_score = case_score.total_score if case_score else 0
 
     # Find most compelling violation
@@ -1095,8 +1095,6 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
     for v in violations:
         if v.bureau:
             defendants.add(v.bureau)
-        if v.furnisher:
-            defendants.add(v.furnisher)
         if v.account_name:
             if v.account_name not in accounts:
                 accounts[v.account_name] = {'violations': [], 'bureaus': {}}
@@ -1107,7 +1105,7 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
                 }
 
     # Standing and scores
-    standing_score = standing.standing_score if standing else 0
+    standing_score = case_score.standing_score if case_score else 0
     total_score = case_score.total_score if case_score else 0
 
     # Settlement target
