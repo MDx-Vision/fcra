@@ -9,7 +9,7 @@ import base64
 
 
 _sendgrid_client = None
-DEFAULT_FROM_EMAIL = "noreply@brightpathascend.com"
+DEFAULT_FROM_EMAIL = "support@brightpathascendgroup.com"
 DEFAULT_FROM_NAME = "Brightpath Ascend Group"
 
 
