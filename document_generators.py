@@ -581,7 +581,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     <p>No impossible contradictions identified in this analysis.</p>
 """
 
-    html += """
+    html += f"""
   </div>
 
   <!-- Section 4: Willfulness Assessment -->
@@ -598,10 +598,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
   <!-- Section 5: Damages Calculation -->
   <div class="section">
     <h2>5. Damages Calculation</h2>
-""".format(
-        willfulness_score=willfulness_score,
-        willfulness_percentage=willfulness_percentage
-    )
+"""
 
     if damages:
         html += f"""
@@ -643,7 +640,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     <p>Damages calculation pending.</p>
 """
 
-    html += """
+    html += f"""
   </div>
 
   <!-- Section 6: Defendant Targeting -->
@@ -651,7 +648,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     <h2>6. Defendant Targeting</h2>
     <p><strong>Total Defendants:</strong> {defendant_count}</p>
     <ul style="margin-left: 2rem; margin-top: 1rem;">
-""".format(defendant_count=defendant_count)
+"""
 
     for defendant in sorted(defendants):
         defendant_violations = [v for v in violations if v.bureau == defendant]
@@ -659,7 +656,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
       <li><strong>{defendant}</strong> - {len(defendant_violations)} violations</li>
 """
 
-    html += """
+    html += f"""
     </ul>
   </div>
 
@@ -726,7 +723,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     <p>Generated {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
   </div>
 </body>
-</html>""".format(case_number=case_number)
+</html>"""
 
     return html
 
