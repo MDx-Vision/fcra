@@ -83,8 +83,17 @@ END OF ROUTES TO ADD
 
 from datetime import datetime
 import os
-from weasyprint import HTML, CSS
-from weasyprint.text.fonts import FontConfiguration
+
+# WeasyPrint imports - lazy loaded to allow import of HTML generators without WeasyPrint
+try:
+    from weasyprint import HTML, CSS
+    from weasyprint.text.fonts import FontConfiguration
+    WEASYPRINT_AVAILABLE = True
+except ImportError:
+    HTML = None
+    CSS = None
+    FontConfiguration = None
+    WEASYPRINT_AVAILABLE = False
 
 
 def html_to_pdf(html_content, output_path, base_url=None):
@@ -109,6 +118,12 @@ def html_to_pdf(html_content, output_path, base_url=None):
         html = generate_client_report_html(...)
         pdf_path = html_to_pdf(html, '/path/to/output.pdf')
     """
+    if not WEASYPRINT_AVAILABLE:
+        raise ImportError(
+            "WeasyPrint is not installed. "
+            "Install with: pip install weasyprint"
+        )
+
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
@@ -1073,6 +1088,7 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
     """
     # Calculate metrics
     case_number = f"BAG-FCRA-2025-{analysis.id:04d}"
+    date_generated = datetime.now().strftime('%B %d, %Y')
     violation_count = len(violations)
     willful_count = sum(1 for v in violations if v.is_willful)
     willfulness_pct = int((willful_count / violation_count * 100)) if violation_count > 0 else 0
@@ -1463,11 +1479,11 @@ def generate_client_report_html(analysis, violations, standing, damages, case_sc
             <p style="text-align: center; color: #64748b; font-size: 14px;">
                 <strong>Brightpath Ascend Group</strong><br>
                 Confidential Client Report | Case #{case_number}<br>
-                Generated {datetime.now().strftime('%B %d, %Y')}
+                Generated {date_generated}
             </p>
         </div>
     </div>
 </body>
-</html>""".format(round_number=analysis.dispute_round, case_number=case_number)
+</html>""".format(round_number=analysis.dispute_round, case_number=case_number, date_generated=date_generated)
 
     return html
