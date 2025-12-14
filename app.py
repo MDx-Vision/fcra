@@ -3204,9 +3204,18 @@ def approve_analysis_stage_1(analysis_id):
     - stage == 1      → run Stage 2, generate docs
     - stage == 2      → already approved, return existing letters (idempotent)
     - anything else   → return error
+
+    Query Parameters:
+    - force=true: Force regeneration of documents even if stage 2 is complete
     """
     db = get_db()
     try:
+        # Check for force regeneration parameter
+        force_regenerate = request.args.get('force', 'false').lower() == 'true'
+        if not force_regenerate:
+            data = request.get_json() or {}
+            force_regenerate = data.get('force', False)
+
         analysis = db.query(Analysis).filter_by(id=analysis_id).first()
         if not analysis:
             return jsonify({'success': False, 'error': 'Analysis not found'}), 404
@@ -3216,8 +3225,8 @@ def approve_analysis_stage_1(analysis_id):
             analysis.stage = 1
             db.commit()
 
-        # If Stage 2 already completed, return existing documents instead of error
-        if analysis.stage == 2:
+        # If Stage 2 already completed and NOT forcing regeneration, return existing documents
+        if analysis.stage == 2 and not force_regenerate:
             documents = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
             documents_payload = [{
                 'document_id': d.id,
@@ -3237,12 +3246,34 @@ def approve_analysis_stage_1(analysis_id):
                 'total_tokens': analysis.tokens_used or 0
             }), 200
 
-        # Any other unexpected stage value
-        if analysis.stage != 1:
+        # Stage validation (allow stage 1 or stage 2 with force regeneration)
+        if analysis.stage != 1 and not (analysis.stage == 2 and force_regenerate):
             return jsonify({
                 'success': False,
-                'error': f'Analysis is not in Stage 1 (current stage: {analysis.stage})'
+                'error': f'Analysis is not in Stage 1 (current stage: {analysis.stage}). Use force=true to regenerate.'
             }), 400
+
+        # If force regenerating, delete old documents and reset to stage 1
+        if force_regenerate and analysis.stage == 2:
+            print(f"\n🔄 FORCE REGENERATION: Deleting old documents and resetting to stage 1...")
+            old_documents = db.query(DisputeLetter).filter_by(analysis_id=analysis_id).all()
+            for doc in old_documents:
+                # Delete PDF file if it exists
+                if doc.file_path and os.path.exists(doc.file_path):
+                    try:
+                        os.remove(doc.file_path)
+                        print(f"  🗑️  Deleted: {doc.file_path}")
+                    except Exception as e:
+                        print(f"  ⚠️  Could not delete {doc.file_path}: {e}")
+                # Delete database record
+                db.delete(doc)
+            db.commit()
+            print(f"  ✅ Deleted {len(old_documents)} old documents")
+
+            # Reset to stage 1
+            analysis.stage = 1
+            db.commit()
+            print(f"  ✅ Reset analysis to stage 1")
 
         print(f"\n🚀 STAGE 2: Generating client documents for analysis {analysis_id}...")
 
