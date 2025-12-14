@@ -116,11 +116,17 @@
                     </span>
                 </p>
             </div>
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <button id="saveBtn" class="btn btn-secondary" onclick="saveAllChanges()">Save Changes</button>
-                <button id="approveBtn" class="btn btn-primary" onclick="approveAnalysis()" {% if analysis.approved_at %}disabled{% endif %}>
-                    {% if analysis.approved_at %}Already Approved{% else %}Approve & Generate Documents{% endif %}
+                <button id="approveBtn" class="btn btn-primary" onclick="approveAnalysis()">
+                    {% if analysis.approved_at %}Regenerate Documents{% else %}Approve & Generate Documents{% endif %}
                 </button>
+                {% if analysis.approved_at %}
+                <label style="display: flex; align-items: center; gap: 5px; font-size: 14px; color: #64748b; cursor: pointer; margin: 0;">
+                    <input type="checkbox" id="forceRegenerate" style="cursor: pointer;">
+                    <span>Force Regenerate (delete existing docs)</span>
+                </label>
+                {% endif %}
                 <a href="/dashboard/case/{{ analysis.id }}" class="btn btn-secondary">Back to Case</a>
             </div>
         </div>
@@ -560,32 +566,49 @@
         }
         
         async function approveAnalysis() {
-            if (!confirm('Approve this analysis and generate all client documents? This will create the comprehensive client report, internal memo, and dispute letters.')) return;
-            
+            // Check if force regeneration is requested
+            const forceCheckbox = document.getElementById('forceRegenerate');
+            const forceRegenerate = forceCheckbox && forceCheckbox.checked;
+
+            const confirmMsg = forceRegenerate
+                ? 'Force regenerate documents? This will DELETE all existing documents and generate new Apple-style documents.'
+                : 'Approve this analysis and generate all client documents? This will create Apple-style documents (Internal Analysis, Client Report, and Client Email).';
+
+            if (!confirm(confirmMsg)) return;
+
             const approveBtn = document.getElementById('approveBtn');
+            const originalText = approveBtn.textContent;
             approveBtn.disabled = true;
-            approveBtn.textContent = 'Generating Documents...';
-            
+            approveBtn.textContent = forceRegenerate ? 'Regenerating Documents...' : 'Generating Documents...';
+
             try {
-                const resp = await fetch(`/api/approve/${analysisId}`, {
+                // Add force=true to URL if checkbox is checked
+                const url = forceRegenerate
+                    ? `/api/approve/${analysisId}?force=true`
+                    : `/api/approve/${analysisId}`;
+
+                const resp = await fetch(url, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
-                
+
                 const data = await resp.json();
-                
+
                 if (data.success) {
-                    showAlert('Analysis approved! Documents are being generated...');
-                    setTimeout(() => location.href = `/dashboard/case/${analysisId}`, 2000);
+                    const message = forceRegenerate
+                        ? `Documents regenerated! Created ${data.documents?.length || 3} new Apple-style documents.`
+                        : 'Analysis approved! Apple-style documents generated successfully.';
+                    showAlert(message);
+                    setTimeout(() => location.reload(), 2000);
                 } else {
-                    showAlert(data.error || 'Failed to approve', 'error');
+                    showAlert(data.error || 'Failed to generate documents', 'error');
                     approveBtn.disabled = false;
-                    approveBtn.textContent = 'Approve & Generate Documents';
+                    approveBtn.textContent = originalText;
                 }
             } catch (err) {
                 showAlert('Error: ' + err.message, 'error');
                 approveBtn.disabled = false;
-                approveBtn.textContent = 'Approve & Generate Documents';
+                approveBtn.textContent = originalText;
             }
         }
         
