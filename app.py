@@ -40,6 +40,7 @@ import uuid
 from datetime import timedelta
 from pdf_generator import LetterPDFGenerator, SectionPDFGenerator, CreditAnalysisPDFGenerator
 from litigation_tools import calculate_damages, calculate_case_score, assess_willfulness
+from document_generators import generate_internal_analysis_html, generate_client_email_html
 from jwt_utils import require_jwt, create_token
 from services.encryption import encrypt_value, decrypt_value, migrate_plaintext_to_encrypted, is_encrypted
 from services import affiliate_service
@@ -3633,6 +3634,67 @@ def get_analysis_data(analysis_id):
         return jsonify({'error': str(e)}), 500
     finally:
         db.close()
+
+
+@app.route("/api/analysis/<int:analysis_id>/internal-analysis")
+def get_internal_analysis_html(analysis_id):
+    """Generate Apple-style Internal Analysis HTML"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({"error": "Analysis not found"}), 404
+        
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        
+        html = generate_internal_analysis_html(
+            analysis=analysis,
+            violations=violations,
+            standing=standing,
+            damages=damages,
+            case_score=case_score
+        )
+        
+        return html, 200, {"Content-Type": "text/html"}
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/analysis/<int:analysis_id>/client-email")
+def get_client_email_html(analysis_id):
+    """Generate Apple-style Client Email HTML"""
+    db = get_db()
+    try:
+        analysis = db.query(Analysis).filter_by(id=analysis_id).first()
+        if not analysis:
+            return jsonify({"error": "Analysis not found"}), 404
+        
+        violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
+        damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
+        case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
+        
+        html = generate_client_email_html(
+            analysis=analysis,
+            violations=violations,
+            standing=standing,
+            damages=damages,
+            case_score=case_score
+        )
+        
+        return html, 200, {"Content-Type": "text/html"}
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
+
 
 
 @app.route('/admin/clients')

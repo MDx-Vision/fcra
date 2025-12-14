@@ -1,0 +1,765 @@
+/*
+ * BRIGHTPATH ASCEND - APPLE-STYLE PORTAL THEME
+ * Version: 1.0
+ * Created: December 13, 2025
+ * 
+ * This stylesheet overrides the default portal styles
+ * to match the premium Apple-inspired document design.
+ * 
+ * Add this AFTER your main styles:
+ * <link rel="stylesheet" href="/static/css/apple-portal-style.css">
+ */
+
+/* ========================================
+   CSS VARIABLES - DESIGN SYSTEM
+   ======================================== */
+:root {
+  /* Primary Colors */
+  --apple-teal: #0d9488;
+  --apple-teal-dark: #0f766e;
+  --apple-teal-light: #14b8a6;
+  
+  /* Navy Palette */
+  --apple-navy: #1e3a5f;
+  --apple-navy-dark: #0a2540;
+  --apple-navy-light: #2d4a6f;
+  
+  /* Neutrals */
+  --apple-white: #ffffff;
+  --apple-cream: #faf9f7;
+  --apple-gray-50: #f9fafb;
+  --apple-gray-100: #f3f4f6;
+  --apple-gray-200: #e5e7eb;
+  --apple-gray-300: #d1d5db;
+  --apple-gray-400: #9ca3af;
+  --apple-gray-500: #6b7280;
+  --apple-gray-600: #4b5563;
+  --apple-gray-700: #374151;
+  --apple-gray-900: #111827;
+  
+  /* Status Colors */
+  --apple-green: #059669;
+  --apple-green-light: #d1fae5;
+  --apple-red: #dc2626;
+  --apple-red-light: #fee2e2;
+  --apple-yellow: #d97706;
+  --apple-yellow-light: #fef3c7;
+  --apple-blue: #2563eb;
+  --apple-blue-light: #dbeafe;
+  
+  /* Typography */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   GOOGLE FONTS IMPORT
+   ======================================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+/* ========================================
+   BASE OVERRIDES
+   ======================================== */
+body {
+  font-family: var(--font-body) !important;
+  background: var(--apple-gray-100) !important;
+  color: var(--apple-gray-700) !important;
+  line-height: 1.6 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+.header {
+  background: linear-gradient(180deg, var(--apple-navy-dark) 0%, var(--apple-navy) 100%) !important;
+  padding: 16px 30px !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.logo span {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+}
+
+.logo span[style*="color: #84cc16"] {
+  color: var(--apple-teal-light) !important;
+}
+
+.portal-title {
+  font-family: var(--font-body) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 3px !important;
+  text-transform: uppercase !important;
+  opacity: 0.7 !important;
+}
+
+.avatar {
+  background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.greeting strong {
+  color: var(--apple-teal-light) !important;
+}
+
+/* ========================================
+   NAVIGATION TABS
+   ======================================== */
+.nav-tabs {
+  background: var(--apple-white) !important;
+  border-bottom: 1px solid var(--apple-gray-200) !important;
+  padding: 0 20px !important;
+  gap: 0 !important;
+  box-shadow: none !important;
+}
+
+.nav-tab {
+  font-family: var(--font-body) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--apple-gray-500) !important;
+  padding: 16px 20px !important;
+  border-bottom: 2px solid transparent !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.2px !important;
+}
+
+.nav-tab:hover {
+  color: var(--apple-navy) !important;
+  background: var(--apple-gray-50) !important;
+}
+
+.nav-tab.active {
+  color: var(--apple-teal) !important;
+  border-bottom-color: var(--apple-teal) !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+/* ========================================
+   CONTAINER & LAYOUT
+   ======================================== */
+.container {
+  max-width: 1140px !important;
+  padding: var(--space-xl) !important;
+}
+
+/* ========================================
+   CARDS
+   ======================================== */
+.card {
+  background: var(--apple-white) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: var(--space-lg) !important;
+  margin-bottom: var(--space-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+}
+
+.card-title {
+  font-family: var(--font-display) !important;
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  color: var(--apple-navy) !important;
+  margin-bottom: var(--space-lg) !important;
+  padding-bottom: var(--space-md) !important;
+  border-bottom: 2px solid var(--apple-teal) !important;
+}
+
+/* ========================================
+   STATUS BANNER
+   ======================================== */
+.status-banner {
+  border-radius: var(--radius-lg) !important;
+  padding: var(--space-xl) !important;
+}
+
+.status-banner h2 {
+  font-family: var(--font-display) !important;
+  font-size: 26px !important;
+  font-weight: 500 !important;
+  color: var(--apple-navy) !important;
+}
+
+.status-banner p {
+  font-family: var(--font-body) !important;
+  color: var(--apple-gray-600) !important;
+}
+
+.status-banner.pending {
+  background: linear-gradient(135deg, var(--apple-gray-50) 0%, var(--apple-gray-100) 100%) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+}
+
+.status-banner.ready {
+  background: linear-gradient(135deg, var(--apple-green-light) 0%, #a7f3d0 100%) !important;
+  border: 1px solid #6ee7b7 !important;
+}
+
+/* ========================================
+   STATS GRID
+   ======================================== */
+.stats-grid {
+  gap: var(--space-lg) !important;
+}
+
+.stat-box {
+  background: var(--apple-gray-50) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: var(--space-lg) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+  transition: all 0.2s ease !important;
+}
+
+.stat-box:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.stat-value {
+  font-family: var(--font-display) !important;
+  font-size: 36px !important;
+  font-weight: 600 !important;
+  color: var(--apple-navy) !important;
+}
+
+.stat-value.green {
+  color: var(--apple-teal) !important;
+}
+
+.stat-value.blue {
+  color: var(--apple-blue) !important;
+}
+
+.stat-label {
+  font-family: var(--font-body) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: var(--apple-gray-500) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  margin-top: var(--space-sm) !important;
+}
+
+/* ========================================
+   ROI DASHBOARD (Summary Tab)
+   ======================================== */
+.card[style*="linear-gradient"][style*="#0f172a"] {
+  background: linear-gradient(135deg, var(--apple-navy-dark) 0%, var(--apple-navy) 100%) !important;
+  border: none !important;
+}
+
+.card[style*="linear-gradient"][style*="#0f172a"] .card-title {
+  color: var(--apple-teal-light) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+.submit-btn,
+.btn-primary,
+.download-btn {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  padding: 12px 24px !important;
+  border-radius: var(--radius-md) !important;
+  background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%) !important;
+  color: var(--apple-white) !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+}
+
+.submit-btn:hover,
+.btn-primary:hover,
+.download-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4) !important;
+}
+
+.btn-upload {
+  background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%) !important;
+}
+
+/* ========================================
+   FORM ELEMENTS
+   ======================================== */
+.form-group label {
+  font-family: var(--font-body) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--apple-gray-700) !important;
+  margin-bottom: var(--space-sm) !important;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  font-family: var(--font-body) !important;
+  font-size: 14px !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--apple-gray-300) !important;
+  border-radius: var(--radius-md) !important;
+  transition: all 0.2s ease !important;
+  background: var(--apple-white) !important;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none !important;
+  border-color: var(--apple-teal) !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1) !important;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+.status-table th {
+  background: var(--apple-navy) !important;
+  color: var(--apple-white) !important;
+  font-family: var(--font-body) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  padding: 14px 12px !important;
+}
+
+.status-table th:first-child {
+  border-radius: var(--radius-md) 0 0 0 !important;
+}
+
+.status-table th:last-child {
+  border-radius: 0 var(--radius-md) 0 0 !important;
+}
+
+.status-table td {
+  font-family: var(--font-body) !important;
+  font-size: 13px !important;
+  padding: 12px !important;
+  border-bottom: 1px solid var(--apple-gray-200) !important;
+}
+
+.status-table tr:nth-child(even) {
+  background: var(--apple-gray-50) !important;
+}
+
+.status-table tr:hover {
+  background: var(--apple-gray-100) !important;
+}
+
+/* ========================================
+   STATUS BADGES
+   ======================================== */
+.status-badge {
+  font-family: var(--font-body) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  padding: 4px 10px !important;
+  border-radius: var(--radius-full) !important;
+  text-transform: uppercase !important;
+}
+
+.status-badge.status-deleted {
+  background: var(--apple-green-light) !important;
+  color: var(--apple-green) !important;
+}
+
+.status-badge.status-sent {
+  background: var(--apple-blue-light) !important;
+  color: var(--apple-blue) !important;
+}
+
+.status-badge.status-in_progress {
+  background: #e0e7ff !important;
+  color: #4338ca !important;
+}
+
+.status-badge.status-no_change,
+.status-badge.status-no_answer {
+  background: var(--apple-red-light) !important;
+  color: var(--apple-red) !important;
+}
+
+.status-badge.status-updated,
+.status-badge.status-pending {
+  background: var(--apple-yellow-light) !important;
+  color: var(--apple-yellow) !important;
+}
+
+.status-badge.status-positive {
+  background: var(--apple-green-light) !important;
+  color: var(--apple-green) !important;
+}
+
+/* ========================================
+   BUREAU SECTIONS
+   ======================================== */
+.bureau-section {
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+}
+
+.bureau-section:nth-child(1) {
+  border-left-color: #dc2626 !important; /* Equifax - Red */
+}
+
+.bureau-section:nth-child(2) {
+  border-left-color: #2563eb !important; /* Experian - Blue */
+}
+
+.bureau-section:nth-child(3) {
+  border-left-color: #0891b2 !important; /* TransUnion - Cyan */
+}
+
+/* ========================================
+   TIMELINE
+   ======================================== */
+.timeline-step .step-circle {
+  font-family: var(--font-display) !important;
+  font-weight: 600 !important;
+}
+
+.timeline-step.complete .step-circle {
+  background: var(--apple-teal) !important;
+}
+
+.timeline-step.current .step-circle {
+  background: var(--apple-navy) !important;
+  animation: pulse-teal 2s infinite !important;
+}
+
+@keyframes pulse-teal {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(13, 148, 136, 0); }
+}
+
+.timeline-step.complete .step-label {
+  color: var(--apple-teal) !important;
+}
+
+.timeline-step.current .step-label {
+  color: var(--apple-navy) !important;
+}
+
+/* ========================================
+   UPLOAD AREA
+   ======================================== */
+.upload-area {
+  border: 2px dashed var(--apple-gray-300) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--apple-gray-50) !important;
+  transition: all 0.2s ease !important;
+}
+
+.upload-area:hover {
+  border-color: var(--apple-teal) !important;
+  background: rgba(13, 148, 136, 0.05) !important;
+}
+
+.upload-text {
+  font-family: var(--font-body) !important;
+  color: var(--apple-gray-600) !important;
+}
+
+.upload-hint {
+  font-family: var(--font-body) !important;
+  color: var(--apple-gray-400) !important;
+}
+
+/* ========================================
+   DOCUMENT CARDS
+   ======================================== */
+.document-item {
+  background: var(--apple-gray-50) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+  transition: all 0.2s ease !important;
+}
+
+.document-item:hover {
+  background: var(--apple-gray-100) !important;
+  transform: translateX(4px) !important;
+}
+
+.document-icon {
+  background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.document-name {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  color: var(--apple-navy) !important;
+}
+
+.document-meta {
+  font-family: var(--font-body) !important;
+  color: var(--apple-gray-500) !important;
+}
+
+/* ========================================
+   CONTACT CARDS
+   ======================================== */
+.contact-card {
+  background: var(--apple-gray-50) !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+  transition: all 0.2s ease !important;
+}
+
+.contact-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.contact-icon {
+  background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%) !important;
+}
+
+.contact-title {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  color: var(--apple-navy) !important;
+}
+
+.contact-value {
+  font-family: var(--font-body) !important;
+  color: var(--apple-teal) !important;
+  font-weight: 500 !important;
+}
+
+.contact-value:hover {
+  color: var(--apple-teal-dark) !important;
+}
+
+/* ========================================
+   EDUCATION CARDS
+   ======================================== */
+.education-card {
+  background: var(--apple-gray-50) !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+  transition: all 0.2s ease !important;
+}
+
+.education-card:hover {
+  background: var(--apple-white) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-color: var(--apple-teal) !important;
+}
+
+.education-title {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  color: var(--apple-navy) !important;
+}
+
+.education-desc {
+  font-family: var(--font-body) !important;
+  color: var(--apple-gray-600) !important;
+  line-height: 1.6 !important;
+}
+
+/* ========================================
+   FAQ ACCORDION
+   ======================================== */
+details {
+  background: var(--apple-gray-50) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+  transition: all 0.2s ease !important;
+}
+
+details[open] {
+  background: var(--apple-white) !important;
+  border-color: var(--apple-teal) !important;
+}
+
+details summary {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  color: var(--apple-navy) !important;
+  cursor: pointer !important;
+}
+
+details p {
+  font-family: var(--font-body) !important;
+  color: var(--apple-gray-600) !important;
+  line-height: 1.7 !important;
+}
+
+/* ========================================
+   REFERRAL SECTION
+   ======================================== */
+.referral-section {
+  background: linear-gradient(135deg, var(--apple-navy-dark) 0%, var(--apple-navy) 100%) !important;
+  border-radius: var(--radius-xl) !important;
+}
+
+.referral-title {
+  font-family: var(--font-display) !important;
+  font-weight: 500 !important;
+}
+
+.referral-code-value {
+  font-family: 'DM Sans', monospace !important;
+  color: var(--apple-teal-light) !important;
+}
+
+.referral-code-box {
+  background: rgba(13, 148, 136, 0.15) !important;
+  border: 1px solid rgba(13, 148, 136, 0.3) !important;
+}
+
+/* ========================================
+   PROFILE SECTION
+   ======================================== */
+.avatar-preview {
+  background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%) !important;
+  border: 3px solid var(--apple-gray-200) !important;
+}
+
+.avatar-upload-section {
+  background: var(--apple-gray-50) !important;
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--apple-gray-200) !important;
+}
+
+/* Account status cards */
+div[style*="border-left: 4px solid #22c55e"] {
+  border-left-color: var(--apple-teal) !important;
+  background: rgba(13, 148, 136, 0.1) !important;
+}
+
+/* ========================================
+   SCORE PROGRESS SECTION
+   ======================================== */
+/* Starting score card */
+div[style*="linear-gradient"][style*="#fef2f2"] {
+  background: linear-gradient(135deg, var(--apple-red-light) 0%, #fecaca 100%) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* Current score card */
+div[style*="linear-gradient"][style*="#f0fdf4"] {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(13, 148, 136, 0.2) 100%) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* Points gained card */
+div[style*="linear-gradient"][style*="#eff6ff"] {
+  background: linear-gradient(135deg, var(--apple-blue-light) 0%, #bfdbfe 100%) !important;
+  border-radius: var(--radius-lg) !important;
+}
+
+/* ========================================
+   LINKS
+   ======================================== */
+a {
+  color: var(--apple-teal) !important;
+  transition: color 0.2s ease !important;
+}
+
+a:hover {
+  color: var(--apple-teal-dark) !important;
+}
+
+/* ========================================
+   SCROLLBAR (Webkit)
+   ======================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--apple-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--apple-gray-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--apple-gray-400);
+}
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+   ======================================== */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-md) !important;
+  }
+  
+  .card {
+    padding: var(--space-md) !important;
+  }
+  
+  .card-title {
+    font-size: 18px !important;
+  }
+  
+  .stat-value {
+    font-size: 28px !important;
+  }
+  
+  .nav-tab {
+    padding: 12px 14px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+  .header,
+  .nav-tabs {
+    display: none !important;
+  }
+  
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid !important;
+  }
+}

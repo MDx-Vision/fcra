@@ -1,50 +1,77 @@
-# FCRA PROMPT 13: LAWYER-READY PACKAGE GENERATOR
+# FCRA PROMPT 13 V2: LAWYER-READY PACKAGE GENERATOR
+## WITH EMBEDDED APPLE-STYLE + TRADITIONAL TEMPLATES
 
-## VERSION INFORMATION
-- **Version:** 1.0
-- **Created:** December 12, 2025
-- **Author:** Brightpath Ascend Group
-- **Purpose:** Generate complete 4-document lawyer-ready litigation packages from credit report imports
+**Version:** 2.0  
+**Updated:** December 13, 2025  
+**Author:** Brightpath Ascend Group  
+**Purpose:** Generate complete 4-document lawyer-ready litigation packages with premium styling
 
 ---
 
 ## OVERVIEW
 
-This prompt generates a complete **4-document FCRA litigation package** ready for attorney review and client presentation. The system analyzes imported credit reports, identifies violations, calculates damages, assesses standing, and produces professional documentation.
+This prompt generates a complete **4-document FCRA litigation package** with professional styling:
+- **Apple-style** for client-facing documents (modern, premium feel)
+- **Traditional Law Firm** for attorney documents (credible, formal)
 
 ### DOCUMENTS GENERATED
 
-| # | Document | Format | Audience | Pages | Purpose |
-|---|----------|--------|----------|-------|---------|
-| 1 | Internal Analysis | HTML | Staff/BAG Team | 3-5 | Quick-scan case review, go/no-go decision |
-| 2 | Client Email Summary | HTML | Client (email body) | 2-3 | Overview for client approval |
-| 3 | Client Report | PDF | Client (attachment) | 40-50 | Comprehensive educational report |
-| 4 | Legal Memorandum | HTML/PDF | Attorneys | 12-15 | Case law analysis, litigation strategy |
+| # | Document | Style | Audience | Pages | Purpose |
+|---|----------|-------|----------|-------|---------|
+| 1 | Internal Analysis | Apple-style | Staff/BAG Team | 5-6 | Quick-scan case review, go/no-go decision |
+| 2 | Client Email | Apple-style | Client (email body) | 1 | Overview with key stats and CTA |
+| 3 | Client Report | Apple-style | Client (PDF) | 7 | Streamlined professional report |
+| 4 | Legal Memorandum | Traditional | Attorneys | 3-4 | Case law analysis, litigation strategy |
 
 ---
 
-## BRANDING REQUIREMENTS
+## DESIGN SYSTEM
 
-### Company Information
-- **Company Name:** Brightpath Ascend Group
-- **Tagline:** FCRA Litigation Services
-- **Brand Colors:**
-  - Primary: Teal (#0d9488)
-  - Secondary: Green (#059669)
-  - Accent: Lime (#84cc16)
-  - Navy (headers): #1e3a5f
+### Apple-Style (Documents 1, 2, 3)
 
-### Logo Usage
-- Logo file: `BAGNowords.png` (teal/green "A" with upward arrow)
-- Header size: 70-80px
-- Footer size: 40px
-- Always include company name text next to logo
+```css
+/* FONTS */
+--font-display: 'Playfair Display', Georgia, serif;
+--font-body: 'DM Sans', -apple-system, sans-serif;
 
-### Document Styling
-- **Internal Analysis:** Modern sans-serif (Segoe UI), blue/white/teal scheme
-- **Client Report:** Professional serif, formal layout
-- **Legal Memo:** Times New Roman, traditional legal format
-- **Client Email:** Friendly professional, minimal formatting
+/* COLORS */
+--brand-teal: #0d9488;
+--brand-teal-dark: #0f766e;
+--brand-teal-light: #14b8a6;
+--brand-navy: #1e3a5f;
+--brand-navy-dark: #0a2540;
+--text-primary: #1a1a2e;
+--text-secondary: #4a5568;
+--bg-cream: #faf9f7;
+
+/* CHARACTERISTICS */
+- Clean whitespace
+- Gradient accent boxes
+- Rounded corners (3px)
+- Subtle shadows
+- Premium feel
+```
+
+### Traditional Law Firm (Document 4)
+
+```css
+/* FONTS */
+font-family: 'Times New Roman', Times, Georgia, serif;
+font-size: 12pt;
+line-height: 2; /* Double-spaced */
+
+/* COLORS */
+- Black text on white
+- Gray table headers (#e8e8e8)
+- Green/Yellow/Red assessment boxes
+
+/* CHARACTERISTICS */
+- Double-ruled borders
+- Uppercase section headers
+- Proper Bluebook citations
+- Dense, formal paragraphs
+- 0.5in first-line indent
+```
 
 ---
 
@@ -55,865 +82,1430 @@ This prompt generates a complete **4-document FCRA litigation package** ready fo
 ```
 
 ### Examples:
-- `Internal_Analysis_PERDOMO_WE_12122025.html`
-- `Email_Client_PERDOMO_WE_12122025.html`
-- `Client_Report_PERDOMO_WE_12122025.pdf`
-- `Legal_Memorandum_PERDOMO_WE_12122025.html`
-
-### Case Number Format:
-```
-BAG-FCRA-[YEAR]-[SEQUENTIAL]
-```
-Example: `BAG-FCRA-2025-001`
-
----
-
-## INPUT REQUIREMENTS
-
-### Required Data (from credit report import):
-```
-CLIENT INFORMATION:
-- Full Name (First, Middle Initial, Last)
-- Current Address
-- Date of Birth
-- Last 4 SSN
-- Case Number (auto-generated)
-
-CREDIT REPORT DATA:
-- Report Date
-- Credit Scores (TU, EX, EQ)
-- All tradelines with:
-  - Creditor/Account Name
-  - Account Number (partial)
-  - Account Type
-  - Account Status (per bureau)
-  - Balance (per bureau)
-  - High Credit/Credit Limit (per bureau)
-  - Payment History (per bureau)
-  - Date Opened
-  - Date of Last Activity
-  - Comments/Remarks
-
-PERSONAL INFORMATION SECTION:
-- Names reported (all variations)
-- Addresses reported (all)
-- Employers reported
-- Phone numbers reported
-
-INQUIRIES:
-- Hard inquiries (last 2 years)
-- Soft inquiries
-```
-
-### Optional Data (strengthens case):
-- Denial letters
-- Adverse action notices
-- Higher rate offers
-- Client statement/intake notes
+- `Internal_Analysis_PERDOMO_WE_12132025.html`
+- `Email_Client_PERDOMO_WE_12132025.html`
+- `Client_Report_PERDOMO_WE_12132025.html`
+- `Legal_Memo_PERDOMO_WE_12132025.html`
 
 ---
 
 ## WORKFLOW
 
-### STEP 1: FULL ANALYSIS
 ```
-1. Import credit report data
-2. Run violation detection algorithms
-3. Run standing analysis (TransUnion v. Ramirez)
-4. Run willfulness assessment (Safeco standard)
-5. Calculate damages (statutory + punitive + actual)
-6. Generate Internal Analysis document
-
-OUTPUT: Internal_Analysis_[NAME]_[DATE].html
-```
-
-### STEP 2: REVIEW
-```
-1. Staff reviews Internal Analysis
-2. Verifies violation accuracy
-3. Confirms standing assessment
-4. Decision: [APPROVE] / [EDIT] / [REJECT]
-```
-
-### STEP 3: GENERATE CLIENT/LAWYER DOCUMENTS
-```
-If APPROVED:
-1. Generate Client Email Summary
-2. Generate Client Report (PDF)
-3. Generate Legal Memorandum
-4. Save all to client file
-
-OUTPUT: 
-- Email_Client_[NAME]_[DATE].html
-- Client_Report_[NAME]_[DATE].pdf
-- Legal_Memorandum_[NAME]_[DATE].html
+STEP 1: Import credit report
+    ↓
+STEP 2: Run violation detection + standing analysis
+    ↓
+STEP 3: Generate Internal Analysis (Document 1)
+    ↓
+STEP 4: Human review checkpoint
+    ↓
+STEP 5: If approved → Generate Documents 2, 3, 4
+    ↓
+STEP 6: Deliver to client + file for attorney
 ```
 
 ---
 
-## VIOLATION DETECTION ALGORITHMS
+## =======================================================================
+## DOCUMENT 1: INTERNAL ANALYSIS (Apple-Style)
+## =======================================================================
 
-### 1. IMPOSSIBLE STATUS CONTRADICTIONS
-**Definition:** Same account shows mutually exclusive statuses across bureaus.
+Generate this HTML structure for internal staff review:
 
-**Detection Logic:**
-```python
-for account in all_accounts:
-    statuses = [account.tu_status, account.ex_status, account.eq_status]
-    
-    # Check for Open vs Paid contradiction
-    if "Open" in statuses and "Paid" in statuses:
-        flag_violation("IMPOSSIBLE_STATUS", account, "CRITICAL")
-    
-    # Check for Open vs Closed contradiction
-    if "Open" in statuses and "Closed" in statuses:
-        flag_violation("IMPOSSIBLE_STATUS", account, "HIGH")
-    
-    # Check for Current vs Charged-Off contradiction
-    if "Current" in statuses and "Charged Off" in statuses:
-        flag_violation("IMPOSSIBLE_STATUS", account, "CRITICAL")
-```
-
-**FCRA Violations:**
-- § 1681e(b) — CRA duty of maximum possible accuracy
-- § 1681s-2(a) — Furnisher duty to report accurate information
-- Metro 2® Format violation — Status Code field requires consistency
-
-**Severity:** 🔴 CRITICAL
-
----
-
-### 2. LATE PAYMENT DATE CONTRADICTIONS
-**Definition:** Different bureaus report different months/years for the same late payment.
-
-**Detection Logic:**
-```python
-for account in accounts_with_late_payments:
-    late_dates = {
-        'TU': account.tu_last_late_date,
-        'EX': account.ex_last_late_date,
-        'EQ': account.eq_last_late_date
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internal Analysis - [CLIENT_NAME]</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-teal: #0d9488;
+      --brand-teal-dark: #0f766e;
+      --brand-navy: #1e3a5f;
+      --brand-navy-dark: #0a2540;
+      --text-primary: #1a1a2e;
+      --text-secondary: #4a5568;
+      --bg-cream: #faf9f7;
+      --bg-white: #ffffff;
     }
     
-    # Remove null values
-    valid_dates = [d for d in late_dates.values() if d]
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    if len(set(valid_dates)) > 1:
-        # Calculate gap
-        gap_months = max(valid_dates) - min(valid_dates)
-        
-        if gap_months >= 12:
-            flag_violation("LATE_DATE_CONTRADICTION", account, "HIGH")
-        elif gap_months >= 1:
-            flag_violation("LATE_DATE_CONTRADICTION", account, "MEDIUM")
-```
-
-**FCRA Violations:**
-- § 1681e(b) — Inaccurate payment history
-- § 1681s-2(a) — Furnisher inaccuracy
-
-**Severity:** 🟠 HIGH (12+ month gap) | 🟡 MEDIUM (1-11 month gap)
-
----
-
-### 3. BALANCE/CREDIT LIMIT CONTRADICTIONS
-**Definition:** Significant discrepancies (>10%) in reported balances or limits.
-
-**Detection Logic:**
-```python
-for account in all_accounts:
-    balances = [account.tu_balance, account.ex_balance, account.eq_balance]
-    balances = [b for b in balances if b is not None]
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      background: var(--bg-cream);
+    }
     
-    if len(balances) >= 2:
-        max_bal = max(balances)
-        min_bal = min(balances)
-        
-        if max_bal > 0:
-            variance = (max_bal - min_bal) / max_bal
-            
-            if variance > 0.10:  # >10% variance
-                flag_violation("BALANCE_CONTRADICTION", account, "MEDIUM")
-```
-
-**FCRA Violations:**
-- § 1681e(b) — Inaccurate balance reporting
-- Metro 2® Field 21 (Balance) inconsistency
-
-**Severity:** 🟡 MEDIUM
-
----
-
-### 4. ACCOUNT TYPE/LIABILITY CONTRADICTIONS
-**Definition:** Account classified differently across bureaus (e.g., Individual vs Joint).
-
-**Detection Logic:**
-```python
-for account in all_accounts:
-    types = [account.tu_type, account.ex_type, account.eq_type]
-    types = [t for t in types if t]
+    .page {
+      max-width: 8.5in;
+      margin: 0 auto;
+      background: var(--bg-white);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
     
-    # Standardize variations
-    type_categories = categorize_account_types(types)
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, var(--brand-navy-dark) 0%, var(--brand-navy) 100%);
+      padding: 30px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     
-    if len(set(type_categories)) > 1:
-        flag_violation("ACCOUNT_TYPE_CONTRADICTION", account, "HIGH")
-```
-
-**FCRA Violations:**
-- § 1681s-2(a) — Furnisher inaccuracy
-- CFPB Regulation V § 1022.43(a) — Account classification requirements
-
-**Severity:** 🟠 HIGH
-
----
-
-### 5. PII INACCURACIES
-**Definition:** Personal identifying information varies or is incorrect across bureaus.
-
-**Detection Logic:**
-```python
-# Name variations
-names = [report.tu_names, report.ex_names, report.eq_names]
-all_names = flatten(names)
-if contains_misspellings(all_names, client.legal_name):
-    flag_violation("PII_NAME", "MEDIUM")
-
-# SSN variations
-ssns = [report.tu_ssn, report.ex_ssn, report.eq_ssn]
-if len(set(ssns)) > 1:
-    flag_violation("PII_SSN", "CRITICAL")
-
-# DOB variations
-dobs = [report.tu_dob, report.ex_dob, report.eq_dob]
-if len(set(dobs)) > 1:
-    flag_violation("PII_DOB", "HIGH")
-
-# Address accuracy
-for address in all_addresses:
-    if not matches_known_addresses(address, client.address_history):
-        flag_violation("PII_ADDRESS", "MEDIUM")
-```
-
-**FCRA Violations:**
-- § 1681e(b) — Inaccurate identifying information
-- § 1681c(g) — SSN truncation requirements
-
-**Severity:** 🔴 CRITICAL (SSN) | 🟠 HIGH (DOB) | 🟡 MEDIUM (Name/Address)
-
----
-
-### 6. DUPLICATE ACCOUNTS
-**Definition:** Same debt reported multiple times (by same or different entities).
-
-**Detection Logic:**
-```python
-for account in all_accounts:
-    potential_duplicates = find_similar_accounts(account, all_accounts)
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
     
-    for dup in potential_duplicates:
-        if is_likely_duplicate(account, dup):
-            flag_violation("DUPLICATE_ACCOUNT", account, "HIGH")
-```
-
-**FCRA Violations:**
-- § 1681e(b) — Double-counting debts
-- § 1681s-2(a) — Furnisher duty
-
-**Severity:** 🟠 HIGH
-
----
-
-### 7. DATE INCONSISTENCIES
-**Definition:** Account dates (opened, closed, last activity) conflict across bureaus.
-
-**Detection Logic:**
-```python
-for account in all_accounts:
-    # Date opened
-    open_dates = get_all_open_dates(account)
-    if significant_variance(open_dates):
-        flag_violation("DATE_OPENED_CONFLICT", account, "MEDIUM")
+    .brand-name {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--brand-teal);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
     
-    # FCRA 7-year calculation issues
-    if violates_7_year_rule(account):
-        flag_violation("OBSOLETE_INFO", account, "HIGH")
+    .doc-type {
+      font-family: 'Playfair Display', serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .confidential {
+      background: #dc2626;
+      color: white;
+      padding: 6px 14px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-radius: 3px;
+    }
+    
+    /* CLIENT INFO BAR */
+    .client-bar {
+      background: var(--bg-cream);
+      padding: 20px 40px;
+      border-bottom: 1px solid #e5e5e5;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    
+    .info-item label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+    
+    .info-item p {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+    
+    /* EXECUTIVE SUMMARY */
+    .exec-summary {
+      background: linear-gradient(135deg, var(--brand-navy-dark) 0%, var(--brand-navy) 100%);
+      margin: 30px 40px;
+      border-radius: 8px;
+      padding: 30px;
+    }
+    
+    .exec-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .exec-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    
+    .exec-item {
+      text-align: center;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px;
+    }
+    
+    .exec-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--brand-teal);
+      margin-bottom: 8px;
+    }
+    
+    .exec-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    /* DECISION BOX */
+    .decision-box {
+      margin: 0 40px 30px;
+      padding: 25px 30px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .decision-box.proceed {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    }
+    
+    .decision-box.caution {
+      background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+    }
+    
+    .decision-box.reject {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+    }
+    
+    .decision-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .decision-sub {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 4px;
+    }
+    
+    /* CONTENT */
+    .content {
+      padding: 0 40px 40px;
+    }
+    
+    .section {
+      margin-bottom: 30px;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--brand-teal);
+    }
+    
+    .section-number {
+      width: 28px;
+      height: 28px;
+      background: var(--brand-navy);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--brand-navy);
+    }
+    
+    /* TABLES */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin: 15px 0;
+    }
+    
+    th {
+      background: var(--brand-navy);
+      color: white;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    
+    tr:hover {
+      background: var(--bg-cream);
+    }
+    
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .badge-critical { background: #fef2f2; color: #dc2626; }
+    .badge-high { background: #fff7ed; color: #ea580c; }
+    .badge-medium { background: #fefce8; color: #ca8a04; }
+    .badge-confirmed { background: #f0fdf4; color: #16a34a; }
+    .badge-conditional { background: #fefce8; color: #ca8a04; }
+    
+    /* FOOTER */
+    .footer {
+      background: var(--brand-navy-dark);
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .footer-brand {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--brand-teal);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    
+    .footer-info {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    @media print {
+      body { background: white; }
+      .page { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    
+    <!-- HEADER -->
+    <div class="header">
+      <div class="brand">
+        <div>
+          <div class="brand-name">Brightpath Ascend Group</div>
+          <div class="doc-type">Internal Case Analysis</div>
+        </div>
+      </div>
+      <div class="confidential">Staff Only — Not for Client</div>
+    </div>
+    
+    <!-- CLIENT INFO BAR -->
+    <div class="client-bar">
+      <div class="info-item">
+        <label>Client</label>
+        <p>[CLIENT_NAME]</p>
+      </div>
+      <div class="info-item">
+        <label>Case Number</label>
+        <p>[CASE_NUMBER]</p>
+      </div>
+      <div class="info-item">
+        <label>Report Date</label>
+        <p>[REPORT_DATE]</p>
+      </div>
+      <div class="info-item">
+        <label>Scores</label>
+        <p>TU: [TU_SCORE] | EX: [EX_SCORE] | EQ: [EQ_SCORE]</p>
+      </div>
+    </div>
+    
+    <!-- EXECUTIVE SUMMARY -->
+    <div class="exec-summary">
+      <div class="exec-title">Executive Summary</div>
+      <div class="exec-grid">
+        <div class="exec-item">
+          <div class="exec-label">Case Strength</div>
+          <div class="exec-value">[CASE_STRENGTH]/10</div>
+        </div>
+        <div class="exec-item">
+          <div class="exec-label">Standing</div>
+          <div class="exec-value">[STANDING_SCORE]/10</div>
+        </div>
+        <div class="exec-item">
+          <div class="exec-label">Willfulness</div>
+          <div class="exec-value">[WILLFULNESS]%</div>
+        </div>
+        <div class="exec-item">
+          <div class="exec-label">Est. Value</div>
+          <div class="exec-value">$[EST_VALUE]K</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- DECISION BOX -->
+    <div class="decision-box [DECISION_CLASS]">
+      <div>
+        <div class="decision-text">[DECISION_TEXT]</div>
+        <div class="decision-sub">[DECISION_REASON]</div>
+      </div>
+      <div style="text-align: right; color: white;">
+        <div style="font-size: 12px; opacity: 0.8;">Settlement Probability</div>
+        <div style="font-size: 24px; font-weight: 700;">[SETTLEMENT_PROB]%</div>
+      </div>
+    </div>
+    
+    <!-- CONTENT SECTIONS -->
+    <div class="content">
+      
+      <!-- SECTION 1: STANDING -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-number">1</div>
+          <div class="section-title">Standing Analysis (TransUnion v. Ramirez)</div>
+        </div>
+        <table>
+          <tr>
+            <th>Element</th>
+            <th>Status</th>
+            <th>Score</th>
+            <th>Evidence</th>
+          </tr>
+          <tr>
+            <td><strong>Dissemination</strong></td>
+            <td><span class="badge badge-[DISS_STATUS]">[DISS_STATUS]</span></td>
+            <td>[DISS_SCORE]/10</td>
+            <td>[DISS_EVIDENCE]</td>
+          </tr>
+          <tr>
+            <td><strong>Concrete Harm</strong></td>
+            <td><span class="badge badge-[HARM_STATUS]">[HARM_STATUS]</span></td>
+            <td>[HARM_SCORE]/10</td>
+            <td>[HARM_EVIDENCE]</td>
+          </tr>
+          <tr>
+            <td><strong>Causation</strong></td>
+            <td><span class="badge badge-[CAUSE_STATUS]">[CAUSE_STATUS]</span></td>
+            <td>[CAUSE_SCORE]/10</td>
+            <td>[CAUSE_EVIDENCE]</td>
+          </tr>
+        </table>
+      </div>
+      
+      <!-- SECTION 2: VIOLATIONS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-number">2</div>
+          <div class="section-title">Violation Summary</div>
+        </div>
+        <table>
+          <tr>
+            <th>Category</th>
+            <th>Count</th>
+            <th>Severity</th>
+            <th>FCRA Section</th>
+          </tr>
+          [VIOLATION_ROWS]
+        </table>
+      </div>
+      
+      <!-- SECTION 3: CRITICAL VIOLATIONS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-number">3</div>
+          <div class="section-title">Critical Violations — Impossible Contradictions</div>
+        </div>
+        <table>
+          <tr>
+            <th>Account</th>
+            <th>Balance</th>
+            <th>TransUnion</th>
+            <th>Experian</th>
+            <th>Equifax</th>
+          </tr>
+          [CONTRADICTION_ROWS]
+        </table>
+      </div>
+      
+      <!-- SECTION 4: DAMAGES -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-number">4</div>
+          <div class="section-title">Damages Calculation</div>
+        </div>
+        <table>
+          <tr>
+            <th>Component</th>
+            <th>Conservative</th>
+            <th>Moderate</th>
+            <th>Aggressive</th>
+          </tr>
+          <tr>
+            <td>Statutory Damages</td>
+            <td>$[STAT_CONS]</td>
+            <td>$[STAT_MOD]</td>
+            <td>$[STAT_AGG]</td>
+          </tr>
+          <tr>
+            <td>Punitive Damages</td>
+            <td>$[PUN_CONS]</td>
+            <td>$[PUN_MOD]</td>
+            <td>$[PUN_AGG]</td>
+          </tr>
+          <tr>
+            <td>Actual Damages</td>
+            <td>$[ACT_CONS]</td>
+            <td>$[ACT_MOD]</td>
+            <td>$[ACT_AGG]</td>
+          </tr>
+          <tr style="background: var(--brand-navy); color: white;">
+            <td><strong>TOTAL</strong></td>
+            <td><strong>$[TOTAL_CONS]</strong></td>
+            <td><strong>$[TOTAL_MOD]</strong></td>
+            <td><strong>$[TOTAL_AGG]</strong></td>
+          </tr>
+        </table>
+      </div>
+      
+      <!-- SECTION 5: DEFENDANTS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-number">5</div>
+          <div class="section-title">Defendant Targeting</div>
+        </div>
+        <table>
+          <tr>
+            <th>Priority</th>
+            <th>Defendant</th>
+            <th>Violations</th>
+            <th>Settlement Target</th>
+          </tr>
+          [DEFENDANT_ROWS]
+        </table>
+      </div>
+      
+      <!-- SECTION 6: ACTION ITEMS -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-number">6</div>
+          <div class="section-title">Action Items</div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div>
+            <h4 style="color: var(--brand-navy); margin-bottom: 10px;">Pre-Approval</h4>
+            <ul style="padding-left: 20px; color: var(--text-secondary);">
+              [PRE_APPROVAL_ITEMS]
+            </ul>
+          </div>
+          <div>
+            <h4 style="color: var(--brand-navy); margin-bottom: 10px;">Post-Approval</h4>
+            <ul style="padding-left: 20px; color: var(--text-secondary);">
+              [POST_APPROVAL_ITEMS]
+            </ul>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="footer-brand">Brightpath Ascend Group</div>
+      <div class="footer-info">Case: [CASE_NUMBER] | Confidential — Internal Use Only</div>
+    </div>
+    
+  </div>
+</body>
+</html>
 ```
-
-**FCRA Violations:**
-- § 1681c(a) — Obsolete information (7-year rule)
-- § 1681e(b) — Date accuracy
-
-**Severity:** 🟠 HIGH (obsolete) | 🟡 MEDIUM (date conflicts)
 
 ---
 
-## STANDING ANALYSIS (TransUnion v. Ramirez)
+## =======================================================================
+## DOCUMENT 2: CLIENT EMAIL (Apple-Style)
+## =======================================================================
 
-### Three-Element Test
-
-Every case MUST establish all three elements to proceed:
-
-#### Element 1: DISSEMINATION
-**Question:** Was the inaccurate information shared with third parties?
-
-**Evidence Sources:**
-- Hard inquiries in last 2 years
-- Recent credit applications (documented)
-- Denial letters mentioning credit report review
-- Pre-approval offers based on credit data
-
-**Scoring:**
-| Evidence Level | Score | Status |
-|---------------|-------|--------|
-| 3+ hard inquiries | 9-10/10 | ✓ CONFIRMED |
-| 1-2 hard inquiries | 7-8/10 | ✓ CONFIRMED |
-| 0 inquiries, but applications | 5-6/10 | ⚠ CONDITIONAL |
-| No evidence | 0-3/10 | ✗ INSUFFICIENT |
-
----
-
-#### Element 2: CONCRETE HARM
-**Question:** Did the consumer suffer real, tangible harm?
-
-**Evidence Sources:**
-- Credit denial letters
-- Higher interest rate offers
-- Increased insurance premiums
-- Employment/housing denial
-- Emotional distress documentation
-
-**Scoring:**
-| Evidence Level | Score | Status |
-|---------------|-------|--------|
-| Denial letter in hand | 9-10/10 | ✓ CONFIRMED |
-| Higher rate documented | 7-8/10 | ✓ CONFIRMED |
-| Score below prime (740) only | 5-6/10 | ⚠ CONDITIONAL |
-| No tangible harm evidence | 0-3/10 | ✗ INSUFFICIENT |
-
----
-
-#### Element 3: CAUSATION
-**Question:** Did the inaccurate information cause the harm?
-
-**Evidence Sources:**
-- Inaccurate info present during application period
-- Timeline alignment (inaccuracy → application → harm)
-- Denial letter citing specific factors
-
-**Scoring:**
-| Evidence Level | Score | Status |
-|---------------|-------|--------|
-| Denial cites disputed info | 9-10/10 | ✓ CONFIRMED |
-| Timeline clearly aligns | 7-8/10 | ✓ CONFIRMED |
-| Reasonable inference | 5-6/10 | ⚠ CONDITIONAL |
-| No connection evident | 0-3/10 | ✗ INSUFFICIENT |
-
----
-
-### Overall Standing Score Calculation
-
-```
-Standing Score = (Element1 + Element2 + Element3) / 3
-
-8.0 - 10.0: ✓ STRONG STANDING — Proceed with confidence
-6.0 - 7.9:  ⚠ CONDITIONAL — Strengthen before litigation
-4.0 - 5.9:  ⚠ WEAK — Gather more evidence or consider deletion-only approach
-0.0 - 3.9:  ✗ INSUFFICIENT — Do not proceed with federal claims
-```
-
-### Strengthening Recommendations
-
-If standing is CONDITIONAL, recommend:
-1. Request denial letters from client
-2. Request adverse action notices
-3. Document higher rates received
-4. Obtain client declaration re: emotional distress
-5. Wait for new credit application and potential denial
-
----
-
-## WILLFULNESS ASSESSMENT (Safeco Standard)
-
-### Legal Standard
-Under *Safeco Insurance Co. v. Burr*, 551 U.S. 47 (2007):
-- **Willful** = Knowingly or with reckless disregard
-- **Reckless** = Objectively unreasonable interpretation of FCRA
-
-### Willfulness Factors
-
-| Factor | Weight | Present If... |
-|--------|--------|---------------|
-| **Pattern Across Bureaus** | HIGH | Same violation type appears on 3+ accounts |
-| **Impossible Scenarios** | VERY HIGH | Objectively impossible data (e.g., Paid mortgage with active payments) |
-| **Sophisticated Defendant** | HIGH | Major institution (Chase, AMEX, Capital One, major CRAs) |
-| **Metro 2® Knowledge** | MODERATE | All furnishers certified in Metro 2® format |
-| **Duration of Inaccuracy** | MODERATE | Violation persisted 6+ months |
-| **Prior Notice Ignored** | VERY HIGH | Client previously disputed, violation continued |
-| **Industry Standards Violated** | HIGH | Clear Metro 2® or CDIA guideline violation |
-
-### Willfulness Score Calculation
-
-```
-For each factor present:
-  VERY HIGH = 20 points
-  HIGH = 15 points
-  MODERATE = 10 points
-
-Total Points / Max Points (100) = Willfulness %
-
-Interpretation:
-  70-100%: LIKELY WILLFUL — Pursue punitive damages aggressively
-  50-69%:  POSSIBLE WILLFUL — Include punitive claim, moderate expectations
-  30-49%:  UNLIKELY WILLFUL — Focus on statutory damages
-  0-29%:   NEGLIGENT ONLY — § 1681o claims only
-```
-
----
-
-## DAMAGES CALCULATION
-
-### Statutory Damages (§ 1681n - Willful)
-
-```
-Per Violation: $100 - $1,000
-Calculation:
-  - Minimum: Violation Count × $100
-  - Maximum: Violation Count × $1,000
-  - Likely: Violation Count × $500 (midpoint)
-
-Example (52 violations):
-  - Minimum: $5,200
-  - Maximum: $52,000
-  - Likely: $26,000
-```
-
-### Punitive Damages (§ 1681n)
-
-```
-Ratio Guidelines (from case law):
-  - Conservative: 1:1 (statutory)
-  - Moderate: 2:1
-  - Aggressive: 3:1 (approaching constitutional limits)
-
-Example (Statutory = $26,000):
-  - 1:1: $26,000
-  - 2:1: $52,000 (MOST LIKELY)
-  - 3:1: $78,000
-
-Note: BMW v. Gore and State Farm v. Campbell limit ratios
-```
-
-### Actual Damages
-
-```
-Categories:
-  - Credit denial costs (application fees, lost deposits)
-  - Higher interest paid (rate differential × loan term)
-  - Emotional distress (documented)
-  - Time spent correcting errors
-  - Lost opportunity costs
-
-Typical Range: $5,000 - $50,000
-```
-
-### Attorney Fees (Mandatory under § 1681n(a)(3))
-
-```
-Lodestar Calculation:
-  Hours × Reasonable Rate = Base Fees
-  
-Typical FCRA Cases:
-  - Simple (1-2 defendants): $15,000 - $25,000
-  - Moderate (3-5 defendants): $25,000 - $50,000
-  - Complex (6+ defendants): $50,000 - $100,000+
-```
-
-### Total Case Valuation Table
-
-```
-| Scenario     | Statutory | Punitive | Actual  | Fees    | TOTAL   |
-|--------------|-----------|----------|---------|---------|---------|
-| Conservative | Min       | $0       | $5,000  | $15,000 | Low     |
-| Moderate     | Likely    | 2:1      | $15,000 | $35,000 | Mid     |
-| Aggressive   | Max       | 3:1      | $40,000 | $75,000 | High    |
-```
-
----
-
-## DOCUMENT 1: INTERNAL ANALYSIS (HTML)
-
-### Purpose
-Quick-scan staff document for go/no-go decision making.
-
-### Structure
+Generate this HTML structure for client email:
 
 ```html
-1. BRANDED HEADER
-   - Brightpath logo + company name
-   - "INTERNAL USE ONLY" badge
-   - Case number + date
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Analysis is Ready - [CLIENT_NAME]</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-teal: #0d9488;
+      --brand-teal-dark: #0f766e;
+      --brand-teal-light: #14b8a6;
+      --brand-navy: #1e3a5f;
+      --brand-navy-dark: #0a2540;
+      --text-primary: #1a1a2e;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --bg-cream: #faf9f7;
+      --bg-white: #ffffff;
+      --border-subtle: #e8e6e3;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      background: linear-gradient(180deg, #f0f0f0 0%, #e8e6e3 100%);
+      padding: 40px 20px;
+    }
+    
+    .email-wrapper { max-width: 600px; margin: 0 auto; }
+    
+    .email-container {
+      background: var(--bg-white);
+      border-radius: 3px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(10, 37, 64, 0.12);
+    }
+    
+    .email-hero {
+      position: relative;
+      background: var(--brand-navy-dark);
+      padding: 48px 40px;
+      text-align: center;
+    }
+    
+    .email-hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--brand-teal), var(--brand-teal-light), var(--brand-teal));
+    }
+    
+    .brand-name {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: var(--brand-teal-light);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .email-body { padding: 45px 40px; }
+    
+    .greeting {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--brand-navy);
+      margin-bottom: 24px;
+    }
+    
+    .intro-text {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      line-height: 1.75;
+    }
+    
+    .intro-text strong {
+      color: var(--brand-navy);
+      font-weight: 600;
+    }
+    
+    .key-finding {
+      background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%);
+      border-radius: 3px;
+      padding: 28px 30px;
+      margin: 32px 0;
+      border-left: 4px solid var(--brand-teal);
+    }
+    
+    .key-finding-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--brand-teal);
+      margin-bottom: 10px;
+    }
+    
+    .key-finding-text {
+      font-size: 16px;
+      color: var(--text-primary);
+      line-height: 1.65;
+    }
+    
+    .stats-container {
+      background: var(--bg-cream);
+      border-radius: 3px;
+      padding: 12px;
+      margin: 32px 0;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    
+    .stat-card {
+      text-align: center;
+      padding: 18px 6px;
+      background: var(--bg-white);
+      border-radius: 2px;
+    }
+    
+    .stat-number {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--brand-teal);
+      margin-bottom: 6px;
+    }
+    
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    
+    .value-card {
+      background: var(--brand-navy-dark);
+      border-radius: 3px;
+      padding: 40px;
+      margin: 32px 0;
+      text-align: center;
+    }
+    
+    .value-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--brand-teal-light);
+      margin-bottom: 12px;
+    }
+    
+    .value-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .cta-section {
+      text-align: center;
+      margin: 40px 0 32px;
+    }
+    
+    .cta-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--brand-navy);
+      margin-bottom: 8px;
+    }
+    
+    .cta-text {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      background: var(--brand-teal);
+      color: white;
+      padding: 18px 48px;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 4px;
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
+    }
+    
+    .signature {
+      margin-top: 40px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    
+    .signature-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--brand-navy);
+    }
+    
+    .signature-contact {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+    
+    .email-footer {
+      background: var(--brand-navy-dark);
+      padding: 30px 40px;
+      text-align: center;
+    }
+    
+    .footer-brand {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--brand-teal-light);
+      text-transform: uppercase;
+    }
+    
+    .footer-disclaimer {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.3);
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
 
-2. CLIENT HEADER
-   - Client name (LAST, First M.I.)
-   - Report date
-   - Credit scores (TU | EX | EQ)
+<div class="email-wrapper">
+  <div class="email-container">
+    
+    <div class="email-hero">
+      <div class="brand-name">Brightpath Ascend Group</div>
+      <div class="hero-title">Your Credit Analysis is Complete</div>
+    </div>
+    
+    <div class="email-body">
+      
+      <p class="greeting">[CLIENT_FIRST_NAME],</p>
+      
+      <p class="intro-text">Your analysis is complete. <strong>We found violations.</strong> Real ones. The kind that get results.</p>
+      
+      <p class="intro-text">This isn't credit repair. It's federal consumer protection — and the law is on your side.</p>
+      
+      <div class="key-finding">
+        <div class="key-finding-label">Key Finding</div>
+        <p class="key-finding-text">[KEY_FINDING_TEXT]</p>
+      </div>
+      
+      <div class="stats-container">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">[VIOLATION_COUNT]</div>
+            <div class="stat-label">Violations</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">$[EST_VALUE]K</div>
+            <div class="stat-label">Case Value</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">[SETTLEMENT_RATE]%</div>
+            <div class="stat-label">Settlement</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">[ACCOUNT_COUNT]</div>
+            <div class="stat-label">Accounts</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="value-card">
+        <div class="value-label">Your Case Value</div>
+        <div class="value-amount">[VALUE_RANGE]</div>
+      </div>
+      
+      <div class="cta-section">
+        <div class="cta-title">Ready?</div>
+        <p class="cta-text">Reply "APPROVED" and we start immediately.</p>
+        <a href="mailto:support@brightpathascend.com?subject=APPROVED" class="cta-button">I'm In →</a>
+      </div>
+      
+      <div class="signature">
+        <div class="signature-name">Brightpath Ascend Group</div>
+        <div class="signature-contact">
+          support@brightpathascend.com<br>
+          (917) 909-4051
+        </div>
+      </div>
+      
+    </div>
+    
+    <div class="email-footer">
+      <div class="footer-brand">Brightpath Ascend Group</div>
+      <div class="footer-disclaimer">
+        Confidential | Case: [CASE_NUMBER]
+      </div>
+    </div>
+    
+  </div>
+</div>
 
-3. EXECUTIVE SUMMARY BOX (gradient blue)
-   - Case Strength: X/10
-   - Standing Score: X/10
-   - Willfulness: XX%
-   - Est. Value: $XXK
-
-4. DECISION BOX
-   - ✓ PROCEED (green) / ⚠ CAUTION (yellow) / ✗ REJECT (red)
-   - Settlement probability
-
-5. QUICK STATS ROW (5 boxes)
-   - Violations count
-   - Defendants count
-   - Impossible contradictions
-   - Average score
-   - Days to resolve
-
-6. SECTION 0: STANDING ANALYSIS
-   - 3-element table
-   - Confidence scores
-   - Evidence notes
-   - Strengthening recommendations
-
-7. SECTION 1: VIOLATION SUMMARY
-   - Category table
-   - Counts, severity, defendants, FCRA sections
-
-8. SECTION 2: CRITICAL VIOLATIONS
-   - Impossible status contradiction table
-   - Account | TU | EX | EQ | Balance | Violation
-
-9. SECTION 3: LATE PAYMENT CONTRADICTIONS
-   - Date discrepancy table
-
-10. SECTION 4: WILLFULNESS ASSESSMENT
-    - Safeco factor table
-    - Present? | Weight | Analysis
-    - Willfulness probability
-
-11. SECTION 5: DAMAGES CALCULATION
-    - Two-column: Statutory | Punitive
-    - Total valuation table (Conservative/Moderate/Aggressive)
-
-12. SECTION 6: DEFENDANT TARGETING
-    - Priority table (Tier 1/2/3)
-    - Violations | Exposure | Settlement Target
-
-13. SECTION 7: ACTION ITEMS
-    - Two-column checklist
-    - Pre-approval | Post-approval
-
-14. SECTION 8: TIMELINE
-    - RLPP phase table
-    - Phase | Days | Action | Expected Outcome
-
-15. BRANDED FOOTER
-    - Company name
-    - Case number
-    - Confidentiality notice
+</body>
+</html>
 ```
-
-### Styling Requirements
-- Font: Segoe UI, sans-serif
-- Header gradient: teal → green → lime
-- Section headers: Navy (#1e3a5f) with numbered circles
-- Risk badges: CRITICAL (red), HIGH (orange), MEDIUM (yellow), LOW (green)
-- Decision box: Color-coded border (green/yellow/red)
-- Print-ready with @media print rules
 
 ---
 
-## DOCUMENT 2: CLIENT EMAIL SUMMARY (HTML)
+## =======================================================================
+## DOCUMENT 3: CLIENT REPORT (Apple-Style, 7 Pages)
+## =======================================================================
 
-### Purpose
-Email body for client communication requesting approval to proceed.
+Generate a 7-page client report with the following structure:
 
-### Structure
-
-```html
-1. GREETING
-   "Dear [First Name],"
-
-2. OPENING
-   "We've completed our analysis of your credit reports..."
-
-3. KEY FINDINGS SUMMARY
-   - Number of violations found
-   - Main violation types
-   - Estimated case value range
-
-4. WHAT THIS MEANS
-   - Plain-language explanation
-   - Why these violations matter
-
-5. ATTACHED REPORT
-   "We've attached a comprehensive XX-page report..."
-
-6. NEXT STEPS
-   - What we need from client (denial letters, approval)
-   - Timeline expectation
-   - What happens after approval
-
-7. CALL TO ACTION
-   "Please reply to this email to confirm..."
-
-8. CLOSING
-   Professional sign-off with contact info
-
-9. DISCLAIMER
-   Standard legal disclaimer
-```
-
-### Tone
-- Warm, professional
-- Educational, not salesy
-- Empowering, not alarming
-- Clear calls to action
-
----
-
-## DOCUMENT 3: CLIENT REPORT (PDF)
-
-### Purpose
-Comprehensive educational document explaining findings, rights, and next steps.
-
-### Structure (40-50 pages)
-
-```
-COVER PAGE
+### PAGE 1: COVER
+- Navy gradient background
 - Brightpath logo
-- "Confidential Credit Analysis Report"
-- Client name
-- Report date
-- Case number
+- "CREDIT ANALYSIS REPORT"
+- Client name, date, case number
+- "Confidential — Prepared for [Client]"
 
-TABLE OF CONTENTS
+### PAGE 2: EXECUTIVE SUMMARY
+- 4-metric box (Case Strength, Standing, Willfulness, Value)
+- Key Finding highlight box (teal accent)
+- 6-stat grid (Violations, Defendants, Accounts, Score Avg, Settlement %, Timeline)
+- Brief "What This Means" paragraph
 
-SECTION 1: EXECUTIVE SUMMARY (2-3 pages)
-- Key findings overview
-- Case strength assessment
-- Estimated value range
-- Recommended action
+### PAGE 3: YOUR RIGHTS
+- What is FCRA (brief)
+- Your 5 Core Rights (icon list)
+- What CRAs Must Do
+- What Furnishers Must Do
 
-SECTION 2: UNDERSTANDING YOUR RIGHTS (3-4 pages)
-- What is the FCRA?
-- Your rights as a consumer
-- CRA and furnisher obligations
-- What happens when they violate your rights
+### PAGE 4: VIOLATION SUMMARY
+- Violation category table
+- Top 3 Critical Violations highlighted
+- Visual severity badges
 
-SECTION 3: CREDIT BUREAU ANALYSIS (4-5 pages)
-- Your scores across bureaus
-- Score factors
-- What affects your credit
-- Bureau-by-bureau comparison
+### PAGE 5: ACCOUNT ANALYSIS
+- Account cards showing contradictions
+- Bureau comparison columns
+- Color-coded status (Open=green, Paid=blue, contradiction=red highlight)
 
-SECTION 4: VIOLATION CATEGORIES (5-6 pages)
-- Impossible status contradictions (explained)
-- Late payment discrepancies (explained)
-- Balance/limit contradictions (explained)
-- PII inaccuracies (explained)
+### PAGE 6: DAMAGES & STRATEGY
+- Damages table (Conservative/Moderate/Aggressive)
+- Defendant priority list
+- Settlement targets
+- Timeline (4 phases)
 
-SECTION 5: ACCOUNT-BY-ACCOUNT ANALYSIS (15-20 pages)
-- Each account with violations
-- What we found
-- Why it matters
-- Applicable law
-
-SECTION 6: LEGAL FRAMEWORK (4-5 pages)
-- FCRA sections that apply
-- Key case law (plain language)
-- Metro 2® requirements
-- Regulatory guidance
-
-SECTION 7: DAMAGES ASSESSMENT (3-4 pages)
-- How damages are calculated
-- Your potential recovery
-- Conservative to aggressive range
-- What affects final amount
-
-SECTION 8: STRATEGIC RECOMMENDATIONS (3-4 pages)
-- Our recommended approach
-- Why RLPP works
-- Expected timeline
-- Settlement vs. litigation
-
-SECTION 9: NEXT STEPS (2-3 pages)
+### PAGE 7: NEXT STEPS
 - What we need from you
 - What happens next
-- Timeline expectations
-- How to contact us
+- Contact information
+- CTA section
 
-APPENDIX (varies)
-- Glossary of terms
-- FCRA section excerpts
-- Sample dispute letters
-```
-
-### Styling Requirements
-- Professional serif font (Georgia or similar)
-- Brightpath branding throughout
-- Page numbers
-- Section headers
-- Call-out boxes for key information
-- Charts/graphics where helpful
+**Use the same Apple-style CSS from Document 1, adapted for print/PDF.**
 
 ---
 
-## DOCUMENT 4: LEGAL MEMORANDUM (HTML/PDF)
+## =======================================================================
+## DOCUMENT 4: LEGAL MEMORANDUM (Traditional Law Firm)
+## =======================================================================
 
-### Purpose
-Attorney-ready analysis with case citations, legal arguments, and litigation strategy.
+Generate this HTML structure for attorney review:
 
-### Structure (12-15 pages)
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Legal Memorandum - [CASE_CAPTION]</title>
+  <style>
+    @page { size: letter; margin: 1in; }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Times New Roman', Times, Georgia, serif;
+      font-size: 12pt;
+      line-height: 2;
+      color: #000;
+      background-color: #fff;
+    }
+    
+    .page {
+      max-width: 8.5in;
+      margin: 0 auto;
+      padding: 1in;
+      background-color: white;
+    }
+    
+    .memo-header {
+      border-bottom: 3px double #000;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .memo-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    
+    .firm-name {
+      font-size: 14pt;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    
+    .firm-division {
+      font-size: 10pt;
+      font-style: italic;
+      color: #333;
+    }
+    
+    .confidential-stamp {
+      text-align: right;
+      font-size: 10pt;
+      font-weight: bold;
+      border: 2px solid #000;
+      padding: 6px 12px;
+      text-transform: uppercase;
+    }
+    
+    .memo-title {
+      text-align: center;
+      font-size: 14pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 25px 0;
+      text-decoration: underline;
+    }
+    
+    .memo-row {
+      display: flex;
+      margin: 4px 0;
+      line-height: 1.6;
+    }
+    
+    .memo-label {
+      width: 120px;
+      font-weight: bold;
+    }
+    
+    .exec-summary {
+      border: 2px solid #000;
+      padding: 20px;
+      margin: 30px 0;
+      background-color: #f9f9f9;
+    }
+    
+    .exec-summary-title {
+      font-size: 12pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #666;
+    }
+    
+    .exec-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      text-align: center;
+    }
+    
+    .exec-item-label {
+      font-size: 9pt;
+      text-transform: uppercase;
+      color: #666;
+    }
+    
+    .exec-item-value {
+      font-size: 18pt;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+    
+    h1 {
+      font-size: 12pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 35px 0 15px 0;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #000;
+    }
+    
+    h2 {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 25px 0 12px 0;
+      font-style: italic;
+    }
+    
+    h3 {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 20px 0 10px 0;
+    }
+    
+    p {
+      margin: 12px 0;
+      text-align: justify;
+      text-indent: 0.5in;
+    }
+    
+    p.no-indent { text-indent: 0; }
+    
+    .cite { font-style: italic; }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 11pt;
+    }
+    
+    th {
+      background-color: #e8e8e8;
+      border: 1px solid #000;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: bold;
+      font-size: 10pt;
+      text-transform: uppercase;
+    }
+    
+    td {
+      border: 1px solid #000;
+      padding: 8px 10px;
+      vertical-align: top;
+    }
+    
+    tr.total-row {
+      background-color: #d9d9d9;
+      font-weight: bold;
+    }
+    
+    tr.highlight-row {
+      background-color: #ffffcc;
+    }
+    
+    ol, ul {
+      margin: 15px 0 15px 0.75in;
+    }
+    
+    li {
+      margin: 8px 0;
+      line-height: 1.8;
+    }
+    
+    .assessment-box {
+      border: 1px solid #000;
+      padding: 15px 20px;
+      margin: 20px 0;
+      background-color: #f5f5f5;
+    }
+    
+    .assessment-box.strong { border-left: 5px solid #228b22; }
+    .assessment-box.moderate { border-left: 5px solid #daa520; }
+    .assessment-box.weak { border-left: 5px solid #dc143c; }
+    
+    .assessment-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    
+    .signature-block { margin-top: 50px; }
+    
+    .signature-line {
+      margin-top: 40px;
+      padding-top: 5px;
+      border-top: 1px solid #000;
+      width: 250px;
+    }
+    
+    .memo-footer {
+      margin-top: 40px;
+      padding-top: 15px;
+      border-top: 1px solid #999;
+      font-size: 10pt;
+      color: #666;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    @media print {
+      .page-break { page-break-before: always; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
 
+<div class="page">
+  
+  <!-- MEMO HEADER -->
+  <div class="memo-header">
+    <div class="memo-header-top">
+      <div>
+        <div class="firm-name">BRIGHTPATH ASCEND GROUP</div>
+        <div class="firm-division">FCRA Litigation Support Services</div>
+      </div>
+      <div class="confidential-stamp">
+        Confidential<br>
+        Attorney Work Product
+      </div>
+    </div>
+    
+    <div class="memo-title">Memorandum of Law</div>
+    
+    <div>
+      <div class="memo-row">
+        <span class="memo-label">TO:</span>
+        <span>Reviewing Counsel</span>
+      </div>
+      <div class="memo-row">
+        <span class="memo-label">FROM:</span>
+        <span>Brightpath Ascend Group — FCRA Litigation Division</span>
+      </div>
+      <div class="memo-row">
+        <span class="memo-label">DATE:</span>
+        <span>[REPORT_DATE]</span>
+      </div>
+      <div class="memo-row">
+        <span class="memo-label">RE:</span>
+        <span><strong>[CLIENT_NAME] v. Equifax Information Services, LLC, et al.</strong></span>
+      </div>
+      <div class="memo-row">
+        <span class="memo-label">MATTER NO.:</span>
+        <span>[CASE_NUMBER]</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="exec-summary">
+    <div class="exec-summary-title">Executive Summary</div>
+    <div class="exec-grid">
+      <div>
+        <div class="exec-item-label">Case Strength</div>
+        <div class="exec-item-value">[CASE_STRENGTH]/10</div>
+      </div>
+      <div>
+        <div class="exec-item-label">Standing</div>
+        <div class="exec-item-value">[STANDING_SCORE]/10</div>
+      </div>
+      <div>
+        <div class="exec-item-label">Willfulness</div>
+        <div class="exec-item-value">[WILLFULNESS]%</div>
+      </div>
+      <div>
+        <div class="exec-item-label">Est. Value</div>
+        <div class="exec-item-value">$[EST_VALUE]K</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- I. QUESTION PRESENTED -->
+  <h1>I. Question Presented</h1>
+  
+  <p class="no-indent">Whether [CLIENT_NAME] ("Consumer") has viable claims under the Fair Credit Reporting Act, 15 U.S.C. § 1681 <em>et seq.</em>, against credit reporting agencies and furnishers based on documented inaccuracies in Consumer's credit reports, and whether such claims survive standing analysis under <span class="cite">TransUnion LLC v. Ramirez</span>, 141 S. Ct. 2190 (2021).</p>
+
+  <!-- II. BRIEF ANSWER -->
+  <h1>II. Brief Answer</h1>
+  
+  <p class="no-indent">Yes. Consumer has [CASE_STRENGTH_TEXT] FCRA claims based on [VIOLATION_COUNT] documented violations across [DEFENDANT_COUNT] defendants. The violations include impossible status contradictions, balance discrepancies, and date reporting errors. Standing is [STANDING_STATUS] under <span class="cite">TransUnion</span>. Willfulness probability is assessed at [WILLFULNESS]%. Estimated case value ranges from $[VALUE_LOW] to $[VALUE_HIGH], with a settlement target of $[SETTLEMENT_TARGET].</p>
+
+  <!-- III. STATEMENT OF FACTS -->
+  <h1>III. Statement of Facts</h1>
+  
+  <h2>A. Background</h2>
+  
+  <p>Consumer [CLIENT_NAME] is an individual residing in [CLIENT_STATE]. Consumer obtained tri-bureau credit reports dated [REPORT_DATE]. Review of these reports reveals significant inaccuracies affecting [ACCOUNT_COUNT] accounts.</p>
+
+  <h2>B. Credit Bureau Scores</h2>
+  
+  <table>
+    <tr>
+      <th>Bureau</th>
+      <th>Score</th>
+      <th>Score Range</th>
+    </tr>
+    [SCORE_ROWS]
+  </table>
+
+  <h2>C. Summary of Inaccuracies</h2>
+  
+  <table>
+    <tr>
+      <th>Violation Category</th>
+      <th>Count</th>
+      <th>Statutory Basis</th>
+      <th>Severity</th>
+    </tr>
+    [VIOLATION_SUMMARY_ROWS]
+  </table>
+
+  <!-- IV. ANALYSIS -->
+  <h1>IV. Analysis</h1>
+  
+  <h2>A. Standing Under <span class="cite">TransUnion LLC v. Ramirez</span></h2>
+  
+  <p>Following the Supreme Court's decision in <span class="cite">TransUnion LLC v. Ramirez</span>, 141 S. Ct. 2190 (2021), FCRA plaintiffs must establish Article III standing by demonstrating: (1) a concrete injury-in-fact; (2) caused by defendant's conduct; (3) that is redressable by a favorable decision.</p>
+
+  <div class="assessment-box [STANDING_BOX_CLASS]">
+    <div class="assessment-title">Standing Assessment: [STANDING_SCORE]/10</div>
+    [STANDING_CONCLUSION]
+  </div>
+
+  <h2>B. Violation Analysis</h2>
+  
+  <h3>1. Impossible Status Contradictions</h3>
+  
+  <p>The most significant violations involve accounts reported with mutually exclusive statuses across bureaus. <em>See</em> <span class="cite">Cushman v. Trans Union Corp.</span>, 115 F.3d 220, 225 (3d Cir. 1997).</p>
+
+  <table>
+    <tr>
+      <th>Account</th>
+      <th>Balance</th>
+      <th>TransUnion</th>
+      <th>Experian</th>
+      <th>Equifax</th>
+    </tr>
+    [CONTRADICTION_ROWS]
+  </table>
+
+  <h2>C. Willfulness Analysis Under <span class="cite">Safeco</span></h2>
+  
+  <p>Under <span class="cite">Safeco Insurance Co. v. Burr</span>, 551 U.S. 47 (2007), willfulness requires knowing or reckless disregard of statutory duties.</p>
+
+  <div class="assessment-box [WILLFULNESS_BOX_CLASS]">
+    <div class="assessment-title">Willfulness Assessment: [WILLFULNESS]% Probability</div>
+    [WILLFULNESS_CONCLUSION]
+  </div>
+
+  <h2>D. Damages Calculation</h2>
+
+  <table>
+    <tr>
+      <th>Component</th>
+      <th>Conservative</th>
+      <th>Moderate</th>
+      <th>Aggressive</th>
+    </tr>
+    [DAMAGES_ROWS]
+    <tr class="total-row">
+      <td><strong>TOTAL</strong></td>
+      <td><strong>$[TOTAL_CONS]</strong></td>
+      <td><strong>$[TOTAL_MOD]</strong></td>
+      <td><strong>$[TOTAL_AGG]</strong></td>
+    </tr>
+  </table>
+
+  <!-- V. SETTLEMENT STRATEGY -->
+  <h1>V. Settlement Strategy</h1>
+
+  <table>
+    <tr>
+      <th>Priority</th>
+      <th>Defendant</th>
+      <th>Violations</th>
+      <th>Settlement Target</th>
+    </tr>
+    [DEFENDANT_ROWS]
+    <tr class="total-row">
+      <td colspan="2"><strong>TOTAL</strong></td>
+      <td><strong>[VIOLATION_COUNT]</strong></td>
+      <td><strong>$[SETTLEMENT_TARGET]</strong></td>
+    </tr>
+  </table>
+
+  <!-- VI. CONCLUSION -->
+  <h1>VI. Conclusion and Recommendations</h1>
+
+  <p class="no-indent"><strong>Recommendations:</strong></p>
+
+  <ol>
+    <li><strong>Initiate Formal Disputes:</strong> Send detailed dispute letters to all [DEFENDANT_COUNT] defendants via certified mail.</li>
+    <li><strong>Strengthen Standing Evidence:</strong> [STANDING_RECOMMENDATION]</li>
+    <li><strong>Prioritize Tier 1 Defendants:</strong> Focus on defendants with most egregious violations.</li>
+    <li><strong>Settlement Strategy:</strong> Target $[SETTLEMENT_TARGET] global settlement.</li>
+  </ol>
+
+  <p><strong>Anticipated Timeline:</strong> 60-120 days RLPP protocol; 12-18 months if litigation required.</p>
+
+  <div style="text-align: center; margin-top: 50px;">* * *</div>
+
+  <!-- SIGNATURE -->
+  <div class="signature-block">
+    <p>Respectfully submitted,</p>
+    <div class="signature-line">
+      Brightpath Ascend Group<br>
+      FCRA Litigation Support Services
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="memo-footer">
+    <div>
+      <strong>BRIGHTPATH ASCEND GROUP</strong><br>
+      FCRA Litigation Support Services
+    </div>
+    <div style="text-align: right;">
+      Matter No.: [CASE_NUMBER]<br>
+      Confidential — Attorney Work Product
+    </div>
+  </div>
+  
+</div>
+
+</body>
+</html>
 ```
-HEADER
-- "CONFIDENTIAL ATTORNEY WORK PRODUCT"
-- Case caption
-- Date prepared
-- Prepared by
-
-EXECUTIVE SUMMARY BOX
-- Case strength
-- Standing assessment
-- Key violations
-- Recommended approach
-
-I. FACTUAL BACKGROUND
-   A. Client Information
-   B. Credit Report Overview
-   C. Identified Inaccuracies
-
-II. STANDING ANALYSIS
-    A. TransUnion v. Ramirez Framework
-    B. Element 1: Dissemination
-       - Evidence
-       - Case law support
-    C. Element 2: Concrete Harm
-       - Evidence
-       - Case law support
-    D. Element 3: Causation
-       - Evidence
-       - Case law support
-    E. Standing Conclusion
-
-III. FCRA VIOLATIONS BY DEFENDANT
-     A. Credit Reporting Agencies
-        1. Equifax - § 1681e(b) violations
-        2. Experian - § 1681e(b) violations
-        3. TransUnion - § 1681e(b) violations
-     B. Furnishers
-        1. [Furnisher 1] - § 1681s-2(a)/(b) violations
-        2. [Furnisher 2] - etc.
-
-IV. WILLFULNESS ANALYSIS
-    A. Safeco Insurance Standard
-    B. Evidence of Willfulness
-       - Pattern violations
-       - Impossible scenarios
-       - Sophisticated defendants
-    C. Willfulness Conclusion
-
-V. DAMAGES CALCULATION
-   A. Statutory Damages (§ 1681n)
-   B. Punitive Damages
-   C. Actual Damages
-   D. Attorney Fees
-   E. Total Exposure by Defendant
-
-VI. SETTLEMENT ANALYSIS
-    A. Defendant-by-Defendant Exposure
-    B. Settlement Probability
-    C. Recommended Settlement Targets
-    D. Litigation Cost-Benefit
-
-VII. DISCOVERY CONSIDERATIONS
-     A. Key Documents to Request
-     B. Interrogatory Topics
-     C. Deposition Targets
-     D. Expert Witness Needs
-
-VIII. CONCLUSION AND RECOMMENDATIONS
-
-APPENDIX
-- Violation Detail Tables
-- Case Citations
-- Timeline
-```
-
-### Styling Requirements
-- Times New Roman, 12pt
-- Traditional legal memo format
-- Case citations in proper Bluebook format
-- Section/subsection numbering
-- Page numbers
-- Confidentiality header/footer
 
 ---
 
-## CASE LAW REFERENCES
+## KEY CASE CITATIONS
 
-### Standing Cases
-- *TransUnion LLC v. Ramirez*, 594 U.S. ___ (2021) — Standing requirements
-- *Spokeo, Inc. v. Robins*, 578 U.S. 330 (2016) — Concrete injury
-- *Trichell v. Midland Credit Mgmt.*, 964 F.3d 990 (11th Cir. 2020) — Dissemination
+Include these citations in Legal Memorandum:
 
-### Willfulness Cases
-- *Safeco Insurance Co. v. Burr*, 551 U.S. 47 (2007) — Willfulness standard
-- *Saunders v. Branch Banking & Trust*, 526 F.3d 142 (4th Cir. 2008) — Pattern evidence
-- *Dalton v. Capital Associated Indus.*, 257 F.3d 409 (4th Cir. 2001) — Punitive damages
+**Standing:**
+- TransUnion LLC v. Ramirez, 141 S. Ct. 2190 (2021)
+- Spokeo, Inc. v. Robins, 578 U.S. 330 (2016)
 
-### CRA Duty Cases
-- *Cushman v. TransUnion*, 115 F.3d 220 (3d Cir. 1997) — Tangible proof requirement
-- *Guimond v. TransUnion*, 45 F.3d 1329 (9th Cir. 1995) — Reinvestigation duty
-- *Philbin v. TransUnion*, 101 F.3d 957 (3d Cir. 1996) — Reasonable procedures
+**Accuracy:**
+- Cushman v. Trans Union Corp., 115 F.3d 220 (3d Cir. 1997)
+- Dalton v. Capital Associated Indus., 257 F.3d 409 (4th Cir. 2001)
 
-### Furnisher Duty Cases
-- *Gorman v. Wolpoff & Abramson*, 584 F.3d 1147 (9th Cir. 2009) — § 1681s-2(b)
-- *Boggio v. USAA Federal Savings Bank*, 696 F.3d 611 (6th Cir. 2012) — Investigation duty
-- *Chiang v. Verizon New England*, 595 F.3d 26 (1st Cir. 2010) — Notice requirement
+**Willfulness:**
+- Safeco Insurance Co. v. Burr, 551 U.S. 47 (2007)
 
-### Damages Cases
-- *Bach v. First Union Nat'l Bank*, 149 F. App'x 354 (6th Cir. 2005) — Emotional distress
-- *Cortez v. TransUnion*, 617 F.3d 688 (3d Cir. 2010) — Punitive damages ratio
-- *Cousin v. TransUnion*, 246 F.3d 359 (5th Cir. 2001) — Actual damages
-
----
-
-## IMPLEMENTATION NOTES
-
-### API Integration
-This prompt is designed to work with Claude API. Pass the following:
-1. System prompt: This document
-2. User prompt: Credit report data in structured format
-3. Request: Generate all 4 documents
-
-### Output Format
-Documents should be generated as separate files:
-1. HTML for Internal Analysis
-2. HTML for Client Email
-3. PDF for Client Report (via HTML → PDF conversion)
-4. HTML for Legal Memo (with PDF option)
-
-### Quality Control
-Human review checkpoint between Step 1 and Step 3:
-- Staff reviews Internal Analysis
-- Verifies violation accuracy
-- Confirms case should proceed
-- Only then generate client-facing documents
-
-### Error Handling
-If insufficient data:
-- Flag missing fields
-- Generate partial analysis with warnings
-- Request additional information before client docs
+**Punitive Limits:**
+- BMW of North America, Inc. v. Gore, 517 U.S. 559 (1996)
+- State Farm Mut. Auto. Ins. Co. v. Campbell, 538 U.S. 408 (2003)
 
 ---
 
@@ -922,14 +1514,14 @@ If insufficient data:
 | Shortcut | Action |
 |----------|--------|
 | `Full` | Generate complete 4-document package |
-| `R1` | Round 1 RLPP dispute letters only |
+| `InternalAnalysis` | Document 1 only |
+| `ClientEmail` | Document 2 only |
+| `ClientReport` | Document 3 only |
+| `LegalMemo` | Document 4 only |
+| `R1` | Round 1 dispute letters |
 | `R2` | MOV escalation letters |
 | `R3` | Regulatory complaints |
 | `R4` | Pre-arbitration demands |
-| `Quick` | Single dispute letter |
-| `ClientReport` | 40-50pg client report only |
-| `InternalAnalysis` | Staff analysis only |
-| `LegalMemo` | Attorney memo only |
 
 ---
 
@@ -938,6 +1530,7 @@ If insufficient data:
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 12/12/2025 | Initial release |
+| 2.0 | 12/13/2025 | Added embedded Apple-style + Traditional templates |
 
 ---
 
