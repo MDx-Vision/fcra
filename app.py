@@ -3992,6 +3992,7 @@ def get_case_score(analysis_id):
         
         standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
         violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
         damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
         
         standing_data = {
@@ -8856,6 +8857,7 @@ def api_generate_round_letters(analysis_id):
         
         client = db.query(Client).filter_by(id=analysis.client_id).first()
         violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
         damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
         
         dispute_round = analysis.dispute_round
@@ -8953,13 +8955,14 @@ def api_get_email_preview(analysis_id):
     """Get HTML email preview for analysis"""
     db = get_db()
     try:
-        from services import email_templates
+        # Apple-style email generator imported at top
 
         analysis = db.query(Analysis).filter_by(id=analysis_id).first()
         if not analysis:
             return jsonify({'success': False, 'error': 'Analysis not found'}), 404
 
         violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
         damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
         case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
         client = db.query(Client).filter_by(id=analysis.client_id).first()
@@ -8986,13 +8989,7 @@ def api_get_email_preview(analysis_id):
             portal_url = f"{request.host_url}portal/{client.portal_token}"
 
         # Generate HTML email
-        html_content = email_templates.fcra_analysis_summary_email(
-            client_name=analysis.client_name,
-            violations=violations_list,
-            damages_info=damages_info,
-            case_strength=case_strength,
-            portal_url=portal_url
-        )
+        html_content = generate_client_email_html(analysis, violations, standing, damages, case_score)
 
         return jsonify({
             'success': True,
@@ -9015,7 +9012,7 @@ def api_send_analysis_email(analysis_id):
     db = get_db()
     try:
         from services.email_automation import send_email
-        from services import email_templates
+        # Apple-style email generator imported at top
         import os
 
         data = request.json
@@ -9031,6 +9028,7 @@ def api_send_analysis_email(analysis_id):
             return jsonify({'success': False, 'error': 'Analysis not found'}), 404
 
         violations = db.query(Violation).filter_by(analysis_id=analysis_id).all()
+        standing = db.query(Standing).filter_by(analysis_id=analysis_id).first()
         damages = db.query(Damages).filter_by(analysis_id=analysis_id).first()
         case_score = db.query(CaseScore).filter_by(analysis_id=analysis_id).first()
         client = db.query(Client).filter_by(id=analysis.client_id).first()
@@ -9057,13 +9055,7 @@ def api_send_analysis_email(analysis_id):
             portal_url = f"{request.host_url}portal/{client.portal_token}"
 
         # Generate HTML email
-        html_content = email_templates.fcra_analysis_summary_email(
-            client_name=analysis.client_name,
-            violations=violations_list,
-            damages_info=damages_info,
-            case_strength=case_strength,
-            portal_url=portal_url
-        )
+        html_content = generate_client_email_html(analysis, violations, standing, damages, case_score)
 
         # Generate fresh Client Report PDF if attach_pdf is True
         attachments = None
