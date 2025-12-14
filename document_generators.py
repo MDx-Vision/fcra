@@ -222,6 +222,12 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     ex_score = credit_scores.get('ex') if credit_scores else 'N/A'
     eq_score = credit_scores.get('eq') if credit_scores else 'N/A'
 
+    # Pre-compute willfulness analysis text to avoid f-string quote issues
+    if willfulness_percentage > 50:
+        willfulness_analysis = "High willfulness indicates potential for punitive damages. Defendants show pattern of deliberate FCRA violations."
+    else:
+        willfulness_analysis = "Moderate willfulness. Some violations may warrant statutory damages enhancements."
+
     # Build HTML
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -585,7 +591,7 @@ def generate_internal_analysis_html(analysis, violations, standing, damages, cas
     <p><strong>Percentage:</strong> {willfulness_percentage}% of violations show willfulness</p>
 
     <p style="margin-top: 1rem;">
-      <strong>Analysis:</strong> {'High willfulness indicates potential for punitive damages. Defendants show pattern of deliberate FCRA violations.' if willfulness_percentage > 50 else 'Moderate willfulness. Some violations may warrant statutory damages enhancements.'}
+      <strong>Analysis:</strong> {willfulness_analysis}
     </p>
   </div>
 
