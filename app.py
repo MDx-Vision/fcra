@@ -3213,7 +3213,7 @@ def approve_analysis_stage_1(analysis_id):
         # Check for force regeneration parameter
         force_regenerate = request.args.get('force', 'false').lower() == 'true'
         if not force_regenerate:
-            data = request.get_json() or {}
+            data = request.get_json(silent=True) or {}
             force_regenerate = data.get('force', False)
 
         analysis = db.query(Analysis).filter_by(id=analysis_id).first()
