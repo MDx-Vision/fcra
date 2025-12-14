@@ -2,19 +2,44 @@
 
 ## Issues Fixed
 
-### 1. ❌ AttributeError: 'Violation' object has no attribute 'furnisher'
+### 1. ❌ AttributeError: 'Standing' object has no attribute 'standing_score'
+**Problem:** Code was trying to access `standing.standing_score` but `standing_score` is in the CaseScore model, not Standing model.
+
+**Root Cause:** I assumed Standing had this attribute without checking database.py first. Made same mistake as with furnisher attribute.
+
+**Fix:** Changed all `standing.standing_score` to `case_score.standing_score` (commit aabaa3b)
+
+**Additional Fixes in Same Commit:**
+- Fixed remaining `v.furnisher` reference at line 1098 (Violation model doesn't have this)
+- Fixed `damages.actual_damages_amount` → `damages.actual_damages_total` (lines 623-625)
+
+**Files Changed:**
+- `document_generators.py` - Lines 214, 766, 1110 (standing_score)
+- `document_generators.py` - Line 1098 (furnisher removal)
+- `document_generators.py` - Lines 623-625 (actual_damages)
+
+**Verification Performed:**
+- ✅ Checked ALL Standing attributes against database.py
+- ✅ Checked ALL Damages attributes against database.py
+- ✅ Checked ALL CaseScore attributes against database.py
+- ✅ Checked ALL Violation attributes against database.py
+- ✅ Checked ALL Analysis attributes against database.py
+
+---
+
+### 2. ❌ AttributeError: 'Violation' object has no attribute 'furnisher'
 **Problem:** Code was trying to access `v.furnisher` but the Violation model doesn't have this attribute.
 
 **Root Cause:** I assumed the model had a `furnisher` field without checking database.py first. Used mock tests that didn't match real schema.
 
-**Fix:** Removed all `v.furnisher` references from document generators (commit 298109a)
+**Fix:** Removed `v.furnisher` references from document generators (commits 298109a, aabaa3b)
 
 **Files Changed:**
-- `document_generators.py` - Lines 190, 653, 760, 1102
+- `document_generators.py` - Lines 190, 653, 760, 1102, 1098 (found additional reference)
 
 ---
 
-### 2. ❌ Documents Not Regenerating (Always Returning Old Docs)
+### 3. ❌ Documents Not Regenerating (Always Returning Old Docs)
 **Problem:** Analysis 106 was already at stage 2, so endpoint returned cached old documents instead of regenerating with new Apple-style generators.
 
 **Root Cause:** Idempotent behavior prevented regeneration once stage 2 was complete.
@@ -49,7 +74,7 @@ curl -X POST http://localhost:5000/api/approve/106 \
 
 ---
 
-### 3. ⚠️  WeasyPrint Import Error in Testing
+### 4. ⚠️  WeasyPrint Import Error in Testing
 **Problem:** Module couldn't be imported without WeasyPrint installed, making local testing difficult.
 
 **Fix:** Made WeasyPrint import conditional (commit d55f0d9)
@@ -59,7 +84,7 @@ curl -X POST http://localhost:5000/api/approve/106 \
 
 ---
 
-### 4. ⚠️  Date Formatting KeyError
+### 5. ⚠️  Date Formatting KeyError
 **Problem:** `.format()` call conflicted with `{datetime.now()...}` in template string.
 
 **Fix:** Computed `date_generated` before HTML string (commit d55f0d9)
@@ -117,6 +142,8 @@ curl -X POST "http://localhost:5000/api/approve/106?force=true"
 ## Complete Git History
 
 ```bash
+aabaa3b - Fix all attribute errors in document generators (standing_score, furnisher, actual_damages)
+5b8f977 - Fix JSON parsing error in approve endpoint and frontend
 653f8c7 - Add comprehensive testing guide for force regeneration
 8d5831c - Add force regeneration parameter to /api/approve endpoint
 298109a - Fix Violation model attribute error - remove furnisher references
