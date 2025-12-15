@@ -571,6 +571,7 @@
                 </button>
             </div>
         </div>
+        {% if stats is defined and stats.total_exposure is defined %}
 
         <div class="stats-grid" data-testid="stats-grid">
             <div class="stat-card highlight" data-testid="stat-total-value">
@@ -596,6 +597,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <div class="pipeline-section" data-testid="pipeline-section">
             <div class="section-header">
