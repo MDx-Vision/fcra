@@ -9122,30 +9122,29 @@ def api_send_analysis_email(analysis_id):
         # Generate HTML email
         html_content = generate_client_email_html(analysis, violations, standing, damages, case_score)
 
-        # Generate fresh Client Report PDF if attach_pdf is True
+        # Generate new 7-page Apple-style Client Report PDF if attach_pdf is True
         attachments = None
         if attach_pdf:
             import base64
             import tempfile
-            from services.pdf_service import FCRAPDFGenerator
 
             try:
-                # Generate fresh Client Report PDF (49 pages with Brightpath styling)
-                pdf_generator = FCRAPDFGenerator()
-
                 # Create temporary file for PDF
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
                     tmp_path = tmp.name
 
-                # Generate PDF with all violations data
-                pdf_generator.generate_client_report(
-                    tmp_path,
-                    analysis.client_name,
+                # Generate 7-page Apple-style report HTML
+                report_html = generate_client_report_html(
+                    analysis,
                     violations,
+                    standing,
                     damages,
                     case_score,
-                    analysis
+                    credit_scores=None
                 )
+
+                # Convert HTML to PDF using WeasyPrint
+                html_to_pdf(report_html, tmp_path)
 
                 # Read and encode PDF to base64
                 with open(tmp_path, 'rb') as f:
@@ -9164,6 +9163,8 @@ def api_send_analysis_email(analysis_id):
                 }]
             except Exception as pdf_error:
                 print(f"Error generating PDF attachment: {pdf_error}")
+                import traceback
+                traceback.print_exc()
                 # Continue without attachment if PDF generation fails
 
         # Send email

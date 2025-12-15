@@ -786,241 +786,70 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
     else:
         settlement_probability = "Variable (40-60%)"
 
+    # ALL STYLES MUST BE INLINE FOR EMAIL CLIENTS
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your Credit Analysis is Complete - {analysis.client_name}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <style>
-    * {{
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }}
-
-    :root {{
-      --navy-dark: #0a2540;
-      --navy-light: #1a365d;
-      --teal: #0d9488;
-      --teal-light: #14b8a6;
-      --gold: #f59e0b;
-      --success: #10b981;
-    }}
-
-    body {{
-      font-family: 'DM Sans', -apple-system, sans-serif;
-      line-height: 1.6;
-      color: #1e293b;
-      background: #f8fafc;
-      margin: 0;
-      padding: 0;
-    }}
-
-    .email-container {{
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
-    }}
-
-    .email-header {{
-      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-light) 100%);
-      color: white;
-      padding: 2.5rem 2rem;
-      text-align: center;
-    }}
-
-    .email-header h1 {{
-      font-family: 'Playfair Display', serif;
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }}
-
-    .email-body {{
-      padding: 2rem;
-    }}
-
-    .greeting {{
-      font-size: 1.125rem;
-      margin-bottom: 1.5rem;
-      color: var(--navy-dark);
-    }}
-
-    .key-finding {{
-      background: #f0f9ff;
-      border-left: 4px solid var(--teal);
-      padding: 1.25rem;
-      margin: 1.5rem 0;
-      border-radius: 4px;
-    }}
-
-    .key-finding h3 {{
-      font-family: 'Playfair Display', serif;
-      color: var(--teal);
-      margin-bottom: 0.5rem;
-      font-size: 1.125rem;
-    }}
-
-    .stats-grid {{
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }}
-
-    .stat-card {{
-      background: #fafaf9;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-      border: 1px solid #e7e5e4;
-    }}
-
-    .stat-label {{
-      font-size: 0.75rem;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 0.25rem;
-    }}
-
-    .stat-value {{
-      font-family: 'Playfair Display', serif;
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--navy-dark);
-    }}
-
-    .value-card {{
-      background: linear-gradient(135deg, var(--teal) 0%, var(--teal-light) 100%);
-      color: white;
-      padding: 1.5rem;
-      border-radius: 12px;
-      text-align: center;
-      margin: 1.5rem 0;
-    }}
-
-    .value-card h3 {{
-      font-size: 0.875rem;
-      margin-bottom: 0.5rem;
-      opacity: 0.9;
-    }}
-
-    .value-amount {{
-      font-family: 'Playfair Display', serif;
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin: 0.5rem 0;
-    }}
-
-    .value-range {{
-      font-size: 0.875rem;
-      opacity: 0.9;
-    }}
-
-    .cta-section {{
-      background: #fafaf9;
-      padding: 1.5rem;
-      border-radius: 8px;
-      text-align: center;
-      margin: 1.5rem 0;
-    }}
-
-    .cta-button {{
-      display: inline-block;
-      background: var(--teal);
-      color: white;
-      padding: 0.875rem 2rem;
-      border-radius: 6px;
-      text-decoration: none;
-      font-weight: 600;
-      margin-top: 1rem;
-      transition: all 0.2s;
-    }}
-
-    .cta-button:hover {{
-      background: var(--teal-light);
-      transform: translateY(-1px);
-    }}
-
-    .email-footer {{
-      background: var(--navy-dark);
-      color: white;
-      padding: 1.5rem 2rem;
-      text-align: center;
-      font-size: 0.875rem;
-    }}
-
-    .footer-brand {{
-      font-family: 'Playfair Display', serif;
-      font-size: 1.125rem;
-      margin-bottom: 0.5rem;
-    }}
-
-    .footer-disclaimer {{
-      opacity: 0.8;
-      font-size: 0.75rem;
-      margin-top: 0.5rem;
-    }}
-  </style>
 </head>
-<body>
-<div class="email-container">
-  <div class="email-header">
-    <h1>Your Credit Analysis is Complete</h1>
-    <div>Case #{case_number} | {analysis.client_name}</div>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #1e293b; background: #f8fafc; margin: 0; padding: 0;">
+<div style="max-width: 600px; margin: 0 auto; background: white;">
+  <!-- NAVY HEADER WITH INLINE STYLES -->
+  <div style="background: linear-gradient(135deg, #0a2540 0%, #1a365d 100%); background-color: #0a2540; color: white; padding: 2.5rem 2rem; text-align: center;">
+    <h1 style="font-family: Georgia, serif; font-size: 1.75rem; font-weight: 700; margin: 0 0 0.5rem 0; padding: 0;">Your Credit Analysis is Complete</h1>
+    <div style="font-size: 0.875rem; opacity: 0.9;">Case #{case_number} | {analysis.client_name}</div>
   </div>
 
-  <div class="email-body">
-    <div class="greeting">
+  <div style="padding: 2rem;">
+    <div style="font-size: 1.125rem; margin-bottom: 1.5rem; color: #0a2540;">
       <strong>Dear {analysis.client_name.split()[0]},</strong>
     </div>
 
-    <p style="margin-bottom: 1rem;">
+    <p style="margin-bottom: 1rem; padding: 0;">
       We've completed a comprehensive analysis of your credit report and found <strong>{violation_count} violations</strong> of the Fair Credit Reporting Act (FCRA).
     </p>
 """
 
     if compelling_violation:
         html += f"""
-    <div class="key-finding">
-      <h3>Most Compelling Violation</h3>
-      <p><strong>{compelling_violation.violation_type or 'FCRA Violation'}</strong></p>
-      <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+    <!-- KEY FINDING WITH INLINE STYLES -->
+    <div style="background: #f0f9ff; border-left: 4px solid #0d9488; padding: 1.25rem; margin: 1.5rem 0; border-radius: 4px;">
+      <h3 style="font-family: Georgia, serif; color: #0d9488; margin-bottom: 0.5rem; font-size: 1.125rem;">Most Compelling Violation</h3>
+      <p style="margin: 0; padding: 0;"><strong>{compelling_violation.violation_type or 'FCRA Violation'}</strong></p>
+      <p style="margin-top: 0.5rem; font-size: 0.875rem; padding: 0;">
         {compelling_violation.description[:200] if compelling_violation.description else 'Critical violation identified in your credit report.'}...
       </p>
     </div>
 """
 
     html += f"""
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Violations Found</div>
-        <div class="stat-value">{violation_count}</div>
+    <!-- STATS GRID WITH INLINE STYLES -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1.5rem 0;">
+      <div style="background: #fafaf9; padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid #e7e5e4;">
+        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Violations Found</div>
+        <div style="font-family: Georgia, serif; font-size: 1.75rem; font-weight: 700; color: #0a2540;">{violation_count}</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Case Strength</div>
-        <div class="stat-value">{total_score}/10</div>
+      <div style="background: #fafaf9; padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid #e7e5e4;">
+        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Case Strength</div>
+        <div style="font-family: Georgia, serif; font-size: 1.75rem; font-weight: 700; color: #0a2540;">{total_score}/10</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Settlement Probability</div>
-        <div class="stat-value" style="font-size: 1rem;">{settlement_probability.split()[0]}</div>
+      <div style="background: #fafaf9; padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid #e7e5e4;">
+        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Settlement Probability</div>
+        <div style="font-family: Georgia, serif; font-size: 1rem; font-weight: 700; color: #0a2540;">{settlement_probability.split()[0]}</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Affected Accounts</div>
-        <div class="stat-value">{account_count}</div>
+      <div style="background: #fafaf9; padding: 1rem; border-radius: 8px; text-align: center; border: 1px solid #e7e5e4;">
+        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">Affected Accounts</div>
+        <div style="font-family: Georgia, serif; font-size: 1.75rem; font-weight: 700; color: #0a2540;">{account_count}</div>
       </div>
     </div>
 
-    <div class="value-card">
-      <h3>ESTIMATED CASE VALUE</h3>
-      <div class="value-amount">${settlement_target // 1000}K</div>
-      <div class="value-range">Settlement Range: ${settlement_min:,} - ${settlement_max:,}</div>
+    <!-- VALUE CARD WITH INLINE STYLES -->
+    <div style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); background-color: #0d9488; color: white; padding: 1.5rem; border-radius: 12px; text-align: center; margin: 1.5rem 0;">
+      <h3 style="font-size: 0.875rem; margin-bottom: 0.5rem; opacity: 0.9;">ESTIMATED CASE VALUE</h3>
+      <div style="font-family: Georgia, serif; font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0;">${settlement_target // 1000}K</div>
+      <div style="font-size: 0.875rem; opacity: 0.9;">Settlement Range: ${settlement_min:,} - ${settlement_max:,}</div>
     </div>
 
     <p style="margin: 1.5rem 0;">
@@ -1034,10 +863,11 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
       <li style="margin-bottom: 0.5rem;">Track progress through your client portal</li>
     </ol>
 
-    <div class="cta-section">
-      <p><strong>Ready to fix your credit report?</strong></p>
-      <p style="font-size: 0.875rem; margin-top: 0.5rem;">Reply to this email or click below to approve and proceed.</p>
-      <a href="mailto:support@brightpathascend.com?subject=APPROVED%20-%20Case%20{case_number}" class="cta-button">
+    <!-- CTA SECTION WITH INLINE STYLES -->
+    <div style="background: #fafaf9; padding: 1.5rem; border-radius: 8px; text-align: center; margin: 1.5rem 0;">
+      <p style="margin: 0; padding: 0;"><strong>Ready to fix your credit report?</strong></p>
+      <p style="font-size: 0.875rem; margin-top: 0.5rem; padding: 0;">Reply to this email or click below to approve and proceed.</p>
+      <a href="mailto:support@brightpathascend.com?subject=APPROVED%20-%20Case%20{case_number}" style="display: inline-block; background: #0d9488; background-color: #0d9488; color: white; padding: 0.875rem 2rem; border-radius: 6px; text-decoration: none; font-weight: 600; margin-top: 1rem;">
         Reply APPROVED
       </a>
     </div>
@@ -1047,9 +877,10 @@ def generate_client_email_html(analysis, violations, standing, damages, case_sco
     </p>
   </div>
 
-  <div class="email-footer">
-    <div class="footer-brand">Brightpath Ascend Group</div>
-    <div class="footer-disclaimer">
+  <!-- FOOTER WITH INLINE STYLES (ISSUE #3 FIX) -->
+  <div style="background: #0a2540; background-color: #0a2540; color: white; padding: 1.5rem 2rem; text-align: center; font-size: 0.875rem;">
+    <div style="font-family: Georgia, serif; font-size: 1.125rem; margin-bottom: 0.5rem;">Brightpath Ascend Group</div>
+    <div style="opacity: 0.8; font-size: 0.75rem; margin-top: 0.5rem;">
       Confidential | Case: {case_number}
     </div>
   </div>
