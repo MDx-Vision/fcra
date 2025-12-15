@@ -4247,6 +4247,85 @@ def dashboard():
     finally:
         db.close()
 
+@app.route('/dashboard/analyses')
+@require_staff()
+def analyses_page():
+    """Case analyses management page"""
+    db = get_db()
+    try:
+        # Get all clients with their latest analysis
+        from sqlalchemy import func, outerjoin
+        
+        clients = db.query(Client).all()
+        all_clients = [{'id': c.id, 'name': c.name, 'email': c.email} for c in clients]
+        
+        # Build analyses list
+        analyses = []
+        for client in clients:
+            # Get latest analysis for this client
+            analysis = db.query(Analysis).filter_by(client_id=client.id).order_by(Analysis.created_at.desc()).first()
+            
+            item = {
+                'client_id': client.id,
+                'client_name': client.name,
+                'client_email': client.email,
+                'analysis_id': None,
+                'stage': 0,
+                'violation_count': 0,
+                'case_score': None,
+                'settlement_target': None,
+                'created_at': None
+            }
+            
+            if analysis:
+                item['analysis_id'] = analysis.id
+                item['stage'] = analysis.stage or 1
+                item['created_at'] = analysis.created_at
+                
+                # Get violation count
+                violation_count = db.query(Violation).filter_by(analysis_id=analysis.id).count()
+                item['violation_count'] = violation_count
+                
+                # Get case score
+                case_score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
+                if case_score:
+                    item['case_score'] = case_score.total_score
+                
+                # Get damages
+                damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
+                if damages:
+                    item['settlement_target'] = damages.settlement_target
+            
+            analyses.append(item)
+        
+        # Sort by stage (pending first) then by date
+        analyses.sort(key=lambda x: (-(x['stage'] or 0) if x['stage'] == 1 else x['stage'] or 0, x['created_at'] or datetime.min), reverse=True)
+        
+        # Calculate stats
+        total = len([a for a in analyses if a['analysis_id']])
+        pending = len([a for a in analyses if a['stage'] == 1])
+        complete = len([a for a in analyses if a['stage'] == 2])
+        none_count = len([a for a in analyses if a['stage'] == 0])
+        total_value = sum(a['settlement_target'] or 0 for a in analyses)
+        
+        stats = {
+            'total': total,
+            'pending': pending,
+            'complete': complete,
+            'none': none_count,
+            'total_value': total_value
+        }
+        
+        return render_template('analyses.html', 
+                             analyses=analyses, 
+                             all_clients=all_clients,
+                             stats=stats,
+                             active_page='analyses')
+    finally:
+        db.close()
+
+
+
 
 @app.route('/dashboard/analytics')
 @require_staff()

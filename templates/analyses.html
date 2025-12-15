@@ -1,0 +1,281 @@
+{% extends "dashboard.html" %}
+{% block title %}Case Analyses - Brightpath Ascend{% endblock %}
+
+{% block dashboard_content %}
+<style>
+:root{--brand-teal:#0d9488;--brand-teal-dark:#0f766e;--brand-navy:#1e3a5f;--brand-navy-dark:#0a2540;--text-primary:#1a1a2e;--text-muted:#718096;--bg-cream:#faf9f7;--border-subtle:#e8e6e3}
+.analyses-page{background:var(--bg-cream);min-height:100vh;padding:30px}
+.page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
+.page-header h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:600;color:var(--brand-navy-dark)}
+.btn-new{background:linear-gradient(135deg,var(--brand-teal),var(--brand-teal-dark));color:#fff;padding:14px 28px;border-radius:8px;border:none;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(13,148,136,.3);transition:.2s}
+.btn-new:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(13,148,136,.4)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:30px}
+.stat-card{background:#fff;padding:24px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted)}
+.stat-card .value{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--brand-navy-dark);margin-top:8px}
+.stat-card .value.teal{color:var(--brand-teal)}
+.stat-card .value.warning{color:#d97706}
+.stat-card .value.success{color:#059669}
+.controls-bar{display:flex;gap:16px;margin-bottom:24px;align-items:center}
+.search-input{flex:1;max-width:400px;padding:12px 16px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;background:#fff}
+.search-input:focus{outline:none;border-color:var(--brand-teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.filter-tabs{display:flex;gap:8px}
+.filter-tab{padding:10px 20px;border-radius:20px;border:1px solid var(--border-subtle);background:#fff;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-primary);transition:.2s}
+.filter-tab:hover{border-color:var(--brand-teal);color:var(--brand-teal)}
+.filter-tab.active{background:var(--brand-navy-dark);color:#fff;border-color:var(--brand-navy-dark)}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden}
+.card-header{background:var(--brand-navy);padding:16px 24px;display:flex;align-items:center;gap:12px}
+.card-header h2{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:#fff;margin:0}
+.analyses-table{width:100%;border-collapse:collapse}
+.analyses-table th{background:var(--bg-cream);padding:14px 20px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-muted);border-bottom:2px solid var(--border-subtle)}
+.analyses-table td{padding:16px 20px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+.analyses-table tr:hover{background:var(--bg-cream)}
+.client-cell .name{font-weight:600;color:var(--brand-navy-dark);text-decoration:none;display:block}
+.client-cell .name:hover{color:var(--brand-teal)}
+.client-cell .email{font-size:12px;color:var(--text-muted);margin-top:2px}
+.stage-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600}
+.stage-0{background:#f1f5f9;color:#64748b}
+.stage-1{background:#fef3c7;color:#92400e}
+.stage-2{background:#d1fae5;color:#065f46}
+.score-cell{font-family:'Playfair Display',serif;font-size:20px;font-weight:700}
+.score-high{color:#059669}
+.score-med{color:#d97706}
+.score-low{color:#dc2626}
+.value-cell{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--brand-teal)}
+.date-cell{font-size:13px;color:var(--text-muted)}
+.action-btn{padding:8px 16px;border-radius:6px;border:1px solid var(--border-subtle);background:#fff;font-size:12px;font-weight:600;cursor:pointer;margin-right:8px;transition:.2s}
+.action-btn:hover{border-color:var(--brand-teal);color:var(--brand-teal)}
+.action-btn.primary{background:linear-gradient(135deg,var(--brand-teal),var(--brand-teal-dark));color:#fff;border:none;box-shadow:0 2px 8px rgba(13,148,136,.3)}
+.action-btn.primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(13,148,136,.4)}
+.empty-state{text-align:center;padding:80px 20px}
+.empty-state h3{font-family:'Playfair Display',serif;font-size:24px;color:var(--brand-navy-dark);margin-bottom:12px}
+.empty-state p{color:var(--text-muted);margin-bottom:24px}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,37,64,.6);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.active{display:flex}
+.modal{background:#fff;border-radius:16px;padding:40px;width:100%;max-width:480px;box-shadow:0 25px 80px rgba(0,0,0,.25)}
+.modal h2{font-family:'Playfair Display',serif;font-size:28px;color:var(--brand-navy-dark);margin-bottom:8px}
+.modal .subtitle{color:var(--text-muted);margin-bottom:32px}
+.form-field{margin-bottom:24px}
+.form-field label{display:block;font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:8px}
+.form-field input,.form-field select{width:100%;padding:14px 16px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;transition:.2s}
+.form-field input:focus,.form-field select:focus{outline:none;border-color:var(--brand-teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:32px;padding-top:24px;border-top:1px solid var(--border-subtle)}
+</style>
+
+<div class="analyses-page">
+  <div class="page-header">
+    <h1>Case Analyses</h1>
+    <button class="btn-new" onclick="openNewAnalysis()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New Analysis
+    </button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Total Cases</div>
+      <div class="value">{{ stats.total }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Pending Review</div>
+      <div class="value warning">{{ stats.pending }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Completed</div>
+      <div class="value success">{{ stats.complete }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total Pipeline Value</div>
+      <div class="value teal">${{ "{:,.0f}".format(stats.total_value) }}</div>
+    </div>
+  </div>
+
+  <div class="controls-bar">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search clients..." onkeyup="filterTable()">
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All</button>
+      <button class="filter-tab" data-filter="0" onclick="setFilter('0')">No Analysis</button>
+      <button class="filter-tab" data-filter="1" onclick="setFilter('1')">Stage 1</button>
+      <button class="filter-tab" data-filter="2" onclick="setFilter('2')">Complete</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <h2>All Cases</h2>
+    </div>
+    <table class="analyses-table">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Stage</th>
+          <th>Violations</th>
+          <th>Score</th>
+          <th>Est. Value</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="analysesBody">
+        {% for item in analyses %}
+        <tr data-stage="{{ item.stage or 0 }}" data-name="{{ item.client_name|lower }}">
+          <td class="client-cell">
+            <a href="/dashboard/contacts?search={{ item.client_name|urlencode }}" class="name">{{ item.client_name }}</a>
+            {% if item.client_email %}<div class="email">{{ item.client_email }}</div>{% endif %}
+          </td>
+          <td>
+            {% if item.stage == 2 %}
+            <span class="stage-badge stage-2">✓ Complete</span>
+            {% elif item.stage == 1 %}
+            <span class="stage-badge stage-1">⏳ Pending</span>
+            {% else %}
+            <span class="stage-badge stage-0">○ None</span>
+            {% endif %}
+          </td>
+          <td>{% if item.violation_count %}<strong>{{ item.violation_count }}</strong>{% else %}—{% endif %}</td>
+          <td class="score-cell {% if item.case_score >= 7 %}score-high{% elif item.case_score >= 5 %}score-med{% else %}score-low{% endif %}">
+            {% if item.case_score %}{{ item.case_score }}/10{% else %}—{% endif %}
+          </td>
+          <td class="value-cell">{% if item.settlement_target %}${{ "{:,.0f}".format(item.settlement_target) }}{% else %}—{% endif %}</td>
+          <td class="date-cell">{% if item.created_at %}{{ item.created_at.strftime('%b %d, %Y') }}{% else %}—{% endif %}</td>
+          <td>
+            {% if item.analysis_id %}
+            <a href="/analysis/{{ item.analysis_id }}/review" class="action-btn primary">Review</a>
+            {% if item.stage == 1 %}
+            <button class="action-btn" onclick="approveAnalysis({{ item.analysis_id }})">Approve</button>
+            {% endif %}
+            {% else %}
+            <button class="action-btn primary" onclick="runAnalysis({{ item.client_id }})">Analyze</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <h3>No cases yet</h3>
+              <p>Upload a credit report to start your first analysis</p>
+              <button class="btn-new" onclick="openNewAnalysis()">New Analysis</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- New Analysis Modal -->
+<div class="modal-overlay" id="newAnalysisModal">
+  <div class="modal">
+    <h2>New Analysis</h2>
+    <p class="subtitle">Upload a credit report to identify FCRA violations</p>
+    <form id="newAnalysisForm" onsubmit="submitNewAnalysis(event)">
+      <div class="form-field">
+        <label>Client</label>
+        <select id="clientSelect" required>
+          <option value="">Select existing client...</option>
+          <option value="new">+ Create New Client</option>
+          {% for client in all_clients %}
+          <option value="{{ client.id }}">{{ client.name }}{% if client.email %} ({{ client.email }}){% endif %}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div id="newClientFields" style="display:none">
+        <div class="form-field">
+          <label>Client Name</label>
+          <input type="text" id="newClientName" placeholder="Full legal name">
+        </div>
+        <div class="form-field">
+          <label>Email Address</label>
+          <input type="email" id="newClientEmail" placeholder="client@email.com">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Credit Report File</label>
+        <input type="file" id="creditReport" accept=".pdf,.html,.htm" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="action-btn" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="action-btn primary">Start Analysis</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function setFilter(stage) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-filter="${stage}"]`).classList.add('active');
+  document.querySelectorAll('#analysesBody tr').forEach(row => {
+    if (stage === 'all' || row.dataset.stage === stage) row.style.display = '';
+    else row.style.display = 'none';
+  });
+}
+
+function filterTable() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  document.querySelectorAll('#analysesBody tr').forEach(row => {
+    row.style.display = (row.dataset.name || '').includes(search) ? '' : 'none';
+  });
+}
+
+function openNewAnalysis() { document.getElementById('newAnalysisModal').classList.add('active'); }
+function closeModal() { document.getElementById('newAnalysisModal').classList.remove('active'); }
+
+document.getElementById('clientSelect').addEventListener('change', function() {
+  document.getElementById('newClientFields').style.display = this.value === 'new' ? 'block' : 'none';
+});
+
+async function submitNewAnalysis(e) {
+  e.preventDefault();
+  const clientId = document.getElementById('clientSelect').value;
+  const file = document.getElementById('creditReport').files[0];
+  if (!file) { alert('Please upload a credit report'); return; }
+  
+  let targetClientId = clientId;
+  if (clientId === 'new') {
+    const name = document.getElementById('newClientName').value;
+    const email = document.getElementById('newClientEmail').value;
+    if (!name) { alert('Please enter client name'); return; }
+    const resp = await fetch('/api/clients', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, email})
+    });
+    const data = await resp.json();
+    if (data.success) targetClientId = data.client_id;
+    else { alert('Error: ' + data.error); return; }
+  }
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('client_id', targetClientId);
+  
+  closeModal();
+  alert('Starting analysis... This may take 1-2 minutes.');
+  
+  const resp = await fetch('/api/analyze-credit-report', { method: 'POST', body: formData });
+  const data = await resp.json();
+  if (data.success) window.location.href = `/analysis/${data.analysis_id}/review`;
+  else alert('Error: ' + data.error);
+}
+
+async function runAnalysis(clientId) {
+  if (!confirm('Run analysis for this client?')) return;
+  const resp = await fetch(`/api/client/${clientId}/analyze`, {method: 'POST'});
+  const data = await resp.json();
+  if (data.success) window.location.href = `/analysis/${data.analysis_id}/review`;
+  else alert('Error: ' + data.error);
+}
+
+async function approveAnalysis(analysisId) {
+  if (!confirm('Approve and generate documents?')) return;
+  const resp = await fetch(`/api/approve/${analysisId}`, {method: 'POST'});
+  const data = await resp.json();
+  if (data.success) { alert('Documents generated!'); location.reload(); }
+  else alert('Error: ' + data.error);
+}
+</script>
+{% endblock %}
