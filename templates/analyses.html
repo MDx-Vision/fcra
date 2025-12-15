@@ -1,9 +1,16 @@
-{% extends "dashboard.html" %}
-{% block title %}Case Analyses - Brightpath Ascend{% endblock %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Analyses - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-{% block dashboard_content %}
-<style>
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+
+    <style>
 :root{--brand-teal:#0d9488;--brand-teal-dark:#0f766e;--brand-navy:#1e3a5f;--brand-navy-dark:#0a2540;--text-primary:#1a1a2e;--text-muted:#718096;--bg-cream:#faf9f7;--border-subtle:#e8e6e3}
+body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#f0f2f5;min-height:100vh}
 .analyses-page{background:var(--bg-cream);min-height:100vh;padding:30px}
 .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
 .page-header h1{font-family:'Playfair Display',serif;font-size:32px;font-weight:600;color:var(--brand-navy-dark)}
@@ -60,222 +67,242 @@
 .form-field input,.form-field select{width:100%;padding:14px 16px;border:1px solid var(--border-subtle);border-radius:8px;font-size:14px;transition:.2s}
 .form-field input:focus,.form-field select:focus{outline:none;border-color:var(--brand-teal);box-shadow:0 0 0 3px rgba(13,148,136,.1)}
 .modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:32px;padding-top:24px;border-top:1px solid var(--border-subtle)}
-</style>
 
-<div class="analyses-page">
-  <div class="page-header">
-    <h1>Case Analyses</h1>
-    <button class="btn-new" onclick="openNewAnalysis()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      New Analysis
-    </button>
-  </div>
+@media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .page-header { flex-direction: column; gap: 15px; align-items: flex-start; }
+    .controls-bar { flex-direction: column; align-items: stretch; }
+    .search-input { max-width: 100%; }
+}
+@media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+    .analyses-page { padding: 15px; }
+}
+    </style>
+</head>
+<body>
+    {% set active_page = 'analyses' %}
+    {% include 'includes/dashboard_sidebar.html' %}
 
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="label">Total Cases</div>
-      <div class="value">{{ stats.total }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Pending Review</div>
-      <div class="value warning">{{ stats.pending }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Completed</div>
-      <div class="value success">{{ stats.complete }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="label">Total Pipeline Value</div>
-      <div class="value teal">${{ "{:,.0f}".format(stats.total_value) }}</div>
-    </div>
-  </div>
-
-  <div class="controls-bar">
-    <input type="text" class="search-input" id="searchInput" placeholder="Search clients..." onkeyup="filterTable()">
-    <div class="filter-tabs">
-      <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All</button>
-      <button class="filter-tab" data-filter="0" onclick="setFilter('0')">No Analysis</button>
-      <button class="filter-tab" data-filter="1" onclick="setFilter('1')">Stage 1</button>
-      <button class="filter-tab" data-filter="2" onclick="setFilter('2')">Complete</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <h2>All Cases</h2>
-    </div>
-    <table class="analyses-table">
-      <thead>
-        <tr>
-          <th>Client</th>
-          <th>Stage</th>
-          <th>Violations</th>
-          <th>Score</th>
-          <th>Est. Value</th>
-          <th>Created</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="analysesBody">
-        {% for item in analyses %}
-        <tr data-stage="{{ item.stage or 0 }}" data-name="{{ item.client_name|lower }}">
-          <td class="client-cell">
-            <a href="/dashboard/contacts?search={{ item.client_name|urlencode }}" class="name">{{ item.client_name }}</a>
-            {% if item.client_email %}<div class="email">{{ item.client_email }}</div>{% endif %}
-          </td>
-          <td>
-            {% if item.stage == 2 %}
-            <span class="stage-badge stage-2">✓ Complete</span>
-            {% elif item.stage == 1 %}
-            <span class="stage-badge stage-1">⏳ Pending</span>
-            {% else %}
-            <span class="stage-badge stage-0">○ None</span>
-            {% endif %}
-          </td>
-          <td>{% if item.violation_count %}<strong>{{ item.violation_count }}</strong>{% else %}—{% endif %}</td>
-          <td class="score-cell {% if item.case_score >= 7 %}score-high{% elif item.case_score >= 5 %}score-med{% else %}score-low{% endif %}">
-            {% if item.case_score %}{{ item.case_score }}/10{% else %}—{% endif %}
-          </td>
-          <td class="value-cell">{% if item.settlement_target %}${{ "{:,.0f}".format(item.settlement_target) }}{% else %}—{% endif %}</td>
-          <td class="date-cell">{% if item.created_at %}{{ item.created_at.strftime('%b %d, %Y') }}{% else %}—{% endif %}</td>
-          <td>
-            {% if item.analysis_id %}
-            <a href="/analysis/{{ item.analysis_id }}/review" class="action-btn primary">Review</a>
-            {% if item.stage == 1 %}
-            <button class="action-btn" onclick="approveAnalysis({{ item.analysis_id }})">Approve</button>
-            {% endif %}
-            {% else %}
-            <button class="action-btn primary" onclick="runAnalysis({{ item.client_id }})">Analyze</button>
-            {% endif %}
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="7">
-            <div class="empty-state">
-              <h3>No cases yet</h3>
-              <p>Upload a credit report to start your first analysis</p>
-              <button class="btn-new" onclick="openNewAnalysis()">New Analysis</button>
+    <main class="main-content">
+        <div class="analyses-page">
+            <div class="page-header">
+                <h1>Case Analyses</h1>
+                <button class="btn-new" onclick="openNewAnalysis()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Analysis
+                </button>
             </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
 
-<!-- New Analysis Modal -->
-<div class="modal-overlay" id="newAnalysisModal">
-  <div class="modal">
-    <h2>New Analysis</h2>
-    <p class="subtitle">Upload a credit report to identify FCRA violations</p>
-    <form id="newAnalysisForm" onsubmit="submitNewAnalysis(event)">
-      <div class="form-field">
-        <label>Client</label>
-        <select id="clientSelect" required>
-          <option value="">Select existing client...</option>
-          <option value="new">+ Create New Client</option>
-          {% for client in all_clients %}
-          <option value="{{ client.id }}">{{ client.name }}{% if client.email %} ({{ client.email }}){% endif %}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div id="newClientFields" style="display:none">
-        <div class="form-field">
-          <label>Client Name</label>
-          <input type="text" id="newClientName" placeholder="Full legal name">
-        </div>
-        <div class="form-field">
-          <label>Email Address</label>
-          <input type="email" id="newClientEmail" placeholder="client@email.com">
-        </div>
-      </div>
-      <div class="form-field">
-        <label>Credit Report File</label>
-        <input type="file" id="creditReport" accept=".pdf,.html,.htm" required>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="action-btn" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="action-btn primary">Start Analysis</button>
-      </div>
-    </form>
-  </div>
-</div>
+            {% if stats is defined %}
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">Total Cases</div>
+                    <div class="value">{{ stats.total }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Pending Review</div>
+                    <div class="value warning">{{ stats.pending }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Completed</div>
+                    <div class="value success">{{ stats.complete }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Pipeline Value</div>
+                    <div class="value teal">${{ "{:,.0f}".format(stats.total_value) }}</div>
+                </div>
+            </div>
+            {% endif %}
 
-<script>
+            <div class="controls-bar">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search clients..." onkeyup="filterTable()">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">All</button>
+                    <button class="filter-tab" data-filter="0" onclick="setFilter('0')">No Analysis</button>
+                    <button class="filter-tab" data-filter="1" onclick="setFilter('1')">Stage 1</button>
+                    <button class="filter-tab" data-filter="2" onclick="setFilter('2')">Complete</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <h2>All Cases</h2>
+                </div>
+                <table class="analyses-table">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Stage</th>
+                            <th>Violations</th>
+                            <th>Score</th>
+                            <th>Est. Value</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysesBody">
+                        {% for item in analyses %}
+                        <tr data-stage="{{ item.stage or 0 }}" data-name="{{ item.client_name|lower }}">
+                            <td class="client-cell">
+                                <a href="/dashboard/contacts?search={{ item.client_name|urlencode }}" class="name">{{ item.client_name }}</a>
+                                {% if item.client_email %}<div class="email">{{ item.client_email }}</div>{% endif %}
+                            </td>
+                            <td>
+                                {% if item.stage == 2 %}
+                                <span class="stage-badge stage-2">✓ Complete</span>
+                                {% elif item.stage == 1 %}
+                                <span class="stage-badge stage-1">⏳ Pending</span>
+                                {% else %}
+                                <span class="stage-badge stage-0">○ None</span>
+                                {% endif %}
+                            </td>
+                            <td>{% if item.violation_count %}<strong>{{ item.violation_count }}</strong>{% else %}—{% endif %}</td>
+                            <td class="score-cell {% if item.case_score >= 7 %}score-high{% elif item.case_score >= 5 %}score-med{% else %}score-low{% endif %}">
+                                {% if item.case_score %}{{ item.case_score }}/10{% else %}—{% endif %}
+                            </td>
+                            <td class="value-cell">{% if item.settlement_target %}${{ "{:,.0f}".format(item.settlement_target) }}{% else %}—{% endif %}</td>
+                            <td class="date-cell">{% if item.created_at %}{{ item.created_at.strftime('%b %d, %Y') }}{% else %}—{% endif %}</td>
+                            <td>
+                                {% if item.analysis_id %}
+                                <a href="/analysis/{{ item.analysis_id }}/review" class="action-btn primary">Review</a>
+                                {% if item.stage == 1 %}
+                                <button class="action-btn" onclick="approveAnalysis({{ item.analysis_id }})">Approve</button>
+                                {% endif %}
+                                {% else %}
+                                <button class="action-btn primary" onclick="runAnalysis({{ item.client_id }})">Analyze</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <h3>No cases yet</h3>
+                                    <p>Upload a credit report to start your first analysis</p>
+                                    <button class="btn-new" onclick="openNewAnalysis()">New Analysis</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Analysis Modal -->
+    <div class="modal-overlay" id="newAnalysisModal">
+        <div class="modal">
+            <h2>New Analysis</h2>
+            <p class="subtitle">Upload a credit report to identify FCRA violations</p>
+            <form id="newAnalysisForm" onsubmit="submitNewAnalysis(event)">
+                <div class="form-field">
+                    <label>Client</label>
+                    <select id="clientSelect" required>
+                        <option value="">Select existing client...</option>
+                        <option value="new">+ Create New Client</option>
+                        {% for client in all_clients %}
+                        <option value="{{ client.id }}">{{ client.name }}{% if client.email %} ({{ client.email }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="newClientFields" style="display:none">
+                    <div class="form-field">
+                        <label>Client Name</label>
+                        <input type="text" id="newClientName" placeholder="Full legal name">
+                    </div>
+                    <div class="form-field">
+                        <label>Email Address</label>
+                        <input type="email" id="newClientEmail" placeholder="client@email.com">
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>Credit Report File</label>
+                    <input type="file" id="creditReport" accept=".pdf,.html,.htm" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="action-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="action-btn primary">Start Analysis</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
 function setFilter(stage) {
-  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector(`[data-filter="${stage}"]`).classList.add('active');
-  document.querySelectorAll('#analysesBody tr').forEach(row => {
-    if (stage === 'all' || row.dataset.stage === stage) row.style.display = '';
-    else row.style.display = 'none';
-  });
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector(`[data-filter="${stage}"]`).classList.add('active');
+    document.querySelectorAll('#analysesBody tr').forEach(row => {
+        if (stage === 'all' || row.dataset.stage === stage) row.style.display = '';
+        else row.style.display = 'none';
+    });
 }
 
 function filterTable() {
-  const search = document.getElementById('searchInput').value.toLowerCase();
-  document.querySelectorAll('#analysesBody tr').forEach(row => {
-    row.style.display = (row.dataset.name || '').includes(search) ? '' : 'none';
-  });
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#analysesBody tr').forEach(row => {
+        row.style.display = (row.dataset.name || '').includes(search) ? '' : 'none';
+    });
 }
 
 function openNewAnalysis() { document.getElementById('newAnalysisModal').classList.add('active'); }
 function closeModal() { document.getElementById('newAnalysisModal').classList.remove('active'); }
 
 document.getElementById('clientSelect').addEventListener('change', function() {
-  document.getElementById('newClientFields').style.display = this.value === 'new' ? 'block' : 'none';
+    document.getElementById('newClientFields').style.display = this.value === 'new' ? 'block' : 'none';
 });
 
 async function submitNewAnalysis(e) {
-  e.preventDefault();
-  const clientId = document.getElementById('clientSelect').value;
-  const file = document.getElementById('creditReport').files[0];
-  if (!file) { alert('Please upload a credit report'); return; }
-  
-  let targetClientId = clientId;
-  if (clientId === 'new') {
-    const name = document.getElementById('newClientName').value;
-    const email = document.getElementById('newClientEmail').value;
-    if (!name) { alert('Please enter client name'); return; }
-    const resp = await fetch('/api/clients', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({name, email})
-    });
+    e.preventDefault();
+    const clientId = document.getElementById('clientSelect').value;
+    const file = document.getElementById('creditReport').files[0];
+    if (!file) { alert('Please upload a credit report'); return; }
+
+    let targetClientId = clientId;
+    if (clientId === 'new') {
+        const name = document.getElementById('newClientName').value;
+        const email = document.getElementById('newClientEmail').value;
+        if (!name) { alert('Please enter client name'); return; }
+        const resp = await fetch('/api/clients', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, email})
+        });
+        const data = await resp.json();
+        if (data.success) targetClientId = data.client_id;
+        else { alert('Error: ' + data.error); return; }
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('client_id', targetClientId);
+
+    closeModal();
+    alert('Starting analysis... This may take 1-2 minutes.');
+
+    const resp = await fetch('/api/analyze-credit-report', { method: 'POST', body: formData });
     const data = await resp.json();
-    if (data.success) targetClientId = data.client_id;
-    else { alert('Error: ' + data.error); return; }
-  }
-  
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('client_id', targetClientId);
-  
-  closeModal();
-  alert('Starting analysis... This may take 1-2 minutes.');
-  
-  const resp = await fetch('/api/analyze-credit-report', { method: 'POST', body: formData });
-  const data = await resp.json();
-  if (data.success) window.location.href = `/analysis/${data.analysis_id}/review`;
-  else alert('Error: ' + data.error);
+    if (data.success) window.location.href = `/analysis/${data.analysis_id}/review`;
+    else alert('Error: ' + data.error);
 }
 
 async function runAnalysis(clientId) {
-  if (!confirm('Run analysis for this client?')) return;
-  const resp = await fetch(`/api/client/${clientId}/analyze`, {method: 'POST'});
-  const data = await resp.json();
-  if (data.success) window.location.href = `/analysis/${data.analysis_id}/review`;
-  else alert('Error: ' + data.error);
+    if (!confirm('Run analysis for this client?')) return;
+    const resp = await fetch(`/api/client/${clientId}/analyze`, {method: 'POST'});
+    const data = await resp.json();
+    if (data.success) window.location.href = `/analysis/${data.analysis_id}/review`;
+    else alert('Error: ' + data.error);
 }
 
 async function approveAnalysis(analysisId) {
-  if (!confirm('Approve and generate documents?')) return;
-  const resp = await fetch(`/api/approve/${analysisId}`, {method: 'POST'});
-  const data = await resp.json();
-  if (data.success) { alert('Documents generated!'); location.reload(); }
-  else alert('Error: ' + data.error);
+    if (!confirm('Approve and generate documents?')) return;
+    const resp = await fetch(`/api/approve/${analysisId}`, {method: 'POST'});
+    const data = await resp.json();
+    if (data.success) { alert('Documents generated!'); location.reload(); }
+    else alert('Error: ' + data.error);
 }
-</script>
-{% endblock %}
+    </script>
+</body>
+</html>
