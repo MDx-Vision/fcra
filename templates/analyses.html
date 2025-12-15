@@ -159,7 +159,7 @@ body{margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,san
                                 {% endif %}
                             </td>
                             <td>{% if item.violation_count %}<strong>{{ item.violation_count }}</strong>{% else %}—{% endif %}</td>
-                            <td class="score-cell {% if item.case_score >= 7 %}score-high{% elif item.case_score >= 5 %}score-med{% else %}score-low{% endif %}">
+                            <td class="score-cell {% if item.case_score and item.case_score >= 7 %}score-high{% elif item.case_score and item.case_score >= 5 %}score-med{% elif item.case_score %}score-low{% endif %}">
                                 {% if item.case_score %}{{ item.case_score }}/10{% else %}—{% endif %}
                             </td>
                             <td class="value-cell">{% if item.settlement_target %}${{ "{:,.0f}".format(item.settlement_target) }}{% else %}—{% endif %}</td>
