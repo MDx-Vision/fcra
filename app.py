@@ -4313,7 +4313,14 @@ def analyses_page():
             'pending': pending,
             'complete': complete,
             'none': none_count,
-            'total_value': total_value
+            'total_value': total_value,
+            # Required by dashboard.html base template
+            'total_exposure': total_value,
+            'active_cases': total,
+            'new_this_week': 0,
+            'avg_score': 0,
+            'high_score_cases': 0,
+            'pending_review': pending
         }
         
         return render_template('analyses.html', 
