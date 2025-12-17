@@ -1,0 +1,334 @@
+{% extends "staff/base_staff.html" %}
+
+{% block title %}Signups{% endblock %}
+
+{% block extra_css %}
+<style>
+    .signup-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+        margin-bottom: 16px;
+        transition: all 0.2s;
+    }
+
+    .signup-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .signup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .signup-name {
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        font-size: 15px;
+    }
+
+    .signup-email {
+        font-size: 13px;
+        color: var(--apple-gray-500);
+        margin-top: 2px;
+    }
+
+    .signup-plan {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .plan-standard { background: rgba(13, 148, 136, 0.1); color: var(--apple-teal); }
+    .plan-premium { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+    .plan-enterprise { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+    .plan-free { background: var(--apple-gray-100); color: var(--apple-gray-600); }
+    .plan-unknown { background: var(--apple-gray-100); color: var(--apple-gray-500); }
+
+    .signup-details {
+        display: flex;
+        gap: 24px;
+        font-size: 13px;
+        color: var(--apple-gray-600);
+        flex-wrap: wrap;
+    }
+
+    .signup-detail {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .signup-detail strong {
+        color: var(--apple-navy-dark);
+    }
+
+    .signup-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--apple-gray-100);
+    }
+
+    .payment-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .payment-paid { background: rgba(5, 150, 105, 0.1); color: var(--apple-green); }
+    .payment-pending { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+    .payment-failed { background: rgba(220, 38, 38, 0.1); color: var(--apple-red); }
+
+    .contacted-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(13, 148, 136, 0.1);
+        color: var(--apple-teal);
+    }
+
+    .section-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .section-count {
+        background: var(--apple-gray-100);
+        color: var(--apple-gray-600);
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .draft-section {
+        margin-bottom: 32px;
+    }
+
+    .draft-card {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border: 1px solid #fcd34d;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--apple-gray-500);
+    }
+
+    .amount {
+        font-family: var(--font-display);
+        font-weight: 600;
+        color: var(--apple-green);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Signups & Payments</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Manage new signups and track payment status</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <a href="/dashboard/signups" class="btn btn-secondary" target="_blank">Old View</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card" style="background: linear-gradient(135deg, var(--apple-green) 0%, #10b981 100%); color: white;">
+        <div class="stat-label" style="color: rgba(255,255,255,0.8);">Total Revenue</div>
+        <div class="stat-value" style="color: white;">${{ "{:,.0f}".format(stats.total_revenue) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Paid Clients</div>
+        <div class="stat-value">{{ stats.paid_count }}</div>
+        <div class="stat-change">+{{ stats.paid_this_week }} this week</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white;">
+        <div class="stat-label" style="color: rgba(255,255,255,0.8);">Pending</div>
+        <div class="stat-value" style="color: white;">{{ stats.pending_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Failed Payments</div>
+        <div class="stat-value" style="color: var(--apple-red);">{{ stats.failed_count }}</div>
+    </div>
+</div>
+
+<div class="sub-filters">
+    <a href="{{ url_for('staff_portal.signups') }}" class="sub-filter {% if filter == 'all' or not filter %}active{% endif %}">
+        All ({{ counts.all }})
+    </a>
+    <a href="{{ url_for('staff_portal.signups', status='paid') }}" class="sub-filter {% if filter == 'paid' %}active{% endif %}">
+        Paid ({{ counts.paid }})
+    </a>
+    <a href="{{ url_for('staff_portal.signups', status='pending') }}" class="sub-filter {% if filter == 'pending' %}active{% endif %}">
+        Pending ({{ counts.pending }})
+    </a>
+    <a href="{{ url_for('staff_portal.signups', status='failed') }}" class="sub-filter {% if filter == 'failed' %}active{% endif %}">
+        Failed ({{ counts.failed }})
+    </a>
+    <a href="{{ url_for('staff_portal.signups', status='free') }}" class="sub-filter {% if filter == 'free' %}active{% endif %}">
+        Free ({{ counts.free }})
+    </a>
+</div>
+
+{% if drafts and (filter == 'all' or filter == 'pending' or not filter) %}
+<div class="draft-section">
+    <h2 class="section-title">
+        Pending Payment Drafts
+        <span class="section-count">{{ drafts|length }}</span>
+    </h2>
+
+    {% for draft in drafts %}
+    <div class="signup-card draft-card">
+        <div class="signup-header">
+            <div>
+                <div class="signup-name">{{ draft.client_name or 'Unknown' }}</div>
+                <div class="signup-email">{{ draft.client_email or 'No email' }}</div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                {% if draft.contacted %}
+                <span class="contacted-badge">Contacted</span>
+                {% endif %}
+                <span class="signup-plan plan-{{ draft.plan_tier }}">{{ draft.plan_tier }}</span>
+            </div>
+        </div>
+        <div class="signup-details">
+            <div class="signup-detail">
+                <strong>Amount:</strong>
+                <span class="amount">${{ "{:,.0f}".format(draft.plan_amount) }}</span>
+            </div>
+            <div class="signup-detail">
+                <strong>Created:</strong> {{ draft.created_at }}
+            </div>
+            <div class="signup-detail">
+                <strong>Expires:</strong> {{ draft.expires_at }}
+            </div>
+        </div>
+        <div class="signup-actions">
+            <button class="btn btn-sm btn-primary" onclick="markContacted('draft', {{ draft.id }})">
+                Mark Contacted
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="sendReminder('{{ draft.client_email }}')">
+                Send Reminder
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div>
+    <h2 class="section-title">
+        Client Signups
+        <span class="section-count">{{ clients|length }}</span>
+    </h2>
+
+    {% if clients %}
+        {% for client in clients %}
+        <div class="signup-card">
+            <div class="signup-header">
+                <div>
+                    <div class="signup-name">{{ client.name }}</div>
+                    <div class="signup-email">{{ client.email or 'No email' }}</div>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    {% if client.contacted %}
+                    <span class="contacted-badge">Contacted</span>
+                    {% endif %}
+                    <span class="payment-status payment-{{ client.payment_status }}">
+                        {{ client.payment_status|title }}
+                    </span>
+                    <span class="signup-plan plan-{{ client.signup_plan or 'unknown' }}">
+                        {{ client.signup_plan or 'N/A' }}
+                    </span>
+                </div>
+            </div>
+            <div class="signup-details">
+                <div class="signup-detail">
+                    <strong>Amount:</strong>
+                    <span class="amount">${{ "{:,.0f}".format(client.signup_amount) }}</span>
+                </div>
+                <div class="signup-detail">
+                    <strong>Payment Method:</strong> {{ client.payment_method|title }}
+                </div>
+                <div class="signup-detail">
+                    <strong>Signed Up:</strong> {{ client.created_at }}
+                </div>
+            </div>
+            <div class="signup-actions">
+                <a href="{{ url_for('staff_portal.client_detail', client_id=client.id) }}" class="btn btn-sm btn-primary">
+                    View Client
+                </a>
+                {% if client.payment_status == 'pending' %}
+                <button class="btn btn-sm btn-secondary" onclick="markContacted('client', {{ client.id }})">
+                    Mark Contacted
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">No signups found</div>
+            <p>No signups match your current filter.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function markContacted(type, id) {
+    fetch('/api/signups/mark-contacted', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ type: type, id: id })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(err => {
+        alert('Error marking as contacted');
+    });
+}
+
+function sendReminder(email) {
+    alert('Send reminder to: ' + email + '\n\nThis feature will be implemented soon.');
+}
+</script>
+{% endblock %}

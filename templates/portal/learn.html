@@ -1,0 +1,238 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'learn' %}
+{% block title %}Learn FCRA{% endblock %}
+{% block content %}
+
+<!-- Hero -->
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 24px; border: none;">
+    <h2 style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; margin: 0 0 12px 0;">Understanding Your Rights</h2>
+    <p style="font-size: 16px; opacity: 0.8; margin: 0;">Knowledge is power. Learn how federal law protects you and what we're doing to enforce those protections.</p>
+</div>
+
+<!-- Quick Stats -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+    <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px;">
+        <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">$1,000</div>
+        <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Per Violation (Statutory)</div>
+    </div>
+    <div class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px;">
+        <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">30</div>
+        <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Days to Investigate</div>
+    </div>
+    <div class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px;">
+        <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">7</div>
+        <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Years Max Reporting</div>
+    </div>
+    <div class="card animate-fade-in-up" data-delay="400" style="text-align: center; padding: 24px;">
+        <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">75%+</div>
+        <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Our Success Rate</div>
+    </div>
+</div>
+
+<!-- FCRA Overview -->
+<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;">
+    <div class="card-title">📜 The Fair Credit Reporting Act (FCRA)</div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;" class="two-col-responsive">
+        <div>
+            <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 12px 0;">What Is It?</h4>
+            <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 0;">The FCRA is a federal law passed in 1970 that regulates how your credit information is collected, shared, and used. It gives you specific rights and requires credit bureaus and data furnishers to follow strict accuracy standards.</p>
+            <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 16px 0 0 0;">When these rules are violated, you have the right to take legal action and recover damages — that's exactly what we help you do.</p>
+        </div>
+        <div>
+            <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 12px 0;">Your Core Rights</h4>
+            <ul style="color: #6b7280; padding-left: 20px; line-height: 2; margin: 0; font-size: 14px;">
+                <li><strong style="color: #1e3a5f;">Accuracy</strong> — Bureaus must maintain "maximum possible accuracy"</li>
+                <li><strong style="color: #1e3a5f;">Dispute</strong> — You can challenge any inaccurate information</li>
+                <li><strong style="color: #1e3a5f;">Investigation</strong> — Bureaus must investigate within 30 days</li>
+                <li><strong style="color: #1e3a5f;">Notification</strong> — You must be told when negative info is reported</li>
+                <li><strong style="color: #1e3a5f;">Damages</strong> — You can sue and recover money for violations</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Violation Types -->
+<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+    <div class="card-title">🔍 Types of Violations We Find</div>
+    <p style="color: #6b7280; margin-bottom: 20px;">These are the most common FCRA violations we identify in credit reports. Each one can result in damages.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;" class="two-col-responsive">
+        <!-- Violation 1 -->
+        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #dc2626;">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">🚫 Impossible Contradictions</h4>
+            <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">The same account shows contradictory information across bureaus. Example: "Open" on TransUnion but "Closed" on Experian.</p>
+            <span style="font-size: 13px; font-weight: 600; color: #dc2626;">Value: $5,000 – $15,000 per violation</span>
+        </div>
+
+        <!-- Violation 2 -->
+        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #f59e0b;">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">💰 Balance Discrepancies</h4>
+            <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">Different balances reported across bureaus, or a charged-off account showing an increasing balance (which is illegal).</p>
+            <span style="font-size: 13px; font-weight: 600; color: #f59e0b;">Value: $3,000 – $8,000 per violation</span>
+        </div>
+
+        <!-- Violation 3 -->
+        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #0d9488;">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">📅 Date Errors</h4>
+            <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">Incorrect dates of first delinquency, last payment, or account opening. These can illegally extend how long negative info stays on your report.</p>
+            <span style="font-size: 13px; font-weight: 600; color: #0d9488;">Value: $2,000 – $6,000 per violation</span>
+        </div>
+
+        <!-- Violation 4 -->
+        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #8b5cf6;">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">🔄 Re-aging Accounts</h4>
+            <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">When a creditor or collector changes dates to make old debt appear newer, keeping it on your report longer than the legal 7-year limit.</p>
+            <span style="font-size: 13px; font-weight: 600; color: #8b5cf6;">Value: $4,000 – $12,000 per violation</span>
+        </div>
+
+        <!-- Violation 5 -->
+        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #2563eb;">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">👥 Mixed Files</h4>
+            <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">Someone else's accounts appearing on your credit report due to similar names, SSNs, or addresses. A serious accuracy failure.</p>
+            <span style="font-size: 13px; font-weight: 600; color: #2563eb;">Value: $8,000 – $25,000+ per violation</span>
+        </div>
+
+        <!-- Violation 6 -->
+        <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #059669;">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">⏱️ Failure to Investigate</h4>
+            <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">When a bureau doesn't respond to your dispute within 30 days, or conducts only a superficial "verification" without real investigation.</p>
+            <span style="font-size: 13px; font-weight: 600; color: #059669;">Value: $3,000 – $10,000 per violation</span>
+        </div>
+    </div>
+</div>
+
+<!-- Dispute Process -->
+<div class="card animate-fade-in-up" data-delay="700" style="margin-bottom: 24px;">
+    <div class="card-title">⚡ How The Dispute Process Works</div>
+    <p style="color: #6b7280; margin-bottom: 24px;">Our strategic approach follows a proven escalation path to maximize your results.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;" class="stats-grid-responsive">
+        <!-- Step 1 -->
+        <div style="text-align: center;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">1</div>
+            <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 1: Formal Dispute Letters</h4>
+            <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">We send detailed certified letters to all three credit bureaus and the data furnishers, documenting specific violations with legal citations.</p>
+            <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 1-7 • Response Due: 30 days</div>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="text-align: center;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">2</div>
+            <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 2: Method of Verification</h4>
+            <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">If they "verify" without fixing the errors, we demand proof of HOW they investigated. This exposes superficial investigations.</p>
+            <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 37-45 • Creates legal pressure</div>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="text-align: center;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">3</div>
+            <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 3: Regulatory Complaints</h4>
+            <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">We file formal complaints with the CFPB, FTC, and your State Attorney General. These create regulatory pressure and paper trails.</p>
+            <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 45-55 • Government oversight engaged</div>
+        </div>
+
+        <!-- Step 4 -->
+        <div style="text-align: center;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">4</div>
+            <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 4: Pre-Litigation</h4>
+            <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">Armed with documented violations and regulatory complaints, we pursue settlement or prepare for arbitration/litigation.</p>
+            <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 55-90 • 75-85% resolve at this stage</div>
+        </div>
+    </div>
+</div>
+
+<!-- Glossary -->
+<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;">
+    <div class="card-title">📖 Glossary of Terms</div>
+    <p style="color: #6b7280; margin-bottom: 20px;">Common terms you'll encounter during your case.</p>
+
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;" class="two-col-responsive">
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">CRA (Credit Reporting Agency)</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">The three major bureaus: Equifax, Experian, and TransUnion.</p>
+        </div>
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">Furnisher</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">Any company that reports information to credit bureaus (banks, lenders, collectors).</p>
+        </div>
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">Metro 2 Format</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">The standardized format creditors must use when reporting to bureaus.</p>
+        </div>
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">Statutory Damages</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">Fixed damages ($100-$1,000 per violation) available under FCRA regardless of actual harm.</p>
+        </div>
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">Willful Violation</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">When a company knowingly or recklessly violates the law — triggers punitive damages.</p>
+        </div>
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">CFPB</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">Consumer Financial Protection Bureau — the federal agency that oversees credit bureaus.</p>
+        </div>
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">DOFD (Date of First Delinquency)</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">The date that starts the 7-year clock for how long negative info can be reported.</p>
+        </div>
+        <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+            <strong style="color: #1e3a5f; font-size: 14px;">Reinsertion</strong>
+            <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">When a deleted item reappears on your report — a serious FCRA violation.</p>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ -->
+<div class="card animate-fade-in-up" data-delay="900" style="margin-bottom: 24px;">
+    <div class="card-title">❓ Frequently Asked Questions</div>
+
+    <details>
+        <summary>How long does the dispute process take?</summary>
+        <p>Credit bureaus have 30 days to investigate and respond to disputes. The complete process typically takes 60-90 days for most cases, though complex cases with multiple violations may take 3-6 months. We'll keep you updated at every stage through your portal.</p>
+    </details>
+
+    <details>
+        <summary>What happens if the bureau doesn't respond in 30 days?</summary>
+        <p>If a bureau fails to respond within 30 days, they must remove the disputed item from your credit report. This is also a violation of FCRA § 1681i that we can use to strengthen your case for damages.</p>
+    </details>
+
+    <details>
+        <summary>What are "statutory damages" vs "actual damages"?</summary>
+        <p><strong>Statutory damages</strong> are fixed amounts ($100-$1,000 per violation) you can recover regardless of proving specific harm. <strong>Actual damages</strong> require proof of real financial harm (denied credit, lost job, emotional distress). Our approach documents both to maximize your recovery.</p>
+    </details>
+
+    <details>
+        <summary>Can I dispute items myself for free?</summary>
+        <p>Yes, you have the right to dispute items directly with credit bureaus for free. However, generic disputes often receive automated responses. Our expertise in FCRA law, strategic bundling of violations, and regulatory escalation paths typically achieve better and faster results — with potential monetary recovery.</p>
+    </details>
+
+    <details>
+        <summary>What if the bureau says my dispute is "frivolous"?</summary>
+        <p>Bureaus sometimes label disputes as "frivolous" to avoid investigation. However, they can only do this if your dispute doesn't identify the specific information being disputed. Our letters are detailed and specific, making frivolous claims much harder — and when they do, it often becomes evidence of willful non-compliance.</p>
+    </details>
+
+    <details>
+        <summary>How is this different from "credit repair"?</summary>
+        <p>Traditional credit repair sends generic dispute letters hoping items get deleted. We're building federal litigation cases with documented violations, calculated damages, and regulatory paper trails. This positions you for settlements in the $12,000-$85,000 range, not just item deletions.</p>
+    </details>
+
+    <details>
+        <summary>Will this hurt my credit score?</summary>
+        <p>No. Disputing inaccurate information does not hurt your credit score. In fact, when inaccurate negative items are removed or corrected, your score typically improves. The dispute process itself has no negative impact on your credit.</p>
+    </details>
+
+    <details>
+        <summary>What should I do if I receive mail from a credit bureau?</summary>
+        <p>Upload it to your portal immediately! Every response is important documentation. Go to the "Documents" tab and upload the letter. We'll review it and determine next steps. Don't throw anything away.</p>
+    </details>
+</div>
+
+<!-- CTA -->
+<div class="card animate-fade-in-up" data-delay="1000" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); text-align: center; padding: 40px 24px; border: none;">
+    <h3 style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; color: white; margin: 0 0 12px 0;">Still Have Questions?</h3>
+    <p style="font-size: 15px; color: rgba(255,255,255,0.8); margin: 0 0 24px 0;">We're here to help you understand every step of the process.</p>
+    <a href="{{ url_for('portal.profile') }}" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; background: white; color: #0d9488; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none;">Contact Us</a>
+</div>
+
+{% endblock %}

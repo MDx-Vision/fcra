@@ -1,0 +1,186 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'profile' %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+
+<!-- Profile Header -->
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;">
+    <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+        <div style="width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.2);">
+            <span style="font-size: 36px; font-weight: 700; color: white;">{{ (current_user.first_name or 'C')[0] }}</span>
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; margin: 0 0 4px 0;">{{ current_user.first_name }} {{ current_user.last_name }}</h2>
+            <p style="font-size: 14px; color: #9ca3af; margin: 0 0 12px 0;">Client since {{ client.created_at.strftime('%B %Y') if client and client.created_at else 'N/A' }}</p>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(13, 148, 136, 0.2); border-radius: 6px; font-size: 13px; font-weight: 600; color: #14b8a6;">🛡️ Round {{ client.current_round|default(1) if client else 1 }}</span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; font-weight: 500; color: white;">✅ Portal Active</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+    <a href="{{ url_for('portal.documents') }}" class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
+        <div style="font-size: 32px; margin-bottom: 12px;">📤</div>
+        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Upload Document</div>
+    </a>
+    <a href="{{ url_for('portal.dashboard') }}" class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
+        <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
+        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">View Case</div>
+    </a>
+    <a href="{{ url_for('portal.learn') }}" class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
+        <div style="font-size: 32px; margin-bottom: 12px;">📖</div>
+        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Learn FCRA</div>
+    </a>
+</div>
+
+<!-- Personal Info -->
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+    <div class="card-title">👤 Personal Information</div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="two-col-responsive">
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Full Name</label>
+            <input type="text" value="{{ current_user.first_name }} {{ current_user.last_name }}" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Email</label>
+            <input type="email" value="{{ current_user.email }}" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Phone</label>
+            <input type="tel" value="{{ client.phone|default('') if client else '' }}" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+        </div>
+        <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Current Round</label>
+            <input type="text" value="Round {{ client.current_round|default(1) if client else 1 }}" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+        </div>
+    </div>
+    <p style="font-size: 13px; color: #9ca3af; margin: 20px 0 0 0;">Need to update your contact information? Contact us and we'll help.</p>
+</div>
+
+<!-- Detailed Status Link -->
+<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px; background: #f9fafb; border: 1px solid #e5e7eb;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 4px 0;">📋 Detailed Bureau Status</h4>
+            <p style="font-size: 14px; color: #6b7280; margin: 0;">View and update individual account statuses across all bureaus.</p>
+        </div>
+        <a href="{{ url_for('portal.status') }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 600; color: #1e3a5f; cursor: pointer; text-decoration: none;">
+            View Status →
+        </a>
+    </div>
+</div>
+
+<!-- Contact -->
+<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+    <div class="card-title">📞 Get in Touch</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+        <a href="tel:9179094051" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <span style="font-size: 20px;">📞</span>
+            </div>
+            <div style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px;">Phone</div>
+            <div style="font-size: 15px; font-weight: 500; color: #0d9488;">(917) 909-4051</div>
+        </a>
+        <a href="mailto:support@brightpathascend.com" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <span style="font-size: 20px;">📧</span>
+            </div>
+            <div style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px;">Email</div>
+            <div style="font-size: 14px; font-weight: 500; color: #0d9488; word-break: break-all;">support@brightpath...</div>
+        </a>
+        <a href="https://brightpathascendgroup.com" target="_blank" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                <span style="font-size: 20px;">🌐</span>
+            </div>
+            <div style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px;">Website</div>
+            <div style="font-size: 14px; font-weight: 500; color: #0d9488;">brightpathascend...</div>
+        </a>
+    </div>
+
+    <!-- Message Form -->
+    <div style="background: #f9fafb; border-radius: 12px; padding: 24px;">
+        <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Send Us a Message</h4>
+        <form action="{{ url_for('portal.send_message') }}" method="POST">
+                        <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Subject</label>
+                <select name="subject" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white;">
+                    <option>General Question</option>
+                    <option>Update My Information</option>
+                    <option>Document Help</option>
+                    <option>Technical Issue</option>
+                    <option>Other</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Message</label>
+                <textarea name="message" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; resize: vertical; min-height: 100px;" placeholder="How can we help?"></textarea>
+            </div>
+            <button type="submit" class="submit-btn" style="width: 100%;">Send Message</button>
+        </form>
+    </div>
+</div>
+
+<!-- Referral -->
+<div class="card animate-fade-in-up" data-delay="700" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; margin-bottom: 24px; border: none;">
+    <div style="text-align: center; margin-bottom: 24px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">🎁</div>
+        <h3 style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; margin: 0 0 8px 0;">Know Someone Who Could Use Our Services?</h3>
+        <p style="font-size: 15px; color: #9ca3af; margin: 0;">Refer a friend and help them restore their credit too!</p>
+    </div>
+
+    <!-- Referral Code -->
+    <div style="background: rgba(13, 148, 136, 0.15); border: 1px solid rgba(13, 148, 136, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 24px;">
+        <div style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Your Referral Code</div>
+        <div style="font-family: 'DM Sans', monospace; font-size: 32px; font-weight: 700; color: #14b8a6; letter-spacing: 2px;">{{ client.referral_code|default('N/A') if client else 'N/A' }}</div>
+    </div>
+
+    <!-- Referral Form -->
+    <form action="{{ url_for('portal.submit_referral') }}" method="POST">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" class="two-col-responsive">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Their Name</label>
+                <input type="text" name="referral_name" placeholder="John Smith" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Their Phone</label>
+                <input type="tel" name="referral_phone" placeholder="(555) 123-4567" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Their Email</label>
+                <input type="email" name="referral_email" placeholder="john@example.com" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Your Name</label>
+                <input type="text" name="your_name" value="{{ current_user.first_name }} {{ current_user.last_name }}" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+            </div>
+            <div style="grid-column: span 2;" class="two-col-responsive">
+                <button type="submit" style="width: 100%; padding: 14px 24px; background: #14b8a6; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Submit Referral</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Account Status -->
+<div class="card animate-fade-in-up" data-delay="800">
+    <div class="card-title">🔐 Security & Account</div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+        <div style="padding: 16px; background: rgba(13, 148, 136, 0.1); border-left: 4px solid #0d9488; border-radius: 8px;">
+            <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Case Status</div>
+            <div style="font-size: 15px; font-weight: 600; color: #0d9488;">Active</div>
+        </div>
+        <div style="padding: 16px; background: rgba(13, 148, 136, 0.1); border-left: 4px solid #0d9488; border-radius: 8px;">
+            <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Client Since</div>
+            <div style="font-size: 15px; font-weight: 600; color: #0d9488;">{{ client.created_at.strftime('%B %Y') if client and client.created_at else 'N/A' }}</div>
+        </div>
+        <div style="padding: 16px; background: rgba(13, 148, 136, 0.1); border-left: 4px solid #0d9488; border-radius: 8px;">
+            <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Portal Access</div>
+            <div style="font-size: 15px; font-weight: 600; color: #0d9488;">Active</div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -107,6 +107,16 @@ app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 request_timing_middleware(app)
 print("✅ Performance monitoring middleware initialized")
 
+# Register portal blueprint for redesigned client portal
+from routes.portal import portal as portal_blueprint
+app.register_blueprint(portal_blueprint)
+print("✅ Portal blueprint registered")
+
+# Register staff portal blueprint for redesigned employee interface
+from routes.staff import staff_portal as staff_portal_blueprint
+app.register_blueprint(staff_portal_blueprint)
+print("✅ Staff portal blueprint registered")
+
 # Simple in-memory rate limiting for login attempts
 login_attempts = {}  # {email: {'count': int, 'last_attempt': datetime}}
 
@@ -583,18 +593,18 @@ def staff_login():
             
             if staff.force_password_change:
                 return render_template('staff_login.html', force_change=True)
-            
-            return redirect('/dashboard')
-            
+
+            return redirect('/staff/')
+
         except Exception as e:
             print(f"Login error: {e}")
             return render_template('staff_login.html', error='Login error. Please try again.')
         finally:
             db.close()
-    
+
     if 'staff_id' in session:
-        return redirect('/dashboard')
-    
+        return redirect('/staff/')
+
     return render_template('staff_login.html')
 
 
@@ -621,13 +631,13 @@ def staff_change_password():
             staff.force_password_change = False
             staff.updated_at = datetime.utcnow()
             db.commit()
-            return redirect('/dashboard')
+            return redirect('/staff/')
     except Exception as e:
         print(f"Password change error: {e}")
         return render_template('staff_login.html', force_change=True, error='Error updating password')
     finally:
         db.close()
-    
+
     return redirect('/staff/login')
 
 
@@ -705,32 +715,8 @@ def api_staff_login():
 @app.route('/dashboard/staff')
 @require_staff(roles=['admin'])
 def dashboard_staff():
-    """Staff management page - admin only"""
-    db = get_db()
-    try:
-        staff_members = db.query(Staff).order_by(Staff.created_at.desc()).all()
-        
-        stats = {
-            'total': len(staff_members),
-            'admins': sum(1 for s in staff_members if s.role == 'admin'),
-            'attorneys': sum(1 for s in staff_members if s.role == 'attorney'),
-            'paralegals': sum(1 for s in staff_members if s.role == 'paralegal'),
-            'viewers': sum(1 for s in staff_members if s.role == 'viewer')
-        }
-        
-        message = request.args.get('message')
-        error = request.args.get('error')
-        
-        return render_template('staff_management.html', 
-            staff_members=staff_members,
-            stats=stats,
-            message=message,
-            error=error
-        )
-    except Exception as e:
-        return f"Error loading staff: {e}", 500
-    finally:
-        db.close()
+    """Redirect to new staff portal admin with team section"""
+    return redirect(url_for('staff_portal.admin', section='team'))
 
 
 @app.route('/api/staff/add', methods=['POST'])
@@ -744,16 +730,16 @@ def api_staff_add():
     password = request.form.get('password', '')
     
     if not email or not password:
-        return redirect('/dashboard/staff?error=Email and password are required')
+        return redirect('/staff/admin?section=team&error=Email and password are required')
     
     if role not in STAFF_ROLES:
-        return redirect('/dashboard/staff?error=Invalid role selected')
+        return redirect('/staff/admin?section=team&error=Invalid role selected')
     
     db = get_db()
     try:
         existing = db.query(Staff).filter_by(email=email).first()
         if existing:
-            return redirect('/dashboard/staff?error=Email already exists')
+            return redirect('/staff/admin?section=team&error=Email already exists')
         
         new_staff = Staff(
             email=email,
@@ -768,10 +754,10 @@ def api_staff_add():
         db.add(new_staff)
         db.commit()
         
-        return redirect(f'/dashboard/staff?message=Staff member {first_name} {last_name} added successfully')
+        return redirect(f'/staff/admin?section=team&message=Staff member {first_name} {last_name} added successfully')
     except Exception as e:
         db.rollback()
-        return redirect(f'/dashboard/staff?error=Error adding staff: {str(e)}')
+        return redirect(f'/staff/admin?section=team&error=Error adding staff: {str(e)}')
     finally:
         db.close()
 
@@ -788,17 +774,17 @@ def api_staff_update():
     is_active = request.form.get('is_active', 'true') == 'true'
     
     if not staff_id or not email:
-        return redirect('/dashboard/staff?error=Missing required fields')
+        return redirect('/staff/admin?section=team&error=Missing required fields')
     
     db = get_db()
     try:
         staff = db.query(Staff).filter_by(id=int(staff_id)).first()
         if not staff:
-            return redirect('/dashboard/staff?error=Staff member not found')
+            return redirect('/staff/admin?section=team&error=Staff member not found')
         
         existing = db.query(Staff).filter(Staff.email == email, Staff.id != int(staff_id)).first()
         if existing:
-            return redirect('/dashboard/staff?error=Email already in use')
+            return redirect('/staff/admin?section=team&error=Email already in use')
         
         staff.email = email
         staff.first_name = first_name
@@ -808,10 +794,10 @@ def api_staff_update():
         staff.updated_at = datetime.utcnow()
         db.commit()
         
-        return redirect(f'/dashboard/staff?message=Staff member updated successfully')
+        return redirect(f'/staff/admin?section=team&message=Staff member updated successfully')
     except Exception as e:
         db.rollback()
-        return redirect(f'/dashboard/staff?error=Error updating staff: {str(e)}')
+        return redirect(f'/staff/admin?section=team&error=Error updating staff: {str(e)}')
     finally:
         db.close()
 
@@ -4149,22 +4135,22 @@ def dashboard():
     db = get_db()
     try:
         from datetime import timedelta
-        
+
         all_analyses = db.query(Analysis).all()
         all_damages = db.query(Damages).all()
         all_scores = db.query(CaseScore).all()
-        
+
         total_exposure = sum(d.total_exposure or 0 for d in all_damages)
         active_cases = len(all_analyses)
         one_week_ago = datetime.utcnow() - timedelta(days=7)
         new_this_week = db.query(Analysis).filter(Analysis.created_at >= one_week_ago).count()
-        
+
         scores = [s.total_score for s in all_scores if s.total_score]
         avg_score = sum(scores) / len(scores) if scores else 0
         high_score_cases = len([s for s in scores if s >= 8])
-        
+
         pending_review = db.query(Analysis).filter(Analysis.stage == 1, Analysis.approved_at == None).count()
-        
+
         stats = {
             'total_exposure': total_exposure,
             'active_cases': active_cases,
@@ -4173,14 +4159,14 @@ def dashboard():
             'high_score_cases': high_score_cases,
             'pending_review': pending_review
         }
-        
+
         stage1_complete_count = db.query(Analysis).filter(Analysis.stage == 1, Analysis.approved_at == None).count()
         stage2_complete_count = db.query(Analysis).filter(Analysis.stage == 2).count()
         stage2_value = sum(
-            (d.total_exposure or 0) 
+            (d.total_exposure or 0)
             for d in db.query(Damages).join(Analysis).filter(Analysis.stage == 2).all()
         )
-        
+
         pipeline = {
             'intake': 0,
             'stage1_pending': 0,
@@ -4190,21 +4176,21 @@ def dashboard():
             'stage2_value': stage2_value,
             'delivered': 0
         }
-        
+
         recent_analyses = db.query(Analysis).order_by(Analysis.created_at.desc()).limit(20).all()
         cases = []
         for analysis in recent_analyses:
             damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
             score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
             client = db.query(Client).filter_by(id=analysis.client_id).first()
-            
+
             if analysis.stage == 1 and not analysis.approved_at:
                 status = 'stage1_complete'
             elif analysis.stage == 2:
                 status = 'stage2_complete'
             else:
                 status = 'intake'
-            
+
             cases.append({
                 'id': analysis.id,
                 'analysis_id': analysis.id,
@@ -4216,7 +4202,7 @@ def dashboard():
                 'score': score.total_score if score else None,
                 'exposure': damages.total_exposure if damages else None
             })
-        
+
         recent_activity = []
         for analysis in db.query(Analysis).order_by(Analysis.created_at.desc()).limit(5).all():
             if analysis.stage == 2:
@@ -4233,7 +4219,7 @@ def dashboard():
                     'color': 'blue',
                     'time': analysis.created_at.strftime('%I:%M %p')
                 })
-        
+
         return render_template('dashboard.html',
             stats=stats,
             pipeline=pipeline,
@@ -4255,16 +4241,16 @@ def analyses_page():
     try:
         # Get all clients with their latest analysis
         from sqlalchemy import func, outerjoin
-        
+
         clients = db.query(Client).all()
         all_clients = [{'id': c.id, 'name': c.name, 'email': c.email} for c in clients]
-        
+
         # Build analyses list
         analyses = []
         for client in clients:
             # Get latest analysis for this client
             analysis = db.query(Analysis).filter_by(client_id=client.id).order_by(Analysis.created_at.desc()).first()
-            
+
             item = {
                 'client_id': client.id,
                 'client_name': client.name,
@@ -4276,38 +4262,38 @@ def analyses_page():
                 'settlement_target': None,
                 'created_at': None
             }
-            
+
             if analysis:
                 item['analysis_id'] = analysis.id
                 item['stage'] = analysis.stage or 1
                 item['created_at'] = analysis.created_at
-                
+
                 # Get violation count
                 violation_count = db.query(Violation).filter_by(analysis_id=analysis.id).count()
                 item['violation_count'] = violation_count
-                
+
                 # Get case score
                 case_score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
                 if case_score:
                     item['case_score'] = case_score.total_score
-                
+
                 # Get damages
                 damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
                 if damages:
                     item['settlement_target'] = damages.settlement_target
-            
+
             analyses.append(item)
-        
+
         # Sort by stage (pending first) then by date
         analyses.sort(key=lambda x: (-(x['stage'] or 0) if x['stage'] == 1 else x['stage'] or 0, x['created_at'] or datetime.min), reverse=True)
-        
+
         # Calculate stats
         total = len([a for a in analyses if a['analysis_id']])
         pending = len([a for a in analyses if a['stage'] == 1])
         complete = len([a for a in analyses if a['stage'] == 2])
         none_count = len([a for a in analyses if a['stage'] == 0])
         total_value = sum(a['settlement_target'] or 0 for a in analyses)
-        
+
         stats = {
             'total': total,
             'pending': pending,
@@ -4322,16 +4308,14 @@ def analyses_page():
             'high_score_cases': 0,
             'pending_review': pending
         }
-        
-        return render_template('analyses.html', 
-                             analyses=analyses, 
+
+        return render_template('analyses.html',
+                             analyses=analyses,
                              all_clients=all_clients,
                              stats=stats,
                              active_page='analyses')
     finally:
         db.close()
-
-
 
 
 @app.route('/dashboard/analytics')
@@ -4342,22 +4326,22 @@ def dashboard_analytics():
     try:
         from datetime import timedelta
         from sqlalchemy import func, extract
-        
+
         now = datetime.utcnow()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         start_of_last_month = (start_of_month - timedelta(days=1)).replace(day=1)
         thirty_days_ago = now - timedelta(days=30)
-        
+
         # ========== CLIENT STATS ==========
         total_clients = db.query(Client).count()
         new_this_month = db.query(Client).filter(Client.created_at >= start_of_month).count()
-        
+
         # Client status breakdown
         active_clients = db.query(Client).filter(Client.status == 'active').count()
         paused_clients = db.query(Client).filter(Client.status == 'paused').count()
         complete_clients = db.query(Client).filter(Client.status == 'complete').count()
         signup_clients = db.query(Client).filter(Client.status == 'signup').count()
-        
+
         client_stats = {
             'total': total_clients,
             'new_this_month': new_this_month,
@@ -4366,24 +4350,21 @@ def dashboard_analytics():
             'complete': complete_clients,
             'signup': signup_clients
         }
-        
+
         # ========== REVENUE STATS ==========
-        # Total revenue collected (from signup_amount where payment_status = 'paid')
         total_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
             Client.payment_status == 'paid',
             Client.signup_amount.isnot(None)
         ).scalar() or 0
-        total_revenue = total_revenue_cents / 100  # Convert cents to dollars
-        
-        # Revenue this month
+        total_revenue = total_revenue_cents / 100
+
         this_month_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
             Client.payment_status == 'paid',
             Client.signup_amount.isnot(None),
             Client.payment_received_at >= start_of_month
         ).scalar() or 0
         this_month_revenue = this_month_revenue_cents / 100
-        
-        # Revenue last month
+
         last_month_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
             Client.payment_status == 'paid',
             Client.signup_amount.isnot(None),
@@ -4391,8 +4372,7 @@ def dashboard_analytics():
             Client.payment_received_at < start_of_month
         ).scalar() or 0
         last_month_revenue = last_month_revenue_cents / 100
-        
-        # Revenue by tier
+
         tier_revenue = {}
         for tier in ['tier1', 'tier2', 'tier3', 'tier4', 'tier5', 'free']:
             tier_cents = db.query(func.sum(Client.signup_amount)).filter(
@@ -4401,7 +4381,7 @@ def dashboard_analytics():
                 Client.signup_amount.isnot(None)
             ).scalar() or 0
             tier_revenue[tier] = tier_cents / 100
-        
+
         revenue_stats = {
             'total': total_revenue,
             'this_month': this_month_revenue,
@@ -4409,25 +4389,22 @@ def dashboard_analytics():
             'by_tier': tier_revenue,
             'month_change': this_month_revenue - last_month_revenue
         }
-        
+
         # ========== CASE STATS ==========
         total_analyses = db.query(Analysis).count()
-        
-        # Analyses by dispute round
+
         round_counts = {}
         for round_num in [1, 2, 3, 4]:
             count = db.query(Analysis).filter(Analysis.dispute_round == round_num).count()
             round_counts[f'round_{round_num}'] = count
-        
-        # Average case score
+
         all_scores = db.query(CaseScore.total_score).filter(CaseScore.total_score.isnot(None)).all()
         avg_case_score = sum(s[0] for s in all_scores) / len(all_scores) if all_scores else 0
-        
-        # Case score distribution
+
         high_score = len([s for s in all_scores if s[0] >= 8])
         medium_score = len([s for s in all_scores if 5 <= s[0] < 8])
         low_score = len([s for s in all_scores if s[0] < 5])
-        
+
         case_stats = {
             'total_analyses': total_analyses,
             'by_round': round_counts,
@@ -4436,7 +4413,7 @@ def dashboard_analytics():
             'medium_score': medium_score,
             'low_score': low_score
         }
-        
+
         # ========== DISPUTE PROGRESS ==========
         total_items = db.query(DisputeItem).count()
         items_deleted = db.query(DisputeItem).filter(DisputeItem.status == 'deleted').count()
@@ -4445,11 +4422,10 @@ def dashboard_analytics():
         items_sent = db.query(DisputeItem).filter(DisputeItem.status == 'sent').count()
         items_in_progress = db.query(DisputeItem).filter(DisputeItem.status == 'in_progress').count()
         items_no_change = db.query(DisputeItem).filter(DisputeItem.status == 'no_change').count()
-        
-        # Success rate = deleted / (deleted + verified + no_change) if any completed
+
         completed_items = items_deleted + items_verified + items_no_change
         success_rate = (items_deleted / completed_items * 100) if completed_items > 0 else 0
-        
+
         dispute_stats = {
             'total_items': total_items,
             'deleted': items_deleted,
@@ -4460,30 +4436,28 @@ def dashboard_analytics():
             'no_change': items_no_change,
             'success_rate': round(success_rate, 1)
         }
-        
+
         # ========== CRA RESPONSE STATS ==========
         total_responses = db.query(CRAResponse).count()
         response_types = {}
         for rtype in ['verified', 'deleted', 'updated', 'investigating', 'no_response', 'frivolous']:
             count = db.query(CRAResponse).filter(CRAResponse.response_type == rtype).count()
             response_types[rtype] = count
-        
+
         cra_stats = {
             'total_responses': total_responses,
             'by_type': response_types
         }
-        
+
         # ========== TIMELINE DATA (Last 30 days) ==========
-        # Daily signups for the last 30 days
         signup_data = []
         revenue_data = []
-        
+
         for i in range(30, -1, -1):
             day = now - timedelta(days=i)
             day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
             day_end = day_start + timedelta(days=1)
-            
-            # Count signups on this day
+
             day_signups = db.query(Client).filter(
                 Client.created_at >= day_start,
                 Client.created_at < day_end
@@ -4493,8 +4467,7 @@ def dashboard_analytics():
                 'label': day_start.strftime('%b %d'),
                 'count': day_signups
             })
-            
-            # Revenue on this day
+
             day_revenue_cents = db.query(func.sum(Client.signup_amount)).filter(
                 Client.payment_status == 'paid',
                 Client.payment_received_at >= day_start,
@@ -4506,37 +4479,30 @@ def dashboard_analytics():
                 'label': day_start.strftime('%b %d'),
                 'amount': day_revenue_cents / 100
             })
-        
+
         timeline_data = {
             'signups': signup_data,
             'revenue': revenue_data
         }
 
         # ========== VA LETTER AUTOMATION STATS ==========
-        # Total letters sent via automation
         total_letters = db.query(func.sum(LetterBatch.letter_count)).scalar() or 0
-
-        # Total cost in cents from all batches
         total_cost_cents = db.query(func.sum(LetterBatch.cost_cents)).scalar() or 0
 
-        # Pending approval (letters with PDF generated but not yet sent)
         pending_approval = db.query(DisputeLetter).filter(
             DisputeLetter.sent_via_letterstream == False,
             DisputeLetter.file_path.isnot(None)
         ).count()
 
-        # Average cost per client (based on clients with sent letters)
         unique_clients_count = db.query(func.count(func.distinct(DisputeLetter.client_id))).filter(
             DisputeLetter.sent_via_letterstream == True
         ).scalar() or 0
         avg_cost_per_client = (total_cost_cents / unique_clients_count) if unique_clients_count > 0 else 0
 
-        # Recent batches (last 10)
         recent_batches = db.query(LetterBatch).order_by(
             LetterBatch.uploaded_at.desc()
         ).limit(10).all()
 
-        # Overdue CRA responses (35+ days past deadline)
         thirty_five_days_ago = now - timedelta(days=35)
         overdue_responses = db.query(CaseDeadline).filter(
             CaseDeadline.deadline_type == 'cra_response',
@@ -4544,12 +4510,10 @@ def dashboard_analytics():
             CaseDeadline.status != 'completed'
         ).count()
 
-        # Reinsertion violations detected
         reinsertion_violations = db.query(TradelineStatus).filter(
             TradelineStatus.current_status == 'reinsertion_violation'
         ).count()
 
-        # Deletion metrics from automation_metrics table
         items_deleted_sum = db.query(func.sum(AutomationMetrics.items_deleted)).scalar() or 0
         items_disputed_sum = db.query(func.sum(AutomationMetrics.items_disputed)).scalar() or 0
         deletion_rate = (items_deleted_sum / items_disputed_sum * 100) if items_disputed_sum > 0 else 0
@@ -4576,7 +4540,7 @@ def dashboard_analytics():
             timeline_data=timeline_data,
             automation_stats=automation_stats
         )
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -4588,33 +4552,8 @@ def dashboard_analytics():
 @app.route('/dashboard/predictive')
 @require_staff(roles=['admin', 'attorney'])
 def dashboard_predictive():
-    """Predictive Analytics Dashboard - Business Intelligence with Forecasting"""
-    db = get_db()
-    try:
-        revenue_forecast = predictive_analytics_service.forecast_revenue(months_ahead=6)
-        revenue_trends = predictive_analytics_service.get_revenue_trends()
-        caseload_forecast = predictive_analytics_service.forecast_caseload(months_ahead=3)
-        growth_opportunities = predictive_analytics_service.identify_growth_opportunities()
-        top_clients = predictive_analytics_service.get_top_clients_by_ltv(limit=10)
-        workload = attorney_analytics_service.get_workload_distribution()
-        leaderboard = attorney_analytics_service.get_leaderboard(metric='efficiency_score', period='month')
-        
-        return render_template('predictive_analytics.html',
-            revenue_forecast=revenue_forecast,
-            revenue_trends=revenue_trends,
-            caseload_forecast=caseload_forecast,
-            growth_opportunities=growth_opportunities,
-            top_clients=top_clients,
-            workload_distribution=workload,
-            leaderboard=leaderboard
-        )
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return f"Predictive Analytics error: {str(e)}", 500
-    finally:
-        db.close()
+    """Predictive Analytics Dashboard - renders analytics template with predictive section"""
+    return render_template('predictive_analytics.html')
 
 
 @app.route('/api/analytics/revenue-forecast')
@@ -4872,16 +4811,16 @@ def dashboard_clients():
     db = get_db()
     try:
         status_filter = request.args.get('status', 'all')
-        
+
         query = db.query(Analysis).order_by(Analysis.created_at.desc())
-        
+
         if status_filter == 'stage1_complete':
             query = query.filter(Analysis.stage == 1, Analysis.approved_at == None)
         elif status_filter == 'stage2_complete':
             query = query.filter(Analysis.stage == 2)
-        
+
         analyses = query.all()
-        
+
         cases = []
         for analysis in analyses:
             damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
@@ -4908,7 +4847,7 @@ def dashboard_clients():
                 'violations': db.query(Violation).filter_by(analysis_id=analysis.id).count(),
                 'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M')
             })
-        
+
         return render_template('clients.html', cases=cases, status_filter=status_filter)
     except Exception as e:
         return f"Error: {str(e)}", 500
@@ -4924,7 +4863,7 @@ def dashboard_signups():
     try:
         from datetime import timedelta
         status_filter = request.args.get('status', 'all')
-        
+
         # Get SignupDraft records (pending payments)
         drafts_query = db.query(SignupDraft).filter(SignupDraft.status == 'pending').order_by(SignupDraft.created_at.desc())
         drafts = []
@@ -4941,10 +4880,10 @@ def dashboard_signups():
                 'created_at': draft.created_at.strftime('%Y-%m-%d %H:%M') if draft.created_at else '',
                 'expires_at': draft.expires_at.strftime('%Y-%m-%d %H:%M') if draft.expires_at else ''
             })
-        
+
         # Get Client records with payment info
         clients_query = db.query(Client).filter(Client.signup_plan != None).order_by(Client.created_at.desc())
-        
+
         if status_filter == 'paid':
             clients_query = clients_query.filter(Client.payment_status == 'paid')
         elif status_filter == 'pending':
@@ -4955,7 +4894,7 @@ def dashboard_signups():
             clients_query = clients_query.filter(Client.payment_pending == True)
         elif status_filter == 'free':
             clients_query = clients_query.filter(Client.signup_plan == 'free')
-        
+
         clients = []
         for client in clients_query.limit(100).all():
             clients.append({
@@ -4971,27 +4910,27 @@ def dashboard_signups():
                 'created_at': client.created_at.strftime('%Y-%m-%d %H:%M') if client.created_at else '',
                 'contacted': 'contacted' in (client.admin_notes or '').lower()
             })
-        
+
         # Calculate stats
         from sqlalchemy import func
         one_week_ago = datetime.utcnow() - timedelta(days=7)
-        
+
         total_revenue = db.query(func.sum(Client.signup_amount)).filter(
             Client.payment_status == 'paid',
             Client.signup_amount != None
         ).scalar() or 0
-        
+
         pending_count = db.query(SignupDraft).filter(SignupDraft.status == 'pending').count()
         pending_count += db.query(Client).filter(Client.payment_status == 'pending', Client.signup_plan != None).count()
-        
+
         paid_count = db.query(Client).filter(Client.payment_status == 'paid').count()
         paid_this_week = db.query(Client).filter(
             Client.payment_status == 'paid',
             Client.payment_received_at >= one_week_ago
         ).count()
-        
+
         failed_count = db.query(Client).filter(Client.payment_status == 'failed').count()
-        
+
         stats = {
             'total_revenue': total_revenue,
             'pending_count': pending_count,
@@ -4999,7 +4938,7 @@ def dashboard_signups():
             'paid_this_week': paid_this_week,
             'failed_count': failed_count
         }
-        
+
         return render_template('signups.html',
             drafts=drafts,
             clients=clients,
@@ -5074,7 +5013,7 @@ def dashboard_settings():
     db = get_db()
     try:
         import json
-        
+
         settings = {}
         all_settings = db.query(SignupSettings).all()
         for s in all_settings:
@@ -5082,7 +5021,7 @@ def dashboard_settings():
                 settings[s.setting_key] = json.loads(s.setting_value) if s.setting_value else None
             except:
                 settings[s.setting_key] = s.setting_value
-        
+
         defaults = {
             'field_name': 'required',
             'field_email': 'required',
@@ -5120,11 +5059,11 @@ def dashboard_settings():
             'payment_zelle': '',
             'payment_paypal': ''
         }
-        
+
         for key, value in defaults.items():
             if key not in settings:
                 settings[key] = value
-        
+
         return render_template('settings.html', settings=settings)
     except Exception as e:
         import traceback
@@ -5526,8 +5465,8 @@ def api_send_email():
 
 @app.route('/api/email/setup')
 def api_email_setup():
-    """Redirect to SendGrid integration setup"""
-    return redirect('/dashboard/settings/email')
+    """Redirect to dashboard settings"""
+    return redirect('/dashboard/settings')
 
 
 VALID_TEMPLATE_TYPES = [
@@ -5891,14 +5830,14 @@ def dashboard_case_detail(case_id):
         analysis = db.query(Analysis).filter_by(id=case_id).first()
         if not analysis:
             return "Case not found", 404
-        
+
         violations = db.query(Violation).filter_by(analysis_id=case_id).all()
         standing = db.query(Standing).filter_by(analysis_id=case_id).first()
         damages = db.query(Damages).filter_by(analysis_id=case_id).first()
         score = db.query(CaseScore).filter_by(analysis_id=case_id).first()
         letters = db.query(DisputeLetter).filter_by(analysis_id=case_id).all()
         client = db.query(Client).filter_by(id=analysis.client_id).first()
-        
+
         return render_template('case_detail.html',
             analysis=analysis,
             client=client,
@@ -5916,63 +5855,35 @@ def dashboard_case_detail(case_id):
 
 @app.route('/portal')
 def portal_redirect():
-    """Redirect /portal to /portal/login"""
+    """Redirect /portal to portal dashboard or login"""
+    if 'client_id' in session:
+        return redirect(url_for('portal.dashboard'))
     return redirect(url_for('portal_login'))
 
 
 @app.route('/portal/<token>')
 def client_portal(token):
-    """Client-facing portal to view their case"""
+    """Client-facing portal access via magic link - authenticate and redirect to new portal"""
     db = get_db()
     try:
         # First try to find client by portal token
         client = db.query(Client).filter_by(portal_token=token).first()
-        
+
         # If not found, try to find a case with this token
-        case = None
-        if client:
-            case = db.query(Case).filter_by(client_id=client.id).first()
-        else:
+        if not client:
             case = db.query(Case).filter_by(portal_token=token).first()
             if case:
                 client = db.query(Client).filter_by(id=case.client_id).first()
-        
+
         # Must have at least a client
         if not client:
             return "Invalid or expired access link", 404
-        
-        # Get analysis - first try from case, then by client
-        analysis = None
-        if case and case.analysis_id:
-            analysis = db.query(Analysis).filter_by(id=case.analysis_id).first()
-        
-        if not analysis:
-            analysis = db.query(Analysis).filter_by(client_id=client.id).order_by(Analysis.created_at.desc()).first()
-        
-        violations = []
-        damages = None
-        score = None
-        letters = []
-        cra_responses = []
-        
-        if analysis:
-            violations = db.query(Violation).filter_by(analysis_id=analysis.id).all()
-            damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
-            score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
-            letters = db.query(DisputeLetter).filter_by(analysis_id=analysis.id).all()
-        
-        cra_responses = db.query(CRAResponse).filter_by(client_id=client.id).order_by(CRAResponse.created_at.desc()).all()
-        
-        # Get dispute items grouped by bureau
-        dispute_items = db.query(DisputeItem).filter_by(client_id=client.id).order_by(DisputeItem.bureau, DisputeItem.created_at.desc()).all()
-        
-        # Get secondary bureau freezes
+
+        # Initialize secondary bureau freezes if they don't exist
         secondary_freezes = db.query(SecondaryBureauFreeze).filter_by(client_id=client.id).all()
-        
-        # If no secondary freezes exist for this client, create default ones
         if not secondary_freezes:
             default_bureaus = [
-                'Innovis', 'ChexSystems', 'Clarity Services Inc', 'LexisNexis', 
+                'Innovis', 'ChexSystems', 'Clarity Services Inc', 'LexisNexis',
                 'CoreLogic Teletrack', 'Factor Trust Inc', 'MicroBilt / PRBC',
                 'LexisNexis Risk Solutions (A TransUnion Company)', 'DataX Ltd'
             ]
@@ -5984,22 +5895,15 @@ def client_portal(token):
                 )
                 db.add(freeze)
             db.commit()
-            secondary_freezes = db.query(SecondaryBureauFreeze).filter_by(client_id=client.id).all()
-        
-        return render_template('client_portal.html',
-            token=token,
-            case=case,
-            client=client,
-            analysis=analysis,
-            violations=violations,
-            damages=damages,
-            score=score,
-            letters=letters,
-            cra_responses=cra_responses,
-            dispute_items=dispute_items,
-            secondary_freezes=secondary_freezes,
-            now=datetime.utcnow()
-        )
+
+        # Set session to authenticate the client
+        session.permanent = True
+        session['client_id'] = client.id
+        session['client_email'] = client.email
+        session['client_name'] = client.name
+
+        # Redirect to new portal dashboard
+        return redirect(url_for('portal.dashboard'))
     except Exception as e:
         return f"Error: {str(e)}", 500
     finally:
@@ -6085,13 +5989,13 @@ def portal_login():
         session['client_email'] = client.email
         session['client_name'] = client.name
         
-        if client.portal_token:
-            return redirect(f'/portal/{client.portal_token}')
-        else:
-            portal_token = secrets.token_urlsafe(32)
-            client.portal_token = portal_token
+        # Ensure client has a portal token
+        if not client.portal_token:
+            client.portal_token = secrets.token_urlsafe(32)
             db.commit()
-            return redirect(f'/portal/{portal_token}')
+
+        # Redirect to new portal dashboard
+        return redirect(url_for('portal.dashboard'))
             
     except Exception as e:
         print(f"Login error: {e}")
@@ -6100,75 +6004,27 @@ def portal_login():
         db.close()
 
 
-@app.route('/portal/dashboard')
-def portal_dashboard():
-    """Redirect authenticated clients to their portal"""
-    # If in test mode or no session, render portal template directly
-    if 'client_id' not in session:
-        # Render client_portal.html with empty data for testing
-        return render_template('client_portal.html',
-            token='test',
-            case=None,
-            client=None,
-            analysis=None,
-            violations=[],
-            damages=None,
-            score=None,
-            letters=[],
-            cra_responses=[],
-            dispute_items=[],
-            secondary_freezes=[],
-            now=datetime.utcnow()
-        )
-
-    db = get_db()
-    try:
-        client = db.query(Client).filter_by(id=session['client_id']).first()
-        if client and client.portal_token:
-            return redirect(f'/portal/{client.portal_token}')
-        return redirect('/portal/login')
-    finally:
-        db.close()
+# OLD ROUTE REMOVED - Blueprint handles /portal/dashboard now
+# @app.route('/portal/dashboard')
+# def portal_dashboard():
+#     """Redirect to new portal blueprint dashboard"""
+#     return redirect(url_for('portal.dashboard'))
 
 
 @app.route('/portal/create-password')
 def portal_create_password():
-    """Password creation page for client portal"""
-    # Render client_portal.html with empty data - password inputs are already in the template
-    return render_template('client_portal.html',
-        token='test',
-        case=None,
-        client=None,
-        analysis=None,
-        violations=[],
-        damages=None,
-        score=None,
-        letters=[],
-        cra_responses=[],
-        dispute_items=[],
-        secondary_freezes=[],
-        now=datetime.utcnow()
-    )
+    """Password creation page - redirect to new portal profile"""
+    if 'client_id' not in session:
+        return redirect(url_for('portal_login'))
+    return redirect(url_for('portal.profile'))
 
 
 @app.route('/portal/messages')
 def portal_messages():
-    """Messages page for client portal"""
-    # Render client_portal.html with empty data - textarea is in contact tab
-    return render_template('client_portal.html',
-        token='test',
-        case=None,
-        client=None,
-        analysis=None,
-        violations=[],
-        damages=None,
-        score=None,
-        letters=[],
-        cra_responses=[],
-        dispute_items=[],
-        secondary_freezes=[],
-        now=datetime.utcnow()
-    )
+    """Messages page - redirect to new portal profile (has contact form)"""
+    if 'client_id' not in session:
+        return redirect(url_for('portal_login'))
+    return redirect(url_for('portal.profile'))
 
 
 @app.route('/portal/logout')
@@ -9479,49 +9335,8 @@ def dashboard_queue_redirect():
 @app.route('/dashboard/cases')
 @require_staff(roles=['admin', 'attorney', 'paralegal'])
 def dashboard_cases():
-    """Cases dashboard with status filter support"""
-    db = get_db()
-    try:
-        status = request.args.get('status', 'all')
-        
-        query = db.query(Client)
-        
-        if status == 'stage1_complete':
-            query = query.filter(Client.case_status == 'stage1_complete')
-            active_page = 'pending_review'
-        elif status == 'stage2_complete':
-            query = query.filter(Client.case_status == 'stage2_complete')
-            active_page = 'ready_deliver'
-        elif status == 'in_progress':
-            query = query.filter(Client.case_status.in_(['uploaded', 'analyzing', 'stage1_complete']))
-            active_page = 'cases'
-        elif status == 'complete':
-            query = query.filter(Client.case_status == 'stage2_complete')
-            active_page = 'cases'
-        else:
-            active_page = 'cases'
-        
-        clients = query.order_by(Client.created_at.desc()).all()
-        
-        status_labels = {
-            'stage1_complete': 'Pending Review',
-            'stage2_complete': 'Ready to Deliver',
-            'in_progress': 'In Progress',
-            'complete': 'Complete',
-            'all': 'All Cases'
-        }
-        
-        return render_template('clients.html',
-                             clients=clients,
-                             active_page=active_page,
-                             status_filter=status,
-                             status_label=status_labels.get(status, 'All Cases'))
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return render_template('clients.html', clients=[], active_page='cases')
-    finally:
-        db.close()
+    """Redirect to clients page"""
+    return redirect('/dashboard/clients')
 
 
 @app.route('/api/freeze-letters/generate', methods=['POST'])

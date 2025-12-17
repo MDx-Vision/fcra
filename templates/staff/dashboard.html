@@ -1,0 +1,142 @@
+{% extends "staff/base_staff.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <div style="display: flex; gap: 12px;">
+        <a href="{{ url_for('staff_portal.clients') }}?action=add" class="btn btn-primary">+ New Client</a>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid stats-grid-responsive">
+    <div class="card stat-card highlight animate-fade-in-up" data-delay="0">
+        <div class="stat-label">Active Cases</div>
+        <div class="stat-value animate-number" data-value="{{ stats.active_cases }}">0</div>
+        <div class="stat-change">{{ stats.cases_change }}% from last month</div>
+    </div>
+    <div class="card stat-card animate-fade-in-up" data-delay="100">
+        <div class="stat-label">Pending Review</div>
+        <div class="stat-value animate-number" data-value="{{ stats.pending_review }}">0</div>
+        <div class="stat-change">Ready for action</div>
+    </div>
+    <div class="card stat-card animate-fade-in-up" data-delay="200">
+        <div class="stat-label">Letters This Week</div>
+        <div class="stat-value animate-number" data-value="{{ stats.letters_sent }}">0</div>
+        <div class="stat-change">{{ stats.letters_change }}% from last week</div>
+    </div>
+    <div class="card stat-card animate-fade-in-up" data-delay="300">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value"><span class="animate-number" data-value="{{ stats.success_rate }}">0</span>%</div>
+        <div class="stat-change {% if stats.success_change < 0 %}negative{% endif %}">{{ stats.success_change }}% change</div>
+    </div>
+</div>
+
+<!-- Pipeline Overview -->
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+    <div class="card-title">Case Pipeline</div>
+    <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;">
+        {% for stage in pipeline %}
+        <a href="{{ url_for('staff_portal.clients') }}?status={{ stage.status }}" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; border: 2px solid transparent; transition: all 0.2s; cursor: pointer;" onmouseover="this.style.borderColor='var(--apple-teal)'" onmouseout="this.style.borderColor='transparent'">
+                <div style="font-size: 28px; font-weight: 700; color: var(--apple-navy-dark);">{{ stage.count }}</div>
+                <div style="font-size: 12px; color: var(--apple-gray-500); margin-top: 4px;">{{ stage.label }}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Two Column Layout -->
+<div class="two-col two-col-responsive">
+    <!-- Recent Cases -->
+    <div class="card animate-fade-in-up" data-delay="500">
+        <div class="card-title">Recent Cases</div>
+        {% if recent_cases %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in recent_cases %}
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: var(--apple-navy-dark);">{{ case.client_name }}</div>
+                        <div style="font-size: 12px; color: var(--apple-gray-500);">{{ case.email }}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-{{ case.status_class }}">{{ case.status }}</span>
+                    </td>
+                    <td style="color: var(--apple-gray-500); font-size: 13px;">{{ case.updated }}</td>
+                    <td>
+                        <a href="{{ url_for('staff_portal.client_detail', client_id=case.id) }}" class="btn btn-secondary btn-sm">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">No recent cases</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Activity Feed -->
+    <div class="card animate-fade-in-up" data-delay="600">
+        <div class="card-title">Recent Activity</div>
+        {% if activities %}
+        {% for activity in activities %}
+        <div class="activity-item">
+            <div class="activity-icon" style="background: {{ activity.bg_color }};">{{ activity.icon }}</div>
+            <div class="activity-content">
+                <div class="activity-title">{{ activity.title }}</div>
+                <div class="activity-time">{{ activity.time }}</div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">No recent activity</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card animate-fade-in-up" data-delay="700" style="margin-top: 24px;">
+    <div class="card-title">Quick Actions</div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+        <a href="{{ url_for('staff_portal.workflow') }}?filter=letters" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Letter Queue</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">{{ stats.letter_queue_count }} pending</div>
+            </div>
+        </a>
+        <a href="{{ url_for('staff_portal.workflow') }}?filter=approvals" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">VA Approvals</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">{{ stats.va_approval_count }} waiting</div>
+            </div>
+        </a>
+        <a href="{{ url_for('staff_portal.documents') }}" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Documents</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">{{ stats.new_docs_count }} new uploads</div>
+            </div>
+        </a>
+        <a href="{{ url_for('staff_portal.clients') }}?filter=new" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">New Signups</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">{{ stats.new_signups_count }} this week</div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}

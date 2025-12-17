@@ -1,0 +1,209 @@
+{% extends "staff/base_staff.html" %}
+{% block title %}Clients{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Clients</h1>
+    <div style="display: flex; gap: 12px;">
+        <button class="btn btn-secondary" onclick="exportClients()">Export</button>
+        <button class="btn btn-primary" onclick="showAddClientModal()">+ Add Client</button>
+    </div>
+</div>
+
+<!-- Sub-filters -->
+<div class="sub-filters">
+    <a href="{{ url_for('staff_portal.clients') }}" class="sub-filter {% if not filter %}active{% endif %}">All ({{ counts.all }})</a>
+    <a href="{{ url_for('staff_portal.clients') }}?filter=active" class="sub-filter {% if filter == 'active' %}active{% endif %}">Active ({{ counts.active }})</a>
+    <a href="{{ url_for('staff_portal.clients') }}?filter=pending" class="sub-filter {% if filter == 'pending' %}active{% endif %}">Pending Review ({{ counts.pending }})</a>
+    <a href="{{ url_for('staff_portal.clients') }}?filter=new" class="sub-filter {% if filter == 'new' %}active{% endif %}">New Signups ({{ counts.new }})</a>
+    <a href="{{ url_for('staff_portal.clients') }}?filter=completed" class="sub-filter {% if filter == 'completed' %}active{% endif %}">Completed ({{ counts.completed }})</a>
+</div>
+
+<!-- Search Bar -->
+<form method="GET" action="{{ url_for('staff_portal.clients') }}" class="search-bar">
+    {% if filter %}<input type="hidden" name="filter" value="{{ filter }}">{% endif %}
+    <span style="font-size: 18px; color: var(--apple-gray-400);">Search</span>
+    <input type="text" name="search" id="clientSearch" value="{{ search or '' }}" placeholder="Search by name, email, or phone..." autocomplete="off">
+    <button type="submit" class="btn btn-primary btn-sm">Search</button>
+    {% if search %}
+    <a href="{{ url_for('staff_portal.clients') }}{% if filter %}?filter={{ filter }}{% endif %}" class="btn btn-secondary btn-sm">Clear</a>
+    {% endif %}
+</form>
+
+<!-- Clients Table -->
+<div class="card animate-fade-in-up">
+    {% if clients %}
+    <table class="data-table" id="clientsTable">
+        <thead>
+            <tr>
+                <th>Client</th>
+                <th>Status</th>
+                <th>Case Score</th>
+                <th>Round</th>
+                <th>Last Activity</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in clients %}
+            <tr data-client-id="{{ client.id }}" data-name="{{ client.name|lower }}" data-email="{{ client.email|lower }}">
+                <td>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--apple-teal); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600;">
+                            {{ client.initials }}
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--apple-navy-dark);">{{ client.name }}</div>
+                            <div style="font-size: 12px; color: var(--apple-gray-500);">{{ client.email }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-{{ client.status_class }}">{{ client.status }}</span>
+                </td>
+                <td>
+                    {% if client.case_score %}
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: {% if client.case_score >= 70 %}var(--apple-green){% elif client.case_score >= 40 %}var(--apple-yellow){% else %}var(--apple-red){% endif %}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px;">
+                            {{ client.case_score }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <span style="color: var(--apple-gray-400);">--</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span style="font-weight: 500;">Round {{ client.round or 1 }}</span>
+                </td>
+                <td style="color: var(--apple-gray-500); font-size: 13px;">{{ client.last_activity }}</td>
+                <td>
+                    <div style="display: flex; gap: 8px;">
+                        <a href="{{ url_for('staff_portal.client_detail', client_id=client.id) }}" class="btn btn-secondary btn-sm">View Case</a>
+                        <button class="btn btn-primary btn-sm" onclick="quickAction({{ client.id }})">Actions</button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">No clients found</div>
+        <p>No clients match your current filter.</p>
+        <button class="btn btn-primary" onclick="showAddClientModal()" style="margin-top: 16px;">Add First Client</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
+    {% for p in range(1, total_pages + 1) %}
+    <a href="{{ url_for('staff_portal.clients') }}?page={{ p }}{% if filter %}&filter={{ filter }}{% endif %}{% if search %}&search={{ search }}{% endif %}"
+       class="btn {% if p == page %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Add Client Modal -->
+<div id="addClientModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="font-family: var(--font-display); font-size: 24px; color: var(--apple-navy-dark);">Add New Client</h2>
+            <button onclick="hideAddClientModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--apple-gray-400);">&times;</button>
+        </div>
+        <form action="{{ url_for('staff_portal.add_client') }}" method="POST">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">First Name</label>
+                <input type="text" name="first_name" required style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">Last Name</label>
+                <input type="text" name="last_name" required style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">Email</label>
+                <input type="email" name="email" required style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">Phone</label>
+                <input type="tel" name="phone" style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" onclick="hideAddClientModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Client</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Actions Modal -->
+<div id="quickActionsModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; max-width: 400px; width: 90%; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-family: var(--font-display); font-size: 20px; color: var(--apple-navy-dark);">Quick Actions</h3>
+            <button onclick="hideQuickActions()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--apple-gray-400);">&times;</button>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;" id="quickActionsContent">
+            <a href="#" class="btn btn-secondary" style="justify-content: flex-start;" id="actionViewCase">View Full Case</a>
+            <a href="#" class="btn btn-secondary" style="justify-content: flex-start;" id="actionGenerateLetter">Generate Letter</a>
+            <a href="#" class="btn btn-secondary" style="justify-content: flex-start;" id="actionUploadDoc">Upload Document</a>
+            <a href="#" class="btn btn-secondary" style="justify-content: flex-start;" id="actionSendEmail">Send Email</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showAddClientModal() {
+    document.getElementById('addClientModal').style.display = 'flex';
+}
+
+function hideAddClientModal() {
+    document.getElementById('addClientModal').style.display = 'none';
+}
+
+function quickAction(clientId) {
+    document.getElementById('actionViewCase').href = '/staff/clients/' + clientId;
+    document.getElementById('actionGenerateLetter').href = '/staff/clients/' + clientId + '#letters';
+    document.getElementById('actionUploadDoc').href = '/staff/clients/' + clientId + '#documents';
+    document.getElementById('actionSendEmail').href = '/staff/clients/' + clientId + '#communication';
+    document.getElementById('quickActionsModal').style.display = 'flex';
+}
+
+function hideQuickActions() {
+    document.getElementById('quickActionsModal').style.display = 'none';
+}
+
+function filterClients(query) {
+    const rows = document.querySelectorAll('#clientsTable tbody tr');
+    const q = query.toLowerCase();
+    rows.forEach(row => {
+        const name = row.dataset.name || '';
+        const email = row.dataset.email || '';
+        if (name.includes(q) || email.includes(q)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function exportClients() {
+    window.location.href = '{{ url_for("staff_portal.export_clients") }}?filter={{ filter }}{% if search %}&search={{ search }}{% endif %}';
+}
+
+function sortClients(sortBy) {
+    window.location.href = '{{ url_for("staff_portal.clients") }}?filter={{ filter }}{% if search %}&search={{ search }}{% endif %}&sort=' + sortBy;
+}
+
+// Close modals on backdrop click
+document.getElementById('addClientModal').addEventListener('click', function(e) {
+    if (e.target === this) hideAddClientModal();
+});
+document.getElementById('quickActionsModal').addEventListener('click', function(e) {
+    if (e.target === this) hideQuickActions();
+});
+</script>
+{% endblock %}

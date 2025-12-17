@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brightpath Client Portal - Complete Preview</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ========================================
+           CSS VARIABLES
+           ======================================== */
+        :root {
+            --apple-teal: #0d9488;
+            --apple-teal-light: #14b8a6;
+            --apple-teal-dark: #0f766e;
+            --apple-navy: #1e3a5f;
+            --apple-navy-dark: #0a2540;
+            --apple-white: #ffffff;
+            --apple-gray-50: #f9fafb;
+            --apple-gray-100: #f3f4f6;
+            --apple-gray-200: #e5e7eb;
+            --apple-gray-300: #d1d5db;
+            --apple-gray-400: #9ca3af;
+            --apple-gray-500: #6b7280;
+            --apple-gray-600: #4b5563;
+            --apple-gray-700: #374151;
+            --apple-gray-800: #1f2937;
+            --apple-gray-900: #111827;
+            --apple-green: #059669;
+            --apple-red: #dc2626;
+            --apple-yellow: #d97706;
+            --font-display: 'Playfair Display', serif;
+            --font-body: 'DM Sans', sans-serif;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ========================================
+           RESET & BASE
+           ======================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--apple-gray-100);
+            color: var(--apple-gray-800);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ========================================
+           HEADER
+           ======================================== */
+        .header {
+            background: linear-gradient(135deg, var(--apple-navy-dark) 0%, var(--apple-navy) 100%);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .logo-text {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--apple-teal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .user-name {
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .user-name strong {
+            display: block;
+        }
+
+        .user-name span {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* ========================================
+           NAVIGATION
+           ======================================== */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px 20px;
+            background: var(--apple-white);
+            border-bottom: 1px solid var(--apple-gray-200);
+            position: sticky;
+            top: 72px;
+            z-index: 100;
+        }
+
+        .nav-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 32px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: var(--apple-gray-500);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-tab:hover {
+            background: var(--apple-gray-50);
+            color: var(--apple-navy);
+        }
+
+        .nav-tab.active {
+            background: var(--apple-teal);
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .nav-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        /* ========================================
+           MAIN CONTENT
+           ======================================== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px 100px;
+        }
+
+        /* ========================================
+           CARDS
+           ======================================== */
+        .card {
+            background: var(--apple-white);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--apple-gray-200);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-title {
+            font-family: var(--font-body);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--apple-navy-dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ========================================
+           TAB CONTENT
+           ======================================== */
+        .tab-content {
+            display: none;
+            opacity: 0;
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ========================================
+           BUTTONS
+           ======================================== */
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+        }
+
+        /* ========================================
+           FORM ELEMENTS
+           ======================================== */
+        input, textarea, select {
+            font-family: var(--font-body);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--apple-teal) !important;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        }
+
+        /* ========================================
+           FAQ ACCORDION
+           ======================================== */
+        details {
+            background: var(--apple-gray-50);
+            border: 1px solid var(--apple-gray-200);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        details:hover {
+            border-color: var(--apple-teal);
+        }
+
+        details[open] {
+            background: white;
+            border-color: var(--apple-teal);
+        }
+
+        details summary {
+            padding: 16px 20px;
+            font-weight: 600;
+            color: var(--apple-navy);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details summary::after {
+            content: '+';
+            font-size: 20px;
+            font-weight: 400;
+            color: var(--apple-teal);
+            transition: transform 0.2s ease;
+        }
+
+        details[open] summary::after {
+            transform: rotate(45deg);
+        }
+
+        details[open] summary {
+            color: var(--apple-teal);
+            border-bottom: 1px solid var(--apple-gray-200);
+        }
+
+        details p {
+            padding: 16px 20px;
+            color: var(--apple-gray-600);
+            line-height: 1.7;
+        }
+
+        /* ========================================
+           ANIMATIONS
+           ======================================== */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(13, 148, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+        }
+
+        .animate-fade-in {
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        .animate-fade-in-up {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        /* Animation delays */
+        [data-delay="0"] { animation-delay: 0ms; }
+        [data-delay="100"] { animation-delay: 100ms; }
+        [data-delay="200"] { animation-delay: 200ms; }
+        [data-delay="300"] { animation-delay: 300ms; }
+        [data-delay="400"] { animation-delay: 400ms; }
+        [data-delay="500"] { animation-delay: 500ms; }
+        [data-delay="600"] { animation-delay: 600ms; }
+        [data-delay="700"] { animation-delay: 700ms; }
+        [data-delay="800"] { animation-delay: 800ms; }
+        [data-delay="900"] { animation-delay: 900ms; }
+        [data-delay="1000"] { animation-delay: 1000ms; }
+
+        /* ========================================
+           RESPONSIVE
+           ======================================== */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+            }
+
+            .logo-text {
+                display: none;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .nav-tabs {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border-top: 1px solid var(--apple-gray-200);
+                border-bottom: none;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            }
+
+            .nav-tab {
+                flex: 1;
+                padding: 8px 4px;
+                border-radius: 0;
+            }
+
+            .nav-tab.active {
+                background: transparent;
+                color: var(--apple-teal);
+            }
+
+            .container {
+                padding: 20px 16px 120px;
+            }
+
+            .stats-grid-responsive {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .two-col-responsive {
+                grid-template-columns: 1fr !important;
+            }
+
+            .three-col-responsive {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid-responsive {
+                gap: 12px !important;
+            }
+
+            .stats-grid-responsive .card {
+                padding: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         HEADER
+         ============================================ -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">⚡</div>
+            <span class="logo-text">Brightpath Ascend</span>
+        </div>
+        <div class="user-info">
+            <div class="user-name">
+                <strong>Sarah Johnson</strong>
+                <span>As of: 12/15/2025</span>
+            </div>
+            <div class="user-avatar">S</div>
+        </div>
+    </header>
+
+    <!-- ============================================
+         NAVIGATION (4 Tabs)
+         ============================================ -->
+    <nav class="nav-tabs">
+        <a class="nav-tab active" href="javascript:void(0)" onclick="switchTab('case', this)">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Case</span>
+        </a>
+        <a class="nav-tab" href="javascript:void(0)" onclick="switchTab('documents', this)">
+            <span class="nav-icon">📁</span>
+            <span class="nav-label">Documents</span>
+        </a>
+        <a class="nav-tab" href="javascript:void(0)" onclick="switchTab('learn', this)">
+            <span class="nav-icon">📖</span>
+            <span class="nav-label">Learn</span>
+        </a>
+        <a class="nav-tab" href="javascript:void(0)" onclick="switchTab('profile', this)">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Profile</span>
+        </a>
+    </nav>
+
+    <!-- ============================================
+         MAIN CONTAINER
+         ============================================ -->
+    <main class="container">
+
+        <!-- ████████████████████████████████████████████
+             TAB 1: CASE (Dashboard)
+             ████████████████████████████████████████████ -->
+        <div class="tab-content active" id="case">
+            
+            <!-- Hero Section -->
+            <div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 24px; border: none;">
+                <p style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; color: #14b8a6; margin: 0 0 16px 0;">Your credit. Our fight.</p>
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 600; margin: 0 0 24px 0;">Your Case</h2>
+                <div style="margin-bottom: 12px;">
+                    <span style="font-family: 'Playfair Display', serif; font-size: 64px; font-weight: 700; color: #14b8a6;" class="animate-number" data-value="47000" data-prefix="$">$0</span>
+                </div>
+                <p style="font-size: 16px; opacity: 0.8; margin: 0;">in violations identified</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+                <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">⚠️</div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;" class="animate-number" data-value="7">0</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Accounts Disputed</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🏛️</div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;" class="animate-number" data-value="3">0</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Bureaus Notified</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">⏱️</div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;"><span class="animate-number" data-value="14">0</span>d</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Until Response</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="400" style="text-align: center; padding: 24px;">
+                    <div style="font-size: 28px; margin-bottom: 8px;">🛡️</div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">2/4</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Round Progress</div>
+                    <div style="display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 12px; font-weight: 600; color: #059669;">
+                        📈 On track
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress + Action Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;" class="two-col-responsive">
+                
+                <!-- Progress Ring Card -->
+                <div class="card animate-fade-in-up" data-delay="500" style="padding: 32px; text-align: center;">
+                    <div class="card-title" style="text-align: left;">📊 Case Progress</div>
+                    
+                    <!-- Progress Ring -->
+                    <div style="position: relative; width: 180px; height: 180px; margin: 24px auto;">
+                        <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg);">
+                            <defs>
+                                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#2dd4bf" />
+                                    <stop offset="100%" stop-color="#0d9488" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="90" cy="90" r="75" fill="none" stroke="#e5e7eb" stroke-width="12"/>
+                            <circle 
+                                class="progress-ring-circle"
+                                cx="90" cy="90" r="75" 
+                                fill="none" 
+                                stroke="url(#progressGradient)" 
+                                stroke-width="12"
+                                stroke-linecap="round"
+                                stroke-dasharray="471.24"
+                                stroke-dashoffset="471.24"
+                                data-progress="50"
+                            />
+                        </svg>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <span style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #1e3a5f;" class="progress-percent-text">0</span><span style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #1e3a5f;">%</span>
+                            <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">Complete</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Round Markers -->
+                    <div style="margin-top: 24px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 6px; background: #0d9488;"></div>
+                                <span style="font-size: 11px; color: #1e3a5f; font-weight: 600;">R1</span>
+                            </div>
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 6px; background: #0d9488;"></div>
+                                <span style="font-size: 11px; color: #1e3a5f; font-weight: 600;">R2</span>
+                            </div>
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 6px; background: #d1d5db;"></div>
+                                <span style="font-size: 11px; color: #9ca3af;">R3</span>
+                            </div>
+                            <div style="text-align: center; flex: 1;">
+                                <div style="width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 6px; background: #d1d5db;"></div>
+                                <span style="font-size: 11px; color: #9ca3af;">R4</span>
+                            </div>
+                        </div>
+                        <div style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;">
+                            <div class="progress-bar-fill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%); border-radius: 3px; transition: width 1s ease-out;" data-width="50"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    
+                    <!-- What's Next -->
+                    <div class="card animate-fade-in-up" data-delay="600" style="padding: 24px; flex: 1;">
+                        <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">📅 What's Next</div>
+                        <h4 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Equifax response expected</h4>
+                        <div style="display: inline-block; padding: 8px 16px; background: rgba(13, 148, 136, 0.1); border-radius: 8px;">
+                            <span style="font-size: 14px; font-weight: 600; color: #0d9488;">December 24</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Card -->
+                    <a href="javascript:void(0)" onclick="switchTab('documents', document.querySelector('[onclick*=documents]'))" class="card animate-fade-in-up" data-delay="700" style="padding: 24px; background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-decoration: none; display: block; flex: 1; border: none;">
+                        <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">⚡ Action Needed</div>
+                        <h4 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: white; margin: 0 0 8px 0;">Received a letter?</h4>
+                        <p style="font-size: 14px; color: #9ca3af; margin: 0 0 16px 0; line-height: 1.5;">Bureau responses strengthen your case. Upload them instantly.</p>
+                        <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #14b8a6;">
+                            Upload now →
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Score Journey -->
+            <div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;">
+                <div class="card-title">📈 Your Credit Score Journey</div>
+                <p style="color: #6b7280; margin-bottom: 24px;">Track your progress as we work to remove inaccurate items from your report.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;" class="stats-grid-responsive">
+                    <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border-radius: 12px; padding: 24px; text-align: center;">
+                        <div style="font-size: 12px; color: #991b1b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Starting Score</div>
+                        <div style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #dc2626;">580</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(13, 148, 136, 0.2) 100%); border-radius: 12px; padding: 24px; text-align: center;">
+                        <div style="font-size: 12px; color: #0f766e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Current Score</div>
+                        <div style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #0d9488;">645</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 24px; text-align: center;">
+                        <div style="font-size: 12px; color: #1e40af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Points Gained</div>
+                        <div style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #2563eb;">+65</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card animate-fade-in-up" data-delay="900">
+                <div class="card-title">🗓️ Your Dispute Journey</div>
+                <p style="color: #6b7280; margin-bottom: 24px;">Every step we're taking to restore your credit.</p>
+                
+                <div class="timeline-vertical">
+                    <!-- Step 1: Complete -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; width: 40px; flex-shrink: 0;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(5, 150, 105, 0.15); border: 3px solid #059669; display: flex; align-items: center; justify-content: center;">
+                                <span style="color: #059669; font-size: 14px;">✓</span>
+                            </div>
+                            <div style="width: 3px; flex: 1; min-height: 40px; margin-top: -2px; background: #059669; border-radius: 2px;"></div>
+                        </div>
+                        <div style="flex: 1; padding-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 8px;">
+                                <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0;">Credit report received</h4>
+                                <span style="font-size: 13px; font-weight: 500; color: #9ca3af;">December 7</span>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0;">All 3 bureau reports analyzed</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: Complete -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; width: 40px; flex-shrink: 0;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(5, 150, 105, 0.15); border: 3px solid #059669; display: flex; align-items: center; justify-content: center;">
+                                <span style="color: #059669; font-size: 14px;">✓</span>
+                            </div>
+                            <div style="width: 3px; flex: 1; min-height: 40px; margin-top: -2px; background: #059669; border-radius: 2px;"></div>
+                        </div>
+                        <div style="flex: 1; padding-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 8px;">
+                                <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0;">Analysis complete</h4>
+                                <span style="font-size: 13px; font-weight: 500; color: #9ca3af;">December 8</span>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0;">7 violations identified, $47,000 exposure</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Complete -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; width: 40px; flex-shrink: 0;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(5, 150, 105, 0.15); border: 3px solid #059669; display: flex; align-items: center; justify-content: center;">
+                                <span style="color: #059669; font-size: 14px;">✓</span>
+                            </div>
+                            <div style="width: 3px; flex: 1; min-height: 40px; margin-top: -2px; background: #059669; border-radius: 2px;"></div>
+                        </div>
+                        <div style="flex: 1; padding-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 8px;">
+                                <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0;">Dispute letters sent</h4>
+                                <span style="font-size: 13px; font-weight: 500; color: #9ca3af;">December 10</span>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0;">Certified mail to Equifax, Experian, TransUnion</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4: Current -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; width: 40px; flex-shrink: 0;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: #0d9488; border: 3px solid #0d9488; display: flex; align-items: center; justify-content: center; animation: pulse 2s infinite;">
+                                <div style="width: 10px; height: 10px; border-radius: 50%; background: white;"></div>
+                            </div>
+                            <div style="width: 3px; flex: 1; min-height: 40px; margin-top: -2px; background: #e5e7eb; border-radius: 2px;"></div>
+                        </div>
+                        <div style="flex: 1; padding-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 8px;">
+                                <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0;">Awaiting responses</h4>
+                                <span style="font-size: 13px; font-weight: 500; color: #0d9488;">In progress</span>
+                            </div>
+                            <p style="font-size: 14px; color: #6b7280; margin: 0;">Deadline: December 24</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5: Future -->
+                    <div style="display: flex; gap: 20px; margin-bottom: 0;">
+                        <div style="display: flex; flex-direction: column; align-items: center; width: 40px; flex-shrink: 0;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: white; border: 3px solid #d1d5db;"></div>
+                        </div>
+                        <div style="flex: 1; padding-bottom: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 8px;">
+                                <h4 style="font-size: 16px; font-weight: 600; color: #9ca3af; margin: 0;">Review & escalate</h4>
+                                <span style="font-size: 13px; font-weight: 500; color: #9ca3af;">Pending</span>
+                            </div>
+                            <p style="font-size: 14px; color: #9ca3af; margin: 0;">Round 3 preparation if needed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View Detailed Status Link -->
+                <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
+                    <a href="javascript:void(0)" onclick="switchTab('status', null)" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #0d9488; text-decoration: none; cursor: pointer;">
+                        View detailed bureau status →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Trust Footer -->
+            <div style="display: flex; justify-content: center; gap: 40px; margin-top: 32px; padding: 24px 0; border-top: 1px solid #e5e7eb; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #6b7280;">
+                    <span style="color: #0d9488;">🔒</span> Bank-Level Security
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #6b7280;">
+                    <span style="color: #0d9488;">⚖️</span> FCRA Attorney-Backed
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #6b7280;">
+                    <span style="color: #0d9488;">🕐</span> 24/7 Portal Access
+                </div>
+            </div>
+        </div>
+
+        <!-- ████████████████████████████████████████████
+             TAB 2: DOCUMENTS
+             ████████████████████████████████████████████ -->
+        <div class="tab-content" id="documents">
+            
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+                <div class="animate-fade-in">
+                    <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Documents</h2>
+                    <p style="font-size: 15px; color: #6b7280; margin: 0;">Upload bureau responses and download your case materials.</p>
+                </div>
+                <button class="submit-btn animate-fade-in" data-delay="100">📤 Upload Document</button>
+            </div>
+
+            <!-- Alert -->
+            <div class="card animate-fade-in-up" data-delay="200" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; margin-bottom: 24px;">
+                <div style="display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+                    <div style="font-size: 24px;">⚡</div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <h4 style="font-size: 16px; font-weight: 600; color: #92400e; margin: 0 0 4px 0;">Received mail from a credit bureau?</h4>
+                        <p style="font-size: 14px; color: #a16207; margin: 0; line-height: 1.5;">Upload it immediately! Every response is critical documentation for your case. Don't throw anything away.</p>
+                    </div>
+                    <button style="padding: 8px 16px; background: #92400e; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;">Upload Now</button>
+                </div>
+            </div>
+
+            <!-- Documents List -->
+            <div class="card animate-fade-in-up" data-delay="300" style="margin-bottom: 24px;">
+                <div class="card-title">📁 Your Case Documents</div>
+                <p style="color: #6b7280; margin-bottom: 20px;">Download your dispute letters, analysis reports, and uploaded documents.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Document 1 -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="font-size: 20px;">📤</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Round 1 Dispute Letters</div>
+                            <div style="font-size: 13px; color: #6b7280;">December 10, 2025</div>
+                        </div>
+                        <div style="padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(13, 148, 136, 0.1); color: #0d9488;">Sent</div>
+                        <button style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 500; color: #4b5563; cursor: pointer;">⬇️ Download</button>
+                    </div>
+                    
+                    <!-- Document 2 -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="font-size: 20px;">📊</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Credit Analysis Report</div>
+                            <div style="font-size: 13px; color: #6b7280;">December 8, 2025</div>
+                        </div>
+                        <div style="padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(5, 150, 105, 0.1); color: #059669;">Complete</div>
+                        <button style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 500; color: #4b5563; cursor: pointer;">⬇️ Download</button>
+                    </div>
+                    
+                    <!-- Document 3 -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="font-size: 20px;">📩</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Experian Response</div>
+                            <div style="font-size: 13px; color: #6b7280;">December 12, 2025</div>
+                        </div>
+                        <div style="padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(245, 158, 11, 0.1); color: #d97706;">Pending Review</div>
+                        <button style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 500; color: #4b5563; cursor: pointer;">⬇️ Download</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+                <div class="card-title">📤 Upload Documents</div>
+                <p style="color: #6b7280; margin-bottom: 24px;">Select document type and upload files related to your case.</p>
+                
+                <!-- Document Types -->
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;" class="stats-grid-responsive">
+                    <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: rgba(13, 148, 136, 0.05); border: 2px solid #0d9488; border-radius: 12px; cursor: pointer;">
+                        <span style="font-size: 28px; margin-bottom: 8px;">📩</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1e3a5f; text-align: center;">CRA Response</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Bureau letters</span>
+                    </label>
+                    <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer;">
+                        <span style="font-size: 28px; margin-bottom: 8px;">💸</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1e3a5f; text-align: center;">Collection Letter</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Debt notices</span>
+                    </label>
+                    <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer;">
+                        <span style="font-size: 28px; margin-bottom: 8px;">📊</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1e3a5f; text-align: center;">Credit Report</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">New reports</span>
+                    </label>
+                    <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer;">
+                        <span style="font-size: 28px; margin-bottom: 8px;">⚖️</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1e3a5f; text-align: center;">Legal Document</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Lawsuits, etc.</span>
+                    </label>
+                    <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer;">
+                        <span style="font-size: 28px; margin-bottom: 8px;">🪪</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1e3a5f; text-align: center;">ID / Proof</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Identity docs</span>
+                    </label>
+                    <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: #f9fafb; border: 2px solid #e5e7eb; border-radius: 12px; cursor: pointer;">
+                        <span style="font-size: 28px; margin-bottom: 8px;">📎</span>
+                        <span style="font-size: 14px; font-weight: 600; color: #1e3a5f; text-align: center;">Other</span>
+                        <span style="font-size: 12px; color: #6b7280; text-align: center;">Anything else</span>
+                    </label>
+                </div>
+                
+                <!-- Drop Zone -->
+                <div style="border: 2px dashed #d1d5db; border-radius: 16px; padding: 48px 24px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.2s ease;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+                    <p style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">
+                        <span style="color: #0d9488; text-decoration: underline;">Click to upload</span> or drag and drop
+                    </p>
+                    <p style="font-size: 14px; color: #9ca3af; margin: 0;">PDF, JPG, or PNG (max 20MB)</p>
+                </div>
+
+                <!-- Notes -->
+                <div style="margin-top: 20px;">
+                    <label style="display: block; font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 8px;">Notes (optional)</label>
+                    <textarea style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 14px; resize: vertical; min-height: 80px;" placeholder="Any additional details about this document..."></textarea>
+                </div>
+
+                <!-- Submit -->
+                <div style="margin-top: 20px;">
+                    <button class="submit-btn" style="width: 100%;">Upload Document</button>
+                </div>
+            </div>
+
+            <!-- Mobile Scanner -->
+            <div class="card animate-fade-in-up" data-delay="500" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-align: center; padding: 32px; border: none;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
+                <h4 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: white; margin: 0 0 12px 0;">Scan with Your Phone</h4>
+                <p style="font-size: 15px; color: #9ca3af; margin: 0 0 24px 0; line-height: 1.5;">Use your phone's camera to scan documents instantly. Perfect for CRA responses and collection letters.</p>
+                <button style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: white; color: #0d9488; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;">📷 Open Scanner</button>
+            </div>
+        </div>
+
+        <!-- ████████████████████████████████████████████
+             TAB 3: LEARN (Full Education Content)
+             ████████████████████████████████████████████ -->
+        <div class="tab-content" id="learn">
+            
+            <!-- Hero -->
+            <div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 24px; border: none;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; margin: 0 0 12px 0;">Understanding Your Rights</h2>
+                <p style="font-size: 16px; opacity: 0.8; margin: 0;">Knowledge is power. Learn how federal law protects you and what we're doing to enforce those protections.</p>
+            </div>
+
+            <!-- Quick Stats -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+                <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px;">
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">$1,000</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Per Violation (Statutory)</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px;">
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">30</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Days to Investigate</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px;">
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">7</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Years Max Reporting</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="400" style="text-align: center; padding: 24px;">
+                    <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">75%+</div>
+                    <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Our Success Rate</div>
+                </div>
+            </div>
+
+            <!-- FCRA Overview -->
+            <div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;">
+                <div class="card-title">📜 The Fair Credit Reporting Act (FCRA)</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;" class="two-col-responsive">
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 12px 0;">What Is It?</h4>
+                        <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 0;">The FCRA is a federal law passed in 1970 that regulates how your credit information is collected, shared, and used. It gives you specific rights and requires credit bureaus and data furnishers to follow strict accuracy standards.</p>
+                        <p style="font-size: 14px; color: #6b7280; line-height: 1.7; margin: 16px 0 0 0;">When these rules are violated, you have the right to take legal action and recover damages — that's exactly what we help you do.</p>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 12px 0;">Your Core Rights</h4>
+                        <ul style="color: #6b7280; padding-left: 20px; line-height: 2; margin: 0; font-size: 14px;">
+                            <li><strong style="color: #1e3a5f;">Accuracy</strong> — Bureaus must maintain "maximum possible accuracy"</li>
+                            <li><strong style="color: #1e3a5f;">Dispute</strong> — You can challenge any inaccurate information</li>
+                            <li><strong style="color: #1e3a5f;">Investigation</strong> — Bureaus must investigate within 30 days</li>
+                            <li><strong style="color: #1e3a5f;">Notification</strong> — You must be told when negative info is reported</li>
+                            <li><strong style="color: #1e3a5f;">Damages</strong> — You can sue and recover money for violations</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Violation Types -->
+            <div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+                <div class="card-title">🔍 Types of Violations We Find</div>
+                <p style="color: #6b7280; margin-bottom: 20px;">These are the most common FCRA violations we identify in credit reports. Each one can result in damages.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;" class="two-col-responsive">
+                    <!-- Violation 1 -->
+                    <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #dc2626;">
+                        <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">🚫 Impossible Contradictions</h4>
+                        <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">The same account shows contradictory information across bureaus. Example: "Open" on TransUnion but "Closed" on Experian.</p>
+                        <span style="font-size: 13px; font-weight: 600; color: #dc2626;">Value: $5,000 – $15,000 per violation</span>
+                    </div>
+                    
+                    <!-- Violation 2 -->
+                    <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                        <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">💰 Balance Discrepancies</h4>
+                        <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">Different balances reported across bureaus, or a charged-off account showing an increasing balance (which is illegal).</p>
+                        <span style="font-size: 13px; font-weight: 600; color: #f59e0b;">Value: $3,000 – $8,000 per violation</span>
+                    </div>
+                    
+                    <!-- Violation 3 -->
+                    <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #0d9488;">
+                        <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">📅 Date Errors</h4>
+                        <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">Incorrect dates of first delinquency, last payment, or account opening. These can illegally extend how long negative info stays on your report.</p>
+                        <span style="font-size: 13px; font-weight: 600; color: #0d9488;">Value: $2,000 – $6,000 per violation</span>
+                    </div>
+                    
+                    <!-- Violation 4 -->
+                    <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #8b5cf6;">
+                        <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">🔄 Re-aging Accounts</h4>
+                        <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">When a creditor or collector changes dates to make old debt appear newer, keeping it on your report longer than the legal 7-year limit.</p>
+                        <span style="font-size: 13px; font-weight: 600; color: #8b5cf6;">Value: $4,000 – $12,000 per violation</span>
+                    </div>
+                    
+                    <!-- Violation 5 -->
+                    <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #2563eb;">
+                        <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">👥 Mixed Files</h4>
+                        <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">Someone else's accounts appearing on your credit report due to similar names, SSNs, or addresses. A serious accuracy failure.</p>
+                        <span style="font-size: 13px; font-weight: 600; color: #2563eb;">Value: $8,000 – $25,000+ per violation</span>
+                    </div>
+                    
+                    <!-- Violation 6 -->
+                    <div style="padding: 20px; background: #f9fafb; border-radius: 12px; border-left: 4px solid #059669;">
+                        <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">⏱️ Failure to Investigate</h4>
+                        <p style="font-size: 13px; color: #6b7280; margin: 0 0 12px 0; line-height: 1.6;">When a bureau doesn't respond to your dispute within 30 days, or conducts only a superficial "verification" without real investigation.</p>
+                        <span style="font-size: 13px; font-weight: 600; color: #059669;">Value: $3,000 – $10,000 per violation</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dispute Process -->
+            <div class="card animate-fade-in-up" data-delay="700" style="margin-bottom: 24px;">
+                <div class="card-title">⚡ How The Dispute Process Works</div>
+                <p style="color: #6b7280; margin-bottom: 24px;">Our strategic approach follows a proven escalation path to maximize your results.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;" class="stats-grid-responsive">
+                    <!-- Step 1 -->
+                    <div style="text-align: center;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">1</div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 1: Formal Dispute Letters</h4>
+                        <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">We send detailed certified letters to all three credit bureaus and the data furnishers, documenting specific violations with legal citations.</p>
+                        <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 1-7 • Response Due: 30 days</div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div style="text-align: center;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">2</div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 2: Method of Verification</h4>
+                        <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">If they "verify" without fixing the errors, we demand proof of HOW they investigated. This exposes superficial investigations.</p>
+                        <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 37-45 • Creates legal pressure</div>
+                    </div>
+                    
+                    <!-- Step 3 -->
+                    <div style="text-align: center;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">3</div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 3: Regulatory Complaints</h4>
+                        <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">We file formal complaints with the CFPB, FTC, and your State Attorney General. These create regulatory pressure and paper trails.</p>
+                        <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 45-55 • Government oversight engaged</div>
+                    </div>
+                    
+                    <!-- Step 4 -->
+                    <div style="text-align: center;">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); color: white; font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">4</div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Round 4: Pre-Litigation</h4>
+                        <p style="font-size: 12px; color: #6b7280; margin: 0; line-height: 1.5;">Armed with documented violations and regulatory complaints, we pursue settlement or prepare for arbitration/litigation.</p>
+                        <div style="margin-top: 12px; font-size: 11px; color: #9ca3af;">Timeline: Days 55-90 • 75-85% resolve at this stage</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Glossary -->
+            <div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;">
+                <div class="card-title">📖 Glossary of Terms</div>
+                <p style="color: #6b7280; margin-bottom: 20px;">Common terms you'll encounter during your case.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;" class="two-col-responsive">
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">CRA (Credit Reporting Agency)</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">The three major bureaus: Equifax, Experian, and TransUnion.</p>
+                    </div>
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">Furnisher</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">Any company that reports information to credit bureaus (banks, lenders, collectors).</p>
+                    </div>
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">Metro 2 Format</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">The standardized format creditors must use when reporting to bureaus.</p>
+                    </div>
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">Statutory Damages</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">Fixed damages ($100-$1,000 per violation) available under FCRA regardless of actual harm.</p>
+                    </div>
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">Willful Violation</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">When a company knowingly or recklessly violates the law — triggers punitive damages.</p>
+                    </div>
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">CFPB</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">Consumer Financial Protection Bureau — the federal agency that oversees credit bureaus.</p>
+                    </div>
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">DOFD (Date of First Delinquency)</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">The date that starts the 7-year clock for how long negative info can be reported.</p>
+                    </div>
+                    <div style="padding: 16px; background: #f9fafb; border-radius: 10px;">
+                        <strong style="color: #1e3a5f; font-size: 14px;">Reinsertion</strong>
+                        <p style="font-size: 13px; color: #6b7280; margin: 8px 0 0 0;">When a deleted item reappears on your report — a serious FCRA violation.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ -->
+            <div class="card animate-fade-in-up" data-delay="900" style="margin-bottom: 24px;">
+                <div class="card-title">❓ Frequently Asked Questions</div>
+                
+                <details>
+                    <summary>How long does the dispute process take?</summary>
+                    <p>Credit bureaus have 30 days to investigate and respond to disputes. The complete process typically takes 60-90 days for most cases, though complex cases with multiple violations may take 3-6 months. We'll keep you updated at every stage through your portal.</p>
+                </details>
+                
+                <details>
+                    <summary>What happens if the bureau doesn't respond in 30 days?</summary>
+                    <p>If a bureau fails to respond within 30 days, they must remove the disputed item from your credit report. This is also a violation of FCRA § 1681i that we can use to strengthen your case for damages.</p>
+                </details>
+                
+                <details>
+                    <summary>What are "statutory damages" vs "actual damages"?</summary>
+                    <p><strong>Statutory damages</strong> are fixed amounts ($100-$1,000 per violation) you can recover regardless of proving specific harm. <strong>Actual damages</strong> require proof of real financial harm (denied credit, lost job, emotional distress). Our approach documents both to maximize your recovery.</p>
+                </details>
+                
+                <details>
+                    <summary>Can I dispute items myself for free?</summary>
+                    <p>Yes, you have the right to dispute items directly with credit bureaus for free. However, generic disputes often receive automated responses. Our expertise in FCRA law, strategic bundling of violations, and regulatory escalation paths typically achieve better and faster results — with potential monetary recovery.</p>
+                </details>
+                
+                <details>
+                    <summary>What if the bureau says my dispute is "frivolous"?</summary>
+                    <p>Bureaus sometimes label disputes as "frivolous" to avoid investigation. However, they can only do this if your dispute doesn't identify the specific information being disputed. Our letters are detailed and specific, making frivolous claims much harder — and when they do, it often becomes evidence of willful non-compliance.</p>
+                </details>
+                
+                <details>
+                    <summary>How is this different from "credit repair"?</summary>
+                    <p>Traditional credit repair sends generic dispute letters hoping items get deleted. We're building federal litigation cases with documented violations, calculated damages, and regulatory paper trails. This positions you for settlements in the $12,000-$85,000 range, not just item deletions.</p>
+                </details>
+                
+                <details>
+                    <summary>Will this hurt my credit score?</summary>
+                    <p>No. Disputing inaccurate information does not hurt your credit score. In fact, when inaccurate negative items are removed or corrected, your score typically improves. The dispute process itself has no negative impact on your credit.</p>
+                </details>
+                
+                <details>
+                    <summary>What should I do if I receive mail from a credit bureau?</summary>
+                    <p>Upload it to your portal immediately! Every response is important documentation. Go to the "Documents" tab and upload the letter. We'll review it and determine next steps. Don't throw anything away.</p>
+                </details>
+            </div>
+
+            <!-- CTA -->
+            <div class="card animate-fade-in-up" data-delay="1000" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); text-align: center; padding: 40px 24px; border: none;">
+                <h3 style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; color: white; margin: 0 0 12px 0;">Still Have Questions?</h3>
+                <p style="font-size: 15px; color: rgba(255,255,255,0.8); margin: 0 0 24px 0;">We're here to help you understand every step of the process.</p>
+                <button onclick="switchTab('profile', document.querySelector('[onclick*=profile]'))" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; background: white; color: #0d9488; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;">Contact Us</button>
+            </div>
+        </div>
+
+        <!-- ████████████████████████████████████████████
+             TAB 4: PROFILE
+             ████████████████████████████████████████████ -->
+        <div class="tab-content" id="profile">
+            
+            <!-- Profile Header -->
+            <div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;">
+                <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                    <div style="width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.2);">
+                        <span style="font-size: 36px; font-weight: 700; color: white;">S</span>
+                    </div>
+                    <div style="flex: 1; min-width: 200px;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; margin: 0 0 4px 0;">Sarah Johnson</h2>
+                        <p style="font-size: 14px; color: #9ca3af; margin: 0 0 12px 0;">Client since December 2025</p>
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(13, 148, 136, 0.2); border-radius: 6px; font-size: 13px; font-weight: 600; color: #14b8a6;">🛡️ Round 2</span>
+                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 6px; font-size: 13px; font-weight: 500; color: white;">✅ Portal Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+                <a href="javascript:void(0)" onclick="switchTab('documents', document.querySelector('[onclick*=documents]'))" class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📤</div>
+                    <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Upload Document</div>
+                </a>
+                <a href="javascript:void(0)" onclick="switchTab('case', document.querySelector('[onclick*=case]'))" class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
+                    <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">View Case</div>
+                </a>
+                <a href="javascript:void(0)" onclick="switchTab('learn', document.querySelector('[onclick*=learn]'))" class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📖</div>
+                    <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Learn FCRA</div>
+                </a>
+            </div>
+
+            <!-- Personal Info -->
+            <div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+                <div class="card-title">👤 Personal Information</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="two-col-responsive">
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Full Name</label>
+                        <input type="text" value="Sarah Johnson" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Email</label>
+                        <input type="email" value="sarah.johnson@email.com" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Phone</label>
+                        <input type="tel" value="(555) 123-4567" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Current Round</label>
+                        <input type="text" value="Round 2" disabled style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px; background: #f9fafb; color: #1e3a5f;">
+                    </div>
+                </div>
+                <p style="font-size: 13px; color: #9ca3af; margin: 20px 0 0 0;">Need to update your contact information? Contact us and we'll help.</p>
+            </div>
+
+            <!-- Detailed Status Link -->
+            <div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px; background: #f9fafb; border: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 4px 0;">📋 Detailed Bureau Status</h4>
+                        <p style="font-size: 14px; color: #6b7280; margin: 0;">View and update individual account statuses across all bureaus.</p>
+                    </div>
+                    <button onclick="switchTab('status', null)" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 600; color: #1e3a5f; cursor: pointer;">
+                        View Status →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contact -->
+            <div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+                <div class="card-title">📞 Get in Touch</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+                    <a href="tel:9179094051" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                            <span style="font-size: 20px;">📞</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px;">Phone</div>
+                        <div style="font-size: 15px; font-weight: 500; color: #0d9488;">(917) 909-4051</div>
+                    </a>
+                    <a href="/cdn-cgi/l/email-protection#a5d6d0d5d5cad7d1e5c7d7ccc2cdd1d5c4d1cdc4d6c6c0cbc1c2d7cad0d58bc6cac8" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                            <span style="font-size: 20px;">📧</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px;">Email</div>
+                        <div style="font-size: 14px; font-weight: 500; color: #0d9488; word-break: break-all;">support@brightpath...</div>
+                    </a>
+                    <a href="https://brightpathascendgroup.com" target="_blank" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                            <span style="font-size: 20px;">🌐</span>
+                        </div>
+                        <div style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px;">Website</div>
+                        <div style="font-size: 14px; font-weight: 500; color: #0d9488;">brightpathascend...</div>
+                    </a>
+                </div>
+                
+                <!-- Message Form -->
+                <div style="background: #f9fafb; border-radius: 12px; padding: 24px;">
+                    <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Send Us a Message</h4>
+                    <form>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Subject</label>
+                            <select style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white;">
+                                <option>General Question</option>
+                                <option>Update My Information</option>
+                                <option>Document Help</option>
+                                <option>Technical Issue</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Message</label>
+                            <textarea style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; resize: vertical; min-height: 100px;" placeholder="How can we help?"></textarea>
+                        </div>
+                        <button type="button" class="submit-btn" style="width: 100%;">Send Message</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Referral -->
+            <div class="card animate-fade-in-up" data-delay="700" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; margin-bottom: 24px; border: none;">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🎁</div>
+                    <h3 style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; margin: 0 0 8px 0;">Know Someone Who Could Use Our Services?</h3>
+                    <p style="font-size: 15px; color: #9ca3af; margin: 0;">Refer a friend and help them restore their credit too!</p>
+                </div>
+                
+                <!-- Referral Code -->
+                <div style="background: rgba(13, 148, 136, 0.15); border: 1px solid rgba(13, 148, 136, 0.3); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 24px;">
+                    <div style="font-size: 12px; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Your Referral Code</div>
+                    <div style="font-family: 'DM Sans', monospace; font-size: 32px; font-weight: 700; color: #14b8a6; letter-spacing: 2px;">BP175</div>
+                </div>
+                
+                <!-- Referral Form -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" class="two-col-responsive">
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Their Name</label>
+                        <input type="text" placeholder="John Smith" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Their Phone</label>
+                        <input type="tel" placeholder="(555) 123-4567" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Their Email</label>
+                        <input type="email" placeholder="john@example.com" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Your Name</label>
+                        <input type="text" value="Sarah Johnson" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white;">
+                    </div>
+                    <div style="grid-column: span 2;" class="two-col-responsive">
+                        <label style="display: block; font-size: 13px; font-weight: 500; color: #9ca3af; margin-bottom: 8px;">Comments (optional)</label>
+                        <textarea placeholder="How do they know you?" style="width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; font-size: 14px; background: rgba(255,255,255,0.05); color: white; resize: vertical; min-height: 60px;"></textarea>
+                    </div>
+                    <div style="grid-column: span 2;" class="two-col-responsive">
+                        <button type="button" style="width: 100%; padding: 14px 24px; background: #14b8a6; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Submit Referral</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Status -->
+            <div class="card animate-fade-in-up" data-delay="800">
+                <div class="card-title">🔐 Security & Account</div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+                    <div style="padding: 16px; background: rgba(13, 148, 136, 0.1); border-left: 4px solid #0d9488; border-radius: 8px;">
+                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Case Status</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0d9488;">Active</div>
+                    </div>
+                    <div style="padding: 16px; background: rgba(13, 148, 136, 0.1); border-left: 4px solid #0d9488; border-radius: 8px;">
+                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Client Since</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0d9488;">December 2025</div>
+                    </div>
+                    <div style="padding: 16px; background: rgba(13, 148, 136, 0.1); border-left: 4px solid #0d9488; border-radius: 8px;">
+                        <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">Portal Access</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0d9488;">Active</div>
+                    </div>
+                </div>
+                
+                <!-- Password Form -->
+                <div style="background: #f9fafb; border-radius: 12px; padding: 24px;">
+                    <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Password & Security</h4>
+                    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">Update your password or use your secure access link to log in.</p>
+                    
+                    <form style="display: grid; gap: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Current Password</label>
+                            <input type="password" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;" class="two-col-responsive">
+                            <div>
+                                <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">New Password</label>
+                                <input type="password" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Confirm Password</label>
+                                <input type="password" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;">
+                            </div>
+                        </div>
+                        <button type="button" class="submit-btn">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ████████████████████████████████████████████
+             TAB 5: STATUS (Hidden - accessible via links)
+             ████████████████████████████████████████████ -->
+        <div class="tab-content" id="status">
+            
+            <!-- Back Link -->
+            <div style="margin-bottom: 24px;">
+                <a href="javascript:void(0)" onclick="switchTab('case', document.querySelector('[onclick*=case]'))" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #0d9488; text-decoration: none;">
+                    ← Back to Case Overview
+                </a>
+            </div>
+
+            <!-- Header -->
+            <div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; margin: 0 0 8px 0;">Detailed Bureau Status</h2>
+                <p style="font-size: 15px; opacity: 0.8; margin: 0;">Track individual account statuses across all three credit bureaus.</p>
+            </div>
+
+            <!-- Summary Stats -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+                <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; border-left: 4px solid #0d9488;">
+                    <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Equifax</div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #0d9488;">3 Items</div>
+                    <div style="font-size: 12px; color: #059669; margin-top: 4px;">1 Deleted</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px; border-left: 4px solid #2563eb;">
+                    <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Experian</div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #2563eb;">2 Items</div>
+                    <div style="font-size: 12px; color: #f59e0b; margin-top: 4px;">Pending</div>
+                </div>
+                <div class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px; border-left: 4px solid #dc2626;">
+                    <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">TransUnion</div>
+                    <div style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #dc2626;">2 Items</div>
+                    <div style="font-size: 12px; color: #f59e0b; margin-top: 4px;">Pending</div>
+                </div>
+            </div>
+
+            <!-- Equifax Section -->
+            <div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+                <div class="card-title" style="color: #0d9488;">
+                    <span style="width: 12px; height: 12px; background: #0d9488; border-radius: 50%; display: inline-block;"></span>
+                    Equifax Accounts
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Account 1 - Deleted -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: rgba(5, 150, 105, 0.05); border-radius: 10px; border: 1px solid rgba(5, 150, 105, 0.2); flex-wrap: wrap;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: #059669; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="color: white; font-size: 16px;">✓</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Capital One - #4821</div>
+                            <div style="font-size: 13px; color: #6b7280;">Collection Account • Reported Balance: $2,340</div>
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #059669; color: white;">DELETED</div>
+                    </div>
+                    
+                    <!-- Account 2 - Pending -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="color: white; font-size: 16px;">⏳</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Midland Credit - #7392</div>
+                            <div style="font-size: 13px; color: #6b7280;">Collection Account • Reported Balance: $4,120</div>
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(245, 158, 11, 0.1); color: #d97706;">PENDING</div>
+                    </div>
+                    
+                    <!-- Account 3 - Disputed -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: #0d9488; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="color: white; font-size: 16px;">📤</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Portfolio Recovery - #1847</div>
+                            <div style="font-size: 13px; color: #6b7280;">Collection Account • Reported Balance: $1,890</div>
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(13, 148, 136, 0.1); color: #0d9488;">DISPUTED</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experian Section -->
+            <div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;">
+                <div class="card-title" style="color: #2563eb;">
+                    <span style="width: 12px; height: 12px; background: #2563eb; border-radius: 50%; display: inline-block;"></span>
+                    Experian Accounts
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Account 1 -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="color: white; font-size: 16px;">⏳</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Midland Credit - #7392</div>
+                            <div style="font-size: 13px; color: #6b7280;">Collection Account • Reported Balance: $4,280</div>
+                            <div style="font-size: 11px; color: #dc2626; margin-top: 4px;">⚠️ Balance differs from Equifax ($4,120)</div>
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(245, 158, 11, 0.1); color: #d97706;">PENDING</div>
+                    </div>
+                    
+                    <!-- Account 2 -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: #0d9488; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="color: white; font-size: 16px;">📤</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">LVNV Funding - #9283</div>
+                            <div style="font-size: 13px; color: #6b7280;">Collection Account • Reported Balance: $3,450</div>
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(13, 148, 136, 0.1); color: #0d9488;">DISPUTED</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TransUnion Section -->
+            <div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+                <div class="card-title" style="color: #dc2626;">
+                    <span style="width: 12px; height: 12px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
+                    TransUnion Accounts
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Account 1 -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="color: white; font-size: 16px;">⏳</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Midland Credit - #7392</div>
+                            <div style="font-size: 13px; color: #6b7280;">Collection Account • Reported Balance: $4,120</div>
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(245, 158, 11, 0.1); color: #d97706;">PENDING</div>
+                    </div>
+                    
+                    <!-- Account 2 -->
+                    <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #f9fafb; border-radius: 10px; border: 1px solid #e5e7eb; flex-wrap: wrap;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: #0d9488; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="color: white; font-size: 16px;">📤</span>
+                        </div>
+                        <div style="flex: 1; min-width: 150px;">
+                            <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">Portfolio Recovery - #1847</div>
+                            <div style="font-size: 13px; color: #6b7280;">Collection Account • Reported Balance: $1,890</div>
+                        </div>
+                        <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(13, 148, 136, 0.1); color: #0d9488;">DISPUTED</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="card animate-fade-in-up" data-delay="700" style="background: #f9fafb;">
+                <div class="card-title">📋 Status Legend</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: #059669; color: white;">DELETED</div>
+                        <span style="font-size: 13px; color: #6b7280;">Removed from report</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(13, 148, 136, 0.1); color: #0d9488;">DISPUTED</div>
+                        <span style="font-size: 13px; color: #6b7280;">Awaiting response</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(245, 158, 11, 0.1); color: #d97706;">PENDING</div>
+                        <span style="font-size: 13px; color: #6b7280;">Under investigation</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(220, 38, 38, 0.1); color: #dc2626;">VERIFIED</div>
+                        <span style="font-size: 13px; color: #6b7280;">Escalating to R3</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: #0d9488; color: white;">FROZEN</div>
+                        <span style="font-size: 13px; color: #6b7280;">Secondary bureau frozen</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(220, 38, 38, 0.15); color: #dc2626;">NOT FROZEN</div>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze not applied</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Secondary Bureaus Freeze Section -->
+            <div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px; margin-top: 24px;">
+                <div class="card-title" style="color: #8b5cf6;">
+                    <span style="width: 12px; height: 12px; background: #8b5cf6; border-radius: 50%; display: inline-block;"></span>
+                    Secondary Bureaus Freeze
+                </div>
+                
+                <!-- Instruction Alert -->
+                <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+                    <p style="font-size: 13px; color: #991b1b; margin: 0; line-height: 1.6;">When you receive a response from a Secondary Bureau that they have <strong>FROZEN</strong> their report, please let us know by changing the Status to FROZEN as appropriate and then clicking the SUBMIT button. If they respond that they did <strong>NOT FREEZE</strong> the report, please change to NOT FROZEN instead and click the SUBMIT button. Thank you.</p>
+                </div>
+                
+                <!-- Table Header -->
+                <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; background: #1e3a5f; color: white; padding: 14px 16px; border-radius: 8px 8px 0 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <span>Follow Up</span>
+                    <span>Type</span>
+                    <span>Status</span>
+                    <span>Secondary Bureau</span>
+                    <span>Comments</span>
+                    <span style="text-align: center;">📎</span>
+                </div>
+                
+                <!-- Bureau Rows -->
+                <div style="display: flex; flex-direction: column; background: #e5e7eb; border-radius: 0 0 8px 8px; overflow: hidden;">
+                    
+                    <!-- Innovis -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">Innovis</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- ChexSystems -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">ChexSystems</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- Clarity Services Inc -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">Clarity Services Inc</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- LexisNexis -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">LexisNexis</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- CoreLogic Teletrack -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">CoreLogic Teletrack</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- Factor Trust Inc -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">Factor Trust Inc</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- MicroBilt / PRBC -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">MicroBilt / PRBC</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- LexisNexis Risk Solutions -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 13px; font-weight: 500; color: #1e3a5f;">LexisNexis Risk Solutions (TransUnion)</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                    
+                    <!-- DataX Ltd -->
+                    <div style="display: grid; grid-template-columns: 70px 55px 115px 1fr 130px 35px; gap: 8px; align-items: center; padding: 12px 16px; background: white;">
+                        <span style="font-size: 13px; color: #9ca3af;">n/a</span>
+                        <span style="font-size: 13px; color: #6b7280;">Freeze</span>
+                        <select style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; background: white; width: 100%;">
+                            <option selected>PENDING</option>
+                            <option>FROZEN</option>
+                            <option>NOT FROZEN</option>
+                        </select>
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">DataX Ltd</span>
+                        <input type="text" placeholder="Add comment" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+                        <span style="color: #9ca3af; font-size: 16px; text-align: center;">📎</span>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div style="text-align: center; margin-top: 24px;">
+                    <button class="submit-btn">Submit changes</button>
+                </div>
+            </div>
+
+            <!-- Back to Case -->
+            <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+                <a href="javascript:void(0)" onclick="switchTab('case', document.querySelector('[onclick*=case]'))" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #0d9488; text-decoration: none;">
+                    ← Back to Case Overview
+                </a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ============================================
+         JAVASCRIPT
+         ============================================ -->
+    <script>
+        // Tab switching
+        function switchTab(tabId, element) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            const targetTab = document.getElementById(tabId);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // Set active nav
+            if (element) {
+                element.classList.add('active');
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Re-run animations for this tab
+            setTimeout(() => {
+                initAnimations();
+                initStatusDropdowns();
+            }, 100);
+        }
+
+        // Status dropdown color change
+        function updateStatusColor(select) {
+            const value = select.value;
+            select.style.fontWeight = '600';
+            if (value === 'FROZEN') {
+                select.style.background = '#0d9488';
+                select.style.color = 'white';
+                select.style.borderColor = '#0d9488';
+            } else if (value === 'NOT FROZEN') {
+                select.style.background = 'rgba(220, 38, 38, 0.15)';
+                select.style.color = '#dc2626';
+                select.style.borderColor = '#dc2626';
+            } else {
+                // PENDING - amber/yellow
+                select.style.background = 'rgba(245, 158, 11, 0.15)';
+                select.style.color = '#d97706';
+                select.style.borderColor = '#f59e0b';
+            }
+        }
+
+        // Initialize status dropdowns
+        function initStatusDropdowns() {
+            document.querySelectorAll('#status select').forEach(select => {
+                // Set initial color
+                updateStatusColor(select);
+                // Add change listener
+                select.addEventListener('change', function() {
+                    updateStatusColor(this);
+                });
+            });
+        }
+
+        // Animated numbers
+        function animateNumber(element) {
+            const target = parseInt(element.dataset.value, 10);
+            const prefix = element.dataset.prefix || '';
+            const duration = 1500;
+            const start = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 4);
+                const current = Math.round(eased * target);
+                element.textContent = prefix + current.toLocaleString();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // Progress ring
+        function animateProgressRing() {
+            const circle = document.querySelector('.progress-ring-circle');
+            const percentText = document.querySelector('.progress-percent-text');
+            const progressBar = document.querySelector('.progress-bar-fill');
+            
+            if (!circle) return;
+            
+            const target = parseInt(circle.dataset.progress, 10);
+            const circumference = 471.24;
+            const duration = 1400;
+            
+            setTimeout(() => {
+                const start = performance.now();
+                
+                function update(currentTime) {
+                    const elapsed = currentTime - start;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 4);
+                    const currentPercent = Math.round(eased * target);
+                    const offset = circumference - (currentPercent / 100) * circumference;
+                    
+                    circle.style.strokeDashoffset = offset;
+                    if (percentText) percentText.textContent = currentPercent;
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(update);
+                    }
+                }
+                
+                requestAnimationFrame(update);
+            }, 600);
+            
+            // Progress bar
+            if (progressBar) {
+                setTimeout(() => {
+                    progressBar.style.width = progressBar.dataset.width + '%';
+                }, 600);
+            }
+        }
+
+        // Initialize animations
+        function initAnimations() {
+            // Animate numbers
+            document.querySelectorAll('.animate-number').forEach(el => {
+                el.textContent = el.dataset.prefix || '0';
+                animateNumber(el);
+            });
+            
+            // Progress ring
+            animateProgressRing();
+        }
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initAnimations();
+            initStatusDropdowns();
+        });
+    </script>
+
+</body>
+</html>

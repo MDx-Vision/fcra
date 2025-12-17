@@ -1,0 +1,254 @@
+{% extends "staff/base_staff.html" %}
+
+{% block title %}Credit Tracker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tracker-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+
+    .client-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .client-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+        border-color: var(--apple-teal);
+    }
+
+    .client-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .client-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--apple-navy) 0%, var(--apple-navy-dark) 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 16px;
+    }
+
+    .client-info h3 {
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        font-size: 15px;
+        margin-bottom: 2px;
+    }
+
+    .client-info p {
+        font-size: 13px;
+        color: var(--apple-gray-500);
+    }
+
+    .client-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .metric {
+        text-align: center;
+        padding: 12px 8px;
+        background: var(--apple-gray-50);
+        border-radius: 10px;
+    }
+
+    .metric-value {
+        font-family: var(--font-display);
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--apple-navy-dark);
+    }
+
+    .metric-value.score {
+        color: var(--apple-teal);
+    }
+
+    .metric-value.score.high {
+        color: var(--apple-green);
+    }
+
+    .metric-value.score.low {
+        color: var(--apple-red);
+    }
+
+    .metric-label {
+        font-size: 11px;
+        color: var(--apple-gray-500);
+        margin-top: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .client-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 12px;
+        border-top: 1px solid var(--apple-gray-100);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-active { background: rgba(13, 148, 136, 0.1); color: var(--apple-teal); }
+    .status-in_progress { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .status-analyzing { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+    .status-complete { background: rgba(5, 150, 105, 0.1); color: var(--apple-green); }
+    .status-new { background: var(--apple-gray-100); color: var(--apple-gray-600); }
+
+    .last-updated {
+        font-size: 12px;
+        color: var(--apple-gray-400);
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--apple-gray-500);
+    }
+
+    .search-filters {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        flex: 1;
+        min-width: 200px;
+        padding: 12px 16px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 12px;
+        font-size: 14px;
+        background: white;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--apple-teal);
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Credit Tracker</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Track client credit repair progress</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card highlight">
+        <div class="stat-label">Clients Tracked</div>
+        <div class="stat-value">{{ stats.total_tracked }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value" style="color: #3b82f6;">{{ stats.in_progress }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Analyzing</div>
+        <div class="stat-value" style="color: #d97706;">{{ stats.analyzing }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Complete</div>
+        <div class="stat-value" style="color: var(--apple-green);">{{ stats.complete }}</div>
+    </div>
+</div>
+
+<div class="search-filters">
+    <input type="text" class="search-input" placeholder="Search clients..." id="clientSearch" onkeyup="filterClients()">
+</div>
+
+<div class="tracker-grid" id="clientGrid">
+    {% if clients %}
+        {% for client in clients %}
+        <a href="{{ url_for('staff_portal.client_detail', client_id=client.id) }}" class="client-card" data-name="{{ client.name|lower }}">
+            <div class="client-header">
+                <div class="client-avatar">{{ client.initials }}</div>
+                <div class="client-info">
+                    <h3>{{ client.name }}</h3>
+                    <p>{{ client.email }}</p>
+                </div>
+            </div>
+            <div class="client-metrics">
+                <div class="metric">
+                    <div class="metric-value score {% if client.score and client.score >= 8 %}high{% elif client.score and client.score < 5 %}low{% endif %}">
+                        {{ client.score or '--' }}
+                    </div>
+                    <div class="metric-label">Score</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">{{ client.round }}</div>
+                    <div class="metric-label">Round</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">--</div>
+                    <div class="metric-label">Items</div>
+                </div>
+            </div>
+            <div class="client-status">
+                <span class="status-badge status-{{ client.status|lower|replace(' ', '_') }}">
+                    {{ client.status }}
+                </span>
+                <span class="last-updated">{{ client.updated_at }}</span>
+            </div>
+        </a>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">No clients found</div>
+            <p>No active clients to track.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterClients() {
+    const search = document.getElementById('clientSearch').value.toLowerCase();
+    const cards = document.querySelectorAll('.client-card');
+
+    cards.forEach(card => {
+        const name = card.dataset.name;
+        if (name.includes(search)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends "staff/base_staff.html" %}
+{% block title %}Admin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Admin</h1>
+</div>
+
+<!-- Sub-filters -->
+<div class="sub-filters">
+    <a href="{{ url_for('staff_portal.admin') }}" class="sub-filter {% if not section %}active{% endif %}">Overview</a>
+    <a href="{{ url_for('staff_portal.admin') }}?section=team" class="sub-filter {% if section == 'team' %}active{% endif %}">Team</a>
+    <a href="{{ url_for('staff_portal.admin') }}?section=analytics" class="sub-filter {% if section == 'analytics' %}active{% endif %}">Analytics</a>
+    <a href="{{ url_for('staff_portal.admin') }}?section=settings" class="sub-filter {% if section == 'settings' %}active{% endif %}">Settings</a>
+    {% if session.get('staff_role') == 'admin' %}
+    <a href="{{ url_for('staff_portal.admin') }}?section=automation" class="sub-filter {% if section == 'automation' %}active{% endif %}">Automation</a>
+    <a href="{{ url_for('staff_portal.admin') }}?section=integrations" class="sub-filter {% if section == 'integrations' %}active{% endif %}">Integrations</a>
+    {% endif %}
+</div>
+
+{% if not section %}
+<!-- Overview Section -->
+<div class="stats-grid stats-grid-responsive">
+    <div class="card stat-card animate-fade-in-up" data-delay="0">
+        <div class="stat-label">Total Clients</div>
+        <div class="stat-value animate-number" data-value="{{ overview.total_clients }}">0</div>
+    </div>
+    <div class="card stat-card animate-fade-in-up" data-delay="100">
+        <div class="stat-label">Active Staff</div>
+        <div class="stat-value animate-number" data-value="{{ overview.active_staff }}">0</div>
+    </div>
+    <div class="card stat-card animate-fade-in-up" data-delay="200">
+        <div class="stat-label">Letters This Month</div>
+        <div class="stat-value animate-number" data-value="{{ overview.letters_month }}">0</div>
+    </div>
+    <div class="card stat-card highlight animate-fade-in-up" data-delay="300">
+        <div class="stat-label">Revenue</div>
+        <div class="stat-value animate-number" data-value="{{ overview.revenue }}" data-prefix="$">$0</div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="card animate-fade-in-up" data-delay="400">
+    <div class="card-title">Quick Links</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+        <a href="/dashboard/staff" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Staff Management</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">Manage team members</div>
+            </div>
+        </a>
+        <a href="/dashboard/settings" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Settings</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">System configuration</div>
+            </div>
+        </a>
+        <a href="/dashboard/analytics" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Analytics</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">View reports</div>
+            </div>
+        </a>
+        <a href="/dashboard/audit" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Audit Logs</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">Activity history</div>
+            </div>
+        </a>
+        {% if session.get('staff_role') == 'admin' %}
+        <a href="/dashboard/automation-tools" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Automation</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">Workflow rules</div>
+            </div>
+        </a>
+        <a href="/dashboard/integrations" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">Integrations</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">Third-party apps</div>
+            </div>
+        </a>
+        <a href="/dashboard/api-keys" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">API Keys</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">Developer access</div>
+            </div>
+        </a>
+        <a href="/dashboard/whitelabel" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 24px; margin-bottom: 8px;">White Label</div>
+                <div style="font-size: 13px; color: var(--apple-gray-600);">Branding options</div>
+            </div>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% elif section == 'team' %}
+<!-- Team Section -->
+<div class="card animate-fade-in-up">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="card-title" style="margin-bottom: 0;">Team Members</div>
+        {% if session.get('staff_role') == 'admin' %}
+        <a href="/dashboard/staff" class="btn btn-primary">Manage Team</a>
+        {% endif %}
+    </div>
+    {% if team_members %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Last Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in team_members %}
+            <tr>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--apple-teal); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                            {{ member.initials }}
+                        </div>
+                        <span style="font-weight: 600;">{{ member.name }}</span>
+                    </div>
+                </td>
+                <td><span class="badge badge-info">{{ member.role }}</span></td>
+                <td style="color: var(--apple-gray-500);">{{ member.email }}</td>
+                <td><span class="badge badge-{% if member.is_active %}success{% else %}danger{% endif %}">{% if member.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                <td style="color: var(--apple-gray-500); font-size: 13px;">{{ member.last_active }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>No team members found</p>
+    </div>
+    {% endif %}
+</div>
+
+{% elif section == 'analytics' %}
+<!-- Analytics Section -->
+<div class="stats-grid stats-grid-responsive" style="margin-bottom: 24px;">
+    <div class="card stat-card">
+        <div class="stat-label">Cases This Month</div>
+        <div class="stat-value animate-number" data-value="{{ analytics.cases_month }}">0</div>
+        <div class="stat-change">{{ analytics.cases_change }}% vs last month</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Success Rate</div>
+        <div class="stat-value"><span class="animate-number" data-value="{{ analytics.success_rate }}">0</span>%</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Avg. Resolution Time</div>
+        <div class="stat-value"><span class="animate-number" data-value="{{ analytics.avg_resolution }}">0</span> days</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Client Satisfaction</div>
+        <div class="stat-value"><span class="animate-number" data-value="{{ analytics.satisfaction }}">0</span>%</div>
+    </div>
+</div>
+
+<div class="card animate-fade-in-up">
+    <div class="card-title">View Detailed Reports</div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="/dashboard/analytics" class="btn btn-secondary">Full Analytics Dashboard</a>
+        <a href="/dashboard/predictive" class="btn btn-secondary">Predictive Analytics</a>
+        <a href="/dashboard/ml-insights" class="btn btn-secondary">ML Insights</a>
+        <a href="/dashboard/performance" class="btn btn-secondary">Performance Metrics</a>
+    </div>
+</div>
+
+{% elif section == 'settings' %}
+<!-- Settings Section -->
+<div class="two-col two-col-responsive">
+    <div class="card animate-fade-in-up">
+        <div class="card-title">General Settings</div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <a href="/dashboard/settings" class="btn btn-secondary" style="justify-content: flex-start;">Company Information</a>
+            <a href="/dashboard/settings/email" class="btn btn-secondary" style="justify-content: flex-start;">Email Settings</a>
+            <a href="/dashboard/settings/sms" class="btn btn-secondary" style="justify-content: flex-start;">SMS Settings</a>
+            <a href="/dashboard/billing" class="btn btn-secondary" style="justify-content: flex-start;">Billing & Payments</a>
+        </div>
+    </div>
+    <div class="card animate-fade-in-up" data-delay="100">
+        <div class="card-title">Resources</div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <a href="/dashboard/knowledge-base" class="btn btn-secondary" style="justify-content: flex-start;">Knowledge Base</a>
+            <a href="/dashboard/sops" class="btn btn-secondary" style="justify-content: flex-start;">Standard Procedures</a>
+            <a href="/dashboard/case-law" class="btn btn-secondary" style="justify-content: flex-start;">Case Law Database</a>
+            <a href="/dashboard/api-docs" class="btn btn-secondary" style="justify-content: flex-start;">API Documentation</a>
+        </div>
+    </div>
+</div>
+
+{% elif section == 'automation' %}
+<!-- Automation Section (Admin Only) -->
+<div class="card animate-fade-in-up">
+    <div class="card-title">Automation Tools</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;">
+        <a href="/dashboard/automation-tools" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 24px; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 20px; font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 8px;">Automation Tools</div>
+                <p style="font-size: 13px; color: var(--apple-gray-600);">Configure automated workflows and rules</p>
+            </div>
+        </a>
+        <a href="/dashboard/workflows" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 24px; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 20px; font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 8px;">Workflow Triggers</div>
+                <p style="font-size: 13px; color: var(--apple-gray-600);">Set up event-based automations</p>
+            </div>
+        </a>
+        <a href="/dashboard/tasks" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 24px; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 20px; font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 8px;">Task Queue</div>
+                <p style="font-size: 13px; color: var(--apple-gray-600);">Monitor background tasks</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+{% elif section == 'integrations' %}
+<!-- Integrations Section (Admin Only) -->
+<div class="card animate-fade-in-up">
+    <div class="card-title">Integrations</div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px;">
+        <a href="/dashboard/integrations" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 24px; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 20px; font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 8px;">Integration Hub</div>
+                <p style="font-size: 13px; color: var(--apple-gray-600);">Connect third-party services</p>
+            </div>
+        </a>
+        <a href="/dashboard/api-keys" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 24px; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 20px; font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 8px;">API Keys</div>
+                <p style="font-size: 13px; color: var(--apple-gray-600);">Manage API access tokens</p>
+            </div>
+        </a>
+        <a href="/dashboard/whitelabel" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 24px; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 20px; font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 8px;">White Label</div>
+                <p style="font-size: 13px; color: var(--apple-gray-600);">Custom branding options</p>
+            </div>
+        </a>
+        <a href="/dashboard/franchise" style="text-decoration: none;">
+            <div style="background: var(--apple-gray-50); border-radius: 12px; padding: 24px; transition: all 0.2s;" onmouseover="this.style.background='var(--apple-gray-100)'" onmouseout="this.style.background='var(--apple-gray-50)'">
+                <div style="font-size: 20px; font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 8px;">Franchise Mode</div>
+                <p style="font-size: 13px; color: var(--apple-gray-600);">Multi-tenant management</p>
+            </div>
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
