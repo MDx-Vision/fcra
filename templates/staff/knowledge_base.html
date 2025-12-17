@@ -1,0 +1,484 @@
+{% extends "staff/base_staff.html" %}
+{% set active_tab = 'admin' %}
+
+{% block title %}Knowledge Base{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* KB Layout */
+    .kb-layout {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 24px;
+    }
+
+    /* Sidebar */
+    .kb-sidebar {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid var(--apple-gray-200);
+        height: fit-content;
+        position: sticky;
+        top: 100px;
+    }
+
+    .kb-sidebar h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--apple-gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+    }
+
+    .kb-categories {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .kb-categories li {
+        margin-bottom: 4px;
+    }
+
+    .kb-categories a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        color: var(--apple-gray-600);
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .kb-categories a:hover {
+        background: var(--apple-gray-50);
+        color: var(--apple-teal);
+    }
+
+    .kb-categories a.active {
+        background: #f0fdfa;
+        color: var(--apple-teal);
+        font-weight: 600;
+    }
+
+    /* KB Content */
+    .kb-section {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid var(--apple-gray-200);
+        margin-bottom: 24px;
+    }
+
+    .kb-section h2 {
+        font-family: var(--font-display);
+        font-size: 20px;
+        color: var(--apple-navy-dark);
+        margin-bottom: 16px;
+    }
+
+    /* Search */
+    .kb-search {
+        margin-bottom: 0;
+    }
+
+    .kb-search input {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 16px;
+        border: 2px solid var(--apple-gray-200);
+        border-radius: 12px;
+        transition: all 0.2s;
+    }
+
+    .kb-search input:focus {
+        outline: none;
+        border-color: var(--apple-teal);
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    /* Articles Grid */
+    .articles-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .article-card {
+        padding: 20px;
+        background: var(--apple-gray-50);
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .article-card:hover {
+        background: #f0fdfa;
+        transform: translateY(-2px);
+        border-color: var(--apple-teal);
+    }
+
+    .article-icon {
+        font-size: 28px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .article-card h3 {
+        color: var(--apple-navy-dark);
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .article-card p {
+        color: var(--apple-gray-500);
+        font-size: 13px;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .article-meta {
+        font-size: 12px;
+        color: var(--apple-gray-400);
+        margin-top: 12px;
+        display: block;
+    }
+
+    /* SOP List */
+    .sop-list {
+        margin-top: 16px;
+    }
+
+    .sop-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--apple-gray-100);
+    }
+
+    .sop-item:last-child {
+        border-bottom: none;
+    }
+
+    .sop-info h3 {
+        font-size: 15px;
+        color: var(--apple-navy-dark);
+        margin: 0 0 4px 0;
+        font-weight: 600;
+    }
+
+    .sop-meta {
+        font-size: 12px;
+        color: var(--apple-gray-500);
+    }
+
+    .sop-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-sm {
+        padding: 8px 14px;
+        font-size: 12px;
+        border: 1px solid var(--apple-gray-200);
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        color: var(--apple-gray-600);
+    }
+
+    .btn-sm:hover {
+        background: var(--apple-teal);
+        color: white;
+        border-color: var(--apple-teal);
+    }
+
+    /* Recent List */
+    .recent-list {
+        margin-top: 16px;
+    }
+
+    .recent-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--apple-gray-100);
+    }
+
+    .recent-item:last-child {
+        border-bottom: none;
+    }
+
+    .recent-icon {
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--apple-gray-100);
+        border-radius: 8px;
+    }
+
+    .recent-info {
+        flex: 1;
+    }
+
+    .recent-info a {
+        color: var(--apple-navy-dark);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+    }
+
+    .recent-info a:hover {
+        color: var(--apple-teal);
+    }
+
+    .recent-meta {
+        display: block;
+        font-size: 12px;
+        color: var(--apple-gray-400);
+        margin-top: 2px;
+    }
+
+    /* Quick Links */
+    .quick-links-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .quick-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: var(--apple-gray-50);
+        border-radius: 10px;
+        text-decoration: none;
+        color: var(--apple-gray-700);
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .quick-link:hover {
+        background: var(--apple-teal);
+        color: white;
+    }
+
+    .quick-link-icon {
+        font-size: 18px;
+    }
+
+    @media (max-width: 1024px) {
+        .kb-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .kb-sidebar {
+            position: static;
+        }
+
+        .articles-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-links-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .quick-links-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Knowledge Base</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Internal documentation, SOPs, and training materials</p>
+    </div>
+    <button class="btn btn-primary" onclick="showAddModal()">+ Add Document</button>
+</div>
+
+<!-- Search -->
+<div class="card" style="margin-bottom: 24px;">
+    <div class="kb-search">
+        <input type="text" placeholder="Search documentation..." id="kb-search" onkeypress="if(event.key==='Enter') searchKB()">
+    </div>
+</div>
+
+<div class="kb-layout">
+    <!-- Sidebar -->
+    <div class="kb-sidebar">
+        <h3>Categories</h3>
+        <ul class="kb-categories">
+            <li><a href="?cat=getting-started" class="{% if category == 'getting-started' %}active{% endif %}">Getting Started</a></li>
+            <li><a href="?cat=sops" class="{% if category == 'sops' %}active{% endif %}">Standard Operating Procedures</a></li>
+            <li><a href="?cat=fcra" class="{% if category == 'fcra' %}active{% endif %}">FCRA Guidelines</a></li>
+            <li><a href="?cat=letters" class="{% if category == 'letters' %}active{% endif %}">Letter Templates</a></li>
+            <li><a href="?cat=scripts" class="{% if category == 'scripts' %}active{% endif %}">Phone Scripts</a></li>
+            <li><a href="?cat=troubleshooting" class="{% if category == 'troubleshooting' %}active{% endif %}">Troubleshooting</a></li>
+            <li><a href="?cat=training" class="{% if category == 'training' %}active{% endif %}">Training Materials</a></li>
+            <li><a href="?cat=policies" class="{% if category == 'policies' %}active{% endif %}">Company Policies</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="kb-content">
+        <!-- Quick Links -->
+        <div class="kb-section">
+            <h2>Quick Links</h2>
+            <div class="quick-links-grid">
+                <a href="#" class="quick-link">
+                    <span class="quick-link-icon">📝</span>
+                    New Client Checklist
+                </a>
+                <a href="#" class="quick-link">
+                    <span class="quick-link-icon">📞</span>
+                    Client Call Script
+                </a>
+                <a href="#" class="quick-link">
+                    <span class="quick-link-icon">✉️</span>
+                    Letter Templates
+                </a>
+                <a href="#" class="quick-link">
+                    <span class="quick-link-icon">📊</span>
+                    Credit Report Guide
+                </a>
+                <a href="#" class="quick-link">
+                    <span class="quick-link-icon">⚖️</span>
+                    FCRA Reference
+                </a>
+                <a href="#" class="quick-link">
+                    <span class="quick-link-icon">🔧</span>
+                    Troubleshooting
+                </a>
+            </div>
+        </div>
+
+        <!-- Popular Articles -->
+        <div class="kb-section">
+            <h2>Popular Articles</h2>
+            <div class="articles-grid">
+                {% for article in popular_articles %}
+                <a href="{{ url_for('staff_portal.knowledge_base') }}?article={{ article.id }}" class="article-card">
+                    <span class="article-icon">{{ article.icon }}</span>
+                    <h3>{{ article.title }}</h3>
+                    <p>{{ article.excerpt }}</p>
+                    <span class="article-meta">{{ article.views }} views | {{ article.read_time }} min read</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Standard Operating Procedures -->
+        <div class="kb-section">
+            <h2>Standard Operating Procedures</h2>
+            <div class="sop-list">
+                {% for sop in sops %}
+                <div class="sop-item">
+                    <div class="sop-info">
+                        <h3>{{ sop.title }}</h3>
+                        <span class="sop-meta">Last updated: {{ sop.updated_at }} by {{ sop.author }}</span>
+                    </div>
+                    <div class="sop-actions">
+                        <button class="btn-sm" onclick="viewSOP({{ sop.id }})">View</button>
+                        <button class="btn-sm" onclick="downloadSOP({{ sop.id }})">Download</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recently Updated -->
+        <div class="kb-section">
+            <h2>Recently Updated</h2>
+            <div class="recent-list">
+                {% for doc in recent_docs %}
+                <div class="recent-item">
+                    <span class="recent-icon">📄</span>
+                    <div class="recent-info">
+                        <a href="{{ url_for('staff_portal.knowledge_base') }}?article={{ doc.id }}">{{ doc.title }}</a>
+                        <span class="recent-meta">Updated {{ doc.updated_at }} | {{ doc.category }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Training Videos -->
+        <div class="kb-section">
+            <h2>Training Videos</h2>
+            <div class="articles-grid">
+                <a href="#" class="article-card">
+                    <span class="article-icon">🎥</span>
+                    <h3>Platform Overview</h3>
+                    <p>Complete walkthrough of the staff portal features</p>
+                    <span class="article-meta">15 min</span>
+                </a>
+                <a href="#" class="article-card">
+                    <span class="article-icon">🎥</span>
+                    <h3>Credit Report Analysis</h3>
+                    <p>How to analyze and identify FCRA violations</p>
+                    <span class="article-meta">25 min</span>
+                </a>
+                <a href="#" class="article-card">
+                    <span class="article-icon">🎥</span>
+                    <h3>Letter Generation</h3>
+                    <p>Creating effective dispute letters</p>
+                    <span class="article-meta">18 min</span>
+                </a>
+                <a href="#" class="article-card">
+                    <span class="article-icon">🎥</span>
+                    <h3>Client Communication</h3>
+                    <p>Best practices for client interactions</p>
+                    <span class="article-meta">12 min</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function searchKB() {
+    const query = document.getElementById('kb-search').value;
+    if (query) {
+        window.location.href = '{{ url_for("staff_portal.knowledge_base") }}?q=' + encodeURIComponent(query);
+    }
+}
+
+function viewSOP(id) {
+    window.location.href = '{{ url_for("staff_portal.knowledge_base") }}?sop=' + id;
+}
+
+function downloadSOP(id) {
+    window.location.href = '/staff/knowledge-base/download/' + id;
+}
+
+function showAddModal() {
+    alert('Add document feature coming soon. Contact admin to add new documentation.');
+}
+</script>
+{% endblock %}

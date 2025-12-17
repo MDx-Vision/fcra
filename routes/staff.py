@@ -1498,3 +1498,69 @@ def case_law():
         avg_damages='$45K',
         recent_cases=12
     )
+
+
+@staff_portal.route('/knowledge-base')
+@require_staff()
+def knowledge_base():
+    """Internal Knowledge Base and SOPs"""
+    # Sample data - in production, load from database
+    popular_articles = [
+        {
+            'id': 1,
+            'icon': '📋',
+            'title': 'New Client Onboarding Process',
+            'excerpt': 'Step-by-step guide for onboarding new credit repair clients efficiently.',
+            'views': 342,
+            'read_time': 5
+        },
+        {
+            'id': 2,
+            'icon': '📊',
+            'title': 'Reading Credit Reports',
+            'excerpt': 'How to analyze and identify FCRA violations in credit reports.',
+            'views': 289,
+            'read_time': 8
+        },
+        {
+            'id': 3,
+            'icon': '✉️',
+            'title': 'Dispute Letter Best Practices',
+            'excerpt': 'Guidelines for writing effective dispute letters that get results.',
+            'views': 256,
+            'read_time': 6
+        },
+        {
+            'id': 4,
+            'icon': '⚖️',
+            'title': 'FCRA Compliance Guide',
+            'excerpt': 'Essential compliance requirements for credit repair operations.',
+            'views': 234,
+            'read_time': 10
+        }
+    ]
+
+    sops = [
+        {'id': 1, 'title': 'Client Intake Procedure', 'updated_at': 'Dec 10, 2024', 'author': 'Admin'},
+        {'id': 2, 'title': 'Credit Report Analysis SOP', 'updated_at': 'Dec 8, 2024', 'author': 'Admin'},
+        {'id': 3, 'title': 'Dispute Letter Generation Process', 'updated_at': 'Dec 5, 2024', 'author': 'Admin'},
+        {'id': 4, 'title': 'Client Communication Guidelines', 'updated_at': 'Nov 28, 2024', 'author': 'Admin'},
+        {'id': 5, 'title': 'Document Handling Procedures', 'updated_at': 'Nov 20, 2024', 'author': 'Admin'}
+    ]
+
+    recent_docs = [
+        {'id': 1, 'title': 'Updated FCRA Section Reference', 'updated_at': '2 hours ago', 'category': 'FCRA Guidelines'},
+        {'id': 2, 'title': 'New Letter Template: Metro 2 Dispute', 'updated_at': '1 day ago', 'category': 'Letter Templates'},
+        {'id': 3, 'title': 'Client Call Script Update', 'updated_at': '2 days ago', 'category': 'Phone Scripts'},
+        {'id': 4, 'title': 'Troubleshooting: Credit Karma Imports', 'updated_at': '3 days ago', 'category': 'Troubleshooting'}
+    ]
+
+    category = request.args.get('cat', '')
+
+    return render_template('staff/knowledge_base.html',
+        active_tab='admin',
+        popular_articles=popular_articles,
+        sops=sops,
+        recent_docs=recent_docs,
+        category=category
+    )
