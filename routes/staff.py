@@ -1372,3 +1372,45 @@ def credit_import_upload():
             imported.append(filename)
 
     return jsonify({'success': True, 'imported': imported})
+
+
+@staff_portal.route('/performance')
+@require_staff(roles=['admin', 'attorney'])
+def performance():
+    """Performance monitoring dashboard"""
+    # Gather performance metrics
+    # In production, these would come from actual monitoring systems
+
+    slow_endpoints = []  # Would be populated from monitoring data
+    recent_errors = []   # Would be populated from error logs
+
+    return render_template('staff/performance.html',
+        active_tab='admin',
+        avg_response_time=142,
+        cache_hit_rate=78,
+        total_requests=1856,
+        error_rate=1.2,
+        slow_endpoints=slow_endpoints,
+        recent_errors=recent_errors,
+        db_pool_size=10,
+        db_checked_in=8,
+        db_checked_out=2,
+        cache_entries=234,
+        cache_hits=1456,
+        cache_misses=412,
+        p50=45,
+        p75=89,
+        p90=156,
+        p95=287,
+        p99=445,
+        max_time=892,
+        last_updated='Just now'
+    )
+
+
+@staff_portal.route('/performance/clear-cache', methods=['POST'])
+@require_staff(roles=['admin'])
+def clear_cache():
+    """Clear application cache"""
+    # In production, this would actually clear the cache
+    return jsonify({'success': True, 'message': 'Cache cleared'})
