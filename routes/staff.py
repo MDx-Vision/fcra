@@ -1564,3 +1564,12 @@ def knowledge_base():
         recent_docs=recent_docs,
         category=category
     )
+
+
+@staff_portal.route('/demand-letters')
+@require_staff()
+def demand_letters():
+    """Demand Letter Generator with templates and settlement calculator"""
+    return render_template('staff/demand_letters.html',
+        active_tab='admin'
+    )
