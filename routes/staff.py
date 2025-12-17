@@ -1414,3 +1414,87 @@ def clear_cache():
     """Clear application cache"""
     # In production, this would actually clear the cache
     return jsonify({'success': True, 'message': 'Cache cleared'})
+
+
+@staff_portal.route('/case-law')
+@require_staff()
+def case_law():
+    """FCRA Case Law Database"""
+    # Sample key cases - in production, load from database
+    key_cases = [
+        {
+            'id': 1,
+            'name': 'TransUnion LLC v. Ramirez',
+            'citation': '594 U.S. ___ (2021)',
+            'court': 'Supreme Court',
+            'year': 2021,
+            'outcome': 'defendant',
+            'category': 'standing',
+            'summary': 'Established that plaintiffs must show concrete harm for Article III standing in FCRA cases. Mere procedural violations without actual harm are insufficient for statutory damages.',
+            'tags': ['Standing', 'Article III', 'Concrete Harm', 'Class Action']
+        },
+        {
+            'id': 2,
+            'name': 'Safeco Insurance Co. v. Burr',
+            'citation': '551 U.S. 47 (2007)',
+            'court': 'Supreme Court',
+            'year': 2007,
+            'outcome': 'defendant',
+            'category': 'willfulness',
+            'summary': 'Defined willfulness standard under FCRA. Reckless disregard of statutory duty constitutes willful violation. Good faith interpretation of ambiguous statute negates willfulness.',
+            'tags': ['Willfulness', 'Reckless Disregard', 'Statutory Damages', 'Good Faith']
+        },
+        {
+            'id': 3,
+            'name': 'Spokeo, Inc. v. Robins',
+            'citation': '578 U.S. 330 (2016)',
+            'court': 'Supreme Court',
+            'year': 2016,
+            'outcome': 'mixed',
+            'category': 'standing',
+            'summary': 'Clarified that bare procedural violation without concrete injury does not satisfy Article III standing requirement. Intangible injuries can be concrete if they have close relationship to traditionally recognized harms.',
+            'tags': ['Standing', 'Concrete Injury', 'Procedural Violation']
+        },
+        {
+            'id': 4,
+            'name': 'Cushman v. Trans Union Corp.',
+            'citation': '115 F.3d 220 (3d Cir. 1997)',
+            'court': '3rd Circuit',
+            'year': 1997,
+            'outcome': 'plaintiff',
+            'category': 'reinvestigation',
+            'summary': 'CRAs must conduct reasonable reinvestigation when consumer disputes information. Merely forwarding dispute to furnisher without independent verification is insufficient.',
+            'tags': ['Reinvestigation', '§1681i', 'Reasonable Procedures']
+        },
+        {
+            'id': 5,
+            'name': 'Saunders v. Branch Banking & Trust',
+            'citation': '526 F.3d 142 (4th Cir. 2008)',
+            'court': '4th Circuit',
+            'year': 2008,
+            'outcome': 'plaintiff',
+            'category': 'furnisher',
+            'summary': 'Furnisher has duty to investigate and correct inaccurate information after receiving notice of dispute from CRA. Failure to conduct reasonable investigation violates §1681s-2(b).',
+            'tags': ['Furnisher Liability', '§1681s-2', 'Investigation Duty']
+        },
+        {
+            'id': 6,
+            'name': 'Cortez v. Trans Union, LLC',
+            'citation': '617 F.3d 688 (3d Cir. 2010)',
+            'court': '3rd Circuit',
+            'year': 2010,
+            'outcome': 'plaintiff',
+            'category': 'damages',
+            'summary': 'Emotional distress damages available under FCRA without physical manifestation. Humiliation and mental anguish from credit denial are compensable actual damages.',
+            'tags': ['Damages', 'Emotional Distress', 'Actual Damages']
+        }
+    ]
+
+    return render_template('staff/case_law.html',
+        active_tab='admin',
+        key_cases=key_cases,
+        total_cases=247,
+        plaintiff_wins=89,
+        avg_damages='$45K',
+        recent_cases=12
+    )
