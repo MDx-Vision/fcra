@@ -1,0 +1,456 @@
+{% extends "staff/base_staff.html" %}
+{% set active_tab = 'workflow' %}
+
+{% block title %}Credit Import{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Upload Zone */
+    .upload-zone {
+        border: 2px dashed var(--apple-gray-300);
+        border-radius: 16px;
+        padding: 48px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: var(--apple-gray-50);
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: var(--apple-teal);
+        background: #f0fdfa;
+    }
+
+    .upload-icon {
+        font-size: 56px;
+        margin-bottom: 16px;
+    }
+
+    .upload-zone h3 {
+        font-size: 20px;
+        color: var(--apple-navy-dark);
+        margin-bottom: 8px;
+    }
+
+    .upload-zone p {
+        color: var(--apple-gray-500);
+        margin-bottom: 4px;
+    }
+
+    .upload-hint {
+        color: var(--apple-gray-400);
+        font-size: 13px;
+        margin-top: 12px;
+    }
+
+    .upload-options {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--apple-gray-200);
+    }
+
+    .upload-options h3 {
+        font-size: 16px;
+        color: var(--apple-navy-dark);
+        margin-bottom: 16px;
+    }
+
+    .option-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .option-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 8px;
+        transition: background 0.2s;
+    }
+
+    .option-item:hover {
+        background: var(--apple-gray-50);
+    }
+
+    .option-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--apple-teal);
+    }
+
+    /* Services Grid */
+    .services-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .service-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: var(--apple-gray-50);
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--apple-gray-700);
+        transition: all 0.2s;
+    }
+
+    .service-item:hover {
+        background: #f0fdfa;
+        transform: translateY(-2px);
+    }
+
+    .service-icon {
+        font-size: 22px;
+    }
+
+    /* Progress Bar */
+    .upload-progress {
+        display: none;
+        margin-top: 20px;
+    }
+
+    .upload-progress.active {
+        display: block;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: var(--apple-gray-200);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--apple-gray-500);
+        text-align: center;
+    }
+
+    /* Recent Imports Table */
+    .empty-cell {
+        text-align: center;
+        color: var(--apple-gray-400);
+        padding: 40px !important;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+        border: 1px solid var(--apple-gray-200);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-right: 4px;
+    }
+
+    .btn-sm:hover {
+        background: var(--apple-teal);
+        color: white;
+        border-color: var(--apple-teal);
+    }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .status-badge.pending {
+        background: rgba(245, 158, 11, 0.12);
+        color: #d97706;
+    }
+
+    .status-badge.processing {
+        background: rgba(59, 130, 246, 0.12);
+        color: #3b82f6;
+    }
+
+    .status-badge.completed {
+        background: rgba(5, 150, 105, 0.12);
+        color: var(--apple-green);
+    }
+
+    .status-badge.failed {
+        background: rgba(220, 38, 38, 0.12);
+        color: var(--apple-red);
+    }
+
+    @media (max-width: 1024px) {
+        .services-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .option-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .services-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Credit Import</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Import and process credit reports for analysis</p>
+    </div>
+</div>
+
+<!-- Import Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Pending Import</div>
+        <div class="stat-value">{{ pending_count|default(0) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Processing</div>
+        <div class="stat-value">{{ processing_count|default(0) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Completed Today</div>
+        <div class="stat-value">{{ completed_today|default(0) }}</div>
+    </div>
+    <div class="stat-card highlight">
+        <div class="stat-label">Total Imported</div>
+        <div class="stat-value">{{ total_imported|default(0) }}</div>
+    </div>
+</div>
+
+<!-- Upload Section -->
+<div class="card">
+    <h2 style="margin-bottom: 20px; font-family: var(--font-display); color: var(--apple-navy-dark);">Upload Credit Reports</h2>
+    <div class="upload-zone" id="upload-zone">
+        <div class="upload-icon">📄</div>
+        <h3>Drag & Drop Credit Reports</h3>
+        <p>or click to browse files</p>
+        <p class="upload-hint">Supports PDF, HTML, and JSON formats from all major credit monitoring services</p>
+        <input type="file" id="file-input" multiple accept=".pdf,.html,.json,.htm" style="display: none;">
+    </div>
+
+    <div class="upload-progress" id="upload-progress">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" id="progress-text">Uploading...</div>
+    </div>
+
+    <div class="upload-options">
+        <h3>Import Options</h3>
+        <div class="option-grid">
+            <label class="option-item">
+                <input type="checkbox" id="opt-auto-assign" checked> Auto-assign to existing client (match by SSN/Name)
+            </label>
+            <label class="option-item">
+                <input type="checkbox" id="opt-auto-analyze" checked> Auto-analyze after import
+            </label>
+            <label class="option-item">
+                <input type="checkbox" id="opt-create-client"> Create new client if no match found
+            </label>
+            <label class="option-item">
+                <input type="checkbox" id="opt-notify"> Send notification to client after import
+            </label>
+        </div>
+    </div>
+</div>
+
+<!-- Supported Services -->
+<div class="card">
+    <h2 style="margin-bottom: 16px; font-family: var(--font-display); color: var(--apple-navy-dark);">Supported Credit Monitoring Services</h2>
+    <div class="services-grid">
+        <div class="service-item">
+            <span class="service-icon">🔵</span>
+            <span>IdentityIQ</span>
+        </div>
+        <div class="service-item">
+            <span class="service-icon">🟢</span>
+            <span>MyScoreIQ</span>
+        </div>
+        <div class="service-item">
+            <span class="service-icon">🟣</span>
+            <span>SmartCredit</span>
+        </div>
+        <div class="service-item">
+            <span class="service-icon">🔴</span>
+            <span>Privacy Guard</span>
+        </div>
+        <div class="service-item">
+            <span class="service-icon">🟡</span>
+            <span>Credit Karma</span>
+        </div>
+        <div class="service-item">
+            <span class="service-icon">🟠</span>
+            <span>Annual Credit Report</span>
+        </div>
+        <div class="service-item">
+            <span class="service-icon">⚫</span>
+            <span>Direct Bureau PDFs</span>
+        </div>
+        <div class="service-item">
+            <span class="service-icon">🔵</span>
+            <span>Other Services</span>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Imports -->
+<div class="card">
+    <h2 style="margin-bottom: 20px; font-family: var(--font-display); color: var(--apple-navy-dark);">Recent Imports</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Client</th>
+                <th>Source</th>
+                <th>Status</th>
+                <th>Imported</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for import in recent_imports %}
+            <tr>
+                <td style="font-family: monospace; font-size: 13px;">{{ import.filename }}</td>
+                <td>{{ import.client.first_name }} {{ import.client.last_name if import.client else 'Unassigned' }}</td>
+                <td>{{ import.source|default('Unknown') }}</td>
+                <td><span class="status-badge {{ import.status }}">{{ import.status|title }}</span></td>
+                <td>{{ import.created_at.strftime('%m/%d/%Y %H:%M') if import.created_at else '-' }}</td>
+                <td>
+                    <button class="btn-sm" onclick="viewImport({{ import.id }})">View</button>
+                    <button class="btn-sm" onclick="processImport({{ import.id }})">Process</button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="empty-cell">No recent imports. Upload credit reports above to get started.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Drag and drop functionality
+const uploadZone = document.getElementById('upload-zone');
+const fileInput = document.getElementById('file-input');
+const progressDiv = document.getElementById('upload-progress');
+const progressFill = document.getElementById('progress-fill');
+const progressText = document.getElementById('progress-text');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+
+uploadZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadZone.classList.add('dragover');
+});
+
+uploadZone.addEventListener('dragleave', () => {
+    uploadZone.classList.remove('dragover');
+});
+
+uploadZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+});
+
+function handleFiles(files) {
+    if (files.length === 0) return;
+
+    const formData = new FormData();
+    for (let file of files) {
+        formData.append('files', file);
+    }
+
+    // Add options
+    formData.append('auto_assign', document.getElementById('opt-auto-assign').checked);
+    formData.append('auto_analyze', document.getElementById('opt-auto-analyze').checked);
+    formData.append('create_client', document.getElementById('opt-create-client').checked);
+    formData.append('notify_client', document.getElementById('opt-notify').checked);
+
+    // Show progress
+    progressDiv.classList.add('active');
+    progressFill.style.width = '0%';
+    progressText.textContent = `Uploading ${files.length} file(s)...`;
+
+    // Simulate progress
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 10;
+        if (progress <= 90) {
+            progressFill.style.width = progress + '%';
+        }
+    }, 200);
+
+    fetch('/staff/credit-import/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        clearInterval(interval);
+        progressFill.style.width = '100%';
+
+        if (data.success) {
+            progressText.textContent = `Successfully imported ${data.imported.length} file(s)!`;
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            progressText.textContent = 'Upload failed: ' + data.error;
+            progressFill.style.background = 'var(--apple-red)';
+        }
+    })
+    .catch(err => {
+        clearInterval(interval);
+        progressText.textContent = 'Upload failed: ' + err.message;
+        progressFill.style.background = 'var(--apple-red)';
+    });
+}
+
+function viewImport(id) {
+    window.location.href = '/staff/credit-import/' + id;
+}
+
+function processImport(id) {
+    if (confirm('Process this credit report now?')) {
+        fetch('/staff/credit-import/' + id + '/process', { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Processing failed: ' + data.error);
+                }
+            });
+    }
+}
+</script>
+{% endblock %}

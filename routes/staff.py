@@ -1318,3 +1318,57 @@ def credit_tracker():
         )
     finally:
         db.close()
+
+
+@staff_portal.route('/credit-import')
+@require_staff()
+def credit_import():
+    """Credit report import page"""
+    db = get_db()
+    try:
+        # Get recent imports - using CreditReport or a similar model
+        # For now, we'll provide placeholder data
+        recent_imports = []
+
+        # Stats
+        pending_count = 0
+        processing_count = 0
+        completed_today = 0
+        total_imported = 0
+
+        return render_template('staff/credit_import.html',
+            active_tab='workflow',
+            recent_imports=recent_imports,
+            pending_count=pending_count,
+            processing_count=processing_count,
+            completed_today=completed_today,
+            total_imported=total_imported
+        )
+    finally:
+        db.close()
+
+
+@staff_portal.route('/credit-import/upload', methods=['POST'])
+@require_staff()
+def credit_import_upload():
+    """Handle credit report file uploads"""
+    from werkzeug.utils import secure_filename
+    import os
+
+    if 'files' not in request.files:
+        return jsonify({'success': False, 'error': 'No files provided'})
+
+    files = request.files.getlist('files')
+    imported = []
+
+    upload_folder = os.path.join(os.getcwd(), 'uploads', 'credit_reports')
+    os.makedirs(upload_folder, exist_ok=True)
+
+    for file in files:
+        if file.filename:
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(upload_folder, filename)
+            file.save(filepath)
+            imported.append(filename)
+
+    return jsonify({'success': True, 'imported': imported})
