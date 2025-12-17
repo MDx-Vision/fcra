@@ -7,7 +7,7 @@
 describe('Analysis - Full QA Suite', () => {
   
   beforeEach(() => {
-    cy.login('test@example.com', 'password123');
+    cy.login('test@example.com', 'testpass123');
   });
 
   // ==========================================

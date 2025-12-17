@@ -1,7 +1,7 @@
 // Exhaustive test for /dashboard/api-docs
 describe('/dashboard/api-docs - API Documentation Page', () => {
   beforeEach(() => {
-    cy.login('test@example.com', 'password123');
+    cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/api-docs');
   });
 

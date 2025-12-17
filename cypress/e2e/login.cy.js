@@ -1,11 +1,11 @@
 describe('Login', () => {
   it('should login successfully with valid credentials', () => {
-    cy.login('test@example.com', 'password123')
+    cy.login('test@example.com', 'testpass123')
     cy.url().should('include', '/dashboard')
   })
 
   it('should display dashboard after login', () => {
-    cy.login('test@example.com', 'password123')
+    cy.login('test@example.com', 'testpass123')
     cy.contains('Dashboard').should('be.visible')
   })
 
