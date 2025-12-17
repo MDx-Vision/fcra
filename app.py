@@ -71,6 +71,11 @@ app = Flask(__name__)
 # Secret key for session management (use environment variable or generate secure key)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
 
+# Register blueprints
+from routes.portal import portal
+app.register_blueprint(portal)
+print("✅ Portal blueprint registered")
+
 # CI/CD Authentication Bypass (ONLY activates with CI=true AND not in production)
 if os.getenv('CI') == 'true' and os.getenv('FLASK_ENV') != 'production' and os.getenv('REPLIT_DEPLOYMENT') != '1':
     @app.before_request

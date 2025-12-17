@@ -1,0 +1,233 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'status' %}
+{% block title %}Bureau Status{% endblock %}
+{% block content %}
+
+<!-- Back Link -->
+<div style="margin-bottom: 24px;">
+    <a href="{{ url_for('portal.dashboard') }}" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #0d9488; text-decoration: none;">
+        ← Back to Case Overview
+    </a>
+</div>
+
+<!-- Header -->
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;">
+    <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; margin: 0 0 8px 0;">Detailed Bureau Status</h2>
+    <p style="font-size: 15px; opacity: 0.8; margin: 0;">Track individual account statuses across all three credit bureaus.</p>
+</div>
+
+<!-- Summary Stats -->
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+    <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; border-left: 4px solid #0d9488;">
+        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Equifax</div>
+        <div style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #0d9488;">{{ accounts|selectattr('bureau', 'equalto', 'Equifax')|list|length }} Items</div>
+    </div>
+    <div class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px; border-left: 4px solid #2563eb;">
+        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Experian</div>
+        <div style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #2563eb;">{{ accounts|selectattr('bureau', 'equalto', 'Experian')|list|length }} Items</div>
+    </div>
+    <div class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px; border-left: 4px solid #dc2626;">
+        <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">TransUnion</div>
+        <div style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #dc2626;">{{ accounts|selectattr('bureau', 'equalto', 'TransUnion')|list|length }} Items</div>
+    </div>
+</div>
+
+<!-- Equifax Section -->
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+    <div class="card-title" style="color: #0d9488;">
+        <span style="width: 12px; height: 12px; background: #0d9488; border-radius: 50%; display: inline-block;"></span>
+        Equifax Accounts
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for account in accounts if account.bureau == 'Equifax' %}
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: {% if account.status == 'DELETED' %}rgba(5, 150, 105, 0.05){% else %}#f9fafb{% endif %}; border-radius: 10px; border: 1px solid {% if account.status == 'DELETED' %}rgba(5, 150, 105, 0.2){% else %}#e5e7eb{% endif %}; flex-wrap: wrap;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: {% if account.status == 'DELETED' %}#059669{% elif account.status == 'PENDING' %}#f59e0b{% else %}#0d9488{% endif %}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span style="color: white; font-size: 16px;">{% if account.status == 'DELETED' %}✓{% elif account.status == 'PENDING' %}⏳{% else %}📤{% endif %}</span>
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">{{ account.creditor_name }} - #{{ account.account_number[-4:] if account.account_number else 'XXXX' }}</div>
+                <div style="font-size: 13px; color: #6b7280;">{{ account.account_type|default('Account') }} • Balance: ${{ "{:,.0f}".format(account.balance|default(0)) }}</div>
+            </div>
+            <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: {% if account.status == 'DELETED' %}#059669{% elif account.status == 'PENDING' %}rgba(245, 158, 11, 0.1){% else %}rgba(13, 148, 136, 0.1){% endif %}; color: {% if account.status == 'DELETED' %}white{% elif account.status == 'PENDING' %}#d97706{% else %}#0d9488{% endif %};">{{ account.status|default('DISPUTED') }}</div>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: #6b7280; padding: 16px;">No Equifax accounts</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Experian Section -->
+<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;">
+    <div class="card-title" style="color: #2563eb;">
+        <span style="width: 12px; height: 12px; background: #2563eb; border-radius: 50%; display: inline-block;"></span>
+        Experian Accounts
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for account in accounts if account.bureau == 'Experian' %}
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: {% if account.status == 'DELETED' %}rgba(5, 150, 105, 0.05){% else %}#f9fafb{% endif %}; border-radius: 10px; border: 1px solid {% if account.status == 'DELETED' %}rgba(5, 150, 105, 0.2){% else %}#e5e7eb{% endif %}; flex-wrap: wrap;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: {% if account.status == 'DELETED' %}#059669{% elif account.status == 'PENDING' %}#f59e0b{% else %}#0d9488{% endif %}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span style="color: white; font-size: 16px;">{% if account.status == 'DELETED' %}✓{% elif account.status == 'PENDING' %}⏳{% else %}📤{% endif %}</span>
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">{{ account.creditor_name }} - #{{ account.account_number[-4:] if account.account_number else 'XXXX' }}</div>
+                <div style="font-size: 13px; color: #6b7280;">{{ account.account_type|default('Account') }} • Balance: ${{ "{:,.0f}".format(account.balance|default(0)) }}</div>
+            </div>
+            <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: {% if account.status == 'DELETED' %}#059669{% elif account.status == 'PENDING' %}rgba(245, 158, 11, 0.1){% else %}rgba(13, 148, 136, 0.1){% endif %}; color: {% if account.status == 'DELETED' %}white{% elif account.status == 'PENDING' %}#d97706{% else %}#0d9488{% endif %};">{{ account.status|default('DISPUTED') }}</div>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: #6b7280; padding: 16px;">No Experian accounts</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- TransUnion Section -->
+<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+    <div class="card-title" style="color: #dc2626;">
+        <span style="width: 12px; height: 12px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
+        TransUnion Accounts
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for account in accounts if account.bureau == 'TransUnion' %}
+        <div style="display: flex; align-items: center; gap: 16px; padding: 16px; background: {% if account.status == 'DELETED' %}rgba(5, 150, 105, 0.05){% else %}#f9fafb{% endif %}; border-radius: 10px; border: 1px solid {% if account.status == 'DELETED' %}rgba(5, 150, 105, 0.2){% else %}#e5e7eb{% endif %}; flex-wrap: wrap;">
+            <div style="width: 40px; height: 40px; border-radius: 8px; background: {% if account.status == 'DELETED' %}#059669{% elif account.status == 'PENDING' %}#f59e0b{% else %}#0d9488{% endif %}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <span style="color: white; font-size: 16px;">{% if account.status == 'DELETED' %}✓{% elif account.status == 'PENDING' %}⏳{% else %}📤{% endif %}</span>
+            </div>
+            <div style="flex: 1; min-width: 150px;">
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">{{ account.creditor_name }} - #{{ account.account_number[-4:] if account.account_number else 'XXXX' }}</div>
+                <div style="font-size: 13px; color: #6b7280;">{{ account.account_type|default('Account') }} • Balance: ${{ "{:,.0f}".format(account.balance|default(0)) }}</div>
+            </div>
+            <div style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; background: {% if account.status == 'DELETED' %}#059669{% elif account.status == 'PENDING' %}rgba(245, 158, 11, 0.1){% else %}rgba(13, 148, 136, 0.1){% endif %}; color: {% if account.status == 'DELETED' %}white{% elif account.status == 'PENDING' %}#d97706{% else %}#0d9488{% endif %};">{{ account.status|default('DISPUTED') }}</div>
+        </div>
+        {% else %}
+        <p style="text-align: center; color: #6b7280; padding: 16px;">No TransUnion accounts</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="card animate-fade-in-up" data-delay="700" style="background: #f9fafb; margin-bottom: 24px;">
+    <div class="card-title">📋 Status Legend</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: #059669; color: white;">DELETED</div>
+            <span style="font-size: 13px; color: #6b7280;">Removed from report</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(13, 148, 136, 0.1); color: #0d9488;">DISPUTED</div>
+            <span style="font-size: 13px; color: #6b7280;">Awaiting response</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(245, 158, 11, 0.1); color: #d97706;">PENDING</div>
+            <span style="font-size: 13px; color: #6b7280;">Under investigation</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(220, 38, 38, 0.1); color: #dc2626;">VERIFIED</div>
+            <span style="font-size: 13px; color: #6b7280;">Escalating to R3</span>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Bureaus Freeze Section -->
+{% if secondary_bureaus %}
+<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;">
+    <div class="card-title" style="color: #8b5cf6;">
+        <span style="width: 12px; height: 12px; background: #8b5cf6; border-radius: 50%; display: inline-block;"></span>
+        Secondary Bureaus Freeze
+    </div>
+
+    <!-- Instruction Alert -->
+    <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
+        <p style="font-size: 13px; color: #991b1b; margin: 0; line-height: 1.6;">When you receive a response from a Secondary Bureau that they have <strong>FROZEN</strong> their report, please let us know by changing the Status to FROZEN as appropriate and then clicking the SUBMIT button. If they respond that they did <strong>NOT FREEZE</strong> the report, please change to NOT FROZEN instead and click the SUBMIT button. Thank you.</p>
+    </div>
+
+    <form action="{{ url_for('portal.update_secondary_status') }}" method="POST">
+
+        <!-- Table Header -->
+        <div class="bureau-grid bureau-header" style="display: grid; grid-template-columns: 80px 60px 120px 1fr 50px 160px; gap: 10px; align-items: center; background: #1e3a5f; color: white; padding: 14px 16px; border-radius: 8px 8px 0 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+            <span>Follow Up</span>
+            <span>Type</span>
+            <span>Status</span>
+            <span>Secondary Bureau</span>
+            <span style="text-align: center;">📎</span>
+            <span>Comments</span>
+        </div>
+
+        <!-- Bureau Rows -->
+        <div style="background: #f3f4f6; border-radius: 0 0 8px 8px; overflow: hidden;">
+            {% for bureau in secondary_bureaus %}
+            <div class="bureau-grid bureau-row" style="display: grid; grid-template-columns: 80px 60px 120px 1fr 50px 160px; gap: 10px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
+                <!-- Follow Up Date -->
+                <span style="font-size: 12px; color: #9ca3af;">{{ bureau.follow_up_date.strftime('%m/%d') if bureau.follow_up_date else 'n/a' }}</span>
+
+                <!-- Type (always Freeze) -->
+                <span style="font-size: 12px; color: #6b7280;">Freeze</span>
+
+                <!-- Status Dropdown -->
+                <select name="status_{{ bureau.id }}" class="status-select" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; font-weight: 600; width: 100%; background: white;">
+                    <option value="PENDING" {% if bureau.status == 'PENDING' or bureau.status == 'pending' %}selected{% endif %}>PENDING</option>
+                    <option value="FROZEN" {% if bureau.status == 'FROZEN' or bureau.status == 'frozen' %}selected{% endif %}>FROZEN</option>
+                    <option value="NOT FROZEN" {% if bureau.status == 'NOT FROZEN' or bureau.status == 'not_frozen' %}selected{% endif %}>NOT FROZEN</option>
+                </select>
+
+                <!-- Bureau Name -->
+                <span style="font-weight: 500; color: #1e3a5f; font-size: 14px;">{{ bureau.bureau_name }}</span>
+
+                <!-- Paperclip Upload -->
+                <div style="text-align: center;">
+                    {% if (bureau_uploads|default({})).get(bureau.bureau_name) %}
+                    <a href="{{ url_for('portal.download_freeze_confirmation', bureau_id=bureau.id) }}" title="Download confirmation" style="font-size: 18px; text-decoration: none;">✅</a>
+                    {% else %}
+                    <label style="cursor: pointer; font-size: 18px; color: #9ca3af;" title="Upload confirmation">
+                        📎
+                        <input type="file" name="confirmation_file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="uploadFreezeConfirmation(this, {{ bureau.id }})">
+                    </label>
+                    {% endif %}
+                </div>
+
+                <!-- Comments Input -->
+                <input type="text" name="comment_{{ bureau.id }}" value="{{ bureau.comments|default('') }}" placeholder="Add comment" style="padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Submit Button -->
+        <div style="text-align: center; margin-top: 24px;">
+            <button type="submit" class="submit-btn">Submit changes</button>
+        </div>
+    </form>
+
+    <script>
+    function uploadFreezeConfirmation(input, bureauId) {
+        if (input.files && input.files[0]) {
+            const formData = new FormData();
+            formData.append('confirmation_file', input.files[0]);
+
+            fetch('/portal/status/upload/' + bureauId, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.reload();
+                }
+            }).catch(error => {
+                alert('Upload failed: ' + error);
+            });
+        }
+    }
+    </script>
+</div>
+{% endif %}
+
+<!-- Back to Case -->
+<div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb;">
+    <a href="{{ url_for('portal.dashboard') }}" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #0d9488; text-decoration: none;">
+        ← Back to Case Overview
+    </a>
+</div>
+
+{% endblock %}
