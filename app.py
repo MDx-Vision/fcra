@@ -25201,6 +25201,392 @@ def api_import_lrm_clients():
         }), 500
 
 
+# =============================================================================
+# CLIENT MANAGER - Bulk and Individual Round/Analysis Management
+# =============================================================================
+
+@app.route('/dashboard/client-manager')
+@require_staff(roles=['admin', 'paralegal'])
+def dashboard_client_manager():
+    """Client manager for bulk and individual round/analysis management"""
+    db = get_db()
+    try:
+        # Get all clients with their latest analysis info
+        clients = db.query(Client).order_by(Client.name).all()
+
+        client_data = []
+        for client in clients:
+            # Get latest analysis for this client
+            latest_analysis = db.query(Analysis).filter_by(client_id=client.id).order_by(Analysis.created_at.desc()).first()
+            # Get credit report count
+            report_count = db.query(CreditReport).filter_by(client_id=client.id).count()
+            # Get analysis count
+            analysis_count = db.query(Analysis).filter_by(client_id=client.id).count()
+
+            client_data.append({
+                'id': client.id,
+                'name': client.name,
+                'email': client.email,
+                'current_round': client.current_dispute_round or 0,
+                'dispute_status': client.dispute_status or 'new',
+                'round_started_at': client.round_started_at.strftime('%Y-%m-%d') if client.round_started_at else None,
+                'report_count': report_count,
+                'analysis_count': analysis_count,
+                'latest_analysis_id': latest_analysis.id if latest_analysis else None,
+                'latest_analysis_stage': latest_analysis.stage if latest_analysis else None,
+                'latest_analysis_round': latest_analysis.dispute_round if latest_analysis else None,
+                'created_at': client.created_at.strftime('%Y-%m-%d') if client.created_at else None
+            })
+
+        return render_template('client_manager.html', clients=client_data, active_page='client-manager')
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f"Error: {str(e)}", 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/set-round', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def api_client_manager_set_round():
+    """Set dispute round for a single client"""
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get('client_id')
+        new_round = data.get('round', 0)
+
+        if client_id is None:
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        old_round = client.current_dispute_round or 0
+        client.current_dispute_round = new_round
+        client.dispute_status = 'active' if new_round > 0 else 'new'
+        client.round_started_at = datetime.utcnow() if new_round > 0 else None
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'client_name': client.name,
+            'old_round': old_round,
+            'new_round': new_round,
+            'message': f"Set {client.name} to Round {new_round}"
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/bulk-set-round', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def api_client_manager_bulk_set_round():
+    """Set dispute round for multiple clients"""
+    db = get_db()
+    try:
+        data = request.json
+        client_ids = data.get('client_ids', [])
+        new_round = data.get('round', 0)
+
+        if not client_ids:
+            return jsonify({'success': False, 'error': 'client_ids is required'}), 400
+
+        updated = []
+        errors = []
+
+        for client_id in client_ids:
+            try:
+                client = db.query(Client).filter_by(id=client_id).first()
+                if client:
+                    old_round = client.current_dispute_round or 0
+                    client.current_dispute_round = new_round
+                    client.dispute_status = 'active' if new_round > 0 else 'new'
+                    client.round_started_at = datetime.utcnow() if new_round > 0 else None
+                    updated.append({'id': client_id, 'name': client.name, 'old_round': old_round})
+                else:
+                    errors.append({'id': client_id, 'error': 'Client not found'})
+            except Exception as e:
+                errors.append({'id': client_id, 'error': str(e)})
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'updated_count': len(updated),
+            'error_count': len(errors),
+            'new_round': new_round,
+            'updated': updated,
+            'errors': errors,
+            'message': f"Updated {len(updated)} clients to Round {new_round}"
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/run-analysis', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def api_client_manager_run_analysis():
+    """Run analysis for a client using their latest credit report"""
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get('client_id')
+        dispute_round = data.get('round', 1)
+
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Get latest credit report for this client
+        credit_report = db.query(CreditReport).filter_by(client_id=client_id).order_by(CreditReport.created_at.desc()).first()
+        if not credit_report:
+            return jsonify({'success': False, 'error': 'No credit report found for this client'}), 404
+
+        if not credit_report.report_html:
+            return jsonify({'success': False, 'error': 'Credit report has no HTML content'}), 400
+
+        # Create new analysis
+        analysis = Analysis(
+            credit_report_id=credit_report.id,
+            client_id=client_id,
+            client_name=client.name,
+            dispute_round=dispute_round,
+            analysis_mode='manual',
+            stage=0
+        )
+        db.add(analysis)
+        db.commit()
+        analysis_id = analysis.id
+
+        # Update client round
+        client.current_dispute_round = dispute_round
+        client.dispute_status = 'active'
+        client.round_started_at = datetime.utcnow()
+        db.commit()
+
+        # Run Stage 1 analysis
+        try:
+            # Clean the HTML
+            cleaned_html = clean_credit_report_html(credit_report.report_html)
+
+            # Run stage 1 analysis
+            # Signature: run_stage1_for_all_sections(client_name, cmm_id, provider, credit_report_text, analysis_mode, dispute_round, ...)
+            stage1_result = run_stage1_for_all_sections(
+                client_name=client.name,
+                cmm_id=None,
+                provider=credit_report.credit_provider or 'Unknown',
+                credit_report_text=cleaned_html,
+                analysis_mode='manual',
+                dispute_round=dispute_round
+            )
+
+            # Update analysis with results
+            analysis.stage_1_analysis = json.dumps(stage1_result) if isinstance(stage1_result, dict) else stage1_result
+            analysis.stage = 1
+            db.commit()
+
+            return jsonify({
+                'success': True,
+                'analysis_id': analysis_id,
+                'client_id': client_id,
+                'client_name': client.name,
+                'dispute_round': dispute_round,
+                'review_url': f'/analysis/{analysis_id}/review',
+                'message': f"Analysis started for {client.name} - Round {dispute_round}"
+            })
+        except Exception as analysis_error:
+            # Analysis failed but record was created
+            return jsonify({
+                'success': False,
+                'error': f'Analysis failed: {str(analysis_error)}',
+                'analysis_id': analysis_id,
+                'client_id': client_id
+            }), 500
+
+    except Exception as e:
+        db.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/bulk-run-analysis', methods=['POST'])
+@require_staff(roles=['admin', 'paralegal'])
+def api_client_manager_bulk_run_analysis():
+    """Queue bulk analysis for multiple clients"""
+    db = get_db()
+    try:
+        data = request.json
+        client_ids = data.get('client_ids', [])
+        dispute_round = data.get('round', 1)
+
+        if not client_ids:
+            return jsonify({'success': False, 'error': 'client_ids is required'}), 400
+
+        queued = []
+        errors = []
+
+        for client_id in client_ids:
+            try:
+                client = db.query(Client).filter_by(id=client_id).first()
+                if not client:
+                    errors.append({'id': client_id, 'error': 'Client not found'})
+                    continue
+
+                credit_report = db.query(CreditReport).filter_by(client_id=client_id).order_by(CreditReport.created_at.desc()).first()
+                if not credit_report or not credit_report.report_html:
+                    errors.append({'id': client_id, 'name': client.name, 'error': 'No credit report with HTML'})
+                    continue
+
+                # Create analysis record (will be processed)
+                analysis = Analysis(
+                    credit_report_id=credit_report.id,
+                    client_id=client_id,
+                    client_name=client.name,
+                    dispute_round=dispute_round,
+                    analysis_mode='manual',
+                    stage=0
+                )
+                db.add(analysis)
+                db.flush()
+
+                # Update client round
+                client.current_dispute_round = dispute_round
+                client.dispute_status = 'active'
+                client.round_started_at = datetime.utcnow()
+
+                queued.append({
+                    'client_id': client_id,
+                    'client_name': client.name,
+                    'analysis_id': analysis.id
+                })
+            except Exception as e:
+                errors.append({'id': client_id, 'error': str(e)})
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'queued_count': len(queued),
+            'error_count': len(errors),
+            'dispute_round': dispute_round,
+            'queued': queued,
+            'errors': errors,
+            'message': f"Queued {len(queued)} analyses for Round {dispute_round}. Run each individually to process."
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/client/<int:client_id>/details')
+@require_staff(roles=['admin', 'paralegal', 'attorney', 'viewer'])
+def api_client_manager_details(client_id):
+    """Get detailed info for a single client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Get all credit reports
+        reports = db.query(CreditReport).filter_by(client_id=client_id).order_by(CreditReport.created_at.desc()).all()
+
+        # Get all analyses
+        analyses = db.query(Analysis).filter_by(client_id=client_id).order_by(Analysis.created_at.desc()).all()
+
+        return jsonify({
+            'success': True,
+            'client': {
+                'id': client.id,
+                'name': client.name,
+                'email': client.email,
+                'current_round': client.current_dispute_round or 0,
+                'dispute_status': client.dispute_status or 'new',
+                'round_started_at': client.round_started_at.isoformat() if client.round_started_at else None,
+                'created_at': client.created_at.isoformat() if client.created_at else None
+            },
+            'reports': [{
+                'id': r.id,
+                'provider': r.credit_provider,
+                'date': r.report_date.isoformat() if r.report_date else None,
+                'created_at': r.created_at.isoformat() if r.created_at else None,
+                'has_html': bool(r.report_html)
+            } for r in reports],
+            'analyses': [{
+                'id': a.id,
+                'round': a.dispute_round,
+                'stage': a.stage,
+                'approved': bool(a.approved_at),
+                'approved_at': a.approved_at.isoformat() if a.approved_at else None,
+                'created_at': a.created_at.isoformat() if a.created_at else None,
+                'review_url': f'/analysis/{a.id}/review'
+            } for a in analyses]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/delete-client', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_client_manager_delete_client():
+    """Delete a client and all associated data (Admin only)"""
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get('client_id')
+
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        client_name = client.name
+
+        # Delete associated records
+        db.query(Violation).filter_by(client_id=client_id).delete()
+        db.query(DisputeLetter).filter_by(client_id=client_id).delete()
+        db.query(Analysis).filter_by(client_id=client_id).delete()
+        db.query(CreditReport).filter_by(client_id=client_id).delete()
+        db.query(Client).filter_by(id=client_id).delete()
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'client_name': client_name,
+            'message': f"Deleted client {client_name} and all associated data"
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

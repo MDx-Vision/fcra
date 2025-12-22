@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Manager - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
+            color: #1a1a2e;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .bulk-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .bulk-actions label {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .bulk-actions select {
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .selected-count {
+            background: #1a1a2e;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .filter-btn.active { background: #1a1a2e; color: white; }
+        .filter-btn:hover { background: #e2e8f0; }
+        .filter-btn.active:hover { background: #1a1a2e; }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            max-width: 400px;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            outline: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+        .client-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .client-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #84cc16, #22c55e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .client-info { flex: 1; }
+        .client-name { font-weight: 600; color: #1a1a2e; }
+        .client-email { font-size: 12px; color: #94a3b8; }
+        .round-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .round-0 { background: #f1f5f9; color: #64748b; }
+        .round-1 { background: #dbeafe; color: #1e40af; }
+        .round-2 { background: #fef3c7; color: #92400e; }
+        .round-3 { background: #fed7aa; color: #c2410c; }
+        .round-4 { background: #fecaca; color: #991b1b; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .status-new { background: #f1f5f9; color: #64748b; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-right: 5px;
+            text-decoration: none;
+            color: #334155;
+        }
+        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
+        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+        .action-btn.danger { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+        .action-btn.danger:hover { background: #fee2e2; }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 { font-size: 20px; color: #1a1a2e; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #334155;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-item label {
+            font-size: 12px;
+            color: #64748b;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .info-item span {
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: #22c55e; }
+        .toast.error { background: #ef4444; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .analysis-list {
+            margin-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 15px;
+        }
+        .analysis-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .checkbox-cell {
+            width: 40px;
+        }
+        .checkbox-cell input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    {% set active_page = 'client-manager' %}
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <main class="main-content" data-testid="client-manager-page">
+        <div class="header">
+            <h1 data-testid="page-title">Client Manager</h1>
+            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">Back to Dashboard</a>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="content-card">
+            <div class="bulk-actions" data-testid="bulk-actions">
+                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 18px; height: 18px;">
+                <label for="selectAll">Select All</label>
+                <span class="selected-count" id="selectedCount">0 selected</span>
+
+                <select id="bulkRound" data-testid="bulk-round-select">
+                    <option value="">Set Round...</option>
+                    <option value="0">Round 0 (New)</option>
+                    <option value="1">Round 1</option>
+                    <option value="2">Round 2</option>
+                    <option value="3">Round 3</option>
+                    <option value="4">Round 4</option>
+                </select>
+                <button class="btn btn-primary" onclick="bulkSetRound()" data-testid="bulk-set-round-btn">Apply to Selected</button>
+                <button class="btn btn-secondary" onclick="bulkRunAnalysis()" data-testid="bulk-run-analysis-btn">Run Analysis on Selected</button>
+            </div>
+
+            <div class="filters" data-testid="filters">
+                <button class="filter-btn active" onclick="filterByRound('all')" data-filter="all">All</button>
+                <button class="filter-btn" onclick="filterByRound(0)" data-filter="0">Round 0</button>
+                <button class="filter-btn" onclick="filterByRound(1)" data-filter="1">Round 1</button>
+                <button class="filter-btn" onclick="filterByRound(2)" data-filter="2">Round 2</button>
+                <button class="filter-btn" onclick="filterByRound(3)" data-filter="3">Round 3</button>
+                <button class="filter-btn" onclick="filterByRound(4)" data-filter="4">Round 4</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()" data-testid="search-input">
+            </div>
+
+            {% if clients %}
+            <table data-testid="clients-table">
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell"></th>
+                        <th>Client</th>
+                        <th>Round</th>
+                        <th>Status</th>
+                        <th>Reports</th>
+                        <th>Analyses</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="clientTableBody" data-testid="clients-table-body">
+                    {% for client in clients %}
+                    <tr data-testid="client-row-{{ client.id }}" data-round="{{ client.current_round }}" data-name="{{ client.name|lower }}">
+                        <td class="checkbox-cell">
+                            <input type="checkbox" class="client-checkbox" value="{{ client.id }}" onchange="updateSelectedCount()">
+                        </td>
+                        <td>
+                            <div class="client-cell">
+                                <div class="client-avatar">{{ client.name[0]|upper if client.name else 'C' }}</div>
+                                <div class="client-info">
+                                    <div class="client-name" data-testid="client-name-{{ client.id }}">{{ client.name }}</div>
+                                    <div class="client-email" data-testid="client-email-{{ client.id }}">{{ client.email or 'No email' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="round-badge round-{{ client.current_round }}" data-testid="client-round-{{ client.id }}">
+                                Round {{ client.current_round }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ client.dispute_status }}" data-testid="client-status-{{ client.id }}">
+                                {{ client.dispute_status|title }}
+                            </span>
+                        </td>
+                        <td data-testid="client-reports-{{ client.id }}">{{ client.report_count }}</td>
+                        <td data-testid="client-analyses-{{ client.id }}">{{ client.analysis_count }}</td>
+                        <td>
+                            <button class="action-btn" onclick="openClientModal({{ client.id }})" data-testid="view-btn-{{ client.id }}">View</button>
+                            <button class="action-btn primary" onclick="runAnalysis({{ client.id }})" data-testid="analyze-btn-{{ client.id }}">Analyze</button>
+                            <select class="action-btn" onchange="setRound({{ client.id }}, this.value); this.value='';" data-testid="round-select-{{ client.id }}">
+                                <option value="">Set Round</option>
+                                <option value="0">Round 0</option>
+                                <option value="1">Round 1</option>
+                                <option value="2">Round 2</option>
+                                <option value="3">Round 3</option>
+                                <option value="4">Round 4</option>
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state" data-testid="empty-state">
+                <p>No clients found. Upload credit reports to add clients.</p>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Client Detail Modal -->
+    <div class="modal" id="clientModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalClientName">Client Details</h2>
+                <button class="modal-close" onclick="closeClientModal()">&times;</button>
+            </div>
+            <div id="modalContent">
+                <div class="info-grid" id="clientInfo"></div>
+                <div id="clientReports"></div>
+                <div id="clientAnalyses"></div>
+            </div>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-primary" id="modalAnalyzeBtn">Run New Analysis</button>
+                <button class="btn btn-danger" id="modalDeleteBtn">Delete Client</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentClientId = null;
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.client-checkbox:checked').length;
+            document.getElementById('selectedCount').textContent = count + ' selected';
+        }
+
+        function toggleSelectAll() {
+            const checked = document.getElementById('selectAll').checked;
+            const visibleRows = document.querySelectorAll('#clientTableBody tr:not([style*="display: none"])');
+            visibleRows.forEach(row => {
+                const checkbox = row.querySelector('.client-checkbox');
+                if (checkbox) checkbox.checked = checked;
+            });
+            updateSelectedCount();
+        }
+
+        function getSelectedIds() {
+            return Array.from(document.querySelectorAll('.client-checkbox:checked')).map(cb => parseInt(cb.value));
+        }
+
+        function filterByRound(round) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            document.querySelectorAll('#clientTableBody tr').forEach(row => {
+                if (round === 'all' || row.dataset.round == round) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function searchClients() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('#clientTableBody tr').forEach(row => {
+                const name = row.dataset.name || '';
+                row.style.display = name.includes(query) ? '' : 'none';
+            });
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function setRound(clientId, round) {
+            if (round === '') return;
+            try {
+                const res = await fetch('/api/client-manager/set-round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId, round: parseInt(round) })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function bulkSetRound() {
+            const ids = getSelectedIds();
+            const round = document.getElementById('bulkRound').value;
+            if (!ids.length) return showToast('Select clients first', 'error');
+            if (round === '') return showToast('Select a round first', 'error');
+
+            try {
+                const res = await fetch('/api/client-manager/bulk-set-round', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_ids: ids, round: parseInt(round) })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function runAnalysis(clientId) {
+            const round = prompt('Enter dispute round (1-4):', '1');
+            if (!round) return;
+
+            try {
+                showToast('Starting analysis...', 'success');
+                const res = await fetch('/api/client-manager/run-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: clientId, round: parseInt(round) })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    if (data.review_url) {
+                        setTimeout(() => window.open(data.review_url, '_blank'), 1000);
+                    }
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function bulkRunAnalysis() {
+            const ids = getSelectedIds();
+            if (!ids.length) return showToast('Select clients first', 'error');
+
+            const round = prompt('Enter dispute round for all selected (1-4):', '1');
+            if (!round) return;
+
+            try {
+                const res = await fetch('/api/client-manager/bulk-run-analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_ids: ids, round: parseInt(round) })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function openClientModal(clientId) {
+            currentClientId = clientId;
+            try {
+                const res = await fetch(`/api/client-manager/client/${clientId}/details`);
+                const data = await res.json();
+                if (data.success) {
+                    const client = data.client;
+                    document.getElementById('modalClientName').textContent = client.name;
+
+                    document.getElementById('clientInfo').innerHTML = `
+                        <div class="info-item"><label>ID</label><span>${client.id}</span></div>
+                        <div class="info-item"><label>Email</label><span>${client.email || 'N/A'}</span></div>
+                        <div class="info-item"><label>Current Round</label><span>Round ${client.current_round}</span></div>
+                        <div class="info-item"><label>Status</label><span>${client.dispute_status}</span></div>
+                        <div class="info-item"><label>Round Started</label><span>${client.round_started_at || 'N/A'}</span></div>
+                        <div class="info-item"><label>Created</label><span>${client.created_at || 'N/A'}</span></div>
+                    `;
+
+                    let reportsHtml = '<h3 style="margin: 15px 0 10px;">Credit Reports (' + data.reports.length + ')</h3>';
+                    if (data.reports.length) {
+                        data.reports.forEach(r => {
+                            reportsHtml += `<div class="analysis-item">
+                                <span>${r.provider || 'Unknown'} - ${r.created_at || 'N/A'}</span>
+                                <span class="status-badge ${r.has_html ? 'status-active' : 'status-new'}">${r.has_html ? 'Has HTML' : 'No HTML'}</span>
+                            </div>`;
+                        });
+                    } else {
+                        reportsHtml += '<p style="color: #64748b;">No credit reports</p>';
+                    }
+                    document.getElementById('clientReports').innerHTML = reportsHtml;
+
+                    let analysesHtml = '<h3 style="margin: 15px 0 10px;">Analyses (' + data.analyses.length + ')</h3>';
+                    if (data.analyses.length) {
+                        data.analyses.forEach(a => {
+                            analysesHtml += `<div class="analysis-item">
+                                <span>Round ${a.round} - Stage ${a.stage} - ${a.created_at || 'N/A'}</span>
+                                <a href="${a.review_url}" class="action-btn" target="_blank">Review</a>
+                            </div>`;
+                        });
+                    } else {
+                        analysesHtml += '<p style="color: #64748b;">No analyses</p>';
+                    }
+                    document.getElementById('clientAnalyses').innerHTML = analysesHtml;
+
+                    document.getElementById('clientModal').classList.add('active');
+                }
+            } catch (err) {
+                showToast('Error loading client: ' + err.message, 'error');
+            }
+        }
+
+        function closeClientModal() {
+            document.getElementById('clientModal').classList.remove('active');
+            currentClientId = null;
+        }
+
+        document.getElementById('modalAnalyzeBtn').onclick = function() {
+            if (currentClientId) {
+                closeClientModal();
+                runAnalysis(currentClientId);
+            }
+        };
+
+        document.getElementById('modalDeleteBtn').onclick = async function() {
+            if (!currentClientId) return;
+            if (!confirm('Are you sure you want to delete this client and all associated data? This cannot be undone.')) return;
+
+            try {
+                const res = await fetch('/api/client-manager/delete-client', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_id: currentClientId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    closeClientModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        };
+
+        // Close modal on outside click
+        document.getElementById('clientModal').onclick = function(e) {
+            if (e.target === this) closeClientModal();
+        };
+    </script>
+</body>
+</html>
