@@ -1,0 +1,512 @@
+{% extends "staff/base_staff.html" %}
+{% set active_tab = 'admin' %}
+
+{% block title %}Case Law Database{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Search Section */
+    .search-section {
+        margin-bottom: 0;
+    }
+
+    .search-bar-lg {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .search-input-lg {
+        flex: 1;
+        padding: 14px 20px;
+        font-size: 16px;
+        border: 2px solid var(--apple-gray-200);
+        border-radius: 12px;
+        transition: all 0.2s;
+    }
+
+    .search-input-lg:focus {
+        outline: none;
+        border-color: var(--apple-teal);
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .search-filters {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .search-filters select {
+        padding: 10px 16px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        color: var(--apple-gray-700);
+        cursor: pointer;
+    }
+
+    .search-filters select:focus {
+        outline: none;
+        border-color: var(--apple-teal);
+    }
+
+    /* Category Buttons */
+    .case-categories {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .category-btn {
+        padding: 8px 20px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 20px;
+        background: white;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--apple-gray-600);
+        transition: all 0.2s;
+    }
+
+    .category-btn:hover {
+        border-color: var(--apple-teal);
+        color: var(--apple-teal);
+    }
+
+    .category-btn.active {
+        background: var(--apple-teal);
+        color: white;
+        border-color: var(--apple-teal);
+    }
+
+    /* Case Card */
+    .case-card {
+        padding: 20px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .case-card:hover {
+        border-color: var(--apple-teal);
+        box-shadow: var(--shadow-md);
+    }
+
+    .case-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+    }
+
+    .case-header h3 {
+        font-size: 18px;
+        color: var(--apple-navy-dark);
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .case-citation {
+        font-family: 'SF Mono', 'Monaco', monospace;
+        color: var(--apple-gray-500);
+        font-size: 13px;
+        background: var(--apple-gray-100);
+        padding: 4px 10px;
+        border-radius: 4px;
+    }
+
+    .case-meta {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 12px;
+        font-size: 13px;
+        color: var(--apple-gray-500);
+        flex-wrap: wrap;
+    }
+
+    .case-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .case-outcome {
+        font-weight: 600;
+    }
+
+    .case-outcome.plaintiff { color: #22c55e; }
+    .case-outcome.defendant { color: #ef4444; }
+    .case-outcome.settlement { color: #eab308; }
+    .case-outcome.mixed { color: #8b5cf6; }
+
+    .case-summary {
+        color: var(--apple-gray-600);
+        margin-bottom: 12px;
+        line-height: 1.6;
+        font-size: 14px;
+    }
+
+    .case-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .case-tag {
+        padding: 4px 12px;
+        background: var(--apple-gray-100);
+        border-radius: 6px;
+        font-size: 12px;
+        color: var(--apple-gray-600);
+        font-weight: 500;
+    }
+
+    .case-actions {
+        display: flex;
+        gap: 8px;
+        padding-top: 16px;
+        border-top: 1px solid var(--apple-gray-100);
+    }
+
+    .btn-sm {
+        padding: 8px 16px;
+        font-size: 13px;
+        border: 1px solid var(--apple-gray-200);
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+        color: var(--apple-gray-700);
+    }
+
+    .btn-sm:hover {
+        background: var(--apple-teal);
+        color: white;
+        border-color: var(--apple-teal);
+    }
+
+    /* Sections Grid */
+    .sections-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .section-card {
+        padding: 20px;
+        background: var(--apple-gray-50);
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .section-card:hover {
+        background: #f0fdfa;
+        transform: translateY(-2px);
+        border-color: var(--apple-teal);
+    }
+
+    .section-card h3 {
+        color: var(--apple-teal);
+        margin-bottom: 4px;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .section-card p {
+        color: var(--apple-gray-600);
+        font-size: 14px;
+        margin: 0;
+    }
+
+    .case-count {
+        display: block;
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--apple-gray-400);
+        font-weight: 500;
+    }
+
+    /* Stats Row */
+    .law-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .law-stat {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--apple-gray-200);
+        text-align: center;
+    }
+
+    .law-stat-value {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--apple-navy-dark);
+    }
+
+    .law-stat-label {
+        font-size: 13px;
+        color: var(--apple-gray-500);
+        margin-top: 4px;
+    }
+
+    @media (max-width: 1024px) {
+        .sections-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .law-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .sections-grid {
+            grid-template-columns: 1fr;
+        }
+        .law-stats {
+            grid-template-columns: 1fr;
+        }
+        .search-filters {
+            flex-direction: column;
+        }
+        .search-filters select {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Case Law Database</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Search FCRA case law and legal precedents</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="law-stats">
+    <div class="law-stat">
+        <div class="law-stat-value">{{ total_cases|default(247) }}</div>
+        <div class="law-stat-label">Total Cases</div>
+    </div>
+    <div class="law-stat">
+        <div class="law-stat-value">{{ plaintiff_wins|default(89) }}</div>
+        <div class="law-stat-label">Plaintiff Victories</div>
+    </div>
+    <div class="law-stat">
+        <div class="law-stat-value">{{ avg_damages|default('$45K') }}</div>
+        <div class="law-stat-label">Avg Damages</div>
+    </div>
+    <div class="law-stat">
+        <div class="law-stat-value">{{ recent_cases|default(12) }}</div>
+        <div class="law-stat-label">Added This Month</div>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="card">
+    <div class="search-section">
+        <div class="search-bar-lg">
+            <input type="text" id="case-search" placeholder="Search by case name, citation, or keyword..." class="search-input-lg">
+            <button class="btn btn-primary" onclick="searchCases()">Search</button>
+        </div>
+        <div class="search-filters">
+            <select id="violation-type">
+                <option value="">All Violation Types</option>
+                <option value="1681e">§1681e(b) - Accuracy</option>
+                <option value="1681i">§1681i - Reinvestigation</option>
+                <option value="1681s-2">§1681s-2 - Furnisher Duties</option>
+                <option value="1681n">§1681n - Willful Violations</option>
+                <option value="1681o">§1681o - Negligent Violations</option>
+            </select>
+            <select id="circuit">
+                <option value="">All Circuits</option>
+                <option value="1">1st Circuit</option>
+                <option value="2">2nd Circuit</option>
+                <option value="3">3rd Circuit</option>
+                <option value="4">4th Circuit</option>
+                <option value="5">5th Circuit</option>
+                <option value="6">6th Circuit</option>
+                <option value="7">7th Circuit</option>
+                <option value="8">8th Circuit</option>
+                <option value="9">9th Circuit</option>
+                <option value="10">10th Circuit</option>
+                <option value="11">11th Circuit</option>
+                <option value="dc">D.C. Circuit</option>
+                <option value="scotus">Supreme Court</option>
+            </select>
+            <select id="year-range">
+                <option value="">All Years</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2020-2024">2020-2024</option>
+                <option value="2015-2019">2015-2019</option>
+                <option value="pre-2015">Before 2015</option>
+            </select>
+            <select id="outcome">
+                <option value="">All Outcomes</option>
+                <option value="plaintiff">Plaintiff Victory</option>
+                <option value="defendant">Defendant Victory</option>
+                <option value="settlement">Settlement</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Key Cases -->
+<div class="card">
+    <h2 style="font-family: var(--font-display); color: var(--apple-navy-dark); margin-bottom: 16px;">Key FCRA Cases</h2>
+    <div class="case-categories">
+        <button class="category-btn active" data-category="all" onclick="filterCategory('all')">All Cases</button>
+        <button class="category-btn" data-category="standing" onclick="filterCategory('standing')">Standing</button>
+        <button class="category-btn" data-category="willfulness" onclick="filterCategory('willfulness')">Willfulness</button>
+        <button class="category-btn" data-category="damages" onclick="filterCategory('damages')">Damages</button>
+        <button class="category-btn" data-category="reinvestigation" onclick="filterCategory('reinvestigation')">Reinvestigation</button>
+        <button class="category-btn" data-category="furnisher" onclick="filterCategory('furnisher')">Furnisher Liability</button>
+    </div>
+
+    <div class="cases-list" id="cases-list">
+        {% for case in key_cases %}
+        <div class="case-card" data-category="{{ case.category }}">
+            <div class="case-header">
+                <h3>{{ case.name }}</h3>
+                <span class="case-citation">{{ case.citation }}</span>
+            </div>
+            <div class="case-meta">
+                <span>{{ case.court }}</span>
+                <span>{{ case.year }}</span>
+                <span class="case-outcome {{ case.outcome }}">{{ case.outcome|title }}</span>
+            </div>
+            <p class="case-summary">{{ case.summary }}</p>
+            <div class="case-tags">
+                {% for tag in case.tags %}
+                <span class="case-tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            <div class="case-actions">
+                <button class="btn-sm" onclick="viewCase('{{ case.id }}')">View Full Case</button>
+                <button class="btn-sm" onclick="copyCitation('{{ case.citation }}')">Copy Citation</button>
+                <button class="btn-sm" onclick="addToLetter('{{ case.id }}')">Add to Letter</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Browse by Section -->
+<div class="card">
+    <h2 style="font-family: var(--font-display); color: var(--apple-navy-dark); margin-bottom: 16px;">Browse by FCRA Section</h2>
+    <div class="sections-grid">
+        <a href="?section=1681e" class="section-card">
+            <h3>§1681e(b)</h3>
+            <p>Accuracy of Reports</p>
+            <span class="case-count">45 cases</span>
+        </a>
+        <a href="?section=1681i" class="section-card">
+            <h3>§1681i</h3>
+            <p>Reinvestigation Procedures</p>
+            <span class="case-count">62 cases</span>
+        </a>
+        <a href="?section=1681s-2" class="section-card">
+            <h3>§1681s-2</h3>
+            <p>Furnisher Duties</p>
+            <span class="case-count">38 cases</span>
+        </a>
+        <a href="?section=1681n" class="section-card">
+            <h3>§1681n</h3>
+            <p>Willful Noncompliance</p>
+            <span class="case-count">29 cases</span>
+        </a>
+        <a href="?section=1681o" class="section-card">
+            <h3>§1681o</h3>
+            <p>Negligent Noncompliance</p>
+            <span class="case-count">21 cases</span>
+        </a>
+        <a href="?section=standing" class="section-card">
+            <h3>Standing</h3>
+            <p>Article III Standing Issues</p>
+            <span class="case-count">15 cases</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function searchCases() {
+    const query = document.getElementById('case-search').value;
+    const violationType = document.getElementById('violation-type').value;
+    const circuit = document.getElementById('circuit').value;
+    const yearRange = document.getElementById('year-range').value;
+    const outcome = document.getElementById('outcome').value;
+
+    let url = '{{ url_for("staff_portal.case_law") }}?';
+    const params = [];
+    if (query) params.push('q=' + encodeURIComponent(query));
+    if (violationType) params.push('violation=' + violationType);
+    if (circuit) params.push('circuit=' + circuit);
+    if (yearRange) params.push('year=' + yearRange);
+    if (outcome) params.push('outcome=' + outcome);
+
+    window.location.href = url + params.join('&');
+}
+
+function filterCategory(category) {
+    // Update button states
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.category === category) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Filter cases
+    document.querySelectorAll('.case-card').forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function viewCase(id) {
+    window.location.href = '/staff/case-law/' + id;
+}
+
+function copyCitation(citation) {
+    navigator.clipboard.writeText(citation).then(() => {
+        alert('Citation copied to clipboard!');
+    });
+}
+
+function addToLetter(id) {
+    alert('Case added to letter queue. Go to Letter Generator to include this citation.');
+}
+
+// Search on Enter key
+document.getElementById('case-search').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchCases();
+    }
+});
+</script>
+{% endblock %}

@@ -1,6 +1,6 @@
 describe('Dashboard', () => {
   beforeEach(() => {
-    cy.login('test@example.com', 'password123')
+    cy.login('test@example.com', 'testpass123')
     cy.url().should('include', '/dashboard')
   })
 

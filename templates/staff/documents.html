@@ -1,0 +1,269 @@
+{% extends "staff/base_staff.html" %}
+{% block title %}Documents{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Documents</h1>
+    <div style="display: flex; gap: 12px;">
+        <button class="btn btn-secondary" onclick="showUploadModal()">Upload Document</button>
+        <button class="btn btn-secondary" onclick="showScanModal()">Scan Document</button>
+    </div>
+</div>
+
+<!-- Sub-filters -->
+<div class="sub-filters">
+    <a href="{{ url_for('staff_portal.documents') }}" class="sub-filter {% if not filter %}active{% endif %}">All Documents ({{ counts.all }})</a>
+    <a href="{{ url_for('staff_portal.documents') }}?filter=uploads" class="sub-filter {% if filter == 'uploads' %}active{% endif %}">Client Uploads ({{ counts.uploads }})</a>
+    <a href="{{ url_for('staff_portal.documents') }}?filter=letters" class="sub-filter {% if filter == 'letters' %}active{% endif %}">Generated Letters ({{ counts.letters }})</a>
+    <a href="{{ url_for('staff_portal.documents') }}?filter=reports" class="sub-filter {% if filter == 'reports' %}active{% endif %}">Credit Reports ({{ counts.reports }})</a>
+    <a href="{{ url_for('staff_portal.documents') }}?filter=responses" class="sub-filter {% if filter == 'responses' %}active{% endif %}">CRA Responses ({{ counts.responses }})</a>
+</div>
+
+<!-- Search Bar -->
+<div class="search-bar">
+    <span style="font-size: 18px; color: var(--apple-gray-400);">Search</span>
+    <input type="text" id="docSearch" placeholder="Search by filename, client, or type..." oninput="filterDocs(this.value)">
+    <select id="docSort" onchange="sortDocs(this.value)" style="border: none; padding: 8px; border-radius: 8px; background: var(--apple-gray-50);">
+        <option value="recent">Most Recent</option>
+        <option value="name">Name A-Z</option>
+        <option value="size">File Size</option>
+    </select>
+</div>
+
+<!-- Documents Grid -->
+<div class="card animate-fade-in-up">
+    {% if documents %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+        {% for doc in documents %}
+        <div class="doc-card" style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; transition: all 0.2s; cursor: pointer;" onclick="previewDoc({{ doc.id }})" data-doc-id="{{ doc.id }}" data-name="{{ doc.filename|lower }}" data-client="{{ doc.client_name|lower }}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div style="font-size: 32px;">
+                    {% if doc.type == 'pdf' %}PDF{% elif doc.type == 'image' %}IMG{% elif doc.type == 'credit_report' %}CR{% else %}DOC{% endif %}
+                </div>
+                <span class="badge badge-{{ doc.status_class }}">{{ doc.status }}</span>
+            </div>
+            <div style="font-weight: 600; color: var(--apple-navy-dark); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ doc.filename }}</div>
+            <div style="font-size: 12px; color: var(--apple-gray-500); margin-bottom: 8px;">{{ doc.client_name }}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--apple-gray-500);">
+                <span>{{ doc.size }}</span>
+                <span>{{ doc.uploaded_at }}</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <a href="{{ doc.download_url }}" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();" download>Download</a>
+                <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); assignDoc({{ doc.id }})">Assign</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">No documents found</div>
+        <p>No documents match your current filter.</p>
+        <button class="btn btn-primary" onclick="showUploadModal()" style="margin-top: 16px;">Upload First Document</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div style="display: flex; justify-content: center; gap: 8px; margin-top: 24px;">
+    {% for p in range(1, total_pages + 1) %}
+    <a href="{{ url_for('staff_portal.documents') }}?page={{ p }}&filter={{ filter }}"
+       class="btn {% if p == page %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Upload Modal -->
+<div id="uploadModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; max-width: 500px; width: 90%; padding: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="font-family: var(--font-display); font-size: 24px; color: var(--apple-navy-dark);">Upload Document</h2>
+            <button onclick="hideUploadModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--apple-gray-400);">&times;</button>
+        </div>
+        <form action="{{ url_for('staff_portal.upload_document') }}" method="POST" enctype="multipart/form-data">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">Select Client</label>
+                <select name="client_id" required style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+                    <option value="">-- Select Client --</option>
+                    {% for client in all_clients %}
+                    <option value="{{ client.id }}">{{ client.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">Document Type</label>
+                <select name="doc_type" required style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+                    <option value="credit_report">Credit Report</option>
+                    <option value="id_document">ID Document</option>
+                    <option value="cra_response">CRA Response</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">File</label>
+                <div id="dropZone" style="border: 2px dashed var(--apple-gray-300); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s;">
+                    <input type="file" name="file" id="fileInput" required style="display: none;" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+                    <div style="color: var(--apple-gray-500);">
+                        <div style="font-size: 32px; margin-bottom: 8px;">Drop file here</div>
+                        <p>or <span style="color: var(--apple-teal); font-weight: 600;">browse</span></p>
+                        <p style="font-size: 12px; margin-top: 8px;">PDF, PNG, JPG, DOC up to 20MB</p>
+                    </div>
+                </div>
+                <div id="selectedFile" style="display: none; margin-top: 12px; padding: 12px; background: var(--apple-gray-50); border-radius: 8px;">
+                    <span id="selectedFileName"></span>
+                    <button type="button" onclick="clearFile()" style="float: right; background: none; border: none; color: var(--apple-red); cursor: pointer;">Remove</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" onclick="hideUploadModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 500; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; max-width: 900px; width: 95%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--apple-gray-200);">
+            <h3 id="previewTitle" style="font-family: var(--font-display); font-size: 20px; color: var(--apple-navy-dark);">Document Preview</h3>
+            <button onclick="hidePreviewModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--apple-gray-400);">&times;</button>
+        </div>
+        <div id="previewContent" style="flex: 1; overflow: auto; padding: 20px; background: var(--apple-gray-100);">
+            <!-- Preview content loads here -->
+        </div>
+        <div style="padding: 16px 20px; border-top: 1px solid var(--apple-gray-200); display: flex; justify-content: flex-end; gap: 12px;">
+            <a href="#" id="previewDownload" class="btn btn-secondary" download>Download</a>
+            <button onclick="hidePreviewModal()" class="btn btn-primary">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showUploadModal() {
+    document.getElementById('uploadModal').style.display = 'flex';
+}
+
+function hideUploadModal() {
+    document.getElementById('uploadModal').style.display = 'none';
+}
+
+function showScanModal() {
+    window.location.href = '/dashboard/document-scanner';
+}
+
+function filterDocs(query) {
+    const cards = document.querySelectorAll('.doc-card');
+    const q = query.toLowerCase();
+    cards.forEach(card => {
+        const name = card.dataset.name || '';
+        const client = card.dataset.client || '';
+        if (name.includes(q) || client.includes(q)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function sortDocs(sortBy) {
+    window.location.href = '{{ url_for("staff_portal.documents") }}?filter={{ filter }}&sort=' + sortBy;
+}
+
+function previewDoc(docId) {
+    document.getElementById('previewTitle').textContent = 'Loading...';
+    document.getElementById('previewContent').innerHTML = '<div style="text-align: center; padding: 60px;"><p>Loading preview...</p></div>';
+    document.getElementById('previewModal').style.display = 'flex';
+
+    fetch('/api/document/' + docId + '/preview')
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('previewTitle').textContent = data.filename;
+        document.getElementById('previewDownload').href = data.download_url;
+        if (data.type === 'pdf') {
+            document.getElementById('previewContent').innerHTML = '<iframe src="' + data.preview_url + '" style="width: 100%; height: 600px; border: none;"></iframe>';
+        } else if (data.type === 'image') {
+            document.getElementById('previewContent').innerHTML = '<img src="' + data.preview_url + '" style="max-width: 100%; height: auto;">';
+        } else {
+            document.getElementById('previewContent').innerHTML = '<div style="text-align: center; padding: 60px;"><p>Preview not available for this file type</p><a href="' + data.download_url + '" class="btn btn-primary">Download to View</a></div>';
+        }
+    });
+}
+
+function hidePreviewModal() {
+    document.getElementById('previewModal').style.display = 'none';
+}
+
+function assignDoc(docId) {
+    const clientId = prompt('Enter Client ID to assign this document:');
+    if (clientId) {
+        fetch('/api/document/' + docId + '/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: clientId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('Document assigned successfully');
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to assign document');
+            }
+        });
+    }
+}
+
+// Drag and drop
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--apple-teal)';
+    dropZone.style.background = 'rgba(13, 148, 136, 0.05)';
+});
+dropZone.addEventListener('dragleave', () => {
+    dropZone.style.borderColor = 'var(--apple-gray-300)';
+    dropZone.style.background = 'transparent';
+});
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.borderColor = 'var(--apple-gray-300)';
+    dropZone.style.background = 'transparent';
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        showSelectedFile(e.dataTransfer.files[0]);
+    }
+});
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+        showSelectedFile(fileInput.files[0]);
+    }
+});
+
+function showSelectedFile(file) {
+    document.getElementById('selectedFileName').textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+    document.getElementById('selectedFile').style.display = 'block';
+    dropZone.style.display = 'none';
+}
+
+function clearFile() {
+    fileInput.value = '';
+    document.getElementById('selectedFile').style.display = 'none';
+    dropZone.style.display = 'block';
+}
+
+// Close modals on backdrop click
+document.getElementById('uploadModal').addEventListener('click', function(e) {
+    if (e.target === this) hideUploadModal();
+});
+document.getElementById('previewModal').addEventListener('click', function(e) {
+    if (e.target === this) hidePreviewModal();
+});
+</script>
+{% endblock %}

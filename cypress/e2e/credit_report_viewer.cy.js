@@ -8,7 +8,7 @@ describe('Credit Report Viewer - Full QA Suite', () => {
   let validReportId = null;
   
   before(() => {
-    cy.login('test@example.com', 'password123');
+    cy.login('test@example.com', 'testpass123');
     cy.request({
       url: '/api/credit-import/credentials',
       failOnStatusCode: false
@@ -23,7 +23,7 @@ describe('Credit Report Viewer - Full QA Suite', () => {
   });
 
   beforeEach(() => {
-    cy.login('test@example.com', 'password123');
+    cy.login('test@example.com', 'testpass123');
   });
 
   describe('Page Load & Structure', () => {

@@ -1,0 +1,584 @@
+{% extends "staff/base_staff.html" %}
+
+{% block title %}Calendar{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+<style>
+    .calendar-container {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+    }
+
+    #calendar {
+        min-height: 650px;
+    }
+
+    .fc .fc-toolbar-title {
+        font-family: var(--font-display);
+        font-size: 20px !important;
+        font-weight: 600 !important;
+        color: var(--apple-navy-dark) !important;
+    }
+
+    .fc .fc-button {
+        background: var(--apple-gray-100) !important;
+        border: 1px solid var(--apple-gray-200) !important;
+        color: var(--apple-gray-700) !important;
+        font-weight: 500 !important;
+        padding: 8px 16px !important;
+        border-radius: 8px !important;
+    }
+
+    .fc .fc-button:hover {
+        background: var(--apple-gray-200) !important;
+        border-color: var(--apple-teal) !important;
+    }
+
+    .fc .fc-button-primary:not(:disabled).fc-button-active {
+        background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%) !important;
+        border-color: var(--apple-teal) !important;
+        color: white !important;
+    }
+
+    .fc .fc-daygrid-day-number {
+        color: var(--apple-gray-700);
+        font-weight: 500;
+    }
+
+    .fc .fc-col-header-cell-cushion {
+        color: var(--apple-gray-500);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+    }
+
+    .fc .fc-daygrid-day.fc-day-today {
+        background: rgba(13, 148, 136, 0.08) !important;
+    }
+
+    .fc-event {
+        cursor: pointer;
+        border-radius: 6px !important;
+        padding: 3px 8px !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        border: none !important;
+    }
+
+    .content-layout {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 24px;
+    }
+
+    .filter-panel {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+        height: fit-content;
+        position: sticky;
+        top: 24px;
+    }
+
+    .filter-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        margin-bottom: 20px;
+    }
+
+    .filter-group {
+        margin-bottom: 16px;
+    }
+
+    .filter-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--apple-gray-500);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 10px;
+        font-size: 14px;
+        background: var(--apple-gray-50);
+        transition: all 0.2s;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        outline: none;
+        border-color: var(--apple-teal);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .filter-btn {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 8px;
+    }
+
+    .filter-btn-primary {
+        background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%);
+        color: white;
+    }
+
+    .filter-btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    }
+
+    .filter-btn-secondary {
+        background: var(--apple-gray-100);
+        color: var(--apple-gray-600);
+    }
+
+    .filter-btn-secondary:hover {
+        background: var(--apple-gray-200);
+    }
+
+    .legend {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--apple-gray-200);
+    }
+
+    .legend-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        margin-bottom: 12px;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: var(--apple-gray-600);
+    }
+
+    .legend-color {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal {
+        background: white;
+        border-radius: 20px;
+        width: 480px;
+        max-width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--apple-gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-header h2 {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+    }
+
+    .modal-close {
+        background: var(--apple-gray-100);
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+        color: var(--apple-gray-500);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+        background: var(--apple-gray-200);
+        color: var(--apple-navy-dark);
+    }
+
+    .modal-body {
+        padding: 24px;
+    }
+
+    .detail-row {
+        display: flex;
+        margin-bottom: 14px;
+    }
+
+    .detail-label {
+        width: 130px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--apple-gray-500);
+    }
+
+    .detail-value {
+        flex: 1;
+        font-size: 14px;
+        color: var(--apple-navy-dark);
+        font-weight: 500;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-active {
+        background: rgba(13, 148, 136, 0.1);
+        color: var(--apple-teal);
+    }
+
+    .status-overdue {
+        background: rgba(220, 38, 38, 0.1);
+        color: var(--apple-red);
+    }
+
+    .status-completed {
+        background: rgba(5, 150, 105, 0.1);
+        color: var(--apple-green);
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--apple-gray-200);
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    @media (max-width: 1024px) {
+        .content-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .filter-panel {
+            position: static;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Deadline Calendar</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Track all case deadlines and response due dates</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card" style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); color: white;">
+        <div class="stat-label" style="color: rgba(255,255,255,0.8);">Overdue</div>
+        <div class="stat-value" style="color: white;" id="statOverdue">{{ stats.overdue }}</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white;">
+        <div class="stat-label" style="color: rgba(255,255,255,0.8);">Due This Week</div>
+        <div class="stat-value" style="color: white;" id="statUpcoming">{{ stats.upcoming }}</div>
+    </div>
+    <div class="stat-card highlight">
+        <div class="stat-label">Active Deadlines</div>
+        <div class="stat-value" id="statActive">{{ stats.active }}</div>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, var(--apple-green) 0%, #10b981 100%); color: white;">
+        <div class="stat-label" style="color: rgba(255,255,255,0.8);">Completed This Month</div>
+        <div class="stat-value" style="color: white;" id="statCompleted">{{ stats.completed }}</div>
+    </div>
+</div>
+
+<div class="content-layout">
+    <div class="calendar-container">
+        <div id="calendar"></div>
+    </div>
+
+    <div class="filter-panel">
+        <h3 class="filter-title">Filter Deadlines</h3>
+
+        <div class="filter-group">
+            <label>Client Name</label>
+            <input type="text" id="filterClient" placeholder="Search client...">
+        </div>
+
+        <div class="filter-group">
+            <label>Bureau</label>
+            <select id="filterBureau">
+                <option value="">All Bureaus</option>
+                <option value="Experian">Experian</option>
+                <option value="TransUnion">TransUnion</option>
+                <option value="Equifax">Equifax</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Deadline Type</label>
+            <select id="filterType">
+                <option value="">All Types</option>
+                <option value="cra_response">CRA Response (30 days)</option>
+                <option value="reinvestigation">Reinvestigation (45 days)</option>
+                <option value="data_furnisher">Data Furnisher</option>
+                <option value="client_action">Client Action</option>
+                <option value="legal_filing">Legal Filing</option>
+            </select>
+        </div>
+
+        <button class="filter-btn filter-btn-primary" onclick="applyFilters()">Apply Filters</button>
+        <button class="filter-btn filter-btn-secondary" onclick="clearFilters()">Clear</button>
+
+        <div class="legend">
+            <div class="legend-title">Deadline Types</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #3498db;"></div>
+                CRA Response (30 days)
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f39c12;"></div>
+                Reinvestigation (45 days)
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #27ae60;"></div>
+                Data Furnisher
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #f1c40f;"></div>
+                Client Action
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #e74c3c;"></div>
+                Legal / Overdue
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deadline Detail Modal -->
+<div class="modal-overlay" id="deadlineModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Deadline Details</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-row">
+                <div class="detail-label">Client</div>
+                <div class="detail-value" id="modalClient">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Email</div>
+                <div class="detail-value" id="modalEmail">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Deadline Type</div>
+                <div class="detail-value" id="modalType">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Bureau</div>
+                <div class="detail-value" id="modalBureau">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Dispute Round</div>
+                <div class="detail-value" id="modalRound">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Start Date</div>
+                <div class="detail-value" id="modalStartDate">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Deadline Date</div>
+                <div class="detail-value" id="modalDeadlineDate">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Days Allowed</div>
+                <div class="detail-value" id="modalDaysAllowed">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Status</div>
+                <div class="detail-value" id="modalStatus">-</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">Notes</div>
+                <div class="detail-value" id="modalNotes">-</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            <a href="#" id="viewClientBtn" class="btn btn-primary">View Client</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script>
+    let calendar;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initCalendar();
+    });
+
+    function initCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,dayGridWeek,listWeek'
+            },
+            events: '/api/calendar/events',
+            eventClick: function(info) {
+                showDeadlineDetails(info.event);
+            },
+            eventDidMount: function(info) {
+                if (info.event.extendedProps.is_overdue) {
+                    info.el.style.animation = 'pulse 2s infinite';
+                }
+            },
+            height: 'auto',
+            dayMaxEvents: 3,
+            moreLinkClick: 'popover'
+        });
+        calendar.render();
+    }
+
+    function applyFilters() {
+        const client = document.getElementById('filterClient').value;
+        const bureau = document.getElementById('filterBureau').value;
+        const type = document.getElementById('filterType').value;
+
+        let url = '/api/calendar/events?';
+        const params = [];
+        if (client) params.push(`client=${encodeURIComponent(client)}`);
+        if (bureau) params.push(`bureau=${encodeURIComponent(bureau)}`);
+        if (type) params.push(`type=${encodeURIComponent(type)}`);
+
+        calendar.removeAllEvents();
+        calendar.addEventSource(url + params.join('&'));
+    }
+
+    function clearFilters() {
+        document.getElementById('filterClient').value = '';
+        document.getElementById('filterBureau').value = '';
+        document.getElementById('filterType').value = '';
+
+        calendar.removeAllEvents();
+        calendar.addEventSource('/api/calendar/events');
+    }
+
+    function showDeadlineDetails(event) {
+        const props = event.extendedProps;
+
+        document.getElementById('modalClient').textContent = props.client_name;
+        document.getElementById('modalEmail').textContent = props.client_email || 'N/A';
+        document.getElementById('modalType').textContent = props.deadline_type_label;
+        document.getElementById('modalBureau').textContent = props.bureau;
+        document.getElementById('modalRound').textContent = 'Round ' + props.dispute_round;
+        document.getElementById('modalStartDate').textContent = props.start_date || 'N/A';
+        document.getElementById('modalDeadlineDate').textContent = event.startStr;
+        document.getElementById('modalDaysAllowed').textContent = props.days_allowed + ' days';
+        document.getElementById('modalNotes').textContent = props.notes || 'No notes';
+
+        const statusEl = document.getElementById('modalStatus');
+        if (props.is_overdue) {
+            statusEl.innerHTML = '<span class="status-badge status-overdue">OVERDUE</span>';
+        } else if (props.status === 'completed') {
+            statusEl.innerHTML = '<span class="status-badge status-completed">Completed</span>';
+        } else {
+            statusEl.innerHTML = '<span class="status-badge status-active">Active</span>';
+        }
+
+        document.getElementById('viewClientBtn').href = '/staff/clients/' + props.client_id;
+
+        document.getElementById('deadlineModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('deadlineModal').classList.remove('active');
+    }
+
+    document.getElementById('deadlineModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
+{% endblock %}

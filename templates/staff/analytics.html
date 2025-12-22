@@ -1,0 +1,387 @@
+{% extends "staff/base_staff.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+    }
+
+    .metric-card.large {
+        grid-column: span 2;
+    }
+
+    .metric-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--apple-gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .metric-value {
+        font-family: var(--font-display);
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--apple-navy-dark);
+    }
+
+    .metric-value.green { color: var(--apple-green); }
+    .metric-value.teal { color: var(--apple-teal); }
+    .metric-value.orange { color: #d97706; }
+    .metric-value.red { color: var(--apple-red); }
+
+    .metric-change {
+        font-size: 13px;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .metric-change.positive { color: var(--apple-green); }
+    .metric-change.negative { color: var(--apple-red); }
+
+    .section-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        margin-bottom: 16px;
+        margin-top: 8px;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+        margin-bottom: 24px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .chart-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+    }
+
+    .mini-chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        height: 60px;
+    }
+
+    .mini-bar {
+        flex: 1;
+        background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%);
+        border-radius: 4px 4px 0 0;
+        min-height: 4px;
+        transition: all 0.3s;
+    }
+
+    .mini-bar:hover {
+        opacity: 0.8;
+    }
+
+    .breakdown-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .breakdown-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+    }
+
+    .breakdown-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        margin-bottom: 16px;
+    }
+
+    .breakdown-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--apple-gray-100);
+    }
+
+    .breakdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .breakdown-label {
+        font-size: 14px;
+        color: var(--apple-gray-600);
+    }
+
+    .breakdown-value {
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: var(--apple-gray-100);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-fill.green { background: var(--apple-green); }
+    .progress-fill.teal { background: var(--apple-teal); }
+    .progress-fill.orange { background: #f59e0b; }
+    .progress-fill.red { background: var(--apple-red); }
+
+    .score-distribution {
+        display: flex;
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .score-item {
+        flex: 1;
+        text-align: center;
+        padding: 16px;
+        background: var(--apple-gray-50);
+        border-radius: 12px;
+    }
+
+    .score-count {
+        font-family: var(--font-display);
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .score-label {
+        font-size: 12px;
+        color: var(--apple-gray-500);
+        margin-top: 4px;
+    }
+
+    @media (max-width: 1200px) {
+        .analytics-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .metric-card.large {
+            grid-column: span 1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+        .breakdown-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Analytics Dashboard</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Business intelligence and performance metrics</p>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="analytics-grid">
+    <div class="metric-card">
+        <div class="metric-label">Total Clients</div>
+        <div class="metric-value">{{ client_stats.total }}</div>
+        <div class="metric-change positive">+{{ client_stats.new_this_month }} this month</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Total Revenue</div>
+        <div class="metric-value green">${{ "{:,.0f}".format(revenue_stats.total) }}</div>
+        <div class="metric-change {% if revenue_stats.month_change >= 0 %}positive{% else %}negative{% endif %}">
+            {% if revenue_stats.month_change >= 0 %}+{% endif %}${{ "{:,.0f}".format(revenue_stats.month_change) }} vs last month
+        </div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Avg Case Score</div>
+        <div class="metric-value teal">{{ case_stats.avg_score }}</div>
+        <div class="metric-change">{{ case_stats.total_analyses }} total analyses</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Deletion Rate</div>
+        <div class="metric-value {% if dispute_stats.success_rate >= 50 %}green{% else %}orange{% endif %}">{{ dispute_stats.success_rate }}%</div>
+        <div class="metric-change">{{ dispute_stats.deleted }} items deleted</div>
+    </div>
+</div>
+
+<!-- Signups Chart -->
+<div class="chart-container">
+    <div class="chart-header">
+        <div class="chart-title">Daily Signups (Last 14 Days)</div>
+    </div>
+    <div class="mini-chart">
+        {% set max_count = timeline_data.signups|map(attribute='count')|max or 1 %}
+        {% for day in timeline_data.signups %}
+        <div class="mini-bar" style="height: {{ (day.count / max_count * 100)|int }}%;" title="{{ day.label }}: {{ day.count }}"></div>
+        {% endfor %}
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--apple-gray-400);">
+        <span>{{ timeline_data.signups[0].label }}</span>
+        <span>{{ timeline_data.signups[-1].label }}</span>
+    </div>
+</div>
+
+<!-- Breakdown Cards -->
+<div class="breakdown-grid">
+    <!-- Client Breakdown -->
+    <div class="breakdown-card">
+        <div class="breakdown-title">Client Status</div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Active</span>
+            <span class="breakdown-value">{{ client_stats.active }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Complete</span>
+            <span class="breakdown-value">{{ client_stats.complete }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">New This Month</span>
+            <span class="breakdown-value" style="color: var(--apple-green);">+{{ client_stats.new_this_month }}</span>
+        </div>
+    </div>
+
+    <!-- Revenue Breakdown -->
+    <div class="breakdown-card">
+        <div class="breakdown-title">Revenue</div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">This Month</span>
+            <span class="breakdown-value" style="color: var(--apple-green);">${{ "{:,.0f}".format(revenue_stats.this_month) }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Last Month</span>
+            <span class="breakdown-value">${{ "{:,.0f}".format(revenue_stats.last_month) }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">All Time</span>
+            <span class="breakdown-value">${{ "{:,.0f}".format(revenue_stats.total) }}</span>
+        </div>
+    </div>
+
+    <!-- Dispute Progress -->
+    <div class="breakdown-card">
+        <div class="breakdown-title">Dispute Items</div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Total Items</span>
+            <span class="breakdown-value">{{ dispute_stats.total_items }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Deleted</span>
+            <span class="breakdown-value" style="color: var(--apple-green);">{{ dispute_stats.deleted }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Verified (No Change)</span>
+            <span class="breakdown-value">{{ dispute_stats.verified }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">In Progress</span>
+            <span class="breakdown-value" style="color: var(--apple-teal);">{{ dispute_stats.in_progress }}</span>
+        </div>
+        <div style="margin-top: 12px;">
+            <div style="font-size: 12px; color: var(--apple-gray-500); margin-bottom: 4px;">Success Rate</div>
+            <div class="progress-bar">
+                <div class="progress-fill green" style="width: {{ dispute_stats.success_rate }}%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRA Responses -->
+    <div class="breakdown-card">
+        <div class="breakdown-title">CRA Responses</div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Total Responses</span>
+            <span class="breakdown-value">{{ cra_stats.total_responses }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Deleted</span>
+            <span class="breakdown-value" style="color: var(--apple-green);">{{ cra_stats.deleted }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Verified</span>
+            <span class="breakdown-value">{{ cra_stats.verified }}</span>
+        </div>
+        <div class="breakdown-item">
+            <span class="breakdown-label">Investigating</span>
+            <span class="breakdown-value" style="color: #d97706;">{{ cra_stats.investigating }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Case Score Distribution -->
+<div class="chart-container">
+    <div class="chart-header">
+        <div class="chart-title">Case Score Distribution</div>
+    </div>
+    <div class="score-distribution">
+        <div class="score-item">
+            <div class="score-count" style="color: var(--apple-green);">{{ case_stats.high_score }}</div>
+            <div class="score-label">High (8+)</div>
+        </div>
+        <div class="score-item">
+            <div class="score-count" style="color: #d97706;">{{ case_stats.medium_score }}</div>
+            <div class="score-label">Medium (5-7)</div>
+        </div>
+        <div class="score-item">
+            <div class="score-count" style="color: var(--apple-red);">{{ case_stats.low_score }}</div>
+            <div class="score-label">Low (&lt;5)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Automation Stats -->
+<div class="analytics-grid" style="grid-template-columns: repeat(2, 1fr);">
+    <div class="metric-card">
+        <div class="metric-label">Letters Sent</div>
+        <div class="metric-value teal">{{ automation_stats.total_letters }}</div>
+        <div class="metric-change">via VA automation</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">Pending Approval</div>
+        <div class="metric-value orange">{{ automation_stats.pending_approval }}</div>
+        <div class="metric-change">letters awaiting review</div>
+    </div>
+</div>
+{% endblock %}

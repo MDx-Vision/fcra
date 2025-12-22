@@ -1,0 +1,506 @@
+{% extends "staff/base_staff.html" %}
+{% block title %}{{ client.name }} - Client Detail{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--apple-teal); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 24px;">
+                {{ client.initials }}
+            </div>
+            <div>
+                <h1 class="page-title">{{ client.name }}</h1>
+                <p style="color: var(--apple-gray-500); margin-top: 4px;">
+                    Round {{ client.round }} | {{ client.status }} | Added {{ client.created_at }}
+                </p>
+            </div>
+        </div>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        {% if analysis and analysis.stage == 1 and not analysis.approved_at %}
+        <a href="/analysis/{{ analysis.id }}/review" class="btn btn-primary">Review & Approve</a>
+        {% elif analysis and analysis.stage == 2 %}
+        <a href="/analysis/{{ analysis.id }}/download" class="btn btn-primary">Download Package</a>
+        {% endif %}
+        <a href="{{ url_for('staff_portal.clients') }}" class="btn btn-secondary">Back to Clients</a>
+    </div>
+</div>
+
+<!-- Sub-navigation -->
+<div class="sub-filters" id="sectionNav">
+    <a href="#overview" class="sub-filter active" onclick="showSection('overview', this)">Overview</a>
+    <a href="#violations" class="sub-filter" onclick="showSection('violations', this)">Violations ({{ violations|length }})</a>
+    <a href="#letters" class="sub-filter" onclick="showSection('letters', this)">Letters ({{ letters|length }})</a>
+    <a href="#documents" class="sub-filter" onclick="showSection('documents', this)">Documents ({{ documents|length }})</a>
+    <a href="#notes" class="sub-filter" onclick="showSection('notes', this)">Notes ({{ notes|length }})</a>
+</div>
+
+<!-- Overview Section -->
+<div id="section-overview" class="section-content">
+    <!-- Stats Row -->
+    <div class="stats-grid stats-grid-responsive" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="card stat-card highlight animate-fade-in-up" data-delay="0">
+            <div class="stat-label">Case Score</div>
+            {% if score %}
+            <div class="stat-value">{{ score.total_score }}/10</div>
+            <div class="stat-change">{{ score.case_strength }}</div>
+            {% else %}
+            <div class="stat-value">--</div>
+            <div class="stat-change">Not scored</div>
+            {% endif %}
+        </div>
+        <div class="card stat-card animate-fade-in-up" data-delay="100">
+            <div class="stat-label">Total Exposure</div>
+            {% if damages %}
+            <div class="stat-value">${{ "{:,.0f}".format(damages.total_exposure) }}</div>
+            <div class="stat-change">Settlement: ${{ "{:,.0f}".format(damages.settlement_target) }}</div>
+            {% else %}
+            <div class="stat-value">$0</div>
+            <div class="stat-change">Not calculated</div>
+            {% endif %}
+        </div>
+        <div class="card stat-card animate-fade-in-up" data-delay="200">
+            <div class="stat-label">Violations</div>
+            <div class="stat-value">{{ violations|length }}</div>
+            <div class="stat-change">Identified issues</div>
+        </div>
+        <div class="card stat-card animate-fade-in-up" data-delay="300">
+            <div class="stat-label">Letters</div>
+            <div class="stat-value">{{ letters|length }}</div>
+            <div class="stat-change">Generated</div>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="two-col two-col-responsive">
+        <!-- Client Information -->
+        <div class="card animate-fade-in-up" data-delay="400">
+            <div class="card-title">Client Information</div>
+            <div class="info-grid">
+                <div class="info-row">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-value">{{ client.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">{{ client.email or 'Not provided' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone</span>
+                    <span class="info-value">{{ client.phone or 'Not provided' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Address</span>
+                    <span class="info-value">
+                        {% if client.address %}
+                        {{ client.address }}{% if client.city %}, {{ client.city }}{% endif %}{% if client.state %} {{ client.state }}{% endif %} {{ client.zip }}
+                        {% else %}
+                        Not provided
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status</span>
+                    <span class="info-value"><span class="badge badge-info">{{ client.status }}</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Last Updated</span>
+                    <span class="info-value">{{ client.updated_at }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Standing Analysis -->
+        <div class="card animate-fade-in-up" data-delay="500">
+            <div class="card-title">Standing Analysis</div>
+            {% if standing %}
+            <div class="standing-list">
+                <div class="standing-item">
+                    <div class="standing-check {% if standing.has_concrete_harm %}yes{% else %}no{% endif %}">
+                        {% if standing.has_concrete_harm %}&#10003;{% else %}&#10007;{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">Concrete Harm</div>
+                        <div style="font-size: 12px; color: var(--apple-gray-500);">{{ standing.concrete_harm_type or 'Not documented' }}</div>
+                    </div>
+                </div>
+                <div class="standing-item">
+                    <div class="standing-check {% if standing.has_dissemination %}yes{% else %}no{% endif %}">
+                        {% if standing.has_dissemination %}&#10003;{% else %}&#10007;{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">Dissemination</div>
+                        <div style="font-size: 12px; color: var(--apple-gray-500);">{{ standing.dissemination_details or 'Not documented' }}</div>
+                    </div>
+                </div>
+                <div class="standing-item">
+                    <div class="standing-check {% if standing.has_procedural_violation %}yes{% else %}no{% endif %}">
+                        {% if standing.has_procedural_violation %}&#10003;{% else %}&#10007;{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">Procedural Violation</div>
+                        <div style="font-size: 12px; color: var(--apple-gray-500);">FCRA compliance issue</div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 30px;">
+                <p style="color: var(--apple-gray-500);">Standing not yet analyzed</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Damages Breakdown -->
+    {% if damages %}
+    <div class="card animate-fade-in-up" data-delay="600" style="margin-top: 24px;">
+        <div class="card-title">Damages Breakdown</div>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+            <div style="text-align: center; padding: 20px; background: var(--apple-gray-50); border-radius: 12px;">
+                <div style="font-size: 24px; font-weight: 700; color: var(--apple-navy-dark);">${{ "{:,.0f}".format(damages.actual_damages_total) }}</div>
+                <div style="font-size: 13px; color: var(--apple-gray-500); margin-top: 4px;">Actual Damages</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: var(--apple-gray-50); border-radius: 12px;">
+                <div style="font-size: 24px; font-weight: 700; color: var(--apple-navy-dark);">${{ "{:,.0f}".format(damages.statutory_damages_total) }}</div>
+                <div style="font-size: 13px; color: var(--apple-gray-500); margin-top: 4px;">Statutory Damages</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: var(--apple-gray-50); border-radius: 12px;">
+                <div style="font-size: 24px; font-weight: 700; color: var(--apple-navy-dark);">${{ "{:,.0f}".format(damages.punitive_damages_amount) }}</div>
+                <div style="font-size: 13px; color: var(--apple-gray-500); margin-top: 4px;">Punitive Damages</div>
+            </div>
+            <div style="text-align: center; padding: 20px; background: var(--apple-teal); border-radius: 12px;">
+                <div style="font-size: 24px; font-weight: 700; color: white;">${{ "{:,.0f}".format(damages.settlement_target) }}</div>
+                <div style="font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 4px;">Settlement Target</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Violations Section -->
+<div id="section-violations" class="section-content" style="display: none;">
+    <div class="card animate-fade-in-up">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 0;">Identified Violations</div>
+            <span class="badge badge-danger">{{ violations|length }} violations</span>
+        </div>
+        {% if violations %}
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for v in violations %}
+            <div style="padding: 20px; background: var(--apple-gray-50); border-radius: 12px; border-left: 4px solid {% if v.severity == 'high' %}var(--apple-red){% elif v.severity == 'medium' %}var(--apple-yellow){% else %}var(--apple-teal){% endif %};">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <span style="font-weight: 600; color: var(--apple-navy-dark);">{{ v.bureau }}</span>
+                        {% if v.section %}
+                        <span class="badge badge-info" style="margin-left: 8px;">{{ v.section }}</span>
+                        {% endif %}
+                    </div>
+                    <span class="badge badge-{% if v.severity == 'high' %}danger{% elif v.severity == 'medium' %}warning{% else %}info{% endif %}">{{ v.severity|title }}</span>
+                </div>
+                {% if v.account_name %}
+                <div style="font-size: 13px; color: var(--apple-gray-500); margin-bottom: 8px;">Account: {{ v.account_name }}</div>
+                {% endif %}
+                <div style="font-size: 14px; color: var(--apple-gray-700);">{{ v.description }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No violations identified yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Letters Section -->
+<div id="section-letters" class="section-content" style="display: none;">
+    <div class="card animate-fade-in-up">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 0;">Generated Letters</div>
+            <button class="btn btn-primary btn-sm" onclick="generateNewLetter()">+ Generate Letter</button>
+        </div>
+        {% if letters %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Letter Type</th>
+                    <th>Bureau</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for letter in letters %}
+                <tr>
+                    <td style="font-weight: 600;">{{ letter.letter_type }}</td>
+                    <td>{{ letter.bureau or '--' }}</td>
+                    <td style="color: var(--apple-gray-500);">{{ letter.created_at }}</td>
+                    <td>
+                        <span class="badge badge-{% if letter.status == 'Sent' %}success{% else %}warning{% endif %}">{{ letter.status }}</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <a href="/api/letter/{{ letter.id }}/download" class="btn btn-secondary btn-sm">Download</a>
+                            {% if letter.status != 'Sent' %}
+                            <button class="btn btn-primary btn-sm" onclick="sendLetter({{ letter.id }})">Send</button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state">
+            <p>No letters generated yet</p>
+            <button class="btn btn-primary" onclick="generateNewLetter()" style="margin-top: 16px;">Generate First Letter</button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Documents Section -->
+<div id="section-documents" class="section-content" style="display: none;">
+    <div class="card animate-fade-in-up">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 0;">Client Documents</div>
+            <button class="btn btn-primary btn-sm" onclick="showUploadModal()">+ Upload Document</button>
+        </div>
+        {% if documents %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+            {% for doc in documents %}
+            <div style="padding: 20px; background: var(--apple-gray-50); border-radius: 12px; text-align: center;">
+                <div style="font-size: 32px; margin-bottom: 8px;">
+                    {% if 'pdf' in doc.filename|lower %}PDF{% elif 'jpg' in doc.filename|lower or 'png' in doc.filename|lower %}IMG{% else %}DOC{% endif %}
+                </div>
+                <div style="font-weight: 600; color: var(--apple-navy-dark); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ doc.filename }}</div>
+                <div style="font-size: 12px; color: var(--apple-gray-500); margin-top: 4px;">{{ doc.created_at }}</div>
+                <a href="/static/client_uploads/{{ doc.filename }}" class="btn btn-secondary btn-sm" style="margin-top: 12px;" download>Download</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>No documents uploaded yet</p>
+            <button class="btn btn-primary" onclick="showUploadModal()" style="margin-top: 16px;">Upload First Document</button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Notes Section -->
+<div id="section-notes" class="section-content" style="display: none;">
+    <div class="card animate-fade-in-up">
+        <div class="card-title">Client Notes</div>
+
+        <!-- Add Note Form -->
+        <form action="{{ url_for('staff_portal.add_client_note', client_id=client.id) }}" method="POST" style="margin-bottom: 24px;">
+            <div style="display: flex; gap: 12px;">
+                <textarea name="content" placeholder="Add a note about this client..." required style="flex: 1; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px; resize: vertical; min-height: 80px; font-family: inherit;"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+                <button type="submit" class="btn btn-primary btn-sm">Add Note</button>
+            </div>
+        </form>
+
+        <!-- Notes List -->
+        {% if notes %}
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for note in notes %}
+            <div style="padding: 16px; background: var(--apple-gray-50); border-radius: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 600; color: var(--apple-navy-dark);">{{ note.author }}</span>
+                    <span style="font-size: 12px; color: var(--apple-gray-500);">{{ note.created_at }}</span>
+                </div>
+                <div style="color: var(--apple-gray-700);">{{ note.content }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 30px;">
+            <p style="color: var(--apple-gray-500);">No notes yet. Add your first note above.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Upload Modal -->
+<div id="uploadModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; max-width: 500px; width: 90%; padding: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <h2 style="font-family: var(--font-display); font-size: 24px; color: var(--apple-navy-dark);">Upload Document</h2>
+            <button onclick="hideUploadModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--apple-gray-400);">&times;</button>
+        </div>
+        <form action="{{ url_for('staff_portal.upload_document') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="client_id" value="{{ client.id }}">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">Document Type</label>
+                <select name="doc_type" required style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+                    <option value="credit_report">Credit Report</option>
+                    <option value="id_document">ID Document</option>
+                    <option value="cra_response">CRA Response</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--apple-gray-700);">File</label>
+                <input type="file" name="file" required style="width: 100%; padding: 12px; border: 1px solid var(--apple-gray-300); border-radius: 8px;">
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" onclick="hideUploadModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .info-grid {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--apple-gray-100);
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: var(--apple-gray-500);
+        font-size: 14px;
+    }
+
+    .info-value {
+        color: var(--apple-navy-dark);
+        font-weight: 500;
+        font-size: 14px;
+        text-align: right;
+    }
+
+    .standing-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .standing-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: var(--apple-gray-50);
+        border-radius: 8px;
+    }
+
+    .standing-check {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .standing-check.yes {
+        background: rgba(5, 150, 105, 0.15);
+        color: var(--apple-green);
+    }
+
+    .standing-check.no {
+        background: rgba(220, 38, 38, 0.15);
+        color: var(--apple-red);
+    }
+
+    .section-content {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @media (max-width: 768px) {
+        .two-col {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showSection(sectionId, element) {
+    // Hide all sections
+    document.querySelectorAll('.section-content').forEach(s => {
+        s.style.display = 'none';
+    });
+
+    // Show selected section
+    document.getElementById('section-' + sectionId).style.display = 'block';
+
+    // Update nav
+    document.querySelectorAll('#sectionNav .sub-filter').forEach(f => {
+        f.classList.remove('active');
+    });
+    element.classList.add('active');
+
+    // Update URL hash
+    history.replaceState(null, null, '#' + sectionId);
+}
+
+// Handle hash on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const hash = window.location.hash.substring(1);
+    if (hash && document.getElementById('section-' + hash)) {
+        const navItem = document.querySelector('#sectionNav a[href="#' + hash + '"]');
+        if (navItem) {
+            showSection(hash, navItem);
+        }
+    }
+});
+
+function showUploadModal() {
+    document.getElementById('uploadModal').style.display = 'flex';
+}
+
+function hideUploadModal() {
+    document.getElementById('uploadModal').style.display = 'none';
+}
+
+function generateNewLetter() {
+    // Redirect to letter generation for this client
+    window.location.href = '/staff/workflow?action=generate&client_id={{ client.id }}';
+}
+
+function sendLetter(letterId) {
+    if (confirm('Send this letter now?')) {
+        fetch('/api/letter/' + letterId + '/send', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to send letter');
+            }
+        });
+    }
+}
+
+// Close modals on backdrop click
+document.getElementById('uploadModal').addEventListener('click', function(e) {
+    if (e.target === this) hideUploadModal();
+});
+</script>
+{% endblock %}

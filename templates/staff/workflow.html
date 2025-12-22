@@ -1,0 +1,205 @@
+{% extends "staff/base_staff.html" %}
+{% block title %}Workflow{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Workflow</h1>
+    <div style="display: flex; gap: 12px;">
+        <button class="btn btn-secondary" onclick="refreshQueue()">Refresh</button>
+        <button class="btn btn-primary" onclick="processSelected()">Process Selected</button>
+    </div>
+</div>
+
+<!-- Sub-filters -->
+<div class="sub-filters">
+    <a href="{{ url_for('staff_portal.workflow') }}" class="sub-filter {% if not filter %}active{% endif %}">All Tasks ({{ counts.all }})</a>
+    <a href="{{ url_for('staff_portal.workflow') }}?filter=letters" class="sub-filter {% if filter == 'letters' %}active{% endif %}">Letter Queue ({{ counts.letters }})</a>
+    <a href="{{ url_for('staff_portal.workflow') }}?filter=approvals" class="sub-filter {% if filter == 'approvals' %}active{% endif %}">VA Approvals ({{ counts.approvals }})</a>
+    <a href="{{ url_for('staff_portal.workflow') }}?filter=analyses" class="sub-filter {% if filter == 'analyses' %}active{% endif %}">Pending Analyses ({{ counts.analyses }})</a>
+    <a href="{{ url_for('staff_portal.workflow') }}?filter=responses" class="sub-filter {% if filter == 'responses' %}active{% endif %}">CRA Responses ({{ counts.responses }})</a>
+</div>
+
+<!-- Stats Summary -->
+<div class="stats-grid stats-grid-responsive" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+    <div class="card stat-card">
+        <div class="stat-label">Due Today</div>
+        <div class="stat-value" style="color: var(--apple-red);">{{ stats.due_today }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Due This Week</div>
+        <div class="stat-value">{{ stats.due_week }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value" style="color: var(--apple-teal);">{{ stats.in_progress }}</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-label">Completed Today</div>
+        <div class="stat-value" style="color: var(--apple-green);">{{ stats.completed_today }}</div>
+    </div>
+</div>
+
+<!-- Work Queue -->
+<div class="card animate-fade-in-up">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="card-title" style="margin-bottom: 0;">Work Queue</div>
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)">
+            <span style="font-size: 13px; color: var(--apple-gray-600);">Select All</span>
+        </label>
+    </div>
+
+    {% if items %}
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for item in items %}
+        <div class="work-item" style="background: var(--apple-gray-50); border-radius: 12px; padding: 20px; display: flex; gap: 16px; align-items: flex-start; transition: all 0.2s;" data-item-id="{{ item.id }}">
+            <input type="checkbox" class="item-checkbox" value="{{ item.id }}" style="margin-top: 4px;">
+            <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                    <div>
+                        <span class="badge badge-{{ item.type_class }}">{{ item.type }}</span>
+                        <span style="font-weight: 600; color: var(--apple-navy-dark); margin-left: 12px;">{{ item.client_name }}</span>
+                    </div>
+                    <span class="badge badge-{% if item.priority == 'urgent' %}danger{% elif item.priority == 'high' %}warning{% else %}info{% endif %}">{{ item.priority }}</span>
+                </div>
+                <p style="color: var(--apple-gray-600); font-size: 14px; margin-bottom: 12px;">{{ item.description }}</p>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 12px; color: var(--apple-gray-500);">
+                        Due: <strong style="color: {% if item.overdue %}var(--apple-red){% else %}var(--apple-gray-700){% endif %}">{{ item.due_date }}</strong>
+                    </span>
+                    <div style="display: flex; gap: 8px;">
+                        {% if item.type == 'Letter' %}
+                        <a href="{{ url_for('staff_portal.client_detail', client_id=item.client_id) }}#letters" class="btn btn-secondary btn-sm">View Letter</a>
+                        <button class="btn btn-primary btn-sm" onclick="approveLetter({{ item.id }})">Approve & Send</button>
+                        {% elif item.type == 'VA Approval' %}
+                        <a href="{{ url_for('staff_portal.client_detail', client_id=item.client_id) }}#letters" class="btn btn-secondary btn-sm">Review</a>
+                        <button class="btn btn-primary btn-sm" onclick="approveVA({{ item.id }})">Approve</button>
+                        {% elif item.type == 'Analysis' %}
+                        <a href="{{ url_for('staff_portal.client_detail', client_id=item.client_id) }}" class="btn btn-secondary btn-sm">View Case</a>
+                        <button class="btn btn-primary btn-sm" onclick="startAnalysis({{ item.client_id }})">Start Analysis</button>
+                        {% else %}
+                        <a href="{{ url_for('staff_portal.client_detail', client_id=item.client_id) }}" class="btn btn-secondary btn-sm">View</a>
+                        <button class="btn btn-primary btn-sm" onclick="processItem({{ item.client_id }})">Process</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">All caught up!</div>
+        <p>No tasks in this queue. Great work!</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Recent Completions -->
+<div class="card animate-fade-in-up" style="margin-top: 24px;">
+    <div class="card-title">Recently Completed</div>
+    {% if completed_items %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Client</th>
+                <th>Completed</th>
+                <th>By</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in completed_items %}
+            <tr>
+                <td><span class="badge badge-{{ item.type_class }}">{{ item.type }}</span></td>
+                <td>{{ item.client_name }}</td>
+                <td style="color: var(--apple-gray-500);">{{ item.completed_at }}</td>
+                <td>{{ item.completed_by }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="padding: 30px;">
+        <p style="color: var(--apple-gray-500);">No recently completed tasks</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshQueue() {
+    window.location.reload();
+}
+
+function toggleSelectAll(checked) {
+    document.querySelectorAll('.item-checkbox').forEach(cb => {
+        cb.checked = checked;
+    });
+}
+
+function getSelectedItems() {
+    return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+}
+
+function processSelected() {
+    const selected = getSelectedItems();
+    if (selected.length === 0) {
+        alert('Please select at least one item');
+        return;
+    }
+    if (confirm(`Process ${selected.length} selected items?`)) {
+        fetch('{{ url_for("staff_portal.process_items") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: selected })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to process items');
+            }
+        });
+    }
+}
+
+function approveLetter(id) {
+    if (confirm('Approve and send this letter?')) {
+        fetch('/api/letter/' + id + '/approve', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to approve letter');
+            }
+        });
+    }
+}
+
+function approveVA(id) {
+    if (confirm('Approve this VA letter?')) {
+        fetch('/api/va-letter/' + id + '/approve', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to approve');
+            }
+        });
+    }
+}
+
+function startAnalysis(clientId) {
+    window.location.href = '/staff/clients/' + clientId;
+}
+
+function processItem(clientId) {
+    window.location.href = '/staff/clients/' + clientId;
+}
+</script>
+{% endblock %}

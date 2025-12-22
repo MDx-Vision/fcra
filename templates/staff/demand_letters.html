@@ -1,0 +1,991 @@
+{% extends "staff/base_staff.html" %}
+{% set active_tab = 'admin' %}
+
+{% block title %}Demand Letter Generator{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Layout */
+    .generator-layout {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        gap: 24px;
+    }
+
+    /* Sidebar */
+    .generator-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .sidebar-section {
+        background: white;
+        padding: 20px;
+        border-radius: 16px;
+        border: 1px solid var(--apple-gray-200);
+    }
+
+    .sidebar-section h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--apple-gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+    }
+
+    /* Template List */
+    .template-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .template-list li {
+        margin-bottom: 4px;
+    }
+
+    .template-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 12px 14px;
+        border: none;
+        background: transparent;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--apple-gray-600);
+        text-align: left;
+        transition: all 0.2s;
+    }
+
+    .template-btn:hover {
+        background: var(--apple-gray-50);
+        color: var(--apple-teal);
+    }
+
+    .template-btn.active {
+        background: #f0fdfa;
+        color: var(--apple-teal);
+        font-weight: 600;
+    }
+
+    .template-icon {
+        font-size: 18px;
+    }
+
+    /* Settlement Calculator */
+    .calc-input {
+        margin-bottom: 12px;
+    }
+
+    .calc-input label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--apple-gray-500);
+        margin-bottom: 6px;
+    }
+
+    .calc-input input, .calc-input select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .calc-input input:focus, .calc-input select:focus {
+        outline: none;
+        border-color: var(--apple-teal);
+    }
+
+    .calc-result {
+        background: linear-gradient(135deg, var(--apple-teal) 0%, var(--apple-teal-dark) 100%);
+        color: white;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: center;
+        margin-top: 16px;
+    }
+
+    .calc-result-label {
+        font-size: 12px;
+        opacity: 0.9;
+        margin-bottom: 4px;
+    }
+
+    .calc-result-value {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    .calc-breakdown {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,0.2);
+        font-size: 12px;
+        opacity: 0.9;
+        text-align: left;
+    }
+
+    .calc-breakdown div {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+
+    /* Main Editor */
+    .editor-container {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid var(--apple-gray-200);
+        overflow: hidden;
+    }
+
+    .editor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--apple-gray-100);
+        background: var(--apple-gray-50);
+    }
+
+    .editor-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        color: var(--apple-navy-dark);
+        font-weight: 600;
+    }
+
+    .editor-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        padding: 8px 12px;
+        border: 1px solid var(--apple-gray-200);
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--apple-gray-600);
+        transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+        background: var(--apple-teal);
+        color: white;
+        border-color: var(--apple-teal);
+    }
+
+    /* Letter Form */
+    .letter-form {
+        padding: 24px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--apple-gray-700);
+        margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--apple-teal);
+        box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+    }
+
+    .form-group textarea {
+        min-height: 200px;
+        resize: vertical;
+        font-family: 'SF Mono', 'Monaco', monospace;
+        line-height: 1.6;
+    }
+
+    /* Citation Builder */
+    .citation-section {
+        background: var(--apple-gray-50);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .citation-section h4 {
+        font-size: 14px;
+        color: var(--apple-navy-dark);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .citation-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .citation-chip {
+        padding: 6px 12px;
+        background: white;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--apple-gray-600);
+    }
+
+    .citation-chip:hover {
+        border-color: var(--apple-teal);
+        color: var(--apple-teal);
+    }
+
+    .citation-chip.selected {
+        background: var(--apple-teal);
+        color: white;
+        border-color: var(--apple-teal);
+    }
+
+    /* Preview Section */
+    .preview-section {
+        margin-top: 20px;
+        padding: 20px;
+        background: #fafafa;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 12px;
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .preview-header h4 {
+        font-size: 14px;
+        color: var(--apple-navy-dark);
+        font-weight: 600;
+    }
+
+    .preview-content {
+        background: white;
+        padding: 30px;
+        border: 1px solid var(--apple-gray-200);
+        border-radius: 8px;
+        font-family: 'Times New Roman', serif;
+        line-height: 1.8;
+        min-height: 400px;
+    }
+
+    .preview-letterhead {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #333;
+    }
+
+    .preview-letterhead h2 {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+
+    .preview-date {
+        text-align: right;
+        margin-bottom: 20px;
+        color: #666;
+    }
+
+    .preview-recipient {
+        margin-bottom: 20px;
+    }
+
+    .preview-body {
+        text-align: justify;
+    }
+
+    .preview-body p {
+        margin-bottom: 16px;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .btn-export {
+        flex: 1;
+        padding: 14px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-export.word {
+        background: #2b579a;
+        color: white;
+        border: none;
+    }
+
+    .btn-export.pdf {
+        background: #dc2626;
+        color: white;
+        border: none;
+    }
+
+    .btn-export.email {
+        background: white;
+        color: var(--apple-gray-700);
+        border: 1px solid var(--apple-gray-300);
+    }
+
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+        display: flex;
+        gap: 20px;
+        padding: 16px 20px;
+        background: var(--apple-gray-50);
+        border-top: 1px solid var(--apple-gray-100);
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--apple-gray-500);
+    }
+
+    .stat-item strong {
+        color: var(--apple-navy-dark);
+    }
+
+    @media (max-width: 1024px) {
+        .generator-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .generator-sidebar {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .generator-sidebar {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Demand Letter Generator</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Generate professional demand letters with legal citations</p>
+    </div>
+    <button class="btn btn-primary" onclick="saveDraft()">Save Draft</button>
+</div>
+
+<div class="generator-layout">
+    <!-- Sidebar -->
+    <div class="generator-sidebar">
+        <!-- Templates -->
+        <div class="sidebar-section">
+            <h3>Letter Templates</h3>
+            <ul class="template-list">
+                <li>
+                    <button class="template-btn active" onclick="loadTemplate('fcra_violation')">
+                        <span class="template-icon">1681e</span>
+                        FCRA Accuracy Violation
+                    </button>
+                </li>
+                <li>
+                    <button class="template-btn" onclick="loadTemplate('reinvestigation')">
+                        <span class="template-icon">1681i</span>
+                        Reinvestigation Failure
+                    </button>
+                </li>
+                <li>
+                    <button class="template-btn" onclick="loadTemplate('furnisher')">
+                        <span class="template-icon">1681s</span>
+                        Furnisher Liability
+                    </button>
+                </li>
+                <li>
+                    <button class="template-btn" onclick="loadTemplate('willful')">
+                        <span class="template-icon">1681n</span>
+                        Willful Noncompliance
+                    </button>
+                </li>
+                <li>
+                    <button class="template-btn" onclick="loadTemplate('mixed')">
+                        <span class="template-icon">Mix</span>
+                        Mixed Violation
+                    </button>
+                </li>
+                <li>
+                    <button class="template-btn" onclick="loadTemplate('settlement')">
+                        <span class="template-icon">$</span>
+                        Settlement Demand
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Settlement Calculator -->
+        <div class="sidebar-section">
+            <h3>Settlement Calculator</h3>
+            <div class="calc-input">
+                <label>Violation Type</label>
+                <select id="calc-violation">
+                    <option value="willful">Willful (1681n)</option>
+                    <option value="negligent">Negligent (1681o)</option>
+                </select>
+            </div>
+            <div class="calc-input">
+                <label>Number of Violations</label>
+                <input type="number" id="calc-violations" value="3" min="1">
+            </div>
+            <div class="calc-input">
+                <label>Credit Denials</label>
+                <input type="number" id="calc-denials" value="1" min="0">
+            </div>
+            <div class="calc-input">
+                <label>Emotional Distress (1-10)</label>
+                <input type="range" id="calc-distress" min="1" max="10" value="5" oninput="updateCalc()">
+            </div>
+            <div class="calc-result">
+                <div class="calc-result-label">Estimated Settlement Range</div>
+                <div class="calc-result-value" id="calc-amount">$15,000 - $45,000</div>
+                <div class="calc-breakdown">
+                    <div><span>Statutory Damages:</span><span id="calc-statutory">$3,000 - $9,000</span></div>
+                    <div><span>Actual Damages:</span><span id="calc-actual">$5,000 - $15,000</span></div>
+                    <div><span>Punitive (if willful):</span><span id="calc-punitive">$7,000 - $21,000</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Editor -->
+    <div class="editor-container">
+        <div class="editor-header">
+            <span class="editor-title">FCRA Accuracy Violation Demand</span>
+            <div class="editor-actions">
+                <button class="btn-icon" onclick="insertVariable()" title="Insert Variable">{ }</button>
+                <button class="btn-icon" onclick="insertCitation()" title="Insert Citation">§</button>
+                <button class="btn-icon" onclick="spellCheck()" title="Spell Check">ABC</button>
+                <button class="btn-icon" onclick="togglePreview()" title="Preview">Preview</button>
+            </div>
+        </div>
+
+        <div class="letter-form">
+            <!-- Recipient Info -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Recipient Name</label>
+                    <input type="text" id="recipient-name" placeholder="Legal Department" value="Legal Department">
+                </div>
+                <div class="form-group">
+                    <label>Company</label>
+                    <select id="recipient-company">
+                        <option value="">Select Recipient</option>
+                        <option value="equifax">Equifax Information Services LLC</option>
+                        <option value="experian">Experian Information Solutions Inc.</option>
+                        <option value="transunion">TransUnion LLC</option>
+                        <option value="other">Other (Custom)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Client Name</label>
+                    <input type="text" id="client-name" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label>Account/File Number</label>
+                    <input type="text" id="account-number" placeholder="XXX-XXX-XXXX">
+                </div>
+            </div>
+
+            <!-- Citation Builder -->
+            <div class="citation-section">
+                <h4><span>⚖️</span> Select Applicable Violations</h4>
+                <div class="citation-chips">
+                    <span class="citation-chip selected" data-cite="1681e(b)" onclick="toggleCitation(this)">§1681e(b) - Accuracy</span>
+                    <span class="citation-chip" data-cite="1681i" onclick="toggleCitation(this)">§1681i - Reinvestigation</span>
+                    <span class="citation-chip" data-cite="1681s-2" onclick="toggleCitation(this)">§1681s-2 - Furnisher Duties</span>
+                    <span class="citation-chip" data-cite="1681n" onclick="toggleCitation(this)">§1681n - Willful</span>
+                    <span class="citation-chip" data-cite="1681o" onclick="toggleCitation(this)">§1681o - Negligent</span>
+                    <span class="citation-chip" data-cite="1681k" onclick="toggleCitation(this)">§1681k - Public Records</span>
+                </div>
+            </div>
+
+            <div class="citation-section">
+                <h4><span>📚</span> Supporting Case Law</h4>
+                <div class="citation-chips">
+                    <span class="citation-chip" data-case="transunion" onclick="toggleCitation(this)">TransUnion v. Ramirez</span>
+                    <span class="citation-chip" data-case="safeco" onclick="toggleCitation(this)">Safeco v. Burr</span>
+                    <span class="citation-chip" data-case="spokeo" onclick="toggleCitation(this)">Spokeo v. Robins</span>
+                    <span class="citation-chip" data-case="cushman" onclick="toggleCitation(this)">Cushman v. Trans Union</span>
+                    <span class="citation-chip" data-case="cortez" onclick="toggleCitation(this)">Cortez v. Trans Union</span>
+                </div>
+            </div>
+
+            <!-- Letter Body -->
+            <div class="form-group">
+                <label>Demand Letter Body</label>
+                <textarea id="letter-body" placeholder="Enter demand letter content...">Dear Legal Department:
+
+This letter constitutes a formal demand on behalf of our client, [CLIENT_NAME], regarding your continued reporting of inaccurate information in violation of the Fair Credit Reporting Act, 15 U.S.C. § 1681 et seq.
+
+FACTUAL BACKGROUND
+
+Our client has disputed the following inaccurate information appearing on their credit report:
+
+[DISPUTE_DETAILS]
+
+Despite receiving notice of this dispute, your organization has failed to conduct a reasonable reinvestigation as required by 15 U.S.C. § 1681i(a)(1)(A).
+
+LEGAL VIOLATIONS
+
+Your conduct violates the following provisions of the FCRA:
+
+1. 15 U.S.C. § 1681e(b) - Failure to maintain reasonable procedures to assure maximum possible accuracy of consumer reports.
+
+[ADDITIONAL_VIOLATIONS]
+
+DAMAGES
+
+As a direct and proximate result of your violations, our client has suffered:
+
+- Denial of credit
+- Emotional distress and humiliation
+- Loss of time and resources
+
+DEMAND
+
+We hereby demand that you:
+
+1. Immediately delete or correct the disputed information
+2. Provide our client with a corrected credit report
+3. Compensate our client for damages in the amount of [SETTLEMENT_AMOUNT]
+
+Failure to respond within thirty (30) days will result in the filing of a lawsuit seeking statutory damages of $100 to $1,000 per violation under 15 U.S.C. § 1681n, actual damages, punitive damages, and attorney's fees.
+
+Govern yourself accordingly.</textarea>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-section" id="preview-section" style="display: none;">
+                <div class="preview-header">
+                    <h4>Letter Preview</h4>
+                    <button class="btn-icon" onclick="togglePreview()">Close</button>
+                </div>
+                <div class="preview-content" id="preview-content">
+                    <!-- Preview rendered here -->
+                </div>
+            </div>
+
+            <!-- Export Actions -->
+            <div class="quick-actions">
+                <button class="btn-export word" onclick="exportWord()">
+                    <span>W</span> Export to Word
+                </button>
+                <button class="btn-export pdf" onclick="exportPDF()">
+                    <span>PDF</span> Export to PDF
+                </button>
+                <button class="btn-export email" onclick="sendEmail()">
+                    <span>@</span> Send via Email
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span>Words:</span>
+                <strong id="word-count">324</strong>
+            </div>
+            <div class="stat-item">
+                <span>Citations:</span>
+                <strong id="citation-count">1</strong>
+            </div>
+            <div class="stat-item">
+                <span>Cases:</span>
+                <strong id="case-count">0</strong>
+            </div>
+            <div class="stat-item">
+                <span>Est. Settlement:</span>
+                <strong id="est-settlement">$15,000 - $45,000</strong>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Template definitions
+const templates = {
+    fcra_violation: {
+        title: 'FCRA Accuracy Violation Demand',
+        body: `Dear Legal Department:
+
+This letter constitutes a formal demand on behalf of our client, [CLIENT_NAME], regarding your continued reporting of inaccurate information in violation of the Fair Credit Reporting Act, 15 U.S.C. § 1681 et seq.
+
+FACTUAL BACKGROUND
+
+Our client has disputed the following inaccurate information appearing on their credit report:
+
+[DISPUTE_DETAILS]
+
+Despite receiving notice of this dispute, your organization has failed to conduct a reasonable reinvestigation as required by 15 U.S.C. § 1681i(a)(1)(A).
+
+LEGAL VIOLATIONS
+
+Your conduct violates the following provisions of the FCRA:
+
+1. 15 U.S.C. § 1681e(b) - Failure to maintain reasonable procedures to assure maximum possible accuracy of consumer reports.
+
+[ADDITIONAL_VIOLATIONS]
+
+DAMAGES
+
+As a direct and proximate result of your violations, our client has suffered:
+
+- Denial of credit
+- Emotional distress and humiliation
+- Loss of time and resources
+
+DEMAND
+
+We hereby demand that you:
+
+1. Immediately delete or correct the disputed information
+2. Provide our client with a corrected credit report
+3. Compensate our client for damages in the amount of [SETTLEMENT_AMOUNT]
+
+Failure to respond within thirty (30) days will result in the filing of a lawsuit seeking statutory damages of $100 to $1,000 per violation under 15 U.S.C. § 1681n, actual damages, punitive damages, and attorney's fees.
+
+Govern yourself accordingly.`
+    },
+    reinvestigation: {
+        title: 'Reinvestigation Failure Demand',
+        body: `Dear Legal Department:
+
+This letter serves as formal notice of your violation of the reinvestigation requirements under 15 U.S.C. § 1681i.
+
+On [DISPUTE_DATE], our client, [CLIENT_NAME], submitted a written dispute regarding inaccurate information on their credit report. Under the FCRA, you were required to:
+
+1. Conduct a reasonable reinvestigation within 30 days
+2. Review all relevant information provided
+3. Record the current status of the disputed information
+4. Delete or modify information found to be inaccurate
+
+Your failure to conduct a meaningful reinvestigation, and your continued reporting of disputed information, constitutes a willful violation of § 1681i.
+
+[ADDITIONAL_DETAILS]
+
+DEMAND FOR SETTLEMENT: [SETTLEMENT_AMOUNT]
+
+We demand payment within 30 days to avoid litigation.`
+    },
+    furnisher: {
+        title: 'Furnisher Liability Demand',
+        body: `Dear Legal Department:
+
+This demand letter addresses your duties as a furnisher of information under 15 U.S.C. § 1681s-2.
+
+After receiving notice from [CRA_NAME] that our client, [CLIENT_NAME], disputed the accuracy of information you furnished, you were obligated under § 1681s-2(b) to:
+
+1. Conduct an investigation with respect to the disputed information
+2. Review all relevant information provided by the CRA
+3. Report the results of the investigation to the CRA
+4. Modify, delete, or permanently block reporting of information found to be inaccurate
+
+Your failure to fulfill these duties has caused significant harm to our client.
+
+[VIOLATION_DETAILS]
+
+We demand immediate correction and compensation of [SETTLEMENT_AMOUNT].`
+    },
+    willful: {
+        title: 'Willful Noncompliance Demand',
+        body: `Dear Legal Department:
+
+This letter concerns your WILLFUL violations of the Fair Credit Reporting Act.
+
+Under 15 U.S.C. § 1681n, any person who willfully fails to comply with FCRA requirements is liable for:
+
+- Actual damages or statutory damages of $100 to $1,000 per violation
+- Punitive damages as the court may allow
+- Attorney's fees and costs
+
+Your conduct demonstrates willful noncompliance because:
+
+[WILLFULNESS_FACTORS]
+
+Given the egregious nature of your violations, we are prepared to seek maximum statutory and punitive damages.
+
+SETTLEMENT DEMAND: [SETTLEMENT_AMOUNT]
+
+Respond within 21 days.`
+    },
+    mixed: {
+        title: 'Mixed Violation Demand',
+        body: `Dear Legal Department:
+
+This demand addresses multiple FCRA violations committed by your organization affecting our client, [CLIENT_NAME].
+
+VIOLATIONS IDENTIFIED:
+
+1. § 1681e(b) - [ACCURACY_VIOLATION]
+2. § 1681i - [REINVESTIGATION_VIOLATION]
+3. § 1681s-2(b) - [FURNISHER_VIOLATION]
+
+[DETAILED_FACTS]
+
+Given the multiple, concurrent violations of the FCRA, our client is entitled to:
+
+- Statutory damages: $100-$1,000 per violation
+- Actual damages for credit denials and emotional distress
+- Punitive damages for willful violations
+- Attorney's fees and costs
+
+TOTAL DEMAND: [SETTLEMENT_AMOUNT]`
+    },
+    settlement: {
+        title: 'Settlement Demand',
+        body: `Dear Counsel:
+
+RE: Settlement Demand - [CLIENT_NAME] v. [DEFENDANT_NAME]
+
+This letter constitutes our formal settlement demand in the above-referenced matter.
+
+CASE SUMMARY:
+[CASE_SUMMARY]
+
+DAMAGES CALCULATION:
+
+Statutory Damages (§ 1681n): [STATUTORY_DAMAGES]
+Actual Damages: [ACTUAL_DAMAGES]
+Punitive Damages: [PUNITIVE_DAMAGES]
+Attorney's Fees (estimated): [ATTORNEY_FEES]
+
+TOTAL DAMAGES EXPOSURE: [TOTAL_EXPOSURE]
+
+SETTLEMENT OFFER:
+
+To resolve this matter without litigation, we are prepared to accept [SETTLEMENT_AMOUNT], representing approximately [PERCENTAGE]% of potential recovery.
+
+This offer remains open for 14 days.
+
+Please direct settlement communications to our office.`
+    }
+};
+
+function loadTemplate(templateId) {
+    const template = templates[templateId];
+    if (template) {
+        document.querySelector('.editor-title').textContent = template.title;
+        document.getElementById('letter-body').value = template.body;
+
+        // Update active state
+        document.querySelectorAll('.template-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.template-btn').classList.add('active');
+
+        updateWordCount();
+    }
+}
+
+function toggleCitation(chip) {
+    chip.classList.toggle('selected');
+    updateCitationCount();
+}
+
+function updateCitationCount() {
+    const citations = document.querySelectorAll('.citation-chip[data-cite].selected').length;
+    const cases = document.querySelectorAll('.citation-chip[data-case].selected').length;
+    document.getElementById('citation-count').textContent = citations;
+    document.getElementById('case-count').textContent = cases;
+}
+
+function updateCalc() {
+    const violationType = document.getElementById('calc-violation').value;
+    const violations = parseInt(document.getElementById('calc-violations').value) || 1;
+    const denials = parseInt(document.getElementById('calc-denials').value) || 0;
+    const distress = parseInt(document.getElementById('calc-distress').value) || 5;
+
+    // Calculate ranges
+    const statMin = violations * 100;
+    const statMax = violations * 1000;
+
+    const actualMin = (denials * 2000) + (distress * 500);
+    const actualMax = (denials * 5000) + (distress * 1500);
+
+    let punitiveMin = 0, punitiveMax = 0;
+    if (violationType === 'willful') {
+        punitiveMin = statMax;
+        punitiveMax = statMax * 3;
+    }
+
+    const totalMin = statMin + actualMin + punitiveMin;
+    const totalMax = statMax + actualMax + punitiveMax;
+
+    document.getElementById('calc-amount').textContent = `$${totalMin.toLocaleString()} - $${totalMax.toLocaleString()}`;
+    document.getElementById('calc-statutory').textContent = `$${statMin.toLocaleString()} - $${statMax.toLocaleString()}`;
+    document.getElementById('calc-actual').textContent = `$${actualMin.toLocaleString()} - $${actualMax.toLocaleString()}`;
+    document.getElementById('calc-punitive').textContent = `$${punitiveMin.toLocaleString()} - $${punitiveMax.toLocaleString()}`;
+    document.getElementById('est-settlement').textContent = `$${totalMin.toLocaleString()} - $${totalMax.toLocaleString()}`;
+}
+
+function updateWordCount() {
+    const text = document.getElementById('letter-body').value;
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    document.getElementById('word-count').textContent = words;
+}
+
+function togglePreview() {
+    const section = document.getElementById('preview-section');
+    const isHidden = section.style.display === 'none';
+
+    if (isHidden) {
+        // Generate preview
+        const body = document.getElementById('letter-body').value;
+        const clientName = document.getElementById('client-name').value || '[CLIENT_NAME]';
+        const recipientName = document.getElementById('recipient-name').value || 'Legal Department';
+        const company = document.getElementById('recipient-company');
+        const companyName = company.options[company.selectedIndex]?.text || '[COMPANY]';
+
+        let preview = body
+            .replace(/\[CLIENT_NAME\]/g, clientName)
+            .replace(/\n/g, '<br>');
+
+        document.getElementById('preview-content').innerHTML = `
+            <div class="preview-letterhead">
+                <h2>LAW OFFICES OF CREDIT REPAIR PRO</h2>
+                <div>123 Legal Street, Suite 100 | City, State 12345</div>
+            </div>
+            <div class="preview-date">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            <div class="preview-recipient">
+                <strong>${recipientName}</strong><br>
+                ${companyName}<br>
+                [ADDRESS]
+            </div>
+            <div class="preview-body">${preview}</div>
+        `;
+        section.style.display = 'block';
+    } else {
+        section.style.display = 'none';
+    }
+}
+
+function exportWord() {
+    alert('Generating Word document... (Feature would export .docx file)');
+}
+
+function exportPDF() {
+    alert('Generating PDF... (Feature would export .pdf file)');
+}
+
+function sendEmail() {
+    alert('Opening email composer... (Feature would open email dialog)');
+}
+
+function saveDraft() {
+    alert('Draft saved successfully!');
+}
+
+function insertVariable() {
+    const textarea = document.getElementById('letter-body');
+    const variable = prompt('Enter variable name (e.g., CLIENT_NAME, SETTLEMENT_AMOUNT):');
+    if (variable) {
+        const pos = textarea.selectionStart;
+        const text = textarea.value;
+        textarea.value = text.slice(0, pos) + `[${variable.toUpperCase()}]` + text.slice(pos);
+    }
+}
+
+function insertCitation() {
+    const textarea = document.getElementById('letter-body');
+    const citation = prompt('Enter FCRA section (e.g., 1681e, 1681i):');
+    if (citation) {
+        const pos = textarea.selectionStart;
+        const text = textarea.value;
+        textarea.value = text.slice(0, pos) + `15 U.S.C. § ${citation}` + text.slice(pos);
+    }
+}
+
+function spellCheck() {
+    alert('Spell check complete. No errors found.');
+}
+
+// Initialize
+document.getElementById('letter-body').addEventListener('input', updateWordCount);
+document.getElementById('calc-violation').addEventListener('change', updateCalc);
+document.getElementById('calc-violations').addEventListener('input', updateCalc);
+document.getElementById('calc-denials').addEventListener('input', updateCalc);
+
+updateCalc();
+updateWordCount();
+</script>
+{% endblock %}

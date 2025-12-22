@@ -1,0 +1,354 @@
+{% extends "staff/base_staff.html" %}
+
+{% block title %}Settlements{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pipeline-container {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 32px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .pipeline-stage {
+        flex: 1;
+        min-width: 150px;
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        border: 1px solid var(--apple-gray-200);
+        transition: all 0.2s;
+    }
+
+    .pipeline-stage:hover {
+        border-color: var(--apple-teal);
+    }
+
+    .pipeline-stage.active {
+        border-color: var(--apple-teal);
+        background: rgba(13, 148, 136, 0.05);
+    }
+
+    .pipeline-count {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--apple-navy-dark);
+    }
+
+    .pipeline-label {
+        font-size: 12px;
+        color: var(--apple-gray-500);
+        font-weight: 500;
+        margin-top: 4px;
+    }
+
+    .pipeline-stage.pending .pipeline-count { color: var(--apple-gray-600); }
+    .pipeline-stage.demand_sent .pipeline-count { color: #3b82f6; }
+    .pipeline-stage.negotiating .pipeline-count { color: #d97706; }
+    .pipeline-stage.accepted .pipeline-count { color: var(--apple-green); }
+    .pipeline-stage.rejected .pipeline-count { color: var(--apple-red); }
+    .pipeline-stage.litigated .pipeline-count { color: #7c3aed; }
+
+    .settlements-table {
+        background: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--apple-gray-200);
+        overflow: hidden;
+    }
+
+    .settlement-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr 120px;
+        gap: 16px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--apple-gray-100);
+        align-items: center;
+        transition: background 0.2s;
+    }
+
+    .settlement-row:hover {
+        background: var(--apple-gray-50);
+    }
+
+    .settlement-row.header {
+        background: var(--apple-gray-50);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--apple-gray-500);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .settlement-row.header:hover {
+        background: var(--apple-gray-50);
+    }
+
+    .client-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .client-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--apple-navy) 0%, var(--apple-navy-dark) 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .client-name {
+        font-weight: 600;
+        color: var(--apple-navy-dark);
+        font-size: 14px;
+    }
+
+    .client-date {
+        font-size: 12px;
+        color: var(--apple-gray-500);
+        margin-top: 2px;
+    }
+
+    .amount {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .amount.target { color: var(--apple-navy-dark); }
+    .amount.final { color: var(--apple-green); }
+    .amount.pending { color: var(--apple-gray-500); }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-pending { background: var(--apple-gray-100); color: var(--apple-gray-600); }
+    .status-demand_sent { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .status-negotiating { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+    .status-accepted { background: rgba(5, 150, 105, 0.1); color: var(--apple-green); }
+    .status-rejected { background: rgba(220, 38, 38, 0.1); color: var(--apple-red); }
+    .status-litigated { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+
+    .action-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: var(--apple-gray-100);
+        color: var(--apple-gray-700);
+    }
+
+    .action-btn:hover {
+        background: var(--apple-teal);
+        color: white;
+    }
+
+    .contingency {
+        font-size: 13px;
+        color: var(--apple-gray-600);
+    }
+
+    .contingency strong {
+        color: var(--apple-green);
+    }
+
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid var(--apple-gray-200);
+    }
+
+    .summary-card h3 {
+        font-size: 13px;
+        color: var(--apple-gray-500);
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    .summary-value {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 700;
+    }
+
+    .summary-value.green { color: var(--apple-green); }
+    .summary-value.orange { color: #d97706; }
+    .summary-value.teal { color: var(--apple-teal); }
+
+    @media (max-width: 1200px) {
+        .settlement-row {
+            grid-template-columns: 2fr 1fr 1fr 100px;
+        }
+        .settlement-row > *:nth-child(4),
+        .settlement-row > *:nth-child(5) {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .summary-cards {
+            grid-template-columns: 1fr;
+        }
+        .pipeline-container {
+            flex-wrap: wrap;
+        }
+        .pipeline-stage {
+            min-width: calc(50% - 6px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Settlement Tracker</h1>
+        <p style="color: var(--apple-gray-500); font-size: 14px; margin-top: 4px;">Track settlement negotiations and payments</p>
+    </div>
+    <div style="display: flex; gap: 12px;">
+        <button class="btn btn-primary" onclick="openNewSettlement()">New Settlement</button>
+    </div>
+</div>
+
+<div class="summary-cards">
+    <div class="summary-card">
+        <h3>Total Settled</h3>
+        <div class="summary-value green">${{ "{:,.0f}".format(stats.total_settled) }}</div>
+        <div class="contingency">{{ stats.count_settled }} settlements completed</div>
+    </div>
+    <div class="summary-card">
+        <h3>Pending Value</h3>
+        <div class="summary-value orange">${{ "{:,.0f}".format(stats.total_pending_value) }}</div>
+        <div class="contingency">{{ stats.count_pending }} in progress</div>
+    </div>
+    <div class="summary-card">
+        <h3>Contingency Earned</h3>
+        <div class="summary-value teal">${{ "{:,.0f}".format(stats.total_contingency) }}</div>
+        <div class="contingency">Avg settlement: <strong>${{ "{:,.0f}".format(stats.avg_settlement) }}</strong></div>
+    </div>
+</div>
+
+<div class="pipeline-container">
+    <div class="pipeline-stage pending">
+        <div class="pipeline-count">{{ status_counts.pending }}</div>
+        <div class="pipeline-label">Pending</div>
+    </div>
+    <div class="pipeline-stage demand_sent">
+        <div class="pipeline-count">{{ status_counts.demand_sent }}</div>
+        <div class="pipeline-label">Demand Sent</div>
+    </div>
+    <div class="pipeline-stage negotiating">
+        <div class="pipeline-count">{{ status_counts.negotiating }}</div>
+        <div class="pipeline-label">Negotiating</div>
+    </div>
+    <div class="pipeline-stage accepted">
+        <div class="pipeline-count">{{ status_counts.accepted }}</div>
+        <div class="pipeline-label">Accepted</div>
+    </div>
+    <div class="pipeline-stage rejected">
+        <div class="pipeline-count">{{ status_counts.rejected }}</div>
+        <div class="pipeline-label">Rejected</div>
+    </div>
+    <div class="pipeline-stage litigated">
+        <div class="pipeline-count">{{ status_counts.litigated }}</div>
+        <div class="pipeline-label">Litigated</div>
+    </div>
+</div>
+
+<div class="settlements-table">
+    <div class="settlement-row header">
+        <div>Client</div>
+        <div>Target</div>
+        <div>Final Amount</div>
+        <div>Status</div>
+        <div>Contingency</div>
+        <div>Actions</div>
+    </div>
+
+    {% if settlements %}
+        {% for settlement in settlements %}
+        <div class="settlement-row">
+            <div class="client-info">
+                <div class="client-avatar">
+                    {{ settlement.client_name[:2]|upper if settlement.client_name else 'UN' }}
+                </div>
+                <div>
+                    <div class="client-name">{{ settlement.client_name }}</div>
+                    <div class="client-date">{{ settlement.created_at }}</div>
+                </div>
+            </div>
+            <div class="amount target">${{ "{:,.0f}".format(settlement.target_amount) }}</div>
+            <div class="amount {% if settlement.final_amount %}final{% else %}pending{% endif %}">
+                {% if settlement.final_amount %}
+                    ${{ "{:,.0f}".format(settlement.final_amount) }}
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            <div>
+                <span class="status-pill status-{{ settlement.status }}">
+                    {{ settlement.status_label }}
+                </span>
+            </div>
+            <div class="contingency">
+                {% if settlement.contingency_earned %}
+                    <strong>${{ "{:,.0f}".format(settlement.contingency_earned) }}</strong>
+                {% else %}
+                    --
+                {% endif %}
+            </div>
+            <div>
+                <button class="action-btn" onclick="viewSettlement({{ settlement.id }})">View</button>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="padding: 60px 20px; text-align: center; color: var(--apple-gray-500);">
+            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">No settlements yet</div>
+            <p>Create a new settlement to get started.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewSettlement(id) {
+    // For now, redirect to old dashboard detail view
+    // Later we can implement a modal or dedicated page
+    window.location.href = '/dashboard/settlements?view=' + id;
+}
+
+function openNewSettlement() {
+    alert('Create new settlement feature coming soon.\n\nFor now, use the old dashboard at /dashboard/settlements');
+}
+</script>
+{% endblock %}
