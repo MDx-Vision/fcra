@@ -112,10 +112,7 @@ app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024
 request_timing_middleware(app)
 print("✅ Performance monitoring middleware initialized")
 
-# Register portal blueprint for redesigned client portal
-from routes.portal import portal as portal_blueprint
-app.register_blueprint(portal_blueprint)
-print("✅ Portal blueprint registered")
+# Portal blueprint already registered above (line 76)
 
 # Register staff portal blueprint for redesigned employee interface
 from routes.staff import staff_portal as staff_portal_blueprint
