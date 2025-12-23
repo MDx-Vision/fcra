@@ -283,10 +283,10 @@ Reference: `DEEP_DIVE_GAP_ANALYSIS.md` and `attached_assets/BAG_CRM_Features_FCR
 - [x] Inline status dropdown editing (click to change)
 - [x] Follow-up date color coding (green/yellow/red)
 
-### Important Features (MEDIUM PRIORITY)
+### Important Features (MEDIUM PRIORITY) ✅ COMPLETE
 - [x] Quick filter buttons (ACTIVE, LEADS, FOLLOW UP, SIGNUPS)
-- [ ] Workflow Selector popup per client
-- [ ] Hover quick info popup on row hover
+- [x] Workflow Selector popup per client
+- [x] Hover quick info popup on row hover
 - [x] Priority flags (MARK 1, MARK 2)
 - [x] Portal Post (PP) column with visual states
 - [x] TYPE column visual codes (C/L/I/X badges)
@@ -327,7 +327,7 @@ Reference: `DEEP_DIVE_GAP_ANALYSIS.md` and `attached_assets/BAG_CRM_Features_FCR
 - ✅ Phase 7: Credit Monitoring Auto-Import (100%)
 
 **In Progress:**
-- 🔄 Phase 8: BAG CRM Feature Parity (70% - Critical UI complete, Medium priority in progress)
+- 🔄 Phase 8: BAG CRM Feature Parity (90% - Critical & Medium priority complete, Nice-to-have remaining)
 
 **Pending:**
 - ⏳ Send Certified Mail API credentials
