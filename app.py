@@ -4856,6 +4856,9 @@ def dashboard_clients():
                 'mark_2': client.mark_2 if client else False,
                 'starred': client.starred if client else False,
                 'portal_posted': client.portal_posted if client else False,
+                # Workflow and contact fields
+                'current_dispute_step': client.current_dispute_step if client else 'intake',
+                'phone': client.phone if client else None,
             })
 
         return render_template('clients.html', cases=cases, status_filter=status_filter)
@@ -10371,6 +10374,54 @@ def api_client_followup(client_id):
             'success': True,
             'client_id': client_id,
             'follow_up_date': client.follow_up_date.isoformat() if client.follow_up_date else None
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/workflow', methods=['POST'])
+@require_staff()
+def api_client_workflow(client_id):
+    """Update client workflow step"""
+    db = get_db()
+    try:
+        data = request.json
+        workflow = data.get('workflow')
+
+        valid_workflows = ['intake', 'round1', 'waiting', 'round2', 'round3', 'litigation', 'settlement', 'complete']
+        if workflow not in valid_workflows:
+            return jsonify({'success': False, 'error': 'Invalid workflow'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        old_workflow = client.current_dispute_step
+        client.current_dispute_step = workflow
+
+        # Also update dispute round based on workflow
+        workflow_to_round = {
+            'intake': 0,
+            'round1': 1,
+            'waiting': 1,
+            'round2': 2,
+            'round3': 3,
+            'litigation': 4,
+            'settlement': 4,
+            'complete': 4
+        }
+        client.current_dispute_round = workflow_to_round.get(workflow, 0)
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'old_workflow': old_workflow,
+            'new_workflow': workflow
         })
     except Exception as e:
         db.rollback()

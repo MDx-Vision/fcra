@@ -395,6 +395,162 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+
+        /* Workflow Badge */
+        .workflow-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #f1f5f9;
+            color: #64748b;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .workflow-badge:hover { background: #e2e8f0; }
+        .workflow-badge.wf-intake { background: #f3e8ff; color: #7c3aed; }
+        .workflow-badge.wf-round1 { background: #dbeafe; color: #1e40af; }
+        .workflow-badge.wf-waiting { background: #fef3c7; color: #92400e; }
+        .workflow-badge.wf-round2 { background: #fed7aa; color: #c2410c; }
+        .workflow-badge.wf-round3 { background: #fecaca; color: #991b1b; }
+        .workflow-badge.wf-litigation { background: #fee2e2; color: #7f1d1d; }
+        .workflow-badge.wf-settlement { background: #dcfce7; color: #166534; }
+        .workflow-badge.wf-complete { background: #d1fae5; color: #065f46; }
+
+        /* Workflow Selector Popup */
+        .workflow-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            z-index: 1001;
+            width: 400px;
+            max-height: 80vh;
+            overflow: hidden;
+        }
+        .workflow-popup.visible { display: block; }
+        .workflow-popup-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .workflow-popup-header h3 { font-size: 18px; color: #1a1a2e; margin: 0; }
+        .workflow-popup-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .workflow-popup-body {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .workflow-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .workflow-option:hover { background: #f8fafc; border-color: #84cc16; }
+        .workflow-option.selected { background: #f0fdf4; border-color: #22c55e; }
+        .workflow-option-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .workflow-option-info { flex: 1; }
+        .workflow-option-name { font-weight: 600; color: #1a1a2e; font-size: 14px; }
+        .workflow-option-desc { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        /* Hover Info Popup */
+        .hover-popup {
+            display: none;
+            position: absolute;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 320px;
+            padding: 16px;
+            pointer-events: none;
+        }
+        .hover-popup.visible { display: block; }
+        .hover-popup-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .hover-popup-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #84cc16, #22c55e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .hover-popup-name { font-weight: 700; color: #1a1a2e; font-size: 16px; }
+        .hover-popup-email { font-size: 12px; color: #64748b; }
+        .hover-popup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .hover-popup-item {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .hover-popup-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+        .hover-popup-value { font-size: 14px; font-weight: 600; color: #1a1a2e; margin-top: 2px; }
+        .hover-popup-contact {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .hover-popup-contact a { color: #2563eb; text-decoration: none; }
+
+        /* Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .overlay.visible { display: block; }
     </style>
 </head>
 <body>
@@ -463,6 +619,7 @@
                         <th>Type</th>
                         <th>Client</th>
                         <th>Status</th>
+                        <th>WF</th>
                         <th>Follow Up</th>
                         <th>Flags</th>
                         <th>Score</th>
@@ -473,10 +630,20 @@
                 <tbody id="clientTableBody" data-testid="clients-table-body">
                     {% for case in cases %}
                     <tr data-testid="client-row-{{ case.id }}"
+                        data-client-id="{{ case.client_id or case.id }}"
                         data-status="{{ case.status }}"
                         data-type="{{ case.client_type or 'L' }}"
                         data-followup="{{ case.follow_up_date or '' }}"
-                        data-starred="{{ 'true' if case.starred else 'false' }}">
+                        data-starred="{{ 'true' if case.starred else 'false' }}"
+                        data-workflow="{{ case.current_dispute_step or 'intake' }}"
+                        data-name="{{ case.client_name }}"
+                        data-email="{{ case.client_email or '' }}"
+                        data-phone="{{ case.phone or '' }}"
+                        data-score="{{ case.score or '' }}"
+                        data-violations="{{ case.violations or 0 }}"
+                        data-exposure="{{ case.exposure or 0 }}"
+                        onmouseenter="showHoverPopup(event, this)"
+                        onmouseleave="hideHoverPopup()">
                         <td class="checkbox-cell">
                             <input type="checkbox" class="client-checkbox" value="{{ case.id }}" onchange="updateBulkToolbar()">
                         </td>
@@ -518,6 +685,13 @@
                                 <button onclick="setStatus({{ case.id }}, 'complete')">Complete</button>
                                 <button onclick="setStatus({{ case.id }}, 'cancelled')">Cancelled</button>
                             </div>
+                        </td>
+                        <td>
+                            <span class="workflow-badge wf-{{ case.current_dispute_step or 'intake' }}"
+                                  onclick="openWorkflowSelector({{ case.client_id or case.id }}, '{{ case.current_dispute_step or 'intake' }}')"
+                                  title="Click to change workflow">
+                                {{ (case.current_dispute_step or 'intake')|replace('_', ' ')|title }}
+                            </span>
                         </td>
                         <td>
                             {% if case.follow_up_date %}
@@ -582,6 +756,107 @@
             {% endif %}
         </div>
     </main>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="closeWorkflowSelector()"></div>
+
+    <!-- Workflow Selector Popup -->
+    <div class="workflow-popup" id="workflowPopup">
+        <div class="workflow-popup-header">
+            <h3>Select Workflow</h3>
+            <button class="workflow-popup-close" onclick="closeWorkflowSelector()">&times;</button>
+        </div>
+        <div class="workflow-popup-body">
+            <div class="workflow-option" data-workflow="intake" onclick="selectWorkflow('intake')">
+                <div class="workflow-option-icon" style="background: #f3e8ff;">📋</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">New Client Intake</div>
+                    <div class="workflow-option-desc">Initial onboarding and document collection</div>
+                </div>
+            </div>
+            <div class="workflow-option" data-workflow="round1" onclick="selectWorkflow('round1')">
+                <div class="workflow-option-icon" style="background: #dbeafe;">1️⃣</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">Round 1 Disputes</div>
+                    <div class="workflow-option-desc">First round of bureau disputes</div>
+                </div>
+            </div>
+            <div class="workflow-option" data-workflow="waiting" onclick="selectWorkflow('waiting')">
+                <div class="workflow-option-icon" style="background: #fef3c7;">⏳</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">Waiting for Response</div>
+                    <div class="workflow-option-desc">Awaiting bureau response (30-45 days)</div>
+                </div>
+            </div>
+            <div class="workflow-option" data-workflow="round2" onclick="selectWorkflow('round2')">
+                <div class="workflow-option-icon" style="background: #fed7aa;">2️⃣</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">Round 2 Disputes</div>
+                    <div class="workflow-option-desc">Second round with Method of Verification</div>
+                </div>
+            </div>
+            <div class="workflow-option" data-workflow="round3" onclick="selectWorkflow('round3')">
+                <div class="workflow-option-icon" style="background: #fecaca;">3️⃣</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">Round 3 Disputes</div>
+                    <div class="workflow-option-desc">Third round with escalated language</div>
+                </div>
+            </div>
+            <div class="workflow-option" data-workflow="litigation" onclick="selectWorkflow('litigation')">
+                <div class="workflow-option-icon" style="background: #fee2e2;">⚖️</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">Litigation Prep</div>
+                    <div class="workflow-option-desc">Intent to sue / demand letters</div>
+                </div>
+            </div>
+            <div class="workflow-option" data-workflow="settlement" onclick="selectWorkflow('settlement')">
+                <div class="workflow-option-icon" style="background: #dcfce7;">💰</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">Settlement Negotiation</div>
+                    <div class="workflow-option-desc">Negotiating settlement terms</div>
+                </div>
+            </div>
+            <div class="workflow-option" data-workflow="complete" onclick="selectWorkflow('complete')">
+                <div class="workflow-option-icon" style="background: #d1fae5;">✅</div>
+                <div class="workflow-option-info">
+                    <div class="workflow-option-name">Case Complete</div>
+                    <div class="workflow-option-desc">All disputes resolved</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hover Info Popup -->
+    <div class="hover-popup" id="hoverPopup">
+        <div class="hover-popup-header">
+            <div class="hover-popup-avatar" id="hoverAvatar">C</div>
+            <div>
+                <div class="hover-popup-name" id="hoverName">Client Name</div>
+                <div class="hover-popup-email" id="hoverEmail">email@example.com</div>
+            </div>
+        </div>
+        <div class="hover-popup-grid">
+            <div class="hover-popup-item">
+                <div class="hover-popup-label">Case Score</div>
+                <div class="hover-popup-value" id="hoverScore">-</div>
+            </div>
+            <div class="hover-popup-item">
+                <div class="hover-popup-label">Violations</div>
+                <div class="hover-popup-value" id="hoverViolations">0</div>
+            </div>
+            <div class="hover-popup-item">
+                <div class="hover-popup-label">Exposure</div>
+                <div class="hover-popup-value" id="hoverExposure">$0</div>
+            </div>
+            <div class="hover-popup-item">
+                <div class="hover-popup-label">Workflow</div>
+                <div class="hover-popup-value" id="hoverWorkflow">Intake</div>
+            </div>
+        </div>
+        <div class="hover-popup-contact" id="hoverContact">
+            <strong>Phone:</strong> <span id="hoverPhone">-</span>
+        </div>
+    </div>
 
     <script>
         // Initialize follow-up date colors on load
@@ -882,6 +1157,105 @@
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.status-cell')) {
                 document.querySelectorAll('.status-dropdown').forEach(d => d.classList.remove('visible'));
+            }
+        });
+
+        // Workflow Selector
+        let currentWorkflowClientId = null;
+
+        function openWorkflowSelector(clientId, currentWorkflow) {
+            currentWorkflowClientId = clientId;
+
+            // Highlight current workflow
+            document.querySelectorAll('.workflow-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.workflow === currentWorkflow) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            document.getElementById('overlay').classList.add('visible');
+            document.getElementById('workflowPopup').classList.add('visible');
+        }
+
+        function closeWorkflowSelector() {
+            document.getElementById('overlay').classList.remove('visible');
+            document.getElementById('workflowPopup').classList.remove('visible');
+            currentWorkflowClientId = null;
+        }
+
+        async function selectWorkflow(workflow) {
+            if (!currentWorkflowClientId) return;
+
+            try {
+                const res = await fetch('/api/clients/' + currentWorkflowClientId + '/workflow', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ workflow })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Workflow updated to: ' + workflow.replace('_', ' '));
+                    closeWorkflowSelector();
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Hover Info Popup
+        let hoverTimeout = null;
+        const hoverPopup = document.getElementById('hoverPopup');
+
+        function showHoverPopup(event, row) {
+            // Delay showing popup
+            hoverTimeout = setTimeout(() => {
+                const data = row.dataset;
+                const name = data.name || 'Unknown';
+                const email = data.email || 'No email';
+                const phone = data.phone || 'No phone';
+                const score = data.score || '-';
+                const violations = data.violations || '0';
+                const exposure = data.exposure ? '$' + parseInt(data.exposure).toLocaleString() : '$0';
+                const workflow = (data.workflow || 'intake').replace('_', ' ');
+
+                document.getElementById('hoverAvatar').textContent = name.charAt(0).toUpperCase();
+                document.getElementById('hoverName').textContent = name;
+                document.getElementById('hoverEmail').textContent = email;
+                document.getElementById('hoverScore').textContent = score;
+                document.getElementById('hoverViolations').textContent = violations;
+                document.getElementById('hoverExposure').textContent = exposure;
+                document.getElementById('hoverWorkflow').textContent = workflow.charAt(0).toUpperCase() + workflow.slice(1);
+                document.getElementById('hoverPhone').textContent = phone || '-';
+
+                // Position popup
+                const rect = row.getBoundingClientRect();
+                const popupWidth = 320;
+                let left = rect.right + 10;
+
+                // If popup would go off right side, show on left
+                if (left + popupWidth > window.innerWidth) {
+                    left = rect.left - popupWidth - 10;
+                }
+
+                hoverPopup.style.left = left + 'px';
+                hoverPopup.style.top = (rect.top + window.scrollY) + 'px';
+                hoverPopup.classList.add('visible');
+            }, 400); // 400ms delay before showing
+        }
+
+        function hideHoverPopup() {
+            clearTimeout(hoverTimeout);
+            hoverPopup.classList.remove('visible');
+        }
+
+        // Close workflow popup with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeWorkflowSelector();
             }
         });
     </script>
