@@ -50,12 +50,85 @@
             color: #1a1a2e;
             border: 2px solid #e2e8f0;
         }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
         .content-card {
             background: white;
             border-radius: 16px;
             padding: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+
+        /* Bulk Action Toolbar */
+        .bulk-toolbar {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            color: white;
+        }
+        .bulk-toolbar.visible { display: flex; }
+        .bulk-toolbar .selected-count {
+            background: #84cc16;
+            color: #1a1a2e;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .bulk-toolbar select {
+            padding: 8px 12px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 13px;
+        }
+        .bulk-toolbar select option { color: #1a1a2e; }
+        .bulk-toolbar button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .bulk-toolbar .btn-apply { background: #84cc16; color: #1a1a2e; }
+        .bulk-toolbar .btn-delete { background: #ef4444; color: white; }
+
+        /* Quick Filters */
+        .quick-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .quick-filter {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-filter.all { background: #1a1a2e; color: white; }
+        .quick-filter.active { background: #dcfce7; color: #166534; }
+        .quick-filter.leads { background: #dbeafe; color: #1e40af; }
+        .quick-filter.followup { background: #fef3c7; color: #92400e; }
+        .quick-filter.signups { background: #f3e8ff; color: #7c3aed; }
+        .quick-filter:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .quick-filter.selected { box-shadow: 0 0 0 2px #1a1a2e; }
+
         .filters {
             display: flex;
             gap: 10px;
@@ -99,8 +172,8 @@
         }
         th {
             text-align: left;
-            padding: 12px 15px;
-            font-size: 12px;
+            padding: 12px 10px;
+            font-size: 11px;
             font-weight: 600;
             color: #64748b;
             text-transform: uppercase;
@@ -108,20 +181,28 @@
             border-bottom: 1px solid #e2e8f0;
         }
         td {
-            padding: 15px;
+            padding: 12px 10px;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 14px;
+            font-size: 13px;
             color: #334155;
         }
         tr:hover { background: #f8fafc; }
+        .checkbox-cell {
+            width: 40px;
+        }
+        .checkbox-cell input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
         .client-cell {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
         .client-avatar {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: linear-gradient(135deg, #84cc16, #22c55e);
             display: flex;
@@ -129,7 +210,7 @@
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 12px;
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -138,58 +219,181 @@
             height: 100%;
             object-fit: cover;
         }
-        .client-info {
-            flex: 1;
+        .client-info { flex: 1; }
+        .client-name { font-weight: 600; color: #1a1a2e; font-size: 13px; }
+        .client-email { font-size: 11px; color: #94a3b8; }
+
+        /* Type Badge */
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
         }
-        .client-name {
-            font-weight: 600;
-            color: #1a1a2e;
-        }
-        .client-email {
-            font-size: 12px;
-            color: #94a3b8;
-        }
+        .type-C { background: #dcfce7; color: #166534; }
+        .type-L { background: #dbeafe; color: #1e40af; }
+        .type-I { background: #f1f5f9; color: #64748b; }
+        .type-X { background: #fee2e2; color: #991b1b; }
+        .type-O { background: #fef3c7; color: #92400e; }
+
+        /* Status Badge & Dropdown */
+        .status-cell { position: relative; }
         .status-badge {
             display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
             font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .status-intake { background: #fef3c7; color: #92400e; }
-        .status-stage1-complete { background: #dbeafe; color: #1e40af; }
-        .status-stage2-complete { background: #dcfce7; color: #166534; }
-        .status-delivered { background: #f0fdf4; color: #15803d; }
+        .status-badge:hover { transform: scale(1.05); }
+        .status-signup { background: #f3e8ff; color: #7c3aed; }
+        .status-active { background: #dcfce7; color: #166534; }
+        .status-paused { background: #fef3c7; color: #92400e; }
+        .status-complete { background: #dbeafe; color: #1e40af; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 100;
+            min-width: 150px;
+            overflow: hidden;
+        }
+        .status-dropdown.visible { display: block; }
+        .status-dropdown button {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            border: none;
+            background: white;
+            text-align: left;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .status-dropdown button:hover { background: #f8fafc; }
+
+        /* Follow-up Date Color Coding */
+        .followup-date {
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        .followup-overdue { background: #fee2e2; color: #991b1b; }
+        .followup-today { background: #fef3c7; color: #92400e; }
+        .followup-soon { background: #dcfce7; color: #166534; }
+        .followup-future { color: #64748b; }
+
+        /* Priority Flags */
+        .priority-flags {
+            display: flex;
+            gap: 4px;
+        }
+        .priority-flag {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .priority-flag.mark1 { background: #ef4444; }
+        .priority-flag.mark2 { background: #f59e0b; }
+        .priority-flag.inactive { background: #e2e8f0; }
+        .priority-flag:hover { transform: scale(1.2); }
+
+        /* Star Toggle */
+        .star-toggle {
+            cursor: pointer;
+            font-size: 16px;
+            color: #e2e8f0;
+        }
+        .star-toggle.active { color: #f59e0b; }
+        .star-toggle:hover { transform: scale(1.1); }
+
+        /* Portal Posted */
+        .portal-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+        .portal-posted { background: #dcfce7; color: #166534; }
+        .portal-not-posted { background: #f1f5f9; color: #94a3b8; }
+
+        /* Row Actions */
+        .row-actions {
+            display: flex;
+            gap: 4px;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        tr:hover .row-actions { opacity: 1; }
+        .row-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 12px;
+            text-decoration: none;
+        }
+        .row-action:hover { background: #f8fafc; border-color: #84cc16; color: #1a1a2e; }
+        .row-action.danger:hover { border-color: #ef4444; color: #ef4444; }
+        .row-action.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+
         .score-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 36px;
-            height: 36px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 11px;
         }
         .score-high { background: #dcfce7; color: #166534; }
         .score-medium { background: #fef3c7; color: #92400e; }
         .score-low { background: #fee2e2; color: #991b1b; }
-        .action-btn {
-            padding: 6px 12px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            margin-right: 5px;
-            text-decoration: none;
-            color: #334155;
-        }
-        .action-btn:hover { background: #f8fafc; border-color: #84cc16; }
-        .action-btn.primary { background: linear-gradient(135deg, #319795 0%, #84cc16 100%); border-color: #84cc16; color: #1a1a2e; }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
             color: #64748b;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: #22c55e; }
+        .toast.error { background: #ef4444; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
     </style>
 </head>
@@ -200,10 +404,45 @@
     <main class="main-content" data-testid="clients-page">
         <div class="header">
             <h1 data-testid="page-title">All Clients</h1>
-            <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">Back to Dashboard</a>
+            <div style="display: flex; gap: 10px;">
+                <a href="/dashboard/client-manager" class="btn btn-secondary">Client Manager</a>
+                <a href="/dashboard" class="btn btn-secondary" data-testid="back-to-dashboard">Back to Dashboard</a>
+            </div>
         </div>
 
         <div class="content-card" data-testid="clients-card">
+            <!-- Bulk Action Toolbar -->
+            <div class="bulk-toolbar" id="bulkToolbar">
+                <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 16px; height: 16px;">
+                <span class="selected-count" id="selectedCount">0 selected</span>
+                <select id="bulkStatus">
+                    <option value="">Change Status...</option>
+                    <option value="signup">Signup</option>
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="complete">Complete</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <select id="bulkType">
+                    <option value="">Change Type...</option>
+                    <option value="L">Lead</option>
+                    <option value="C">Client</option>
+                    <option value="I">Inactive</option>
+                    <option value="X">Cancelled</option>
+                </select>
+                <button class="btn-apply" onclick="applyBulkAction()">Apply</button>
+                <button class="btn-delete" onclick="bulkDelete()">Delete Selected</button>
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="quick-filters">
+                <button class="quick-filter all selected" onclick="quickFilter('all')">ALL</button>
+                <button class="quick-filter active" onclick="quickFilter('active')">ACTIVE</button>
+                <button class="quick-filter leads" onclick="quickFilter('leads')">LEADS</button>
+                <button class="quick-filter followup" onclick="quickFilter('followup')">FOLLOW UP</button>
+                <button class="quick-filter signups" onclick="quickFilter('signups')">SIGNUPS</button>
+            </div>
+
             <div class="filters" data-testid="filters">
                 <a href="/dashboard/clients" class="filter-btn {% if status_filter == 'all' %}active{% endif %}" data-testid="filter-all">All</a>
                 <a href="/dashboard/clients?status=stage1_complete" class="filter-btn {% if status_filter == 'stage1_complete' %}active{% endif %}" data-testid="filter-needs-review">Needs Review</a>
@@ -214,27 +453,45 @@
                 <input type="text" placeholder="Search clients..." id="searchInput" onkeyup="searchClients()" data-testid="search-input">
             </div>
 
-            <!-- Credit Bureau Coverage -->
-            <div style="display: none;" data-bureaus="Equifax Experian TransUnion">Equifax Experian TransUnion</div>
-
             {% if cases %}
             <table data-testid="clients-table">
                 <thead>
                     <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox" id="headerCheckbox" onclick="toggleSelectAll()">
+                        </th>
+                        <th>Type</th>
                         <th>Client</th>
                         <th>Status</th>
+                        <th>Follow Up</th>
+                        <th>Flags</th>
                         <th>Score</th>
-                        <th>Violations</th>
-                        <th>Exposure</th>
-                        <th>Created</th>
+                        <th>Portal</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="clientTableBody" data-testid="clients-table-body">
                     {% for case in cases %}
-                    <tr data-testid="client-row-{{ case.id }}">
+                    <tr data-testid="client-row-{{ case.id }}"
+                        data-status="{{ case.status }}"
+                        data-type="{{ case.client_type or 'L' }}"
+                        data-followup="{{ case.follow_up_date or '' }}"
+                        data-starred="{{ 'true' if case.starred else 'false' }}">
+                        <td class="checkbox-cell">
+                            <input type="checkbox" class="client-checkbox" value="{{ case.id }}" onchange="updateBulkToolbar()">
+                        </td>
+                        <td>
+                            <span class="type-badge type-{{ case.client_type or 'L' }}"
+                                  onclick="toggleType({{ case.id }}, '{{ case.client_type or 'L' }}')"
+                                  title="Click to change type">
+                                {{ case.client_type or 'L' }}
+                            </span>
+                        </td>
                         <td>
                             <div class="client-cell">
+                                <span class="star-toggle {% if case.starred %}active{% endif %}"
+                                      onclick="toggleStar({{ case.id }})"
+                                      title="Toggle favorite">★</span>
                                 <div class="client-avatar">
                                     {% if case.avatar_filename %}
                                     <img src="/static/avatars/{{ case.avatar_filename }}" alt="Avatar">
@@ -248,26 +505,70 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
-                            <span class="status-badge status-{{ case.status|replace('_', '-') }}" data-testid="client-status-{{ case.id }}">
-                                {{ case.status_label }}
+                        <td class="status-cell">
+                            <span class="status-badge status-{{ case.status }}"
+                                  onclick="toggleStatusDropdown({{ case.id }})"
+                                  data-testid="client-status-{{ case.id }}">
+                                {{ case.status|title }}
                             </span>
+                            <div class="status-dropdown" id="statusDropdown-{{ case.id }}">
+                                <button onclick="setStatus({{ case.id }}, 'signup')">Signup</button>
+                                <button onclick="setStatus({{ case.id }}, 'active')">Active</button>
+                                <button onclick="setStatus({{ case.id }}, 'paused')">Paused</button>
+                                <button onclick="setStatus({{ case.id }}, 'complete')">Complete</button>
+                                <button onclick="setStatus({{ case.id }}, 'cancelled')">Cancelled</button>
+                            </div>
+                        </td>
+                        <td>
+                            {% if case.follow_up_date %}
+                            <span class="followup-date" id="followup-{{ case.id }}" data-date="{{ case.follow_up_date }}">
+                                {{ case.follow_up_date }}
+                            </span>
+                            {% else %}
+                            <span class="followup-date followup-future" style="cursor: pointer;" onclick="setFollowUp({{ case.id }})">
+                                Set date
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="priority-flags">
+                                <span class="priority-flag {% if case.mark_1 %}mark1{% else %}inactive{% endif %}"
+                                      onclick="toggleFlag({{ case.id }}, 'mark_1')" title="Priority 1"></span>
+                                <span class="priority-flag {% if case.mark_2 %}mark2{% else %}inactive{% endif %}"
+                                      onclick="toggleFlag({{ case.id }}, 'mark_2')" title="Priority 2"></span>
+                            </div>
                         </td>
                         <td>
                             {% if case.score %}
-                            <span class="score-badge {% if case.score >= 8 %}score-high{% elif case.score >= 5 %}score-medium{% else %}score-low{% endif %}" data-testid="client-score-{{ case.id }}">
+                            <span class="score-badge {% if case.score >= 8 %}score-high{% elif case.score >= 5 %}score-medium{% else %}score-low{% endif %}"
+                                  data-testid="client-score-{{ case.id }}">
                                 {{ case.score }}
                             </span>
                             {% else %}-{% endif %}
                         </td>
-                        <td data-testid="client-violations-{{ case.id }}">{{ case.violations }}</td>
-                        <td data-testid="client-exposure-{{ case.id }}">{% if case.exposure %}${{ "{:,.0f}".format(case.exposure) }}{% else %}-{% endif %}</td>
-                        <td data-testid="client-created-{{ case.id }}">{{ case.created_at }}</td>
                         <td>
-                            {% if case.status == 'stage1_complete' %}
-                            <a href="/analysis/{{ case.analysis_id }}/review" class="action-btn primary" data-testid="review-btn-{{ case.id }}">Review</a>
-                            {% endif %}
-                            <a href="/dashboard/case/{{ case.id }}" class="action-btn" data-testid="view-btn-{{ case.id }}">View</a>
+                            <span class="portal-badge {% if case.portal_posted %}portal-posted{% else %}portal-not-posted{% endif %}"
+                                  onclick="togglePortal({{ case.id }})" style="cursor: pointer;">
+                                {% if case.portal_posted %}PP{% else %}--{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="row-actions">
+                                <a href="/dashboard/case/{{ case.id }}" class="row-action" title="View Details">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                </a>
+                                {% if case.analysis_id %}
+                                <a href="/analysis/{{ case.analysis_id }}/review" class="row-action primary" title="Review Analysis">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                                </a>
+                                {% endif %}
+                                <button class="row-action" onclick="addNote({{ case.id }})" title="Add Note">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                </button>
+                                <button class="row-action danger" onclick="deleteClient({{ case.id }}, '{{ case.client_name }}')" title="Delete">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -283,14 +584,306 @@
     </main>
 
     <script>
-        function searchClients() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('#clientTableBody tr');
-            rows.forEach(row => {
-                const name = row.querySelector('.client-name').textContent.toLowerCase();
-                row.style.display = name.includes(query) ? '' : 'none';
+        // Initialize follow-up date colors on load
+        document.addEventListener('DOMContentLoaded', function() {
+            colorCodeFollowUps();
+        });
+
+        function colorCodeFollowUps() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            document.querySelectorAll('.followup-date[data-date]').forEach(el => {
+                const dateStr = el.dataset.date;
+                if (!dateStr) return;
+
+                const date = new Date(dateStr);
+                const diffDays = Math.floor((date - today) / (1000 * 60 * 60 * 24));
+
+                el.classList.remove('followup-overdue', 'followup-today', 'followup-soon', 'followup-future');
+
+                if (diffDays < 0) {
+                    el.classList.add('followup-overdue');
+                } else if (diffDays === 0) {
+                    el.classList.add('followup-today');
+                } else if (diffDays <= 3) {
+                    el.classList.add('followup-soon');
+                } else {
+                    el.classList.add('followup-future');
+                }
             });
         }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Bulk selection
+        function toggleSelectAll() {
+            const checked = document.getElementById('headerCheckbox').checked;
+            document.querySelectorAll('.client-checkbox').forEach(cb => cb.checked = checked);
+            updateBulkToolbar();
+        }
+
+        function updateBulkToolbar() {
+            const selected = document.querySelectorAll('.client-checkbox:checked').length;
+            const toolbar = document.getElementById('bulkToolbar');
+            const count = document.getElementById('selectedCount');
+
+            if (selected > 0) {
+                toolbar.classList.add('visible');
+                count.textContent = selected + ' selected';
+            } else {
+                toolbar.classList.remove('visible');
+            }
+        }
+
+        function getSelectedIds() {
+            return Array.from(document.querySelectorAll('.client-checkbox:checked')).map(cb => parseInt(cb.value));
+        }
+
+        async function applyBulkAction() {
+            const ids = getSelectedIds();
+            const status = document.getElementById('bulkStatus').value;
+            const type = document.getElementById('bulkType').value;
+
+            if (!ids.length) return showToast('Select clients first', 'error');
+            if (!status && !type) return showToast('Select an action', 'error');
+
+            try {
+                const res = await fetch('/api/clients/bulk-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_ids: ids, status, client_type: type })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function bulkDelete() {
+            const ids = getSelectedIds();
+            if (!ids.length) return showToast('Select clients first', 'error');
+            if (!confirm(`Delete ${ids.length} clients? This cannot be undone.`)) return;
+
+            try {
+                const res = await fetch('/api/clients/bulk-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_ids: ids })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Quick filters
+        function quickFilter(filter) {
+            document.querySelectorAll('.quick-filter').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+
+            document.querySelectorAll('#clientTableBody tr').forEach(row => {
+                const status = row.dataset.status;
+                const type = row.dataset.type;
+                const followup = row.dataset.followup;
+
+                let show = true;
+                if (filter === 'active') show = status === 'active';
+                else if (filter === 'leads') show = type === 'L';
+                else if (filter === 'followup') show = !!followup;
+                else if (filter === 'signups') show = status === 'signup';
+
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        // Inline status editing
+        function toggleStatusDropdown(clientId) {
+            document.querySelectorAll('.status-dropdown').forEach(d => d.classList.remove('visible'));
+            document.getElementById('statusDropdown-' + clientId).classList.toggle('visible');
+        }
+
+        async function setStatus(clientId, status) {
+            document.querySelectorAll('.status-dropdown').forEach(d => d.classList.remove('visible'));
+
+            try {
+                const res = await fetch('/api/clients/' + clientId + '/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Status updated');
+                    setTimeout(() => location.reload(), 500);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Toggle type
+        async function toggleType(clientId, currentType) {
+            const types = ['L', 'C', 'I', 'X'];
+            const nextType = types[(types.indexOf(currentType) + 1) % types.length];
+
+            try {
+                const res = await fetch('/api/clients/' + clientId + '/type', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ client_type: nextType })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Toggle star
+        async function toggleStar(clientId) {
+            try {
+                const res = await fetch('/api/clients/' + clientId + '/star', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    const star = event.target;
+                    star.classList.toggle('active');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Toggle priority flag
+        async function toggleFlag(clientId, flag) {
+            try {
+                const res = await fetch('/api/clients/' + clientId + '/flag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ flag })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const el = event.target;
+                    if (data.value) {
+                        el.classList.remove('inactive');
+                        el.classList.add(flag === 'mark_1' ? 'mark1' : 'mark2');
+                    } else {
+                        el.classList.add('inactive');
+                        el.classList.remove('mark1', 'mark2');
+                    }
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Toggle portal posted
+        async function togglePortal(clientId) {
+            try {
+                const res = await fetch('/api/clients/' + clientId + '/portal', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Set follow-up date
+        async function setFollowUp(clientId) {
+            const date = prompt('Enter follow-up date (YYYY-MM-DD):');
+            if (!date) return;
+
+            try {
+                const res = await fetch('/api/clients/' + clientId + '/followup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ date })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Add note
+        function addNote(clientId) {
+            const note = prompt('Add note:');
+            if (!note) return;
+
+            fetch('/api/clients/' + clientId + '/note', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ note })
+            }).then(res => res.json()).then(data => {
+                if (data.success) showToast('Note added');
+                else showToast(data.error, 'error');
+            });
+        }
+
+        // Delete client
+        async function deleteClient(clientId, name) {
+            if (!confirm(`Delete ${name}? This cannot be undone.`)) return;
+
+            try {
+                const res = await fetch('/api/clients/' + clientId + '/delete', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Client deleted');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Search
+        function searchClients() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('#clientTableBody tr').forEach(row => {
+                const name = row.querySelector('.client-name')?.textContent.toLowerCase() || '';
+                const email = row.querySelector('.client-email')?.textContent.toLowerCase() || '';
+                row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+            });
+        }
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.status-cell')) {
+                document.querySelectorAll('.status-dropdown').forEach(d => d.classList.remove('visible'));
+            }
+        });
     </script>
 </body>
 </html>

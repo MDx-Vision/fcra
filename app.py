@@ -4809,7 +4809,7 @@ def api_intake():
 @app.route('/dashboard/clients')
 @require_staff(roles=['admin', 'paralegal', 'attorney'])
 def dashboard_clients():
-    """Client list page"""
+    """Client list page with Phase 8 BAG CRM features"""
     db = get_db()
     try:
         status_filter = request.args.get('status', 'all')
@@ -4839,15 +4839,23 @@ def dashboard_clients():
             cases.append({
                 'id': analysis.id,
                 'analysis_id': analysis.id,
+                'client_id': client.id if client else None,
                 'client_name': analysis.client_name,
                 'client_email': client.email if client else None,
                 'avatar_filename': client.avatar_filename if client else None,
-                'status': status,
+                'status': client.status if client else status,
                 'status_label': get_status_label(status),
                 'score': score.total_score if score else None,
                 'exposure': damages.total_exposure if damages else None,
                 'violations': db.query(Violation).filter_by(analysis_id=analysis.id).count(),
-                'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M')
+                'created_at': analysis.created_at.strftime('%Y-%m-%d %H:%M'),
+                # Phase 8 BAG CRM fields
+                'client_type': client.client_type if client else 'L',
+                'follow_up_date': client.follow_up_date.isoformat() if client and client.follow_up_date else None,
+                'mark_1': client.mark_1 if client else False,
+                'mark_2': client.mark_2 if client else False,
+                'starred': client.starred if client else False,
+                'portal_posted': client.portal_posted if client else False,
             })
 
         return render_template('clients.html', cases=cases, status_filter=status_filter)
@@ -10126,6 +10134,286 @@ def api_delete_client(client_id):
         db.rollback()
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================================
+# PHASE 8: BAG CRM FEATURE PARITY - CLIENT MANAGEMENT ENDPOINTS
+# ============================================================================
+
+@app.route('/api/clients/bulk-update', methods=['POST'])
+@require_staff()
+def api_clients_bulk_update():
+    """Bulk update client status and/or type"""
+    db = get_db()
+    try:
+        data = request.json
+        client_ids = data.get('client_ids', [])
+        status = data.get('status')
+        client_type = data.get('client_type')
+
+        if not client_ids:
+            return jsonify({'success': False, 'error': 'No clients selected'}), 400
+
+        updated = 0
+        for client_id in client_ids:
+            client = db.query(Client).filter_by(id=client_id).first()
+            if client:
+                if status:
+                    client.status = status
+                if client_type:
+                    client.client_type = client_type
+                client.updated_at = datetime.now()
+                updated += 1
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Updated {updated} clients',
+            'updated_count': updated
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/bulk-delete', methods=['POST'])
+@require_staff(roles=['admin'])
+def api_clients_bulk_delete():
+    """Bulk delete clients (Admin only)"""
+    db = get_db()
+    try:
+        data = request.json
+        client_ids = data.get('client_ids', [])
+
+        if not client_ids:
+            return jsonify({'success': False, 'error': 'No clients selected'}), 400
+
+        deleted = 0
+        for client_id in client_ids:
+            client = db.query(Client).filter_by(id=client_id).first()
+            if client:
+                # Delete associated records
+                db.query(CreditReport).filter_by(client_id=client_id).delete()
+                db.query(Analysis).filter_by(client_id=client_id).delete()
+                db.query(Client).filter_by(id=client_id).delete()
+                deleted += 1
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Deleted {deleted} clients',
+            'deleted_count': deleted
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/type', methods=['POST'])
+@require_staff()
+def api_client_type(client_id):
+    """Update client type (L=Lead, C=Client, I=Inactive, X=Cancelled)"""
+    db = get_db()
+    try:
+        data = request.json
+        client_type = data.get('client_type')
+
+        if client_type not in ['L', 'C', 'I', 'X', 'O', 'P']:
+            return jsonify({'success': False, 'error': 'Invalid client type'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        old_type = client.client_type
+        client.client_type = client_type
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'old_type': old_type,
+            'new_type': client_type
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/star', methods=['POST'])
+@require_staff()
+def api_client_star(client_id):
+    """Toggle client starred status"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        client.starred = not client.starred
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'starred': client.starred
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/flag', methods=['POST'])
+@require_staff()
+def api_client_flag(client_id):
+    """Toggle client priority flag (mark_1 or mark_2)"""
+    db = get_db()
+    try:
+        data = request.json
+        flag = data.get('flag')
+
+        if flag not in ['mark_1', 'mark_2']:
+            return jsonify({'success': False, 'error': 'Invalid flag'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        if flag == 'mark_1':
+            client.mark_1 = not client.mark_1
+            new_value = client.mark_1
+        else:
+            client.mark_2 = not client.mark_2
+            new_value = client.mark_2
+
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'flag': flag,
+            'value': new_value
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/portal', methods=['POST'])
+@require_staff()
+def api_client_portal(client_id):
+    """Toggle client portal posted status"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        client.portal_posted = not client.portal_posted
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'portal_posted': client.portal_posted
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/followup', methods=['POST'])
+@require_staff()
+def api_client_followup(client_id):
+    """Set client follow-up date"""
+    db = get_db()
+    try:
+        data = request.json
+        date_str = data.get('date')
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        if date_str:
+            try:
+                client.follow_up_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'success': False, 'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+        else:
+            client.follow_up_date = None
+
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'follow_up_date': client.follow_up_date.isoformat() if client.follow_up_date else None
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/note', methods=['POST'])
+@require_staff()
+def api_client_add_note(client_id):
+    """Add a note to client"""
+    db = get_db()
+    try:
+        data = request.json
+        note = data.get('note')
+
+        if not note:
+            return jsonify({'success': False, 'error': 'Note is required'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Add note with timestamp
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M')
+        new_note = f"[{timestamp}] {note}"
+
+        if client.admin_notes:
+            client.admin_notes = new_note + "\n\n" + client.admin_notes
+        else:
+            client.admin_notes = new_note
+
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'message': 'Note added'
+        })
+    except Exception as e:
+        db.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()

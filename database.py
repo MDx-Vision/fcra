@@ -199,7 +199,11 @@ class Client(Base):
     groups = Column(String(500))  # Comma-separated tags
     mark_1 = Column(Boolean, default=False)  # Color marking flag 1
     mark_2 = Column(Boolean, default=False)  # Color marking flag 2
-    
+    starred = Column(Boolean, default=False)  # Star/favorite toggle
+    phone_verified = Column(Boolean, default=False)  # Phone verified checkbox
+    portal_posted = Column(Boolean, default=False)  # Portal posted status
+    assigned_to = Column(Integer, ForeignKey('staff.id'), nullable=True)  # Assigned staff member
+
     organization_id = Column(Integer, nullable=True, index=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
