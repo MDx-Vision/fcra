@@ -25589,6 +25589,219 @@ def api_client_manager_delete_client():
         db.close()
 
 
+# ============================================================================
+# CLIENT MANAGER - DOCUMENT UPLOAD ENDPOINTS
+# ============================================================================
+
+@app.route('/api/client-manager/upload-cra-response', methods=['POST'])
+@require_staff()
+def api_client_manager_upload_cra_response():
+    """Upload a CRA response document for a client"""
+    db = get_db()
+    try:
+        client_id = request.form.get('client_id')
+        bureau = request.form.get('bureau')
+        dispute_round = request.form.get('dispute_round', 1)
+        response_type = request.form.get('response_type', 'verified')
+        response_date = request.form.get('response_date')
+
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Create client-specific directory
+        upload_dir = os.path.join('uploads', 'cra_responses', str(client_id))
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # Generate safe filename
+        from werkzeug.utils import secure_filename
+        original_filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{bureau}_{dispute_round}_{timestamp}_{original_filename}"
+        file_path = os.path.join(upload_dir, filename)
+
+        # Save file
+        file.save(file_path)
+        file_size = os.path.getsize(file_path)
+
+        # Create CRA response record
+        cra_response = CRAResponse(
+            client_id=int(client_id),
+            bureau=bureau,
+            dispute_round=int(dispute_round),
+            response_type=response_type,
+            response_date=datetime.strptime(response_date, '%Y-%m-%d').date() if response_date else None,
+            received_date=datetime.now().date(),
+            file_path=file_path,
+            file_name=original_filename,
+            file_size=file_size,
+            uploaded_by_admin=True
+        )
+        db.add(cra_response)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f"Uploaded CRA response from {bureau} for round {dispute_round}",
+            'response_id': cra_response.id,
+            'file_path': file_path
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/upload-letter-sent', methods=['POST'])
+@require_staff()
+def api_client_manager_upload_letter_sent():
+    """Upload a copy of a dispute letter that was sent"""
+    db = get_db()
+    try:
+        client_id = request.form.get('client_id')
+        bureau = request.form.get('bureau')
+        dispute_round = request.form.get('dispute_round', 1)
+        sent_date = request.form.get('sent_date')
+        letter_type = request.form.get('letter_type', 'dispute')  # dispute, validation, intent_to_sue, etc.
+
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Create client-specific directory
+        upload_dir = os.path.join('uploads', 'letters_sent', str(client_id))
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # Generate safe filename
+        from werkzeug.utils import secure_filename
+        original_filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{bureau}_{letter_type}_{dispute_round}_{timestamp}_{original_filename}"
+        file_path = os.path.join(upload_dir, filename)
+
+        # Save file
+        file.save(file_path)
+        file_size = os.path.getsize(file_path)
+
+        # Use ClientUpload model for manual letter uploads
+        client_upload = ClientUpload(
+            client_id=int(client_id),
+            category='letter_sent',
+            document_type=letter_type,
+            bureau=bureau,
+            dispute_round=int(dispute_round),
+            file_path=file_path,
+            file_name=original_filename,
+            file_size=file_size,
+            file_type=os.path.splitext(original_filename)[1].lower(),
+            document_date=datetime.strptime(sent_date, '%Y-%m-%d').date() if sent_date else None,
+            uploaded_at=datetime.now()
+        )
+        db.add(client_upload)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f"Uploaded letter sent to {bureau} for round {dispute_round}",
+            'upload_id': client_upload.id,
+            'file_path': file_path
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/client/<int:client_id>/uploads')
+@require_staff()
+def api_client_manager_get_uploads(client_id):
+    """Get all uploads (CRA responses and letters sent) for a client"""
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Get CRA responses
+        cra_responses = db.query(CRAResponse).filter_by(client_id=client_id).order_by(CRAResponse.received_date.desc()).all()
+
+        # Get letters sent from ClientUpload (manual uploads)
+        letters_sent = db.query(ClientUpload).filter_by(
+            client_id=client_id,
+            category='letter_sent'
+        ).order_by(ClientUpload.uploaded_at.desc()).all()
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'client_name': client.name,
+            'cra_responses': [{
+                'id': r.id,
+                'bureau': r.bureau,
+                'dispute_round': r.dispute_round,
+                'response_type': r.response_type,
+                'response_date': r.response_date.isoformat() if r.response_date else None,
+                'received_date': r.received_date.isoformat() if r.received_date else None,
+                'file_name': r.file_name,
+                'file_path': r.file_path
+            } for r in cra_responses],
+            'letters_sent': [{
+                'id': l.id,
+                'bureau': l.bureau,
+                'round_number': l.dispute_round,
+                'letter_type': l.document_type,
+                'sent_at': l.document_date.isoformat() if l.document_date else l.uploaded_at.isoformat() if l.uploaded_at else None,
+                'file_path': l.file_path,
+                'file_name': l.file_name
+            } for l in letters_sent]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/client-manager/download/<path:file_path>')
+@require_staff()
+def api_client_manager_download_file(file_path):
+    """Download an uploaded file"""
+    from flask import send_file
+
+    # Security check - ensure path is within uploads directory
+    full_path = os.path.abspath(file_path)
+    uploads_dir = os.path.abspath('uploads')
+
+    if not full_path.startswith(uploads_dir):
+        return jsonify({'success': False, 'error': 'Invalid file path'}), 403
+
+    if not os.path.exists(full_path):
+        return jsonify({'success': False, 'error': 'File not found'}), 404
+
+    return send_file(full_path, as_attachment=True)
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

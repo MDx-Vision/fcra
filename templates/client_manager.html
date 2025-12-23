@@ -431,7 +431,7 @@
 
     <!-- Client Detail Modal -->
     <div class="modal" id="clientModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
                 <h2 id="modalClientName">Client Details</h2>
                 <button class="modal-close" onclick="closeClientModal()">&times;</button>
@@ -440,11 +440,119 @@
                 <div class="info-grid" id="clientInfo"></div>
                 <div id="clientReports"></div>
                 <div id="clientAnalyses"></div>
+                <div id="clientUploads"></div>
             </div>
-            <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="modalAnalyzeBtn">Run New Analysis</button>
+                <button class="btn btn-secondary" onclick="openUploadModal('cra')">Upload CRA Response</button>
+                <button class="btn btn-secondary" onclick="openUploadModal('letter')">Upload Letter Sent</button>
                 <button class="btn btn-danger" id="modalDeleteBtn">Delete Client</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Upload CRA Response Modal -->
+    <div class="modal" id="uploadCRAModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload CRA Response</h2>
+                <button class="modal-close" onclick="closeUploadModal('cra')">&times;</button>
+            </div>
+            <form id="uploadCRAForm" enctype="multipart/form-data">
+                <input type="hidden" id="cra_client_id" name="client_id">
+                <div class="form-group">
+                    <label>Bureau</label>
+                    <select name="bureau" required>
+                        <option value="">Select Bureau...</option>
+                        <option value="Experian">Experian</option>
+                        <option value="TransUnion">TransUnion</option>
+                        <option value="Equifax">Equifax</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dispute Round</label>
+                    <select name="dispute_round" required>
+                        <option value="1">Round 1</option>
+                        <option value="2">Round 2</option>
+                        <option value="3">Round 3</option>
+                        <option value="4">Round 4</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Response Type</label>
+                    <select name="response_type" required>
+                        <option value="verified">Verified (No Change)</option>
+                        <option value="deleted">Deleted</option>
+                        <option value="updated">Updated/Modified</option>
+                        <option value="investigating">Still Investigating</option>
+                        <option value="frivolous">Marked Frivolous</option>
+                        <option value="no_response">No Response</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Response Date</label>
+                    <input type="date" name="response_date">
+                </div>
+                <div class="form-group">
+                    <label>Upload Document (PDF, JPG, PNG)</label>
+                    <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required style="padding: 10px; border: 2px dashed #e2e8f0; border-radius: 8px; width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Upload CRA Response</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Letter Sent Modal -->
+    <div class="modal" id="uploadLetterModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Letter Sent</h2>
+                <button class="modal-close" onclick="closeUploadModal('letter')">&times;</button>
+            </div>
+            <form id="uploadLetterForm" enctype="multipart/form-data">
+                <input type="hidden" id="letter_client_id" name="client_id">
+                <div class="form-group">
+                    <label>Recipient Bureau/Entity</label>
+                    <select name="bureau" required>
+                        <option value="">Select Recipient...</option>
+                        <option value="Experian">Experian</option>
+                        <option value="TransUnion">TransUnion</option>
+                        <option value="Equifax">Equifax</option>
+                        <option value="Creditor">Creditor/Furnisher</option>
+                        <option value="Collection">Collection Agency</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Dispute Round</label>
+                    <select name="dispute_round" required>
+                        <option value="1">Round 1</option>
+                        <option value="2">Round 2</option>
+                        <option value="3">Round 3</option>
+                        <option value="4">Round 4</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Letter Type</label>
+                    <select name="letter_type" required>
+                        <option value="dispute">Dispute Letter</option>
+                        <option value="validation">Debt Validation</option>
+                        <option value="intent_to_sue">Intent to Sue</option>
+                        <option value="section_609">Section 609 Request</option>
+                        <option value="section_611">Section 611 Request</option>
+                        <option value="method_of_verification">Method of Verification</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date Sent</label>
+                    <input type="date" name="sent_date">
+                </div>
+                <div class="form-group">
+                    <label>Upload Document (PDF, JPG, PNG)</label>
+                    <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required style="padding: 10px; border: 2px dashed #e2e8f0; border-radius: 8px; width: 100%;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Upload Letter</button>
+            </form>
         </div>
     </div>
 
@@ -637,6 +745,9 @@
                     }
                     document.getElementById('clientAnalyses').innerHTML = analysesHtml;
 
+                    // Load uploads
+                    loadClientUploads(clientId);
+
                     document.getElementById('clientModal').classList.add('active');
                 }
             } catch (err) {
@@ -682,6 +793,138 @@
         // Close modal on outside click
         document.getElementById('clientModal').onclick = function(e) {
             if (e.target === this) closeClientModal();
+        };
+
+        // Upload modal functions
+        function openUploadModal(type) {
+            if (!currentClientId) {
+                showToast('Please select a client first', 'error');
+                return;
+            }
+            if (type === 'cra') {
+                document.getElementById('cra_client_id').value = currentClientId;
+                document.getElementById('uploadCRAModal').classList.add('active');
+            } else if (type === 'letter') {
+                document.getElementById('letter_client_id').value = currentClientId;
+                document.getElementById('uploadLetterModal').classList.add('active');
+            }
+        }
+
+        function closeUploadModal(type) {
+            if (type === 'cra') {
+                document.getElementById('uploadCRAModal').classList.remove('active');
+                document.getElementById('uploadCRAForm').reset();
+            } else if (type === 'letter') {
+                document.getElementById('uploadLetterModal').classList.remove('active');
+                document.getElementById('uploadLetterForm').reset();
+            }
+        }
+
+        // Handle CRA response upload
+        document.getElementById('uploadCRAForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                showToast('Uploading CRA response...', 'success');
+                const res = await fetch('/api/client-manager/upload-cra-response', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    closeUploadModal('cra');
+                    // Refresh client uploads in modal
+                    loadClientUploads(currentClientId);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        };
+
+        // Handle letter sent upload
+        document.getElementById('uploadLetterForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                showToast('Uploading letter...', 'success');
+                const res = await fetch('/api/client-manager/upload-letter-sent', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message);
+                    closeUploadModal('letter');
+                    // Refresh client uploads in modal
+                    loadClientUploads(currentClientId);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        };
+
+        // Load client uploads
+        async function loadClientUploads(clientId) {
+            try {
+                const res = await fetch(`/api/client-manager/client/${clientId}/uploads`);
+                const data = await res.json();
+                if (data.success) {
+                    let uploadsHtml = '<div style="display: flex; gap: 20px; margin-top: 20px;">';
+
+                    // CRA Responses section
+                    uploadsHtml += '<div style="flex: 1;"><h3 style="margin-bottom: 10px;">CRA Responses (' + data.cra_responses.length + ')</h3>';
+                    if (data.cra_responses.length) {
+                        data.cra_responses.forEach(r => {
+                            uploadsHtml += `<div class="analysis-item">
+                                <div>
+                                    <strong>${r.bureau || 'Unknown'}</strong> - Round ${r.dispute_round}<br>
+                                    <small style="color: #64748b;">${r.response_type} | ${r.received_date || 'No date'}</small>
+                                </div>
+                                <a href="/api/client-manager/download/${r.file_path}" class="action-btn" target="_blank">Download</a>
+                            </div>`;
+                        });
+                    } else {
+                        uploadsHtml += '<p style="color: #64748b; font-size: 13px;">No CRA responses uploaded</p>';
+                    }
+                    uploadsHtml += '</div>';
+
+                    // Letters Sent section
+                    uploadsHtml += '<div style="flex: 1;"><h3 style="margin-bottom: 10px;">Letters Sent (' + data.letters_sent.length + ')</h3>';
+                    if (data.letters_sent.length) {
+                        data.letters_sent.forEach(l => {
+                            uploadsHtml += `<div class="analysis-item">
+                                <div>
+                                    <strong>${l.bureau || 'Unknown'}</strong> - Round ${l.round_number}<br>
+                                    <small style="color: #64748b;">${l.sent_at || 'No date'}</small>
+                                </div>
+                                <a href="/api/client-manager/download/${l.file_path}" class="action-btn" target="_blank">Download</a>
+                            </div>`;
+                        });
+                    } else {
+                        uploadsHtml += '<p style="color: #64748b; font-size: 13px;">No letters uploaded</p>';
+                    }
+                    uploadsHtml += '</div></div>';
+
+                    document.getElementById('clientUploads').innerHTML = uploadsHtml;
+                }
+            } catch (err) {
+                console.error('Error loading uploads:', err);
+            }
+        }
+
+        // Close upload modals on outside click
+        document.getElementById('uploadCRAModal').onclick = function(e) {
+            if (e.target === this) closeUploadModal('cra');
+        };
+        document.getElementById('uploadLetterModal').onclick = function(e) {
+            if (e.target === this) closeUploadModal('letter');
         };
     </script>
 </body>
