@@ -6,6 +6,15 @@ import time
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.attributes import flag_modified
 
+# Initialize logging first
+from services.logging_config import (
+    setup_logging, init_request_logging,
+    app_logger, api_logger, db_logger, ai_logger, audit_logger,
+    log_error, log_audit, log_ai_request, log_performance, timed
+)
+setup_logging()
+app_logger.info("Starting FCRA Litigation Platform...")
+
 # API Configuration
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '') or os.environ.get('FCRA Automation Secure', '')
 if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHROPIC_API_KEY) < 20:
@@ -67,6 +76,10 @@ from database import APIKey, APIRequest, APIWebhook, API_SCOPES, WEBHOOK_EVENTS,
 import json
 
 app = Flask(__name__)
+
+# Initialize request/response logging
+init_request_logging(app)
+app_logger.info("Flask app initialized")
 
 # Secret key for session management (use environment variable or generate secure key)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
@@ -1941,7 +1954,16 @@ NO templates or placeholders. Extract real account names, bureaus, violations.
                 print(f"   Regular input: ${regular_input_cost:.4f}")
             print(f"   Output: ${output_cost:.4f}")
             print(f"   TOTAL: ${total_cost:.4f}")
-            
+
+            # Log AI usage for monitoring
+            log_ai_request(
+                model='claude-sonnet-4-20250514',
+                tokens_in=total_input_tokens,
+                tokens_out=output_tokens,
+                cost=total_cost,
+                duration_ms=0  # Will add timing later
+            )
+
             if cache_read_tokens > 0:
                 print(f"\n🎉 SAVINGS:")
                 print(f"   Without caching: ${cost_without_cache:.4f}")
@@ -10094,7 +10116,13 @@ def api_create_client():
         
         db.add(client)
         db.commit()
-        
+
+        # Audit log: Client created
+        log_audit('CLIENT_CREATED',
+                  user_id=session.get('staff_id'),
+                  client_id=client.id,
+                  details={'name': client.name, 'email': client.email})
+
         try:
             WorkflowTriggersService.evaluate_triggers('case_created', {
                 'client_id': client.id,
@@ -10104,11 +10132,12 @@ def api_create_client():
                 'plan': 'manual'
             })
         except Exception as wf_error:
-            print(f"⚠️  Workflow trigger error (non-fatal): {wf_error}")
-        
+            app_logger.warning(f"Workflow trigger error (non-fatal): {wf_error}")
+
         return jsonify({'success': True, 'client_id': client.id})
     except Exception as e:
         db.rollback()
+        log_error(e, context={'action': 'create_client'})
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
