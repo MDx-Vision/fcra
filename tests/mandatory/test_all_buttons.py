@@ -43,13 +43,13 @@ async def click_all_buttons():
         ]
 
         for url in pages:
-            await test_buttons_on_page(page, url)
+            await _run_buttons_on_page(page, url)
 
         await browser.close()
 
     save_results()
 
-async def test_buttons_on_page(page, url):
+async def _run_buttons_on_page(page, url):
     """Find and click every button on a page"""
 
     RESULTS["log"].append(f"\n=== Scanning: {url} ===")

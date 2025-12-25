@@ -33,13 +33,13 @@ async def test_all_modals():
         ]
 
         for url in pages:
-            await test_modals_on_page(page, url)
+            await _run_modals_on_page(page, url)
 
         await browser.close()
 
     save_results()
 
-async def test_modals_on_page(page, url):
+async def _run_modals_on_page(page, url):
     """Find and test every modal on a page"""
 
     RESULTS["log"].append(f"\n=== Testing modals on: {url} ===")

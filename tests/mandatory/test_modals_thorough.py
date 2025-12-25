@@ -66,13 +66,13 @@ async def test_all_modals():
         page = await context.new_page()
 
         for url, modal_ids in MODALS_BY_PAGE.items():
-            await test_modals_on_page(page, url, modal_ids)
+            await _run_modals_on_page(page, url, modal_ids)
 
         await browser.close()
 
     save_results()
 
-async def test_modals_on_page(page, url, modal_ids):
+async def _run_modals_on_page(page, url, modal_ids):
     """Test each modal on a page: open it, verify it displays, close it"""
 
     print(f"\n{'='*60}")
@@ -97,7 +97,7 @@ async def test_modals_on_page(page, url, modal_ids):
         return
 
     for modal_id in modal_ids:
-        modal_result = await test_single_modal(page, modal_id, url)
+        modal_result = await _run_single_modal(page, modal_id, url)
         page_result["modals"].append(modal_result)
         if modal_result["found"]:
             page_result["modals_found"] += 1
@@ -107,7 +107,7 @@ async def test_modals_on_page(page, url, modal_ids):
 
     RESULTS["pages"].append(page_result)
 
-async def test_single_modal(page, modal_id, page_url):
+async def _run_single_modal(page, modal_id, page_url):
     """Test a single modal: open, verify visible, close
 
     Note: This app uses CSS class 'active' for modal visibility, NOT display:none/flex.

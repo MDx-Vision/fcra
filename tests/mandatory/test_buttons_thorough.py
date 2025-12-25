@@ -94,13 +94,13 @@ async def test_all_buttons():
         page = await context.new_page()
 
         for url in PAGES_TO_TEST:
-            await test_buttons_on_page(page, url)
+            await _run_buttons_on_page(page, url)
 
         await browser.close()
 
     save_results()
 
-async def test_buttons_on_page(page, url):
+async def _run_buttons_on_page(page, url):
     """Find and test every button on a page"""
 
     print(f"\n{'='*60}")
@@ -130,14 +130,14 @@ async def test_buttons_on_page(page, url):
     RESULTS["buttons_found"] += len(buttons)
 
     for i, button in enumerate(buttons):
-        button_result = await test_single_button(page, button, i, url)
+        button_result = await _run_single_button(page, button, i, url)
         page_result["buttons"].append(button_result)
         page_result["buttons_tested"] += 1
         RESULTS["buttons_tested"] += 1
 
     RESULTS["pages"].append(page_result)
 
-async def test_single_button(page, button, index, page_url):
+async def _run_single_button(page, button, index, page_url):
     """Test a single button and determine its status"""
 
     result = {

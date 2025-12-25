@@ -1,140 +1,140 @@
 {
-  "timestamp": "2025-12-07T17:51:30.374211",
+  "timestamp": "2025-12-25T22:12:27.396396",
   "forms_tested": 12,
-  "forms_passed": 7,
-  "forms_failed": 5,
+  "forms_passed": 0,
+  "forms_failed": 12,
   "submissions": [
     {
       "name": "Client Signup",
       "url": "/signup",
       "priority": "critical",
-      "page_loaded": true,
+      "page_loaded": false,
       "modal_opened": false,
-      "fields_filled": 12,
+      "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "FAIL",
-      "notes": ""
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to \""
     },
     {
       "name": "Staff Login",
       "url": "/staff/login",
       "priority": "critical",
-      "page_loaded": true,
+      "page_loaded": false,
       "modal_opened": false,
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "FILL_FAILED",
-      "notes": "Could not fill any fields"
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating"
     },
     {
       "name": "Portal Login",
       "url": "/portal/login",
       "priority": "critical",
-      "page_loaded": true,
+      "page_loaded": false,
       "modal_opened": false,
-      "fields_filled": 2,
-      "submitted": true,
-      "success_detected": true,
-      "status": "PASS",
-      "notes": ""
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/portal/login\nCall log:\n  - navigatin"
     },
     {
       "name": "Add Staff Member",
       "url": "/dashboard/staff",
       "priority": "critical",
-      "page_loaded": true,
-      "modal_opened": true,
-      "fields_filled": 5,
-      "submitted": true,
-      "success_detected": true,
-      "status": "PASS",
-      "notes": ""
+      "page_loaded": false,
+      "modal_opened": false,
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/staff\nCall log:\n  - naviga"
     },
     {
       "name": "Save Settings",
       "url": "/dashboard/settings",
       "priority": "critical",
-      "page_loaded": true,
+      "page_loaded": false,
       "modal_opened": false,
-      "fields_filled": 2,
-      "submitted": true,
-      "success_detected": true,
-      "status": "PASS",
-      "notes": ""
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/settings\nCall log:\n  - nav"
     },
     {
       "name": "Add Affiliate",
       "url": "/dashboard/affiliates",
       "priority": "important",
-      "page_loaded": true,
-      "modal_opened": true,
-      "fields_filled": 7,
-      "submitted": true,
-      "success_detected": true,
-      "status": "PASS",
-      "notes": ""
+      "page_loaded": false,
+      "modal_opened": false,
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/affiliates\nCall log:\n  - n"
     },
     {
       "name": "Add Case Law",
       "url": "/dashboard/case-law",
       "priority": "important",
-      "page_loaded": true,
-      "modal_opened": true,
-      "fields_filled": 8,
-      "submitted": true,
-      "success_detected": true,
-      "status": "PASS",
-      "notes": ""
+      "page_loaded": false,
+      "modal_opened": false,
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/case-law\nCall log:\n  - nav"
     },
     {
       "name": "Create Pattern",
       "url": "/dashboard/patterns",
       "priority": "important",
-      "page_loaded": true,
-      "modal_opened": true,
-      "fields_filled": 3,
+      "page_loaded": false,
+      "modal_opened": false,
+      "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "SUBMIT_FAILED",
-      "notes": "Could not click submit button"
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/patterns\nCall log:\n  - nav"
     },
     {
       "name": "Create Organization (Franchise)",
       "url": "/dashboard/franchise",
       "priority": "important",
-      "page_loaded": true,
-      "modal_opened": true,
-      "fields_filled": 9,
-      "submitted": true,
-      "success_detected": true,
-      "status": "PASS",
-      "notes": ""
+      "page_loaded": false,
+      "modal_opened": false,
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/franchise\nCall log:\n  - na"
     },
     {
       "name": "Create Billing Plan",
       "url": "/dashboard/billing",
       "priority": "important",
-      "page_loaded": true,
-      "modal_opened": true,
-      "fields_filled": 4,
-      "submitted": true,
+      "page_loaded": false,
+      "modal_opened": false,
+      "fields_filled": 0,
+      "submitted": false,
       "success_detected": false,
-      "status": "ERROR_SHOWN",
-      "notes": "Error: Stripe Not Connected"
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/billing\nCall log:\n  - navi"
     },
     {
       "name": "Import Client",
       "url": "/dashboard/import",
       "priority": "secondary",
-      "page_loaded": true,
+      "page_loaded": false,
       "modal_opened": false,
-      "fields_filled": 4,
-      "submitted": true,
-      "success_detected": true,
-      "status": "PASS",
-      "notes": ""
+      "fields_filled": 0,
+      "submitted": false,
+      "success_detected": false,
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/import\nCall log:\n  - navig"
     },
     {
       "name": "Create White-Label Tenant",
@@ -145,8 +145,8 @@
       "fields_filled": 0,
       "submitted": false,
       "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 500"
+      "status": "ERROR",
+      "notes": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/white-label\nCall log:\n  - "
     }
   ]
 }

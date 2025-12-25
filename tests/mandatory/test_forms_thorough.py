@@ -246,14 +246,14 @@ async def test_all_forms():
         page = await context.new_page()
 
         for url, form_ids in PAGES_WITH_FORMS:
-            await test_forms_on_page(page, url, form_ids)
+            await _run_forms_on_page(page, url, form_ids)
 
         await browser.close()
 
     calculate_totals()
     save_results()
 
-async def test_forms_on_page(page, url, expected_form_ids):
+async def _run_forms_on_page(page, url, expected_form_ids):
     """Find all forms on a page and test each one"""
 
     print(f"\n{'='*60}")

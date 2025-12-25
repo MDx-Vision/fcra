@@ -1,21 +1,244 @@
 {
-  "timestamp": "2025-12-06T22:36:34.292494",
-  "pages_tested": 45,
+  "timestamp": "2025-12-25T22:12:27.263062",
+  "pages_tested": 0,
   "forms_tested": 2,
-  "fields_tested": 3,
-  "buttons_clicked": 11,
-  "links_checked": 30,
+  "fields_tested": 0,
+  "buttons_clicked": 0,
+  "links_checked": 0,
   "modals_tested": 0,
-  "edge_cases_tested": 23,
-  "responsive_tests": 12,
-  "accessibility_tests": 3,
-  "issues_found": [],
-  "issues_fixed": [],
-  "passed": 48,
-  "failed": 0,
-  "console_errors": [
-    "Error loading doc status for client 24 TypeError: Failed to fetch\n    at loadAllDocumentStatuses (http://localhost:5001/dashboard/contacts:2883:44)",
-    "Error loading common agencies: TypeError: Failed to fetch\n    at loadCommonAgencies (http://localhost:5001/dashboard/automation-tools:2967:40)\n    at http://localhost:5001/dashboard/automation-tools:3110:9"
+  "edge_cases_tested": 0,
+  "responsive_tests": 0,
+  "accessibility_tests": 0,
+  "issues_found": [
+    {
+      "type": "page_error",
+      "page": "/",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/\nCall log:\n  - navigating to \"http:/"
+    },
+    {
+      "type": "page_error",
+      "page": "/signup",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to \""
+    },
+    {
+      "type": "page_error",
+      "page": "/staff/login",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating"
+    },
+    {
+      "type": "page_error",
+      "page": "/portal/login",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/portal/login\nCall log:\n  - navigatin"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard\nCall log:\n  - navigating t"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/clients",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/clients\nCall log:\n  - navi"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/signups",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/signups\nCall log:\n  - navi"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/cases",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/cases\nCall log:\n  - naviga"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/settlements",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/settlements\nCall log:\n  - "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/staff",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/staff\nCall log:\n  - naviga"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/analytics",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/analytics\nCall log:\n  - na"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/credit-tracker",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-tracker\nCall log:\n "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/calendar",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/calendar\nCall log:\n  - nav"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/contacts",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/contacts\nCall log:\n  - nav"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/automation-tools",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/automation-tools\nCall log:"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/letter-queue",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/letter-queue\nCall log:\n  -"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/demand-generator",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/demand-generator\nCall log:"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/import",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/import\nCall log:\n  - navig"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/documents",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/documents\nCall log:\n  - na"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/settings",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/settings\nCall log:\n  - nav"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/integrations",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/integrations\nCall log:\n  -"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/billing",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/billing\nCall log:\n  - navi"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/tasks",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/tasks\nCall log:\n  - naviga"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/workflows",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/workflows\nCall log:\n  - na"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/ml-insights",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/ml-insights\nCall log:\n  - "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/white-label",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/white-label\nCall log:\n  - "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/whitelabel",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/whitelabel\nCall log:\n  - n"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/franchise",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/franchise\nCall log:\n  - na"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/affiliates",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/affiliates\nCall log:\n  - n"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/triage",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/triage\nCall log:\n  - navig"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/escalation",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/escalation\nCall log:\n  - n"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/case-law",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/case-law\nCall log:\n  - nav"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/knowledge-base",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/knowledge-base\nCall log:\n "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/sops",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/sops\nCall log:\n  - navigat"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/chexsystems",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/chexsystems\nCall log:\n  - "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/specialty-bureaus",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/specialty-bureaus\nCall log"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/furnishers",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/furnishers\nCall log:\n  - n"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/patterns",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/patterns\nCall log:\n  - nav"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/sol",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/sol\nCall log:\n  - navigati"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/cfpb",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/cfpb\nCall log:\n  - navigat"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/frivolousness",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/frivolousness\nCall log:\n  "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/predictive",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/predictive\nCall log:\n  - n"
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/credit-import",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import\nCall log:\n  "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/performance",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/performance\nCall log:\n  - "
+    },
+    {
+      "type": "page_error",
+      "page": "/dashboard/suspense-accounts",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/suspense-accounts\nCall log"
+    }
   ],
+  "issues_fixed": [],
+  "passed": 0,
+  "failed": 48,
+  "console_errors": [],
   "page_errors": []
 }

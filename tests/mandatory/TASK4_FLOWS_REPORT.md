@@ -1,41 +1,37 @@
 # TASK 4: END-TO-END FLOW RESULTS
 
-**Timestamp:** 2025-12-06T23:16:26.604763
+**Timestamp:** 2025-12-25T22:12:27.377084
 
 ## Summary
 | Metric | Count |
 |--------|-------|
 | Flows Tested | 6 |
-| Flows Passed | 5 |
-| Flows Failed | 1 |
-| Total Steps | 12 |
-| Steps Passed | 11 |
+| Flows Passed | 0 |
+| Flows Failed | 6 |
+| Total Steps | 6 |
+| Steps Passed | 0 |
 
 ## Flow Details
 
-### Client Signup (PASS)
-- [+] Load signup page
-- [+] Fill personal info
-- [+] Navigate to step 2
-
-### Staff Login (PARTIAL)
-- [+] Load login page
+### Client Signup (PARTIAL)
 - [-] Error
 
-### Client Management (PASS)
-- [+] Load clients page
+### Staff Login (PARTIAL)
+- [-] Error
 
-### Case Management (PASS)
-- [+] Load cases page
-- [+] View case list (0 items)
+### Client Management (PARTIAL)
+- [-] Error
 
-### Settlement Flow (PASS)
-- [+] Load settlements page
-- [+] View settlements (1 items)
+### Case Management (PARTIAL)
+- [-] Error
 
-### Client Portal (PASS)
-- [+] Load portal login
-- [+] Portal form exists
+### Settlement Flow (PARTIAL)
+- [-] Error
+
+### Client Portal (PARTIAL)
+- [-] Error
 
 ## Issues
-- {'flow': 'Staff Login', 'error': 'ElementHandle.fill: Timeout 30000ms exceeded.\nCall log:\n    - fill("admin@test.com")\n  - attempting '}
+- {'flow': 'Client Signup', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to "'}
+- {'flow': 'Staff Login', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating'}
+- {'flow': 'Client Management', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/clients\nCall log:\n  - navi'}

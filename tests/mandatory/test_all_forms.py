@@ -69,7 +69,7 @@ async def test_all_forms():
 
         # Test each form
         for form_info in all_forms:
-            await test_single_form(page, form_info)
+            await _run_single_form(page, form_info)
 
         await browser.close()
 
@@ -172,7 +172,7 @@ async def discover_all_forms(page):
 
     return forms_found
 
-async def test_single_form(page, form_info):
+async def _run_single_form(page, form_info):
     """Test a single form with ALL edge cases"""
 
     url = form_info["url"]

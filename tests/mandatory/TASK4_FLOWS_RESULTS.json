@@ -1,76 +1,65 @@
 {
-  "timestamp": "2025-12-06T23:16:26.604763",
+  "timestamp": "2025-12-25T22:12:27.377084",
   "flows_tested": 6,
-  "flows_passed": 5,
-  "flows_failed": 1,
-  "steps_total": 12,
-  "steps_passed": 11,
+  "flows_passed": 0,
+  "flows_failed": 6,
+  "steps_total": 6,
+  "steps_passed": 0,
   "issues": [
     {
+      "flow": "Client Signup",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to \""
+    },
+    {
       "flow": "Staff Login",
-      "error": "ElementHandle.fill: Timeout 30000ms exceeded.\nCall log:\n    - fill(\"admin@test.com\")\n  - attempting "
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating"
+    },
+    {
+      "flow": "Client Management",
+      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/clients\nCall log:\n  - navi"
     }
   ],
   "flow_details": {
     "Client Signup": [
       {
-        "step": "Load signup page",
-        "status": "PASS"
-      },
-      {
-        "step": "Fill personal info",
-        "status": "PASS"
-      },
-      {
-        "step": "Navigate to step 2",
-        "status": "PASS"
+        "step": "Error",
+        "status": "FAIL",
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to \""
       }
     ],
     "Staff Login": [
       {
-        "step": "Load login page",
-        "status": "PASS"
-      },
-      {
         "step": "Error",
         "status": "FAIL",
-        "error": "ElementHandle.fill: Timeout 30000ms exceeded.\nCall log:\n    - fill(\"admin@test.com\")\n  - attempting "
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating"
       }
     ],
     "Client Management": [
       {
-        "step": "Load clients page",
-        "status": "PASS"
+        "step": "Error",
+        "status": "FAIL",
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/clients\nCall log:\n  - navi"
       }
     ],
     "Case Management": [
       {
-        "step": "Load cases page",
-        "status": "PASS"
-      },
-      {
-        "step": "View case list (0 items)",
-        "status": "PASS"
+        "step": "Error",
+        "status": "FAIL",
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/cases\nCall log:\n  - naviga"
       }
     ],
     "Settlement Flow": [
       {
-        "step": "Load settlements page",
-        "status": "PASS"
-      },
-      {
-        "step": "View settlements (1 items)",
-        "status": "PASS"
+        "step": "Error",
+        "status": "FAIL",
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/settlements\nCall log:\n  - "
       }
     ],
     "Client Portal": [
       {
-        "step": "Load portal login",
-        "status": "PASS"
-      },
-      {
-        "step": "Portal form exists",
-        "status": "PASS"
+        "step": "Error",
+        "status": "FAIL",
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/portal/login\nCall log:\n  - navigatin"
       }
     ]
   }

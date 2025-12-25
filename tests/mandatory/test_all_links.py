@@ -43,13 +43,13 @@ async def test_all_links():
         tested_links = set()
 
         for url in pages:
-            await test_links_on_page(page, url, tested_links)
+            await _run_links_on_page(page, url, tested_links)
 
         await browser.close()
 
     save_results()
 
-async def test_links_on_page(page, url, tested_links):
+async def _run_links_on_page(page, url, tested_links):
     """Find and test every link on a page"""
 
     RESULTS["log"].append(f"\n=== Scanning: {url} ===")

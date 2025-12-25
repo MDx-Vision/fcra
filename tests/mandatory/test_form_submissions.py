@@ -257,13 +257,13 @@ async def test_all_form_submissions():
         page = await context.new_page()
 
         for form_test in FORM_TESTS:
-            await test_single_form_submission(page, form_test)
+            await _run_single_form_submission(page, form_test)
 
         await browser.close()
 
     save_results()
 
-async def test_single_form_submission(page, form_test):
+async def _run_single_form_submission(page, form_test):
     """Test a single form: fill, submit, verify"""
 
     name = form_test["name"]

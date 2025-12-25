@@ -26,18 +26,18 @@ async def test_all_flows():
         context = await browser.new_context()
         page = await context.new_page()
 
-        await test_flow_signup(page)
-        await test_flow_staff_login(page)
-        await test_flow_client_management(page)
-        await test_flow_case_management(page)
-        await test_flow_settlement(page)
-        await test_flow_client_portal(page)
+        await _run_flow_signup(page)
+        await _run_flow_staff_login(page)
+        await _run_flow_client_management(page)
+        await _run_flow_case_management(page)
+        await _run_flow_settlement(page)
+        await _run_flow_client_portal(page)
 
         await browser.close()
 
     save_results()
 
-async def test_flow_signup(page):
+async def _run_flow_signup(page):
     """FLOW 1: Complete signup flow"""
     flow_name = "Client Signup"
     steps = []
@@ -74,7 +74,7 @@ async def test_flow_signup(page):
     RESULTS["steps_total"] += len(steps)
     RESULTS["flow_details"][flow_name] = steps
 
-async def test_flow_staff_login(page):
+async def _run_flow_staff_login(page):
     """FLOW 2: Staff login and dashboard access"""
     flow_name = "Staff Login"
     steps = []
@@ -119,7 +119,7 @@ async def test_flow_staff_login(page):
     RESULTS["steps_total"] += len(steps)
     RESULTS["flow_details"][flow_name] = steps
 
-async def test_flow_client_management(page):
+async def _run_flow_client_management(page):
     """FLOW 3: Client CRUD operations"""
     flow_name = "Client Management"
     steps = []
@@ -154,7 +154,7 @@ async def test_flow_client_management(page):
     RESULTS["steps_total"] += len(steps)
     RESULTS["flow_details"][flow_name] = steps
 
-async def test_flow_case_management(page):
+async def _run_flow_case_management(page):
     """FLOW 4: Case management"""
     flow_name = "Case Management"
     steps = []
@@ -178,7 +178,7 @@ async def test_flow_case_management(page):
     RESULTS["steps_total"] += len(steps)
     RESULTS["flow_details"][flow_name] = steps
 
-async def test_flow_settlement(page):
+async def _run_flow_settlement(page):
     """FLOW 5: Settlement tracking"""
     flow_name = "Settlement Flow"
     steps = []
@@ -202,7 +202,7 @@ async def test_flow_settlement(page):
     RESULTS["steps_total"] += len(steps)
     RESULTS["flow_details"][flow_name] = steps
 
-async def test_flow_client_portal(page):
+async def _run_flow_client_portal(page):
     """FLOW 6: Client portal access"""
     flow_name = "Client Portal"
     steps = []

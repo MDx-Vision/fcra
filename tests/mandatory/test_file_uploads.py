@@ -50,13 +50,13 @@ async def test_file_uploads():
         ]
 
         for url in pages_with_uploads:
-            await test_uploads_on_page(page, url)
+            await _run_uploads_on_page(page, url)
 
         await browser.close()
 
     save_results()
 
-async def test_uploads_on_page(page, url):
+async def _run_uploads_on_page(page, url):
     """Test file uploads on a specific page"""
 
     RESULTS["log"].append(f"\n=== Testing uploads on: {url} ===")
@@ -72,20 +72,20 @@ async def test_uploads_on_page(page, url):
             RESULTS["log"].append(f"  Testing file input #{i}")
 
             for filename, content, mime in TEST_FILES["valid"]:
-                await test_single_upload(page, file_input, filename, content, "valid")
+                await _run_single_upload(page, file_input, filename, content, "valid")
 
             for filename, content, mime in TEST_FILES["invalid_should_reject"]:
-                await test_single_upload(page, file_input, filename, content, "invalid")
+                await _run_single_upload(page, file_input, filename, content, "invalid")
                 RESULTS["security_tests"] += 1
 
             for filename, content, mime in TEST_FILES["malicious_names"]:
-                await test_single_upload(page, file_input, filename, content, "malicious")
+                await _run_single_upload(page, file_input, filename, content, "malicious")
                 RESULTS["security_tests"] += 1
 
     except Exception as e:
         RESULTS["log"].append(f"  ERROR: {str(e)[:100]}")
 
-async def test_single_upload(page, file_input, filename, content, test_type):
+async def _run_single_upload(page, file_input, filename, content, test_type):
     """Test uploading a single file"""
 
     try:

@@ -38,11 +38,11 @@ async def test_cross_browser():
         ]
 
         for browser_name, browser_type in browsers:
-            await test_browser(browser_name, browser_type)
+            await _run_browser(browser_name, browser_type)
 
     save_results()
 
-async def test_browser(browser_name, browser_type):
+async def _run_browser(browser_name, browser_type):
     """Test all critical functionality in a specific browser"""
 
     print(f"\n=== Testing {browser_name} ===")

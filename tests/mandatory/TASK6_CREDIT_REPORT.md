@@ -1,19 +1,20 @@
 # TASK 6: CREDIT REPORT VIEWER RESULTS
 
-**Timestamp:** 2025-12-06T23:18:19.535442
+**Timestamp:** 2025-12-25T22:12:27.386498
 
 ## Summary
 | Metric | Count |
 |--------|-------|
 | Tests Run | 5 |
-| Tests Passed | 5 |
-| Tests Failed | 0 |
+| Tests Passed | 0 |
+| Tests Failed | 5 |
 
 ## Test Log
-- [PASS] Credit import page loads
-- [PASS] Credit tracker page loads
-- [INFO] No file upload input found on credit-import page
-- [PASS] Analytics page has 68 chart elements
-- [INFO] No generate button found on letter-queue
+- [FAIL] Credit import page error: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
 
 ## Issues
+- {'test': 'credit_import_page', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import\nCall log:\n  '}
+- {'test': 'credit_tracker_page', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-tracker\nCall log:\n '}
+- {'test': 'credit_upload', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import\nCall log:\n  '}
+- {'test': 'credit_analysis', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/analytics\nCall log:\n  - na'}
+- {'test': 'dispute_generation', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/letter-queue\nCall log:\n  -'}

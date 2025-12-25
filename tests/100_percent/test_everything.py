@@ -156,49 +156,49 @@ async def test_everything():
         log("\n" + "=" * 40)
         log("TESTING ALL PAGES")
         log("=" * 40)
-        await test_all_pages(page)
+        await _run_all_pages(page)
 
         # Test all forms with edge cases
         log("\n" + "=" * 40)
         log("TESTING ALL FORMS WITH EDGE CASES")
         log("=" * 40)
-        await test_all_forms(page)
+        await _run_all_forms(page)
 
         # Test all buttons
         log("\n" + "=" * 40)
         log("TESTING ALL BUTTONS")
         log("=" * 40)
-        await test_all_buttons(page)
+        await _run_all_buttons(page)
 
         # Test all links
         log("\n" + "=" * 40)
         log("TESTING ALL LINKS")
         log("=" * 40)
-        await test_all_links(page)
+        await _run_all_links(page)
 
         # Test all modals
         log("\n" + "=" * 40)
         log("TESTING ALL MODALS")
         log("=" * 40)
-        await test_all_modals(page)
+        await _run_all_modals(page)
 
         # Test responsive design
         log("\n" + "=" * 40)
         log("TESTING RESPONSIVE DESIGN")
         log("=" * 40)
-        await test_responsive(page)
+        await _run_responsive(page)
 
         # Test accessibility
         log("\n" + "=" * 40)
         log("TESTING ACCESSIBILITY")
         log("=" * 40)
-        await test_accessibility(page)
+        await _run_accessibility(page)
 
         # Test critical flows
         log("\n" + "=" * 40)
         log("TESTING CRITICAL FLOWS")
         log("=" * 40)
-        await test_critical_flows(page)
+        await _run_critical_flows(page)
 
         await browser.close()
 
@@ -216,7 +216,7 @@ def capture_console(msg):
 def capture_error(err):
     RESULTS["page_errors"].append(str(err))
 
-async def test_all_pages(page):
+async def _run_all_pages(page):
     """Test every single page loads without errors"""
 
     for url in ALL_PAGES:
@@ -247,20 +247,20 @@ async def test_all_pages(page):
             })
             log(f"  [ERROR] {url} - {str(e)[:50]}")
 
-async def test_all_forms(page):
+async def _run_all_forms(page):
     """Test every form with edge cases"""
 
     # Signup form
     log("  Testing signup form...")
-    await test_signup_form(page)
+    await _run_signup_form(page)
 
     # Login form
     log("  Testing staff login form...")
-    await test_login_form(page)
+    await _run_login_form(page)
 
     RESULTS["forms_tested"] += 2
 
-async def test_signup_form(page):
+async def _run_signup_form(page):
     """Test signup form with all edge cases"""
     try:
         await page.goto(f"{BASE_URL}/signup", wait_until="domcontentloaded", timeout=10000)
@@ -309,7 +309,7 @@ async def test_signup_form(page):
     except Exception as e:
         log(f"    Signup form error: {str(e)[:50]}")
 
-async def test_login_form(page):
+async def _run_login_form(page):
     """Test login form"""
     try:
         await page.goto(f"{BASE_URL}/staff/login", wait_until="domcontentloaded", timeout=10000)
@@ -335,7 +335,7 @@ async def test_login_form(page):
     except Exception as e:
         log(f"    Login form error: {str(e)[:50]}")
 
-async def test_all_buttons(page):
+async def _run_all_buttons(page):
     """Click every button on key pages"""
 
     pages_to_test = [
@@ -382,7 +382,7 @@ async def test_all_buttons(page):
         except Exception as e:
             log(f"  {url}: Error - {str(e)[:30]}")
 
-async def test_all_links(page):
+async def _run_all_links(page):
     """Test all links on main pages"""
 
     pages_to_test = ["/", "/dashboard"]
@@ -407,7 +407,7 @@ async def test_all_links(page):
         except:
             pass
 
-async def test_all_modals(page):
+async def _run_all_modals(page):
     """Test all modals open and close"""
 
     pages_with_modals = [
@@ -449,7 +449,7 @@ async def test_all_modals(page):
         except:
             pass
 
-async def test_responsive(page):
+async def _run_responsive(page):
     """Test responsive design at different viewports"""
 
     viewports = [
@@ -488,7 +488,7 @@ async def test_responsive(page):
 
         log(f"  {viewport['name']}: Tested {len(test_pages)} pages")
 
-async def test_accessibility(page):
+async def _run_accessibility(page):
     """Test basic accessibility"""
 
     await page.set_viewport_size({"width": 1920, "height": 1080})
@@ -540,22 +540,22 @@ async def test_accessibility(page):
 
         log(f"  {url}: Accessibility checked")
 
-async def test_critical_flows(page):
+async def _run_critical_flows(page):
     """Test end-to-end critical flows"""
 
     # Flow 1: Complete signup
     log("  Testing signup flow...")
-    await test_signup_flow(page)
+    await _run_signup_flow(page)
 
     # Flow 2: Staff login
     log("  Testing staff login flow...")
-    await test_staff_login_flow(page)
+    await _run_staff_login_flow(page)
 
     # Flow 3: Dashboard navigation
     log("  Testing dashboard navigation...")
-    await test_dashboard_navigation(page)
+    await _run_dashboard_navigation(page)
 
-async def test_signup_flow(page):
+async def _run_signup_flow(page):
     """Test complete signup flow"""
     try:
         await page.goto(f"{BASE_URL}/signup", wait_until="domcontentloaded", timeout=10000)
@@ -590,7 +590,7 @@ async def test_signup_flow(page):
         RESULTS["failed"] += 1
         log(f"    Signup flow: FAIL - {str(e)[:30]}")
 
-async def test_staff_login_flow(page):
+async def _run_staff_login_flow(page):
     """Test staff login"""
     try:
         await page.goto(f"{BASE_URL}/staff/login", wait_until="domcontentloaded", timeout=10000)
@@ -614,7 +614,7 @@ async def test_staff_login_flow(page):
         RESULTS["failed"] += 1
         log(f"    Staff login flow: FAIL - {str(e)[:30]}")
 
-async def test_dashboard_navigation(page):
+async def _run_dashboard_navigation(page):
     """Test navigating through dashboard"""
     try:
         await page.goto(f"{BASE_URL}/dashboard", wait_until="domcontentloaded", timeout=10000)

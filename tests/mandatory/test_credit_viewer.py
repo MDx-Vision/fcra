@@ -23,17 +23,17 @@ async def test_credit_viewer():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
 
-        await test_credit_import_page(page)
-        await test_credit_tracker_page(page)
-        await test_credit_upload(page)
-        await test_credit_analysis(page)
-        await test_dispute_generation(page)
+        await _run_credit_import_page(page)
+        await _run_credit_tracker_page(page)
+        await _run_credit_upload(page)
+        await _run_credit_analysis(page)
+        await _run_dispute_generation(page)
 
         await browser.close()
 
     save_results()
 
-async def test_credit_import_page(page):
+async def _run_credit_import_page(page):
     """Test 1: Credit import page loads"""
     RESULTS["tests_run"] += 1
 
@@ -52,7 +52,7 @@ async def test_credit_import_page(page):
         RESULTS["issues"].append({"test": "credit_import_page", "error": str(e)[:100]})
         RESULTS["log"].append(f"[FAIL] Credit import page error: {str(e)[:50]}")
 
-async def test_credit_tracker_page(page):
+async def _run_credit_tracker_page(page):
     """Test 2: Credit tracker page loads"""
     RESULTS["tests_run"] += 1
 
@@ -70,7 +70,7 @@ async def test_credit_tracker_page(page):
         RESULTS["tests_failed"] += 1
         RESULTS["issues"].append({"test": "credit_tracker_page", "error": str(e)[:100]})
 
-async def test_credit_upload(page):
+async def _run_credit_upload(page):
     """Test 3: Upload credit report file"""
     RESULTS["tests_run"] += 1
 
@@ -90,7 +90,7 @@ async def test_credit_upload(page):
         RESULTS["tests_failed"] += 1
         RESULTS["issues"].append({"test": "credit_upload", "error": str(e)[:100]})
 
-async def test_credit_analysis(page):
+async def _run_credit_analysis(page):
     """Test 4: Credit report analysis features"""
     RESULTS["tests_run"] += 1
 
@@ -110,7 +110,7 @@ async def test_credit_analysis(page):
         RESULTS["tests_failed"] += 1
         RESULTS["issues"].append({"test": "credit_analysis", "error": str(e)[:100]})
 
-async def test_dispute_generation(page):
+async def _run_dispute_generation(page):
     """Test 5: Generate disputes from credit report"""
     RESULTS["tests_run"] += 1
 

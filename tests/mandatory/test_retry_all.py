@@ -146,7 +146,7 @@ def log(msg):
     RESULTS["log"].append(msg)
 
 
-async def test_all_forms(page):
+async def _run_all_forms(page):
     """TASK 1: Test ALL 50 forms with 37 edge cases each"""
     log("\n" + "="*60)
     log("TASK 1: TESTING ALL 50 FORMS")
@@ -196,7 +196,7 @@ async def test_all_forms(page):
             RESULTS["issues"].append(f"Form error: {url} {form_selector} - {str(e)[:50]}")
 
 
-async def test_all_buttons(page):
+async def _run_all_buttons(page):
     """TASK 2: Click ALL 1,584 buttons - NO SKIPPING"""
     log("\n" + "="*60)
     log("TASK 2: CLICKING ALL BUTTONS")
@@ -254,7 +254,7 @@ async def test_all_buttons(page):
             log(f"[ERROR] {url}: {str(e)[:50]}")
 
 
-async def test_all_links(page):
+async def _run_all_links(page):
     """TASK 5: Test ALL 323 links - NO DEDUPLICATION"""
     log("\n" + "="*60)
     log("TASK 5: TESTING ALL LINKS")
@@ -307,7 +307,7 @@ async def test_all_links(page):
     log(f"\nTotal links found across all pages: {total_links}")
 
 
-async def test_modals(page):
+async def _run_modals(page):
     """TASK 3: Test ALL modals"""
     log("\n" + "="*60)
     log("TASK 3: TESTING MODALS")
@@ -357,7 +357,7 @@ async def test_modals(page):
             log(f"[ERROR] {url}: {str(e)[:50]}")
 
 
-async def test_flows(page):
+async def _run_flows(page):
     """TASK 4: Test ALL 6 flows - 6/6 must pass"""
     log("\n" + "="*60)
     log("TASK 4: TESTING ALL FLOWS")
@@ -445,11 +445,11 @@ async def main():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
 
-        await test_all_forms(page)
-        await test_all_buttons(page)
-        await test_all_links(page)
-        await test_modals(page)
-        await test_flows(page)
+        await _run_all_forms(page)
+        await _run_all_buttons(page)
+        await _run_all_links(page)
+        await _run_modals(page)
+        await _run_flows(page)
 
         await browser.close()
 
