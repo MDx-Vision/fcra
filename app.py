@@ -31,7 +31,7 @@ from flask import Flask, request, jsonify, render_template, send_file, session, 
 from flask_cors import CORS
 import os
 from datetime import datetime
-from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance, SpecialtyBureauDispute, SPECIALTY_BUREAUS, SPECIALTY_DISPUTE_TYPES, SPECIALTY_LETTER_TYPES, SPECIALTY_RESPONSE_OUTCOMES, CreditMonitoringCredential, CREDIT_MONITORING_SERVICES, LetterBatch, TradelineStatus, AutomationMetrics
+from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance, SpecialtyBureauDispute, SPECIALTY_BUREAUS, SPECIALTY_DISPUTE_TYPES, SPECIALTY_LETTER_TYPES, SPECIALTY_RESPONSE_OUTCOMES, CreditMonitoringCredential, CREDIT_MONITORING_SERVICES, LetterBatch, TradelineStatus, AutomationMetrics, ClientTag, ClientTagAssignment, UserQuickLink
 from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10677,6 +10677,328 @@ def api_toggle_client_document(client_id):
         db.rollback()
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# PHASE 8: TAG MANAGEMENT ENDPOINTS
+# ============================================================
+
+@app.route('/api/tags', methods=['GET'])
+@require_staff()
+def api_list_tags():
+    """List all client tags"""
+    db = get_db()
+    try:
+        tags = db.query(ClientTag).order_by(ClientTag.name).all()
+        return jsonify({
+            'success': True,
+            'tags': [{
+                'id': t.id,
+                'name': t.name,
+                'color': t.color,
+                'created_at': t.created_at.strftime('%Y-%m-%d') if t.created_at else None
+            } for t in tags]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tags', methods=['POST'])
+@require_staff()
+def api_create_tag():
+    """Create a new client tag"""
+    db = get_db()
+    try:
+        data = request.json
+        name = data.get('name', '').strip()
+        color = data.get('color', '#6366f1')
+
+        if not name:
+            return jsonify({'success': False, 'error': 'Tag name is required'}), 400
+
+        # Check for duplicate
+        existing = db.query(ClientTag).filter_by(name=name).first()
+        if existing:
+            return jsonify({'success': False, 'error': 'Tag already exists'}), 400
+
+        tag = ClientTag(name=name, color=color)
+        db.add(tag)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'tag': {
+                'id': tag.id,
+                'name': tag.name,
+                'color': tag.color
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tags/<int:tag_id>', methods=['PUT'])
+@require_staff()
+def api_update_tag(tag_id):
+    """Update a client tag"""
+    db = get_db()
+    try:
+        data = request.json
+        tag = db.query(ClientTag).filter_by(id=tag_id).first()
+        if not tag:
+            return jsonify({'success': False, 'error': 'Tag not found'}), 404
+
+        if 'name' in data:
+            new_name = data['name'].strip()
+            if new_name and new_name != tag.name:
+                existing = db.query(ClientTag).filter_by(name=new_name).first()
+                if existing:
+                    return jsonify({'success': False, 'error': 'Tag name already exists'}), 400
+                tag.name = new_name
+
+        if 'color' in data:
+            tag.color = data['color']
+
+        db.commit()
+        return jsonify({
+            'success': True,
+            'tag': {
+                'id': tag.id,
+                'name': tag.name,
+                'color': tag.color
+            }
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/tags/<int:tag_id>', methods=['DELETE'])
+@require_staff()
+def api_delete_tag(tag_id):
+    """Delete a client tag"""
+    db = get_db()
+    try:
+        tag = db.query(ClientTag).filter_by(id=tag_id).first()
+        if not tag:
+            return jsonify({'success': False, 'error': 'Tag not found'}), 404
+
+        # Delete all assignments first (cascade should handle this, but be explicit)
+        db.query(ClientTagAssignment).filter_by(tag_id=tag_id).delete()
+        db.delete(tag)
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Tag deleted'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/tags', methods=['GET'])
+@require_staff()
+def api_get_client_tags(client_id):
+    """Get tags assigned to a client"""
+    db = get_db()
+    try:
+        assignments = db.query(ClientTagAssignment).filter_by(client_id=client_id).all()
+        tag_ids = [a.tag_id for a in assignments]
+        tags = db.query(ClientTag).filter(ClientTag.id.in_(tag_ids)).all() if tag_ids else []
+
+        return jsonify({
+            'success': True,
+            'client_id': client_id,
+            'tags': [{
+                'id': t.id,
+                'name': t.name,
+                'color': t.color
+            } for t in tags]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/tags', methods=['POST'])
+@require_staff()
+def api_add_client_tag(client_id):
+    """Add a tag to a client"""
+    db = get_db()
+    try:
+        data = request.json
+        tag_id = data.get('tag_id')
+
+        if not tag_id:
+            return jsonify({'success': False, 'error': 'tag_id is required'}), 400
+
+        # Verify client exists
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Verify tag exists
+        tag = db.query(ClientTag).filter_by(id=tag_id).first()
+        if not tag:
+            return jsonify({'success': False, 'error': 'Tag not found'}), 404
+
+        # Check if already assigned
+        existing = db.query(ClientTagAssignment).filter_by(
+            client_id=client_id, tag_id=tag_id
+        ).first()
+        if existing:
+            return jsonify({'success': True, 'message': 'Tag already assigned'})
+
+        assignment = ClientTagAssignment(client_id=client_id, tag_id=tag_id)
+        db.add(assignment)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Tag added',
+            'tag': {'id': tag.id, 'name': tag.name, 'color': tag.color}
+        })
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/clients/<int:client_id>/tags/<int:tag_id>', methods=['DELETE'])
+@require_staff()
+def api_remove_client_tag(client_id, tag_id):
+    """Remove a tag from a client"""
+    db = get_db()
+    try:
+        assignment = db.query(ClientTagAssignment).filter_by(
+            client_id=client_id, tag_id=tag_id
+        ).first()
+
+        if not assignment:
+            return jsonify({'success': False, 'error': 'Tag not assigned to client'}), 404
+
+        db.delete(assignment)
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Tag removed'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================
+# PHASE 8: QUICK LINKS ENDPOINTS
+# ============================================================
+
+@app.route('/api/staff/quick-links', methods=['GET'])
+@require_staff()
+def api_get_quick_links():
+    """Get current staff member's quick links"""
+    db = get_db()
+    try:
+        staff_id = session.get('staff_id')
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+        links = db.query(UserQuickLink).filter_by(staff_id=staff_id).order_by(UserQuickLink.slot_number).all()
+
+        # Return as dict with slot numbers as keys
+        links_dict = {l.slot_number: {'label': l.label, 'url': l.url} for l in links}
+
+        return jsonify({
+            'success': True,
+            'quick_links': links_dict
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/staff/quick-links', methods=['POST'])
+@require_staff()
+def api_save_quick_link():
+    """Save a quick link for current staff member"""
+    db = get_db()
+    try:
+        staff_id = session.get('staff_id')
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+        data = request.json
+        slot_number = data.get('slot_number')
+        label = data.get('label', '').strip()
+        url = data.get('url', '').strip()
+
+        if not slot_number or slot_number < 1 or slot_number > 8:
+            return jsonify({'success': False, 'error': 'slot_number must be 1-8'}), 400
+
+        if not label or not url:
+            return jsonify({'success': False, 'error': 'label and url are required'}), 400
+
+        # Find existing or create new
+        existing = db.query(UserQuickLink).filter_by(
+            staff_id=staff_id, slot_number=slot_number
+        ).first()
+
+        if existing:
+            existing.label = label
+            existing.url = url
+        else:
+            link = UserQuickLink(
+                staff_id=staff_id,
+                slot_number=slot_number,
+                label=label,
+                url=url
+            )
+            db.add(link)
+
+        db.commit()
+        return jsonify({'success': True, 'message': 'Quick link saved'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/staff/quick-links/<int:slot_number>', methods=['DELETE'])
+@require_staff()
+def api_delete_quick_link(slot_number):
+    """Delete a quick link"""
+    db = get_db()
+    try:
+        staff_id = session.get('staff_id')
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+        link = db.query(UserQuickLink).filter_by(
+            staff_id=staff_id, slot_number=slot_number
+        ).first()
+
+        if not link:
+            return jsonify({'success': False, 'error': 'Quick link not found'}), 404
+
+        db.delete(link)
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Quick link deleted'})
+    except Exception as e:
+        db.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
@@ -25552,8 +25874,23 @@ def dashboard_client_manager():
     """Client manager for bulk and individual round/analysis management"""
     db = get_db()
     try:
-        # Get all clients with their latest analysis info
-        clients = db.query(Client).order_by(Client.name).all()
+        # Pagination parameters
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 25))
+
+        # Validate per_page
+        if per_page not in [10, 25, 50, 100]:
+            per_page = 25
+
+        # Get total count
+        total_clients = db.query(Client).count()
+        total_pages = (total_clients + per_page - 1) // per_page
+
+        # Get paginated clients with their latest analysis info
+        clients = db.query(Client).order_by(Client.name).offset((page - 1) * per_page).limit(per_page).all()
+
+        # Get all tags for the tag selector
+        all_tags = db.query(ClientTag).order_by(ClientTag.name).all()
 
         client_data = []
         for client in clients:
@@ -25563,11 +25900,16 @@ def dashboard_client_manager():
             report_count = db.query(CreditReport).filter_by(client_id=client.id).count()
             # Get analysis count
             analysis_count = db.query(Analysis).filter_by(client_id=client.id).count()
+            # Get client's tags
+            tag_assignments = db.query(ClientTagAssignment).filter_by(client_id=client.id).all()
+            tag_ids = [a.tag_id for a in tag_assignments]
+            client_tags = db.query(ClientTag).filter(ClientTag.id.in_(tag_ids)).all() if tag_ids else []
 
             client_data.append({
                 'id': client.id,
                 'name': client.name,
                 'email': client.email,
+                'phone': client.phone,
                 'current_round': client.current_dispute_round or 0,
                 'dispute_status': client.dispute_status or 'new',
                 'round_started_at': client.round_started_at.strftime('%Y-%m-%d') if client.round_started_at else None,
@@ -25576,10 +25918,29 @@ def dashboard_client_manager():
                 'latest_analysis_id': latest_analysis.id if latest_analysis else None,
                 'latest_analysis_stage': latest_analysis.stage if latest_analysis else None,
                 'latest_analysis_round': latest_analysis.dispute_round if latest_analysis else None,
-                'created_at': client.created_at.strftime('%Y-%m-%d') if client.created_at else None
+                'created_at': client.created_at.strftime('%Y-%m-%d') if client.created_at else None,
+                # Phase 8: Additional fields for BAG CRM parity
+                'status_2': client.status_2 or '',
+                'client_type': client.client_type or 'L',
+                'phone_verified': client.phone_verified or False,
+                'is_affiliate': client.is_affiliate or False,
+                'starred': client.starred or False,
+                'mark_1': client.mark_1 or False,
+                'mark_2': client.mark_2 or False,
+                'portal_posted': client.portal_posted or False,
+                'employer_company': client.employer_company or '',
+                'follow_up_date': client.follow_up_date.strftime('%Y-%m-%d') if client.follow_up_date else None,
+                'tags': [{'id': t.id, 'name': t.name, 'color': t.color} for t in client_tags]
             })
 
-        return render_template('client_manager.html', clients=client_data, active_page='client-manager')
+        return render_template('client_manager.html',
+                               clients=client_data,
+                               active_page='client-manager',
+                               page=page,
+                               per_page=per_page,
+                               total_clients=total_clients,
+                               total_pages=total_pages,
+                               all_tags=[{'id': t.id, 'name': t.name, 'color': t.color} for t in all_tags])
     except Exception as e:
         import traceback
         traceback.print_exc()

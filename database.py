@@ -203,11 +203,45 @@ class Client(Base):
     phone_verified = Column(Boolean, default=False)  # Phone verified checkbox
     portal_posted = Column(Boolean, default=False)  # Portal posted status
     assigned_to = Column(Integer, ForeignKey('staff.id'), nullable=True)  # Assigned staff member
+    employer_company = Column(String(255))  # Employer/company name for client
 
     organization_id = Column(Integer, nullable=True, index=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ClientTag(Base):
+    """Tags for organizing and categorizing clients"""
+    __tablename__ = 'client_tags'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False, unique=True)
+    color = Column(String(7), default='#6366f1')  # Hex color code
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ClientTagAssignment(Base):
+    """Many-to-many relationship between clients and tags"""
+    __tablename__ = 'client_tag_assignments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False, index=True)
+    tag_id = Column(Integer, ForeignKey('client_tags.id', ondelete='CASCADE'), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UserQuickLink(Base):
+    """Custom quick links for staff users (slots 1-8)"""
+    __tablename__ = 'user_quick_links'
+
+    id = Column(Integer, primary_key=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id', ondelete='CASCADE'), nullable=False, index=True)
+    slot_number = Column(Integer, nullable=False)  # 1-8
+    label = Column(String(50), nullable=False)
+    url = Column(String(500), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 
 class CreditReport(Base):
     __tablename__ = 'credit_reports'
@@ -4394,6 +4428,22 @@ def init_db():
         ("letter_queue", "notification_sent_at", "TIMESTAMP"),
         ("letter_queue", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("letter_queue", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Phase 8: BAG CRM Feature Parity - Tags and Quick Links
+        ("clients", "employer_company", "VARCHAR(255)"),
+        ("client_tags", "id", "SERIAL PRIMARY KEY"),
+        ("client_tags", "name", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("client_tags", "color", "VARCHAR(7) DEFAULT '#6366f1'"),
+        ("client_tags", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_tag_assignments", "id", "SERIAL PRIMARY KEY"),
+        ("client_tag_assignments", "client_id", "INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE"),
+        ("client_tag_assignments", "tag_id", "INTEGER NOT NULL REFERENCES client_tags(id) ON DELETE CASCADE"),
+        ("client_tag_assignments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("user_quick_links", "id", "SERIAL PRIMARY KEY"),
+        ("user_quick_links", "staff_id", "INTEGER NOT NULL REFERENCES staff(id) ON DELETE CASCADE"),
+        ("user_quick_links", "slot_number", "INTEGER NOT NULL"),
+        ("user_quick_links", "label", "VARCHAR(50) NOT NULL"),
+        ("user_quick_links", "url", "VARCHAR(500) NOT NULL"),
+        ("user_quick_links", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     conn = engine.connect()

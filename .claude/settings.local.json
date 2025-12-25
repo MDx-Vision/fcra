@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nPhase 8 Complete: BAG CRM Feature Parity - All Remaining Items\n\n## Database Changes\n- Added employer_company column to Client model\n- Created ClientTag model for tag management\n- Created ClientTagAssignment for client-tag relationships\n- Created UserQuickLink for custom quick links \\(slots 1-8\\)\n- Added migrations for all new tables and columns\n\n## API Endpoints\n- Tag CRUD: GET/POST /api/tags, PUT/DELETE /api/tags/<id>\n- Client tags: GET/POST/DELETE /api/clients/<id>/tags\n- Quick links: GET/POST /api/staff/quick-links, DELETE by slot\n\n## UI Enhancements \\(client_manager.html\\)\n- Version badge \\(v2.0\\) in header\n- Quick Links toolbar with 8 configurable slots\n- New columns: Type, Status 2, Phone Verified, Tags\n- Affiliate badges and star indicators\n- Pagination controls \\(10/25/50/100 rows per page\\)\n- Tag management modal\n- Quick links settings modal\n\n## Checklist Update\n- Phase 8 marked 100% complete\n- All 8 phases now complete\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}
