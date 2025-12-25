@@ -215,7 +215,7 @@
 - [x] Proper error handling in API endpoints
 - [x] Database migrations system (manual SQL for now)
 - [x] Add comprehensive logging (services/logging_config.py)
-- [x] Add unit tests for calculations (164 tests across all phases)
+- [x] Add unit tests for calculations (178 tests across all phases)
 - [x] Add integration tests for workflows
 - [x] GitHub Actions CI pipeline
 
