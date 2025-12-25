@@ -235,9 +235,9 @@
 - [ ] Environment variable management
 - [ ] API authentication/authorization
 - [x] Rate limiting (Flask-Limiter)
-- [ ] Input validation and sanitization
+- [x] Input validation and sanitization (services/input_validator.py)
 - [x] SQL injection prevention (using ORM)
-- [ ] XSS protection
+- [x] XSS protection (bleach sanitization + script removal)
 - [ ] HTTPS enforcement
 
 ---

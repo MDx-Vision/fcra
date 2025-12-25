@@ -229,7 +229,7 @@ def init_request_logging(app):
 
     @app.before_request
     def before_request():
-        from flask import g
+        from flask import g, request
         g.start_time = time.time()
         log_request(request)
 
@@ -243,6 +243,7 @@ def init_request_logging(app):
 
     @app.errorhandler(Exception)
     def handle_exception(e):
+        from flask import request
         log_error(e, context={'path': request.path, 'method': request.method})
         # Re-raise to let Flask handle it
         raise e

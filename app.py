@@ -18,6 +18,13 @@ app_logger.info("Starting FCRA Litigation Platform...")
 # Rate limiting
 from services.rate_limiter import init_rate_limiter, RATE_LIMITS
 
+# Input validation and sanitization
+from services.input_validator import (
+    validate_request_data, sanitize_dict, sanitize_string,
+    validate_email, validate_phone, detect_sql_injection, detect_xss,
+    sanitize_credit_report_html
+)
+
 # API Configuration
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '') or os.environ.get('FCRA Automation Secure', '')
 if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHROPIC_API_KEY) < 20:
@@ -693,8 +700,8 @@ def staff_logout():
 def api_staff_login():
     """API endpoint for staff login"""
     data = request.get_json() or {}
-    email = data.get('email', '').strip().lower()
-    password = data.get('password', '')
+    email = sanitize_string(data.get('email', '')).strip().lower()
+    password = data.get('password', '')  # Don't sanitize password - it needs to match hash
     
     if not email or not password:
         return jsonify({'success': False, 'error': 'Email and password required'}), 400
@@ -2857,11 +2864,13 @@ def analyze_and_generate_letters():
         if not data:
             print(f"❌ No JSON data received")
             return jsonify({'success': False, 'error': 'No JSON data in request'}), 400
-        
-        client_name = data.get('clientName')
-        client_email = data.get('clientEmail', '')
-        credit_provider = data.get('creditProvider', 'Unknown')
-        credit_report_html = data.get('creditReportHTML', '')
+
+        # Sanitize inputs
+        client_name = sanitize_string(data.get('clientName', ''), max_length=200)
+        client_email = sanitize_string(data.get('clientEmail', ''), max_length=255)
+        credit_provider = sanitize_string(data.get('creditProvider', 'Unknown'), max_length=100)
+        # Sanitize credit report HTML (remove scripts but preserve structure)
+        credit_report_html = sanitize_credit_report_html(data.get('creditReportHTML', ''))
         dispute_round = data.get('disputeRound', 1)
         analysis_mode = data.get('analysisMode', 'auto')
         
@@ -5999,12 +6008,12 @@ def portal_login():
     
     db = get_db()
     try:
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        
+        email = sanitize_string(request.form.get('email', '')).strip().lower()
+        password = request.form.get('password', '')  # Don't sanitize password
+
         if not email or not password:
             return render_template('portal_login.html', error='Email and password are required')
-        
+
         allowed, wait_time = check_rate_limit(email)
         if not allowed:
             minutes = wait_time // 60
@@ -10058,7 +10067,11 @@ def api_update_client_status(client_id):
     """Update client status and fields"""
     db = get_db()
     try:
-        data = request.json
+        # Sanitize all input data
+        data = sanitize_dict(request.json or {}, {
+            'email': 'email', 'phone': 'phone', 'phone_2': 'phone',
+            'mobile': 'phone', 'address_zip': 'zip', 'address_state': 'state'
+        })
         client = db.query(Client).filter_by(id=client_id).first()
         if not client:
             return jsonify({'success': False, 'error': 'Client not found'}), 404
@@ -10093,11 +10106,15 @@ def api_update_client_status(client_id):
 
 
 @app.route('/api/clients/create', methods=['POST'])
+@validate_request_data(
+    required_fields=['email'],
+    field_rules={'email': 'email', 'phone': 'phone', 'address_zip': 'zip', 'address_state': 'state'}
+)
 def api_create_client():
     """Create a new client"""
     db = get_db()
     try:
-        data = request.json
+        data = request.validated_data  # Use sanitized data
         
         first_name = data.get('first_name', '')
         last_name = data.get('last_name', '')
@@ -10569,10 +10586,11 @@ def api_client_notes(client_id):
             return jsonify({'success': True, 'notes': notes_data})
         else:
             data = request.json
+            # Sanitize note content to prevent XSS
             note = ClientNote(
                 client_id=client_id,
-                note_content=data.get('note_content'),
-                created_by=data.get('created_by', 'Admin')
+                note_content=sanitize_string(data.get('note_content', ''), max_length=10000),
+                created_by=sanitize_string(data.get('created_by', 'Admin'), max_length=100)
             )
             db.add(note)
             db.commit()
