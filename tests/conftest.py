@@ -2,11 +2,15 @@
 Shared pytest fixtures for all phase tests.
 """
 import pytest
+import pytest_asyncio
 import sys
 import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Base URL for browser tests
+BASE_URL = "http://localhost:5001"
 
 from app import app as flask_app
 from database import (
@@ -170,3 +174,44 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests"
     )
+    config.addinivalue_line(
+        "markers", "browser: marks tests requiring browser"
+    )
+
+
+# ============== Playwright Browser Fixtures ==============
+
+@pytest_asyncio.fixture(scope="function")
+async def browser():
+    """Create a Playwright browser instance."""
+    from playwright.async_api import async_playwright
+
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    yield browser
+    await browser.close()
+    await playwright.stop()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def browser_context(browser):
+    """Create a browser context with default viewport."""
+    context = await browser.new_context(
+        viewport={"width": 1920, "height": 1080}
+    )
+    yield context
+    await context.close()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def page(browser_context):
+    """Create a new page for testing."""
+    page = await browser_context.new_page()
+    yield page
+    await page.close()
+
+
+@pytest.fixture
+def app_base_url():
+    """Return the base URL for browser tests."""
+    return BASE_URL
