@@ -234,7 +234,7 @@
 - [x] Correct host binding (0.0.0.0:5000)
 - [ ] Environment variable management
 - [ ] API authentication/authorization
-- [ ] Rate limiting
+- [x] Rate limiting (Flask-Limiter)
 - [ ] Input validation and sanitization
 - [x] SQL injection prevention (using ORM)
 - [ ] XSS protection

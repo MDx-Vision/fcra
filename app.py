@@ -15,6 +15,9 @@ from services.logging_config import (
 setup_logging()
 app_logger.info("Starting FCRA Litigation Platform...")
 
+# Rate limiting
+from services.rate_limiter import init_rate_limiter, RATE_LIMITS
+
 # API Configuration
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '') or os.environ.get('FCRA Automation Secure', '')
 if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHROPIC_API_KEY) < 20:
@@ -80,6 +83,10 @@ app = Flask(__name__)
 # Initialize request/response logging
 init_request_logging(app)
 app_logger.info("Flask app initialized")
+
+# Initialize rate limiting
+limiter = init_rate_limiter(app)
+app_logger.info("Rate limiting initialized")
 
 # Secret key for session management (use environment variable or generate secure key)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
@@ -555,6 +562,7 @@ def inject_tenant_branding():
 
 
 @app.route('/staff/login', methods=['GET', 'POST'])
+@limiter.limit(RATE_LIMITS['login'])  # Prevent brute force attacks
 def staff_login():
     """Staff login page"""
     if request.method == 'POST':
@@ -2839,6 +2847,7 @@ def parse_and_analyze_credit_report():
 
 
 @app.route('/api/analyze', methods=['POST'])
+@limiter.limit(RATE_LIMITS['ai_analysis'])  # Limit expensive AI operations
 def analyze_and_generate_letters():
     """Process credit report, run AI analysis, generate PDF letters"""
     db = get_db()
