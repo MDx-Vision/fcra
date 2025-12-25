@@ -912,6 +912,29 @@ def api_staff_toggle_status():
         db.close()
 
 
+@app.route('/mockups/')
+@app.route('/mockups/<path:filename>')
+def serve_mockups(filename=None):
+    """Serve portal mockup files for demos"""
+    from flask import send_from_directory
+    import os
+    mockups_dir = os.path.join(os.path.dirname(__file__), 'docs', 'mockups')
+    if filename is None:
+        # List available mockups
+        return '''<!DOCTYPE html>
+<html><head><title>Portal Mockups</title>
+<style>body{font-family:system-ui;max-width:600px;margin:50px auto;padding:20px}
+a{display:block;padding:15px;margin:10px 0;background:#7c3aed;color:white;text-decoration:none;border-radius:8px;text-align:center}
+a:hover{background:#5b21b6}h1{color:#1f2937}</style></head>
+<body><h1>Portal Mockups</h1>
+<a href="/mockups/portal_login.html">Login Page</a>
+<a href="/mockups/portal_dashboard.html">Dashboard</a>
+<a href="/mockups/portal_documents.html">Documents Upload</a>
+<p style="margin-top:30px;color:#6b7280;text-align:center">These are interactive HTML mockups for client onboarding</p>
+</body></html>'''
+    return send_from_directory(mockups_dir, filename)
+
+
 @app.route('/')
 def home():
     """Home page - shows form or status"""
