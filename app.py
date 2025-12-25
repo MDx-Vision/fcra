@@ -101,6 +101,11 @@ app_logger.info("Flask app initialized")
 limiter = init_rate_limiter(app)
 app_logger.info("Rate limiting initialized")
 
+# Initialize security headers and HTTPS enforcement
+from services.security_headers import init_security_headers
+init_security_headers(app)
+app_logger.info("Security headers initialized")
+
 # Secret key for session management (using centralized config)
 app.secret_key = config.SECRET_KEY
 

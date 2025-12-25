@@ -238,7 +238,7 @@
 - [x] Input validation and sanitization (services/input_validator.py)
 - [x] SQL injection prevention (using ORM)
 - [x] XSS protection (bleach sanitization + script removal)
-- [ ] HTTPS enforcement
+- [x] HTTPS enforcement (services/security_headers.py + HSTS + CSP)
 
 ---
 
