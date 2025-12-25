@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Portal - Documents | FCRA Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f3f4f6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(91, 33, 182, 0.3);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #5b21b6;
+            font-size: 14px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Back Link */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .back-link:hover {
+            color: #7c3aed;
+        }
+
+        /* Page Title */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .page-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* Upload Area */
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: #7c3aed;
+            background: #f5f3ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .upload-subtext {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+
+        .browse-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .browse-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.4);
+        }
+
+        .file-types {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        /* Document Type Selector */
+        .doc-type-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .doc-type-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .doc-type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .doc-type-btn {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .doc-type-btn:hover {
+            border-color: #c4b5fd;
+            background: #f5f3ff;
+        }
+
+        .doc-type-btn.selected {
+            border-color: #7c3aed;
+            background: #f5f3ff;
+        }
+
+        .doc-type-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .doc-type-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .doc-type-desc {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* Documents List */
+        .documents-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .doc-count {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .document-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .document-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background: #f9fafb;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .document-table th:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .document-table th:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .document-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .document-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .doc-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .doc-icon {
+            width: 40px;
+            height: 40px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .doc-icon.pdf {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .doc-icon.image {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .doc-name {
+            font-weight: 500;
+            color: #1f2937;
+            font-size: 14px;
+        }
+
+        .doc-size {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .doc-type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .doc-type-badge.bureau {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .doc-type-badge.id {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .doc-type-badge.evidence {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .doc-date {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .doc-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .action-btn.view {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .action-btn.view:hover {
+            background: #e5e7eb;
+        }
+
+        .action-btn.download {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .action-btn.download:hover {
+            background: #ddd6fe;
+        }
+
+        /* Upload Progress (simulated) */
+        .upload-progress {
+            display: none;
+            margin-top: 24px;
+            padding: 16px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+        }
+
+        .upload-progress.show {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .progress-filename {
+            font-size: 14px;
+            font-weight: 500;
+            color: #166534;
+        }
+
+        .progress-percent {
+            font-size: 14px;
+            color: #166534;
+        }
+
+        .progress-bar-container {
+            height: 8px;
+            background: #bbf7d0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #22c55e;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* Success Message */
+        .success-message {
+            display: none;
+            margin-top: 24px;
+            padding: 16px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .success-text {
+            font-size: 14px;
+            color: #166534;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .doc-type-grid {
+                grid-template-columns: 1fr;
+            }
+            .document-table {
+                font-size: 13px;
+            }
+            .doc-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Demo indicator */
+        .demo-badge {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(91, 33, 182, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+        }
+
+        /* Tips Box */
+        .tips-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .tips-box h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e40af;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tips-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .tips-box li {
+            font-size: 13px;
+            color: #1e40af;
+            margin-bottom: 6px;
+        }
+
+        .tips-box li:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-badge">MOCKUP - Document Upload</div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">FCRA</div>
+            <h1>Client Portal</h1>
+        </div>
+        <div class="user-menu">
+            <div class="user-avatar">JD</div>
+            <span>John Doe</span>
+            <span style="cursor: pointer;">&#9662;</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <a href="portal_dashboard.html" class="back-link">
+            &#8592; Back to Dashboard
+        </a>
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Documents</h1>
+                <p class="page-subtitle">Upload and manage your case documents</p>
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">&#128196;</div>
+                <div class="upload-text">Drag and drop files here</div>
+                <div class="upload-subtext">or</div>
+                <a href="#" class="browse-btn" id="browseBtn">Browse Files</a>
+                <div class="file-types">Accepted: PDF, JPG, PNG (Max 10MB)</div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div class="upload-progress" id="uploadProgress">
+                <div class="progress-header">
+                    <span class="progress-filename" id="uploadFilename">Equifax_Response.pdf</span>
+                    <span class="progress-percent" id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div class="success-message" id="successMessage">
+                <div class="success-icon">&#10003;</div>
+                <div class="success-text">File uploaded successfully! Our team will review it shortly.</div>
+            </div>
+
+            <!-- Document Type Selector -->
+            <div class="doc-type-section">
+                <h3>Select Document Type</h3>
+                <div class="doc-type-grid">
+                    <button class="doc-type-btn selected" data-type="bureau">
+                        <div class="doc-type-icon">&#128231;</div>
+                        <div class="doc-type-label">Bureau Response</div>
+                        <div class="doc-type-desc">Letter from Equifax, Experian, or TransUnion</div>
+                    </button>
+                    <button class="doc-type-btn" data-type="creditor">
+                        <div class="doc-type-icon">&#127974;</div>
+                        <div class="doc-type-label">Creditor Response</div>
+                        <div class="doc-type-desc">Letter from a bank or collection agency</div>
+                    </button>
+                    <button class="doc-type-btn" data-type="id">
+                        <div class="doc-type-icon">&#127380;</div>
+                        <div class="doc-type-label">ID Verification</div>
+                        <div class="doc-type-desc">Copy of ID, utility bill, or SSN card</div>
+                    </button>
+                    <button class="doc-type-btn" data-type="evidence">
+                        <div class="doc-type-icon">&#128202;</div>
+                        <div class="doc-type-label">Supporting Evidence</div>
+                        <div class="doc-type-desc">Payment records, account statements</div>
+                    </button>
+                    <button class="doc-type-btn" data-type="denial">
+                        <div class="doc-type-icon">&#10060;</div>
+                        <div class="doc-type-label">Denial Letter</div>
+                        <div class="doc-type-desc">Credit denial or adverse action notice</div>
+                    </button>
+                    <button class="doc-type-btn" data-type="other">
+                        <div class="doc-type-icon">&#128195;</div>
+                        <div class="doc-type-label">Other</div>
+                        <div class="doc-type-desc">Any other relevant document</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tips Box -->
+            <div class="tips-box">
+                <h4>&#128161; Tips for Good Uploads</h4>
+                <ul>
+                    <li><strong>Scan or photograph clearly</strong> - Make sure all text is readable</li>
+                    <li><strong>Upload the full document</strong> - Include all pages</li>
+                    <li><strong>Label correctly</strong> - Choose the right document type above</li>
+                    <li><strong>Upload promptly</strong> - Don't wait to upload bureau responses</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Documents List -->
+        <div class="documents-section">
+            <div class="section-header">
+                <h2 class="section-title">Your Uploaded Documents</h2>
+                <span class="doc-count">3 documents</span>
+            </div>
+
+            <table class="document-table">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Type</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="doc-info">
+                                <div class="doc-icon pdf">&#128196;</div>
+                                <div>
+                                    <div class="doc-name">Equifax_Response.pdf</div>
+                                    <div class="doc-size">245 KB</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="doc-type-badge bureau">Bureau Response</span>
+                        </td>
+                        <td class="doc-date">Jan 20, 2025</td>
+                        <td>
+                            <div class="doc-actions">
+                                <button class="action-btn view">View</button>
+                                <button class="action-btn download">Download</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="doc-info">
+                                <div class="doc-icon image">&#128247;</div>
+                                <div>
+                                    <div class="doc-name">ID_Verification.jpg</div>
+                                    <div class="doc-size">1.2 MB</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="doc-type-badge id">ID Verification</span>
+                        </td>
+                        <td class="doc-date">Jan 10, 2025</td>
+                        <td>
+                            <div class="doc-actions">
+                                <button class="action-btn view">View</button>
+                                <button class="action-btn download">Download</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="doc-info">
+                                <div class="doc-icon pdf">&#128196;</div>
+                                <div>
+                                    <div class="doc-name">Bank_Statement_Dec.pdf</div>
+                                    <div class="doc-size">512 KB</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="doc-type-badge evidence">Supporting Evidence</span>
+                        </td>
+                        <td class="doc-date">Jan 5, 2025</td>
+                        <td>
+                            <div class="doc-actions">
+                                <button class="action-btn view">View</button>
+                                <button class="action-btn download">Download</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // Document type selection
+        document.querySelectorAll('.doc-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelector('.doc-type-btn.selected')?.classList.remove('selected');
+                this.classList.add('selected');
+            });
+        });
+
+        // Drag and drop simulation
+        const uploadZone = document.getElementById('uploadZone');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const successMessage = document.getElementById('successMessage');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercent = document.getElementById('progressPercent');
+
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', function() {
+            this.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            simulateUpload();
+        });
+
+        // Browse button click
+        document.getElementById('browseBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            simulateUpload();
+        });
+
+        // Simulate upload
+        function simulateUpload() {
+            uploadProgress.classList.add('show');
+            successMessage.classList.remove('show');
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+
+                    setTimeout(() => {
+                        uploadProgress.classList.remove('show');
+                        successMessage.classList.add('show');
+                    }, 500);
+                }
+
+                progressBar.style.width = progress + '%';
+                progressPercent.textContent = Math.round(progress) + '%';
+            }, 200);
+        }
+
+        // View/Download button alerts
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const action = this.classList.contains('view') ? 'View' : 'Download';
+                alert(`This is a mockup. In the real portal, you would ${action.toLowerCase()} the document.`);
+            });
+        });
+    </script>
+</body>
+</html>
