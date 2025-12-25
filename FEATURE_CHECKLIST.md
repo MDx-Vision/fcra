@@ -232,7 +232,7 @@
 - [x] Autoscale deployment configuration
 - [x] Health check endpoint (/ returns 200)
 - [x] Correct host binding (0.0.0.0:5000)
-- [ ] Environment variable management
+- [x] Environment variable management (services/config.py + .env.example)
 - [ ] API authentication/authorization
 - [x] Rate limiting (Flask-Limiter)
 - [x] Input validation and sanitization (services/input_validator.py)

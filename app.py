@@ -25,8 +25,11 @@ from services.input_validator import (
     sanitize_credit_report_html
 )
 
-# API Configuration
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '') or os.environ.get('FCRA Automation Secure', '')
+# Centralized configuration management
+from services.config import config
+
+# API Configuration (using centralized config)
+ANTHROPIC_API_KEY = config.ANTHROPIC_API_KEY
 if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHROPIC_API_KEY) < 20:
     print(f"⚠️  WARNING: Invalid or missing Anthropic API key!")
     print(f"   Expected: Secret 'FCRA Automation Secure' with valid sk-ant-... key")
@@ -95,8 +98,8 @@ app_logger.info("Flask app initialized")
 limiter = init_rate_limiter(app)
 app_logger.info("Rate limiting initialized")
 
-# Secret key for session management (use environment variable or generate secure key)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', secrets.token_hex(32))
+# Secret key for session management (using centralized config)
+app.secret_key = config.SECRET_KEY
 
 # Register blueprints
 from routes.portal import portal
@@ -104,7 +107,7 @@ app.register_blueprint(portal)
 print("✅ Portal blueprint registered")
 
 # CI/CD Authentication Bypass (ONLY activates with CI=true AND not in production)
-if os.getenv('CI') == 'true' and os.getenv('FLASK_ENV') != 'production' and os.getenv('REPLIT_DEPLOYMENT') != '1':
+if config.IS_CI and not config.IS_PRODUCTION:
     @app.before_request
     def ci_mock_auth():
         # Skip for login page so Cypress can test the login form
@@ -117,7 +120,7 @@ if os.getenv('CI') == 'true' and os.getenv('FLASK_ENV') != 'production' and os.g
             session['staff_name'] = 'CI Test Admin'
 
 # Session configuration for secure cookies
-app.config['SESSION_COOKIE_SECURE'] = os.getenv('CI') != 'true'  # HTTPS only (disabled in CI)
+app.config['SESSION_COOKIE_SECURE'] = not config.IS_CI  # HTTPS only (disabled in CI)
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JS access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session expiry
@@ -25920,6 +25923,19 @@ def api_import_lrm_clients():
         }), 500
 
 
+@app.route('/api/admin/config-status')
+@require_staff(roles=['admin'])
+def api_config_status():
+    """Get configuration status for all services (Admin only)"""
+    return jsonify({
+        'success': True,
+        'environment': config.ENV,
+        'is_production': config.IS_PRODUCTION,
+        'services': config.get_status(),
+        'log_level': config.LOG_LEVEL
+    })
+
+
 # =============================================================================
 # CLIENT MANAGER - Bulk and Individual Round/Analysis Management
 # =============================================================================
@@ -26568,7 +26584,7 @@ def handle_404_error(error):
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = config.PORT
     print("\n" + "🚀" * 30)
     print("FCRA AUTOMATION SERVER STARTING")
     print("🚀" * 30)
