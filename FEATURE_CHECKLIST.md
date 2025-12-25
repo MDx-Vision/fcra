@@ -233,7 +233,7 @@
 - [x] Health check endpoint (/ returns 200)
 - [x] Correct host binding (0.0.0.0:5000)
 - [x] Environment variable management (services/config.py + .env.example)
-- [ ] API authentication/authorization
+- [x] API authentication/authorization (services/api_auth.py + API key scopes)
 - [x] Rate limiting (Flask-Limiter)
 - [x] Input validation and sanitization (services/input_validator.py)
 - [x] SQL injection prevention (using ORM)

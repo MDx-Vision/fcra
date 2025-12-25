@@ -28,6 +28,9 @@ from services.input_validator import (
 # Centralized configuration management
 from services.config import config
 
+# API authentication and authorization (require_api_key defined below in this file)
+from services.api_auth import require_auth, AVAILABLE_SCOPES, create_jwt_token
+
 # API Configuration (using centralized config)
 ANTHROPIC_API_KEY = config.ANTHROPIC_API_KEY
 if not ANTHROPIC_API_KEY or ANTHROPIC_API_KEY.startswith('INVALID') or len(ANTHROPIC_API_KEY) < 20:
@@ -24169,6 +24172,40 @@ def api_keys_rotate(key_id):
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
+
+
+@app.route('/api/keys/scopes', methods=['GET'])
+def api_keys_scopes():
+    """List available API key scopes (public endpoint)"""
+    return jsonify({
+        'success': True,
+        'scopes': AVAILABLE_SCOPES
+    })
+
+
+@app.route('/api/keys/verify', methods=['GET'])
+@require_api_key()
+def api_keys_verify():
+    """
+    Verify an API key and return its info.
+    Use this to test your API key is working.
+    """
+    api_key = g.api_key
+    return jsonify({
+        'success': True,
+        'valid': True,
+        'key_id': api_key.id,
+        'name': api_key.name,
+        'scopes': api_key.scopes or [],
+        'rate_limits': {
+            'per_minute': api_key.rate_limit_per_minute,
+            'per_day': api_key.rate_limit_per_day,
+            'remaining_minute': g.rate_info.get('minute_remaining', 0),
+            'remaining_day': g.rate_info.get('day_remaining', 0)
+        },
+        'expires_at': api_key.expires_at.isoformat() if api_key.expires_at else None,
+        'usage_count': api_key.usage_count
+    })
 
 
 # ============================================================
