@@ -256,6 +256,16 @@
         </div>
 
         <div class="login-card" data-testid="portal-login-card">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'error' if category == 'error' else 'info' }}" data-testid="flash-message">
+                <span>{{ '⚠️' if category == 'error' else 'ℹ️' }}</span> {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
             {% if error %}
             <div class="alert alert-error" data-testid="error-message">
                 <span>⚠️</span> {{ error }}
