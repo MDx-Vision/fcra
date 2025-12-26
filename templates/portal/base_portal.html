@@ -9,10 +9,36 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/portal-redesign.css') }}">
+    <style>
+        /* Accessibility - Skip Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #1a1a2e;
+            color: white;
+            padding: 8px 16px;
+            z-index: 10000;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 0 0 8px 0;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+        /* Focus visible for keyboard navigation */
+        *:focus-visible {
+            outline: 3px solid #319795;
+            outline-offset: 2px;
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header class="header">
+    <!-- Accessibility: Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="header" role="banner">
         <div class="logo">
             <div class="logo-icon">⚖️</div>
             <span class="logo-text">Brightpath</span>
@@ -23,22 +49,22 @@
         </div>
     </header>
 
-    <nav class="nav-tabs">
+    <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
         <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}">
-            <span class="nav-icon">📊</span><span class="nav-label">Case</span>
+            <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
         </a>
         <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}">
-            <span class="nav-icon">📁</span><span class="nav-label">Documents</span>
+            <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
         </a>
         <a href="{{ url_for('portal.learn') }}" class="nav-tab {% if active_tab == 'learn' %}active{% endif %}">
-            <span class="nav-icon">📖</span><span class="nav-label">Learn</span>
+            <span class="nav-icon" aria-hidden="true">📖</span><span class="nav-label">Learn</span>
         </a>
         <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}">
-            <span class="nav-icon">👤</span><span class="nav-label">Profile</span>
+            <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
         </a>
     </nav>
 
-    <main class="main-content">
+    <main class="main-content" id="main-content" role="main">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}

@@ -379,11 +379,36 @@
             color: white !important;
             border-color: var(--apple-teal) !important;
         }
+
+        /* Accessibility - Skip Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--apple-navy);
+            color: white;
+            padding: 8px 16px;
+            z-index: 10000;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 0 0 8px 0;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+        /* Focus visible for keyboard navigation */
+        *:focus-visible {
+            outline: 3px solid var(--apple-teal);
+            outline-offset: 2px;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <header class="header">
+    <!-- Accessibility: Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="header" role="banner">
         <div class="logo">
             <div class="logo-icon">BP</div>
             <span class="logo-text">Brightpath Staff</span>
@@ -401,7 +426,7 @@
         </div>
     </header>
 
-    <nav class="nav-tabs">
+    <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
         <a href="{{ url_for('staff_portal.dashboard') }}" class="nav-tab {% if active_tab == 'dashboard' %}active{% endif %}">
             <span class="nav-icon">Dashboard</span>
         </a>
@@ -432,7 +457,7 @@
         {% endif %}
     </div>
 
-    <main class="main-content">
+    <main class="main-content" id="main-content" role="main">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
