@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-25T22:12:27.478379",
+  "timestamp": "2025-12-26T00:50:56.822705",
   "checks_passed": 0,
   "issues_found": [
     "Database connection error: connection to server at \"localhost\" (::1), port 5432 failed: Connection refused\n\tIs the server running on that host and accepting TCP/IP connections?\nconnection to server at \"localhost\" (127.0.0.1), port 5432 failed: Connection refused\n\tIs the server running on that host and accepting TCP/IP connections?\n"

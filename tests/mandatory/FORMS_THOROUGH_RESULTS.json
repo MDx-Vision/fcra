@@ -1,11 +1,271 @@
 {
-  "timestamp": "2025-12-25T22:12:27.398160",
-  "forms_found": 0,
-  "forms_tested": 0,
-  "fields_found": 0,
-  "fields_tested": 0,
-  "edge_cases_run": 0,
-  "edge_cases_target": 0,
+  "timestamp": "2025-12-26T00:50:56.759577",
+  "forms_found": 9,
+  "forms_tested": 9,
+  "fields_found": 28,
+  "fields_tested": 28,
+  "edge_cases_run": 1036,
+  "edge_cases_target": 1036,
   "issues": [],
-  "forms": []
+  "forms": [
+    {
+      "page": "/signup",
+      "form_id": "signupForm",
+      "fields": [
+        {
+          "name": "firstName",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "lastName",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "phone",
+          "type": "tel",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "addressStreet",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "addressCity",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "addressZip",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "dateOfBirth",
+          "type": "date",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "ssnLast4",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "estimatedDebt",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "referralCode",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "creditUsername",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "creditPassword",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 481
+    },
+    {
+      "page": "/portal/login",
+      "form_id": "loginForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/portal/login",
+      "form_id": "forgotForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 37
+    },
+    {
+      "page": "/portal/login",
+      "form_id": "resetForm",
+      "fields": [
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "confirm_password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/dashboard/white-label",
+      "form_id": "tenantForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/dashboard/ml-insights",
+      "form_id": "outcomeForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/dashboard/case-law",
+      "form_id": "addCaseForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/dashboard/cfpb",
+      "form_id": "editComplaintForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/dashboard/workflows",
+      "form_id": "workflow-form",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    }
+  ]
 }

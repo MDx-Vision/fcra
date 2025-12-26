@@ -1,26 +1,16 @@
 {
-  "timestamp": "2025-12-25T22:12:27.392907",
+  "timestamp": "2025-12-26T00:50:56.751134",
   "browsers_tested": 3,
   "browsers_passed": 0,
   "browsers_failed": 3,
   "browser_results": {
     "chromium": {
-      "pages_tested": 0,
-      "pages_passed": 0,
+      "pages_tested": 8,
+      "pages_passed": 7,
       "actions_tested": 4,
-      "actions_passed": 1,
+      "actions_passed": 4,
       "issues": [
-        "/: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "/signup: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "/staff/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "/portal/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "/dashboard: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "/dashboard/clients: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "/dashboard/cases: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "/dashboard/settlements: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "Form test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "CSS test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "No buttons found"
+        "/staff/login returned 429"
       ]
     },
     "firefox": {

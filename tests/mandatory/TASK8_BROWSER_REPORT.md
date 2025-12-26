@@ -1,6 +1,6 @@
 # TASK 8: CROSS-BROWSER TESTING RESULTS
 
-**Timestamp:** 2025-12-25T22:12:27.392907
+**Timestamp:** 2025-12-26T00:50:56.751134
 
 ## Summary
 | Metric | Count |
@@ -12,20 +12,10 @@
 ## Browser Details
 
 ### Chromium [PARTIAL]
-- Pages: 0/0
-- Actions: 1/4
+- Pages: 7/8
+- Actions: 4/4
 - Issues:
-  - /: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - /signup: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - /staff/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - /portal/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - /dashboard: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - /dashboard/clients: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - /dashboard/cases: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - /dashboard/settlements: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - Form test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - CSS test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l
-  - No buttons found
+  - /staff/login returned 429
 
 ### Firefox [PARTIAL]
 - Pages: 0/0

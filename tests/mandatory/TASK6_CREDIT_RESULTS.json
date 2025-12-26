@@ -1,31 +1,14 @@
 {
-  "timestamp": "2025-12-25T22:12:27.386498",
+  "timestamp": "2025-12-26T00:50:56.748722",
   "tests_run": 5,
-  "tests_passed": 0,
-  "tests_failed": 5,
-  "issues": [
-    {
-      "test": "credit_import_page",
-      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import\nCall log:\n  "
-    },
-    {
-      "test": "credit_tracker_page",
-      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-tracker\nCall log:\n "
-    },
-    {
-      "test": "credit_upload",
-      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import\nCall log:\n  "
-    },
-    {
-      "test": "credit_analysis",
-      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/analytics\nCall log:\n  - na"
-    },
-    {
-      "test": "dispute_generation",
-      "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/letter-queue\nCall log:\n  -"
-    }
-  ],
+  "tests_passed": 3,
+  "tests_failed": 2,
+  "issues": [],
   "log": [
-    "[FAIL] Credit import page error: Page.goto: net::ERR_CONNECTION_REFUSED at http://l"
+    "[FAIL] Credit import page redirected",
+    "[FAIL] Credit tracker page redirected",
+    "[INFO] No file upload input found on credit-import page",
+    "[INFO] No chart elements found",
+    "[INFO] No generate button found on letter-queue"
   ]
 }
