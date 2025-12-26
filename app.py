@@ -10257,26 +10257,77 @@ def api_create_client():
 
 
 @app.route('/api/clients/<int:client_id>/delete', methods=['POST'])
+@require_staff()
 def api_delete_client(client_id):
-    """Delete a client"""
+    """Delete a client and all related data (GDPR/CCPA compliant full deletion)"""
     db = get_db()
     try:
         client = db.query(Client).filter_by(id=client_id).first()
         if not client:
             return jsonify({'success': False, 'error': 'Client not found'}), 404
-        
+
+        # Log the deletion for audit trail
+        log_audit('client_delete_initiated', {
+            'client_id': client_id,
+            'client_name': client.name,
+            'client_email': client.email
+        })
+
+        # Delete all related records in proper order (child tables first)
+        # E-signature records
+        from database import ClientDocumentSignature
+        db.query(ClientDocumentSignature).filter_by(client_id=client_id).delete()
+
+        # Tags
+        db.query(ClientTagAssignment).filter_by(client_id=client_id).delete()
+
+        # Uploads and documents
+        db.query(ClientUpload).filter_by(client_id=client_id).delete()
+        db.query(ClientDocument).filter_by(client_id=client_id).delete()
+
+        # Credit monitoring
+        db.query(CreditMonitoringCredential).filter_by(client_id=client_id).delete()
+        db.query(CreditScoreSnapshot).filter_by(client_id=client_id).delete()
+        db.query(CreditScoreProjection).filter_by(client_id=client_id).delete()
+
+        # Communications
+        db.query(SMSLog).filter_by(client_id=client_id).delete()
+        db.query(EmailLog).filter_by(client_id=client_id).delete()
+        db.query(Notification).filter_by(client_id=client_id).delete()
+
+        # Cases and related
+        db.query(CaseDeadline).filter_by(client_id=client_id).delete()
+        db.query(Settlement).filter_by(client_id=client_id).delete()
+        db.query(Case).filter_by(client_id=client_id).delete()
+
+        # Credit reports and analysis
+        db.query(DisputeLetter).filter_by(client_id=client_id).delete()
+        db.query(Analysis).filter_by(client_id=client_id).delete()
+        db.query(CreditReport).filter_by(client_id=client_id).delete()
+
+        # Tasks and notes
         db.query(Task).filter_by(client_id=client_id).delete()
         db.query(ClientNote).filter_by(client_id=client_id).delete()
-        db.query(ClientDocument).filter_by(client_id=client_id).delete()
-        
+
+        # Referrals (handle both directions)
+        db.query(ClientReferral).filter_by(referring_client_id=client_id).delete()
+        db.query(ClientReferral).filter_by(referred_client_id=client_id).delete()
+
+        # Finally delete the client
         db.delete(client)
         db.commit()
-        
-        return jsonify({'success': True, 'message': 'Client deleted'})
+
+        log_audit('client_deleted', {
+            'client_id': client_id,
+            'tables_cleaned': 'all related data removed'
+        })
+
+        return jsonify({'success': True, 'message': 'Client and all related data deleted'})
     except Exception as e:
         db.rollback()
         import traceback
         traceback.print_exc()
+        log_error(e, {'action': 'client_delete', 'client_id': client_id})
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
