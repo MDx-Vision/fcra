@@ -133,10 +133,26 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JS access
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # CSRF protection
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)  # Session expiry
 
-# Allow Replit frontend + WordPress frontend + any admin UIs
+# CORS Configuration - Secure origins list
+def get_allowed_origins():
+    """Get allowed CORS origins based on environment."""
+    origins = [
+        "http://localhost:5000",
+        "http://localhost:5001",
+        "http://127.0.0.1:5000",
+        "http://127.0.0.1:5001",
+    ]
+    # Add Replit domains if configured
+    if config.REPLIT_DEV_DOMAIN:
+        origins.append(f"https://{config.REPLIT_DEV_DOMAIN}")
+    # In CI, allow broader testing
+    if config.IS_CI:
+        origins.append("*")
+    return origins
+
 CORS(app, resources={
-    r"/*": {
-        "origins": ["*"],
+    r"/api/*": {
+        "origins": get_allowed_origins(),
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "X-API-Key"],
         "supports_credentials": True

@@ -10,23 +10,28 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 def get_encryption_key():
-    """Get or generate encryption key from environment"""
+    """Get encryption key from environment - fails if not configured."""
     key = os.environ.get('FCRA_ENCRYPTION_KEY')
-    
+
     if not key:
-        key = Fernet.generate_key().decode()
-        print(f"⚠️  No FCRA_ENCRYPTION_KEY found. Generated new key.")
-        print(f"   Add to secrets: FCRA_ENCRYPTION_KEY={key}")
-        os.environ['FCRA_ENCRYPTION_KEY'] = key
-    
+        # In CI/testing, generate a temporary key
+        if os.environ.get('CI') == 'true' or os.environ.get('TESTING') == 'true':
+            key = Fernet.generate_key().decode()
+            os.environ['FCRA_ENCRYPTION_KEY'] = key
+        else:
+            raise ValueError(
+                "FCRA_ENCRYPTION_KEY environment variable is required. "
+                "Generate one with: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+            )
+
     if isinstance(key, str):
         try:
             key_bytes = key.encode() if len(key) == 44 else base64.urlsafe_b64encode(key.encode()[:32].ljust(32, b'\0'))
         except:
-            key_bytes = Fernet.generate_key()
+            raise ValueError("Invalid FCRA_ENCRYPTION_KEY format. Must be a valid Fernet key.")
     else:
         key_bytes = key
-    
+
     return key_bytes
 
 
