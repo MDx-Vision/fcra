@@ -141,7 +141,5 @@ def test_database():
         for issue in issues:
             log(f"  - {issue}")
 
-    return results
-
 if __name__ == "__main__":
     test_database()

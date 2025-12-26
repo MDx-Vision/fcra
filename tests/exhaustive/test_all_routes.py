@@ -67,7 +67,5 @@ def test_all_routes():
         for err in results["errors"][:20]:
             print(f"  - {err}")
 
-    return results
-
 if __name__ == "__main__":
     test_all_routes()
