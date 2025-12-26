@@ -26655,4 +26655,4 @@ if __name__ == '__main__':
     print("🚀" * 30)
     print(f"\n📡 Listening on port {port}")
     print("✅ Ready to receive credit reports!\n")
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)
