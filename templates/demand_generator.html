@@ -217,6 +217,25 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         const resultSection = document.getElementById('resultSection');
 
+        // Ensure clean state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Reset any cached form state
+            document.getElementById('selectedClientId').value = '';
+            document.getElementById('selectedClientName').textContent = '';
+            document.getElementById('demandAmount').value = '';
+
+            // Ensure correct visibility
+            loadingOverlay.classList.add('hidden');
+            resultSection.classList.add('hidden');
+            demandForm.classList.add('hidden');
+            noClientSelected.classList.remove('hidden');
+
+            // Disable generate button until client is selected
+            generateBtn.disabled = true;
+            generateBtn.style.opacity = '0.5';
+            generateBtn.style.cursor = 'not-allowed';
+        });
+
         clientSearch.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
             clientItems.forEach(item => {
@@ -229,12 +248,17 @@
             item.addEventListener('click', () => {
                 clientItems.forEach(i => i.classList.remove('selected'));
                 item.classList.add('selected');
-                
+
                 document.getElementById('selectedClientId').value = item.dataset.id;
                 document.getElementById('selectedClientName').textContent = item.dataset.name;
-                
+
                 noClientSelected.classList.add('hidden');
                 demandForm.classList.remove('hidden');
+
+                // Enable generate button now that client is selected
+                generateBtn.disabled = false;
+                generateBtn.style.opacity = '1';
+                generateBtn.style.cursor = 'pointer';
             });
         });
 
@@ -242,6 +266,11 @@
             const clientId = document.getElementById('selectedClientId').value;
             if (!clientId) {
                 alert('Please select a client first');
+                return;
+            }
+
+            // Double-check button isn't disabled
+            if (generateBtn.disabled) {
                 return;
             }
             
