@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-12-25T17:28:32.713491",
+  "forms": {
+    "found": 11,
+    "tested": 0
+  },
+  "buttons": {
+    "found": 25,
+    "clicked": 0
+  },
+  "links": {
+    "found": 13,
+    "tested": 0
+  },
+  "flows": {
+    "passed": 0
+  },
+  "issues": []
+}

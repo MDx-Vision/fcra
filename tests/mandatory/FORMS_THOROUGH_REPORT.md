@@ -1,24 +1,24 @@
 # THOROUGH FORM TESTING RESULTS
 
-**Date:** 2025-12-26T00:50:56.759577
+**Date:** 2025-12-26T10:40:19.208711
 **Status:** PASS
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| Forms Found | 9 |
-| Forms Tested | 9 |
-| Fields Found | 28 |
-| Fields Tested | 28 |
-| Edge Cases Target | 1036 |
-| Edge Cases Run | 1036 |
+| Forms Found | 8 |
+| Forms Tested | 8 |
+| Fields Found | 26 |
+| Fields Tested | 26 |
+| Edge Cases Target | 962 |
+| Edge Cases Run | 962 |
 | **Pass Rate** | **100.0%** |
 
 ## Target vs Actual
 
-- Target: 28 fields x 37 edge cases = 1036
-- Actual: 1036
+- Target: 26 fields x 37 edge cases = 962
+- Actual: 962
 - Gap: 0
 
 ## Forms Tested
@@ -66,39 +66,31 @@ Edge cases: 74
 | password | input/password | PASS 37/37 |
 | confirm_password | input/password | PASS 37/37 |
 
-### /dashboard/white-label #tenantForm
-Edge cases: 74
-
-| Field | Tag/Type | Edge Cases |
-|-------|----------|------------|
-| email | input/email | PASS 37/37 |
-| password | input/password | PASS 37/37 |
-
-### /dashboard/ml-insights #outcomeForm
-Edge cases: 74
-
-| Field | Tag/Type | Edge Cases |
-|-------|----------|------------|
-| email | input/email | PASS 37/37 |
-| password | input/password | PASS 37/37 |
-
-### /dashboard/case-law #addCaseForm
-Edge cases: 74
-
-| Field | Tag/Type | Edge Cases |
-|-------|----------|------------|
-| email | input/email | PASS 37/37 |
-| password | input/password | PASS 37/37 |
-
-### /dashboard/cfpb #editComplaintForm
-Edge cases: 74
-
-| Field | Tag/Type | Edge Cases |
-|-------|----------|------------|
-| email | input/email | PASS 37/37 |
-| password | input/password | PASS 37/37 |
-
 ### /dashboard/workflows #workflow-form
+Edge cases: 74
+
+| Field | Tag/Type | Edge Cases |
+|-------|----------|------------|
+| email | input/email | PASS 37/37 |
+| password | input/password | PASS 37/37 |
+
+### /dashboard/billing #createPlanForm
+Edge cases: 74
+
+| Field | Tag/Type | Edge Cases |
+|-------|----------|------------|
+| email | input/email | PASS 37/37 |
+| password | input/password | PASS 37/37 |
+
+### /dashboard/staff #addForm
+Edge cases: 74
+
+| Field | Tag/Type | Edge Cases |
+|-------|----------|------------|
+| email | input/email | PASS 37/37 |
+| password | input/password | PASS 37/37 |
+
+### /dashboard/settings/sms #smsSettingsForm
 Edge cases: 74
 
 | Field | Tag/Type | Edge Cases |

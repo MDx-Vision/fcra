@@ -1,6 +1,6 @@
 # TASK 8: CROSS-BROWSER TESTING RESULTS
 
-**Timestamp:** 2025-12-26T00:50:56.751134
+**Timestamp:** 2025-12-26T10:40:19.205741
 
 ## Summary
 | Metric | Count |
@@ -12,16 +12,21 @@
 ## Browser Details
 
 ### Chromium [PARTIAL]
-- Pages: 7/8
-- Actions: 4/4
+- Pages: 3/8
+- Actions: 3/4
 - Issues:
   - /staff/login returned 429
+  - /dashboard returned 429
+  - /dashboard/clients returned 429
+  - /dashboard/cases returned 429
+  - /dashboard/settlements returned 429
+  - No buttons found
 
 ### Firefox [PARTIAL]
 - Pages: 0/0
 - Actions: 0/0
 - Issues:
-  - Browser launch failed: BrowserType.launch: Executable doesn't exist at /home/runner/workspace/.cache/ms-playwright/firefox-1495/firefox/firefox
+  - Browser launch failed: BrowserType.launch: Executable doesn't exist at /Users/rafaelrodriguez/Library/Caches/ms-playwright/firefox-1497/firefox/Nightly.app/Contents/MacOS/firefox
 ╔════════════════════════════════════════════════════════════╗
 ║ Looks like Playwright was just installed or updated.       ║
 ║ Please run the following command to download new browsers: ║
@@ -35,7 +40,7 @@
 - Pages: 0/0
 - Actions: 0/0
 - Issues:
-  - Browser launch failed: BrowserType.launch: Executable doesn't exist at /home/runner/workspace/.cache/ms-playwright/webkit-2215/pw_run.sh
+  - Browser launch failed: BrowserType.launch: Executable doesn't exist at /Users/rafaelrodriguez/Library/Caches/ms-playwright/webkit-2227/pw_run.sh
 ╔════════════════════════════════════════════════════════════╗
 ║ Looks like Playwright was just installed or updated.       ║
 ║ Please run the following command to download new browsers: ║
