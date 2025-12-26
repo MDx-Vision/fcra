@@ -1,6 +1,6 @@
 # BUTTON INVENTORY - COMPLETE STATUS REPORT
 
-**Date:** 2025-12-26T10:40:19.204222
+**Date:** 2025-12-26T10:47:55.848858
 **Purpose:** Know exactly what works, what's broken, what needs building
 
 ---
@@ -85,7 +85,7 @@ Found: 5 buttons | Tested: 5
 | 3 | 👁 | HIDDEN | Button not visible on page (likely  |
 | 4 | Reset Password | HIDDEN | Button not visible on page (likely  |
 
-### /dashboard/contacts
+### /dashboard/workflows
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -93,7 +93,7 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/automation-tools
+### /dashboard/ml-insights
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -101,7 +101,7 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/letter-queue
+### /dashboard/white-label
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -109,7 +109,7 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/demand-generator
+### /dashboard/franchise
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -117,7 +117,7 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/import
+### /dashboard/affiliates
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |

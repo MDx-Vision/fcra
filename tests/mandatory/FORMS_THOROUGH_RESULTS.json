@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-12-26T10:40:19.208711",
-  "forms_found": 8,
-  "forms_tested": 8,
-  "fields_found": 26,
-  "fields_tested": 26,
-  "edge_cases_run": 962,
-  "edge_cases_target": 962,
+  "timestamp": "2025-12-26T10:47:55.853608",
+  "forms_found": 9,
+  "forms_tested": 9,
+  "fields_found": 28,
+  "fields_tested": 28,
+  "edge_cases_run": 1036,
+  "edge_cases_target": 1036,
   "issues": [],
   "forms": [
     {
@@ -163,6 +163,69 @@
       "total_edge_cases": 74
     },
     {
+      "page": "/dashboard/ml-insights",
+      "form_id": "outcomeForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/dashboard/case-law",
+      "form_id": "addCaseForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
+      "page": "/dashboard/cfpb",
+      "form_id": "editComplaintForm",
+      "fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 74
+    },
+    {
       "page": "/dashboard/workflows",
       "form_id": "workflow-form",
       "fields": [
@@ -186,48 +249,6 @@
     {
       "page": "/dashboard/billing",
       "form_id": "createPlanForm",
-      "fields": [
-        {
-          "name": "email",
-          "type": "email",
-          "tag": "input",
-          "edge_cases_tested": 37,
-          "errors": []
-        },
-        {
-          "name": "password",
-          "type": "password",
-          "tag": "input",
-          "edge_cases_tested": 37,
-          "errors": []
-        }
-      ],
-      "total_edge_cases": 74
-    },
-    {
-      "page": "/dashboard/staff",
-      "form_id": "addForm",
-      "fields": [
-        {
-          "name": "email",
-          "type": "email",
-          "tag": "input",
-          "edge_cases_tested": 37,
-          "errors": []
-        },
-        {
-          "name": "password",
-          "type": "password",
-          "tag": "input",
-          "edge_cases_tested": 37,
-          "errors": []
-        }
-      ],
-      "total_edge_cases": 74
-    },
-    {
-      "page": "/dashboard/settings/sms",
-      "form_id": "smsSettingsForm",
       "fields": [
         {
           "name": "email",

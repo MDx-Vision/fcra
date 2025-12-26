@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-26T10:40:19.204222",
+  "timestamp": "2025-12-26T10:47:55.848858",
   "buttons_found": 23,
   "buttons_tested": 23,
   "status_counts": {
@@ -224,138 +224,33 @@
     },
     {
       "url": "/dashboard/contacts",
-      "buttons_found": 2,
-      "buttons_tested": 2,
-      "buttons": [
-        {
-          "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
-          "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
-        },
-        {
-          "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
-        }
-      ]
+      "buttons_found": 0,
+      "buttons_tested": 0,
+      "buttons": []
     },
     {
       "url": "/dashboard/automation-tools",
-      "buttons_found": 2,
-      "buttons_tested": 2,
-      "buttons": [
-        {
-          "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
-          "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
-        },
-        {
-          "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
-        }
-      ]
+      "buttons_found": 0,
+      "buttons_tested": 0,
+      "buttons": []
     },
     {
       "url": "/dashboard/letter-queue",
-      "buttons_found": 2,
-      "buttons_tested": 2,
-      "buttons": [
-        {
-          "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
-          "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
-        },
-        {
-          "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
-        }
-      ]
+      "buttons_found": 0,
+      "buttons_tested": 0,
+      "buttons": []
     },
     {
       "url": "/dashboard/demand-generator",
-      "buttons_found": 2,
-      "buttons_tested": 2,
-      "buttons": [
-        {
-          "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
-          "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
-        },
-        {
-          "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
-        }
-      ]
+      "buttons_found": 0,
+      "buttons_tested": 0,
+      "buttons": []
     },
     {
       "url": "/dashboard/import",
-      "buttons_found": 2,
-      "buttons_tested": 2,
-      "buttons": [
-        {
-          "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
-          "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
-        },
-        {
-          "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
-        }
-      ]
+      "buttons_found": 0,
+      "buttons_tested": 0,
+      "buttons": []
     },
     {
       "url": "/dashboard/documents",
@@ -389,33 +284,138 @@
     },
     {
       "url": "/dashboard/workflows",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/ml-insights",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/white-label",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/franchise",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/affiliates",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/triage",
