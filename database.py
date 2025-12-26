@@ -1380,6 +1380,49 @@ class ESignatureRequest(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class DocumentTemplate(Base):
+    """CROA and other document templates for e-signature system"""
+    __tablename__ = 'document_templates'
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(100), unique=True, nullable=False, index=True)  # e.g., "CROA_01_RIGHTS_DISCLOSURE"
+    name = Column(String(255), nullable=False)  # Human-readable name
+    description = Column(Text)  # Description of the document
+
+    content_html = Column(Text, nullable=False)  # HTML content of the document
+
+    must_sign_before_contract = Column(Boolean, default=False)  # CROA requirement
+    is_croa_required = Column(Boolean, default=True)  # Part of CROA compliance
+    signing_order = Column(Integer, default=0)  # Order in signing flow
+
+    effective_date = Column(Date)  # When this version became effective
+    version = Column(String(20), default='1.0')
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ClientDocumentSignature(Base):
+    """Track client signatures on document templates"""
+    __tablename__ = 'client_document_signatures'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    document_template_id = Column(Integer, ForeignKey('document_templates.id'), nullable=False, index=True)
+
+    signature_data = Column(Text)  # Base64 signature image or typed name
+    signature_type = Column(String(50), default='typed')  # 'typed', 'drawn', 'uploaded'
+
+    ip_address = Column(String(50))  # IP address at time of signing
+    user_agent = Column(Text)  # Browser/device info
+
+    signed_at = Column(DateTime, default=datetime.utcnow)
+    signed_document_path = Column(String(500))  # Path to signed PDF
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class CaseTriage(Base):
     """AI-powered case triage for priority scoring and queue assignment"""
     __tablename__ = 'case_triage'
@@ -4444,6 +4487,31 @@ def init_db():
         ("user_quick_links", "label", "VARCHAR(50) NOT NULL"),
         ("user_quick_links", "url", "VARCHAR(500) NOT NULL"),
         ("user_quick_links", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # CROA Document Templates for E-Signature
+        ("document_templates", "id", "SERIAL PRIMARY KEY"),
+        ("document_templates", "code", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("document_templates", "name", "VARCHAR(255) NOT NULL"),
+        ("document_templates", "description", "TEXT"),
+        ("document_templates", "content_html", "TEXT NOT NULL"),
+        ("document_templates", "must_sign_before_contract", "BOOLEAN DEFAULT FALSE"),
+        ("document_templates", "is_croa_required", "BOOLEAN DEFAULT TRUE"),
+        ("document_templates", "signing_order", "INTEGER DEFAULT 0"),
+        ("document_templates", "effective_date", "DATE"),
+        ("document_templates", "version", "VARCHAR(20) DEFAULT '1.0'"),
+        ("document_templates", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("document_templates", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("document_templates", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Client Document Signatures
+        ("client_document_signatures", "id", "SERIAL PRIMARY KEY"),
+        ("client_document_signatures", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("client_document_signatures", "document_template_id", "INTEGER NOT NULL REFERENCES document_templates(id)"),
+        ("client_document_signatures", "signature_data", "TEXT"),
+        ("client_document_signatures", "signature_type", "VARCHAR(50) DEFAULT 'typed'"),
+        ("client_document_signatures", "ip_address", "VARCHAR(50)"),
+        ("client_document_signatures", "user_agent", "TEXT"),
+        ("client_document_signatures", "signed_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_document_signatures", "signed_document_path", "VARCHAR(500)"),
+        ("client_document_signatures", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
     
     conn = engine.connect()

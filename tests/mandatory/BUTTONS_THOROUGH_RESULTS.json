@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-26T11:05:00.353572",
+  "timestamp": "2025-12-26T11:30:08.707028",
   "buttons_found": 23,
   "buttons_tested": 23,
   "status_counts": {
@@ -284,15 +284,57 @@
     },
     {
       "url": "/dashboard/workflows",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/ml-insights",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/white-label",
@@ -377,57 +419,15 @@
     },
     {
       "url": "/dashboard/triage",
-      "buttons_found": 2,
-      "buttons_tested": 2,
-      "buttons": [
-        {
-          "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
-          "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
-        },
-        {
-          "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
-        }
-      ]
+      "buttons_found": 0,
+      "buttons_tested": 0,
+      "buttons": []
     },
     {
       "url": "/dashboard/escalation",
-      "buttons_found": 2,
-      "buttons_tested": 2,
-      "buttons": [
-        {
-          "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
-          "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
-        },
-        {
-          "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
-        }
-      ]
+      "buttons_found": 0,
+      "buttons_tested": 0,
+      "buttons": []
     },
     {
       "url": "/dashboard/case-law",

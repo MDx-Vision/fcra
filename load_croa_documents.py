@@ -15,7 +15,7 @@ from datetime import date
 # CONFIGURATION - UPDATE THIS PATH
 # =============================================================================
 
-DOCS_FOLDER = "/Users/rafaelrodriguez/fcra/htm"  # Your CROA documents folder
+DOCS_FOLDER = "/Users/rafaelrodriguez/fcra/docs/htm"  # Your CROA documents folder
 
 # =============================================================================
 # DOCUMENT DEFINITIONS (in signing order)
@@ -26,7 +26,7 @@ DOCUMENTS = [
         "code": "CROA_01_RIGHTS_DISCLOSURE",
         "name": "Consumer Credit File Rights Disclosure",
         "description": "Required disclosure of your rights under federal law (CROA § 1679c)",
-        "filename": "CROA_01_RIGHTS_DISCLOSURE.htm",
+        "filename": "CROA_01_RIGHTS_DISCLOSURE.html",
         "must_sign_before_contract": True,  # ONLY this one is True
         "signing_order": 1,
     },
@@ -34,7 +34,7 @@ DOCUMENTS = [
         "code": "CROA_02_LPOA",
         "name": "Limited Power of Attorney",
         "description": "Authorization for us to communicate with credit bureaus on your behalf",
-        "filename": "CROA_02_LPOA.htm",
+        "filename": "CROA_02_LPOA.html",
         "must_sign_before_contract": False,
         "signing_order": 2,
     },
@@ -42,7 +42,7 @@ DOCUMENTS = [
         "code": "CROA_03_SERVICE_AGREEMENT",
         "name": "Service Agreement",
         "description": "Terms, conditions, and fee structure for services",
-        "filename": "CROA_03_SERVICE_AGREEMENT.htm",
+        "filename": "CROA_03_SERVICE_AGREEMENT.html",
         "must_sign_before_contract": False,
         "signing_order": 3,
     },
@@ -50,7 +50,7 @@ DOCUMENTS = [
         "code": "CROA_04_CANCELLATION_NOTICE",
         "name": "Notice of Right to Cancel",
         "description": "Your 3-business-day cancellation rights under CROA",
-        "filename": "CROA_04_CANCELLATION_NOTICE.htm",
+        "filename": "CROA_04_CANCELLATION_NOTICE.html",
         "must_sign_before_contract": False,
         "signing_order": 4,
     },
@@ -58,7 +58,7 @@ DOCUMENTS = [
         "code": "CROA_05_SERVICE_COMPLETION",
         "name": "Service Completion Authorization",
         "description": "Authorization to begin work after cancellation period",
-        "filename": "CROA_05_SERVICE_COMPLETION.htm",
+        "filename": "CROA_05_SERVICE_COMPLETION.html",
         "must_sign_before_contract": False,
         "signing_order": 5,
     },
@@ -66,7 +66,7 @@ DOCUMENTS = [
         "code": "CROA_06_HIPAA",
         "name": "HIPAA Authorization",
         "description": "Authorization to access health-related information if applicable",
-        "filename": "CROA_06_HIPAA.htm",
+        "filename": "CROA_06_HIPAA.html",
         "must_sign_before_contract": False,
         "signing_order": 6,
     },
@@ -74,7 +74,7 @@ DOCUMENTS = [
         "code": "CROA_07_WELCOME_PACKET",
         "name": "Client Welcome Packet",
         "description": "Welcome information and next steps",
-        "filename": "CROA_07_WELCOME_PACKET.htm",
+        "filename": "CROA_07_WELCOME_PACKET.html",
         "must_sign_before_contract": False,
         "signing_order": 7,
     },
@@ -125,38 +125,41 @@ def extract_body_content(html_content):
 
 def load_documents():
     """Load all CROA documents into database"""
-    
-    # Import Flask app context
+
+    # Import database modules
     try:
-        from app import app, db
-        from app.models.esign_models import DocumentTemplate
-    except ImportError:
-        print("ERROR: Cannot import Flask app.")
+        from database import SessionLocal, DocumentTemplate, Base, engine
+    except ImportError as e:
+        print(f"ERROR: Cannot import required modules: {e}")
         print("Make sure you're running this from your project root directory.")
-        print("Or run inside Flask shell: flask shell < load_croa_documents.py")
+        print("And ensure DATABASE_URL is set.")
         return
-    
-    with app.app_context():
+
+    # Create tables if they don't exist
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+
+    try:
         loaded = 0
         skipped = 0
         errors = 0
-        
+
         for doc in DOCUMENTS:
             filepath = os.path.join(DOCS_FOLDER, doc["filename"])
-            
+
             # Check if file exists
             if not os.path.exists(filepath):
                 print(f"❌ FILE NOT FOUND: {filepath}")
                 errors += 1
                 continue
-            
+
             # Check if already exists in database
-            existing = DocumentTemplate.query.filter_by(code=doc["code"]).first()
+            existing = db.query(DocumentTemplate).filter_by(code=doc["code"]).first()
             if existing:
                 print(f"⏭️  SKIPPED (already exists): {doc['name']}")
                 skipped += 1
                 continue
-            
+
             # Read and clean HTML
             try:
                 with open(filepath, 'r', encoding='utf-8') as f:
@@ -164,10 +167,10 @@ def load_documents():
             except UnicodeDecodeError:
                 with open(filepath, 'r', encoding='latin-1') as f:
                     raw_html = f.read()
-            
+
             cleaned_html = clean_html(raw_html)
             body_content = extract_body_content(cleaned_html)
-            
+
             # Create database record
             template = DocumentTemplate(
                 code=doc["code"],
@@ -181,32 +184,34 @@ def load_documents():
                 is_active=True,
                 version="1.0"
             )
-            
-            db.session.add(template)
+
+            db.add(template)
             print(f"✅ LOADED: {doc['name']}")
             loaded += 1
-        
+
         # Commit all changes
         if loaded > 0:
-            db.session.commit()
-        
+            db.commit()
+
         print("\n" + "=" * 50)
         print(f"SUMMARY:")
         print(f"  ✅ Loaded:  {loaded}")
         print(f"  ⏭️  Skipped: {skipped}")
         print(f"  ❌ Errors:  {errors}")
         print("=" * 50)
-        
+
         if loaded > 0:
             print("\n🎉 Documents ready for e-signature system!")
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":
     print("=" * 50)
     print("CROA DOCUMENT LOADER")
     print("=" * 50)
-    print(f"\nLooking for .htm files in: {DOCS_FOLDER}\n")
-    
+    print(f"\nLooking for .html files in: {DOCS_FOLDER}\n")
+
     if DOCS_FOLDER == "/path/to/your/htm/files":
         print("❌ ERROR: Update DOCS_FOLDER path first!")
         print("   Edit this script and change line 14")
