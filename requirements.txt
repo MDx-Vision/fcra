@@ -1,32 +1,43 @@
+# Core Flask
 Flask==3.0.0
 Flask-CORS==4.0.0
+Flask-Limiter>=3.5.0
 Werkzeug==3.0.1
-anthropic==0.74.1
-beautifulsoup4==4.12.3
-psycopg2-binary
-python-docx
-reportlab
-requests
-sqlalchemy
 gunicorn==21.2.0
-fpdf
+
+# Database
+sqlalchemy
+psycopg2-binary
+
+# AI
+anthropic==0.74.1
+
+# PDF Generation & Parsing
 fpdf2
+reportlab
+weasyprint
+pdfplumber
+pypdf
+
+# Document Processing
+python-docx
+beautifulsoup4==4.12.3
+
+# Security & Auth
 pyjwt
 cryptography
+bleach>=6.0.0
+
+# External Services
 stripe
 twilio
 sendgrid
-pypdf
-PyPDF2
-pdfplumber
-pdfplumber
-PyPDF2
-python-dateutil
-pdfplumber
-python-dateutil
-playwright
 paramiko
-weasyprint
-Flask-Limiter>=3.5.0
-bleach>=6.0.0
+
+# Utilities
+requests
+python-dateutil
 python-dotenv>=1.0.0
+
+# Testing
+playwright
