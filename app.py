@@ -986,6 +986,27 @@ def readiness_check():
         }), 503
 
 
+# =============================================================================
+# LEGAL PAGES (Privacy Policy, Terms of Service)
+# =============================================================================
+
+@app.route('/legal/privacy')
+@app.route('/privacy-policy')
+@app.route('/privacy')
+def privacy_policy():
+    """Privacy Policy page."""
+    return render_template('legal/privacy_policy.html')
+
+
+@app.route('/legal/terms')
+@app.route('/terms-of-service')
+@app.route('/terms')
+@app.route('/tos')
+def terms_of_service():
+    """Terms of Service page."""
+    return render_template('legal/terms_of_service.html')
+
+
 @app.route('/')
 def home():
     """Home page - shows form or status"""
