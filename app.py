@@ -951,6 +951,41 @@ a:hover{background:#5b21b6}h1{color:#1f2937}</style></head>
     return send_from_directory(mockups_dir, filename)
 
 
+# =============================================================================
+# HEALTH CHECK ENDPOINTS (for monitoring and container orchestration)
+# =============================================================================
+
+@app.route('/health')
+def health_check():
+    """Basic health check - returns 200 if app is running."""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'version': '1.0.0'
+    })
+
+
+@app.route('/ready')
+def readiness_check():
+    """Readiness check - verifies database connectivity."""
+    try:
+        db = get_db()
+        db.execute("SELECT 1")
+        db.close()
+        return jsonify({
+            'status': 'ready',
+            'database': 'connected',
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'not_ready',
+            'database': 'disconnected',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 503
+
+
 @app.route('/')
 def home():
     """Home page - shows form or status"""
