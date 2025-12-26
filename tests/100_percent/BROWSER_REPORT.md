@@ -1,6 +1,6 @@
 # 100% EXHAUSTIVE QA RESULTS
 
-**Date:** 2025-12-26T10:47:55.684508
+**Date:** 2025-12-26T11:05:00.226635
 **Tester:** Claude Code (Playwright Automation)
 
 ## Summary
@@ -16,14 +16,15 @@
 | Modals Tested | 0 |
 | Responsive Tests | 12 |
 | Accessibility Tests | 3 |
-| Passed | 11 |
-| Failed | 37 |
-| Issues Found | 37 |
-| Console Errors | 54 |
+| Passed | 10 |
+| Failed | 38 |
+| Issues Found | 38 |
+| Console Errors | 55 |
 | Page Errors | 0 |
 
 ## Issues Found
 
+- **page_load**: {'type': 'page_load', 'page': '/dashboard/cases', 'status': 429}
 - **page_load**: {'type': 'page_load', 'page': '/dashboard/settlements', 'status': 429}
 - **page_load**: {'type': 'page_load', 'page': '/dashboard/staff', 'status': 429}
 - **page_load**: {'type': 'page_load', 'page': '/dashboard/analytics', 'status': 429}
@@ -79,6 +80,6 @@
 ## Conclusion
 
 Total Tests: 48
-Pass Rate: 22.9%
+Pass Rate: 20.8%
 
 **Status:** ISSUES NEED FIXING

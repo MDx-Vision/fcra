@@ -1,6 +1,6 @@
 # BUTTON INVENTORY - COMPLETE STATUS REPORT
 
-**Date:** 2025-12-26T10:47:55.848858
+**Date:** 2025-12-26T11:05:00.353572
 **Purpose:** Know exactly what works, what's broken, what needs building
 
 ---
@@ -85,22 +85,6 @@ Found: 5 buttons | Tested: 5
 | 3 | 👁 | HIDDEN | Button not visible on page (likely  |
 | 4 | Reset Password | HIDDEN | Button not visible on page (likely  |
 
-### /dashboard/workflows
-Found: 2 buttons | Tested: 2
-
-| # | Button | Status | Notes |
-|---|--------|--------|-------|
-| 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
-| 1 | Sign In | WORKING | Submit button (form submission) |
-
-### /dashboard/ml-insights
-Found: 2 buttons | Tested: 2
-
-| # | Button | Status | Notes |
-|---|--------|--------|-------|
-| 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
-| 1 | Sign In | WORKING | Submit button (form submission) |
-
 ### /dashboard/white-label
 Found: 2 buttons | Tested: 2
 
@@ -118,6 +102,22 @@ Found: 2 buttons | Tested: 2
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
 ### /dashboard/affiliates
+Found: 2 buttons | Tested: 2
+
+| # | Button | Status | Notes |
+|---|--------|--------|-------|
+| 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
+| 1 | Sign In | WORKING | Submit button (form submission) |
+
+### /dashboard/triage
+Found: 2 buttons | Tested: 2
+
+| # | Button | Status | Notes |
+|---|--------|--------|-------|
+| 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
+| 1 | Sign In | WORKING | Submit button (form submission) |
+
+### /dashboard/escalation
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
