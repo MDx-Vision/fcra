@@ -6,7 +6,8 @@ describe('Staff Login Page (/dashboard/affiliates)', () => {
 
   describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
-      cy.url().should('include', '/dashboard/affiliates');
+      // Page redirects to staff login when not authenticated
+      cy.url().should('include', '/staff/login');
       cy.get('[data-testid="login-container"]').should('be.visible');
     });
 
@@ -15,11 +16,7 @@ describe('Staff Login Page (/dashboard/affiliates)', () => {
     });
 
     it('should not have console errors', () => {
-      cy.window().then((win) => {
-        cy.stub(win.console, 'error').as('consoleError');
-      });
-      cy.reload();
-      // Console error check removed - spy setup issue;
+      cy.get('@consoleError').should('not.have.been.called');
     });
 
     it('should not return server errors', () => {
