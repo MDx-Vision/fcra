@@ -10,3 +10,8 @@ before(() => {
 Cypress.on('uncaught:exception', (err, runnable) => {
   return false
 })
+
+// Set up console.error spy on each page load for "has no console errors" checks
+Cypress.on('window:before:load', (win) => {
+  cy.spy(win.console, 'error').as('consoleError')
+})

@@ -15,9 +15,7 @@ describe('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
 
     it('should not have console errors', () => {
-      cy.window().then((win) => {
-        expect(win.console.error).to.not.have.been.called;
-      });
+      cy.get('@consoleError').should('not.have.been.called');
     });
 
     it('should not return server errors', () => {

@@ -16,9 +16,7 @@ describe('/admin - FCRA Admin Dashboard', () => {
     });
 
     it('has no console errors', () => {
-      cy.window().then((win) => {
-        expect(win.console.error).to.not.have.been.called;
-      });
+      cy.get('@consoleError').should('not.have.been.called');
     });
 
     it('responds with 200 status', () => {

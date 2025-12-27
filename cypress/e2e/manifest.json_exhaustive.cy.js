@@ -8,9 +8,7 @@ describe('/manifest.json', () => {
   describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/manifest.json');
-      cy.window().then((win) => {
-        expect(win.console.error).to.not.have.been.called;
-      });
+      cy.get('@consoleError').should('not.have.been.called');
     });
 
     it('should have correct URL', () => {

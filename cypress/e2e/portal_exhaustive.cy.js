@@ -15,9 +15,7 @@ describe('/portal - Client Login Page', () => {
     });
 
     it('should not have console errors', () => {
-      cy.window().then((win) => {
-        expect(win.console.error).to.not.have.been.called;
-      });
+      cy.get('@consoleError').should('not.have.been.called');
     });
 
     it('should return 200 status', () => {
