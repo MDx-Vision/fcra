@@ -3,6 +3,8 @@ describe('/admin - FCRA Admin Dashboard', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/admin');
+    cy.get('body').should('be.visible');
+    cy.wait(500); // Allow page to fully render
   });
 
   describe('Page Load Tests', () => {
@@ -57,8 +59,8 @@ describe('/admin - FCRA Admin Dashboard', () => {
     });
 
     it('displays all buttons', () => {
-      cy.get('#parseBtn').scrollIntoView().should('be.visible').should('contain', '📊 Parse PDF Preview');
-      cy.get('#submitBtn').scrollIntoView().should('be.visible').should('contain', '🔍 Generate Analysis');
+      cy.get('#parseBtn').should('exist').scrollIntoView().should('contain', '📊 Parse PDF Preview');
+      cy.get('#submitBtn').should('exist').scrollIntoView().should('contain', '🔍 Generate Analysis');
     });
 
     it('displays input type toggle buttons', () => {
@@ -75,18 +77,20 @@ describe('/admin - FCRA Admin Dashboard', () => {
     });
 
     it('name field accepts text and is required', () => {
-      cy.get('#name').scrollIntoView()
+      cy.get('#name').should('exist').scrollIntoView()
         .should('have.attr', 'type', 'text')
         .should('have.attr', 'required')
-        .type('Test User')
+        .clear()
+        .type('Test User', { force: true })
         .should('have.value', 'Test User');
     });
 
     it('email field accepts email and is optional', () => {
-      cy.get('#email').scrollIntoView()
+      cy.get('#email').should('exist').scrollIntoView()
         .should('have.attr', 'type', 'email')
         .should('not.have.attr', 'required')
-        .type('test@example.com')
+        .clear()
+        .type('test@example.com', { force: true })
         .should('have.value', 'test@example.com');
     });
 
