@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-12-26T17:16:54.942130",
-  "buttons_found": 25,
-  "buttons_tested": 25,
+  "timestamp": "2025-12-26T19:43:31.607837",
+  "buttons_found": 27,
+  "buttons_tested": 27,
   "status_counts": {
-    "working": 15,
+    "working": 17,
     "not_built": 0,
     "broken": 1,
     "disabled": 0,
@@ -503,9 +503,30 @@
     },
     {
       "url": "/dashboard/performance",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/suspense",
