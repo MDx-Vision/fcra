@@ -9,6 +9,9 @@ import os
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Set TESTING environment variable for encryption key auto-generation
+os.environ['TESTING'] = 'true'
+
 # Base URL for browser tests
 BASE_URL = "http://localhost:5001"
 
