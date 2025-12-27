@@ -77,21 +77,23 @@ describe('/admin - FCRA Admin Dashboard', () => {
     });
 
     it('name field accepts text and is required', () => {
-      cy.get('#name').should('exist').scrollIntoView()
-        .should('have.attr', 'type', 'text')
-        .should('have.attr', 'required')
-        .clear()
-        .type('Test User', { force: true })
-        .should('have.value', 'Test User');
+      cy.get('#name').should('exist');
+      cy.get('#name').scrollIntoView();
+      cy.get('#name').should('have.attr', 'type', 'text');
+      cy.get('#name').should('have.attr', 'required');
+      cy.get('#name').clear({ force: true });
+      cy.get('#name').type('Test User', { force: true });
+      cy.get('#name').should('have.value', 'Test User');
     });
 
     it('email field accepts email and is optional', () => {
-      cy.get('#email').should('exist').scrollIntoView()
-        .should('have.attr', 'type', 'email')
-        .should('not.have.attr', 'required')
-        .clear()
-        .type('test@example.com', { force: true })
-        .should('have.value', 'test@example.com');
+      cy.get('#email').should('exist');
+      cy.get('#email').scrollIntoView();
+      cy.get('#email').should('have.attr', 'type', 'email');
+      cy.get('#email').should('not.have.attr', 'required');
+      cy.get('#email').clear({ force: true });
+      cy.get('#email').type('test@example.com', { force: true });
+      cy.get('#email').should('have.value', 'test@example.com');
     });
 
     it('report textarea accepts text', () => {
