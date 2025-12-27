@@ -1,6 +1,6 @@
 # BUTTON INVENTORY - COMPLETE STATUS REPORT
 
-**Date:** 2025-12-26T11:30:08.707028
+**Date:** 2025-12-26T17:16:54.942130
 **Purpose:** Know exactly what works, what's broken, what needs building
 
 ---
@@ -9,13 +9,13 @@
 
 | Metric | Count | Percentage |
 |--------|-------|------------|
-| Buttons Found | 23 | - |
-| Buttons Tested | 23 | 100% |
-| WORKING | 13 | 56.5% |
+| Buttons Found | 25 | - |
+| Buttons Tested | 25 | 100% |
+| WORKING | 15 | 60.0% |
 | NOT BUILT | 0 | 0.0% |
-| BROKEN | 1 | 4.3% |
+| BROKEN | 1 | 4.0% |
 | DISABLED | 0 | 0.0% |
-| HIDDEN | 9 | 39.1% |
+| HIDDEN | 9 | 36.0% |
 | DANGEROUS (tested safely) | 0 | 0.0% |
 
 ---
@@ -85,7 +85,7 @@ Found: 5 buttons | Tested: 5
 | 3 | 👁 | HIDDEN | Button not visible on page (likely  |
 | 4 | Reset Password | HIDDEN | Button not visible on page (likely  |
 
-### /dashboard/workflows
+### /dashboard/calendar
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -93,7 +93,7 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/ml-insights
+### /dashboard/contacts
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -101,7 +101,7 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/white-label
+### /dashboard/automation-tools
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -109,7 +109,7 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/franchise
+### /dashboard/letter-queue
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -117,7 +117,15 @@ Found: 2 buttons | Tested: 2
 | 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
 | 1 | Sign In | WORKING | Submit button (form submission) |
 
-### /dashboard/affiliates
+### /dashboard/demand-generator
+Found: 2 buttons | Tested: 2
+
+| # | Button | Status | Notes |
+|---|--------|--------|-------|
+| 0 | 👁 | WORKING | Has onclick: togglePassword('passwo |
+| 1 | Sign In | WORKING | Submit button (form submission) |
+
+### /dashboard/settings/sms
 Found: 2 buttons | Tested: 2
 
 | # | Button | Status | Notes |
@@ -130,9 +138,9 @@ Found: 2 buttons | Tested: 2
 
 ## Conclusion
 
-- **Total Buttons Found:** 23
-- **Total Buttons Tested:** 23
-- **Working:** 13 (56.5%)
+- **Total Buttons Found:** 25
+- **Total Buttons Tested:** 25
+- **Working:** 15 (60.0%)
 - **Need Building:** 0
 - **Need Fixing:** 1
 - **Hidden (in modals):** 9

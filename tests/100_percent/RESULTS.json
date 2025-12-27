@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-26T11:30:08.624355",
+  "timestamp": "2025-12-26T17:16:54.841687",
   "pages_tested": 45,
   "forms_tested": 2,
   "fields_tested": 3,
@@ -10,6 +10,26 @@
   "responsive_tests": 12,
   "accessibility_tests": 3,
   "issues_found": [
+    {
+      "type": "page_load",
+      "page": "/dashboard",
+      "status": 429
+    },
+    {
+      "type": "page_load",
+      "page": "/dashboard/clients",
+      "status": 429
+    },
+    {
+      "type": "page_load",
+      "page": "/dashboard/signups",
+      "status": 429
+    },
+    {
+      "type": "page_load",
+      "page": "/dashboard/cases",
+      "status": 429
+    },
     {
       "type": "page_load",
       "page": "/dashboard/settlements",
@@ -197,9 +217,13 @@
     }
   ],
   "issues_fixed": [],
-  "passed": 11,
-  "failed": 37,
+  "passed": 7,
+  "failed": 41,
   "console_errors": [
+    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
+    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
+    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
+    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
     "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
     "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
     "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
