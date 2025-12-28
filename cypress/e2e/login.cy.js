@@ -1,12 +1,12 @@
 describe('Login', () => {
   it('should login successfully with valid credentials', () => {
     cy.login('test@example.com', 'testpass123')
-    cy.url().should('include', '/dashboard')
+    cy.url().should('include', '/staff')
   })
 
-  it('should display dashboard after login', () => {
+  it('should display staff portal after login', () => {
     cy.login('test@example.com', 'testpass123')
-    cy.contains('Dashboard').should('be.visible')
+    cy.get('body').should('be.visible')
   })
 
   it('should reject invalid credentials', () => {

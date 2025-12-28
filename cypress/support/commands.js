@@ -6,9 +6,10 @@ Cypress.Commands.add('login', (email = 'test@example.com', password = 'testpass1
     body: {
       email: email,
       password: password
-    }
+    },
+    followRedirect: true
   });
-  cy.visit('/dashboard');
+  cy.visit('/staff/');
 });
 
 // Login as staff member

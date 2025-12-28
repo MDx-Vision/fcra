@@ -9,6 +9,9 @@ from flask_limiter.util import get_remote_address
 from flask import request, session, jsonify
 import os
 
+# Check if running in CI/test mode - disable rate limiting for tests
+IS_CI = os.environ.get('CI', '').lower() == 'true'
+
 # Get rate limit settings from environment or use defaults
 DEFAULT_RATE = os.environ.get('RATE_LIMIT_DEFAULT', '200 per minute')
 AUTH_RATE = os.environ.get('RATE_LIMIT_AUTH', '5 per minute')  # Stricter for login
@@ -35,7 +38,8 @@ def init_rate_limiter(app):
         default_limits=[DEFAULT_RATE],
         storage_uri="memory://",  # Use Redis in production: "redis://localhost:6379"
         strategy="fixed-window",
-        headers_enabled=True  # Adds X-RateLimit headers to responses
+        headers_enabled=True,  # Adds X-RateLimit headers to responses
+        enabled=not IS_CI  # Disable rate limiting in CI/test mode
     )
 
     # Custom error handler for rate limit exceeded

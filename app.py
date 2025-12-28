@@ -724,35 +724,58 @@ def staff_logout():
 
 
 @app.route('/api/staff/login', methods=['POST'])
+@limiter.limit(RATE_LIMITS['login'])  # Prevent brute force attacks
 def api_staff_login():
     """API endpoint for staff login"""
     data = request.get_json() or {}
     email = sanitize_string(data.get('email', '')).strip().lower()
     password = data.get('password', '')  # Don't sanitize password - it needs to match hash
-    
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+
     if not email or not password:
         return jsonify({'success': False, 'error': 'Email and password required'}), 400
-    
+
     db = get_db()
     try:
         staff = db.query(Staff).filter_by(email=email).first()
-        
-        if not staff or not check_password_hash(staff.password_hash, password):
+        audit_service = get_audit_service(db)
+
+        if not staff:
+            audit_service.log_login(
+                user_id=None, user_type='staff', success=False, ip=user_ip,
+                email=email, failure_reason='User not found'
+            )
             return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
-        
+
         if not staff.is_active:
+            audit_service.log_login(
+                user_id=staff.id, user_type='staff', success=False, ip=user_ip,
+                email=email, name=staff.full_name, failure_reason='Account disabled'
+            )
             return jsonify({'success': False, 'error': 'Account disabled'}), 403
-        
+
+        if not check_password_hash(staff.password_hash, password):
+            audit_service.log_login(
+                user_id=staff.id, user_type='staff', success=False, ip=user_ip,
+                email=email, name=staff.full_name, failure_reason='Invalid password'
+            )
+            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+
         staff.last_login = datetime.utcnow()
         db.commit()
-        
+
         session.permanent = True
         session['staff_id'] = staff.id
         session['staff_role'] = staff.role
         session['staff_name'] = staff.full_name
         session['staff_email'] = staff.email
         session['staff_initials'] = staff.initials
-        
+
+        audit_service.log_login(
+            user_id=staff.id, user_type='staff', success=True, ip=user_ip,
+            email=staff.email, name=staff.full_name
+        )
+
         return jsonify({
             'success': True,
             'staff': {
