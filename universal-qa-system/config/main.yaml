@@ -1,0 +1,47 @@
+# Universal QA System - Main Configuration
+# ==========================================
+
+system:
+  name: "Universal QA System"
+  version: "1.0.0"
+  environment: "development"  # development, staging, production
+
+# Test execution settings
+testing:
+  parallel_workers: 4
+  timeout_seconds: 300
+  retry_failed: true
+  max_retries: 2
+  stop_on_failure: false
+
+# Reporting configuration
+reporting:
+  output_dir: "./reports"
+  formats:
+    - "html"
+    - "json"
+    - "junit"
+  include_screenshots: true
+  include_logs: true
+
+# Project settings
+projects:
+  config_dir: "./config/projects"
+  default_project: null
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "./logs/qa-system.log"
+  rotate_size_mb: 10
+  retain_count: 5
+
+# Notifications (optional)
+notifications:
+  enabled: false
+  channels:
+    slack:
+      webhook_url: ""
+    email:
+      smtp_host: ""
+      recipients: []

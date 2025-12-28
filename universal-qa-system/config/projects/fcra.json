@@ -1,0 +1,10 @@
+{
+  "name": "fcra",
+  "display_name": "FCRA Platform",
+  "description": "Fair Credit Reporting Act litigation and credit repair platform",
+  "test_framework": "cypress",
+  "paths": {
+    "base_url": "http://localhost:5000",
+    "cypress_specs": "cypress/e2e"
+  }
+}

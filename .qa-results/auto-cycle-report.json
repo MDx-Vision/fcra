@@ -1,0 +1,769 @@
+{
+  "timestamp": "2025-12-28T05:29:37.249Z",
+  "summary": {
+    "passed": 43,
+    "failed": 7,
+    "skipped": 0
+  },
+  "categories": {
+    "auth": [
+      {
+        "folder": "affiliates_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboardaffiliates) -- Page Load Tests -- should load the page without errors (failed).png"
+      },
+      {
+        "folder": "affiliates_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboardaffiliates) -- Page Load Tests -- should not return server errors (failed).png"
+      },
+      {
+        "folder": "affiliates_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboardaffiliates) -- should display all headings correctly -- before each hook (failed).png"
+      },
+      {
+        "folder": "analysis_exhaustive.cy.js",
+        "file": "Analysis - Full QA Suite -- should display page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "analytics.cy.js",
+        "file": "Analytics Page -- should load the analytics page -- before each hook (failed).png"
+      },
+      {
+        "folder": "api_docs_exhaustive.cy.js",
+        "file": "dashboardapi-docs - API Documentation Page -- should load without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "api_keys_exhaustive.cy.js",
+        "file": "Staff Login Page Tests -- should load without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "audit_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardaudit -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "auth_exhaustive.cy.js",
+        "file": "Auth - Full QA Suite -- should display page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "automation_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardautomation -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "automation_tools_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardautomation-tools -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "billing_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardbilling -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "calendar_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardcalendar -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "case_law_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardcase-law -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "cfpb_exhaustive.cy.js",
+        "file": "Staff Login - dashboardcfpb -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "chexsystems_exhaustive.cy.js",
+        "file": "dashboardchexsystems - Staff Login Page -- should load without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "client_portal.cy.js",
+        "file": "Client Portal -- Password Creation -- should display password creation form -- before each hook (failed).png"
+      },
+      {
+        "folder": "clients.cy.js",
+        "file": "Clients Page -- should load the clients page -- before each hook (failed).png"
+      },
+      {
+        "folder": "clients_crud.cy.js",
+        "file": "Clients Page - Comprehensive Tests -- should load the clients page -- before each hook (failed).png"
+      },
+      {
+        "folder": "clients_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardclients -- should have correct page title -- before each hook (failed).png"
+      },
+      {
+        "folder": "contacts_exhaustive.cy.js",
+        "file": "Staff Login Page -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "create_item.cy.js",
+        "file": "Create Item (Staff Member) -- should create a new staff member successfully -- before each hook (failed).png"
+      },
+      {
+        "folder": "create_password_exhaustive.cy.js",
+        "file": "Client Portal Create Password Page -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "credit_import_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardcredit-import -- Page Load Tests -- should load the page without errors (failed).png"
+      },
+      {
+        "folder": "credit_import_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardcredit-import -- should display main H1 heading Brightpath Ascend Group -- before each hook (failed).png"
+      },
+      {
+        "folder": "credit_report_viewer.cy.js",
+        "file": "Credit Report Viewer - Full QA Suite -- should load credit import list page -- before all hook (failed).png"
+      },
+      {
+        "folder": "credit_reports.cy.js",
+        "file": "Credit Report Processing -- should display upload area -- before each hook (failed).png"
+      },
+      {
+        "folder": "credit_tracker_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardcredit-tracker -- should load page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "dashboard.cy.js",
+        "file": "Dashboard -- should load the dashboard page -- before each hook (failed).png"
+      },
+      {
+        "folder": "dashboard_exhaustive.cy.js",
+        "file": "Client Portal Dashboard -- should load the dashboard page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "demand_generator_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboarddemand-generator) -- should load page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "dispute_letters.cy.js",
+        "file": "Dispute Letter Generation -- should display pending letters -- before each hook (failed).png"
+      },
+      {
+        "folder": "documents_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboarddocuments -- Page Load Tests -- should load the page without errors (failed).png"
+      },
+      {
+        "folder": "documents_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboarddocuments -- should display all headings correctly -- before each hook (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Unauthorized Access -- should redirect unauthenticated users from dashboard (failed).png"
+      },
+      {
+        "folder": "email_exhaustive.cy.js",
+        "file": "Staff Login Page Tests -- should load without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "escalation_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboardescalation) -- should load without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "franchise_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardfranchise -- Page Load Tests -- should load without errors (failed).png"
+      },
+      {
+        "folder": "franchise_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardfranchise -- should display company logo -- before each hook (failed).png"
+      },
+      {
+        "folder": "frivolousness_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboardfrivolousness) -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "furnishers_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardfurnishers -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "generator_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardcfpbgenerator -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "history_exhaustive.cy.js",
+        "file": "history Page Tests -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "import_exhaustive.cy.js",
+        "file": "dashboardimport - Staff Login Page -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "integrations_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardintegrations -- should load page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "knowledge_base_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboardknowledge-base) -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "letter_queue_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardletter-queue -- Page Load Tests -- should load the page without errors (failed).png"
+      },
+      {
+        "folder": "letter_queue_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardletter-queue -- should display main container -- before each hook (failed).png"
+      },
+      {
+        "folder": "login.cy.js",
+        "file": "Login -- should display dashboard after login (failed).png"
+      },
+      {
+        "folder": "login.cy.js",
+        "file": "Login -- should display login form elements (failed).png"
+      },
+      {
+        "folder": "login.cy.js",
+        "file": "Login -- should have client portal link (failed).png"
+      },
+      {
+        "folder": "login.cy.js",
+        "file": "Login -- should login successfully with valid credentials (failed).png"
+      },
+      {
+        "folder": "login.cy.js",
+        "file": "Login -- should reject invalid credentials (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Error Handling Tests -- should handle network errors in reset password (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Form State Management Tests -- should reset button state after failed reset password attempt (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Login Form Tests -- should submit login form (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Page Load Tests -- should load page without errors (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should accept input in password fields (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should display reset password form elements (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should handle reset password error (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should handle successful password reset (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should show error for short password (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should show error when passwords do not match (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should show reset password form when token is present (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Reset Password Form Tests -- should toggle new password visibility (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Token Access Tests -- should extract token from full portal URL (failed).png"
+      },
+      {
+        "folder": "logout_exhaustive.cy.js",
+        "file": "portallogout - Client Login Page -- Token Access Tests -- should prompt for token when token access link is clicked (failed).png"
+      },
+      {
+        "folder": "manifest.json_exhaustive.cy.js",
+        "file": "manifest.json -- should load without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "messages_exhaustive.cy.js",
+        "file": "Client Portal - Messages Page -- should load without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "ml_insights_exhaustive.cy.js",
+        "file": "dashboardml-insights - Staff Login Page -- Page Load Tests -- should load without errors (failed).png"
+      },
+      {
+        "folder": "ml_insights_exhaustive.cy.js",
+        "file": "dashboardml-insights - Staff Login Page -- should display main logo and branding -- before each hook (failed).png"
+      },
+      {
+        "folder": "other_exhaustive.cy.js",
+        "file": "Other - Full QA Suite -- should load -- before each hook (failed).png"
+      },
+      {
+        "folder": "patterns_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardpatterns -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "performance_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardperformance -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Forgot Password Form Tests -- should have correct forgot email input attributes (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Interactive Element Tests -- should handle token access prompt (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Login Form Tests -- should have required email input with correct attributes (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Login Form Tests -- should have required password input with correct attributes (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Login Form Tests -- should show loading state on form submission (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Page Load Tests -- should not have console errors (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should accept password input (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should display reset password form elements (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should handle successful password reset (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should have correct confirm password input attributes (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should have correct new password input attributes (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should have hidden token input with value (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should have working password toggle for new password (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should show reset password form when token is present (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should validate minimum password length (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- Reset Password Form Tests -- should validate password mismatch (failed).png"
+      },
+      {
+        "folder": "portal_exhaustive.cy.js",
+        "file": "portal - Client Login Page -- should extract token from full portal URL -- before each hook (failed).png"
+      },
+      {
+        "folder": "predictive_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardpredictive -- Page Load Tests -- should load without errors (failed).png"
+      },
+      {
+        "folder": "predictive_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardpredictive -- should display company logo and name -- before each hook (failed).png"
+      },
+      {
+        "folder": "queue_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardqueue -- Page Load Tests -- should load the page without errors (failed).png"
+      },
+      {
+        "folder": "queue_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardqueue -- should have correct page title -- before each hook (failed).png"
+      },
+      {
+        "folder": "reports_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardreports -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "scanned_documents_exhaustive.cy.js",
+        "file": "Staff Login Page Tests -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "settings_exhaustive.cy.js",
+        "file": "Staff Login Page -- Page Load Tests -- should load the page without errors (failed).png"
+      },
+      {
+        "folder": "settings_exhaustive.cy.js",
+        "file": "Staff Login Page -- should have correct page title -- before each hook (failed).png"
+      },
+      {
+        "folder": "settlements.cy.js",
+        "file": "Settlements Page -- should load the settlements page -- before each hook (failed).png"
+      },
+      {
+        "folder": "settlements_crud.cy.js",
+        "file": "Settlements Page - Comprehensive Tests -- should load the settlements page -- before each hook (failed).png"
+      },
+      {
+        "folder": "settlements_exhaustive.cy.js",
+        "file": "Settlements - Full QA Suite -- should load dashboardsettlements -- before each hook (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Step 2 - Credit Monitoring Access Tests -- should display all credit service options -- before each hook (failed).png"
+      },
+      {
+        "folder": "signups_exhaustive.cy.js",
+        "file": "dashboardsignups - Staff Login Page -- Page Load Tests -- should load without errors (failed).png"
+      },
+      {
+        "folder": "signups_exhaustive.cy.js",
+        "file": "dashboardsignups - Staff Login Page -- should display main container -- before each hook (failed).png"
+      },
+      {
+        "folder": "smoke.cy.js",
+        "file": "Smoke Tests -- can login and access dashboard (failed).png"
+      },
+      {
+        "folder": "smoke.cy.js",
+        "file": "Smoke Tests -- loads the staff login page with all elements (failed).png"
+      },
+      {
+        "folder": "sms_exhaustive.cy.js",
+        "file": "Staff Login Page (dashboardsettingssms) -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "sol_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardsol -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "sops_exhaustive.cy.js",
+        "file": "dashboardsops - Staff Login Page Tests -- loads page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "specialty_bureaus_exhaustive.cy.js",
+        "file": "Staff Login Page - dashboardspecialty-bureaus -- should load the page without errors -- before each hook (failed).png"
+      },
+      {
+        "folder": "staff_crud.cy.js",
+        "file": "Staff Management - Comprehensive Tests -- should load the staff management page -- before each hook (failed).png"
+      },
+      {
+        "folder": "staff_exhaustive.cy.js",
+        "file": "Staff - Full QA Suite -- should load dashboardstaff -- before each hook (failed).png"
+      }
+    ],
+    "notBuilt": [],
+    "selector": [
+      {
+        "folder": "admin_exhaustive.cy.js",
+        "file": "admin - FCRA Admin Dashboard -- UI Element Tests -- displays all buttons (failed).png"
+      },
+      {
+        "folder": "preview_exhaustive.cy.js",
+        "file": "Credit Report Preview Page -- Accessibility Tests -- should have interactive elements accessible (failed).png"
+      },
+      {
+        "folder": "preview_exhaustive.cy.js",
+        "file": "Credit Report Preview Page -- UI Element Tests -- should show all buttons (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Interactive Element Tests -- should handle add more button click (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Interactive Element Tests -- should handle capture button click (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Interactive Element Tests -- should handle step navigation (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Interactive Element Tests -- should handle tab switching functionality (failed).png"
+      }
+    ],
+    "timeout": [
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Network Errors -- should handle API timeout (failed).png"
+      }
+    ],
+    "rateLimit": [],
+    "other": [
+      {
+        "folder": "admin_exhaustive.cy.js",
+        "file": "admin - FCRA Admin Dashboard -- Form Tests - analysisForm -- email field accepts email and is optional (failed).png"
+      },
+      {
+        "folder": "admin_exhaustive.cy.js",
+        "file": "admin - FCRA Admin Dashboard -- Form Tests - analysisForm -- has correct form attributes (failed).png"
+      },
+      {
+        "folder": "admin_exhaustive.cy.js",
+        "file": "admin - FCRA Admin Dashboard -- Form Tests - analysisForm -- name field accepts text and is required (failed).png"
+      },
+      {
+        "folder": "admin_exhaustive.cy.js",
+        "file": "admin - FCRA Admin Dashboard -- Page Load Tests -- has no console errors (failed).png"
+      },
+      {
+        "folder": "admin_exhaustive.cy.js",
+        "file": "admin - FCRA Admin Dashboard -- Preview Section Structure -- confidence bar exists with proper structure (failed).png"
+      },
+      {
+        "folder": "admin_exhaustive.cy.js",
+        "file": "admin - FCRA Admin Dashboard -- Preview Section Structure -- has all preview sections (failed).png"
+      },
+      {
+        "folder": "auth_exhaustive.cy.js",
+        "file": "Auth - Full QA Suite -- Page Load & Navigation -- should load staffchange-password (failed).png"
+      },
+      {
+        "folder": "client_portal.cy.js",
+        "file": "Client Portal -- Portal Dashboard -- should have logout option (failed).png"
+      },
+      {
+        "folder": "client_portal.cy.js",
+        "file": "Client Portal -- Portal Dashboard -- should have navigation menu (failed).png"
+      },
+      {
+        "folder": "client_portal.cy.js",
+        "file": "Client Portal -- Portal Documents -- should allow document download (failed).png"
+      },
+      {
+        "folder": "client_portal.cy.js",
+        "file": "Client Portal -- Portal Messages -- should allow sending messages (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Concurrent Operations -- should handle simultaneous edits (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Data Validation -- should validate file size limits (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Error Messages -- should log errors for debugging (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Network Errors -- should handle network disconnection (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Session Handling -- should clear session on logout (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Session Handling -- should handle concurrent sessions (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Session Handling -- should handle expired session (failed).png"
+      },
+      {
+        "folder": "edge_cases.cy.js",
+        "file": "Edge Cases & Error Handling -- Unauthorized Access -- should prevent staff from accessing other staff data (failed).png"
+      },
+      {
+        "folder": "preview_exhaustive.cy.js",
+        "file": "Credit Report Preview Page -- Analysis Flow Tests -- should show spinning animation during analysis (failed).png"
+      },
+      {
+        "folder": "preview_exhaustive.cy.js",
+        "file": "Credit Report Preview Page -- Results Display Tests -- should display violations list section (failed).png"
+      },
+      {
+        "folder": "preview_exhaustive.cy.js",
+        "file": "Credit Report Preview Page -- User Flow Tests -- should complete full analysis flow successfully (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Accessibility Tests -- should have proper form labels and inputs (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display add more button (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display back button (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display camera tab button as active (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display capture button (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display download PDF link (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display download text link (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display next button (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display scan another document button (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should display upload tab button (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should make all buttons clickable (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Button Tests -- should switch between camera and upload tabs (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Error Handling Tests -- should handle empty document selection (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Error Handling Tests -- should handle invalid file uploads (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Error Handling Tests -- should handle network errors gracefully (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- File Upload Tests -- should handle file upload functionality (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Navigation Tests -- should display all main navigation items (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Page Load Tests -- should not have server errors (failed).png"
+      },
+      {
+        "folder": "scanner_exhaustive.cy.js",
+        "file": "scanner - Document Scanner -- Responsive Tests -- should display correctly on mobile (375px) (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Button Tests -- should have portal link button (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Button Tests -- should test all navigation buttons (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Form Structure Tests -- should have signup form with correct attributes (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Full Form Flow Tests -- should complete step 2 with valid data (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Step 1 - Personal Information Tests -- Date Input -- should have date of birth input (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Step 1 - Personal Information Tests -- Text Inputs -- should have email input with validation (failed).png"
+      },
+      {
+        "folder": "signup_exhaustive.cy.js",
+        "file": "signup - Complete Test Suite -- Step 1 - Personal Information Tests -- Text Inputs -- should have phone input with placeholder (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Accessibility Tests -- should have keyboard navigation support (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Accessibility Tests -- should have proper form labels (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Button Tests -- should display client portal link (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Button Tests -- should display navigation buttons in step 2 (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Button Tests -- should display submit button (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Credit Monitoring Section Tests -- should accept credit credentials input (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Credit Monitoring Section Tests -- should allow selecting credit service (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Credit Monitoring Section Tests -- should display credit credentials fields (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Data Integrity Tests -- should preserve form data between steps (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Error Handling Tests -- should handle form submission errors (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Form Structure Tests -- should display signup form (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Form Validation Tests -- should prevent form submission without required fields (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Navigation Tests -- should navigate between form steps (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Navigation Tests -- should update progress indicators (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Personal Information Form Tests -- should accept input in text fields (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Personal Information Form Tests -- should display all required personal info fields (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Service Agreement Tests -- should allow checking agreement boxes (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Service Agreement Tests -- should display agreement checkboxes (failed).png"
+      }
+    ]
+  },
+  "recommendation": "Fix auth first"
+}
