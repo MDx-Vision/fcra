@@ -350,53 +350,53 @@
     {% set active_page = 'api-keys' %}
     {% include 'includes/dashboard_sidebar.html' %}
 
-    <main class="main-content">
+    <main class="main-content" data-testid="api-management-container">
         <div class="header">
-            <h1>API Management</h1>
+            <h1 data-testid="api-management-title">API Management</h1>
             <div class="header-actions">
-                <a href="/dashboard/api-docs" class="btn btn-secondary">
+                <a href="/dashboard/api-docs" class="btn btn-secondary" data-testid="view-api-docs-btn">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     View API Docs
                 </a>
-                <button class="btn btn-primary" onclick="openModal('createKeyModal')">
+                <button class="btn btn-primary" onclick="openModal('createKeyModal')" data-testid="generate-api-key-btn">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                     Generate API Key
                 </button>
             </div>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card highlight">
+        <div class="stats-grid" data-testid="stats-grid">
+            <div class="stat-card highlight" data-testid="stat-total-keys">
                 <h3>Total API Keys</h3>
                 <div class="stat-value">{{ stats.total_keys }}</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-testid="stat-active-keys">
                 <h3>Active Keys</h3>
                 <div class="stat-value">{{ stats.active_keys }}</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-testid="stat-total-webhooks">
                 <h3>Total Webhooks</h3>
                 <div class="stat-value">{{ stats.total_webhooks }}</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" data-testid="stat-active-webhooks">
                 <h3>Active Webhooks</h3>
                 <div class="stat-value">{{ stats.active_webhooks }}</div>
             </div>
         </div>
 
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('keys')">API Keys</button>
-            <button class="tab" onclick="switchTab('webhooks')">Webhooks</button>
-            <button class="tab" onclick="switchTab('usage')">Usage Analytics</button>
+        <div class="tabs" data-testid="tabs">
+            <button class="tab active" onclick="switchTab('keys')" data-testid="tab-api-keys">API Keys</button>
+            <button class="tab" onclick="switchTab('webhooks')" data-testid="tab-webhooks">Webhooks</button>
+            <button class="tab" onclick="switchTab('usage')" data-testid="tab-usage">Usage Analytics</button>
         </div>
 
-        <div id="keys-tab" class="tab-content active">
-            <div class="card">
+        <div id="keys-tab" class="tab-content active" data-testid="keys-tab">
+            <div class="card" data-testid="api-keys-card">
                 <div class="card-header">
                     <h2 class="card-title">API Keys</h2>
                 </div>
                 {% if api_keys %}
-                <table class="table">
+                <table class="table" data-testid="api-keys-table">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -443,7 +443,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <div class="empty-state">
+                <div class="empty-state" data-testid="api-keys-empty">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                     <h3>No API Keys</h3>
                     <p>Create your first API key to enable third-party integrations.</p>
@@ -452,17 +452,17 @@
             </div>
         </div>
 
-        <div id="webhooks-tab" class="tab-content">
-            <div class="card">
+        <div id="webhooks-tab" class="tab-content" data-testid="webhooks-tab">
+            <div class="card" data-testid="webhooks-card">
                 <div class="card-header">
                     <h2 class="card-title">Webhooks</h2>
-                    <button class="btn btn-primary btn-sm" onclick="openModal('createWebhookModal')">
+                    <button class="btn btn-primary btn-sm" onclick="openModal('createWebhookModal')" data-testid="add-webhook-btn">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         Add Webhook
                     </button>
                 </div>
                 {% if webhooks %}
-                <table class="table">
+                <table class="table" data-testid="webhooks-table">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -510,7 +510,7 @@
                     </tbody>
                 </table>
                 {% else %}
-                <div class="empty-state">
+                <div class="empty-state" data-testid="webhooks-empty">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                     <h3>No Webhooks</h3>
                     <p>Add webhooks to receive real-time notifications about platform events.</p>
@@ -519,13 +519,13 @@
             </div>
         </div>
 
-        <div id="usage-tab" class="tab-content">
-            <div class="card">
+        <div id="usage-tab" class="tab-content" data-testid="usage-tab">
+            <div class="card" data-testid="usage-card">
                 <div class="card-header">
                     <h2 class="card-title">API Usage Analytics</h2>
                 </div>
-                <div id="usageContent">
-                    <div class="empty-state">
+                <div id="usageContent" data-testid="usage-content">
+                    <div class="empty-state" data-testid="usage-empty">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                         <h3>Select an API Key</h3>
                         <p>Click "Usage" on an API key to view detailed analytics.</p>
@@ -535,13 +535,13 @@
         </div>
     </main>
 
-    <div id="createKeyModal" class="modal">
+    <div id="createKeyModal" class="modal" data-testid="create-key-modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Generate New API Key</h2>
-                <button class="modal-close" onclick="closeModal('createKeyModal')">&times;</button>
+                <button class="modal-close" onclick="closeModal('createKeyModal')" data-testid="create-key-modal-close">&times;</button>
             </div>
-            <form id="createKeyForm" onsubmit="createApiKey(event)">
+            <form id="createKeyForm" onsubmit="createApiKey(event)" data-testid="create-key-form">
                 <div class="form-group">
                     <label class="form-label">Key Name *</label>
                     <input type="text" name="name" class="form-input" placeholder="e.g., Production Integration" required>
@@ -579,11 +579,11 @@
         </div>
     </div>
 
-    <div id="keyCreatedModal" class="modal">
+    <div id="keyCreatedModal" class="modal" data-testid="key-created-modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">API Key Created Successfully</h2>
-                <button class="modal-close" onclick="closeModal('keyCreatedModal'); location.reload();">&times;</button>
+                <button class="modal-close" onclick="closeModal('keyCreatedModal'); location.reload();" data-testid="key-created-modal-close">&times;</button>
             </div>
             <p style="color: #dc2626; font-weight: 500; margin-bottom: 16px;">
                 Store this API key securely - it will not be shown again!
@@ -598,13 +598,13 @@
         </div>
     </div>
 
-    <div id="createWebhookModal" class="modal">
+    <div id="createWebhookModal" class="modal" data-testid="create-webhook-modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Create Webhook</h2>
-                <button class="modal-close" onclick="closeModal('createWebhookModal')">&times;</button>
+                <button class="modal-close" onclick="closeModal('createWebhookModal')" data-testid="create-webhook-modal-close">&times;</button>
             </div>
-            <form id="createWebhookForm" onsubmit="createWebhook(event)">
+            <form id="createWebhookForm" onsubmit="createWebhook(event)" data-testid="create-webhook-form">
                 <div class="form-group">
                     <label class="form-label">Webhook Name *</label>
                     <input type="text" name="name" class="form-input" placeholder="e.g., Slack Notifications" required>

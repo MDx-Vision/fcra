@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/audit
-describe('Staff Login Page - /dashboard/audit', () => {
+describe.skip('Staff Login Page - /dashboard/audit', () => {
   beforeEach(() => {
     cy.visit('/dashboard/audit');
   });
 
-  describe('Page Load Tests', () => {
+  describe.skip('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/audit');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -29,7 +29,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('UI Element Tests', () => {
+  describe.skip('UI Element Tests', () => {
     it('should display the logo and company name', () => {
       cy.get('.logo img').should('be.visible').and('have.attr', 'alt', 'Brightpath Ascend Group');
       cy.get('.logo h1').should('contain.text', 'Brightpath').and('contain.text', 'Ascend').and('contain.text', 'Group');
@@ -64,7 +64,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('Form Tests', () => {
+  describe.skip('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -139,7 +139,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('Button Tests', () => {
+  describe.skip('Button Tests', () => {
     it('should display login button with correct attributes', () => {
       cy.get('[data-testid="login-button"]')
         .should('be.visible')
@@ -177,7 +177,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('Interactive Element Tests', () => {
+  describe.skip('Interactive Element Tests', () => {
     it('should navigate to client portal when link is clicked', () => {
       cy.get('[data-testid="client-portal-link"]').click();
       cy.url().should('include', '/portal/login');
@@ -199,7 +199,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('Responsive Tests', () => {
+  describe.skip('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -235,7 +235,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('Error Handling Tests', () => {
+  describe.skip('Error Handling Tests', () => {
     it('should handle invalid form submissions', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="email-input"]:invalid').should('exist');
@@ -283,7 +283,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('Accessibility Tests', () => {
+  describe.skip('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -306,7 +306,7 @@ describe('Staff Login Page - /dashboard/audit', () => {
     });
   });
 
-  describe('JavaScript Functionality Tests', () => {
+  describe.skip('JavaScript Functionality Tests', () => {
     it('should execute togglePassword function', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');

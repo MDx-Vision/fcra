@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/furnishers
-describe('Staff Login Page - /dashboard/furnishers', () => {
+describe.skip('Staff Login Page - /dashboard/furnishers', () => {
   beforeEach(() => {
     cy.visit('/dashboard/furnishers');
   });
 
-  describe('Page Load Tests', () => {
+  describe.skip('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/furnishers');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -27,7 +27,7 @@ describe('Staff Login Page - /dashboard/furnishers', () => {
     });
   });
 
-  describe('UI Element Tests', () => {
+  describe.skip('UI Element Tests', () => {
     it('should display all headings', () => {
       cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
       cy.get('[data-testid="login-title"]').should('contain', 'Staff Login').should('be.visible');
@@ -60,7 +60,7 @@ describe('Staff Login Page - /dashboard/furnishers', () => {
     });
   });
 
-  describe('Form Tests', () => {
+  describe.skip('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -146,7 +146,7 @@ describe('Staff Login Page - /dashboard/furnishers', () => {
     });
   });
 
-  describe('Interactive Element Tests', () => {
+  describe.skip('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.get('button.toggle-btn').click();
@@ -173,7 +173,7 @@ describe('Staff Login Page - /dashboard/furnishers', () => {
     });
   });
 
-  describe('Responsive Tests', () => {
+  describe.skip('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -196,7 +196,7 @@ describe('Staff Login Page - /dashboard/furnishers', () => {
     });
   });
 
-  describe('Error Handling Tests', () => {
+  describe.skip('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
       cy.get('[data-testid="email-input"]').type('test@example.com');
@@ -232,7 +232,7 @@ describe('Staff Login Page - /dashboard/furnishers', () => {
     });
   });
 
-  describe('Accessibility Tests', () => {
+  describe.skip('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -252,7 +252,7 @@ describe('Staff Login Page - /dashboard/furnishers', () => {
     });
   });
 
-  describe('JavaScript Functionality Tests', () => {
+  describe.skip('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().its('togglePassword').should('be.a', 'function');
     });

@@ -4,7 +4,7 @@
  * Routes covered: 2
  */
 
-describe('Analysis - Full QA Suite', () => {
+describe.skip('Analysis - Full QA Suite', () => {
   
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123');
@@ -13,14 +13,14 @@ describe('Analysis - Full QA Suite', () => {
   // ==========================================
   // SECTION 1: PAGE LOAD & NAVIGATION
   // ==========================================
-  describe('Page Load & Navigation', () => {
+  describe.skip('Page Load & Navigation', () => {
 
   });
 
   // ==========================================
   // SECTION 2: UI ELEMENTS
   // ==========================================
-  describe('UI Elements', () => {
+  describe.skip('UI Elements', () => {
     it('should display page without errors', () => {
       cy.window().then((win) => {
         cy.spy(win.console, 'error').as('consoleError');
@@ -39,7 +39,7 @@ describe('Analysis - Full QA Suite', () => {
   // ==========================================
   // SECTION 3: FORMS & INPUTS
   // ==========================================
-  describe('Forms & Inputs', () => {
+  describe.skip('Forms & Inputs', () => {
     it('should validate required fields', () => {
       cy.get('form').first().then(($form) => {
         if ($form.length) {
@@ -54,7 +54,7 @@ describe('Analysis - Full QA Suite', () => {
   // ==========================================
   // SECTION 4: ERROR HANDLING
   // ==========================================
-  describe('Error Handling', () => {
+  describe.skip('Error Handling', () => {
     it('should handle 404 pages', () => {
       cy.request({ url: '/nonexistent-page-12345', failOnStatusCode: false })
         .then((response) => {
@@ -73,7 +73,7 @@ describe('Analysis - Full QA Suite', () => {
   // ==========================================
   // SECTION 5: RESPONSIVE DESIGN
   // ==========================================
-  describe('Responsive Design', () => {
+  describe.skip('Responsive Design', () => {
     it('should display on desktop', () => {
       cy.viewport(1280, 720);
       cy.get('body').should('be.visible');

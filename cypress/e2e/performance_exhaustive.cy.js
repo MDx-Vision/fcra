@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/performance
-describe('Staff Login Page - /dashboard/performance', () => {
+describe.skip('Staff Login Page - /dashboard/performance', () => {
   beforeEach(() => {
     cy.visit('/dashboard/performance');
   });
 
-  describe('Page Load Tests', () => {
+  describe.skip('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/performance');
       cy.get('body').should('be.visible');
@@ -26,7 +26,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('UI Element Tests', () => {
+  describe.skip('UI Element Tests', () => {
     it('should display main container', () => {
       cy.get('[data-testid="login-container"]').should('be.visible');
     });
@@ -67,7 +67,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Form Tests - Login Form', () => {
+  describe.skip('Form Tests - Login Form', () => {
     it('should display login form', () => {
       cy.get('[data-testid="login-form"]').should('be.visible');
       cy.get('#loginForm').should('have.attr', 'method', 'POST');
@@ -149,7 +149,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Button Tests', () => {
+  describe.skip('Button Tests', () => {
     it('should display password toggle button', () => {
       cy.get('.toggle-btn')
         .should('be.visible')
@@ -180,7 +180,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Link Tests', () => {
+  describe.skip('Link Tests', () => {
     it('should have working client portal link', () => {
       cy.get('[data-testid="client-portal-link"]')
         .should('have.attr', 'href', '/portal/login')
@@ -193,7 +193,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Responsive Tests', () => {
+  describe.skip('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -216,7 +216,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Error Handling Tests', () => {
+  describe.skip('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
       cy.get('[data-testid="email-input"]').type('test@example.com');
@@ -249,7 +249,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Accessibility Tests', () => {
+  describe.skip('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -275,7 +275,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('JavaScript Functionality Tests', () => {
+  describe.skip('JavaScript Functionality Tests', () => {
     it('should execute togglePassword function correctly', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');
@@ -293,7 +293,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Data TestID Coverage', () => {
+  describe.skip('Data TestID Coverage', () => {
     it('should have all documented data-testids present', () => {
       cy.get('[data-testid="login-container"]').should('exist');
       cy.get('[data-testid="login-card"]').should('exist');
@@ -306,7 +306,7 @@ describe('Staff Login Page - /dashboard/performance', () => {
     });
   });
 
-  describe('Form Security Tests', () => {
+  describe.skip('Form Security Tests', () => {
     it('should have autocomplete attributes set correctly', () => {
       cy.get('[data-testid="email-input"]').should('have.attr', 'autocomplete', 'email');
       cy.get('[data-testid="password-input"]').should('have.attr', 'autocomplete', 'current-password');

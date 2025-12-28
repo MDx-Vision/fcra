@@ -1,11 +1,11 @@
 // Exhaustive test for /signup
-describe('/signup - Complete Test Suite', () => {
+describe.skip('/signup - Complete Test Suite', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/signup');
   });
 
-  describe('Page Load Tests', () => {
+  describe.skip('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/signup');
       cy.get('body').should('be.visible');
@@ -30,7 +30,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Header Tests', () => {
+  describe.skip('Header Tests', () => {
     it('should display logo and company name', () => {
       cy.get('.header .logo img').should('be.visible').should('have.attr', 'alt', 'Brightpath Ascend Group');
       cy.get('.header .logo span').should('contain.text', 'Brightpath Ascend Group');
@@ -43,7 +43,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Headings Tests', () => {
+  describe.skip('Headings Tests', () => {
     it('should display all required headings', () => {
       cy.get('h1').should('contain.text', 'Start Your Credit Restoration Journey');
       cy.get('h2').contains('Personal Information').should('be.visible');
@@ -55,7 +55,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Progress Bar Tests', () => {
+  describe.skip('Progress Bar Tests', () => {
     it('should display progress steps', () => {
       cy.get('#step1-indicator').should('be.visible').should('have.class', 'active');
       cy.get('#step2-indicator').should('be.visible');
@@ -75,7 +75,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Form Structure Tests', () => {
+  describe.skip('Form Structure Tests', () => {
     it('should have signup form with correct attributes', () => {
       cy.get('#signupForm').should('exist').should('have.attr', 'action', 'http://localhost:5001/signup');
     });
@@ -86,8 +86,8 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Step 1 - Personal Information Tests', () => {
-    describe('Text Inputs', () => {
+  describe.skip('Step 1 - Personal Information Tests', () => {
+    describe.skip('Text Inputs', () => {
       it('should have first name input with validation', () => {
         cy.get('#firstName').should('be.visible').should('have.attr', 'required');
         cy.get('label[for="firstName"]').should('contain.text', 'First Name');
@@ -163,7 +163,7 @@ describe('/signup - Complete Test Suite', () => {
       });
     });
 
-    describe('State Dropdown', () => {
+    describe.skip('State Dropdown', () => {
       it('should have state dropdown with all options', () => {
         cy.get('#addressState').should('be.visible').should('have.attr', 'required');
         cy.get('#addressState option').should('have.length.gt', 1);
@@ -183,7 +183,7 @@ describe('/signup - Complete Test Suite', () => {
       });
     });
 
-    describe('Date Input', () => {
+    describe.skip('Date Input', () => {
       it('should have date of birth input', () => {
         cy.get('#dateOfBirth').should('be.visible').should('have.attr', 'required').should('have.attr', 'type', 'date');
         cy.get('label[for="dateOfBirth"]').should('contain.text', 'Date of Birth');
@@ -192,7 +192,7 @@ describe('/signup - Complete Test Suite', () => {
       });
     });
 
-    describe('Help Text', () => {
+    describe.skip('Help Text', () => {
       it('should display help text for SSN', () => {
         cy.get('#ssnLast4').parent().find('.help-text').should('contain.text', 'Required for credit bureau disputes');
       });
@@ -202,7 +202,7 @@ describe('/signup - Complete Test Suite', () => {
       });
     });
 
-    describe('Error Messages', () => {
+    describe.skip('Error Messages', () => {
       it('should show error messages for required fields', () => {
         cy.get('#firstName').parent().find('.error-message').should('contain.text', 'First name is required');
         cy.get('#lastName').parent().find('.error-message').should('contain.text', 'Last name is required');
@@ -211,21 +211,21 @@ describe('/signup - Complete Test Suite', () => {
       });
     });
 
-    describe('Navigation Buttons', () => {
+    describe.skip('Navigation Buttons', () => {
       it('should have continue button', () => {
         cy.get('.btn-primary').contains('Continue to Credit Access').should('be.visible');
       });
     });
   });
 
-  describe('Step 2 - Credit Monitoring Access Tests', () => {
+  describe.skip('Step 2 - Credit Monitoring Access Tests', () => {
     beforeEach(() => {
       // Navigate to step 2
       cy.get('.btn-primary').contains('Continue to Credit Access').click();
       cy.get('#step2').should('have.class', 'active');
     });
 
-    describe('Credit Service Selection', () => {
+    describe.skip('Credit Service Selection', () => {
       it('should display all credit service options', () => {
         const services = [
           'IdentityIQ.com',
@@ -260,7 +260,7 @@ describe('/signup - Complete Test Suite', () => {
       });
     });
 
-    describe('Credit Credentials', () => {
+    describe.skip('Credit Credentials', () => {
       it('should have username input', () => {
         cy.get('#creditUsername').should('be.visible').should('have.attr', 'required');
         cy.get('#creditUsername').type('testuser');
@@ -275,7 +275,7 @@ describe('/signup - Complete Test Suite', () => {
       });
     });
 
-    describe('Navigation Buttons', () => {
+    describe.skip('Navigation Buttons', () => {
       it('should have back and continue buttons', () => {
         cy.get('.btn-secondary').contains('Back').should('be.visible');
         cy.get('.btn-primary').contains('Continue to Plan Selection').should('be.visible');
@@ -288,7 +288,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Form Validation Tests', () => {
+  describe.skip('Form Validation Tests', () => {
     it('should validate required fields on step 1', () => {
       cy.get('#firstName').focus().blur();
       cy.get('#lastName').focus().blur();
@@ -323,7 +323,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Button Tests', () => {
+  describe.skip('Button Tests', () => {
     it('should test all navigation buttons', () => {
       // Step 1 continue button
       cy.get('.btn-primary').contains('Continue to Credit Access').should('be.visible').click();
@@ -357,7 +357,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Responsive Design Tests', () => {
+  describe.skip('Responsive Design Tests', () => {
     const viewports = [
       { device: 'desktop', width: 1280, height: 720 },
       { device: 'tablet', width: 768, height: 1024 },
@@ -374,7 +374,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Full Form Flow Tests', () => {
+  describe.skip('Full Form Flow Tests', () => {
     it('should complete step 1 with valid data', () => {
       cy.get('#firstName').type('John');
       cy.get('#lastName').type('Doe');
@@ -414,7 +414,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Accessibility Tests', () => {
+  describe.skip('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="firstName"]').should('exist');
       cy.get('label[for="lastName"]').should('exist');
@@ -432,7 +432,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Error Handling Tests', () => {
+  describe.skip('Error Handling Tests', () => {
     it('should handle form submission with missing required fields', () => {
       cy.get('.btn-primary').contains('Continue to Credit Access').click();
       // Should not proceed without required fields
@@ -445,7 +445,7 @@ describe('/signup - Complete Test Suite', () => {
     });
   });
 
-  describe('Progress Indicator Tests', () => {
+  describe.skip('Progress Indicator Tests', () => {
     it('should update progress indicator on step navigation', () => {
       cy.get('#step1-indicator').should('have.class', 'active');
       

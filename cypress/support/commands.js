@@ -1,15 +1,11 @@
 Cypress.Commands.add('login', (email = 'test@example.com', password = 'testpass123') => {
-  cy.request({
-    method: 'POST',
-    url: '/staff/login',
-    form: true,
-    body: {
-      email: email,
-      password: password
-    },
-    followRedirect: true
+  cy.session([email, password], () => {
+    cy.visit('/staff/login');
+    cy.get('[data-testid="email-input"]').type(email);
+    cy.get('[data-testid="password-input"]').type(password);
+    cy.get('[data-testid="login-button"]').click();
+    cy.url().should('include', '/staff');
   });
-  cy.visit('/staff/');
 });
 
 // Login as staff member

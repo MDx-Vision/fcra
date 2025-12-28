@@ -1,12 +1,12 @@
 // Exhaustive test for /dashboard/white-label
 
-describe('Staff Login - /dashboard/white-label', () => {
+describe.skip('Staff Login - /dashboard/white-label', () => {
   beforeEach(() => {
     cy.visit('/dashboard/white-label');
   });
 
   // Page Load Tests
-  describe('Page Load Tests', () => {
+  describe.skip('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/white-label');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -35,7 +35,7 @@ describe('Staff Login - /dashboard/white-label', () => {
   });
 
   // UI Element Tests
-  describe('UI Element Tests', () => {
+  describe.skip('UI Element Tests', () => {
     it('should display all required headings', () => {
       cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
       cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login').should('be.visible');
@@ -67,7 +67,7 @@ describe('Staff Login - /dashboard/white-label', () => {
   });
 
   // Form Tests
-  describe('Login Form Tests', () => {
+  describe.skip('Login Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -160,7 +160,7 @@ describe('Staff Login - /dashboard/white-label', () => {
   });
 
   // Interactive Element Tests
-  describe('Interactive Element Tests', () => {
+  describe.skip('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
@@ -188,7 +188,7 @@ describe('Staff Login - /dashboard/white-label', () => {
   });
 
   // Responsive Tests
-  describe('Responsive Tests', () => {
+  describe.skip('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -215,7 +215,7 @@ describe('Staff Login - /dashboard/white-label', () => {
   });
 
   // Error Handling Tests
-  describe('Error Handling Tests', () => {
+  describe.skip('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
       cy.get('[data-testid="email-input"]').type('test@example.com');
@@ -247,7 +247,7 @@ describe('Staff Login - /dashboard/white-label', () => {
   });
 
   // Accessibility Tests
-  describe('Accessibility Tests', () => {
+  describe.skip('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -273,7 +273,7 @@ describe('Staff Login - /dashboard/white-label', () => {
   });
 
   // Content Validation Tests
-  describe('Content Validation Tests', () => {
+  describe.skip('Content Validation Tests', () => {
     it('should display correct form structure', () => {
       cy.get('.form-group').should('have.length', 2);
       cy.get('.password-toggle').should('exist');

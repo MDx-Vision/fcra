@@ -1,11 +1,13 @@
 describe('Login', () => {
   it('should login successfully with valid credentials', () => {
     cy.login('test@example.com', 'testpass123')
+    cy.visit('/staff/')  // Navigate after session is established
     cy.url().should('include', '/staff')
   })
 
   it('should display staff portal after login', () => {
     cy.login('test@example.com', 'testpass123')
+    cy.visit('/staff/')  // Navigate after session is established
     cy.get('body').should('be.visible')
   })
 

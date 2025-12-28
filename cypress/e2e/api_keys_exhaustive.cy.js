@@ -1,247 +1,215 @@
-// Exhaustive test for /dashboard/api-keys
-describe('Staff Login Page Tests', () => {
+// Exhaustive test for /dashboard/api-keys (API Management page)
+// Note: In CI mode, the app auto-sets staff session via ci_mock_auth() in app.py
+// This means we can directly visit authenticated pages without manual login
+describe('API Management Page Tests', () => {
   beforeEach(() => {
+    // In CI mode, ci_mock_auth() auto-sets staff_id in session for non-login pages
+    // So we can directly visit the dashboard page
     cy.visit('/dashboard/api-keys');
+    cy.url().should('include', '/dashboard/api-keys');
   });
 
   describe('Page Load Tests', () => {
-    it('should load without errors', () => {
-      cy.get('[data-testid="login-container"]').should('be.visible');
+    it('should load the API management page', () => {
+      cy.get('[data-testid="api-management-container"]').should('be.visible');
       cy.url().should('include', '/dashboard/api-keys');
     });
 
-    it('should not have console errors', () => {
-      cy.window().then((win) => {
-        cy.spy(win.console, 'error').as('consoleError');
-      });
-      // Console error check removed - spy setup issue;
+    it('should display the page title', () => {
+      cy.get('[data-testid="api-management-title"]').should('contain.text', 'API Management');
     });
 
     it('should not have server errors', () => {
       cy.request('/dashboard/api-keys').then((response) => {
-        expect(response.status).to.not.be.oneOf([404, 500]);
+        expect(response.status).to.eq(200);
       });
     });
   });
 
-  describe('UI Element Tests', () => {
-    it('should display all headings', () => {
-      cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
-      cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
+  describe('Header Actions', () => {
+    it('should display View API Docs button', () => {
+      cy.get('[data-testid="view-api-docs-btn"]')
+        .should('be.visible')
+        .and('have.attr', 'href', '/dashboard/api-docs');
     });
 
-    it('should display logo and company info', () => {
-      cy.get('.logo img').should('be.visible').and('have.attr', 'src', '/static/images/logo.png');
-      cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
-      cy.contains('FCRA Litigation Platform').should('be.visible');
-    });
-
-    it('should display staff badge', () => {
-      cy.get('.staff-badge').should('be.visible').and('contain.text', 'Staff Portal');
-      cy.get('.staff-badge svg').should('be.visible');
-    });
-
-    it('should display subtitle', () => {
-      cy.contains('Sign in to access the admin dashboard').should('be.visible');
-    });
-
-    it('should display all buttons', () => {
-      cy.get('.toggle-btn').should('be.visible').and('contain.text', '👁');
-      cy.get('[data-testid="login-button"]').should('be.visible').and('contain.text', 'Sign In');
-    });
-
-    it('should display client portal link', () => {
-      cy.get('[data-testid="client-portal-link"]').should('be.visible').and('have.attr', 'href', '/portal/login');
-      cy.contains('Looking for client portal?').should('be.visible');
+    it('should display Generate API Key button', () => {
+      cy.get('[data-testid="generate-api-key-btn"]')
+        .should('be.visible')
+        .and('contain.text', 'Generate API Key');
     });
   });
 
-  describe('Login Form Tests', () => {
-    it('should display form with correct attributes', () => {
-      cy.get('[data-testid="login-form"]')
-        .should('be.visible')
-        .and('have.attr', 'method', 'POST')
-        .and('have.attr', 'action', '/staff/login')
-        .and('have.attr', 'id', 'loginForm');
+  describe('Stats Grid', () => {
+    it('should display stats grid', () => {
+      cy.get('[data-testid="stats-grid"]').should('be.visible');
     });
 
-    it('should display email input with correct attributes', () => {
-      cy.get('[data-testid="email-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'email')
-        .and('have.attr', 'name', 'email')
-        .and('have.attr', 'id', 'email')
-        .and('have.attr', 'placeholder', 'your@email.com')
-        .should('have.attr', 'required')
-        .and('have.attr', 'autocomplete', 'email');
+    it('should display total keys stat', () => {
+      cy.get('[data-testid="stat-total-keys"]').should('be.visible');
+      cy.get('[data-testid="stat-total-keys"]').contains('Total API Keys');
     });
 
-    it('should display password input with correct attributes', () => {
-      cy.get('[data-testid="password-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'password')
-        .and('have.attr', 'name', 'password')
-        .and('have.attr', 'id', 'password')
-        .and('have.attr', 'placeholder', 'Enter your password')
-        .should('have.attr', 'required')
-        .and('have.attr', 'autocomplete', 'current-password');
+    it('should display active keys stat', () => {
+      cy.get('[data-testid="stat-active-keys"]').should('be.visible');
+      cy.get('[data-testid="stat-active-keys"]').contains('Active Keys');
     });
 
-    it('should display form labels', () => {
-      cy.get('label[for="email"]').should('contain.text', 'Email Address');
-      cy.get('label[for="password"]').should('contain.text', 'Password');
+    it('should display total webhooks stat', () => {
+      cy.get('[data-testid="stat-total-webhooks"]').should('be.visible');
+      cy.get('[data-testid="stat-total-webhooks"]').contains('Total Webhooks');
     });
 
-    it('should accept text input in email field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com').should('have.value', 'test@example.com');
-    });
-
-    it('should accept text input in password field', () => {
-      cy.get('[data-testid="password-input"]').type('password123').should('have.value', 'password123');
-    });
-
-    it('should validate required email field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]:invalid').should('exist');
-    });
-
-    it('should validate required password field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="password-input"]:invalid').should('exist');
-    });
-
-    it('should validate email format', () => {
-      cy.get('[data-testid="email-input"]').type('invalid-email');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]:invalid').should('exist');
-    });
-
-    it('should submit form with valid data', () => {
-      cy.intercept('POST', '/staff/login', { fixture: 'login-success.json' }).as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@loginRequest');
-    });
-
-    it('should disable submit button and show loading state on form submission', () => {
-      cy.intercept('POST', '/staff/login', { delay: 1000, fixture: 'login-success.json' }).as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="login-button"]').should('be.disabled').and('contain.text', 'Signing in...');
-      cy.get('[data-testid="login-button"] .spinner').should('exist');
+    it('should display active webhooks stat', () => {
+      cy.get('[data-testid="stat-active-webhooks"]').should('be.visible');
+      cy.get('[data-testid="stat-active-webhooks"]').contains('Active Webhooks');
     });
   });
 
-  describe('Interactive Element Tests', () => {
-    it('should toggle password visibility', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
+  describe('Tabs', () => {
+    it('should display tabs', () => {
+      cy.get('[data-testid="tabs"]').should('be.visible');
     });
 
-    it('should navigate to client portal when link is clicked', () => {
-      cy.get('[data-testid="client-portal-link"]').click();
-      cy.url().should('include', '/portal/login');
+    it('should have API Keys tab active by default', () => {
+      cy.get('[data-testid="tab-api-keys"]').should('have.class', 'active');
     });
 
-    it('should have clickable submit button', () => {
-      cy.get('[data-testid="login-button"]').should('not.be.disabled').click();
+    it('should switch to Webhooks tab when clicked', () => {
+      cy.get('[data-testid="tab-webhooks"]').click();
+      cy.get('[data-testid="tab-webhooks"]').should('have.class', 'active');
+      cy.get('[data-testid="webhooks-tab"]').should('have.class', 'active');
     });
 
-    it('should have clickable password toggle button', () => {
-      cy.get('.toggle-btn').should('be.visible').click();
+    it('should switch to Usage Analytics tab when clicked', () => {
+      cy.get('[data-testid="tab-usage"]').click();
+      cy.get('[data-testid="tab-usage"]').should('have.class', 'active');
+      cy.get('[data-testid="usage-tab"]').should('have.class', 'active');
+    });
+  });
+
+  describe('API Keys Tab', () => {
+    it('should display API keys card', () => {
+      cy.get('[data-testid="api-keys-card"]').should('be.visible');
+    });
+
+    it('should display API keys table or empty state', () => {
+      cy.get('[data-testid="api-keys-card"]').then(($card) => {
+        if ($card.find('[data-testid="api-keys-table"]').length) {
+          cy.get('[data-testid="api-keys-table"]').should('be.visible');
+        } else {
+          cy.get('[data-testid="api-keys-empty"]').should('be.visible');
+          cy.get('[data-testid="api-keys-empty"]').contains('No API Keys');
+        }
+      });
+    });
+  });
+
+  describe('Webhooks Tab', () => {
+    beforeEach(() => {
+      cy.get('[data-testid="tab-webhooks"]').click();
+    });
+
+    it('should display webhooks card', () => {
+      cy.get('[data-testid="webhooks-card"]').should('be.visible');
+    });
+
+    it('should display Add Webhook button', () => {
+      cy.get('[data-testid="add-webhook-btn"]')
+        .should('be.visible')
+        .and('contain.text', 'Add Webhook');
+    });
+
+    it('should display webhooks table or empty state', () => {
+      cy.get('[data-testid="webhooks-card"]').then(($card) => {
+        if ($card.find('[data-testid="webhooks-table"]').length) {
+          cy.get('[data-testid="webhooks-table"]').should('be.visible');
+        } else {
+          cy.get('[data-testid="webhooks-empty"]').should('be.visible');
+          cy.get('[data-testid="webhooks-empty"]').contains('No Webhooks');
+        }
+      });
+    });
+  });
+
+  describe('Usage Analytics Tab', () => {
+    beforeEach(() => {
+      cy.get('[data-testid="tab-usage"]').click();
+    });
+
+    it('should display usage card', () => {
+      cy.get('[data-testid="usage-card"]').should('be.visible');
+    });
+
+    it('should display usage content with empty state initially', () => {
+      cy.get('[data-testid="usage-content"]').should('be.visible');
+      cy.get('[data-testid="usage-empty"]').should('be.visible');
+      cy.get('[data-testid="usage-empty"]').contains('Select an API Key');
+    });
+  });
+
+  describe('Create API Key Modal', () => {
+    it('should open modal when Generate API Key is clicked', () => {
+      cy.get('[data-testid="generate-api-key-btn"]').click();
+      cy.get('[data-testid="create-key-modal"]').should('have.class', 'active');
+    });
+
+    it('should display create key form', () => {
+      cy.get('[data-testid="generate-api-key-btn"]').click();
+      cy.get('[data-testid="create-key-form"]').should('be.visible');
+    });
+
+    it('should close modal when close button is clicked', () => {
+      cy.get('[data-testid="generate-api-key-btn"]').click();
+      cy.get('[data-testid="create-key-modal-close"]').click();
+      cy.get('[data-testid="create-key-modal"]').should('not.have.class', 'active');
+    });
+  });
+
+  describe('Create Webhook Modal', () => {
+    beforeEach(() => {
+      cy.get('[data-testid="tab-webhooks"]').click();
+    });
+
+    it('should open modal when Add Webhook is clicked', () => {
+      cy.get('[data-testid="add-webhook-btn"]').click();
+      cy.get('[data-testid="create-webhook-modal"]').should('have.class', 'active');
+    });
+
+    it('should display create webhook form', () => {
+      cy.get('[data-testid="add-webhook-btn"]').click();
+      cy.get('[data-testid="create-webhook-form"]').should('be.visible');
+    });
+
+    it('should close modal when close button is clicked', () => {
+      cy.get('[data-testid="add-webhook-btn"]').click();
+      cy.get('[data-testid="create-webhook-modal-close"]').click();
+      cy.get('[data-testid="create-webhook-modal"]').should('not.have.class', 'active');
     });
   });
 
   describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('[data-testid="api-management-container"]').should('be.visible');
+      cy.get('[data-testid="stats-grid"]').should('be.visible');
     });
 
     it('should display correctly on tablet (768px)', () => {
       cy.viewport(768, 1024);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('[data-testid="api-management-container"]').should('be.visible');
     });
 
     it('should display correctly on mobile (375px)', () => {
       cy.viewport(375, 667);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('[data-testid="api-management-container"]').should('be.visible');
     });
   });
 
-  describe('Error Handling Tests', () => {
-    it('should handle invalid login credentials', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('loginError');
-      cy.get('[data-testid="email-input"]').type('invalid@example.com');
-      cy.get('[data-testid="password-input"]').type('wrongpassword');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@loginError');
-    });
-
-    it('should handle network errors', () => {
-      cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@networkError');
-    });
-
-    it('should handle server errors', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Internal server error' } }).as('serverError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@serverError');
-    });
-
-    it('should handle empty form submission', () => {
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]:invalid').should('exist');
-      cy.get('[data-testid="password-input"]:invalid').should('exist');
-    });
-  });
-
-  describe('Accessibility Tests', () => {
-    it('should have proper form labels', () => {
-      cy.get('label[for="email"]').should('exist');
-      cy.get('label[for="password"]').should('exist');
-    });
-
-    it('should have proper alt text for logo', () => {
-      cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
-    });
-
-    it('should have proper heading hierarchy', () => {
-      cy.get('h1').should('exist');
-      cy.get('h2').should('exist');
-    });
-  });
-
-  describe('Data TestID Coverage', () => {
-    it('should have all required data-testids present', () => {
-      cy.get('[data-testid="login-container"]').should('exist');
-      cy.get('[data-testid="login-card"]').should('exist');
-      cy.get('[data-testid="login-title"]').should('exist');
-      cy.get('[data-testid="login-form"]').should('exist');
-      cy.get('[data-testid="email-input"]').should('exist');
-      cy.get('[data-testid="password-input"]').should('exist');
-      cy.get('[data-testid="login-button"]').should('exist');
-      cy.get('[data-testid="client-portal-link"]').should('exist');
+  describe('Navigation', () => {
+    it('should navigate to API docs when View API Docs is clicked', () => {
+      cy.get('[data-testid="view-api-docs-btn"]').click();
+      cy.url().should('include', '/dashboard/api-docs');
     });
   });
 });

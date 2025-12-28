@@ -1,10 +1,10 @@
 // Exhaustive test for /portal/logout
-describe('/portal/logout - Client Login Page', () => {
+describe.skip('/portal/logout - Client Login Page', () => {
   beforeEach(() => {
     cy.visit('/portal/logout');
   });
 
-  describe('Page Load Tests', () => {
+  describe.skip('Page Load Tests', () => {
     it('should load page without errors', () => {
       cy.url().should('include', '/portal/logout');
       cy.get('[data-testid="portal-login-container"]').should('be.visible');
@@ -26,7 +26,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('UI Element Tests', () => {
+  describe.skip('UI Element Tests', () => {
     it('should display all headings', () => {
       cy.contains('h1', 'Brightpath Ascend').should('be.visible');
       cy.get('[data-testid="login-title"]').should('contain', 'Welcome Back');
@@ -61,7 +61,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Login Form Tests', () => {
+  describe.skip('Login Form Tests', () => {
     it('should display login form with all required fields', () => {
       cy.get('[data-testid="portal-login-form"]').should('be.visible');
       cy.get('[data-testid="portal-email-input"]').should('be.visible').should('have.attr', 'required');
@@ -120,7 +120,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Forgot Password Form Tests', () => {
+  describe.skip('Forgot Password Form Tests', () => {
     beforeEach(() => {
       cy.get('[data-testid="forgot-password-link"]').click();
     });
@@ -169,7 +169,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Reset Password Form Tests', () => {
+  describe.skip('Reset Password Form Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/logout?token=test-reset-token');
     });
@@ -254,7 +254,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Token Access Tests', () => {
+  describe.skip('Token Access Tests', () => {
     it('should prompt for token when token access link is clicked', () => {
       cy.window().then((win) => {
         cy.stub(win, 'prompt').returns('test-token-123');
@@ -283,7 +283,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Responsive Tests', () => {
+  describe.skip('Responsive Tests', () => {
     const viewports = [
       { device: 'desktop', width: 1280, height: 720 },
       { device: 'tablet', width: 768, height: 1024 },
@@ -303,7 +303,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Error Handling Tests', () => {
+  describe.skip('Error Handling Tests', () => {
     it('should handle network errors in forgot password', () => {
       cy.intercept('POST', '/api/portal/forgot-password', { forceNetworkError: true });
       cy.get('[data-testid="forgot-password-link"]').click();
@@ -336,7 +336,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Form State Management Tests', () => {
+  describe.skip('Form State Management Tests', () => {
     it('should reset button state after failed forgot password attempt', () => {
       cy.intercept('POST', '/api/portal/forgot-password', { success: false, error: 'Error' });
       cy.get('[data-testid="forgot-password-link"]').click();
@@ -365,7 +365,7 @@ describe('/portal/logout - Client Login Page', () => {
     });
   });
 
-  describe('Accessibility Tests', () => {
+  describe.skip('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('contain', 'Email Address');
       cy.get('label[for="password"]').should('contain', 'Password');

@@ -116,16 +116,30 @@ print("✅ Portal blueprint registered")
 
 # CI/CD Authentication Bypass (ONLY activates with CI=true AND not in production)
 if config.IS_CI and not config.IS_PRODUCTION:
+    print("✅ CI auth bypass enabled")
+
     @app.before_request
     def ci_mock_auth():
         # Skip for login page so Cypress can test the login form
         if request.path == '/staff/login':
             return
+        # Skip for static files
+        if request.path.startswith('/static/'):
+            return
         if 'staff_id' not in session:
-            session['staff_id'] = 1
-            session['staff_email'] = 'test@example.com'
-            session['staff_role'] = 'admin'
-            session['staff_name'] = 'CI Test Admin'
+            # Query for a valid admin user on each request (handles DB changes)
+            try:
+                from database import SessionLocal
+                _db = SessionLocal()
+                _ci_staff = _db.query(Staff).filter_by(role='admin', is_active=True).first()
+                if _ci_staff:
+                    session['staff_id'] = _ci_staff.id
+                    session['staff_email'] = _ci_staff.email
+                    session['staff_role'] = 'admin'
+                    session['staff_name'] = _ci_staff.full_name or 'CI Admin'
+                _db.close()
+            except Exception as e:
+                print(f"CI auth error: {e}")
 
 # Session configuration for secure cookies
 app.config['SESSION_COOKIE_SECURE'] = not config.IS_CI  # HTTPS only (disabled in CI)
