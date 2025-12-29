@@ -299,6 +299,38 @@ from routes.portal import portal
 app.register_blueprint(portal)
 print("✅ Portal blueprint registered")
 
+# Initialize Swagger/OpenAPI documentation
+from flasgger import Swagger
+
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec",
+            "route": "/api/docs/apispec.json",
+            "rule_filter": lambda rule: rule.rule.startswith("/api")
+            or rule.rule.startswith("/health"),
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/api/docs/static",
+    "swagger_ui": True,
+    "specs_route": "/api/docs/",
+}
+
+swagger_template = {
+    "openapi": "3.0.3",
+    "info": {
+        "title": "FCRA Credit Repair Platform API",
+        "description": "API documentation for the FCRA Credit Repair Management Platform",
+        "version": "1.0.0",
+    },
+    "servers": [{"url": "/", "description": "Current server"}],
+}
+
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
+app_logger.info("Swagger API documentation initialized at /api/docs/")
+
 # CI/CD Authentication Bypass (ONLY activates with CI=true AND not in production)
 if config.IS_CI and not config.IS_PRODUCTION:
     print("✅ CI auth bypass enabled")
@@ -1325,7 +1357,34 @@ a:hover{background:#5b21b6}h1{color:#1f2937}</style></head>
 
 @app.route("/health")
 def health_check():
-    """Basic health check - returns 200 if app is running."""
+    """
+    Application health check
+    Returns application health status with memory and CPU metrics
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Application is healthy
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: healthy
+                timestamp:
+                  type: string
+                version:
+                  type: string
+                uptime_seconds:
+                  type: number
+                memory:
+                  type: object
+                cpu_percent:
+                  type: number
+    """
     import os
 
     import psutil
@@ -1352,7 +1411,18 @@ def health_check():
 
 @app.route("/ready")
 def readiness_check():
-    """Readiness check - verifies all dependencies are available."""
+    """
+    Readiness check
+    Verifies database and cache connectivity for load balancer routing
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: All dependencies are ready
+      503:
+        description: One or more dependencies are not ready
+    """
     checks = {
         "database": {"status": "unknown", "latency_ms": None},
     }
@@ -1400,7 +1470,21 @@ def readiness_check():
 
 @app.route("/health/live")
 def liveness_check():
-    """Kubernetes liveness probe - minimal check."""
+    """
+    Liveness probe
+    Minimal check for Kubernetes/container orchestration
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Application is alive
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: OK
+    """
     return "OK", 200
 
 

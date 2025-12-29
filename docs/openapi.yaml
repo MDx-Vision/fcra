@@ -1,0 +1,560 @@
+openapi: 3.0.3
+info:
+  title: FCRA Credit Repair Platform API
+  description: |
+    API for the FCRA Credit Repair Management Platform.
+
+    ## Authentication
+    Most endpoints require authentication via session cookie or API key.
+
+    ## Rate Limiting
+    API requests are rate-limited. See response headers for limit info.
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: Proprietary
+
+servers:
+  - url: /api
+    description: API endpoints
+
+tags:
+  - name: Authentication
+    description: Staff login and session management
+  - name: Staff
+    description: Staff/user management
+  - name: Clients
+    description: Client management
+  - name: Credit Reports
+    description: Credit report parsing and analysis
+  - name: Analysis
+    description: Credit report analysis operations
+  - name: Documents
+    description: Document generation and downloads
+  - name: Analytics
+    description: Business analytics and reporting
+  - name: Health
+    description: Health check endpoints
+
+paths:
+  # Health Checks
+  /health:
+    get:
+      tags: [Health]
+      summary: Application health check
+      description: Returns application health status with memory and CPU metrics
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /ready:
+    get:
+      tags: [Health]
+      summary: Readiness check
+      description: Verifies database and cache connectivity
+      responses:
+        '200':
+          description: All dependencies are ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+        '503':
+          description: One or more dependencies are not ready
+
+  /health/live:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      description: Minimal check for container orchestration
+      responses:
+        '200':
+          description: Application is alive
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  # Authentication
+  /staff/login:
+    post:
+      tags: [Authentication]
+      summary: Staff login
+      description: Authenticate staff member and create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    $ref: '#/components/schemas/StaffUser'
+        '401':
+          description: Invalid credentials
+
+  # Staff Management
+  /staff/add:
+    post:
+      tags: [Staff]
+      summary: Add new staff member
+      description: Create a new staff account (admin only)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStaffRequest'
+      responses:
+        '200':
+          description: Staff member created
+        '403':
+          description: Insufficient permissions
+
+  # Credit Reports
+  /credit-report/parse-pdf:
+    post:
+      tags: [Credit Reports]
+      summary: Parse credit report PDF
+      description: Upload and parse a credit report PDF file
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                client_id:
+                  type: integer
+      responses:
+        '200':
+          description: Report parsed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParsedReportResponse'
+        '400':
+          description: Invalid file or parsing error
+
+  /credit-report/parse-and-analyze:
+    post:
+      tags: [Credit Reports]
+      summary: Parse and analyze credit report
+      description: Upload, parse, and run AI analysis on credit report
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                client_id:
+                  type: integer
+      responses:
+        '200':
+          description: Analysis complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+
+  # Analysis Operations
+  /analyze:
+    post:
+      tags: [Analysis]
+      summary: Run credit analysis
+      description: Perform AI-powered analysis on parsed credit report
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id]
+              properties:
+                client_id:
+                  type: integer
+                report_id:
+                  type: integer
+      responses:
+        '200':
+          description: Analysis complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+
+  /analysis/{analysis_id}/data:
+    get:
+      tags: [Analysis]
+      summary: Get analysis data
+      description: Retrieve full analysis data including violations
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Analysis data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisData'
+        '404':
+          description: Analysis not found
+
+  /analysis/{analysis_id}/violations:
+    get:
+      tags: [Analysis]
+      summary: Get violations for analysis
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of violations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Violation'
+
+    post:
+      tags: [Analysis]
+      summary: Add violation to analysis
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateViolationRequest'
+      responses:
+        '200':
+          description: Violation added
+
+  /approve/{analysis_id}:
+    post:
+      tags: [Analysis]
+      summary: Approve analysis
+      description: Attorney approval for analysis
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Analysis approved
+
+  # Documents
+  /download/{letter_id}:
+    get:
+      tags: [Documents]
+      summary: Download dispute letter
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: letter_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Letter PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /download/analysis/{analysis_id}/full_report:
+    get:
+      tags: [Documents]
+      summary: Download full analysis report
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Full report PDF
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # Analytics
+  /analytics/revenue-forecast:
+    get:
+      tags: [Analytics]
+      summary: Get revenue forecast
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Revenue forecast data
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /analytics/attorney-performance:
+    get:
+      tags: [Analytics]
+      summary: Get attorney performance metrics
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Attorney performance data
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: "1.0.0"
+        uptime_seconds:
+          type: number
+        memory:
+          type: object
+          properties:
+            rss_mb:
+              type: number
+            vms_mb:
+              type: number
+        cpu_percent:
+          type: number
+
+    ReadyResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              type: object
+              properties:
+                status:
+                  type: string
+                latency_ms:
+                  type: number
+            cache:
+              type: object
+              properties:
+                status:
+                  type: string
+                entries:
+                  type: integer
+                hit_rate:
+                  type: number
+
+    StaffUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, attorney, paralegal, viewer]
+
+    CreateStaffRequest:
+      type: object
+      required: [email, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, attorney, paralegal, viewer]
+
+    ParsedReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        report_id:
+          type: integer
+        accounts_found:
+          type: integer
+        bureaus:
+          type: array
+          items:
+            type: string
+
+    AnalysisResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        analysis_id:
+          type: integer
+        violations_found:
+          type: integer
+        score:
+          type: integer
+
+    AnalysisData:
+      type: object
+      properties:
+        id:
+          type: integer
+        client_id:
+          type: integer
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+
+    Violation:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        bureau:
+          type: string
+        account_name:
+          type: string
+
+    CreateViolationRequest:
+      type: object
+      required: [type, description]
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        bureau:
+          type: string
+        account_name:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: integer

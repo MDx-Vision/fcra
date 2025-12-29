@@ -96,6 +96,14 @@ bandit -r app.py services/ --severity-level high
 npm audit
 ```
 
+## API Documentation
+
+Interactive API documentation is available at `/api/docs/` when the app is running.
+
+- **Swagger UI**: `/api/docs/`
+- **OpenAPI Spec**: `/api/docs/apispec.json`
+- **Static Spec**: `docs/openapi.yaml`
+
 ## CI/CD
 
 All PRs run through:
