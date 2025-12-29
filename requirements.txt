@@ -21,7 +21,7 @@ pypdf
 
 # Document Processing
 python-docx
-beautifulsoup4==4.12.3
+beautifulsoup4==4.14.3
 
 # Security & Auth
 pyjwt
