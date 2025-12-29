@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   check-pr:
     name: Check for PR
@@ -13,7 +17,6 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Get the commit SHA
             const sha = context.sha;
 
             // Check if this commit is associated with a PR
@@ -24,25 +27,27 @@ jobs:
             });
 
             if (prs.length === 0) {
-              // Direct push - create an issue to warn
-              const { data: commit } = await github.rest.repos.getCommit({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: sha
-              });
+              console.log('');
+              console.log('⚠️  ========================================');
+              console.log('⚠️  DIRECT PUSH TO MAIN DETECTED');
+              console.log('⚠️  ========================================');
+              console.log('');
+              console.log('This commit was pushed directly to main without a Pull Request.');
+              console.log('');
+              console.log('Best Practice: Please use Pull Requests for all changes to main so that:');
+              console.log('  - CI checks run before merge');
+              console.log('  - Changes can be reviewed');
+              console.log('  - History is easier to track');
+              console.log('');
+              console.log('See CONTRIBUTING.md for guidelines.');
+              console.log('');
 
-              const author = commit.author?.login || commit.commit.author.name;
-              const message = commit.commit.message.split('\n')[0];
+              // Set output for potential use
+              core.setOutput('direct_push', 'true');
 
-              // Add a comment to the commit
-              await github.rest.repos.createCommitComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: sha,
-                body: `⚠️ **Direct push to main detected**\n\nThis commit was pushed directly to \`main\` without a Pull Request.\n\n**Best Practice:** Please use Pull Requests for all changes to \`main\` so that:\n- CI checks run before merge\n- Changes can be reviewed\n- History is easier to track\n\nSee [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md) for guidelines.`
-              });
-
-              console.log(`⚠️ Direct push detected: "${message}" by ${author}`);
+              // This makes the check yellow/warning but doesn't fail
+              core.warning('Direct push to main detected. Please use Pull Requests.');
             } else {
-              console.log(`✅ Commit came from PR #${prs[0].number}`);
+              console.log(`✅ Commit came from PR #${prs[0].number}: ${prs[0].title}`);
+              core.setOutput('direct_push', 'false');
             }
