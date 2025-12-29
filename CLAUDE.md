@@ -5,7 +5,7 @@
 ### Test Status: 100% PASSING
 - **Unit tests**: 4,653 passing (56 test files, ~95s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
-- **Exhaustive tests**: 68 files skipped (future features with `[data-testid]` selectors)
+- **Exhaustive tests**: 23 enabled, 45 skipped (skipped tests need authenticated page data-testids)
 - **Full QA suite**: All tests pass
 - **Service coverage**: 56/56 services have dedicated test files (100%)
 
