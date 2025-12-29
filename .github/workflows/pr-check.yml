@@ -1,0 +1,48 @@
+name: PR Check
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  check-pr:
+    name: Check for PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if push came from PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get the commit SHA
+            const sha = context.sha;
+
+            // Check if this commit is associated with a PR
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: sha
+            });
+
+            if (prs.length === 0) {
+              // Direct push - create an issue to warn
+              const { data: commit } = await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: sha
+              });
+
+              const author = commit.author?.login || commit.commit.author.name;
+              const message = commit.commit.message.split('\n')[0];
+
+              // Add a comment to the commit
+              await github.rest.repos.createCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: sha,
+                body: `⚠️ **Direct push to main detected**\n\nThis commit was pushed directly to \`main\` without a Pull Request.\n\n**Best Practice:** Please use Pull Requests for all changes to \`main\` so that:\n- CI checks run before merge\n- Changes can be reviewed\n- History is easier to track\n\nSee [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md) for guidelines.`
+              });
+
+              console.log(`⚠️ Direct push detected: "${message}" by ${author}`);
+            } else {
+              console.log(`✅ Commit came from PR #${prs[0].number}`);
+            }
