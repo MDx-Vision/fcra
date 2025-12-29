@@ -59,16 +59,38 @@ jobs:
           path: coverage.xml
           retention-days: 30
 
-      - name: Coverage summary
+      - name: Check coverage threshold
         run: |
-          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
           python -c "
           import xml.etree.ElementTree as ET
+          import sys
+
+          MINIMUM_COVERAGE = 20  # Fail if coverage drops below this
+
           tree = ET.parse('coverage.xml')
           root = tree.getroot()
           line_rate = float(root.get('line-rate', 0)) * 100
-          print(f'**Line Coverage: {line_rate:.1f}%**')
-          " >> $GITHUB_STEP_SUMMARY
+
+          print(f'Line Coverage: {line_rate:.1f}%')
+          print(f'Minimum Required: {MINIMUM_COVERAGE}%')
+
+          # Write to job summary
+          with open('$GITHUB_STEP_SUMMARY', 'a') as f:
+              f.write('## Coverage Report\n')
+              f.write(f'**Line Coverage: {line_rate:.1f}%** (minimum: {MINIMUM_COVERAGE}%)\n')
+              if line_rate >= MINIMUM_COVERAGE:
+                  f.write('✅ Coverage threshold passed\n')
+              else:
+                  f.write('❌ Coverage threshold failed\n')
+
+          if line_rate < MINIMUM_COVERAGE:
+              print(f'❌ FAILED: Coverage {line_rate:.1f}% is below minimum {MINIMUM_COVERAGE}%')
+              sys.exit(1)
+          else:
+              print(f'✅ PASSED: Coverage meets minimum threshold')
+          "
+        env:
+          GITHUB_STEP_SUMMARY: ${{ github.step_summary }}
 
   cypress-tests:
     name: Cypress E2E Tests
