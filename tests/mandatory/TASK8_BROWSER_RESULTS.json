@@ -1,15 +1,27 @@
 {
-  "timestamp": "2025-12-29T08:50:22.154411",
+  "timestamp": "2025-12-29T16:40:41.028283",
   "browsers_tested": 3,
-  "browsers_passed": 1,
-  "browsers_failed": 2,
+  "browsers_passed": 0,
+  "browsers_failed": 3,
   "browser_results": {
     "chromium": {
-      "pages_tested": 8,
-      "pages_passed": 8,
+      "pages_tested": 0,
+      "pages_passed": 0,
       "actions_tested": 4,
-      "actions_passed": 4,
-      "issues": []
+      "actions_passed": 1,
+      "issues": [
+        "/: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/signup: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/staff/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/portal/login: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard/clients: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard/cases: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "/dashboard/settlements: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "Form test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "CSS test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
+        "No buttons found"
+      ]
     },
     "firefox": {
       "pages_tested": 0,
