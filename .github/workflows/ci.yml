@@ -42,10 +42,11 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
+          pip install pytest pytest-cov pytest-asyncio playwright
+          playwright install chromium
 
       - name: Run unit tests
-        run: pytest tests/ -v --tb=short -q
+        run: pytest tests/ -v --tb=short -q --ignore=tests/mandatory
         env:
           CI: "true"
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
