@@ -9,14 +9,14 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
 REPORTS_DIR = Path("uploads/credit_reports")
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-SERVICE_CONFIGS = {
+SERVICE_CONFIGS: Dict[str, Dict[str, Any]] = {
     "IdentityIQ.com": {
         "login_url": "https://member.identityiq.com/login.aspx",
         "username_selector": "#txtUserName",
@@ -238,7 +238,7 @@ class CreditImportAutomation:
         return result
 
     async def _login(
-        self, config: Dict, username: str, password: str, ssn_last4: str
+        self, config: Dict[str, Any], username: str, password: str, ssn_last4: str
     ) -> bool:
         """Perform login to credit monitoring service."""
         try:
@@ -519,12 +519,12 @@ class CreditImportAutomation:
             return False
 
     async def _download_report(
-        self, config: Dict, client_id: int, client_name: str
-    ) -> Optional[Dict]:
+        self, config: Dict[str, Any], client_id: int, client_name: str
+    ) -> Optional[Dict[str, Any]]:
         """Navigate to credit report and download/save it."""
         try:
             flow = config.get("report_download_flow", "")
-            captured_data = {"responses": []}
+            captured_data: Dict[str, List[Any]] = {"responses": []}
 
             async def capture_response(response):
                 """Capture XHR responses that might contain credit data."""
@@ -881,7 +881,7 @@ class CreditImportAutomation:
             logger.error(f"Failed to download report: {e}")
             return None
 
-    async def _extract_scores(self) -> Optional[Dict]:
+    async def _extract_scores(self) -> Optional[Dict[str, Any]]:
         """Extract credit scores from the current page after JS rendering."""
         scores = {}
 
@@ -962,7 +962,7 @@ class CreditImportAutomation:
             logger.error(f"Failed to extract scores: {e}")
             return None
 
-    def _extract_scores_from_html(self, html_content: str) -> Dict:
+    def _extract_scores_from_html(self, html_content: str) -> Dict[str, Any]:
         """Extract scores directly from HTML content using regex patterns."""
         import re
 
@@ -1013,7 +1013,7 @@ class CreditImportAutomation:
 
         return scores
 
-    def _extract_accounts_from_xhr(self, responses: List[Dict]) -> List[Dict]:
+    def _extract_accounts_from_xhr(self, responses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Extract accounts from captured XHR responses."""
         accounts = []
 
@@ -1067,7 +1067,7 @@ class CreditImportAutomation:
         logger.info(f"Extracted {len(accounts)} accounts from XHR data")
         return accounts
 
-    def _parse_account_item(self, item: Dict) -> Optional[Dict]:
+    def _parse_account_item(self, item: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Parse a single account/tradeline item from XHR data."""
         if not isinstance(item, dict):
             return None
@@ -1089,7 +1089,7 @@ class CreditImportAutomation:
         if not name:
             return None
 
-        account = {
+        account: Dict[str, Any] = {
             "creditor": name,
             "account_number": None,
             "account_type": None,
@@ -1148,7 +1148,7 @@ class CreditImportAutomation:
 
         return account
 
-    async def _extract_accounts_data(self) -> List[Dict]:
+    async def _extract_accounts_data(self) -> List[Dict[str, Any]]:
         """Extract account/tradeline data from the credit report page."""
         accounts = []
 

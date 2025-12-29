@@ -1059,13 +1059,12 @@ def validate_special_comments(comments: list, account_data: dict) -> dict:
             'severity': 'medium'
         })
     
-    comment_details = []
+    comment_details: List[Dict[str, Any]] = []
     for comment in comments:
         if comment in SPECIAL_COMMENT_CODES:
-            comment_details.append({
-                'code': comment,
-                **SPECIAL_COMMENT_CODES[comment]
-            })
+            detail: Dict[str, Any] = {'code': comment}
+            detail.update(SPECIAL_COMMENT_CODES[comment])  # type: ignore[call-overload]
+            comment_details.append(detail)
     
     return {
         'is_valid': len(violations) == 0,
@@ -1197,7 +1196,7 @@ def validate_compliance_conditions(conditions: list, account_data: dict) -> dict
     }
 
 
-def validate_dofd_hierarchy(dofd: str, status_changes: list, account_data: dict = None) -> dict:
+def validate_dofd_hierarchy(dofd: str, status_changes: list, account_data: Optional[dict] = None) -> dict:
     """
     Check DOFD follows CRRG 2025 hierarchy rules.
     
@@ -1372,7 +1371,7 @@ def validate_2025_requirements(account_data: dict) -> dict:
                     'code': account_status,
                     'field': field,
                     'issue': f'Bankruptcy Chapter {bankruptcy_reqs.get("chapter", "?")} account missing required field "{field}"',
-                    'crrg_reference': bankruptcy_reqs.get('crrg_section', 'CRRG 2025 Section 9.1'),
+                    'crrg_reference': str(bankruptcy_reqs.get('crrg_section', 'CRRG 2025 Section 9.1')),
                     'recommended_action': f'Provide value for bankruptcy account field: {field}',
                     'severity': 'high'
                 })
@@ -1429,7 +1428,7 @@ def validate_2025_requirements(account_data: dict) -> dict:
                             'code': condition,
                             'field': 'Condition Effective Date',
                             'issue': f'2025 enhanced condition {condition} requires effective date',
-                            'crrg_reference': cond_info.get('crrg_section', 'CRRG 2025'),
+                            'crrg_reference': str(cond_info.get('crrg_section', 'CRRG 2025')),
                             'recommended_action': 'Provide effective date for 2025 enhanced compliance conditions',
                             'severity': 'medium'
                         })
@@ -1598,25 +1597,23 @@ def get_payment_rating_info(rating_code: str) -> Optional[dict]:
     return None
 
 
-def get_special_comment_info(comment_code: str) -> Optional[dict]:
+def get_special_comment_info(comment_code: str) -> Optional[Dict[str, Any]]:
     """Get detailed information about a special comment code."""
     comment_code = str(comment_code).strip().upper() if comment_code else ''
     if comment_code in SPECIAL_COMMENT_CODES:
-        return {
-            'code': comment_code,
-            **SPECIAL_COMMENT_CODES[comment_code]
-        }
+        result: Dict[str, Any] = {'code': comment_code}
+        result.update(SPECIAL_COMMENT_CODES[comment_code])  # type: ignore[call-overload]
+        return result
     return None
 
 
-def get_compliance_condition_info(condition_code: str) -> Optional[dict]:
+def get_compliance_condition_info(condition_code: str) -> Optional[Dict[str, Any]]:
     """Get detailed information about a compliance condition code."""
     condition_code = str(condition_code).strip().upper() if condition_code else ''
     if condition_code in COMPLIANCE_CONDITION_CODES:
-        return {
-            'code': condition_code,
-            **COMPLIANCE_CONDITION_CODES[condition_code]
-        }
+        result: Dict[str, Any] = {'code': condition_code}
+        result.update(COMPLIANCE_CONDITION_CODES[condition_code])  # type: ignore[call-overload]
+        return result
     return None
 
 
@@ -1624,7 +1621,7 @@ def is_derogatory_status(status_code: str) -> bool:
     """Check if a status code indicates derogatory status."""
     status_code = str(status_code).strip().zfill(2) if status_code else ''
     if status_code in ACCOUNT_STATUS_CODES:
-        return ACCOUNT_STATUS_CODES[status_code].get('is_derogatory', False)
+        return bool(ACCOUNT_STATUS_CODES[status_code].get('is_derogatory', False))
     return False
 
 
@@ -1632,7 +1629,7 @@ def requires_dofd(status_code: str) -> bool:
     """Check if a status code requires DOFD."""
     status_code = str(status_code).strip().zfill(2) if status_code else ''
     if status_code in ACCOUNT_STATUS_CODES:
-        return ACCOUNT_STATUS_CODES[status_code].get('requires_dofd', False)
+        return bool(ACCOUNT_STATUS_CODES[status_code].get('requires_dofd', False))
     return False
 
 

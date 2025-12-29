@@ -59,8 +59,8 @@ class CronParser:
             return True
 
         if "/" in field:
-            base, step = field.split("/")
-            step = int(step)
+            base, step_str = field.split("/")
+            step = int(step_str)
             if base == "*":
                 return value % step == 0
             else:
@@ -211,7 +211,7 @@ class SchedulerService:
                         payload=schedule["payload"],
                         cron_expression=schedule["cron_expression"],
                         is_active=True,
-                        next_run=CronParser.get_next_run(schedule["cron_expression"]),
+                        next_run=CronParser.get_next_run(str(schedule["cron_expression"])),
                     )
                     session.add(job)
                     created.append(job)

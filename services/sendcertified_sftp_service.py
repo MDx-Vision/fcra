@@ -9,7 +9,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
-import paramiko
+import paramiko  # type: ignore[import-untyped]
 from sqlalchemy.orm import Session
 
 # Import from existing codebase
@@ -106,7 +106,7 @@ def upload_batch(letters: List[Dict]) -> Dict:
                 "city": letter.get("city"),
                 "state": letter.get("state"),
                 "zip": letter.get("zip"),
-                "pdf_filename": os.path.basename(letter.get("pdf_path")),
+                "pdf_filename": os.path.basename(letter.get("pdf_path") or ""),
                 "tracking_number": letter.get("tracking_number", ""),
             }
         )
@@ -173,8 +173,8 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
     batch_letters = []
     for letter in letters:
         # Get bureau address
-        bureau = letter.bureau or "Equifax"  # Default to Equifax if not specified
-        bureau_info = BUREAU_ADDRESSES.get(bureau)
+        bureau_name: str = str(letter.bureau) if letter.bureau else "Equifax"  # Default to Equifax if not specified
+        bureau_info = BUREAU_ADDRESSES.get(bureau_name)
 
         if not bureau_info:
             continue  # Skip if bureau not found
@@ -217,8 +217,8 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
 
     for letter in letters:
         if letter.id in [bl["letter_id"] for bl in batch_letters]:
-            letter.sent_via_letterstream = True
-            letter.sent_at = now
+            letter.sent_via_letterstream = True  # type: ignore[assignment]
+            letter.sent_at = now  # type: ignore[assignment]
             letter.tracking_number = f"SCM{letter.id:06d}"
 
             # Create 30-day response deadline
@@ -317,8 +317,8 @@ def update_batch_status(db: Session, batch_id: str) -> Optional[LetterBatch]:
     tracking_result = check_tracking(batch_id)
 
     if tracking_result.get("tracking_available"):
-        batch.status = "complete"
-        batch.tracking_received_at = datetime.utcnow()
+        batch.status = "complete"  # type: ignore[assignment]
+        batch.tracking_received_at = datetime.utcnow()  # type: ignore[assignment]
         db.commit()
 
     return batch

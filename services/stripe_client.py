@@ -5,7 +5,7 @@ Fetches Stripe credentials from Replit's connector API
 
 import os
 
-import requests
+import requests  # type: ignore[import-untyped]
 import stripe
 
 _connection_settings = None

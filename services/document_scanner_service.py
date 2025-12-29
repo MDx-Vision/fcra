@@ -9,7 +9,7 @@ import io
 import os
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import anthropic
 from fpdf import FPDF
@@ -97,7 +97,7 @@ class DocumentScanner:
         except Exception as e:
             print(f"Warning: Anthropic client not initialized: {e}")
 
-    def process_uploaded_image(self, image_data: bytes, filename: str) -> Dict:
+    def process_uploaded_image(self, image_data: bytes, filename: str) -> Dict[str, Any]:
         """
         Process a single uploaded image - validate, optimize, and save.
 
@@ -114,15 +114,15 @@ class DocumentScanner:
             if img.mode == "RGBA":
                 background = Image.new("RGB", img.size, (255, 255, 255))
                 background.paste(img, mask=img.split()[3])
-                img = background
+                img = background  # type: ignore[assignment]
             elif img.mode != "RGB":
-                img = img.convert("RGB")
+                img = img.convert("RGB")  # type: ignore[assignment]
 
             max_dimension = 2000
             if img.width > max_dimension or img.height > max_dimension:
                 ratio = min(max_dimension / img.width, max_dimension / img.height)
                 new_size = (int(img.width * ratio), int(img.height * ratio))
-                img = img.resize(new_size, Image.Resampling.LANCZOS)
+                img = img.resize(new_size, Image.Resampling.LANCZOS)  # type: ignore[assignment]
 
             image_id = str(uuid.uuid4())[:8]
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -151,10 +151,10 @@ class DocumentScanner:
     def combine_images_to_pdf(
         self,
         image_paths: List[str],
-        output_filename: str = None,
-        client_name: str = None,
+        output_filename: Optional[str] = None,
+        client_name: Optional[str] = None,
         document_type: str = "other",
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """
         Combine multiple images into a single PDF document.
 
@@ -229,7 +229,7 @@ class DocumentScanner:
 
     def extract_text_from_image(
         self, image_path: str, document_type: str = "other"
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """
         Extract text from a single image using Claude Vision OCR.
 
@@ -264,7 +264,7 @@ class DocumentScanner:
                 media_type = "image/webp"
 
             doc_config = DOCUMENT_TYPES.get(document_type, DOCUMENT_TYPES["other"])
-            ocr_prompt = doc_config["ocr_prompt"]
+            ocr_prompt: str = doc_config["ocr_prompt"]  # type: ignore[index]
 
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -315,10 +315,10 @@ class DocumentScanner:
         self,
         image_paths: List[str],
         document_type: str = "credit_report",
-        client_id: int = None,
-        client_name: str = None,
+        client_id: Optional[int] = None,
+        client_name: Optional[str] = None,
         run_ocr: bool = True,
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """
         Process a multi-page document: combine to PDF and optionally run OCR.
 
@@ -424,19 +424,19 @@ class ScanSession:
 
     def __init__(
         self,
-        client_id: int = None,
-        client_name: str = None,
+        client_id: Optional[int] = None,
+        client_name: Optional[str] = None,
         document_type: str = "credit_report",
     ):
         self.session_id = str(uuid.uuid4())
         self.client_id = client_id
         self.client_name = client_name
         self.document_type = document_type
-        self.images = []
+        self.images: List[Dict[str, Any]] = []
         self.created_at = datetime.utcnow()
         self.scanner = DocumentScanner()
 
-    def add_image(self, image_data: bytes, filename: str) -> Dict:
+    def add_image(self, image_data: bytes, filename: str) -> Dict[str, Any]:
         """Add an image to the session"""
         result = self.scanner.process_uploaded_image(image_data, filename)
 
@@ -486,7 +486,7 @@ class ScanSession:
         self.images = new_images
         return True
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> Dict[str, Any]:
         """Get current session status"""
         return {
             "session_id": self.session_id,
@@ -498,7 +498,7 @@ class ScanSession:
             "created_at": self.created_at.isoformat(),
         }
 
-    def finalize(self, run_ocr: bool = True) -> Dict:
+    def finalize(self, run_ocr: bool = True) -> Dict[str, Any]:
         """Finalize the session - create PDF and optionally run OCR"""
         if not self.images:
             return {"success": False, "error": "No images in session"}
@@ -529,8 +529,8 @@ scan_sessions: Dict[str, ScanSession] = {}
 
 
 def create_scan_session(
-    client_id: int = None, client_name: str = None, document_type: str = "credit_report"
-) -> Dict:
+    client_id: Optional[int] = None, client_name: Optional[str] = None, document_type: str = "credit_report"
+) -> Dict[str, Any]:
     """Create a new scanning session"""
     session = ScanSession(client_id, client_name, document_type)
     scan_sessions[session.session_id] = session
@@ -567,9 +567,9 @@ def cleanup_old_sessions(max_age_hours: int = 24) -> int:
     return removed
 
 
-def get_document_types() -> List[Dict]:
+def get_document_types() -> List[Dict[str, Any]]:
     """Get list of supported document types"""
     return [
-        {"id": k, "name": v["name"], "description": v["description"]}
+        {"id": k, "name": str(v["name"]), "description": str(v["description"])}  # type: ignore[index]
         for k, v in DOCUMENT_TYPES.items()
     ]

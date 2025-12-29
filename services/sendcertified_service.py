@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import requests
+import requests  # type: ignore[import-untyped]
 
 from database import (
     CertifiedMailOrder,
@@ -35,7 +35,7 @@ class SendCertifiedService:
     """
 
     def __init__(
-        self, api_key: str = None, api_secret: str = None, sandbox: bool = True
+        self, api_key: Optional[str] = None, api_secret: Optional[str] = None, sandbox: bool = True
     ):
         """
         Initialize SendCertified service.
@@ -84,8 +84,8 @@ class SendCertifiedService:
     def _get_headers(self) -> Dict[str, str]:
         """Get authorization headers for API requests."""
         return {
-            "Authorization": f"Bearer {self.api_key}",
-            "X-API-Secret": self.api_secret,
+            "Authorization": f"Bearer {self.api_key or ''}",
+            "X-API-Secret": self.api_secret or "",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
@@ -93,13 +93,13 @@ class SendCertifiedService:
     def _log_event(
         self,
         event_type: str,
-        event_data: dict = None,
-        client_id: int = None,
-        request_id: str = None,
-        response_status: int = None,
-        error_message: str = None,
+        event_data: Optional[Dict[str, Any]] = None,
+        client_id: Optional[int] = None,
+        request_id: Optional[str] = None,
+        response_status: Optional[int] = None,
+        error_message: Optional[str] = None,
         cost_cents: int = 0,
-    ):
+    ) -> None:
         """Log an integration event to the database."""
         if not self._integration_id:
             return
@@ -196,7 +196,7 @@ class SendCertifiedService:
             self._update_connection_status("error", error_msg[:200])
             return False
 
-    def _update_connection_status(self, status: str, error: str = None):
+    def _update_connection_status(self, status: str, error: Optional[str] = None) -> None:
         """Update connection status in IntegrationConnection table."""
         session = SessionLocal()
         try:
@@ -207,12 +207,12 @@ class SendCertifiedService:
             )
 
             if connection:
-                connection.connection_status = status
+                connection.connection_status = status  # type: ignore[assignment]
                 connection.last_connected_at = (
-                    datetime.utcnow() if status == "connected" else None
+                    datetime.utcnow() if status == "connected" else None  # type: ignore[assignment]
                 )
-                connection.last_error = error
-                connection.updated_at = datetime.utcnow()
+                connection.last_error = error  # type: ignore[assignment]
+                connection.updated_at = datetime.utcnow()  # type: ignore[assignment]
                 session.commit()
         except Exception as e:
             logger.error(f"Error updating connection status: {e}")
@@ -226,10 +226,10 @@ class SendCertifiedService:
         address: Dict[str, str],
         document_content: bytes,
         mail_class: str = "certified",
-        client_id: int = None,
-        dispute_id: int = None,
-        letter_type: str = None,
-        bureau: str = None,
+        client_id: Optional[int] = None,
+        dispute_id: Optional[int] = None,
+        letter_type: Optional[str] = None,
+        bureau: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create a certified mailing through SendCertified API.
@@ -419,19 +419,21 @@ class SendCertifiedService:
 
     def _format_address(self, address: Dict[str, str]) -> str:
         """Format address dict into single string."""
-        parts = []
-        if address.get("street") or address.get("address_line_1"):
-            parts.append(address.get("street") or address.get("address_line_1"))
+        parts: List[str] = []
+        street = address.get("street") or address.get("address_line_1")
+        if street:
+            parts.append(street)
         if address.get("address_line_2"):
-            parts.append(address.get("address_line_2"))
+            parts.append(address["address_line_2"])
 
-        city_state_zip = []
+        city_state_zip: List[str] = []
         if address.get("city"):
             city_state_zip.append(address["city"])
         if address.get("state"):
             city_state_zip.append(address["state"])
-        if address.get("zip") or address.get("zip_code"):
-            city_state_zip.append(address.get("zip") or address.get("zip_code"))
+        zip_val = address.get("zip") or address.get("zip_code")
+        if zip_val:
+            city_state_zip.append(zip_val)
 
         if city_state_zip:
             parts.append(", ".join(city_state_zip))
@@ -439,7 +441,7 @@ class SendCertifiedService:
         return "\n".join(parts)
 
     def get_tracking_status(
-        self, tracking_number: str = None, order_id: int = None
+        self, tracking_number: Optional[str] = None, order_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Get tracking status for a certified mailing.
@@ -461,8 +463,8 @@ class SendCertifiedService:
         try:
             if order_id:
                 order = session.query(CertifiedMailOrder).filter_by(id=order_id).first()
-                if order:
-                    tracking_number = order.tracking_number
+                if order and order.tracking_number:
+                    tracking_number = str(order.tracking_number)
 
             if not tracking_number:
                 return {
@@ -540,11 +542,11 @@ class SendCertifiedService:
                     order.webhook_data = data
                     if status == "delivered" and delivered_at:
                         try:
-                            order.delivered_at = datetime.fromisoformat(
+                            order.delivered_at = datetime.fromisoformat(  # type: ignore[assignment]
                                 delivered_at.replace("Z", "+00:00")
                             )
                         except:
-                            order.delivered_at = datetime.utcnow()
+                            order.delivered_at = datetime.utcnow()  # type: ignore[assignment]
                     session.commit()
 
                 self._log_event(
@@ -602,7 +604,7 @@ class SendCertifiedService:
             session.close()
 
     def download_return_receipt(
-        self, tracking_number: str = None, order_id: int = None
+        self, tracking_number: Optional[str] = None, order_id: Optional[int] = None
     ) -> Optional[bytes]:
         """
         Download return receipt (green card) as PDF.
@@ -618,8 +620,8 @@ class SendCertifiedService:
         try:
             if order_id:
                 order = session.query(CertifiedMailOrder).filter_by(id=order_id).first()
-                if order:
-                    tracking_number = order.tracking_number
+                if order and order.tracking_number:
+                    tracking_number = str(order.tracking_number)
 
             if not tracking_number:
                 logger.warning(
@@ -758,13 +760,13 @@ def configure_sendcertified(
             )
             session.add(connection)
 
-        connection.api_key_encrypted = encrypt_value(api_key)
-        connection.api_secret_encrypted = encrypt_value(api_secret)
-        connection.is_sandbox = sandbox
-        connection.base_url = SANDBOX_BASE_URL if sandbox else PRODUCTION_BASE_URL
-        connection.is_active = True
-        connection.connection_status = "configured"
-        connection.updated_at = datetime.utcnow()
+        connection.api_key_encrypted = encrypt_value(api_key)  # type: ignore[assignment]
+        connection.api_secret_encrypted = encrypt_value(api_secret)  # type: ignore[assignment]
+        connection.is_sandbox = sandbox  # type: ignore[assignment]
+        connection.base_url = SANDBOX_BASE_URL if sandbox else PRODUCTION_BASE_URL  # type: ignore[assignment]
+        connection.is_active = True  # type: ignore[assignment]
+        connection.connection_status = "configured"  # type: ignore[assignment]
+        connection.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
         session.commit()
 

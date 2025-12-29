@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-12-29T01:40:15.591362",
+  "timestamp": "2025-12-29T08:50:22.002879",
   "pages_tested": 45,
   "forms_tested": 2,
   "fields_tested": 3,
-  "buttons_clicked": 11,
+  "buttons_clicked": 23,
   "links_checked": 30,
   "modals_tested": 0,
   "edge_cases_tested": 23,
@@ -14,6 +14,12 @@
       "type": "page_load",
       "page": "/dashboard/predictive",
       "status": 500
+    },
+    {
+      "type": "responsive",
+      "page": "/dashboard",
+      "viewport": "mobile",
+      "issue": "horizontal_scroll"
     }
   ],
   "issues_fixed": [],
@@ -22,6 +28,7 @@
   "console_errors": [
     "Error loading settlement analytics: TypeError: Failed to fetch\n    at HTMLDocument.loadSettlementAnalytics (http://localhost:5001/dashboard/analytics:1448:40)",
     "Refused to load the font 'data:application/x-font-ttf;charset=utf-8;base64,AAEAAAALAIAAAwAwT1MvMg8SBfAAAAC8AAAAYGNtYXAXVtKNAAABHAAAAFRnYXNwAAAAEAAAAXAAAAAIZ2x5ZgYydxIAAAF4AAAFNGhlYWQUJ7cIAAAGrAAAADZoaGVhB20DzAAABuQAAAAkaG10eCIABhQAAAcIAAAALGxvY2ED4AU6AAAHNAAAABhtYXhwAA8AjAAAB0wAAAAgbmFtZXsr690AAAdsAAABhnBvc3QAAwAAAAAI9AAAACAAAwPAAZAABQAAApkCzAAAAI8CmQLMAAAB6wAzAQkAAAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAAAAAAAABAAADpBgPA/8AAQAPAAEAAAAABAAAAAAAAAAAAAAAgAAAAAAADAAAAAwAAABwAAQADAAAAHAADAAEAAAAcAAQAOAAAAAoACAACAAIAAQAg6Qb//f//AAAAAAAg6QD//f...ABAAAAAAAEAAcAdQABAAAAAAAFAAsAFQABAAAAAAAGAAcASwABAAAAAAAKABoAigADAAEECQABAA4ABwADAAEECQACAA4AZwADAAEECQADAA4APQADAAEECQAEAA4AfAADAAEECQAFABYAIAADAAEECQAGAA4AUgADAAEECQAKADQApGZjaWNvbnMAZgBjAGkAYwBvAG4Ac1ZlcnNpb24gMS4wAFYAZQByAHMAaQBvAG4AIAAxAC4AMGZjaWNvbnMAZgBjAGkAYwBvAG4Ac2ZjaWNvbnMAZgBjAGkAYwBvAG4Ac1JlZ3VsYXIAUgBlAGcAdQBsAGEAcmZjaWNvbnMAZgBjAGkAYwBvAG4Ac0ZvbnQgZ2VuZXJhdGVkIGJ5IEljb01vb24uAEYAbwBuAHQAIABnAGUAbgBlAHIAYQB0AGUAZAAgAGIAeQAgAEkAYwBvAE0AbwBvAG4ALgAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' because it violates the following Content Security Policy directive: \"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com\".\n",
+    "Error loading doc status for client 273 TypeError: Failed to fetch\n    at loadAllDocumentStatuses (http://localhost:5001/dashboard/contacts:2518:44)",
     "Refused to load the font 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/fonts/bootstrap-icons.woff2?2ab2cbbe07fcebb53bdaa7313bb290f2' because it violates the following Content Security Policy directive: \"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com\".\n",
     "Refused to load the font 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/fonts/bootstrap-icons.woff?2ab2cbbe07fcebb53bdaa7313bb290f2' because it violates the following Content Security Policy directive: \"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com\".\n",
     "Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)"

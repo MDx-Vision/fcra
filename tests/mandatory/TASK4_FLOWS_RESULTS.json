@@ -1,10 +1,10 @@
 {
-  "timestamp": "2025-12-29T01:40:15.784436",
+  "timestamp": "2025-12-29T08:50:22.137346",
   "flows_tested": 6,
   "flows_passed": 6,
   "flows_failed": 0,
-  "steps_total": 16,
-  "steps_passed": 16,
+  "steps_total": 17,
+  "steps_passed": 17,
   "issues": [],
   "flow_details": {
     "Client Signup": [
@@ -51,6 +51,10 @@
       {
         "step": "Load clients page",
         "status": "PASS"
+      },
+      {
+        "step": "View client list",
+        "status": "PASS"
       }
     ],
     "Case Management": [
@@ -59,7 +63,7 @@
         "status": "PASS"
       },
       {
-        "step": "View case list (0 items)",
+        "step": "View case list (80 items)",
         "status": "PASS"
       }
     ],
@@ -69,7 +73,7 @@
         "status": "PASS"
       },
       {
-        "step": "View settlements (0 items)",
+        "step": "View settlements (4 items)",
         "status": "PASS"
       }
     ],

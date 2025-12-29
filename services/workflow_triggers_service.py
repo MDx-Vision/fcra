@@ -2,7 +2,7 @@ import json
 import time
 import traceback
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy import and_, desc, func, or_
 
@@ -423,9 +423,9 @@ class WorkflowTriggersService:
         trigger_type: str,
         conditions: Dict[str, Any],
         actions: List[Dict[str, Any]],
-        description: str = None,
+        description: Optional[str] = None,
         priority: int = 5,
-        staff_id: int = None,
+        staff_id: Optional[int] = None,
     ) -> WorkflowTrigger:
         """Create a new workflow trigger"""
         if trigger_type not in TRIGGER_TYPES:
@@ -672,7 +672,7 @@ class WorkflowTriggersService:
 
             for action in trigger.actions:
                 action_result = WorkflowTriggersService._execute_single_action(
-                    session, action, client_id, event_data
+                    session, action, cast(int, client_id) if client_id else 0, event_data
                 )
                 actions_executed.append(action_result)
                 if not action_result.get("success"):
@@ -685,10 +685,10 @@ class WorkflowTriggersService:
                 error_message = None
             elif len(errors) == len(trigger.actions):
                 status = "failed"
-                error_message = "; ".join(errors)
+                error_message = "; ".join(str(e) for e in errors if e)
             else:
                 status = "partial"
-                error_message = "; ".join(errors)
+                error_message = "; ".join(str(e) for e in errors if e)
 
             execution = WorkflowExecution(
                 trigger_id=trigger_id,
@@ -1208,4 +1208,8 @@ def handle_execute_workflow(payload: Dict[str, Any]) -> Dict[str, Any]:
     event_type = payload.get("event_type")
     event_data = payload.get("event_data", {})
 
-    return WorkflowTriggersService.execute_actions(trigger_id, event_type, event_data)
+    return WorkflowTriggersService.execute_actions(
+        cast(int, trigger_id) if trigger_id else 0,
+        cast(str, event_type) if event_type else "",
+        event_data
+    )

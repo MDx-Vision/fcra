@@ -56,7 +56,7 @@ class NotarizeService:
         )
         self.sandbox = sandbox
         self.base_url = SANDBOX_BASE_URL if sandbox else PRODUCTION_BASE_URL
-        self._integration_id = None
+        self._integration_id: Optional[int] = None
 
     @property
     def is_configured(self) -> bool:
@@ -68,7 +68,7 @@ class NotarizeService:
         if not self.is_configured:
             raise ValueError("Notarize.com API key is not configured")
         return {
-            "ApiKey": self.api_key,
+            "ApiKey": self.api_key or "",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
@@ -101,7 +101,7 @@ class NotarizeService:
                 session.commit()
                 session.refresh(connection)
 
-            self._integration_id = connection.id
+            self._integration_id = int(connection.id)
             return self._integration_id
         except Exception as e:
             logger.error(f"Error getting integration ID: {e}")
@@ -113,13 +113,13 @@ class NotarizeService:
     def _log_event(
         self,
         event_type: str,
-        event_data: Dict = None,
-        client_id: int = None,
-        request_id: str = None,
-        response_status: int = None,
-        error_message: str = None,
+        event_data: Optional[Dict[str, Any]] = None,
+        client_id: Optional[int] = None,
+        request_id: Optional[str] = None,
+        response_status: Optional[int] = None,
+        error_message: Optional[str] = None,
         cost_cents: int = 0,
-        db=None,
+        db: Any = None,
     ) -> None:
         """Log an integration event for audit trail."""
         session = db or SessionLocal()
@@ -169,7 +169,7 @@ class NotarizeService:
             self._log_event(
                 event_type="test_connection",
                 response_status=response.status_code,
-                error_message=None if response.ok else response.text[:500],
+                error_message=None if response.ok else str(response.text[:500]),
             )
 
             if response.status_code in [200, 201]:
@@ -196,9 +196,9 @@ class NotarizeService:
         signer_last_name: str,
         document_url: str,
         requirement: str = "notarization",
-        client_id: int = None,
-        document_id: int = None,
-        document_name: str = None,
+        client_id: Optional[int] = None,
+        document_id: Optional[int] = None,
+        document_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create a new notarization transaction.
@@ -266,7 +266,7 @@ class NotarizeService:
                 event_data={"signer_email": signer_email, "requirement": requirement},
                 client_id=client_id,
                 response_status=response.status_code,
-                error_message=None if response.ok else response.text[:500],
+                error_message=None if response.ok else str(response.text[:500]),
                 db=session,
             )
 
@@ -429,10 +429,10 @@ class NotarizeService:
             self._log_event(
                 event_type="get_transaction_status",
                 event_data={"external_id": external_id},
-                client_id=transaction.client_id,
-                request_id=external_id,
+                client_id=int(transaction.client_id) if transaction.client_id else None,
+                request_id=str(external_id) if external_id else None,
                 response_status=response.status_code,
-                error_message=None if response.ok else response.text[:500],
+                error_message=None if response.ok else str(response.text[:500]),
                 db=session,
             )
 
@@ -474,7 +474,7 @@ class NotarizeService:
             }
             normalized_status = status_mapping.get(api_status, api_status)
 
-            events = transaction.webhook_events or []
+            events: List[Any] = list(transaction.webhook_events) if transaction.webhook_events else []
             if normalized_status != transaction.status:
                 events.append(
                     {
@@ -485,11 +485,11 @@ class NotarizeService:
                 )
 
             transaction.status = normalized_status
-            transaction.webhook_events = events
-            transaction.updated_at = datetime.utcnow()
+            transaction.webhook_events = events  # type: ignore[assignment]
+            transaction.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
             if normalized_status == "completed" and not transaction.completed_at:
-                transaction.completed_at = datetime.utcnow()
+                transaction.completed_at = datetime.utcnow()  # type: ignore[assignment]
 
             session.commit()
 
@@ -572,7 +572,7 @@ class NotarizeService:
 
             external_id = transaction.external_transaction_id
 
-            status_result = self.get_transaction_status(transaction.id)
+            status_result = self.get_transaction_status(int(transaction.id))
             if status_result.get("status") != "completed":
                 return {
                     "success": False,
@@ -632,8 +632,8 @@ class NotarizeService:
                     "external_id": external_id,
                     "document_index": document_index,
                 },
-                client_id=transaction.client_id,
-                request_id=external_id,
+                client_id=int(transaction.client_id) if transaction.client_id else None,
+                request_id=str(external_id) if external_id else None,
                 response_status=200,
                 db=session,
             )
@@ -656,7 +656,7 @@ class NotarizeService:
             session.close()
 
     def verify_webhook_signature(
-        self, payload: Union[str, bytes], signature: str, secret: str = None
+        self, payload: Union[str, bytes], signature: str, secret: Optional[str] = None
     ) -> bool:
         """
         Verify the webhook signature from Notarize.com.
@@ -707,8 +707,8 @@ class NotarizeService:
     def handle_webhook(
         self,
         webhook_data: Dict[str, Any],
-        raw_payload: Union[str, bytes] = None,
-        signature: str = None,
+        raw_payload: Optional[Union[str, bytes]] = None,
+        signature: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Handle incoming webhook notifications from Notarize.com.
@@ -797,7 +797,7 @@ class NotarizeService:
             event_lower = str(event_type).lower() if event_type else ""
             new_status = status_mapping.get(event_lower, transaction.status)
 
-            events = transaction.webhook_events or []
+            events: List[Any] = list(transaction.webhook_events) if transaction.webhook_events else []
             events.append(
                 {
                     "event": event_type,
@@ -807,21 +807,21 @@ class NotarizeService:
                 }
             )
 
-            transaction.status = new_status
-            transaction.webhook_events = events
-            transaction.updated_at = datetime.utcnow()
+            transaction.status = new_status  # type: ignore[assignment]
+            transaction.webhook_events = events  # type: ignore[assignment]
+            transaction.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
             action_taken = f"Updated status to {new_status}"
 
             if new_status == "completed":
-                transaction.completed_at = datetime.utcnow()
+                transaction.completed_at = datetime.utcnow()  # type: ignore[assignment]
                 action_taken = f"Updated status to completed"
 
             self._log_event(
                 event_type="webhook_received",
                 event_data=webhook_data,
-                client_id=transaction.client_id,
-                request_id=transaction_id,
+                client_id=int(transaction.client_id) if transaction.client_id else None,
+                request_id=str(transaction_id) if transaction_id else None,
                 db=session,
             )
 
@@ -852,7 +852,7 @@ class NotarizeService:
             session.close()
 
 
-def get_notarize_service(sandbox: bool = None) -> NotarizeService:
+def get_notarize_service(sandbox: Optional[bool] = None) -> NotarizeService:
     """
     Factory function to create a NotarizeService instance with default configuration.
 

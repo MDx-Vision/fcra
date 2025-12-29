@@ -7,11 +7,12 @@ Handles affiliate referral tracking, commission calculations, and payout process
 import random
 import string
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from database import Affiliate, Client, Commission, get_db
 
 
-def generate_affiliate_code(name: str = None) -> str:
+def generate_affiliate_code(name: Optional[str] = None) -> str:
     """Generate a unique affiliate code"""
     if name:
         prefix = "".join(c.upper() for c in name[:3] if c.isalpha())
@@ -320,8 +321,8 @@ def get_affiliate_stats(affiliate_id: int) -> dict:
 
 
 def process_payout(
-    affiliate_id: int, amount: float, payout_method: str = None, notes: str = None
-) -> dict:
+    affiliate_id: int, amount: float, payout_method: Optional[str] = None, notes: Optional[str] = None
+) -> Dict[str, Any]:
     """Process a payout to an affiliate, marking commissions as paid"""
     if not amount or amount <= 0:
         return {"success": False, "message": "Invalid payout amount"}
@@ -479,15 +480,15 @@ def get_referral_tree(affiliate_id: int) -> dict:
 def create_affiliate(
     name: str,
     email: str,
-    phone: str = None,
-    company_name: str = None,
-    parent_affiliate_id: int = None,
+    phone: Optional[str] = None,
+    company_name: Optional[str] = None,
+    parent_affiliate_id: Optional[int] = None,
     commission_rate_1: float = 0.10,
     commission_rate_2: float = 0.05,
-    payout_method: str = None,
-    payout_details: dict = None,
+    payout_method: Optional[str] = None,
+    payout_details: Optional[Dict[str, Any]] = None,
     status: str = "pending",
-) -> dict:
+) -> Dict[str, Any]:
     """Create a new affiliate"""
     session = get_db()
     try:
@@ -589,7 +590,7 @@ def update_affiliate(affiliate_id: int, **kwargs) -> dict:
         session.close()
 
 
-def get_all_affiliates(status: str = None, limit: int = 100) -> list:
+def get_all_affiliates(status: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
     """Get all affiliates with optional status filter"""
     session = get_db()
     try:
@@ -635,7 +636,7 @@ def get_all_affiliates(status: str = None, limit: int = 100) -> list:
         session.close()
 
 
-def get_affiliate_by_id(affiliate_id: int) -> dict:
+def get_affiliate_by_id(affiliate_id: int) -> Optional[Dict[str, Any]]:
     """Get a single affiliate by ID"""
     session = get_db()
     try:
@@ -692,12 +693,12 @@ def get_affiliate_by_id(affiliate_id: int) -> dict:
 def apply_for_affiliate(
     name: str,
     email: str,
-    phone: str = None,
-    company_name: str = None,
-    payout_method: str = None,
-    payout_details: dict = None,
-    referrer_code: str = None,
-) -> dict:
+    phone: Optional[str] = None,
+    company_name: Optional[str] = None,
+    payout_method: Optional[str] = None,
+    payout_details: Optional[Dict[str, Any]] = None,
+    referrer_code: Optional[str] = None,
+) -> Dict[str, Any]:
     """Public endpoint for affiliate application"""
     parent_affiliate_id = None
 

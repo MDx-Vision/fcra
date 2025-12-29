@@ -3,6 +3,7 @@ import os
 import re
 import time
 import zipfile
+from typing import Any
 
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.attributes import flag_modified
@@ -65,6 +66,7 @@ from anthropic import Anthropic
 
 from prompt_loader import get_prompt_loader
 
+client: Anthropic | None = None
 try:
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
     if "invalid" in ANTHROPIC_API_KEY.lower():
@@ -73,8 +75,7 @@ try:
         print("✅ Anthropic API client initialized")
 except Exception as e:
     print(f"❌ Failed to initialize Anthropic client: {e}")
-    # Still create a dummy client to prevent crashes
-    client = None
+    # client remains None to prevent crashes
 import json
 import os
 import secrets
@@ -418,7 +419,7 @@ app.register_blueprint(staff_portal_blueprint)
 print("✅ Staff portal blueprint registered")
 
 # Simple in-memory rate limiting for login attempts
-login_attempts = {}  # {email: {'count': int, 'last_attempt': datetime}}
+login_attempts: dict[str, dict[str, int | datetime]] = {}  # {email: {'count': int, 'last_attempt': datetime}}
 
 # Store received credit reports
 credit_reports = []
@@ -700,8 +701,8 @@ def require_api_key(scopes=None):
     return decorator
 
 
-_whitelabel_config_cache = {}
-_whitelabel_cache_timestamps = {}
+_whitelabel_config_cache: dict[str, Any] = {}
+_whitelabel_cache_timestamps: dict[str, datetime] = {}
 _WHITELABEL_CACHE_TTL = 300
 
 
@@ -1798,9 +1799,9 @@ SECTION_MARKERS = {
 }
 
 
-def split_report_into_sections(text: str) -> dict:
+def split_report_into_sections(text: str) -> dict[str, str]:
     """Split cleaned report text into logical sections based on common headings"""
-    sections = {k: [] for k in SECTION_MARKERS.keys()}
+    sections: dict[str, list[str]] = {k: [] for k in SECTION_MARKERS.keys()}
     current_key = None
 
     if not text:
@@ -1834,7 +1835,7 @@ def split_report_into_sections(text: str) -> dict:
     return finalized
 
 
-def merge_standing(standings: list) -> dict:
+def merge_standing(standings: list[Any]) -> dict[str, Any]:
     """Merge multiple standing blocks (OR booleans, SUM counts, concatenate strings)"""
     if not standings:
         return {
@@ -1849,90 +1850,91 @@ def merge_standing(standings: list) -> dict:
             "adverse_action_notices_count": 0,
         }
 
-    merged = {
-        "has_concrete_harm": False,
-        "concrete_harm_type": [],
-        "harm_details": [],
-        "has_dissemination": False,
-        "dissemination_details": [],
-        "has_causation": False,
-        "causation_details": [],
-        "denial_letters_count": 0,
-        "adverse_action_notices_count": 0,
-    }
+    has_concrete_harm = False
+    concrete_harm_type: list[str] = []
+    harm_details: list[str] = []
+    has_dissemination = False
+    dissemination_details: list[str] = []
+    has_causation = False
+    causation_details: list[str] = []
+    denial_letters_count = 0
+    adverse_action_notices_count = 0
 
     for s in standings:
         if not s:
             continue
-        merged["has_concrete_harm"] = merged["has_concrete_harm"] or s.get(
+        has_concrete_harm = has_concrete_harm or s.get(
             "has_concrete_harm", False
         )
-        merged["has_dissemination"] = merged["has_dissemination"] or s.get(
+        has_dissemination = has_dissemination or s.get(
             "has_dissemination", False
         )
-        merged["has_causation"] = merged["has_causation"] or s.get(
+        has_causation = has_causation or s.get(
             "has_causation", False
         )
         if s.get("concrete_harm_type"):
-            merged["concrete_harm_type"].append(str(s.get("concrete_harm_type")))
+            concrete_harm_type.append(str(s.get("concrete_harm_type")))
         if s.get("harm_details"):
-            merged["harm_details"].append(str(s.get("harm_details")))
+            harm_details.append(str(s.get("harm_details")))
         if s.get("dissemination_details"):
-            merged["dissemination_details"].append(str(s.get("dissemination_details")))
+            dissemination_details.append(str(s.get("dissemination_details")))
         if s.get("causation_details"):
-            merged["causation_details"].append(str(s.get("causation_details")))
-        merged["denial_letters_count"] += int(s.get("denial_letters_count", 0) or 0)
-        merged["adverse_action_notices_count"] += int(
+            causation_details.append(str(s.get("causation_details")))
+        denial_letters_count += int(s.get("denial_letters_count", 0) or 0)
+        adverse_action_notices_count += int(
             s.get("adverse_action_notices_count", 0) or 0
         )
 
     return {
-        "has_concrete_harm": merged["has_concrete_harm"],
-        "concrete_harm_type": " | ".join(merged["concrete_harm_type"]),
-        "harm_details": "\n\n".join(merged["harm_details"]),
-        "has_dissemination": merged["has_dissemination"],
-        "dissemination_details": "\n\n".join(merged["dissemination_details"]),
-        "has_causation": merged["has_causation"],
-        "causation_details": "\n\n".join(merged["causation_details"]),
-        "denial_letters_count": merged["denial_letters_count"],
-        "adverse_action_notices_count": merged["adverse_action_notices_count"],
+        "has_concrete_harm": has_concrete_harm,
+        "concrete_harm_type": " | ".join(concrete_harm_type),
+        "harm_details": "\n\n".join(harm_details),
+        "has_dissemination": has_dissemination,
+        "dissemination_details": "\n\n".join(dissemination_details),
+        "has_causation": has_causation,
+        "causation_details": "\n\n".join(causation_details),
+        "denial_letters_count": denial_letters_count,
+        "adverse_action_notices_count": adverse_action_notices_count,
     }
 
 
-def merge_actual_damages(damages_list: list) -> dict:
+def merge_actual_damages(damages_list: list[Any]) -> dict[str, Any]:
     """Merge multiple actual_damages blocks by summing numeric fields"""
-    merged = {
-        "credit_denials_amount": 0,
-        "higher_interest_amount": 0,
-        "credit_monitoring_amount": 0,
-        "time_stress_amount": 0,
-        "other_actual_amount": 0,
-        "notes": "",
-    }
-    notes = []
+    credit_denials_amount: float = 0
+    higher_interest_amount: float = 0
+    credit_monitoring_amount: float = 0
+    time_stress_amount: float = 0
+    other_actual_amount: float = 0
+    notes: list[str] = []
     for d in damages_list:
         if not d:
             continue
-        merged["credit_denials_amount"] += float(d.get("credit_denials_amount", 0) or 0)
-        merged["higher_interest_amount"] += float(
+        credit_denials_amount += float(d.get("credit_denials_amount", 0) or 0)
+        higher_interest_amount += float(
             d.get("higher_interest_amount", 0) or 0
         )
-        merged["credit_monitoring_amount"] += float(
+        credit_monitoring_amount += float(
             d.get("credit_monitoring_amount", 0) or 0
         )
-        merged["time_stress_amount"] += float(d.get("time_stress_amount", 0) or 0)
-        merged["other_actual_amount"] += float(d.get("other_actual_amount", 0) or 0)
+        time_stress_amount += float(d.get("time_stress_amount", 0) or 0)
+        other_actual_amount += float(d.get("other_actual_amount", 0) or 0)
         if d.get("notes"):
             notes.append(str(d["notes"]))
-    merged["notes"] = "\n\n".join(notes)
-    return merged
+    return {
+        "credit_denials_amount": credit_denials_amount,
+        "higher_interest_amount": higher_interest_amount,
+        "credit_monitoring_amount": credit_monitoring_amount,
+        "time_stress_amount": time_stress_amount,
+        "other_actual_amount": other_actual_amount,
+        "notes": "\n\n".join(notes),
+    }
 
 
-def merge_litigation_data(section_results: list) -> dict:
+def merge_litigation_data(section_results: list[Any]) -> dict[str, Any]:
     """Merge litigation_data from multiple sections into one"""
-    all_violations = []
-    standings = []
-    damages_blocks = []
+    all_violations: list[Any] = []
+    standings: list[Any] = []
+    damages_blocks: list[Any] = []
     for r in section_results:
         if not r:
             continue
@@ -23633,7 +23635,7 @@ def instant_preview_page():
     return render_template("instant_preview.html")
 
 
-PREVIEW_RATE_LIMIT = {}  # Simple IP-based rate limit: {ip: (count, first_request_time)}
+PREVIEW_RATE_LIMIT: dict[str, tuple[int, float]] = {}  # Simple IP-based rate limit: {ip: (count, first_request_time)}
 PREVIEW_RATE_MAX = 10  # Max 10 requests per 10 minutes per IP
 PREVIEW_RATE_WINDOW = 600  # 10 minutes
 

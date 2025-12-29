@@ -88,7 +88,7 @@ class StripePlansService:
             self._stripe = get_stripe_client()
         return self._stripe
 
-    def _get_integration_id(self, db) -> Optional[int]:
+    def _get_integration_id(self, db: Any) -> Optional[int]:
         """Get or create Stripe integration connection ID"""
         if self._integration_id:
             return self._integration_id
@@ -112,13 +112,13 @@ class StripePlansService:
 
     def _log_event(
         self,
-        db,
+        db: Any,
         event_type: str,
-        event_data: dict,
+        event_data: Dict[str, Any],
         client_id: Optional[int] = None,
         response_status: int = 200,
         error_message: Optional[str] = None,
-    ):
+    ) -> None:
         """Log integration event for audit trail"""
         try:
             integration_id = self._get_integration_id(db)
@@ -150,8 +150,8 @@ class StripePlansService:
         name: str,
         price_cents: int,
         interval: str = "month",
-        features: List[str] = None,
-        display_name: str = None,
+        features: Optional[List[str]] = None,
+        display_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create a new billing plan in Stripe and database
@@ -308,10 +308,10 @@ class StripePlansService:
         finally:
             db.close()
 
-    def _get_or_create_stripe_customer(self, db, client: Client) -> str:
+    def _get_or_create_stripe_customer(self, db: Any, client: Client) -> str:
         """Get or create Stripe customer for client"""
         if client.stripe_customer_id:
-            return client.stripe_customer_id
+            return str(client.stripe_customer_id)
 
         customer = self.stripe.Customer.create(
             email=client.email, name=client.name, metadata={"client_id": str(client.id)}
@@ -855,11 +855,11 @@ class StripePlansService:
                 db.close()
 
             result = self.create_plan(
-                name=plan_config["name"],
-                price_cents=plan_config["price_cents"],
-                interval=plan_config["billing_interval"],
-                features=plan_config["features"],
-                display_name=plan_config["display_name"],
+                name=str(plan_config["name"]),
+                price_cents=int(plan_config["price_cents"]),  # type: ignore[call-overload]
+                interval=str(plan_config["billing_interval"]),
+                features=list(plan_config["features"]),  # type: ignore[call-overload]
+                display_name=str(plan_config["display_name"]),
             )
 
             if result.get("success"):

@@ -1,15 +1,30 @@
 {
-  "timestamp": "2025-12-29T01:40:15.790508",
-  "links_found": 114,
-  "links_tested": 102,
-  "links_valid": 101,
-  "links_broken": 1,
+  "timestamp": "2025-12-29T08:50:22.142834",
+  "links_found": 290,
+  "links_tested": 278,
+  "links_valid": 274,
+  "links_broken": 4,
   "external_links": 0,
   "issues": [
+    {
+      "page": "/staff/login",
+      "link": "/staff/documents",
+      "status": 500
+    },
+    {
+      "page": "/staff/login",
+      "link": "/staff/clients/264",
+      "status": 500
+    },
     {
       "page": "/dashboard",
       "link": "/dashboard/predictive",
       "status": 500
+    },
+    {
+      "page": "/dashboard/documents",
+      "link": "//uploads/test.pdf",
+      "status": 404
     }
   ],
   "log": [
@@ -18,17 +33,17 @@
     "\n=== Scanning: /signup ===",
     "  Found 4 links",
     "\n=== Scanning: /staff/login ===",
-    "  Found 29 links",
+    "  Found 34 links",
     "\n=== Scanning: /portal/login ===",
     "  Found 3 links",
     "\n=== Scanning: /dashboard ===",
     "  Found 46 links",
     "\n=== Scanning: /dashboard/clients ===",
-    "  Found 50 links",
+    "  Found 210 links",
     "\n=== Scanning: /dashboard/signups ===",
     "  Found 52 links",
     "\n=== Scanning: /dashboard/cases ===",
-    "  Found 50 links",
+    "  Found 210 links",
     "\n=== Scanning: /dashboard/settlements ===",
     "  Found 46 links",
     "\n=== Scanning: /dashboard/staff ===",
@@ -40,7 +55,7 @@
     "\n=== Scanning: /dashboard/calendar ===",
     "  Found 46 links",
     "\n=== Scanning: /dashboard/contacts ===",
-    "  Found 58 links",
+    "  Found 78 links",
     "\n=== Scanning: /dashboard/automation-tools ===",
     "  Found 46 links",
     "\n=== Scanning: /dashboard/letter-queue ===",
@@ -50,7 +65,7 @@
     "\n=== Scanning: /dashboard/import ===",
     "  Found 46 links",
     "\n=== Scanning: /dashboard/documents ===",
-    "  Found 56 links",
+    "  Found 64 links",
     "\n=== Scanning: /dashboard/settings ===",
     "  Found 47 links",
     "\n=== Scanning: /dashboard/integrations ===",

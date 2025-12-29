@@ -9,9 +9,10 @@ import json
 import logging
 import os
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
 from database import (
     Client,
@@ -94,9 +95,9 @@ def _extract_text_from_pdf(file_path: str) -> Optional[str]:
             import PyPDF2
 
             with open(file_path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
+                reader_pyp2: Any = PyPDF2.PdfReader(f)
                 text_parts = []
-                for page in reader.pages:
+                for page in reader_pyp2.pages:
                     text = page.extract_text()
                     if text:
                         text_parts.append(text)
@@ -346,7 +347,7 @@ def extract_cra_response_data(
         )
         prompt = CRA_RESPONSE_PROMPT.replace("{bureau_hint}", bureau_hint)
 
-        messages_content = []
+        messages_content: List[Dict[str, Any]] = []
 
         if file_type_lower == "pdf":
             pdf_images = _convert_pdf_to_images(file_path)
@@ -402,10 +403,13 @@ def extract_cra_response_data(
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
             temperature=0,
-            messages=[{"role": "user", "content": messages_content}],
+            messages=[{"role": "user", "content": messages_content}],  # type: ignore[arg-type,typeddict-item]
         )
 
-        response_text = response.content[0].text.strip()
+        first_block = response.content[0]
+        if not isinstance(first_block, TextBlock):
+            return {"success": False, "error": "Unexpected response type", "data": None}
+        response_text = first_block.text.strip()
 
         if response_text.startswith("```json"):
             response_text = response_text[7:]
@@ -464,7 +468,7 @@ def analyze_collection_letter(file_path: str, file_type: str) -> Dict[str, Any]:
             file_type.lower() if file_type else file_path.lower().split(".")[-1]
         )
 
-        messages_content = []
+        messages_content: List[Dict[str, Any]] = []
 
         if file_type_lower == "pdf":
             pdf_images = _convert_pdf_to_images(file_path)
@@ -520,10 +524,13 @@ def analyze_collection_letter(file_path: str, file_type: str) -> Dict[str, Any]:
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
             temperature=0,
-            messages=[{"role": "user", "content": messages_content}],
+            messages=[{"role": "user", "content": messages_content}],  # type: ignore[arg-type,typeddict-item]
         )
 
-        response_text = response.content[0].text.strip()
+        first_block = response.content[0]
+        if not isinstance(first_block, TextBlock):
+            return {"success": False, "error": "Unexpected response type", "data": None}
+        response_text = first_block.text.strip()
 
         if response_text.startswith("```json"):
             response_text = response_text[7:]
@@ -596,7 +603,10 @@ def detect_fcra_violations(
             messages=[{"role": "user", "content": prompt}],
         )
 
-        response_text = response.content[0].text.strip()
+        first_block = response.content[0]
+        if not isinstance(first_block, TextBlock):
+            return {"success": False, "error": "Unexpected response type", "violations": []}
+        response_text = first_block.text.strip()
 
         if response_text.startswith("```json"):
             response_text = response_text[7:]
@@ -654,9 +664,9 @@ def update_client_upload_ocr(upload_id: int, ocr_data: Dict[str, Any]) -> bool:
             logger.error(f"ClientUpload {upload_id} not found")
             return False
 
-        upload.ocr_extracted = True
-        upload.ocr_data = ocr_data
-        upload.updated_at = datetime.utcnow()
+        upload.ocr_extracted = True  # type: ignore[assignment]
+        upload.ocr_data = ocr_data  # type: ignore[assignment]
+        upload.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
         session.commit()
         logger.info(f"Updated ClientUpload {upload_id} with OCR data")
@@ -693,24 +703,25 @@ def process_upload_for_ocr(
         if not upload:
             return {"success": False, "error": f"ClientUpload {upload_id} not found"}
 
-        file_path = upload.file_path
-        file_type = upload.file_type or (
-            file_path.split(".")[-1] if file_path else "pdf"
+        file_path_val: str = str(upload.file_path) if upload.file_path else ""
+        file_type_val: str = str(upload.file_type) if upload.file_type else (
+            file_path_val.split(".")[-1] if file_path_val else "pdf"
         )
-        doc_category = category or upload.category
+        bureau_val: Optional[str] = str(upload.bureau) if upload.bureau else None
+        doc_category = category or (str(upload.category) if upload.category else None)
 
-        if not file_path or not os.path.exists(file_path):
-            return {"success": False, "error": f"File not found: {file_path}"}
+        if not file_path_val or not os.path.exists(file_path_val):
+            return {"success": False, "error": f"File not found: {file_path_val}"}
 
         if doc_category in ["cra_response", "bureau_response", "dispute_result"]:
             result = extract_cra_response_data(
-                file_path=file_path, file_type=file_type, bureau=upload.bureau
+                file_path=file_path_val, file_type=file_type_val, bureau=bureau_val
             )
         elif doc_category in ["collection_letter", "debt_collection", "collection"]:
-            result = analyze_collection_letter(file_path=file_path, file_type=file_type)
+            result = analyze_collection_letter(file_path=file_path_val, file_type=file_type_val)
         else:
             result = extract_cra_response_data(
-                file_path=file_path, file_type=file_type, bureau=upload.bureau
+                file_path=file_path_val, file_type=file_type_val, bureau=bureau_val
             )
 
         if result.get("success") and result.get("data"):
@@ -778,7 +789,7 @@ def batch_process_uploads(
     Returns:
         Dictionary with batch processing results
     """
-    results = {"total": len(upload_ids), "successful": 0, "failed": 0, "results": []}
+    results: Dict[str, Any] = {"total": len(upload_ids), "successful": 0, "failed": 0, "results": []}
 
     for upload_id in upload_ids:
         result = process_upload_for_ocr(upload_id, category)
@@ -815,18 +826,23 @@ def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
                 "error": f"CRA Response {cra_response_id} not found",
             }
 
-        if not cra_response.file_path or not os.path.exists(cra_response.file_path):
+        cra_file_path: str = str(cra_response.file_path) if cra_response.file_path else ""
+        cra_bureau: Optional[str] = str(cra_response.bureau) if cra_response.bureau else None
+        cra_client_id: int = int(cra_response.client_id) if cra_response.client_id else 0
+        cra_dispute_round: int = int(cra_response.dispute_round) if cra_response.dispute_round else 0
+
+        if not cra_file_path or not os.path.exists(cra_file_path):
             return {
                 "success": False,
-                "error": f"File not found: {cra_response.file_path}",
+                "error": f"File not found: {cra_file_path}",
             }
 
-        file_type = cra_response.file_path.split(".")[-1].lower()
+        file_type = cra_file_path.split(".")[-1].lower()
 
         extraction_result = extract_cra_response_data(
-            file_path=cra_response.file_path,
+            file_path=cra_file_path,
             file_type=file_type,
-            bureau=cra_response.bureau,
+            bureau=cra_bureau,
         )
 
         if not extraction_result.get("success"):
@@ -841,8 +857,8 @@ def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
         dispute_items = (
             session.query(DisputeItem)
             .filter(
-                DisputeItem.client_id == cra_response.client_id,
-                DisputeItem.bureau == cra_response.bureau,
+                DisputeItem.client_id == cra_client_id,
+                DisputeItem.bureau == cra_bureau,
             )
             .all()
         )
@@ -855,12 +871,14 @@ def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
             account_number = ext_item.get("account_number", "").strip()
             result = ext_item.get("result", "").lower()
 
-            best_match = None
-            best_score = 0
+            best_match: Optional[DisputeItem] = None
+            best_score: float = 0.0
 
             for di in dispute_items:
+                di_creditor: str = str(di.creditor_name) if di.creditor_name else ""
+                di_account: str = str(di.account_id) if di.account_id else ""
                 score = _calculate_match_score(
-                    ext_item, di.creditor_name or "", di.account_id or ""
+                    ext_item, di_creditor, di_account
                 )
                 if score > best_score and score >= 0.5:
                     best_score = score
@@ -891,13 +909,14 @@ def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
                 match_info["matched_creditor"] = best_match.creditor_name
                 match_info["matched_account"] = best_match.account_id
 
+                best_match_creditor: str = str(best_match.creditor_name) if best_match.creditor_name else ""
                 if new_status == "verified" and best_match.status == "deleted":
                     reinsertion = _check_reinsertion_violation(
                         session,
-                        cra_response.client_id,
-                        best_match.creditor_name,
-                        cra_response.bureau,
-                        cra_response.dispute_round,
+                        cra_client_id,
+                        best_match_creditor,
+                        cra_bureau or "",
+                        cra_dispute_round,
                     )
                     if reinsertion.get("is_reinsertion"):
                         reinsertion_violations.append(
@@ -905,7 +924,7 @@ def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
                                 "dispute_item_id": best_match.id,
                                 "creditor_name": best_match.creditor_name,
                                 "deleted_in_round": reinsertion.get("deleted_round"),
-                                "reappeared_in_round": cra_response.dispute_round,
+                                "reappeared_in_round": cra_dispute_round,
                                 "fcra_section": "611(a)(5)",
                                 "violation_type": "reinsertion",
                             }
@@ -920,10 +939,11 @@ def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
 
         summary_counts = extracted_data.get("summary_counts", {})
 
+        cra_case_id: Optional[int] = int(cra_response.case_id) if cra_response.case_id else None
         ocr_record = CRAResponseOCR(
-            client_id=cra_response.client_id,
-            case_id=cra_response.case_id,
-            bureau=cra_response.bureau,
+            client_id=cra_client_id,
+            case_id=cra_case_id,
+            bureau=cra_bureau,
             document_type="cra_response",
             document_date=_parse_date(extracted_data.get("response_date")),
             response_date=_parse_date(extracted_data.get("response_date")),
@@ -964,7 +984,7 @@ def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
             "success": True,
             "cra_response_id": cra_response_id,
             "ocr_record_id": ocr_record.id,
-            "bureau": cra_response.bureau,
+            "bureau": cra_bureau,
             "response_date": extracted_data.get("response_date"),
             "confidence_score": extracted_data.get("confidence_score", 0.7),
             "summary": {
@@ -1115,7 +1135,7 @@ def apply_analysis_updates(
         if not ocr_record:
             return {"success": False, "error": f"OCR record {ocr_record_id} not found"}
 
-        structured_data = ocr_record.structured_data or {}
+        structured_data: Dict[str, Any] = cast(Dict[str, Any], ocr_record.structured_data) if ocr_record.structured_data else {}
         items_to_update = reviewed_items or structured_data.get("matched_items", [])
         reinsertion_violations = structured_data.get("reinsertion_violations", [])
 
@@ -1137,9 +1157,9 @@ def apply_analysis_updates(
 
             if dispute_item:
                 old_status = dispute_item.status
-                dispute_item.status = new_status
-                dispute_item.response_date = date.today()
-                dispute_item.response_notes = (
+                dispute_item.status = new_status  # type: ignore[assignment]
+                dispute_item.response_date = date.today()  # type: ignore[assignment]
+                dispute_item.response_notes = (  # type: ignore[assignment]
                     f"Auto-updated from CRA response analysis. Previous: {old_status}"
                 )
 
@@ -1176,13 +1196,15 @@ def apply_analysis_updates(
                     }
                 )
 
-        ocr_record.reviewed = True
-        ocr_record.reviewed_by = staff_user
-        ocr_record.reviewed_at = datetime.utcnow()
-        ocr_record.notes = (
-            (ocr_record.notes or "")
+        ocr_record.reviewed = True  # type: ignore[assignment]
+        ocr_record.reviewed_by = staff_user  # type: ignore[assignment]
+        ocr_record.reviewed_at = datetime.utcnow()  # type: ignore[assignment]
+        current_notes: str = str(ocr_record.notes) if ocr_record.notes else ""
+        new_notes: str = (
+            current_notes
             + f"\nApplied {len(updates_made)} updates on {datetime.utcnow().isoformat()}"
         )
+        ocr_record.notes = new_notes  # type: ignore[assignment]
 
         session.commit()
 
@@ -1229,7 +1251,7 @@ def get_analysis_for_review(ocr_record_id: int) -> Dict[str, Any]:
         if not ocr_record:
             return {"success": False, "error": f"OCR record {ocr_record_id} not found"}
 
-        structured_data = ocr_record.structured_data or {}
+        structured_data: Dict[str, Any] = cast(Dict[str, Any], ocr_record.structured_data) if ocr_record.structured_data else {}
         extracted_data = structured_data.get("extracted_data", {})
         matched_items = structured_data.get("matched_items", [])
         reinsertion_violations = structured_data.get("reinsertion_violations", [])
