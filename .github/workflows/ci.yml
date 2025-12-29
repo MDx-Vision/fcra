@@ -195,3 +195,45 @@ jobs:
 
       - name: Run flake8
         run: flake8 app.py services/ --max-line-length=150 --ignore=E501,W503,E402 --exit-zero
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install bandit
+        run: pip install bandit
+
+      - name: Run bandit (Python security)
+        run: |
+          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "### Python (Bandit)" >> $GITHUB_STEP_SUMMARY
+          bandit -r app.py services/ -f txt -o bandit-report.txt --severity-level medium || true
+          if [ -s bandit-report.txt ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat bandit-report.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          bandit -r app.py services/ --severity-level high --confidence-level high
+
+      - name: Run npm audit (JS security)
+        run: |
+          echo "### JavaScript (npm audit)" >> $GITHUB_STEP_SUMMARY
+          npm ci
+          npm audit --audit-level=high || echo "⚠️ Vulnerabilities found (see above)" >> $GITHUB_STEP_SUMMARY
