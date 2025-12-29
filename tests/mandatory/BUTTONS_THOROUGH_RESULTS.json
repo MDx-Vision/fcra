@@ -1,14 +1,14 @@
 {
-  "timestamp": "2025-12-26T19:43:31.607837",
-  "buttons_found": 27,
-  "buttons_tested": 27,
+  "timestamp": "2025-12-29T01:40:15.793630",
+  "buttons_found": 463,
+  "buttons_tested": 463,
   "status_counts": {
-    "working": 17,
-    "not_built": 0,
-    "broken": 1,
-    "disabled": 0,
-    "hidden": 9,
-    "dangerous_safe": 0
+    "working": 79,
+    "not_built": 12,
+    "broken": 242,
+    "disabled": 2,
+    "hidden": 127,
+    "dangerous_safe": 1
   },
   "pages": [
     {
@@ -170,15 +170,227 @@
     },
     {
       "url": "/dashboard",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 13,
+      "buttons_tested": 13,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Batch Upload",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "openBatchModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "New Client",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openIntakeModal()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 12,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/clients",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 8,
+      "buttons_tested": 8,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Apply",
+          "id": "",
+          "class": "btn-apply",
+          "type": "button",
+          "onclick": "applyBulkAction()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 1,
+          "text": "Delete Selected",
+          "id": "",
+          "class": "btn-delete",
+          "type": "button",
+          "onclick": "bulkDelete()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 2,
+          "text": "ALL",
+          "id": "",
+          "class": "quick-filter all selected",
+          "type": "button",
+          "onclick": "quickFilter('all')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('all')"
+        },
+        {
+          "index": 3,
+          "text": "ACTIVE",
+          "id": "",
+          "class": "quick-filter active",
+          "type": "button",
+          "onclick": "quickFilter('active')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('active')"
+        },
+        {
+          "index": 4,
+          "text": "LEADS",
+          "id": "",
+          "class": "quick-filter leads",
+          "type": "button",
+          "onclick": "quickFilter('leads')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('leads')"
+        },
+        {
+          "index": 5,
+          "text": "FOLLOW UP",
+          "id": "",
+          "class": "quick-filter followup",
+          "type": "button",
+          "onclick": "quickFilter('followup')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('followup')"
+        },
+        {
+          "index": 6,
+          "text": "SIGNUPS",
+          "id": "",
+          "class": "quick-filter signups",
+          "type": "button",
+          "onclick": "quickFilter('signups')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('signups')"
+        },
+        {
+          "index": 7,
+          "text": "\u00d7",
+          "id": "",
+          "class": "workflow-popup-close",
+          "type": "button",
+          "onclick": "closeWorkflowSelector()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/signups",
@@ -188,15 +400,227 @@
     },
     {
       "url": "/dashboard/cases",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 8,
+      "buttons_tested": 8,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Apply",
+          "id": "",
+          "class": "btn-apply",
+          "type": "button",
+          "onclick": "applyBulkAction()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 1,
+          "text": "Delete Selected",
+          "id": "",
+          "class": "btn-delete",
+          "type": "button",
+          "onclick": "bulkDelete()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 2,
+          "text": "ALL",
+          "id": "",
+          "class": "quick-filter all selected",
+          "type": "button",
+          "onclick": "quickFilter('all')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('all')"
+        },
+        {
+          "index": 3,
+          "text": "ACTIVE",
+          "id": "",
+          "class": "quick-filter active",
+          "type": "button",
+          "onclick": "quickFilter('active')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('active')"
+        },
+        {
+          "index": 4,
+          "text": "LEADS",
+          "id": "",
+          "class": "quick-filter leads",
+          "type": "button",
+          "onclick": "quickFilter('leads')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('leads')"
+        },
+        {
+          "index": 5,
+          "text": "FOLLOW UP",
+          "id": "",
+          "class": "quick-filter followup",
+          "type": "button",
+          "onclick": "quickFilter('followup')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('followup')"
+        },
+        {
+          "index": 6,
+          "text": "SIGNUPS",
+          "id": "",
+          "class": "quick-filter signups",
+          "type": "button",
+          "onclick": "quickFilter('signups')",
+          "status": "WORKING",
+          "notes": "Has onclick: quickFilter('signups')"
+        },
+        {
+          "index": 7,
+          "text": "\u00d7",
+          "id": "",
+          "class": "workflow-popup-close",
+          "type": "button",
+          "onclick": "closeWorkflowSelector()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/settlements",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 13,
+      "buttons_tested": 13,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Clear Filters",
+          "id": "",
+          "class": "btn btn-sm btn-secondary",
+          "type": "button",
+          "onclick": "clearFilters()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal('settlementModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 2,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal('settlementModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 3,
+          "text": "Save Changes",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "saveSettlement()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal('offerModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 5,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal('offerModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 6,
+          "text": "Add Offer",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "submitOffer()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 7,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal('settleModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 8,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal('settleModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 9,
+          "text": "Confirm Settlement",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "submitSettle()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 10,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal('paymentModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 11,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal('paymentModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 12,
+          "text": "Record Payment",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "submitPayment()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/staff",
@@ -212,115 +636,1316 @@
     },
     {
       "url": "/dashboard/credit-tracker",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
-    },
-    {
-      "url": "/dashboard/calendar",
-      "buttons_found": 2,
-      "buttons_tested": 2,
+      "buttons_found": 44,
+      "buttons_tested": 44,
       "buttons": [
         {
           "index": 0,
-          "text": "\ud83d\udc41",
+          "text": "Quick Estimate",
           "id": "",
-          "class": "toggle-btn",
+          "class": "tab-btn active",
           "type": "button",
-          "onclick": "togglePassword('password')",
+          "onclick": "switchTab('quick')",
           "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
+          "notes": "Has onclick: switchTab('quick')"
         },
         {
           "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
+          "text": "Detailed Calculator",
+          "id": "",
+          "class": "tab-btn",
+          "type": "button",
+          "onclick": "switchTab('detailed')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('detailed')"
+        },
+        {
+          "index": 2,
+          "text": "Client Progress",
+          "id": "",
+          "class": "tab-btn",
+          "type": "button",
+          "onclick": "switchTab('clients')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('clients')"
+        },
+        {
+          "index": 3,
+          "text": "Calculate Estimate",
+          "id": "",
+          "class": "btn-estimate",
+          "type": "button",
+          "onclick": "calculateEstimate()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Calculate Detailed Estimate",
+          "id": "",
+          "class": "btn-estimate",
+          "type": "button",
+          "onclick": "calculateDetailedEstimate()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 5,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('late_payment_120', '120-Day Late Payment'",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 6,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('late_payment_90', '90-Day Late Payment')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 7,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('late_payment_60', '60-Day Late Payment')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 8,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('late_payment_30', '30-Day Late Payment')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 9,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('repossession', 'Repossession')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 10,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('student_loan_default', 'Student Loan Defa",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 11,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('charge_off', 'Charge-Off')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 12,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('collection', 'Collection Account')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 13,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('deed_in_lieu', 'Deed in Lieu')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 14,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('short_sale', 'Short Sale')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 15,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('profit_loss', 'Profit and Loss Write-Off'",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 16,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('settled_less', 'Settled for Less')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 17,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('medical_collection', 'Medical Collection'",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 18,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('paid_collection', 'Paid Collection')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 19,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('bankruptcy_ch7', 'Chapter 7 Bankruptcy')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 20,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('bankruptcy', 'Bankruptcy')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 21,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('bankruptcy_ch13', 'Chapter 13 Bankruptcy'",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 22,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('foreclosure', 'Foreclosure')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 23,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('judgment', 'Civil Judgment')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 24,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('tax_lien', 'Tax Lien')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 25,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('over_limit', 'Over Limit Account')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 26,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('maxed_out', 'Maxed Out Account')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 27,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('high_utilization', 'High Credit Utilizati",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 28,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('multiple_inquiries', 'Multiple Hard Inqui",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 29,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('hard_inquiry', 'Hard Inquiry')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 30,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('inquiry', 'Hard Inquiry')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 31,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('reaged_debt', 'Re-aged Debt')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 32,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('mixed_file', 'Mixed File Error')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 33,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('obsolete_info', 'Obsolete Information')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 34,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('identity_error', 'Identity Error')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 35,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('inaccurate_info', 'Inaccurate Information",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 36,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('duplicate_account', 'Duplicate Account')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 37,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('wrong_status', 'Wrong Account Status')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 38,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('wrong_balance', 'Wrong Balance')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 39,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('wrong_date', 'Wrong Date')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 40,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('identity_theft', 'Identity Theft Account'",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 41,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('authorized_user_negative', 'Authorized Us",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 42,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('closed_negative', 'Closed Account (Negati",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 43,
+          "text": "+ Add",
+          "id": "",
+          "class": "btn-add-item",
+          "type": "button",
+          "onclick": "addItem('unknown', 'Other Negative Item')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
+    },
+    {
+      "url": "/dashboard/calendar",
+      "buttons_found": 10,
+      "buttons_tested": 10,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "",
+          "id": "",
+          "class": "fc-prev-button fc-button fc-button-primary",
+          "type": "button",
           "onclick": "",
           "status": "WORKING",
-          "notes": "Submit button (form submission)"
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "",
+          "id": "",
+          "class": "fc-next-button fc-button fc-button-primary",
+          "type": "button",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "today",
+          "id": "",
+          "class": "fc-today-button fc-button fc-button-primary",
+          "type": "button",
+          "onclick": "",
+          "status": "DISABLED",
+          "notes": "Button is disabled"
+        },
+        {
+          "index": 3,
+          "text": "month",
+          "id": "",
+          "class": "fc-dayGridMonth-button fc-button fc-button-primary",
+          "type": "button",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 4,
+          "text": "week",
+          "id": "",
+          "class": "fc-dayGridWeek-button fc-button fc-button-primary",
+          "type": "button",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 5,
+          "text": "list",
+          "id": "",
+          "class": "fc-listWeek-button fc-button fc-button-primary",
+          "type": "button",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 6,
+          "text": "Apply Filters",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "applyFilters()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 7,
+          "text": "Clear Filters",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "clearFilters()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 8,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 9,
+          "text": "Close",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
         }
       ]
     },
     {
       "url": "/dashboard/contacts",
-      "buttons_found": 2,
-      "buttons_tested": 2,
+      "buttons_found": 29,
+      "buttons_tested": 29,
       "buttons": [
         {
           "index": 0,
-          "text": "\ud83d\udc41",
+          "text": "Add Contact",
           "id": "",
-          "class": "toggle-btn",
+          "class": "btn btn-secondary",
           "type": "button",
-          "onclick": "togglePassword('password')",
+          "onclick": "openAddContactModal()",
           "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
+          "notes": "Opens modal"
         },
         {
           "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
+          "text": "ADD CONTACT",
+          "id": "",
+          "class": "top-nav-btn active",
+          "type": "button",
+          "onclick": "openAddContactModal()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
           "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 12,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 13,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 14,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 15,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 16,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 17,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 18,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 19,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 20,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 21,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 22,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 23,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 24,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 25,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 26,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 27,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 28,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
         }
       ]
     },
     {
       "url": "/dashboard/automation-tools",
-      "buttons_found": 2,
-      "buttons_tested": 2,
+      "buttons_found": 37,
+      "buttons_tested": 37,
       "buttons": [
         {
           "index": 0,
-          "text": "\ud83d\udc41",
+          "text": "FREEZE LETTERS",
           "id": "",
-          "class": "toggle-btn",
+          "class": "top-nav-btn active",
           "type": "button",
-          "onclick": "togglePassword('password')",
+          "onclick": "switchTab('freeze-letters')",
           "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
+          "notes": "Has onclick: switchTab('freeze-letters')"
         },
         {
           "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
+          "text": "VALIDATION LETTERS",
+          "id": "",
+          "class": "top-nav-btn",
+          "type": "button",
+          "onclick": "switchTab('validation-letters')",
           "status": "WORKING",
-          "notes": "Submit button (form submission)"
+          "notes": "Has onclick: switchTab('validation-letters'"
+        },
+        {
+          "index": 2,
+          "text": "DEADLINES",
+          "id": "",
+          "class": "top-nav-btn",
+          "type": "button",
+          "onclick": "switchTab('deadlines')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('deadlines')"
+        },
+        {
+          "index": 3,
+          "text": "DISPUTE ROUNDS",
+          "id": "",
+          "class": "top-nav-btn",
+          "type": "button",
+          "onclick": "switchTab('dispute-rounds')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('dispute-rounds')"
+        },
+        {
+          "index": 4,
+          "text": "SETTLEMENT CALCULATOR",
+          "id": "",
+          "class": "top-nav-btn",
+          "type": "button",
+          "onclick": "switchTab('settlement-calculator')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('settlement-calculat"
+        },
+        {
+          "index": 5,
+          "text": "CERTIFIED MAIL",
+          "id": "",
+          "class": "top-nav-btn",
+          "type": "button",
+          "onclick": "switchTab('certified-mail')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('certified-mail')"
+        },
+        {
+          "index": 6,
+          "text": "NOTARIZATION",
+          "id": "",
+          "class": "top-nav-btn",
+          "type": "button",
+          "onclick": "switchTab('notarization')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('notarization')"
+        },
+        {
+          "index": 7,
+          "text": "ADVANCED LETTERS",
+          "id": "",
+          "class": "top-nav-btn",
+          "type": "button",
+          "onclick": "switchTab('advanced-letters')",
+          "status": "WORKING",
+          "notes": "Has onclick: switchTab('advanced-letters')"
+        },
+        {
+          "index": 8,
+          "text": "Select All Primary",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "selectAllPrimary()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 9,
+          "text": "Select All Secondary",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "selectAllSecondary()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 10,
+          "text": "Clear All",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "clearAllBureaus()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 11,
+          "text": "Generate Freeze Letters",
+          "id": "generateFreezeBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateFreezeLetters()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 12,
+          "text": "Generate Validation Letter",
+          "id": "generateValidationBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateValidationLetter()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 13,
+          "text": "Auto-Generate from Case Analysis",
+          "id": "autoGenerateBtn",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "autoGenerateFromCase()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 14,
+          "text": "All",
+          "id": "",
+          "class": "filter-btn active",
+          "type": "button",
+          "onclick": "filterDeadlines('all')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 15,
+          "text": "Overdue",
+          "id": "",
+          "class": "filter-btn",
+          "type": "button",
+          "onclick": "filterDeadlines('overdue')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 16,
+          "text": "This Week",
+          "id": "",
+          "class": "filter-btn",
+          "type": "button",
+          "onclick": "filterDeadlines('week')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 17,
+          "text": "This Month",
+          "id": "",
+          "class": "filter-btn",
+          "type": "button",
+          "onclick": "filterDeadlines('month')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 18,
+          "text": "Advance to Selected Round",
+          "id": "advanceRoundBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "advanceRoundManual()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 19,
+          "text": "Add Damage Item",
+          "id": "",
+          "class": "add-damage-btn",
+          "type": "button",
+          "onclick": "addDamageItem()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 20,
+          "text": "Calculate Settlement",
+          "id": "calculateBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "calculateSettlement()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 21,
+          "text": "Generate RESPA QWR Letter",
+          "id": "generateRespaBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateAdvancedLetter('respa-qwr')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 22,
+          "text": "Preview Letter",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "previewAdvancedLetter('respa-qwr')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 23,
+          "text": "Generate Reg Z Dispute Letter",
+          "id": "generateRegzBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateAdvancedLetter('reg-z')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 24,
+          "text": "Preview Letter",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "previewAdvancedLetter('reg-z')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 25,
+          "text": "Generate FDCPA Validation Letter",
+          "id": "generateFdcpaBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateAdvancedLetter('fdcpa-validation')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 26,
+          "text": "Preview Letter",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "previewAdvancedLetter('fdcpa-validation')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 27,
+          "text": "Generate \u00a7605B Block Request",
+          "id": "generate605bBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateAdvancedLetter('605b-block')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 28,
+          "text": "Preview Letter",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "previewAdvancedLetter('605b-block')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 29,
+          "text": "Generate \u00a7623 Direct Dispute",
+          "id": "generate623Btn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateAdvancedLetter('623-furnisher')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 30,
+          "text": "Preview Letter",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "previewAdvancedLetter('623-furnisher')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 31,
+          "text": "Generate Reinsertion Challenge",
+          "id": "generateReinsertionBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateAdvancedLetter('reinsertion')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 32,
+          "text": "Preview Letter",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "previewAdvancedLetter('reinsertion')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 33,
+          "text": "Generate MOV Request Letter",
+          "id": "generateMovBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "generateAdvancedLetter('mov-request')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 34,
+          "text": "Preview Letter",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "previewAdvancedLetter('mov-request')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 35,
+          "text": "Close Preview",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "closeLetterPreview()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 36,
+          "text": "Download PDF",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "downloadPreviewAsPDF()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
         }
       ]
     },
     {
       "url": "/dashboard/letter-queue",
-      "buttons_found": 2,
-      "buttons_tested": 2,
+      "buttons_found": 8,
+      "buttons_tested": 8,
       "buttons": [
         {
           "index": 0,
-          "text": "\ud83d\udc41",
+          "text": "Run Trigger Check",
           "id": "",
-          "class": "toggle-btn",
+          "class": "btn btn-secondary",
           "type": "button",
-          "onclick": "togglePassword('password')",
+          "onclick": "runTriggerCheck()",
           "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
+          "notes": "Opens modal"
         },
         {
           "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
+          "text": "Approve Selected (\n0\n)",
+          "id": "btnBulkApprove",
+          "class": "btn btn-success",
+          "type": "button",
+          "onclick": "bulkApproveSelected()",
+          "status": "DISABLED",
+          "notes": "Button is disabled"
+        },
+        {
+          "index": 2,
+          "text": "Download PDF",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
           "onclick": "",
           "status": "WORKING",
-          "notes": "Submit button (form submission)"
+          "notes": "Opens modal"
+        },
+        {
+          "index": 3,
+          "text": "Print",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 4,
+          "text": "Mark as Sent",
+          "id": "",
+          "class": "btn btn-success btn-sm",
+          "type": "button",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 5,
+          "text": "Resend",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 6,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeDismissModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 7,
+          "text": "Dismiss Letter",
+          "id": "",
+          "class": "btn btn-danger",
+          "type": "button",
+          "onclick": "confirmDismiss()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
         }
       ]
     },
@@ -331,97 +1956,1979 @@
       "buttons": [
         {
           "index": 0,
-          "text": "\ud83d\udc41",
-          "id": "",
-          "class": "toggle-btn",
+          "text": "Generate AI Demand Letter",
+          "id": "generateBtn",
+          "class": "btn btn-primary",
           "type": "button",
-          "onclick": "togglePassword('password')",
-          "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
         },
         {
           "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
+          "text": "Copy Text",
+          "id": "copyBtn",
+          "class": "btn btn-copy",
+          "type": "button",
           "onclick": "",
-          "status": "WORKING",
-          "notes": "Submit button (form submission)"
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
         }
       ]
     },
     {
       "url": "/dashboard/import",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 3,
+      "buttons_tested": 3,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Import Client",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        },
+        {
+          "index": 1,
+          "text": "Clear Form",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "document.getElementById('singleImportForm').reset(",
+          "status": "WORKING",
+          "notes": "Has onclick: document.getElementById('singl"
+        },
+        {
+          "index": 2,
+          "text": "Delete Report",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "",
+          "status": "DANGEROUS_SAFE",
+          "notes": "Clicked and cancelled safely"
+        }
+      ]
     },
     {
       "url": "/dashboard/documents",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 10,
+      "buttons_tested": 10,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Upload Document",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openUploadModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeUploadModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "CRA Response",
+          "id": "",
+          "class": "category-btn",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 3,
+          "text": "Collection Letter",
+          "id": "",
+          "class": "category-btn",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Legal/Lawsuit",
+          "id": "",
+          "class": "category-btn",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 5,
+          "text": "Credit Report",
+          "id": "",
+          "class": "category-btn",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 6,
+          "text": "ID/Proof",
+          "id": "",
+          "class": "category-btn",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 7,
+          "text": "Other",
+          "id": "",
+          "class": "category-btn",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 8,
+          "text": "Back",
+          "id": "prevBtn",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "prevStep()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 9,
+          "text": "Next",
+          "id": "nextBtn",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "nextStep()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/settings",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "window.location.reload()",
+          "status": "WORKING",
+          "notes": "Has onclick: window.location.reload()"
+        },
+        {
+          "index": 1,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/integrations",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 12,
+      "buttons_tested": 12,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Refresh All",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "refreshStatuses()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Configure",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "openConfigModal('sendcertified')",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "Test Connection",
+          "id": "",
+          "class": "btn btn-primary btn-sm",
+          "type": "button",
+          "onclick": "testConnection('sendcertified')",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/billing",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 5,
+      "buttons_tested": 5,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Create Plan",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openCreatePlanModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Initialize Default Plans",
+          "id": "",
+          "class": "btn btn-secondary btn-sm",
+          "type": "button",
+          "onclick": "initializeDefaultPlans()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/tasks",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 50,
+      "buttons_tested": 50,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Refresh",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "refreshData()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Process Tasks",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "openProcessModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "New Task",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openTaskModal()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 12,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 13,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 14,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 15,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 16,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 17,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 18,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 19,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 20,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 21,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 22,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 23,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 24,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 25,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 26,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 27,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 28,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 29,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 30,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 31,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 32,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 33,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 34,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 35,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 36,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 37,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 38,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 39,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 40,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 41,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 42,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 43,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 44,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 45,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 46,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 47,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 48,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 49,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/workflows",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 54,
+      "buttons_tested": 54,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Refresh",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "refreshData()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 12,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 13,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 14,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 15,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 16,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 17,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 18,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 19,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 20,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 21,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 22,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 23,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 24,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 25,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 26,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 27,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 28,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 29,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 30,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 31,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 32,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 33,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 34,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 35,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 36,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 37,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 38,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 39,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 40,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 41,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 42,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 43,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 44,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 45,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 46,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 47,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 48,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 49,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 50,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 51,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 52,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 53,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/ml-insights",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 6,
+      "buttons_tested": 6,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Refresh Patterns",
+          "id": "",
+          "class": "btn btn-outline-primary me-2",
+          "type": "button",
+          "onclick": "refreshPatterns()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Record Outcome",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "showRecordOutcomeModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "Record First Outcome",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "showRecordOutcomeModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "btn-close",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 5,
+          "text": "Record Outcome",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "submitOutcome()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/white-label",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 11,
+      "buttons_tested": 11,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Add Tenant",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openCreateModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Create First Tenant",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openCreateModal()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/franchise",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 17,
+      "buttons_tested": 17,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "New Organization",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openModal('createOrgModal')",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Create Organization",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openModal('createOrgModal')",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 12,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 13,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 14,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 15,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 16,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/affiliates",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 9,
+      "buttons_tested": 9,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Add Affiliate",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openAddModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "All",
+          "id": "",
+          "class": "filter-btn active",
+          "type": "button",
+          "onclick": "filterAffiliates('all')",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/triage",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 8,
+      "buttons_tested": 8,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Refresh",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "refreshData()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/escalation",
@@ -431,9 +3938,130 @@
     },
     {
       "url": "/dashboard/case-law",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 12,
+      "buttons_tested": 12,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Populate Default Cases",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "populateDefaultCases()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Add Citation",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openAddModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "Populate Default Cases",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "populateDefaultCases()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/knowledge-base",
@@ -443,51 +4071,719 @@
     },
     {
       "url": "/dashboard/sops",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 1,
+      "buttons_tested": 1,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/chexsystems",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 5,
+      "buttons_tested": 5,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "New Dispute",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openNewDisputeModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Create First Dispute",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openNewDisputeModal()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/specialty-bureaus",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 23,
+      "buttons_tested": 23,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "New Dispute",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openNewDisputeModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "View Disputes",
+          "id": "",
+          "class": "btn btn-sm btn-secondary",
+          "type": "button",
+          "onclick": "event.stopPropagation(); filterByBureau('Innovis')",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 12,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 13,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 14,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 15,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 16,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 17,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 18,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 19,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 20,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 21,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 22,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/furnishers",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 5,
+      "buttons_tested": 5,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Sync from Cases",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "populateFromExisting()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Add Furnisher",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openAddModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeAddModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 3,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeAddModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Save Furnisher",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "saveFurnisher()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/patterns",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 15,
+      "buttons_tested": 15,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "New Pattern",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openCreateModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Create First Pattern",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openCreateModal()",
+          "status": "NOT_BUILT",
+          "notes": "Click timeout - may not be wired up"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 5,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 6,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 7,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 8,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 9,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 10,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 11,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 12,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 13,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 14,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/sol",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 5,
+      "buttons_tested": 5,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Check Deadlines",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "checkDeadlines()",
+          "status": "BROKEN",
+          "notes": "Click error: Page.evaluate: Execution context was destroyed, mo"
+        },
+        {
+          "index": 1,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 3,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        },
+        {
+          "index": 4,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
+        }
+      ]
     },
     {
       "url": "/dashboard/cfpb",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 5,
+      "buttons_tested": 5,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "All",
+          "id": "",
+          "class": "filter-btn active",
+          "type": "button",
+          "onclick": "filterComplaints('all')",
+          "status": "WORKING",
+          "notes": "Has onclick: filterComplaints('all')"
+        },
+        {
+          "index": 1,
+          "text": "Draft",
+          "id": "",
+          "class": "filter-btn",
+          "type": "button",
+          "onclick": "filterComplaints('draft')",
+          "status": "WORKING",
+          "notes": "Has onclick: filterComplaints('draft')"
+        },
+        {
+          "index": 2,
+          "text": "Ready",
+          "id": "",
+          "class": "filter-btn",
+          "type": "button",
+          "onclick": "filterComplaints('ready')",
+          "status": "WORKING",
+          "notes": "Has onclick: filterComplaints('ready')"
+        },
+        {
+          "index": 3,
+          "text": "Submitted",
+          "id": "",
+          "class": "filter-btn",
+          "type": "button",
+          "onclick": "filterComplaints('submitted')",
+          "status": "WORKING",
+          "notes": "Has onclick: filterComplaints('submitted')"
+        },
+        {
+          "index": 4,
+          "text": "Response Received",
+          "id": "",
+          "class": "filter-btn",
+          "type": "button",
+          "onclick": "filterComplaints('response_received')",
+          "status": "WORKING",
+          "notes": "Has onclick: filterComplaints('response_rec"
+        }
+      ]
     },
     {
       "url": "/dashboard/frivolousness",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 7,
+      "buttons_tested": 7,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Add Defense Case",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openAddModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal('addModal')",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal('addModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 3,
+          "text": "Add Case",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "submit",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal('viewModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 5,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal('viewModal')",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 6,
+          "text": "Save Changes",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "saveCase()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard/predictive",
@@ -497,34 +4793,115 @@
     },
     {
       "url": "/dashboard/credit-import",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
-    },
-    {
-      "url": "/dashboard/performance",
-      "buttons_found": 2,
-      "buttons_tested": 2,
+      "buttons_found": 5,
+      "buttons_tested": 5,
       "buttons": [
         {
           "index": 0,
-          "text": "\ud83d\udc41",
+          "text": "Import All Due",
           "id": "",
-          "class": "toggle-btn",
+          "class": "btn btn-secondary",
           "type": "button",
-          "onclick": "togglePassword('password')",
+          "onclick": "triggerAllDue()",
           "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
+          "notes": "Opens modal"
         },
         {
           "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
+          "text": "Add Credential",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "openAddModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "closeModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 3,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "closeModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Save Credential",
+          "id": "saveBtn",
+          "class": "btn btn-primary",
           "type": "submit",
           "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
+    },
+    {
+      "url": "/dashboard/performance",
+      "buttons_found": 5,
+      "buttons_tested": 5,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Refresh",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "refreshData()",
           "status": "WORKING",
-          "notes": "Submit button (form submission)"
+          "notes": "Opens modal"
+        },
+        {
+          "index": 1,
+          "text": "Clear Cache",
+          "id": "",
+          "class": "btn btn-danger",
+          "type": "button",
+          "onclick": "showClearCacheModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 2,
+          "text": "\u00d7",
+          "id": "",
+          "class": "modal-close",
+          "type": "button",
+          "onclick": "hideClearCacheModal()",
+          "status": "WORKING",
+          "notes": "Opens modal"
+        },
+        {
+          "index": 3,
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "hideClearCacheModal()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Clear Cache",
+          "id": "",
+          "class": "btn btn-danger",
+          "type": "submit",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
         }
       ]
     },
@@ -554,28 +4931,38 @@
     },
     {
       "url": "/dashboard/settings/sms",
-      "buttons_found": 2,
-      "buttons_tested": 2,
+      "buttons_found": 3,
+      "buttons_tested": 3,
       "buttons": [
         {
           "index": 0,
-          "text": "\ud83d\udc41",
+          "text": "\ud83d\udce4 Send Test",
           "id": "",
-          "class": "toggle-btn",
+          "class": "btn btn-test",
           "type": "button",
-          "onclick": "togglePassword('password')",
+          "onclick": "sendTestSMS()",
           "status": "WORKING",
-          "notes": "Has onclick: togglePassword('password')"
+          "notes": "Shows success message"
         },
         {
           "index": 1,
-          "text": "Sign In",
-          "id": "loginBtn",
-          "class": "login-btn",
-          "type": "submit",
-          "onclick": "",
+          "text": "Cancel",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "window.location.reload()",
           "status": "WORKING",
-          "notes": "Submit button (form submission)"
+          "notes": "Shows success message"
+        },
+        {
+          "index": 2,
+          "text": "",
+          "id": "",
+          "class": "",
+          "type": "",
+          "onclick": "",
+          "status": "BROKEN",
+          "notes": "ElementHandle.inner_text: Execution context was destroyed, most likely because of a navigation\nCall "
         }
       ]
     }

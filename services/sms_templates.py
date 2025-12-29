@@ -39,21 +39,21 @@ def case_update_sms(client_name, status):
     Sent when case moves to a new stage.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     status_messages = {
-        'active': "Your case is now active and under review.",
-        'stage1_pending': "Stage 1 analysis is in progress.",
-        'stage1_complete': "Stage 1 analysis is complete! Check your portal for details.",
-        'stage2_pending': "We're generating your dispute letters.",
-        'stage2_complete': "Your dispute letters are ready for review.",
-        'delivered': "All documents have been delivered. Check your portal.",
-        'waiting_response': "Disputes sent. Awaiting bureau responses.",
-        'complete': "Your case has been completed. Thank you!",
-        'paused': "Your case is paused. Contact us with questions."
+        "active": "Your case is now active and under review.",
+        "stage1_pending": "Stage 1 analysis is in progress.",
+        "stage1_complete": "Stage 1 analysis is complete! Check your portal for details.",
+        "stage2_pending": "We're generating your dispute letters.",
+        "stage2_complete": "Your dispute letters are ready for review.",
+        "delivered": "All documents have been delivered. Check your portal.",
+        "waiting_response": "Disputes sent. Awaiting bureau responses.",
+        "complete": "Your case has been completed. Thank you!",
+        "paused": "Your case is paused. Contact us with questions.",
     }
-    
+
     message = status_messages.get(status, f"Your case status is now: {status}")
-    
+
     return f"Hi {first_name}, {COMPANY_NAME} update: {message} {REPLY_STOP}"
 
 
@@ -86,7 +86,9 @@ def payment_reminder_sms(client_name, amount):
     Payment reminder for pending balance.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    formatted_amount = f"${amount:,.2f}" if isinstance(amount, (int, float)) else f"${amount}"
+    formatted_amount = (
+        f"${amount:,.2f}" if isinstance(amount, (int, float)) else f"${amount}"
+    )
     return (
         f"Hi {first_name}, reminder: your payment of {formatted_amount} "
         f"for {COMPANY_NAME} services is pending. "
@@ -115,9 +117,9 @@ def round_started_sms(client_name, round_number):
         1: "Initial Dispute",
         2: "Follow-up (MOV Request)",
         3: "Pre-Litigation Warning",
-        4: "Final Demand"
+        4: "Final Demand",
     }.get(round_number, f"Round {round_number}")
-    
+
     return (
         f"Hi {first_name}, {COMPANY_NAME} has started "
         f"{round_desc} for your credit case. "
@@ -207,21 +209,21 @@ def reinsertion_alert_sms(client_name, bureau):
 
 
 TEMPLATE_TYPES = {
-    'welcome': welcome_sms,
-    'document_reminder': document_reminder_sms,
-    'case_update': case_update_sms,
-    'dispute_sent': dispute_sent_sms,
-    'cra_response': cra_response_sms,
-    'payment_reminder': payment_reminder_sms,
-    'appointment_reminder': appointment_reminder_sms,
-    'round_started': round_started_sms,
-    'document_uploaded': document_uploaded_sms,
-    'analysis_ready': analysis_ready_sms,
-    'letters_ready': letters_ready_sms,
-    'custom': custom_sms,
-    'dispute_mailed': dispute_mailed_sms,
-    'cra_response_received': cra_response_received_sms,
-    'reinsertion_alert': reinsertion_alert_sms
+    "welcome": welcome_sms,
+    "document_reminder": document_reminder_sms,
+    "case_update": case_update_sms,
+    "dispute_sent": dispute_sent_sms,
+    "cra_response": cra_response_sms,
+    "payment_reminder": payment_reminder_sms,
+    "appointment_reminder": appointment_reminder_sms,
+    "round_started": round_started_sms,
+    "document_uploaded": document_uploaded_sms,
+    "analysis_ready": analysis_ready_sms,
+    "letters_ready": letters_ready_sms,
+    "custom": custom_sms,
+    "dispute_mailed": dispute_mailed_sms,
+    "cra_response_received": cra_response_received_sms,
+    "reinsertion_alert": reinsertion_alert_sms,
 }
 
 

@@ -1,11 +1,11 @@
 {
-  "timestamp": "2025-12-26T19:43:31.616570",
-  "forms_found": 9,
-  "forms_tested": 9,
-  "fields_found": 28,
-  "fields_tested": 28,
-  "edge_cases_run": 1036,
-  "edge_cases_target": 1036,
+  "timestamp": "2025-12-29T01:40:15.804592",
+  "forms_found": 23,
+  "forms_tested": 23,
+  "fields_found": 154,
+  "fields_tested": 154,
+  "edge_cases_run": 5698,
+  "edge_cases_target": 5698,
   "issues": [],
   "forms": [
     {
@@ -163,12 +163,215 @@
       "total_edge_cases": 74
     },
     {
+      "page": "/dashboard",
+      "form_id": "intakeForm",
+      "fields": [
+        {
+          "name": "clientName",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "clientEmail",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "clientPhone",
+          "type": "tel",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "creditReportHTML",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 148
+    },
+    {
+      "page": "/dashboard/settings",
+      "form_id": "settingsForm",
+      "fields": [
+        {
+          "name": "tier_free_desc",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier1_price",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier1_desc",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier2_price",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier2_desc",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier3_price",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier3_desc",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier4_price",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier4_desc",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier5_price",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tier5_desc",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "payment_cashapp",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "payment_venmo",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "payment_zelle",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "payment_paypal",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 555
+    },
+    {
+      "page": "/dashboard/affiliates",
+      "form_id": "addAffiliateForm",
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "phone",
+          "type": "tel",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "company_name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "commission_rate_1",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "commission_rate_2",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "payout_email",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 259
+    },
+    {
       "page": "/dashboard/credit-import",
       "form_id": "credentialForm",
       "fields": [
         {
-          "name": "email",
-          "type": "email",
+          "name": "username",
+          "type": "text",
           "tag": "input",
           "edge_cases_tested": 37,
           "errors": []
@@ -179,36 +382,106 @@
           "tag": "input",
           "edge_cases_tested": 37,
           "errors": []
+        },
+        {
+          "name": "ssn_last4",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
         }
       ],
-      "total_edge_cases": 74
+      "total_edge_cases": 111
     },
     {
       "page": "/dashboard/patterns",
       "form_id": "createPatternForm",
       "fields": [
         {
-          "name": "email",
-          "type": "email",
+          "name": "pattern_name",
+          "type": "text",
           "tag": "input",
           "edge_cases_tested": 37,
           "errors": []
         },
         {
-          "name": "password",
-          "type": "password",
+          "name": "violation_code",
+          "type": "text",
           "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "violation_type",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "violation_description",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "strategy_notes",
+          "type": "text",
+          "tag": "textarea",
           "edge_cases_tested": 37,
           "errors": []
         }
       ],
-      "total_edge_cases": 74
+      "total_edge_cases": 185
     },
     {
       "page": "/dashboard/franchise",
       "form_id": "createOrgForm",
       "fields": [
         {
+          "name": "name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "address",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "city",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "state",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "zip_code",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "phone",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
           "name": "email",
           "type": "email",
           "tag": "input",
@@ -216,20 +489,97 @@
           "errors": []
         },
         {
-          "name": "password",
-          "type": "password",
+          "name": "revenue_share_percent",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "contact_name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "license_number",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "billing_contact_email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "max_users",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "max_clients",
+          "type": "number",
           "tag": "input",
           "edge_cases_tested": 37,
           "errors": []
         }
       ],
-      "total_edge_cases": 74
+      "total_edge_cases": 481
     },
     {
       "page": "/dashboard/tasks",
       "form_id": "task-form",
       "fields": [
         {
+          "name": "task-priority",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "task-scheduled",
+          "type": "datetime-local",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "task-payload",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 111
+    },
+    {
+      "page": "/dashboard/import",
+      "form_id": "singleImportForm",
+      "fields": [
+        {
+          "name": "firstName",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "lastName",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
           "name": "email",
           "type": "email",
           "tag": "input",
@@ -237,7 +587,231 @@
           "errors": []
         },
         {
-          "name": "password",
+          "name": "phone",
+          "type": "tel",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "addressStreet",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "addressCity",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "addressZip",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "dateOfBirth",
+          "type": "date",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "ssnLast4",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "legacySystemId",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "legacyCaseNumber",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "importNotes",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 444
+    },
+    {
+      "page": "/dashboard/frivolousness",
+      "form_id": "addForm",
+      "fields": [
+        {
+          "name": "claim_date",
+          "type": "date",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "follow_up_due",
+          "type": "date",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "claim_reason",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "new_legal_theory",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "defense_strategy",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 185
+    },
+    {
+      "page": "/dashboard/specialty-bureaus",
+      "form_id": "disputeForm",
+      "fields": [
+        {
+          "name": "account_name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "account_number",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "dispute_reason",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "letter_sent_date",
+          "type": "date",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tracking_number",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 222
+    },
+    {
+      "page": "/dashboard/documents",
+      "form_id": "uploadForm",
+      "fields": [
+        {
+          "name": "document_date",
+          "type": "date",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "received_date",
+          "type": "date",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 111
+    },
+    {
+      "page": "/dashboard/chexsystems",
+      "form_id": "disputeForm",
+      "fields": [
+        {
+          "name": "reported_by",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "dispute_reason",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 111
+    },
+    {
+      "page": "/dashboard/integrations",
+      "form_id": "configForm",
+      "fields": [
+        {
+          "name": "api_key",
+          "type": "password",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "api_secret",
           "type": "password",
           "tag": "input",
           "edge_cases_tested": 37,
@@ -247,25 +821,431 @@
       "total_edge_cases": 74
     },
     {
-      "page": "/dashboard/import",
-      "form_id": "singleImportForm",
+      "page": "/dashboard/white-label",
+      "form_id": "tenantForm",
       "fields": [
         {
-          "name": "email",
+          "name": "name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "domain",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "max_users",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "max_clients",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "company_name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "support_email",
           "type": "email",
           "tag": "input",
           "edge_cases_tested": 37,
           "errors": []
         },
         {
-          "name": "password",
-          "type": "password",
+          "name": "company_phone",
+          "type": "tel",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "company_email",
+          "type": "email",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "company_address",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "logo_url",
+          "type": "url",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "favicon_url",
+          "type": "url",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "primaryColorPicker",
+          "type": "color",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "primary_color",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "secondaryColorPicker",
+          "type": "color",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "secondary_color",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "accentColorPicker",
+          "type": "color",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "accent_color",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "terms_url",
+          "type": "url",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "privacy_url",
+          "type": "url",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "webhook_url",
+          "type": "url",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "custom_css",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "custom_js",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "apiKey",
+          "type": "text",
           "tag": "input",
           "edge_cases_tested": 37,
           "errors": []
         }
       ],
-      "total_edge_cases": 74
+      "total_edge_cases": 888
+    },
+    {
+      "page": "/dashboard/ml-insights",
+      "form_id": "outcomeForm",
+      "fields": [
+        {
+          "name": "client_id",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "settlement_amount",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "actual_damages",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "time_to_resolution_days",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "furnisher_id",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "attorney_id",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "violation_types",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "dispute_rounds_completed",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "violation_count",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 333
+    },
+    {
+      "page": "/dashboard/case-law",
+      "form_id": "addCaseForm",
+      "fields": [
+        {
+          "name": "case_name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "citation",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "court",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "year",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "fcra_sections",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "violation_types",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "key_holding",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "full_summary",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "damages_awarded",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "tags",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 407
+    },
+    {
+      "page": "/dashboard/workflows",
+      "form_id": "workflow-form",
+      "fields": [
+        {
+          "name": "trigger-name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "trigger-description",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "trigger-priority",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "trigger-conditions",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 148
+    },
+    {
+      "page": "/dashboard/billing",
+      "form_id": "createPlanForm",
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "display_name",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "price",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "features",
+          "type": "text",
+          "tag": "textarea",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 148
+    },
+    {
+      "page": "/dashboard/settings/sms",
+      "form_id": "smsSettingsForm",
+      "fields": [
+        {
+          "name": "reminder_delay_hours",
+          "type": "number",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "testPhone",
+          "type": "tel",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        },
+        {
+          "name": "testMessage",
+          "type": "text",
+          "tag": "input",
+          "edge_cases_tested": 37,
+          "errors": []
+        }
+      ],
+      "total_edge_cases": 111
     }
   ]
 }

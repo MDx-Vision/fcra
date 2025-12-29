@@ -261,16 +261,16 @@ jobs:
           if black --check app.py services/ 2>&1; then
             echo "✅ All files formatted correctly" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Some files need formatting. Run: \`black app.py services/\`" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Some files need formatting. Run: \`black app.py services/\`" >> $GITHUB_STEP_SUMMARY
           fi
-          black --check app.py services/ --quiet || true
+          black --check app.py services/
 
       - name: Check isort imports
         run: |
           echo "### isort (Import ordering)" >> $GITHUB_STEP_SUMMARY
-          if isort --check-only app.py services/ 2>&1; then
+          if isort --check-only app.py services/ --profile black 2>&1; then
             echo "✅ All imports sorted correctly" >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ Some imports need sorting. Run: \`isort app.py services/\`" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Some imports need sorting. Run: \`isort app.py services/ --profile black\`" >> $GITHUB_STEP_SUMMARY
           fi
-          isort --check-only app.py services/ --quiet || true
+          isort --check-only app.py services/ --profile black

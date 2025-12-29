@@ -1,15 +1,16 @@
 # TASK 5: LINK TESTING RESULTS
 
 **Target:** 323 links
-**Timestamp:** 2025-12-26T19:43:31.603914
+**Timestamp:** 2025-12-29T01:40:15.790508
 
 ## Summary
 | Metric | Count |
 |--------|-------|
-| Links Found | 4 |
-| Links Tested | 3 |
-| Links Valid | 3 |
-| Links Broken | 0 |
+| Links Found | 114 |
+| Links Tested | 102 |
+| Links Valid | 101 |
+| Links Broken | 1 |
 | External Links (skipped) | 0 |
 
 ## Broken Links
+- {'page': '/dashboard', 'link': '/dashboard/predictive', 'status': 500}

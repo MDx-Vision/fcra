@@ -14,7 +14,7 @@ def get_base_template(content, subject):
     """
     Base HTML email template with Brightpath Ascend branding.
     """
-    return f'''
+    return f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -59,7 +59,7 @@ def get_base_template(content, subject):
     </table>
 </body>
 </html>
-'''
+"""
 
 
 def welcome_email(client_name, portal_url=None):
@@ -67,18 +67,18 @@ def welcome_email(client_name, portal_url=None):
     Welcome email for new clients after signup.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 20px 0;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     Access Your Client Portal
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">Welcome, {first_name}!</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -101,8 +101,8 @@ def welcome_email(client_name, portal_url=None):
         <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
             If you have any questions, simply reply to this email or call our team.
         </p>
-    '''
-    
+    """
+
     return get_base_template(content, f"Welcome to {COMPANY_NAME}")
 
 
@@ -111,20 +111,20 @@ def document_reminder_email(client_name, missing_docs, portal_url=None):
     Reminder email for missing required documents.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     docs_list = "".join([f"<li>{doc}</li>" for doc in missing_docs])
-    
+
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     Upload Documents Now
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">Documents Needed, {first_name}</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -140,8 +140,8 @@ def document_reminder_email(client_name, missing_docs, portal_url=None):
         </p>
         
         {portal_section}
-    '''
-    
+    """
+
     return get_base_template(content, "Action Required: Documents Needed")
 
 
@@ -150,60 +150,63 @@ def case_update_email(client_name, status, details=None, portal_url=None):
     Case status update notification email.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     status_info = {
-        'active': {
-            'title': 'Your Case is Now Active',
-            'message': 'Great news! Your credit restoration case is now active and our team is reviewing your information.',
-            'color': PRIMARY_COLOR
+        "active": {
+            "title": "Your Case is Now Active",
+            "message": "Great news! Your credit restoration case is now active and our team is reviewing your information.",
+            "color": PRIMARY_COLOR,
         },
-        'stage1_complete': {
-            'title': 'Analysis Complete',
-            'message': 'Your credit report analysis is complete. We\'ve identified violations and prepared a detailed report for your review.',
-            'color': SECONDARY_COLOR
+        "stage1_complete": {
+            "title": "Analysis Complete",
+            "message": "Your credit report analysis is complete. We've identified violations and prepared a detailed report for your review.",
+            "color": SECONDARY_COLOR,
         },
-        'stage2_complete': {
-            'title': 'Dispute Letters Ready',
-            'message': 'Your personalized dispute letters have been generated and are ready for review. These letters are customized for each bureau based on the violations we found.',
-            'color': SECONDARY_COLOR
+        "stage2_complete": {
+            "title": "Dispute Letters Ready",
+            "message": "Your personalized dispute letters have been generated and are ready for review. These letters are customized for each bureau based on the violations we found.",
+            "color": SECONDARY_COLOR,
         },
-        'waiting_response': {
-            'title': 'Disputes Sent - Awaiting Response',
-            'message': 'Your dispute letters have been sent to the credit bureaus. By law, they must respond within 30-45 days.',
-            'color': PRIMARY_COLOR
+        "waiting_response": {
+            "title": "Disputes Sent - Awaiting Response",
+            "message": "Your dispute letters have been sent to the credit bureaus. By law, they must respond within 30-45 days.",
+            "color": PRIMARY_COLOR,
         },
-        'complete': {
-            'title': 'Case Completed',
-            'message': 'Congratulations! Your credit restoration case has been completed. Thank you for trusting us with your credit journey.',
-            'color': SECONDARY_COLOR
-        }
+        "complete": {
+            "title": "Case Completed",
+            "message": "Congratulations! Your credit restoration case has been completed. Thank you for trusting us with your credit journey.",
+            "color": SECONDARY_COLOR,
+        },
     }
-    
-    info = status_info.get(status, {
-        'title': f'Case Update: {status}',
-        'message': f'Your case status has been updated to: {status}',
-        'color': PRIMARY_COLOR
-    })
-    
+
+    info = status_info.get(
+        status,
+        {
+            "title": f"Case Update: {status}",
+            "message": f"Your case status has been updated to: {status}",
+            "color": PRIMARY_COLOR,
+        },
+    )
+
     details_section = ""
     if details:
-        details_section = f'''
+        details_section = f"""
             <div style="background-color: #f8fafc; border-left: 4px solid {info['color']}; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
                 <p style="color: #334155; margin: 0; font-size: 14px;">{details}</p>
             </div>
-        '''
-    
+        """
+
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     View Details in Portal
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">{info['title']}</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -217,9 +220,9 @@ def case_update_email(client_name, status, details=None, portal_url=None):
         {details_section}
         
         {portal_section}
-    '''
-    
-    return get_base_template(content, info['title'])
+    """
+
+    return get_base_template(content, info["title"])
 
 
 def dispute_sent_email(client_name, bureau, tracking_info=None, portal_url=None):
@@ -227,28 +230,28 @@ def dispute_sent_email(client_name, bureau, tracking_info=None, portal_url=None)
     Notification when dispute letter is sent to a bureau.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     tracking_section = ""
     if tracking_info:
-        tracking_section = f'''
+        tracking_section = f"""
             <div style="background-color: #f0fdf4; border: 1px solid #86efac; padding: 15px 20px; margin: 20px 0; border-radius: 8px;">
                 <p style="color: #166534; margin: 0; font-size: 14px;">
                     <strong>Tracking Number:</strong> {tracking_info}
                 </p>
             </div>
-        '''
-    
+        """
+
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     Track Your Disputes
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">Dispute Letter Sent!</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -272,8 +275,8 @@ def dispute_sent_email(client_name, bureau, tracking_info=None, portal_url=None)
         </ul>
         
         {portal_section}
-    '''
-    
+    """
+
     return get_base_template(content, f"Dispute Sent to {bureau}")
 
 
@@ -282,26 +285,26 @@ def cra_response_email(client_name, bureau, result_summary=None, portal_url=None
     Notification when CRA response is received.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     result_section = ""
     if result_summary:
-        result_section = f'''
+        result_section = f"""
             <div style="background-color: #f8fafc; border-left: 4px solid {PRIMARY_COLOR}; padding: 15px 20px; margin: 20px 0; border-radius: 0 8px 8px 0;">
                 <p style="color: #334155; margin: 0; font-size: 14px;">{result_summary}</p>
             </div>
-        '''
-    
+        """
+
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     View Full Response
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">Response Received from {bureau}</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -319,8 +322,8 @@ def cra_response_email(client_name, bureau, result_summary=None, portal_url=None
         </p>
         
         {portal_section}
-    '''
-    
+    """
+
     return get_base_template(content, f"Bureau Response from {bureau}")
 
 
@@ -329,23 +332,27 @@ def payment_reminder_email(client_name, amount, due_date=None, payment_url=None)
     Payment reminder for pending balance.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    formatted_amount = f"${amount:,.2f}" if isinstance(amount, (int, float)) else f"${amount}"
-    
+    formatted_amount = (
+        f"${amount:,.2f}" if isinstance(amount, (int, float)) else f"${amount}"
+    )
+
     due_section = ""
     if due_date:
-        due_section = f"<p style='color: #ef4444; font-weight: 600;'>Due Date: {due_date}</p>"
-    
+        due_section = (
+            f"<p style='color: #ef4444; font-weight: 600;'>Due Date: {due_date}</p>"
+        )
+
     payment_section = ""
     if payment_url:
-        payment_section = f'''
+        payment_section = f"""
             <p style="margin: 25px 0;">
                 <a href="{payment_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     Make Payment Now
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">Payment Reminder</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -367,52 +374,56 @@ def payment_reminder_email(client_name, amount, due_date=None, payment_url=None)
         <p style="color: #64748b; font-size: 14px;">
             If you've already made this payment, please disregard this notice. For questions about your balance, reply to this email.
         </p>
-    '''
-    
+    """
+
     return get_base_template(content, "Payment Reminder")
 
 
-def analysis_ready_email(client_name, violations_count=None, exposure=None, portal_url=None):
+def analysis_ready_email(
+    client_name, violations_count=None, exposure=None, portal_url=None
+):
     """
     Notification when credit analysis is complete.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     stats_section = ""
     if violations_count or exposure:
         stats_html = ""
         if violations_count:
-            stats_html += f'''
+            stats_html += f"""
                 <div style="text-align: center; padding: 15px;">
                     <p style="color: #64748b; margin: 0; font-size: 12px; text-transform: uppercase;">Violations Found</p>
                     <p style="color: #ef4444; margin: 5px 0 0 0; font-size: 28px; font-weight: 700;">{violations_count}</p>
                 </div>
-            '''
+            """
         if exposure:
-            formatted_exposure = f"${exposure:,.0f}" if isinstance(exposure, (int, float)) else exposure
-            stats_html += f'''
+            formatted_exposure = (
+                f"${exposure:,.0f}" if isinstance(exposure, (int, float)) else exposure
+            )
+            stats_html += f"""
                 <div style="text-align: center; padding: 15px;">
                     <p style="color: #64748b; margin: 0; font-size: 12px; text-transform: uppercase;">Potential Exposure</p>
                     <p style="color: {SECONDARY_COLOR}; margin: 5px 0 0 0; font-size: 28px; font-weight: 700;">{formatted_exposure}</p>
                 </div>
-            '''
-        stats_section = f'''
+            """
+        stats_section = f"""
             <div style="display: flex; justify-content: center; gap: 40px; background-color: #f8fafc; padding: 20px; margin: 20px 0; border-radius: 8px;">
                 {stats_html}
             </div>
-        '''
-    
+        """
+
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0; text-align: center;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     View Your Analysis
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">Your Credit Analysis is Ready!</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -430,8 +441,8 @@ def analysis_ready_email(client_name, violations_count=None, exposure=None, port
         </p>
         
         {portal_section}
-    '''
-    
+    """
+
     return get_base_template(content, "Your Credit Analysis is Ready")
 
 
@@ -440,23 +451,23 @@ def letters_ready_email(client_name, letter_count, bureaus=None, portal_url=None
     Notification when dispute letters are generated.
     """
     first_name = client_name.split()[0] if client_name else "there"
-    
+
     bureaus_section = ""
     if bureaus:
         bureaus_list = ", ".join(bureaus)
         bureaus_section = f"<p style='color: #334155; font-size: 14px;'>Bureaus: <strong>{bureaus_list}</strong></p>"
-    
+
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0; text-align: center;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     Download Your Letters
                 </a>
             </p>
-        '''
-    
-    content = f'''
+        """
+
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">Your Dispute Letters Are Ready!</h2>
         
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -486,12 +497,14 @@ def letters_ready_email(client_name, letter_count, bureaus=None, portal_url=None
         </ul>
         
         {portal_section}
-    '''
-    
+    """
+
     return get_base_template(content, "Dispute Letters Ready")
 
 
-def cra_response_received_email(client_name, bureau, items_deleted, items_verified, portal_url=None):
+def cra_response_received_email(
+    client_name, bureau, items_deleted, items_verified, portal_url=None
+):
     """
     Notification when CRA has responded to dispute.
     """
@@ -499,15 +512,15 @@ def cra_response_received_email(client_name, bureau, items_deleted, items_verifi
 
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0; text-align: center;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     View Full Response
                 </a>
             </p>
-        '''
+        """
 
-    content = f'''
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">{bureau} Has Responded to Your Dispute</h2>
 
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -553,7 +566,7 @@ def cra_response_received_email(client_name, bureau, items_deleted, items_verifi
         <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
             If you have questions about the response, feel free to reply to this email.
         </p>
-    '''
+    """
 
     return get_base_template(content, f"{bureau} Has Responded to Your Dispute")
 
@@ -566,15 +579,15 @@ def cra_no_response_violation_email(client_name, bureau, portal_url=None):
 
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0; text-align: center;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     View Case Details
                 </a>
             </p>
-        '''
+        """
 
-    content = f'''
+    content = f"""
         <h2 style="color: {DARK_COLOR}; margin: 0 0 20px 0; font-size: 24px;">FCRA Violation: {bureau} Failed to Respond</h2>
 
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
@@ -616,12 +629,14 @@ def cra_no_response_violation_email(client_name, bureau, portal_url=None):
         <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
             We're handling this violation aggressively on your behalf. If you have questions, please don't hesitate to reach out.
         </p>
-    '''
+    """
 
     return get_base_template(content, f"FCRA Violation: {bureau} Failed to Respond")
 
 
-def reinsertion_violation_alert_email(client_name, bureau, account_name, portal_url=None):
+def reinsertion_violation_alert_email(
+    client_name, bureau, account_name, portal_url=None
+):
     """
     URGENT alert when a previously deleted item is reinserted without notification.
     """
@@ -629,15 +644,15 @@ def reinsertion_violation_alert_email(client_name, bureau, account_name, portal_
 
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 25px 0; text-align: center;">
                 <a href="{portal_url}" style="display: inline-block; background: #ef4444; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     View Case Details - Action Required
                 </a>
             </p>
-        '''
+        """
 
-    content = f'''
+    content = f"""
         <div style="background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); padding: 20px; margin: -40px -30px 30px -30px; text-align: center;">
             <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700;">🚨 URGENT: FCRA Violation Detected</h2>
             <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 15px;">Immediate Action Required</p>
@@ -702,12 +717,14 @@ def reinsertion_violation_alert_email(client_name, bureau, account_name, portal_
         <p style="color: #64748b; font-size: 14px; margin-top: 25px;">
             This is a serious violation and we are treating it with the highest priority. Our team will contact you within 24 hours to discuss next steps.
         </p>
-    '''
+    """
 
     return get_base_template(content, "🚨 URGENT: Reinsertion Violation Detected")
 
 
-def fcra_analysis_summary_email(client_name, violations, damages_info, case_strength, portal_url=None):
+def fcra_analysis_summary_email(
+    client_name, violations, damages_info, case_strength, portal_url=None
+):
     """
     Comprehensive FCRA analysis summary email for clients.
     This is the main email sent with the full report PDF attachment.
@@ -723,16 +740,16 @@ def fcra_analysis_summary_email(client_name, violations, damages_info, case_stre
 
     # Determine case strength styling
     strength_colors = {
-        'Strong': {'bg': '#dcfce7', 'text': '#166534', 'border': '#86efac'},
-        'Moderate': {'bg': '#fef3c7', 'text': '#92400e', 'border': '#fcd34d'},
-        'Weak': {'bg': '#fee2e2', 'text': '#991b1b', 'border': '#fca5a5'}
+        "Strong": {"bg": "#dcfce7", "text": "#166534", "border": "#86efac"},
+        "Moderate": {"bg": "#fef3c7", "text": "#92400e", "border": "#fcd34d"},
+        "Weak": {"bg": "#fee2e2", "text": "#991b1b", "border": "#fca5a5"},
     }
-    strength_style = strength_colors.get(case_strength, strength_colors['Moderate'])
+    strength_style = strength_colors.get(case_strength, strength_colors["Moderate"])
 
     # Group violations by bureau
     violations_by_bureau = {}
     for v in violations[:10]:  # Limit to first 10 for email
-        bureau = v.get('bureau', 'Unknown')
+        bureau = v.get("bureau", "Unknown")
         if bureau not in violations_by_bureau:
             violations_by_bureau[bureau] = []
         violations_by_bureau[bureau].append(v)
@@ -740,35 +757,39 @@ def fcra_analysis_summary_email(client_name, violations, damages_info, case_stre
     # Build violations summary HTML
     violations_html = ""
     for bureau, bureau_violations in violations_by_bureau.items():
-        violations_html += f'''
+        violations_html += f"""
         <div style="background-color: #f8fafc; border-left: 4px solid {PRIMARY_COLOR}; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0;">
             <h3 style="color: {DARK_COLOR}; margin: 0 0 10px 0; font-size: 18px;">{bureau}</h3>
-        '''
+        """
         for v in bureau_violations:
-            account = v.get('account_name', 'Account')
-            violation_type = v.get('violation_type', 'FCRA Violation')
-            description = v.get('description', '')[:150] + '...' if len(v.get('description', '')) > 150 else v.get('description', '')
-            violations_html += f'''
+            account = v.get("account_name", "Account")
+            violation_type = v.get("violation_type", "FCRA Violation")
+            description = (
+                v.get("description", "")[:150] + "..."
+                if len(v.get("description", "")) > 150
+                else v.get("description", "")
+            )
+            violations_html += f"""
             <div style="margin-bottom: 12px;">
                 <p style="color: #1e293b; margin: 0; font-size: 15px; font-weight: 600;">• {account}</p>
                 <p style="color: #64748b; margin: 5px 0 0 15px; font-size: 14px; line-height: 1.5;">{violation_type}</p>
                 <p style="color: #64748b; margin: 3px 0 0 15px; font-size: 13px; line-height: 1.4;">{description}</p>
             </div>
-            '''
+            """
         violations_html += "</div>"
 
     # Portal section
     portal_section = ""
     if portal_url:
-        portal_section = f'''
+        portal_section = f"""
             <p style="margin: 30px 0; text-align: center;">
                 <a href="{portal_url}" style="display: inline-block; background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); color: #ffffff; padding: 16px 36px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                     Access Your Client Portal
                 </a>
             </p>
-        '''
+        """
 
-    content = f'''
+    content = f"""
         <div style="background: linear-gradient(135deg, {PRIMARY_COLOR} 0%, {SECONDARY_COLOR} 100%); padding: 20px; margin: -40px -30px 30px -30px; text-align: center;">
             <h2 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 700;">Your Credit Analysis is Complete</h2>
             <p style="color: rgba(255,255,255,0.95); margin: 10px 0 0 0; font-size: 15px;">Comprehensive FCRA Violations Report</p>
@@ -853,23 +874,23 @@ def fcra_analysis_summary_email(client_name, violations, damages_info, case_stre
             Best regards,<br>
             <strong>{COMPANY_NAME} Team</strong>
         </p>
-    '''
+    """
 
     return get_base_template(content, "Your Credit Analysis is Complete")
 
 
 TEMPLATE_TYPES = {
-    'welcome': welcome_email,
-    'document_reminder': document_reminder_email,
-    'case_update': case_update_email,
-    'dispute_sent': dispute_sent_email,
-    'cra_response': cra_response_email,
-    'payment_reminder': payment_reminder_email,
-    'analysis_ready': analysis_ready_email,
-    'letters_ready': letters_ready_email,
-    'cra_response_received': cra_response_received_email,
-    'cra_no_response_violation': cra_no_response_violation_email,
-    'reinsertion_violation_alert': reinsertion_violation_alert_email
+    "welcome": welcome_email,
+    "document_reminder": document_reminder_email,
+    "case_update": case_update_email,
+    "dispute_sent": dispute_sent_email,
+    "cra_response": cra_response_email,
+    "payment_reminder": payment_reminder_email,
+    "analysis_ready": analysis_ready_email,
+    "letters_ready": letters_ready_email,
+    "cra_response_received": cra_response_received_email,
+    "cra_no_response_violation": cra_no_response_violation_email,
+    "reinsertion_violation_alert": reinsertion_violation_alert_email,
 }
 
 

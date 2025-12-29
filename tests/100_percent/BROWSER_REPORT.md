@@ -1,6 +1,6 @@
 # 100% EXHAUSTIVE QA RESULTS
 
-**Date:** 2025-12-26T19:43:31.196041
+**Date:** 2025-12-29T01:40:15.591362
 **Tester:** Claude Code (Playwright Automation)
 
 ## Summary
@@ -11,74 +11,34 @@
 | Forms Tested | 2 |
 | Fields Tested | 3 |
 | Edge Cases Tested | 23 |
-| Buttons Clicked | 0 |
-| Links Checked | 0 |
+| Buttons Clicked | 11 |
+| Links Checked | 30 |
 | Modals Tested | 0 |
 | Responsive Tests | 12 |
 | Accessibility Tests | 3 |
-| Passed | 11 |
-| Failed | 37 |
-| Issues Found | 37 |
-| Console Errors | 54 |
+| Passed | 47 |
+| Failed | 1 |
+| Issues Found | 1 |
+| Console Errors | 5 |
 | Page Errors | 0 |
 
 ## Issues Found
 
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/settlements', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/staff', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/analytics', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/credit-tracker', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/calendar', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/contacts', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/automation-tools', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/letter-queue', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/demand-generator', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/import', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/documents', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/settings', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/integrations', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/billing', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/tasks', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/workflows', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/ml-insights', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/white-label', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/whitelabel', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/franchise', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/affiliates', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/triage', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/escalation', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/case-law', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/knowledge-base', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/sops', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/chexsystems', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/specialty-bureaus', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/furnishers', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/patterns', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/sol', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/cfpb', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/frivolousness', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/predictive', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/credit-import', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/performance', 'status': 429}
-- **page_load**: {'type': 'page_load', 'page': '/dashboard/suspense-accounts', 'status': 429}
+- **page_load**: {'type': 'page_load', 'page': '/dashboard/predictive', 'status': 500}
 
 ## Console Errors
 
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
-- Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)
+- Error loading settlement analytics: TypeError: Failed to fetch
+    at HTMLDocument.loadSettlementAna
+- Refused to load the font 'data:application/x-font-ttf;charset=utf-8;base64,AAEAAAALAIAAAwAwT1MvMg8SB
+- Refused to load the font 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/fonts/bootstrap-i
+- Refused to load the font 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/fonts/bootstrap-i
+- Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)
 
 
 ## Conclusion
 
 Total Tests: 48
-Pass Rate: 22.9%
+Pass Rate: 97.9%
 
 **Status:** ISSUES NEED FIXING

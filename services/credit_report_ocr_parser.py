@@ -4,20 +4,21 @@ Credit Report OCR Parser - Uses Claude Vision for Image-Based PDFs
 This parser handles three-bureau credit reports that are image-based (scanned/screenshot).
 Uses the same Claude Vision approach as your existing ocr_service.py
 """
-import os
-import json
+
 import base64
+import json
 import logging
+import os
 import tempfile
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 # Use same API key setup as ocr_service.py
-ANTHROPIC_API_KEY = os.environ.get('FCRA Automation Secure', '')
+ANTHROPIC_API_KEY = os.environ.get("FCRA Automation Secure", "")
 if not ANTHROPIC_API_KEY or len(ANTHROPIC_API_KEY) < 20:
-    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 _anthropic_client = None
 
@@ -29,10 +30,13 @@ def get_anthropic_client():
         if ANTHROPIC_API_KEY and len(ANTHROPIC_API_KEY) >= 20:
             try:
                 from anthropic import Anthropic
+
                 _anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
                 logger.info("Credit Report Parser: Anthropic client initialized")
             except Exception as e:
-                logger.error(f"Credit Report Parser: Failed to initialize Anthropic client: {e}")
+                logger.error(
+                    f"Credit Report Parser: Failed to initialize Anthropic client: {e}"
+                )
                 return None
         else:
             logger.warning("Credit Report Parser: Invalid or missing Anthropic API key")
@@ -46,14 +50,18 @@ def _convert_pdf_to_images(file_path: str, max_pages: int = 20) -> Optional[List
         from pdf2image import convert_from_path
 
         # Convert PDF to images (150 DPI is good balance of quality vs size)
-        images = convert_from_path(file_path, dpi=150, first_page=1, last_page=max_pages)
+        images = convert_from_path(
+            file_path, dpi=150, first_page=1, last_page=max_pages
+        )
         base64_images = []
 
         for i, img in enumerate(images):
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
-                img.save(tmp.name, 'PNG')
-                with open(tmp.name, 'rb') as f:
-                    base64_images.append(base64.standard_b64encode(f.read()).decode('utf-8'))
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                img.save(tmp.name, "PNG")
+                with open(tmp.name, "rb") as f:
+                    base64_images.append(
+                        base64.standard_b64encode(f.read()).decode("utf-8")
+                    )
                 os.unlink(tmp.name)
 
         logger.info(f"Converted PDF to {len(base64_images)} images")
@@ -277,7 +285,7 @@ def parse_credit_report_vision(file_path: str) -> Dict[str, Any]:
         "report_type": "three_bureau",
         "extraction_method": "claude_vision",
         "data": None,
-        "tokens_used": 0
+        "tokens_used": 0,
     }
 
     # Check file exists
@@ -296,7 +304,9 @@ def parse_credit_report_vision(file_path: str) -> Dict[str, Any]:
     pdf_images = _convert_pdf_to_images(file_path, max_pages=20)
 
     if not pdf_images:
-        result["error"] = "Could not convert PDF to images. Install: pip install pdf2image and apt-get install poppler-utils"
+        result["error"] = (
+            "Could not convert PDF to images. Install: pip install pdf2image and apt-get install poppler-utils"
+        )
         return result
 
     logger.info(f"Sending {len(pdf_images)} images to Claude Vision for analysis")
@@ -305,20 +315,19 @@ def parse_credit_report_vision(file_path: str) -> Dict[str, Any]:
     messages_content = []
 
     for i, img_base64 in enumerate(pdf_images):
-        messages_content.append({
-            "type": "image",
-            "source": {
-                "type": "base64",
-                "media_type": "image/png",
-                "data": img_base64
+        messages_content.append(
+            {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": "image/png",
+                    "data": img_base64,
+                },
             }
-        })
+        )
 
     # Add the extraction prompt
-    messages_content.append({
-        "type": "text",
-        "text": CREDIT_REPORT_EXTRACTION_PROMPT
-    })
+    messages_content.append({"type": "text", "text": CREDIT_REPORT_EXTRACTION_PROMPT})
 
     try:
         # Call Claude Vision
@@ -326,14 +335,13 @@ def parse_credit_report_vision(file_path: str) -> Dict[str, Any]:
             model="claude-sonnet-4-20250514",
             max_tokens=8192,  # Large output for full report
             temperature=0,
-            messages=[{
-                "role": "user",
-                "content": messages_content
-            }]
+            messages=[{"role": "user", "content": messages_content}],
         )
 
         response_text = response.content[0].text.strip()
-        result["tokens_used"] = response.usage.input_tokens + response.usage.output_tokens
+        result["tokens_used"] = (
+            response.usage.input_tokens + response.usage.output_tokens
+        )
 
         # Clean up JSON response
         if response_text.startswith("```json"):
@@ -352,15 +360,19 @@ def parse_credit_report_vision(file_path: str) -> Dict[str, Any]:
 
             # Add analysis
             result["data"]["discrepancies"] = detect_discrepancies(extracted_data)
-            result["data"]["derogatory_accounts"] = detect_derogatory_accounts(extracted_data.get("accounts", []))
+            result["data"]["derogatory_accounts"] = detect_derogatory_accounts(
+                extracted_data.get("accounts", [])
+            )
 
             # Log summary
             accounts = extracted_data.get("accounts", [])
             scores = extracted_data.get("credit_scores", {})
-            logger.info(f"Extracted: {len(accounts)} accounts, "
-                       f"Scores: TU={scores.get('transunion', {}).get('score')}, "
-                       f"EX={scores.get('experian', {}).get('score')}, "
-                       f"EQ={scores.get('equifax', {}).get('score')}")
+            logger.info(
+                f"Extracted: {len(accounts)} accounts, "
+                f"Scores: TU={scores.get('transunion', {}).get('score')}, "
+                f"EX={scores.get('experian', {}).get('score')}, "
+                f"EQ={scores.get('equifax', {}).get('score')}"
+            )
 
         except json.JSONDecodeError as je:
             logger.error(f"Failed to parse Claude response as JSON: {je}")
@@ -386,11 +398,13 @@ def detect_discrepancies(data: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     names = [n for n in [tu_name, ex_name, eq_name] if n]
     if len(set(names)) > 1:
-        discrepancies.append({
-            "type": "personal_info",
-            "field": "name",
-            "description": f"Name varies: TU='{tu_name}', EX='{ex_name}', EQ='{eq_name}'"
-        })
+        discrepancies.append(
+            {
+                "type": "personal_info",
+                "field": "name",
+                "description": f"Name varies: TU='{tu_name}', EX='{ex_name}', EQ='{eq_name}'",
+            }
+        )
 
     # Check summary stats - delinquent count
     stats = data.get("summary_stats", {})
@@ -399,11 +413,13 @@ def detect_discrepancies(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     eq_delinq = stats.get("equifax", {}).get("delinquent", 0)
 
     if tu_delinq != ex_delinq or ex_delinq != eq_delinq:
-        discrepancies.append({
-            "type": "summary",
-            "field": "delinquent",
-            "description": f"Delinquent count varies: TU={tu_delinq}, EX={ex_delinq}, EQ={eq_delinq}"
-        })
+        discrepancies.append(
+            {
+                "type": "summary",
+                "field": "delinquent",
+                "description": f"Delinquent count varies: TU={tu_delinq}, EX={ex_delinq}, EQ={eq_delinq}",
+            }
+        )
 
     # Check account discrepancies
     for account in data.get("accounts", []):
@@ -413,31 +429,35 @@ def detect_discrepancies(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         balances = [
             account.get("tu_balance"),
             account.get("ex_balance"),
-            account.get("eq_balance")
+            account.get("eq_balance"),
         ]
         balances = [b for b in balances if b is not None]
         if len(balances) >= 2 and len(set(balances)) > 1:
-            discrepancies.append({
-                "type": "account",
-                "account": creditor,
-                "field": "balance",
-                "description": f"Balance varies for {creditor}"
-            })
+            discrepancies.append(
+                {
+                    "type": "account",
+                    "account": creditor,
+                    "field": "balance",
+                    "description": f"Balance varies for {creditor}",
+                }
+            )
 
         # Payment status discrepancy
         statuses = [
             account.get("tu_payment_status", ""),
             account.get("ex_payment_status", ""),
-            account.get("eq_payment_status", "")
+            account.get("eq_payment_status", ""),
         ]
         statuses = [s for s in statuses if s]
         if len(statuses) >= 2 and len(set(statuses)) > 1:
-            discrepancies.append({
-                "type": "account",
-                "account": creditor,
-                "field": "payment_status",
-                "description": f"Payment status varies for {creditor}"
-            })
+            discrepancies.append(
+                {
+                    "type": "account",
+                    "account": creditor,
+                    "field": "payment_status",
+                    "description": f"Payment status varies for {creditor}",
+                }
+            )
 
     return discrepancies
 
@@ -447,41 +467,54 @@ def detect_derogatory_accounts(accounts: List[Dict[str, Any]]) -> List[Dict[str,
     derogatory = []
 
     bad_keywords = [
-        "past due", "late", "collection", "charge off", "charged off",
-        "delinquent", "30 days", "60 days", "90 days", "120 days",
-        "not more than"
+        "past due",
+        "late",
+        "collection",
+        "charge off",
+        "charged off",
+        "delinquent",
+        "30 days",
+        "60 days",
+        "90 days",
+        "120 days",
+        "not more than",
     ]
 
     for account in accounts:
         issues = []
         creditor = account.get("creditor_name", "Unknown")
 
-        for bureau, prefix in [("TransUnion", "tu"), ("Experian", "ex"), ("Equifax", "eq")]:
+        for bureau, prefix in [
+            ("TransUnion", "tu"),
+            ("Experian", "ex"),
+            ("Equifax", "eq"),
+        ]:
             status = str(account.get(f"{prefix}_payment_status", "")).lower()
             past_due = account.get(f"{prefix}_past_due", 0) or 0
 
             # Check payment status
             for keyword in bad_keywords:
                 if keyword in status:
-                    issues.append({
-                        "bureau": bureau,
-                        "issue": f"Payment status: {account.get(f'{prefix}_payment_status', '')}"
-                    })
+                    issues.append(
+                        {
+                            "bureau": bureau,
+                            "issue": f"Payment status: {account.get(f'{prefix}_payment_status', '')}",
+                        }
+                    )
                     break
 
             # Check past due amount
             if past_due > 0:
-                issues.append({
-                    "bureau": bureau,
-                    "issue": f"Past due: ${past_due}"
-                })
+                issues.append({"bureau": bureau, "issue": f"Past due: ${past_due}"})
 
         if issues:
-            derogatory.append({
-                "creditor_name": creditor,
-                "account_number": account.get("account_number"),
-                "issues": issues
-            })
+            derogatory.append(
+                {
+                    "creditor_name": creditor,
+                    "account_number": account.get("account_number"),
+                    "issues": issues,
+                }
+            )
 
     return derogatory
 
@@ -491,7 +524,7 @@ def get_worst_payment_status(account: Dict[str, Any]) -> Dict[str, str]:
     statuses = [
         str(account.get("tu_payment_status", "")).lower(),
         str(account.get("ex_payment_status", "")).lower(),
-        str(account.get("eq_payment_status", "")).lower()
+        str(account.get("eq_payment_status", "")).lower(),
     ]
 
     # Check for severe delinquency first
@@ -505,7 +538,11 @@ def get_worst_payment_status(account: Dict[str, Any]) -> Dict[str, str]:
 
     for status in statuses:
         if "30" in status or "not more than" in status:
-            return {"text": "30 Days Past Due", "class": "badge-warning", "color": "yellow"}
+            return {
+                "text": "30 Days Past Due",
+                "class": "badge-warning",
+                "color": "yellow",
+            }
 
     # Check for good status
     for status in statuses:
@@ -524,6 +561,7 @@ def get_worst_payment_status(account: Dict[str, Any]) -> Dict[str, str]:
 # MAIN ENTRY POINT - Replace parse_credit_report_pdf in pdf_parser_service.py
 # =============================================================================
 
+
 def parse_credit_report_pdf(file_path: str) -> Dict[str, Any]:
     """
     Main entry point for parsing credit report PDFs.
@@ -539,6 +577,7 @@ def parse_credit_report_pdf(file_path: str) -> Dict[str, Any]:
     # Try text extraction first
     try:
         import pdfplumber
+
         with pdfplumber.open(file_path) as pdf:
             text = ""
             for page in pdf.pages:
@@ -548,9 +587,12 @@ def parse_credit_report_pdf(file_path: str) -> Dict[str, Any]:
 
             # If we got substantial text, use text parser
             if len(text.strip()) > 500:
-                logger.info(f"PDF has extractable text ({len(text)} chars), using text parser")
+                logger.info(
+                    f"PDF has extractable text ({len(text)} chars), using text parser"
+                )
                 # Import and use the text-based parser
                 from services.pdf_parser_service_text import parse_three_bureau_text
+
                 return parse_three_bureau_text(text)
     except Exception as e:
         logger.warning(f"Text extraction failed: {e}")
@@ -563,6 +605,7 @@ def parse_credit_report_pdf(file_path: str) -> Dict[str, Any]:
 # =============================================================================
 # TEST FUNCTION
 # =============================================================================
+
 
 def test_parser(file_path: str):
     """Test the parser on a credit report PDF."""
@@ -581,7 +624,9 @@ def test_parser(file_path: str):
     print(f"\n✅ SUCCESS - Tokens used: {result['tokens_used']}")
 
     # Report info
-    print(f"\n📋 Report: {data.get('reference_number')} dated {data.get('report_date')}")
+    print(
+        f"\n📋 Report: {data.get('reference_number')} dated {data.get('report_date')}"
+    )
 
     # Scores
     scores = data.get("credit_scores", {})
@@ -605,8 +650,12 @@ def test_parser(file_path: str):
     print(f"\n💳 ACCOUNTS ({len(accounts)} found):")
     for acc in accounts[:10]:  # Show first 10
         status = get_worst_payment_status(acc)
-        bal = acc.get("tu_balance") or acc.get("ex_balance") or acc.get("eq_balance") or 0
-        print(f"   • {acc.get('creditor_name', 'Unknown'):30} ${bal:>10,.2f}  [{status['text']}]")
+        bal = (
+            acc.get("tu_balance") or acc.get("ex_balance") or acc.get("eq_balance") or 0
+        )
+        print(
+            f"   • {acc.get('creditor_name', 'Unknown'):30} ${bal:>10,.2f}  [{status['text']}]"
+        )
     if len(accounts) > 10:
         print(f"   ... and {len(accounts) - 10} more")
 
@@ -622,7 +671,9 @@ def test_parser(file_path: str):
     if derogatory:
         print(f"\n🔴 DEROGATORY ACCOUNTS ({len(derogatory)}):")
         for d in derogatory:
-            issues = ", ".join([f"{i['bureau']}: {i['issue']}" for i in d.get('issues', [])])
+            issues = ", ".join(
+                [f"{i['bureau']}: {i['issue']}" for i in d.get("issues", [])]
+            )
             print(f"   • {d.get('creditor_name')}: {issues}")
 
     print("\n" + "=" * 70)
@@ -630,6 +681,7 @@ def test_parser(file_path: str):
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) < 2:
         print("Usage: python credit_report_ocr_parser.py <path_to_pdf>")
     else:

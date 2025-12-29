@@ -3,29 +3,44 @@ OCR Service for extracting data from CRA response documents and collection lette
 Uses Claude (Anthropic API) for document analysis and data extraction.
 Includes CRA response analysis and reinsertion violation detection.
 """
-import os
-import json
+
 import base64
+import json
 import logging
-from datetime import datetime, date
-from typing import Dict, List, Optional, Any, Union
+import os
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional, Union
 
 from anthropic import Anthropic
-from database import SessionLocal, ClientUpload, CRAResponse, CRAResponseOCR, DisputeItem, Violation, Client
+
+from database import (
+    Client,
+    ClientUpload,
+    CRAResponse,
+    CRAResponseOCR,
+    DisputeItem,
+    SessionLocal,
+    Violation,
+)
 
 logger = logging.getLogger(__name__)
 
-ANTHROPIC_API_KEY = os.environ.get('FCRA Automation Secure', '')
+ANTHROPIC_API_KEY = os.environ.get("FCRA Automation Secure", "")
 if not ANTHROPIC_API_KEY or len(ANTHROPIC_API_KEY) < 20:
-    ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 _anthropic_client = None
+
 
 def get_anthropic_client() -> Optional[Anthropic]:
     """Get or create Anthropic client instance."""
     global _anthropic_client
     if _anthropic_client is None:
-        if ANTHROPIC_API_KEY and len(ANTHROPIC_API_KEY) >= 20 and 'invalid' not in ANTHROPIC_API_KEY.lower():
+        if (
+            ANTHROPIC_API_KEY
+            and len(ANTHROPIC_API_KEY) >= 20
+            and "invalid" not in ANTHROPIC_API_KEY.lower()
+        ):
             try:
                 _anthropic_client = Anthropic(api_key=ANTHROPIC_API_KEY)
                 logger.info("OCR Service: Anthropic client initialized")
@@ -41,8 +56,8 @@ def get_anthropic_client() -> Optional[Anthropic]:
 def _load_image_as_base64(file_path: str) -> Optional[str]:
     """Load an image file and return its base64 encoding."""
     try:
-        with open(file_path, 'rb') as f:
-            return base64.standard_b64encode(f.read()).decode('utf-8')
+        with open(file_path, "rb") as f:
+            return base64.standard_b64encode(f.read()).decode("utf-8")
     except Exception as e:
         logger.error(f"Failed to load image {file_path}: {e}")
         return None
@@ -50,21 +65,22 @@ def _load_image_as_base64(file_path: str) -> Optional[str]:
 
 def _get_media_type(file_path: str, file_type: str) -> str:
     """Determine the media type for an image file."""
-    ext = file_type.lower() if file_type else file_path.lower().split('.')[-1]
+    ext = file_type.lower() if file_type else file_path.lower().split(".")[-1]
     media_types = {
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'gif': 'image/gif',
-        'webp': 'image/webp'
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+        "gif": "image/gif",
+        "webp": "image/webp",
     }
-    return media_types.get(ext, 'image/jpeg')
+    return media_types.get(ext, "image/jpeg")
 
 
 def _extract_text_from_pdf(file_path: str) -> Optional[str]:
     """Extract text from a PDF file using pypdf."""
     try:
         from pypdf import PdfReader
+
         reader = PdfReader(file_path)
         text_parts = []
         for page in reader.pages:
@@ -76,7 +92,8 @@ def _extract_text_from_pdf(file_path: str) -> Optional[str]:
         logger.warning("pypdf not available, trying PyPDF2")
         try:
             import PyPDF2
-            with open(file_path, 'rb') as f:
+
+            with open(file_path, "rb") as f:
                 reader = PyPDF2.PdfReader(f)
                 text_parts = []
                 for page in reader.pages:
@@ -95,19 +112,22 @@ def _extract_text_from_pdf(file_path: str) -> Optional[str]:
 def _convert_pdf_to_images(file_path: str) -> Optional[List[str]]:
     """Convert PDF pages to images and return base64 encoded images."""
     try:
-        from pdf2image import convert_from_path
         import tempfile
-        
+
+        from pdf2image import convert_from_path
+
         images = convert_from_path(file_path, dpi=150, first_page=1, last_page=5)
         base64_images = []
-        
+
         for i, img in enumerate(images):
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp:
-                img.save(tmp.name, 'PNG')
-                with open(tmp.name, 'rb') as f:
-                    base64_images.append(base64.standard_b64encode(f.read()).decode('utf-8'))
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                img.save(tmp.name, "PNG")
+                with open(tmp.name, "rb") as f:
+                    base64_images.append(
+                        base64.standard_b64encode(f.read()).decode("utf-8")
+                    )
                 os.unlink(tmp.name)
-        
+
         return base64_images if base64_images else None
     except ImportError:
         logger.warning("pdf2image not available, falling back to text extraction")
@@ -291,18 +311,16 @@ Analyze thoroughly and identify all potential violations with supporting evidenc
 
 
 def extract_cra_response_data(
-    file_path: str, 
-    file_type: str, 
-    bureau: Optional[str] = None
+    file_path: str, file_type: str, bureau: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Extract data from CRA (Credit Reporting Agency) response documents.
-    
+
     Args:
         file_path: Path to the image (jpg/png) or PDF file
         file_type: File type (jpg, png, pdf)
         bureau: Optional bureau name hint (Equifax, Experian, TransUnion)
-    
+
     Returns:
         Dictionary with extracted data or error information
     """
@@ -311,47 +329,53 @@ def extract_cra_response_data(
         return {
             "success": False,
             "error": "Anthropic API client not available",
-            "data": None
+            "data": None,
         }
-    
+
     if not os.path.exists(file_path):
-        return {
-            "success": False,
-            "error": f"File not found: {file_path}",
-            "data": None
-        }
-    
+        return {"success": False, "error": f"File not found: {file_path}", "data": None}
+
     try:
-        file_type_lower = file_type.lower() if file_type else file_path.lower().split('.')[-1]
-        bureau_hint = f"Bureau: {bureau}" if bureau else "Bureau not specified - detect from document"
+        file_type_lower = (
+            file_type.lower() if file_type else file_path.lower().split(".")[-1]
+        )
+        bureau_hint = (
+            f"Bureau: {bureau}"
+            if bureau
+            else "Bureau not specified - detect from document"
+        )
         prompt = CRA_RESPONSE_PROMPT.replace("{bureau_hint}", bureau_hint)
-        
+
         messages_content = []
-        
-        if file_type_lower == 'pdf':
+
+        if file_type_lower == "pdf":
             pdf_images = _convert_pdf_to_images(file_path)
             if pdf_images:
                 for img_base64 in pdf_images:
-                    messages_content.append({
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/png",
-                            "data": img_base64
+                    messages_content.append(
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": img_base64,
+                            },
                         }
-                    })
+                    )
             else:
                 pdf_text = _extract_text_from_pdf(file_path)
                 if pdf_text:
-                    messages_content.append({
-                        "type": "text",
-                        "text": f"Document Text Content:\n\n{pdf_text}"
-                    })
+                    messages_content.append(
+                        {
+                            "type": "text",
+                            "text": f"Document Text Content:\n\n{pdf_text}",
+                        }
+                    )
                 else:
                     return {
                         "success": False,
                         "error": "Could not extract content from PDF",
-                        "data": None
+                        "data": None,
                     }
         else:
             image_base64 = _load_image_as_base64(file_path)
@@ -359,34 +383,30 @@ def extract_cra_response_data(
                 return {
                     "success": False,
                     "error": "Could not load image file",
-                    "data": None
+                    "data": None,
                 }
-            messages_content.append({
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": _get_media_type(file_path, file_type),
-                    "data": image_base64
+            messages_content.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": _get_media_type(file_path, file_type),
+                        "data": image_base64,
+                    },
                 }
-            })
-        
-        messages_content.append({
-            "type": "text",
-            "text": prompt
-        })
-        
+            )
+
+        messages_content.append({"type": "text", "text": prompt})
+
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
             temperature=0,
-            messages=[{
-                "role": "user",
-                "content": messages_content
-            }]
+            messages=[{"role": "user", "content": messages_content}],
         )
-        
+
         response_text = response.content[0].text.strip()
-        
+
         if response_text.startswith("```json"):
             response_text = response_text[7:]
         if response_text.startswith("```"):
@@ -394,7 +414,7 @@ def extract_cra_response_data(
         if response_text.endswith("```"):
             response_text = response_text[:-3]
         response_text = response_text.strip()
-        
+
         try:
             extracted_data = json.loads(response_text)
         except json.JSONDecodeError as je:
@@ -402,36 +422,29 @@ def extract_cra_response_data(
             extracted_data = {
                 "raw_response": response_text,
                 "parse_error": str(je),
-                "confidence_score": 0.5
+                "confidence_score": 0.5,
             }
-        
+
         return {
             "success": True,
             "error": None,
             "data": extracted_data,
-            "tokens_used": response.usage.input_tokens + response.usage.output_tokens
+            "tokens_used": response.usage.input_tokens + response.usage.output_tokens,
         }
-        
+
     except Exception as e:
         logger.error(f"Error extracting CRA response data: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "data": None
-        }
+        return {"success": False, "error": str(e), "data": None}
 
 
-def analyze_collection_letter(
-    file_path: str, 
-    file_type: str
-) -> Dict[str, Any]:
+def analyze_collection_letter(file_path: str, file_type: str) -> Dict[str, Any]:
     """
     Analyze a collection letter for key information and FDCPA violations.
-    
+
     Args:
         file_path: Path to the image (jpg/png) or PDF file
         file_type: File type (jpg, png, pdf)
-    
+
     Returns:
         Dictionary with extracted data and detected violations
     """
@@ -440,45 +453,47 @@ def analyze_collection_letter(
         return {
             "success": False,
             "error": "Anthropic API client not available",
-            "data": None
+            "data": None,
         }
-    
+
     if not os.path.exists(file_path):
-        return {
-            "success": False,
-            "error": f"File not found: {file_path}",
-            "data": None
-        }
-    
+        return {"success": False, "error": f"File not found: {file_path}", "data": None}
+
     try:
-        file_type_lower = file_type.lower() if file_type else file_path.lower().split('.')[-1]
-        
+        file_type_lower = (
+            file_type.lower() if file_type else file_path.lower().split(".")[-1]
+        )
+
         messages_content = []
-        
-        if file_type_lower == 'pdf':
+
+        if file_type_lower == "pdf":
             pdf_images = _convert_pdf_to_images(file_path)
             if pdf_images:
                 for img_base64 in pdf_images:
-                    messages_content.append({
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": "image/png",
-                            "data": img_base64
+                    messages_content.append(
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": img_base64,
+                            },
                         }
-                    })
+                    )
             else:
                 pdf_text = _extract_text_from_pdf(file_path)
                 if pdf_text:
-                    messages_content.append({
-                        "type": "text",
-                        "text": f"Collection Letter Text Content:\n\n{pdf_text}"
-                    })
+                    messages_content.append(
+                        {
+                            "type": "text",
+                            "text": f"Collection Letter Text Content:\n\n{pdf_text}",
+                        }
+                    )
                 else:
                     return {
                         "success": False,
                         "error": "Could not extract content from PDF",
-                        "data": None
+                        "data": None,
                     }
         else:
             image_base64 = _load_image_as_base64(file_path)
@@ -486,34 +501,30 @@ def analyze_collection_letter(
                 return {
                     "success": False,
                     "error": "Could not load image file",
-                    "data": None
+                    "data": None,
                 }
-            messages_content.append({
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": _get_media_type(file_path, file_type),
-                    "data": image_base64
+            messages_content.append(
+                {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": _get_media_type(file_path, file_type),
+                        "data": image_base64,
+                    },
                 }
-            })
-        
-        messages_content.append({
-            "type": "text",
-            "text": COLLECTION_LETTER_PROMPT
-        })
-        
+            )
+
+        messages_content.append({"type": "text", "text": COLLECTION_LETTER_PROMPT})
+
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
             temperature=0,
-            messages=[{
-                "role": "user",
-                "content": messages_content
-            }]
+            messages=[{"role": "user", "content": messages_content}],
         )
-        
+
         response_text = response.content[0].text.strip()
-        
+
         if response_text.startswith("```json"):
             response_text = response_text[7:]
         if response_text.startswith("```"):
@@ -521,7 +532,7 @@ def analyze_collection_letter(
         if response_text.endswith("```"):
             response_text = response_text[:-3]
         response_text = response_text.strip()
-        
+
         try:
             extracted_data = json.loads(response_text)
         except json.JSONDecodeError as je:
@@ -529,36 +540,31 @@ def analyze_collection_letter(
             extracted_data = {
                 "raw_response": response_text,
                 "parse_error": str(je),
-                "confidence_score": 0.5
+                "confidence_score": 0.5,
             }
-        
+
         return {
             "success": True,
             "error": None,
             "data": extracted_data,
-            "tokens_used": response.usage.input_tokens + response.usage.output_tokens
+            "tokens_used": response.usage.input_tokens + response.usage.output_tokens,
         }
-        
+
     except Exception as e:
         logger.error(f"Error analyzing collection letter: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "data": None
-        }
+        return {"success": False, "error": str(e), "data": None}
 
 
 def detect_fcra_violations(
-    document_data: Dict[str, Any], 
-    document_type: str
+    document_data: Dict[str, Any], document_type: str
 ) -> Dict[str, Any]:
     """
     Analyze extracted document data for potential FCRA violations.
-    
+
     Args:
         document_data: Previously extracted document data (from CRA response or other)
         document_type: Type of document (cra_response, collection_letter, credit_report)
-    
+
     Returns:
         Dictionary with detected violations and recommendations
     """
@@ -567,34 +573,31 @@ def detect_fcra_violations(
         return {
             "success": False,
             "error": "Anthropic API client not available",
-            "violations": []
+            "violations": [],
         }
-    
+
     if not document_data:
         return {
             "success": False,
             "error": "No document data provided",
-            "violations": []
+            "violations": [],
         }
-    
+
     try:
         prompt = FCRA_VIOLATION_ANALYSIS_PROMPT.format(
             document_type=document_type,
-            document_data=json.dumps(document_data, indent=2)
+            document_data=json.dumps(document_data, indent=2),
         )
-        
+
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=4096,
             temperature=0,
-            messages=[{
-                "role": "user",
-                "content": prompt
-            }]
+            messages=[{"role": "user", "content": prompt}],
         )
-        
+
         response_text = response.content[0].text.strip()
-        
+
         if response_text.startswith("```json"):
             response_text = response_text[7:]
         if response_text.startswith("```"):
@@ -602,7 +605,7 @@ def detect_fcra_violations(
         if response_text.endswith("```"):
             response_text = response_text[:-3]
         response_text = response_text.strip()
-        
+
         try:
             violations_data = json.loads(response_text)
         except json.JSONDecodeError as je:
@@ -610,9 +613,9 @@ def detect_fcra_violations(
             violations_data = {
                 "raw_response": response_text,
                 "parse_error": str(je),
-                "violations_detected": []
+                "violations_detected": [],
             }
-        
+
         return {
             "success": True,
             "error": None,
@@ -622,50 +625,43 @@ def detect_fcra_violations(
             "potential_damages": violations_data.get("total_potential_damages", {}),
             "recommended_actions": violations_data.get("recommended_actions", []),
             "litigation_worthiness": violations_data.get("litigation_worthiness", {}),
-            "tokens_used": response.usage.input_tokens + response.usage.output_tokens
+            "tokens_used": response.usage.input_tokens + response.usage.output_tokens,
         }
-        
+
     except Exception as e:
         logger.error(f"Error detecting FCRA violations: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "violations": []
-        }
+        return {"success": False, "error": str(e), "violations": []}
 
 
-def update_client_upload_ocr(
-    upload_id: int, 
-    ocr_data: Dict[str, Any]
-) -> bool:
+def update_client_upload_ocr(upload_id: int, ocr_data: Dict[str, Any]) -> bool:
     """
     Update a ClientUpload record with OCR extracted data.
-    
+
     Args:
         upload_id: ID of the ClientUpload record
         ocr_data: Extracted OCR data to store
-    
+
     Returns:
         True if successful, False otherwise
     """
     session = SessionLocal()
     try:
-        upload = session.query(ClientUpload).filter(
-            ClientUpload.id == upload_id
-        ).first()
-        
+        upload = (
+            session.query(ClientUpload).filter(ClientUpload.id == upload_id).first()
+        )
+
         if not upload:
             logger.error(f"ClientUpload {upload_id} not found")
             return False
-        
+
         upload.ocr_extracted = True
         upload.ocr_data = ocr_data
         upload.updated_at = datetime.utcnow()
-        
+
         session.commit()
         logger.info(f"Updated ClientUpload {upload_id} with OCR data")
         return True
-        
+
     except Exception as e:
         session.rollback()
         logger.error(f"Error updating ClientUpload OCR data: {e}")
@@ -675,225 +671,210 @@ def update_client_upload_ocr(
 
 
 def process_upload_for_ocr(
-    upload_id: int,
-    category: Optional[str] = None
+    upload_id: int, category: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Process a ClientUpload for OCR extraction based on its category.
     Automatically determines the appropriate extraction function to use.
-    
+
     Args:
         upload_id: ID of the ClientUpload record
         category: Optional category override
-    
+
     Returns:
         Dictionary with processing results
     """
     session = SessionLocal()
     try:
-        upload = session.query(ClientUpload).filter(
-            ClientUpload.id == upload_id
-        ).first()
-        
+        upload = (
+            session.query(ClientUpload).filter(ClientUpload.id == upload_id).first()
+        )
+
         if not upload:
-            return {
-                "success": False,
-                "error": f"ClientUpload {upload_id} not found"
-            }
-        
+            return {"success": False, "error": f"ClientUpload {upload_id} not found"}
+
         file_path = upload.file_path
-        file_type = upload.file_type or (file_path.split('.')[-1] if file_path else 'pdf')
+        file_type = upload.file_type or (
+            file_path.split(".")[-1] if file_path else "pdf"
+        )
         doc_category = category or upload.category
-        
+
         if not file_path or not os.path.exists(file_path):
-            return {
-                "success": False,
-                "error": f"File not found: {file_path}"
-            }
-        
-        if doc_category in ['cra_response', 'bureau_response', 'dispute_result']:
+            return {"success": False, "error": f"File not found: {file_path}"}
+
+        if doc_category in ["cra_response", "bureau_response", "dispute_result"]:
             result = extract_cra_response_data(
-                file_path=file_path,
-                file_type=file_type,
-                bureau=upload.bureau
+                file_path=file_path, file_type=file_type, bureau=upload.bureau
             )
-        elif doc_category in ['collection_letter', 'debt_collection', 'collection']:
-            result = analyze_collection_letter(
-                file_path=file_path,
-                file_type=file_type
-            )
+        elif doc_category in ["collection_letter", "debt_collection", "collection"]:
+            result = analyze_collection_letter(file_path=file_path, file_type=file_type)
         else:
             result = extract_cra_response_data(
-                file_path=file_path,
-                file_type=file_type,
-                bureau=upload.bureau
+                file_path=file_path, file_type=file_type, bureau=upload.bureau
             )
-        
+
         if result.get("success") and result.get("data"):
             ocr_data = {
                 "extracted_at": datetime.utcnow().isoformat(),
                 "category": doc_category,
                 "extraction_result": result["data"],
-                "tokens_used": result.get("tokens_used", 0)
+                "tokens_used": result.get("tokens_used", 0),
             }
-            
-            if doc_category in ['cra_response', 'bureau_response', 'dispute_result']:
+
+            if doc_category in ["cra_response", "bureau_response", "dispute_result"]:
                 violations_result = detect_fcra_violations(
-                    document_data=result["data"],
-                    document_type="cra_response"
+                    document_data=result["data"], document_type="cra_response"
                 )
                 if violations_result.get("success"):
                     ocr_data["violations_analysis"] = {
                         "violations": violations_result.get("violations", []),
                         "overall_count": violations_result.get("overall_count", 0),
-                        "highest_severity": violations_result.get("highest_severity", "none"),
-                        "potential_damages": violations_result.get("potential_damages", {}),
-                        "recommended_actions": violations_result.get("recommended_actions", []),
-                        "litigation_worthiness": violations_result.get("litigation_worthiness", {})
+                        "highest_severity": violations_result.get(
+                            "highest_severity", "none"
+                        ),
+                        "potential_damages": violations_result.get(
+                            "potential_damages", {}
+                        ),
+                        "recommended_actions": violations_result.get(
+                            "recommended_actions", []
+                        ),
+                        "litigation_worthiness": violations_result.get(
+                            "litigation_worthiness", {}
+                        ),
                     }
-            
+
             update_success = update_client_upload_ocr(upload_id, ocr_data)
-            
+
             return {
                 "success": True,
                 "upload_id": upload_id,
                 "data": ocr_data,
-                "db_updated": update_success
+                "db_updated": update_success,
             }
         else:
             return {
                 "success": False,
                 "error": result.get("error", "Unknown extraction error"),
-                "upload_id": upload_id
+                "upload_id": upload_id,
             }
-            
+
     except Exception as e:
         logger.error(f"Error processing upload for OCR: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "upload_id": upload_id
-        }
+        return {"success": False, "error": str(e), "upload_id": upload_id}
     finally:
         session.close()
 
 
 def batch_process_uploads(
-    upload_ids: List[int],
-    category: Optional[str] = None
+    upload_ids: List[int], category: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Process multiple ClientUploads for OCR extraction.
-    
+
     Args:
         upload_ids: List of ClientUpload IDs to process
         category: Optional category override for all uploads
-    
+
     Returns:
         Dictionary with batch processing results
     """
-    results = {
-        "total": len(upload_ids),
-        "successful": 0,
-        "failed": 0,
-        "results": []
-    }
-    
+    results = {"total": len(upload_ids), "successful": 0, "failed": 0, "results": []}
+
     for upload_id in upload_ids:
         result = process_upload_for_ocr(upload_id, category)
         results["results"].append(result)
-        
+
         if result.get("success"):
             results["successful"] += 1
         else:
             results["failed"] += 1
-    
+
     return results
 
 
-def analyze_cra_response(
-    cra_response_id: int
-) -> Dict[str, Any]:
+def analyze_cra_response(cra_response_id: int) -> Dict[str, Any]:
     """
     Analyze a CRA response document using Claude Vision.
     Extracts items, matches to existing DisputeItems, and detects reinsertion violations.
-    
+
     Args:
         cra_response_id: ID of the CRAResponse record
-    
+
     Returns:
         Dictionary with analysis results including matched items and reinsertion flags
     """
     session = SessionLocal()
     try:
-        cra_response = session.query(CRAResponse).filter(
-            CRAResponse.id == cra_response_id
-        ).first()
-        
+        cra_response = (
+            session.query(CRAResponse).filter(CRAResponse.id == cra_response_id).first()
+        )
+
         if not cra_response:
             return {
                 "success": False,
-                "error": f"CRA Response {cra_response_id} not found"
+                "error": f"CRA Response {cra_response_id} not found",
             }
-        
+
         if not cra_response.file_path or not os.path.exists(cra_response.file_path):
             return {
                 "success": False,
-                "error": f"File not found: {cra_response.file_path}"
+                "error": f"File not found: {cra_response.file_path}",
             }
-        
-        file_type = cra_response.file_path.split('.')[-1].lower()
-        
+
+        file_type = cra_response.file_path.split(".")[-1].lower()
+
         extraction_result = extract_cra_response_data(
             file_path=cra_response.file_path,
             file_type=file_type,
-            bureau=cra_response.bureau
+            bureau=cra_response.bureau,
         )
-        
+
         if not extraction_result.get("success"):
             return {
                 "success": False,
-                "error": extraction_result.get("error", "Extraction failed")
+                "error": extraction_result.get("error", "Extraction failed"),
             }
-        
+
         extracted_data = extraction_result.get("data", {})
         extracted_items = extracted_data.get("items", [])
-        
-        dispute_items = session.query(DisputeItem).filter(
-            DisputeItem.client_id == cra_response.client_id,
-            DisputeItem.bureau == cra_response.bureau
-        ).all()
-        
+
+        dispute_items = (
+            session.query(DisputeItem)
+            .filter(
+                DisputeItem.client_id == cra_response.client_id,
+                DisputeItem.bureau == cra_response.bureau,
+            )
+            .all()
+        )
+
         matched_items = []
         reinsertion_violations = []
-        
+
         for ext_item in extracted_items:
             creditor_name = ext_item.get("creditor_name", "").lower().strip()
             account_number = ext_item.get("account_number", "").strip()
             result = ext_item.get("result", "").lower()
-            
+
             best_match = None
             best_score = 0
-            
+
             for di in dispute_items:
                 score = _calculate_match_score(
-                    ext_item, 
-                    di.creditor_name or "", 
-                    di.account_id or ""
+                    ext_item, di.creditor_name or "", di.account_id or ""
                 )
                 if score > best_score and score >= 0.5:
                     best_score = score
                     best_match = di
-            
+
             status_map = {
                 "deleted": "deleted",
                 "verified": "verified",
                 "updated": "updated",
                 "investigating": "investigating",
-                "remains": "verified"
+                "remains": "verified",
             }
             new_status = status_map.get(result, None)
-            
+
             match_info = {
                 "extracted_creditor": ext_item.get("creditor_name"),
                 "extracted_account": account_number,
@@ -901,42 +882,44 @@ def analyze_cra_response(
                 "extracted_reason": ext_item.get("reason"),
                 "extracted_changes": ext_item.get("changes_made"),
                 "match_score": best_score,
-                "new_status": new_status
+                "new_status": new_status,
             }
-            
+
             if best_match:
                 match_info["dispute_item_id"] = best_match.id
                 match_info["current_status"] = best_match.status
                 match_info["matched_creditor"] = best_match.creditor_name
                 match_info["matched_account"] = best_match.account_id
-                
+
                 if new_status == "verified" and best_match.status == "deleted":
                     reinsertion = _check_reinsertion_violation(
-                        session, 
+                        session,
                         cra_response.client_id,
                         best_match.creditor_name,
                         cra_response.bureau,
-                        cra_response.dispute_round
+                        cra_response.dispute_round,
                     )
                     if reinsertion.get("is_reinsertion"):
-                        reinsertion_violations.append({
-                            "dispute_item_id": best_match.id,
-                            "creditor_name": best_match.creditor_name,
-                            "deleted_in_round": reinsertion.get("deleted_round"),
-                            "reappeared_in_round": cra_response.dispute_round,
-                            "fcra_section": "611(a)(5)",
-                            "violation_type": "reinsertion"
-                        })
+                        reinsertion_violations.append(
+                            {
+                                "dispute_item_id": best_match.id,
+                                "creditor_name": best_match.creditor_name,
+                                "deleted_in_round": reinsertion.get("deleted_round"),
+                                "reappeared_in_round": cra_response.dispute_round,
+                                "fcra_section": "611(a)(5)",
+                                "violation_type": "reinsertion",
+                            }
+                        )
                         match_info["reinsertion_detected"] = True
             else:
                 match_info["dispute_item_id"] = None
                 match_info["current_status"] = None
                 match_info["match_warning"] = "No matching dispute item found"
-            
+
             matched_items.append(match_info)
-        
+
         summary_counts = extracted_data.get("summary_counts", {})
-        
+
         ocr_record = CRAResponseOCR(
             client_id=cra_response.client_id,
             case_id=cra_response.case_id,
@@ -948,23 +931,35 @@ def analyze_cra_response(
             structured_data={
                 "extracted_data": extracted_data,
                 "matched_items": matched_items,
-                "reinsertion_violations": reinsertion_violations
+                "reinsertion_violations": reinsertion_violations,
             },
-            items_verified=[m for m in matched_items if m.get("extracted_result") == "verified"],
-            items_deleted=[m for m in matched_items if m.get("extracted_result") == "deleted"],
-            items_updated=[m for m in matched_items if m.get("extracted_result") == "updated"],
-            items_reinvestigated=[m for m in matched_items if m.get("extracted_result") == "investigating"],
-            new_violations_detected=reinsertion_violations if reinsertion_violations else None,
-            reinvestigation_complete=(extracted_data.get("response_type") == "Results of Investigation"),
+            items_verified=[
+                m for m in matched_items if m.get("extracted_result") == "verified"
+            ],
+            items_deleted=[
+                m for m in matched_items if m.get("extracted_result") == "deleted"
+            ],
+            items_updated=[
+                m for m in matched_items if m.get("extracted_result") == "updated"
+            ],
+            items_reinvestigated=[
+                m for m in matched_items if m.get("extracted_result") == "investigating"
+            ],
+            new_violations_detected=(
+                reinsertion_violations if reinsertion_violations else None
+            ),
+            reinvestigation_complete=(
+                extracted_data.get("response_type") == "Results of Investigation"
+            ),
             frivolous_claim=extracted_data.get("frivolous_warning", False),
             ocr_confidence=extracted_data.get("confidence_score", 0.7),
             extraction_method="claude_vision",
-            processed_at=datetime.utcnow()
+            processed_at=datetime.utcnow(),
         )
-        
+
         session.add(ocr_record)
         session.commit()
-        
+
         return {
             "success": True,
             "cra_response_id": cra_response_id,
@@ -974,50 +969,50 @@ def analyze_cra_response(
             "confidence_score": extracted_data.get("confidence_score", 0.7),
             "summary": {
                 "total_items_found": len(extracted_items),
-                "items_matched": len([m for m in matched_items if m.get("dispute_item_id")]),
-                "items_unmatched": len([m for m in matched_items if not m.get("dispute_item_id")]),
+                "items_matched": len(
+                    [m for m in matched_items if m.get("dispute_item_id")]
+                ),
+                "items_unmatched": len(
+                    [m for m in matched_items if not m.get("dispute_item_id")]
+                ),
                 "items_deleted": summary_counts.get("items_deleted", 0),
                 "items_verified": summary_counts.get("items_verified", 0),
                 "items_updated": summary_counts.get("items_updated", 0),
-                "reinsertion_violations": len(reinsertion_violations)
+                "reinsertion_violations": len(reinsertion_violations),
             },
             "matched_items": matched_items,
             "reinsertion_violations": reinsertion_violations,
             "frivolous_warning": extracted_data.get("frivolous_warning", False),
             "investigation_summary": extracted_data.get("investigation_summary"),
-            "tokens_used": extraction_result.get("tokens_used", 0)
+            "tokens_used": extraction_result.get("tokens_used", 0),
         }
-        
+
     except Exception as e:
         session.rollback()
         logger.error(f"Error analyzing CRA response: {e}")
         import traceback
+
         traceback.print_exc()
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
     finally:
         session.close()
 
 
 def _calculate_match_score(
-    extracted_item: Dict[str, Any],
-    db_creditor: str,
-    db_account: str
+    extracted_item: Dict[str, Any], db_creditor: str, db_account: str
 ) -> float:
     """Calculate similarity score between extracted item and database record."""
     score = 0.0
-    
+
     ext_creditor = (extracted_item.get("creditor_name") or "").lower().strip()
     ext_account = (extracted_item.get("account_number") or "").strip()
     db_creditor_lower = db_creditor.lower().strip()
     db_account_clean = db_account.strip()
-    
+
     if ext_creditor and db_creditor_lower:
         ext_words = set(ext_creditor.replace(",", " ").replace(".", " ").split())
         db_words = set(db_creditor_lower.replace(",", " ").replace(".", " ").split())
-        
+
         if ext_creditor == db_creditor_lower:
             score += 0.6
         elif ext_words & db_words:
@@ -1025,47 +1020,51 @@ def _calculate_match_score(
             score += 0.4 * overlap
         elif ext_creditor in db_creditor_lower or db_creditor_lower in ext_creditor:
             score += 0.5
-    
+
     if ext_account and db_account_clean:
-        ext_digits = ''.join(filter(str.isdigit, ext_account))[-4:]
-        db_digits = ''.join(filter(str.isdigit, db_account_clean))[-4:]
-        
+        ext_digits = "".join(filter(str.isdigit, ext_account))[-4:]
+        db_digits = "".join(filter(str.isdigit, db_account_clean))[-4:]
+
         if ext_digits and db_digits and ext_digits == db_digits:
             score += 0.4
         elif ext_digits and db_digits:
             matching = sum(a == b for a, b in zip(ext_digits, db_digits))
             score += 0.2 * (matching / max(len(ext_digits), len(db_digits)))
-    
+
     return min(score, 1.0)
 
 
 def _check_reinsertion_violation(
-    session,
-    client_id: int,
-    creditor_name: str,
-    bureau: str,
-    current_round: int
+    session, client_id: int, creditor_name: str, bureau: str, current_round: int
 ) -> Dict[str, Any]:
     """Check if an item was previously deleted and is now reappearing (reinsertion)."""
-    prior_deleted_items = session.query(DisputeItem).filter(
-        DisputeItem.client_id == client_id,
-        DisputeItem.bureau == bureau,
-        DisputeItem.status == "deleted",
-        DisputeItem.dispute_round < current_round
-    ).all()
-    
+    prior_deleted_items = (
+        session.query(DisputeItem)
+        .filter(
+            DisputeItem.client_id == client_id,
+            DisputeItem.bureau == bureau,
+            DisputeItem.status == "deleted",
+            DisputeItem.dispute_round < current_round,
+        )
+        .all()
+    )
+
     creditor_lower = creditor_name.lower().strip() if creditor_name else ""
-    
+
     for item in prior_deleted_items:
         item_creditor = (item.creditor_name or "").lower().strip()
-        if item_creditor == creditor_lower or creditor_lower in item_creditor or item_creditor in creditor_lower:
+        if (
+            item_creditor == creditor_lower
+            or creditor_lower in item_creditor
+            or item_creditor in creditor_lower
+        ):
             return {
                 "is_reinsertion": True,
                 "deleted_round": item.dispute_round,
                 "deleted_item_id": item.id,
-                "deleted_creditor": item.creditor_name
+                "deleted_creditor": item.creditor_name,
             }
-    
+
     return {"is_reinsertion": False}
 
 
@@ -1091,63 +1090,68 @@ def apply_analysis_updates(
     ocr_record_id: int,
     reviewed_items: Optional[List[Dict[str, Any]]] = None,
     create_violations: bool = True,
-    staff_user: Optional[str] = None
+    staff_user: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Apply the analysis results to update DisputeItem statuses.
-    
+
     Args:
         ocr_record_id: ID of the CRAResponseOCR record
         reviewed_items: Optional list of reviewed/edited items (if None, uses stored data)
         create_violations: Whether to create Violation records for reinsertion
         staff_user: Name/email of the staff member applying changes
-    
+
     Returns:
         Dictionary with update results
     """
     session = SessionLocal()
     try:
-        ocr_record = session.query(CRAResponseOCR).filter(
-            CRAResponseOCR.id == ocr_record_id
-        ).first()
-        
+        ocr_record = (
+            session.query(CRAResponseOCR)
+            .filter(CRAResponseOCR.id == ocr_record_id)
+            .first()
+        )
+
         if not ocr_record:
-            return {
-                "success": False,
-                "error": f"OCR record {ocr_record_id} not found"
-            }
-        
+            return {"success": False, "error": f"OCR record {ocr_record_id} not found"}
+
         structured_data = ocr_record.structured_data or {}
         items_to_update = reviewed_items or structured_data.get("matched_items", [])
         reinsertion_violations = structured_data.get("reinsertion_violations", [])
-        
+
         updates_made = []
         violations_created = []
-        
+
         for item in items_to_update:
             dispute_item_id = item.get("dispute_item_id")
             new_status = item.get("new_status")
-            
+
             if not dispute_item_id or not new_status:
                 continue
-            
-            dispute_item = session.query(DisputeItem).filter(
-                DisputeItem.id == dispute_item_id
-            ).first()
-            
+
+            dispute_item = (
+                session.query(DisputeItem)
+                .filter(DisputeItem.id == dispute_item_id)
+                .first()
+            )
+
             if dispute_item:
                 old_status = dispute_item.status
                 dispute_item.status = new_status
                 dispute_item.response_date = date.today()
-                dispute_item.response_notes = f"Auto-updated from CRA response analysis. Previous: {old_status}"
-                
-                updates_made.append({
-                    "dispute_item_id": dispute_item_id,
-                    "creditor_name": dispute_item.creditor_name,
-                    "old_status": old_status,
-                    "new_status": new_status
-                })
-        
+                dispute_item.response_notes = (
+                    f"Auto-updated from CRA response analysis. Previous: {old_status}"
+                )
+
+                updates_made.append(
+                    {
+                        "dispute_item_id": dispute_item_id,
+                        "creditor_name": dispute_item.creditor_name,
+                        "old_status": old_status,
+                        "new_status": new_status,
+                    }
+                )
+
         if create_violations and reinsertion_violations:
             for rv in reinsertion_violations:
                 violation = Violation(
@@ -1161,22 +1165,27 @@ def apply_analysis_updates(
                     statutory_damages_min=100,
                     statutory_damages_max=1000,
                     is_willful=True,
-                    willfulness_notes="Reinsertion of deleted information indicates failure to implement proper procedures"
+                    willfulness_notes="Reinsertion of deleted information indicates failure to implement proper procedures",
                 )
                 session.add(violation)
-                violations_created.append({
-                    "creditor_name": rv.get("creditor_name"),
-                    "fcra_section": "611(a)(5)",
-                    "violation_type": "reinsertion"
-                })
-        
+                violations_created.append(
+                    {
+                        "creditor_name": rv.get("creditor_name"),
+                        "fcra_section": "611(a)(5)",
+                        "violation_type": "reinsertion",
+                    }
+                )
+
         ocr_record.reviewed = True
         ocr_record.reviewed_by = staff_user
         ocr_record.reviewed_at = datetime.utcnow()
-        ocr_record.notes = (ocr_record.notes or "") + f"\nApplied {len(updates_made)} updates on {datetime.utcnow().isoformat()}"
-        
+        ocr_record.notes = (
+            (ocr_record.notes or "")
+            + f"\nApplied {len(updates_made)} updates on {datetime.utcnow().isoformat()}"
+        )
+
         session.commit()
-        
+
         return {
             "success": True,
             "ocr_record_id": ocr_record_id,
@@ -1185,18 +1194,16 @@ def apply_analysis_updates(
             "violations_created": len(violations_created),
             "violations": violations_created,
             "reviewed_by": staff_user,
-            "reviewed_at": datetime.utcnow().isoformat()
+            "reviewed_at": datetime.utcnow().isoformat(),
         }
-        
+
     except Exception as e:
         session.rollback()
         logger.error(f"Error applying analysis updates: {e}")
         import traceback
+
         traceback.print_exc()
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
     finally:
         session.close()
 
@@ -1204,53 +1211,55 @@ def apply_analysis_updates(
 def get_analysis_for_review(ocr_record_id: int) -> Dict[str, Any]:
     """
     Get analysis data formatted for staff review.
-    
+
     Args:
         ocr_record_id: ID of the CRAResponseOCR record
-    
+
     Returns:
         Dictionary with analysis data ready for review
     """
     session = SessionLocal()
     try:
-        ocr_record = session.query(CRAResponseOCR).filter(
-            CRAResponseOCR.id == ocr_record_id
-        ).first()
-        
+        ocr_record = (
+            session.query(CRAResponseOCR)
+            .filter(CRAResponseOCR.id == ocr_record_id)
+            .first()
+        )
+
         if not ocr_record:
-            return {
-                "success": False,
-                "error": f"OCR record {ocr_record_id} not found"
-            }
-        
+            return {"success": False, "error": f"OCR record {ocr_record_id} not found"}
+
         structured_data = ocr_record.structured_data or {}
         extracted_data = structured_data.get("extracted_data", {})
         matched_items = structured_data.get("matched_items", [])
         reinsertion_violations = structured_data.get("reinsertion_violations", [])
-        
+
         return {
             "success": True,
             "ocr_record_id": ocr_record_id,
             "client_id": ocr_record.client_id,
             "bureau": ocr_record.bureau,
-            "response_date": ocr_record.response_date.isoformat() if ocr_record.response_date else None,
+            "response_date": (
+                ocr_record.response_date.isoformat()
+                if ocr_record.response_date
+                else None
+            ),
             "confidence_score": ocr_record.ocr_confidence,
             "reviewed": ocr_record.reviewed,
             "reviewed_by": ocr_record.reviewed_by,
-            "reviewed_at": ocr_record.reviewed_at.isoformat() if ocr_record.reviewed_at else None,
+            "reviewed_at": (
+                ocr_record.reviewed_at.isoformat() if ocr_record.reviewed_at else None
+            ),
             "frivolous_claim": ocr_record.frivolous_claim,
             "investigation_summary": extracted_data.get("investigation_summary"),
             "matched_items": matched_items,
             "reinsertion_violations": reinsertion_violations,
             "summary_counts": extracted_data.get("summary_counts", {}),
-            "raw_text": ocr_record.raw_text[:2000] if ocr_record.raw_text else None
+            "raw_text": ocr_record.raw_text[:2000] if ocr_record.raw_text else None,
         }
-        
+
     except Exception as e:
         logger.error(f"Error getting analysis for review: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
     finally:
         session.close()

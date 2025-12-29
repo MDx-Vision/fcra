@@ -1,212 +1,212 @@
 {
-  "timestamp": "2025-12-26T19:43:31.617696",
+  "timestamp": "2025-12-29T01:40:15.806425",
   "modals_target": 53,
-  "modals_found": 0,
+  "modals_found": 39,
   "modals_tested": 52,
   "status_counts": {
-    "opens_and_closes": 0,
-    "opens_only": 0,
-    "not_found": 52,
+    "opens_and_closes": 37,
+    "opens_only": 2,
+    "not_found": 13,
     "error": 0
   },
   "pages": [
     {
       "url": "/dashboard/contacts",
       "modals_expected": 4,
-      "modals_found": 0,
+      "modals_found": 4,
       "modals_tested": 4,
       "modals": [
         {
           "id": "contactModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "notesModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "taskModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "docsModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/affiliates",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "addAffiliateModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/credit-import",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "credentialModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/performance",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "clearCacheModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/patterns",
       "modals_expected": 3,
-      "modals_found": 0,
+      "modals_found": 3,
       "modals_tested": 3,
       "modals": [
         {
           "id": "createModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "detailModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "addViolationModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/franchise",
       "modals_expected": 5,
-      "modals_found": 0,
+      "modals_found": 5,
       "modals_tested": 5,
       "modals": [
         {
           "id": "createOrgModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "editOrgModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "membersModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "consolidatedReportModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "transferModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/furnishers",
       "modals_expected": 2,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 2,
       "modals": [
         {
           "id": "addModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "editModal",
@@ -222,87 +222,87 @@
     {
       "url": "/dashboard/calendar",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "deadlineModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/frivolousness",
       "modals_expected": 2,
-      "modals_found": 0,
+      "modals_found": 2,
       "modals_tested": 2,
       "modals": [
         {
           "id": "addModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "viewModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/settlements",
       "modals_expected": 4,
-      "modals_found": 0,
+      "modals_found": 4,
       "modals_tested": 4,
       "modals": [
         {
           "id": "settlementModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "offerModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "settleModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "paymentModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
@@ -344,17 +344,17 @@
     {
       "url": "/dashboard/specialty-bureaus",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "disputeModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
@@ -378,17 +378,17 @@
     {
       "url": "/dashboard/documents",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "uploadModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
@@ -430,94 +430,94 @@
     {
       "url": "/dashboard/chexsystems",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "newDisputeModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/sops",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "sopModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/integrations",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "configModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard",
       "modals_expected": 2,
-      "modals_found": 0,
+      "modals_found": 2,
       "modals_tested": 2,
       "modals": [
         {
           "id": "intakeModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "batchModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/triage",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "reviewModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
@@ -541,78 +541,78 @@
     {
       "url": "/dashboard/white-label",
       "modals_expected": 3,
-      "modals_found": 0,
+      "modals_found": 3,
       "modals_tested": 3,
       "modals": [
         {
           "id": "tenantModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "usersModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
           "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "status": "PARTIAL",
+          "notes": "Opens but doesn't close properly"
         },
         {
           "id": "statsModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
           "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "status": "PARTIAL",
+          "notes": "Opens but doesn't close properly"
         }
       ]
     },
     {
       "url": "/dashboard/ml-insights",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "recordOutcomeModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/case-law",
       "modals_expected": 2,
-      "modals_found": 0,
+      "modals_found": 2,
       "modals_tested": 2,
       "modals": [
         {
           "id": "viewModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         },
         {
           "id": "addModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
@@ -645,34 +645,34 @@
     {
       "url": "/dashboard/letter-queue",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "dismissModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },
     {
       "url": "/dashboard/billing",
       "modals_expected": 1,
-      "modals_found": 0,
+      "modals_found": 1,
       "modals_tested": 1,
       "modals": [
         {
           "id": "createPlanModal",
-          "found": false,
-          "opens": false,
-          "displays_correctly": false,
-          "closes": false,
-          "status": "NOT_FOUND",
-          "notes": "Modal element not found in DOM"
+          "found": true,
+          "opens": true,
+          "displays_correctly": true,
+          "closes": true,
+          "status": "PASS",
+          "notes": "Opens and closes correctly"
         }
       ]
     },

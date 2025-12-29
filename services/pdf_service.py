@@ -6,15 +6,23 @@ Generates two types of PDFs:
 2. Legal Analysis - Detailed internal analysis for legal team (using ReportLab)
 """
 
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
-from reportlab.lib.colors import HexColor, white
-from reportlab.lib.units import inch
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from datetime import datetime
 import os
 import re
+from datetime import datetime
+
+from reportlab.lib.colors import HexColor, white
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import (
+    PageBreak,
+    Paragraph,
+    SimpleDocTemplate,
+    Spacer,
+    Table,
+    TableStyle,
+)
 from weasyprint import HTML
 
 # Brightpath Ascend brand colors (matching email template)
@@ -33,200 +41,261 @@ class FCRAPDFGenerator:
     def _setup_custom_styles(self):
         """Create custom paragraph styles"""
         # Client report styles
-        self.styles.add(ParagraphStyle(
-            name='ClientHeader',
-            parent=self.styles['Heading1'],
-            fontSize=24,
-            textColor=HexColor('#1a5276'),
-            spaceAfter=12,
-            alignment=TA_CENTER,
-            fontName='Helvetica-Bold'
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="ClientHeader",
+                parent=self.styles["Heading1"],
+                fontSize=24,
+                textColor=HexColor("#1a5276"),
+                spaceAfter=12,
+                alignment=TA_CENTER,
+                fontName="Helvetica-Bold",
+            )
+        )
 
-        self.styles.add(ParagraphStyle(
-            name='ClientSubHeader',
-            parent=self.styles['Heading2'],
-            fontSize=16,
-            textColor=HexColor('#1a5276'),
-            spaceAfter=10,
-            spaceBefore=10,
-            fontName='Helvetica-Bold'
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="ClientSubHeader",
+                parent=self.styles["Heading2"],
+                fontSize=16,
+                textColor=HexColor("#1a5276"),
+                spaceAfter=10,
+                spaceBefore=10,
+                fontName="Helvetica-Bold",
+            )
+        )
 
-        self.styles.add(ParagraphStyle(
-            name='ClientBody',
-            parent=self.styles['Normal'],
-            fontSize=11,
-            textColor=HexColor('#2c3e50'),
-            spaceAfter=8,
-            fontName='Helvetica',
-            leading=14
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="ClientBody",
+                parent=self.styles["Normal"],
+                fontSize=11,
+                textColor=HexColor("#2c3e50"),
+                spaceAfter=8,
+                fontName="Helvetica",
+                leading=14,
+            )
+        )
 
-        self.styles.add(ParagraphStyle(
-            name='ClientHighlight',
-            parent=self.styles['Normal'],
-            fontSize=12,
-            textColor=HexColor('#1a5276'),
-            spaceAfter=8,
-            fontName='Helvetica-Bold',
-            leading=15
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="ClientHighlight",
+                parent=self.styles["Normal"],
+                fontSize=12,
+                textColor=HexColor("#1a5276"),
+                spaceAfter=8,
+                fontName="Helvetica-Bold",
+                leading=15,
+            )
+        )
 
         # Legal report styles (formal serif fonts, no colors)
-        self.styles.add(ParagraphStyle(
-            name='LegalTitle',
-            parent=self.styles['Heading1'],
-            fontSize=14,
-            textColor=HexColor('#000000'),
-            spaceAfter=12,
-            spaceBefore=0,
-            fontName='Times-Bold',
-            alignment=TA_CENTER
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="LegalTitle",
+                parent=self.styles["Heading1"],
+                fontSize=14,
+                textColor=HexColor("#000000"),
+                spaceAfter=12,
+                spaceBefore=0,
+                fontName="Times-Bold",
+                alignment=TA_CENTER,
+            )
+        )
 
-        self.styles.add(ParagraphStyle(
-            name='LegalHeader',
-            parent=self.styles['Heading1'],
-            fontSize=12,
-            textColor=HexColor('#000000'),
-            spaceAfter=10,
-            spaceBefore=10,
-            fontName='Times-Bold'
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="LegalHeader",
+                parent=self.styles["Heading1"],
+                fontSize=12,
+                textColor=HexColor("#000000"),
+                spaceAfter=10,
+                spaceBefore=10,
+                fontName="Times-Bold",
+            )
+        )
 
-        self.styles.add(ParagraphStyle(
-            name='LegalSubHeader',
-            parent=self.styles['Heading2'],
-            fontSize=11,
-            textColor=HexColor('#000000'),
-            spaceAfter=8,
-            spaceBefore=8,
-            fontName='Times-Bold'
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="LegalSubHeader",
+                parent=self.styles["Heading2"],
+                fontSize=11,
+                textColor=HexColor("#000000"),
+                spaceAfter=8,
+                spaceBefore=8,
+                fontName="Times-Bold",
+            )
+        )
 
-        self.styles.add(ParagraphStyle(
-            name='LegalBody',
-            parent=self.styles['Normal'],
-            fontSize=11,
-            textColor=HexColor('#000000'),
-            spaceAfter=8,
-            fontName='Times-Roman',
-            leading=14,
-            firstLineIndent=0
-        ))
+        self.styles.add(
+            ParagraphStyle(
+                name="LegalBody",
+                parent=self.styles["Normal"],
+                fontSize=11,
+                textColor=HexColor("#000000"),
+                spaceAfter=8,
+                fontName="Times-Roman",
+                leading=14,
+                firstLineIndent=0,
+            )
+        )
 
     def _add_branded_header(self, story, title, subtitle=None):
         """Add Brightpath Ascend branded header banner (matching email template)"""
         # Teal header banner with white text (matching email template)
-        header_text = '<font size=16 color=white><b>BRIGHTPATH ASCEND</b></font><br/>'
-        header_text += '<font size=10 color=white>FCRA Litigation Analysis</font>'
+        header_text = "<font size=16 color=white><b>BRIGHTPATH ASCEND</b></font><br/>"
+        header_text += "<font size=10 color=white>FCRA Litigation Analysis</font>"
 
-        header_para = Paragraph(header_text, ParagraphStyle(
-            'BrandHeader',
-            fontSize=16,
-            textColor=white,
-            alignment=TA_CENTER,
-            spaceAfter=0
-        ))
+        header_para = Paragraph(
+            header_text,
+            ParagraphStyle(
+                "BrandHeader",
+                fontSize=16,
+                textColor=white,
+                alignment=TA_CENTER,
+                spaceAfter=0,
+            ),
+        )
 
-        header_table = Table([[header_para]], colWidths=[6.5*inch])
-        header_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), HexColor(PRIMARY_COLOR)),  # Teal background
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 20),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 20),
-        ]))
+        header_table = Table([[header_para]], colWidths=[6.5 * inch])
+        header_table.setStyle(
+            TableStyle(
+                [
+                    (
+                        "BACKGROUND",
+                        (0, 0),
+                        (-1, -1),
+                        HexColor(PRIMARY_COLOR),
+                    ),  # Teal background
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 20),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 20),
+                ]
+            )
+        )
         story.append(header_table)
-        story.append(Spacer(1, 0.3*inch))
+        story.append(Spacer(1, 0.3 * inch))
 
         # Document title
         if title:
-            story.append(Paragraph(title, self.styles['ClientHeader']))
+            story.append(Paragraph(title, self.styles["ClientHeader"]))
         if subtitle:
-            story.append(Paragraph(subtitle, self.styles['ClientBody']))
-        story.append(Spacer(1, 0.2*inch))
-        story.append(Spacer(1, 0.2*inch))
+            story.append(Paragraph(subtitle, self.styles["ClientBody"]))
+        story.append(Spacer(1, 0.2 * inch))
+        story.append(Spacer(1, 0.2 * inch))
 
     def _add_summary_box(self, story, violations_count, total_exposure, case_strength):
         """Add executive summary box with color-coded case strength (matching email template)"""
         # Color-coded case strength boxes (matching email template)
         strength_colors = {
-            'Strong': {'bg': '#dcfce7', 'text': '#166534', 'border': '#86efac'},
-            'Moderate': {'bg': '#fef3c7', 'text': '#92400e', 'border': '#fcd34d'},
-            'Weak': {'bg': '#fee2e2', 'text': '#991b1b', 'border': '#fca5a5'},
-            'Developing': {'bg': '#fef3c7', 'text': '#92400e', 'border': '#fcd34d'}
+            "Strong": {"bg": "#dcfce7", "text": "#166534", "border": "#86efac"},
+            "Moderate": {"bg": "#fef3c7", "text": "#92400e", "border": "#fcd34d"},
+            "Weak": {"bg": "#fee2e2", "text": "#991b1b", "border": "#fca5a5"},
+            "Developing": {"bg": "#fef3c7", "text": "#92400e", "border": "#fcd34d"},
         }
-        colors = strength_colors.get(case_strength, strength_colors['Moderate'])
+        colors = strength_colors.get(case_strength, strength_colors["Moderate"])
 
         # Three-column summary layout (matching email template)
-        summary_data = [[
-            Paragraph(f'<font size=32 color="{colors["text"]}"><b>{violations_count}</b></font><br/>'
-                     f'<font size=10 color="{colors["text"]}">FCRA Violations</font>',
-                     ParagraphStyle('sum1', alignment=TA_CENTER)),
-            Paragraph(f'<font size=32 color="{colors["text"]}"><b>${total_exposure:,.0f}</b></font><br/>'
-                     f'<font size=10 color="{colors["text"]}">Total Exposure</font>',
-                     ParagraphStyle('sum2', alignment=TA_CENTER)),
-            Paragraph(f'<font size=24 color="{colors["text"]}"><b>{case_strength}</b></font><br/>'
-                     f'<font size=10 color="{colors["text"]}">Case Strength</font>',
-                     ParagraphStyle('sum3', alignment=TA_CENTER))
-        ]]
+        summary_data = [
+            [
+                Paragraph(
+                    f'<font size=32 color="{colors["text"]}"><b>{violations_count}</b></font><br/>'
+                    f'<font size=10 color="{colors["text"]}">FCRA Violations</font>',
+                    ParagraphStyle("sum1", alignment=TA_CENTER),
+                ),
+                Paragraph(
+                    f'<font size=32 color="{colors["text"]}"><b>${total_exposure:,.0f}</b></font><br/>'
+                    f'<font size=10 color="{colors["text"]}">Total Exposure</font>',
+                    ParagraphStyle("sum2", alignment=TA_CENTER),
+                ),
+                Paragraph(
+                    f'<font size=24 color="{colors["text"]}"><b>{case_strength}</b></font><br/>'
+                    f'<font size=10 color="{colors["text"]}">Case Strength</font>',
+                    ParagraphStyle("sum3", alignment=TA_CENTER),
+                ),
+            ]
+        ]
 
-        summary_table = Table(summary_data, colWidths=[2.16*inch, 2.16*inch, 2.16*inch])
-        summary_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), HexColor(colors['bg'])),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 15),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 15),
-            ('BOX', (0, 0), (-1, -1), 2, HexColor(colors['border'])),
-            ('LINEAFTER', (0, 0), (0, 0), 1, HexColor(colors['border'])),
-            ('LINEAFTER', (1, 0), (1, 0), 1, HexColor(colors['border'])),
-        ]))
+        summary_table = Table(
+            summary_data, colWidths=[2.16 * inch, 2.16 * inch, 2.16 * inch]
+        )
+        summary_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), HexColor(colors["bg"])),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("TOPPADDING", (0, 0), (-1, -1), 15),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 15),
+                    ("BOX", (0, 0), (-1, -1), 2, HexColor(colors["border"])),
+                    ("LINEAFTER", (0, 0), (0, 0), 1, HexColor(colors["border"])),
+                    ("LINEAFTER", (1, 0), (1, 0), 1, HexColor(colors["border"])),
+                ]
+            )
+        )
         story.append(summary_table)
-        story.append(Spacer(1, 0.3*inch))
+        story.append(Spacer(1, 0.3 * inch))
 
     def _add_violations_table(self, story, violations):
         """Add violations table"""
-        story.append(Paragraph('Violations Identified', self.styles['ClientSubHeader']))
-        story.append(Spacer(1, 0.1*inch))
+        story.append(Paragraph("Violations Identified", self.styles["ClientSubHeader"]))
+        story.append(Spacer(1, 0.1 * inch))
 
         # Group violations by bureau
         bureaus = {}
         for v in violations:
-            bureau = v.bureau or 'Unknown'
+            bureau = v.bureau or "Unknown"
             if bureau not in bureaus:
                 bureaus[bureau] = []
             bureaus[bureau].append(v)
 
         for bureau, bureau_violations in bureaus.items():
-            story.append(Paragraph(f'<b>{bureau}</b>', self.styles['ClientHighlight']))
+            story.append(Paragraph(f"<b>{bureau}</b>", self.styles["ClientHighlight"]))
 
-            for v in bureau_violations[:10]:  # Limit to top 10 per bureau for client report
+            for v in bureau_violations[
+                :10
+            ]:  # Limit to top 10 per bureau for client report
                 violation_data = [
-                    [Paragraph(f'<b>{v.fcra_section}</b>', self.styles['ClientBody']),
-                     Paragraph(v.violation_type or 'N/A', self.styles['ClientBody'])],
-                    [Paragraph(v.description or 'No description', self.styles['ClientBody']), '']
+                    [
+                        Paragraph(
+                            f"<b>{v.fcra_section}</b>", self.styles["ClientBody"]
+                        ),
+                        Paragraph(v.violation_type or "N/A", self.styles["ClientBody"]),
+                    ],
+                    [
+                        Paragraph(
+                            v.description or "No description", self.styles["ClientBody"]
+                        ),
+                        "",
+                    ],
                 ]
 
-                violation_table = Table(violation_data, colWidths=[2*inch, 4*inch])
-                violation_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (1, 0), HexColor('#e8f4f8')),
-                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                    ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                    ('TOPPADDING', (0, 0), (-1, -1), 6),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                    ('LEFTPADDING', (0, 0), (-1, -1), 8),
-                    ('BOX', (0, 0), (-1, -1), 0.5, HexColor('#1a5276'))
-                ]))
+                violation_table = Table(violation_data, colWidths=[2 * inch, 4 * inch])
+                violation_table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (1, 0), HexColor("#e8f4f8")),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                            ("TOPPADDING", (0, 0), (-1, -1), 6),
+                            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                            ("BOX", (0, 0), (-1, -1), 0.5, HexColor("#1a5276")),
+                        ]
+                    )
+                )
                 story.append(violation_table)
-                story.append(Spacer(1, 0.1*inch))
+                story.append(Spacer(1, 0.1 * inch))
 
             if len(bureau_violations) > 10:
-                story.append(Paragraph(f'<i>...and {len(bureau_violations) - 10} more violations</i>',
-                                     self.styles['ClientBody']))
-            story.append(Spacer(1, 0.2*inch))
+                story.append(
+                    Paragraph(
+                        f"<i>...and {len(bureau_violations) - 10} more violations</i>",
+                        self.styles["ClientBody"],
+                    )
+                )
+            story.append(Spacer(1, 0.2 * inch))
 
     def _sanitize_text(self, text):
         """Sanitize text for PDF rendering"""
@@ -234,17 +303,19 @@ class FCRAPDFGenerator:
             return ""
         # Replace problematic characters
         replacements = {
-            '<': '&lt;',
-            '>': '&gt;',
-            '&': '&amp;',
-            '\x00': '',
-            '\r': '',
+            "<": "&lt;",
+            ">": "&gt;",
+            "&": "&amp;",
+            "\x00": "",
+            "\r": "",
         }
         for old, new in replacements.items():
             text = text.replace(old, new)
         return text
 
-    def generate_client_report(self, output_path, client_name, violations, damages, case_score, analysis):
+    def generate_client_report(
+        self, output_path, client_name, violations, damages, case_score, analysis
+    ):
         """
         Generate client-facing PDF report using WeasyPrint (40-50 pages, NO dispute letters)
 
@@ -259,16 +330,24 @@ class FCRAPDFGenerator:
         # Parse full_analysis and STOP before dispute letters
         analysis_text = ""
         if analysis.full_analysis:
-            lines = analysis.full_analysis.split('\n')
+            lines = analysis.full_analysis.split("\n")
             for line in lines:
                 # Stop if we hit dispute letter sections
-                if any(marker in line.upper() for marker in [
-                    'DISPUTE LETTER', 'START OF DISPUTE', 'ROUND 1 LETTER',
-                    'CERTIFIED MAIL', 'DEAR SIR/MADAM', '--- DISPUTE LETTER ---',
-                    'LETTER TO', 'RE: DISPUTE'
-                ]):
+                if any(
+                    marker in line.upper()
+                    for marker in [
+                        "DISPUTE LETTER",
+                        "START OF DISPUTE",
+                        "ROUND 1 LETTER",
+                        "CERTIFIED MAIL",
+                        "DEAR SIR/MADAM",
+                        "--- DISPUTE LETTER ---",
+                        "LETTER TO",
+                        "RE: DISPUTE",
+                    ]
+                ):
                     break
-                analysis_text += line + '\n'
+                analysis_text += line + "\n"
 
         # Convert markdown to HTML
         analysis_content = self._markdown_to_html(analysis_text)
@@ -277,7 +356,9 @@ class FCRAPDFGenerator:
         violations_count = len(violations) if violations else 0
         total_exposure = damages.total_exposure if damages else 0
         settlement_target = damages.settlement_target if damages else 0
-        case_strength = self._get_case_strength_label(case_score.total_score if case_score else 0)
+        case_strength = self._get_case_strength_label(
+            case_score.total_score if case_score else 0
+        )
 
         # Build HTML with COMPLETE styling from reference template
         html_content = f"""<!DOCTYPE html>
@@ -754,11 +835,11 @@ class FCRAPDFGenerator:
         if not text:
             return ""
         replacements = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
         }
         for old, new in replacements.items():
             text = text.replace(old, new)
@@ -770,7 +851,7 @@ class FCRAPDFGenerator:
             return ""
 
         # Split into lines for processing
-        lines = text.split('\n')
+        lines = text.split("\n")
         html_lines = []
         in_list = False
         in_table = False
@@ -782,59 +863,61 @@ class FCRAPDFGenerator:
             # Skip empty lines
             if not stripped:
                 if in_list:
-                    html_lines.append('</ul>')
+                    html_lines.append("</ul>")
                     in_list = False
-                html_lines.append('<br/>')
+                html_lines.append("<br/>")
                 continue
 
             # Headers
-            if stripped.startswith('###'):
+            if stripped.startswith("###"):
                 text = stripped[3:].strip()
-                html_lines.append(f'<h3>{self._escape_html(text)}</h3>')
-            elif stripped.startswith('##'):
+                html_lines.append(f"<h3>{self._escape_html(text)}</h3>")
+            elif stripped.startswith("##"):
                 text = stripped[2:].strip()
-                html_lines.append(f'<h2>{self._escape_html(text)}</h2>')
-            elif stripped.startswith('#'):
+                html_lines.append(f"<h2>{self._escape_html(text)}</h2>")
+            elif stripped.startswith("#"):
                 text = stripped[1:].strip()
-                html_lines.append(f'<h1>{self._escape_html(text)}</h1>')
+                html_lines.append(f"<h1>{self._escape_html(text)}</h1>")
 
             # Horizontal rules
-            elif stripped.startswith('---') or stripped.startswith('___'):
-                html_lines.append('<hr style="border: 1px solid #ccc; margin: 20px 0;">')
+            elif stripped.startswith("---") or stripped.startswith("___"):
+                html_lines.append(
+                    '<hr style="border: 1px solid #ccc; margin: 20px 0;">'
+                )
 
             # Lists
-            elif stripped.startswith('- ') or stripped.startswith('* '):
+            elif stripped.startswith("- ") or stripped.startswith("* "):
                 if not in_list:
-                    html_lines.append('<ul>')
+                    html_lines.append("<ul>")
                     in_list = True
                 text = stripped[2:].strip()
                 # Apply inline formatting
                 text = self._apply_inline_formatting(text)
-                html_lines.append(f'<li>{text}</li>')
+                html_lines.append(f"<li>{text}</li>")
 
             # Numbered lists
-            elif re.match(r'^\d+\.\s', stripped):
-                text = re.sub(r'^\d+\.\s', '', stripped)
+            elif re.match(r"^\d+\.\s", stripped):
+                text = re.sub(r"^\d+\.\s", "", stripped)
                 text = self._apply_inline_formatting(text)
-                html_lines.append(f'<li>{text}</li>')
+                html_lines.append(f"<li>{text}</li>")
 
             # Tables (simple detection)
-            elif '|' in stripped:
+            elif "|" in stripped:
                 # Skip for now, handle simple cases
                 continue
 
             # Regular paragraphs
             else:
                 if in_list:
-                    html_lines.append('</ul>')
+                    html_lines.append("</ul>")
                     in_list = False
                 text = self._apply_inline_formatting(stripped)
-                html_lines.append(f'<p>{text}</p>')
+                html_lines.append(f"<p>{text}</p>")
 
         if in_list:
-            html_lines.append('</ul>')
+            html_lines.append("</ul>")
 
-        return '\n'.join(html_lines)
+        return "\n".join(html_lines)
 
     def _apply_inline_formatting(self, text):
         """Apply bold, italic, and other inline markdown formatting"""
@@ -842,15 +925,19 @@ class FCRAPDFGenerator:
         text = self._escape_html(text)
 
         # Bold: **text** or __text__
-        text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
-        text = re.sub(r'__(.+?)__', r'<strong>\1</strong>', text)
+        text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+        text = re.sub(r"__(.+?)__", r"<strong>\1</strong>", text)
 
         # Italic: *text* or _text_ (but not inside words)
-        text = re.sub(r'\*([^*]+?)\*', r'<em>\1</em>', text)
-        text = re.sub(r'\b_([^_]+?)_\b', r'<em>\1</em>', text)
+        text = re.sub(r"\*([^*]+?)\*", r"<em>\1</em>", text)
+        text = re.sub(r"\b_([^_]+?)_\b", r"<em>\1</em>", text)
 
         # Code: `code`
-        text = re.sub(r'`([^`]+?)`', r'<code style="background: #f4f4f4; padding: 2px 4px; border-radius: 3px;">\1</code>', text)
+        text = re.sub(
+            r"`([^`]+?)`",
+            r'<code style="background: #f4f4f4; padding: 2px 4px; border-radius: 3px;">\1</code>',
+            text,
+        )
 
         return text
 
@@ -863,8 +950,17 @@ class FCRAPDFGenerator:
         else:
             return "Developing"
 
-    def generate_legal_analysis(self, output_path, client_name, violations, standing, damages,
-                               case_score, analysis, full_analysis_text):
+    def generate_legal_analysis(
+        self,
+        output_path,
+        client_name,
+        violations,
+        standing,
+        damages,
+        case_score,
+        analysis,
+        full_analysis_text,
+    ):
         """
         Generate detailed legal analysis PDF
 
@@ -878,115 +974,204 @@ class FCRAPDFGenerator:
             analysis: Analysis object
             full_analysis_text: Full stage 2 analysis text
         """
-        doc = SimpleDocTemplate(output_path, pagesize=letter,
-                              rightMargin=1*inch, leftMargin=1*inch,
-                              topMargin=1*inch, bottomMargin=1*inch)
+        doc = SimpleDocTemplate(
+            output_path,
+            pagesize=letter,
+            rightMargin=1 * inch,
+            leftMargin=1 * inch,
+            topMargin=1 * inch,
+            bottomMargin=1 * inch,
+        )
         story = []
 
         # Formal Legal Document Header
-        story.append(Paragraph('FCRA LITIGATION ANALYSIS - CONFIDENTIAL', self.styles['LegalTitle']))
-        story.append(Spacer(1, 0.1*inch))
-        story.append(Paragraph(f'<b>Client:</b> {client_name}', self.styles['LegalBody']))
-        story.append(Paragraph(f'<b>Analysis ID:</b> {analysis.id}', self.styles['LegalBody']))
-        story.append(Paragraph(f'<b>Date:</b> {analysis.created_at.strftime("%B %d, %Y")}',
-                             self.styles['LegalBody']))
-        story.append(Spacer(1, 0.3*inch))
+        story.append(
+            Paragraph(
+                "FCRA LITIGATION ANALYSIS - CONFIDENTIAL", self.styles["LegalTitle"]
+            )
+        )
+        story.append(Spacer(1, 0.1 * inch))
+        story.append(
+            Paragraph(f"<b>Client:</b> {client_name}", self.styles["LegalBody"])
+        )
+        story.append(
+            Paragraph(f"<b>Analysis ID:</b> {analysis.id}", self.styles["LegalBody"])
+        )
+        story.append(
+            Paragraph(
+                f'<b>Date:</b> {analysis.created_at.strftime("%B %d, %Y")}',
+                self.styles["LegalBody"],
+            )
+        )
+        story.append(Spacer(1, 0.3 * inch))
 
         # Confidentiality notice
-        story.append(Paragraph(
-            '<i>This document contains confidential attorney work product and privileged information. '
-            'It is prepared for internal legal review and potential submission to counsel. '
-            'Unauthorized disclosure is prohibited.</i>',
-            ParagraphStyle('notice', fontSize=9, textColor=HexColor('#000000'),
-                         fontName='Times-Italic', alignment=TA_CENTER, spaceAfter=12)
-        ))
-        story.append(Spacer(1, 0.3*inch))
+        story.append(
+            Paragraph(
+                "<i>This document contains confidential attorney work product and privileged information. "
+                "It is prepared for internal legal review and potential submission to counsel. "
+                "Unauthorized disclosure is prohibited.</i>",
+                ParagraphStyle(
+                    "notice",
+                    fontSize=9,
+                    textColor=HexColor("#000000"),
+                    fontName="Times-Italic",
+                    alignment=TA_CENTER,
+                    spaceAfter=12,
+                ),
+            )
+        )
+        story.append(Spacer(1, 0.3 * inch))
 
         # Case Score
         if case_score:
-            story.append(Paragraph(f'I. CASE STRENGTH SCORE: {case_score.total_score}/10',
-                                 self.styles['LegalHeader']))
-            story.append(Spacer(1, 0.2*inch))
+            story.append(
+                Paragraph(
+                    f"I. CASE STRENGTH SCORE: {case_score.total_score}/10",
+                    self.styles["LegalHeader"],
+                )
+            )
+            story.append(Spacer(1, 0.2 * inch))
 
         # Violations
-        story.append(Paragraph(f'II. VIOLATIONS IDENTIFIED: {len(violations)}', self.styles['LegalHeader']))
-        story.append(Spacer(1, 0.1*inch))
+        story.append(
+            Paragraph(
+                f"II. VIOLATIONS IDENTIFIED: {len(violations)}",
+                self.styles["LegalHeader"],
+            )
+        )
+        story.append(Spacer(1, 0.1 * inch))
 
         for v in violations:
             text = f"• {v.fcra_section} - {v.violation_type} ({v.bureau})"
-            story.append(Paragraph(self._sanitize_text(text), self.styles['LegalBody']))
+            story.append(Paragraph(self._sanitize_text(text), self.styles["LegalBody"]))
 
             desc = f"  {v.description or 'No description'}"
-            story.append(Paragraph(self._sanitize_text(desc), self.styles['LegalBody']))
+            story.append(Paragraph(self._sanitize_text(desc), self.styles["LegalBody"]))
 
             willful = f"  Willful: {'Yes' if v.is_willful else 'No'}"
-            story.append(Paragraph(willful, self.styles['LegalBody']))
+            story.append(Paragraph(willful, self.styles["LegalBody"]))
 
             damages_range = f"  Statutory Damages: ${v.statutory_damages_min}-${v.statutory_damages_max}"
-            story.append(Paragraph(damages_range, self.styles['LegalBody']))
-            story.append(Spacer(1, 0.1*inch))
+            story.append(Paragraph(damages_range, self.styles["LegalBody"]))
+            story.append(Spacer(1, 0.1 * inch))
 
-        story.append(Spacer(1, 0.2*inch))
+        story.append(Spacer(1, 0.2 * inch))
 
         # Standing Analysis
-        story.append(Paragraph('III. STANDING ANALYSIS', self.styles['LegalHeader']))
+        story.append(Paragraph("III. STANDING ANALYSIS", self.styles["LegalHeader"]))
         if standing:
-            story.append(Paragraph(f"• Concrete Harm: {'Yes' if standing.has_concrete_harm else 'No'}",
-                                 self.styles['LegalBody']))
-            story.append(Paragraph(f"• Dissemination: {'Yes' if standing.has_dissemination else 'No'}",
-                                 self.styles['LegalBody']))
-            story.append(Paragraph(f"• Causation: {'Yes' if standing.has_causation else 'No'}",
-                                 self.styles['LegalBody']))
-        story.append(Spacer(1, 0.2*inch))
+            story.append(
+                Paragraph(
+                    f"• Concrete Harm: {'Yes' if standing.has_concrete_harm else 'No'}",
+                    self.styles["LegalBody"],
+                )
+            )
+            story.append(
+                Paragraph(
+                    f"• Dissemination: {'Yes' if standing.has_dissemination else 'No'}",
+                    self.styles["LegalBody"],
+                )
+            )
+            story.append(
+                Paragraph(
+                    f"• Causation: {'Yes' if standing.has_causation else 'No'}",
+                    self.styles["LegalBody"],
+                )
+            )
+        story.append(Spacer(1, 0.2 * inch))
 
         # Damages Calculation
-        story.append(Paragraph('IV. DAMAGES CALCULATION', self.styles['LegalHeader']))
+        story.append(Paragraph("IV. DAMAGES CALCULATION", self.styles["LegalHeader"]))
         if damages:
-            story.append(Paragraph(f"• Actual Damages: ${damages.actual_damages_total:,.0f}",
-                                 self.styles['LegalBody']))
-            story.append(Paragraph(f"• Statutory Damages: ${damages.statutory_damages_total:,.0f}",
-                                 self.styles['LegalBody']))
-            story.append(Paragraph(f"• Punitive Damages: ${damages.punitive_damages_amount:,.0f}",
-                                 self.styles['LegalBody']))
-            story.append(Paragraph(f"• Total Exposure: ${damages.total_exposure:,.0f}",
-                                 self.styles['LegalBody']))
-            story.append(Paragraph(f"• Settlement Target (65%): ${damages.settlement_target:,.0f}",
-                                 self.styles['LegalBody']))
-        story.append(Spacer(1, 0.3*inch))
+            story.append(
+                Paragraph(
+                    f"• Actual Damages: ${damages.actual_damages_total:,.0f}",
+                    self.styles["LegalBody"],
+                )
+            )
+            story.append(
+                Paragraph(
+                    f"• Statutory Damages: ${damages.statutory_damages_total:,.0f}",
+                    self.styles["LegalBody"],
+                )
+            )
+            story.append(
+                Paragraph(
+                    f"• Punitive Damages: ${damages.punitive_damages_amount:,.0f}",
+                    self.styles["LegalBody"],
+                )
+            )
+            story.append(
+                Paragraph(
+                    f"• Total Exposure: ${damages.total_exposure:,.0f}",
+                    self.styles["LegalBody"],
+                )
+            )
+            story.append(
+                Paragraph(
+                    f"• Settlement Target (65%): ${damages.settlement_target:,.0f}",
+                    self.styles["LegalBody"],
+                )
+            )
+        story.append(Spacer(1, 0.3 * inch))
 
         # Full Analysis with page break
         if full_analysis_text:
             story.append(PageBreak())
-            story.append(Paragraph('V. COMPREHENSIVE LITIGATION ANALYSIS', self.styles['LegalHeader']))
-            story.append(Spacer(1, 0.2*inch))
+            story.append(
+                Paragraph(
+                    "V. COMPREHENSIVE LITIGATION ANALYSIS", self.styles["LegalHeader"]
+                )
+            )
+            story.append(Spacer(1, 0.2 * inch))
 
             # Split and add analysis text with formal legal formatting
-            lines = full_analysis_text.split('\n')
+            lines = full_analysis_text.split("\n")
             for line in lines:
                 if line.strip():
                     # Check if line is a heading (all caps or ends with colon)
-                    if line.strip().isupper() or (line.strip().endswith(':') and len(line.strip()) < 80):
+                    if line.strip().isupper() or (
+                        line.strip().endswith(":") and len(line.strip()) < 80
+                    ):
                         # Style as subheader
                         try:
-                            story.append(Paragraph(self._sanitize_text(line), self.styles['LegalSubHeader']))
+                            story.append(
+                                Paragraph(
+                                    self._sanitize_text(line),
+                                    self.styles["LegalSubHeader"],
+                                )
+                            )
                         except:
                             pass
                     else:
                         # Chunk long lines
                         if len(line) > 1000:
-                            chunks = [line[i:i+1000] for i in range(0, len(line), 1000)]
+                            chunks = [
+                                line[i : i + 1000] for i in range(0, len(line), 1000)
+                            ]
                             for chunk in chunks:
                                 try:
-                                    story.append(Paragraph(self._sanitize_text(chunk), self.styles['LegalBody']))
+                                    story.append(
+                                        Paragraph(
+                                            self._sanitize_text(chunk),
+                                            self.styles["LegalBody"],
+                                        )
+                                    )
                                 except:
                                     pass
                         else:
                             try:
-                                story.append(Paragraph(self._sanitize_text(line), self.styles['LegalBody']))
+                                story.append(
+                                    Paragraph(
+                                        self._sanitize_text(line),
+                                        self.styles["LegalBody"],
+                                    )
+                                )
                             except:
                                 pass
                 else:
-                    story.append(Spacer(1, 0.1*inch))
+                    story.append(Spacer(1, 0.1 * inch))
 
         # Build PDF
         doc.build(story)

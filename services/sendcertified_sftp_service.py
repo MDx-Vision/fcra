@@ -3,54 +3,56 @@ SendCertifiedMail.com SFTP Integration Service
 Handles batch upload of dispute letters via SFTP
 """
 
-import os
 import csv
 import io
-import paramiko
+import os
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
+import paramiko
 from sqlalchemy.orm import Session
 
 # Import from existing codebase
-from database import DisputeLetter, CaseDeadline, LetterBatch
-
+from database import CaseDeadline, DisputeLetter, LetterBatch
 
 # Bureau address lookup dictionary
 BUREAU_ADDRESSES = {
-    'Equifax': {
-        'name': 'Equifax Information Services LLC',
-        'address1': 'P.O. Box 740256',
-        'city': 'Atlanta',
-        'state': 'GA',
-        'zip': '30374-0256'
+    "Equifax": {
+        "name": "Equifax Information Services LLC",
+        "address1": "P.O. Box 740256",
+        "city": "Atlanta",
+        "state": "GA",
+        "zip": "30374-0256",
     },
-    'Experian': {
-        'name': 'Experian',
-        'address1': 'P.O. Box 4500',
-        'city': 'Allen',
-        'state': 'TX',
-        'zip': '75013'
+    "Experian": {
+        "name": "Experian",
+        "address1": "P.O. Box 4500",
+        "city": "Allen",
+        "state": "TX",
+        "zip": "75013",
     },
-    'TransUnion': {
-        'name': 'TransUnion LLC',
-        'address1': 'Consumer Dispute Center',
-        'address2': 'P.O. Box 2000',
-        'city': 'Chester',
-        'state': 'PA',
-        'zip': '19016'
-    }
+    "TransUnion": {
+        "name": "TransUnion LLC",
+        "address1": "Consumer Dispute Center",
+        "address2": "P.O. Box 2000",
+        "city": "Chester",
+        "state": "PA",
+        "zip": "19016",
+    },
 }
 
 
 def get_sftp_connection():
     """Establish SFTP connection to SendCertifiedMail.com"""
-    host = os.environ.get('SENDCERTIFIED_SFTP_HOST')
-    username = os.environ.get('SENDCERTIFIED_SFTP_USERNAME')
-    password = os.environ.get('SENDCERTIFIED_SFTP_PASSWORD')
-    port = int(os.environ.get('SENDCERTIFIED_SFTP_PORT', 22))
+    host = os.environ.get("SENDCERTIFIED_SFTP_HOST")
+    username = os.environ.get("SENDCERTIFIED_SFTP_USERNAME")
+    password = os.environ.get("SENDCERTIFIED_SFTP_PASSWORD")
+    port = int(os.environ.get("SENDCERTIFIED_SFTP_PORT", 22))
 
     if not all([host, username, password]):
-        raise ValueError("Missing SendCertified SFTP credentials in environment variables")
+        raise ValueError(
+            "Missing SendCertified SFTP credentials in environment variables"
+        )
 
     transport = paramiko.Transport((host, port))
     transport.connect(username=username, password=password)
@@ -78,24 +80,36 @@ def upload_batch(letters: List[Dict]) -> Dict:
 
     # Create CSV manifest
     csv_buffer = io.StringIO()
-    csv_writer = csv.DictWriter(csv_buffer, fieldnames=[
-        'letter_id', 'recipient_name', 'address1', 'address2',
-        'city', 'state', 'zip', 'pdf_filename', 'tracking_number'
-    ])
+    csv_writer = csv.DictWriter(
+        csv_buffer,
+        fieldnames=[
+            "letter_id",
+            "recipient_name",
+            "address1",
+            "address2",
+            "city",
+            "state",
+            "zip",
+            "pdf_filename",
+            "tracking_number",
+        ],
+    )
     csv_writer.writeheader()
 
     for letter in letters:
-        csv_writer.writerow({
-            'letter_id': letter.get('letter_id'),
-            'recipient_name': letter.get('recipient_name'),
-            'address1': letter.get('address1'),
-            'address2': letter.get('address2', ''),
-            'city': letter.get('city'),
-            'state': letter.get('state'),
-            'zip': letter.get('zip'),
-            'pdf_filename': os.path.basename(letter.get('pdf_path')),
-            'tracking_number': letter.get('tracking_number', '')
-        })
+        csv_writer.writerow(
+            {
+                "letter_id": letter.get("letter_id"),
+                "recipient_name": letter.get("recipient_name"),
+                "address1": letter.get("address1"),
+                "address2": letter.get("address2", ""),
+                "city": letter.get("city"),
+                "state": letter.get("state"),
+                "zip": letter.get("zip"),
+                "pdf_filename": os.path.basename(letter.get("pdf_path")),
+                "tracking_number": letter.get("tracking_number", ""),
+            }
+        )
 
     csv_content = csv_buffer.getvalue()
 
@@ -113,20 +127,20 @@ def upload_batch(letters: List[Dict]) -> Dict:
 
         # Upload CSV manifest
         csv_path = f"{batch_dir}/manifest.csv"
-        sftp.putfo(io.BytesIO(csv_content.encode('utf-8')), csv_path)
+        sftp.putfo(io.BytesIO(csv_content.encode("utf-8")), csv_path)
 
         # Upload PDF files
         for letter in letters:
-            pdf_path = letter.get('pdf_path')
+            pdf_path = letter.get("pdf_path")
             if pdf_path and os.path.exists(pdf_path):
                 remote_pdf_path = f"{batch_dir}/{os.path.basename(pdf_path)}"
                 sftp.put(pdf_path, remote_pdf_path)
 
         return {
-            'batch_id': batch_id,
-            'letter_count': len(letters),
-            'timestamp': timestamp,
-            'status': 'uploaded'
+            "batch_id": batch_id,
+            "letter_count": len(letters),
+            "timestamp": timestamp,
+            "status": "uploaded",
         }
 
     finally:
@@ -159,27 +173,29 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
     batch_letters = []
     for letter in letters:
         # Get bureau address
-        bureau = letter.bureau or 'Equifax'  # Default to Equifax if not specified
+        bureau = letter.bureau or "Equifax"  # Default to Equifax if not specified
         bureau_info = BUREAU_ADDRESSES.get(bureau)
 
         if not bureau_info:
             continue  # Skip if bureau not found
 
-        batch_letters.append({
-            'letter_id': letter.id,
-            'recipient_name': bureau_info['name'],
-            'address1': bureau_info['address1'],
-            'address2': bureau_info.get('address2', ''),
-            'city': bureau_info['city'],
-            'state': bureau_info['state'],
-            'zip': bureau_info['zip'],
-            'pdf_path': letter.file_path or '',
-            'tracking_number': f"SCM{letter.id:06d}"
-        })
+        batch_letters.append(
+            {
+                "letter_id": letter.id,
+                "recipient_name": bureau_info["name"],
+                "address1": bureau_info["address1"],
+                "address2": bureau_info.get("address2", ""),
+                "city": bureau_info["city"],
+                "state": bureau_info["state"],
+                "zip": bureau_info["zip"],
+                "pdf_path": letter.file_path or "",
+                "tracking_number": f"SCM{letter.id:06d}",
+            }
+        )
 
     # Upload batch
     result = upload_batch(batch_letters)
-    batch_id = result['batch_id']
+    batch_id = result["batch_id"]
 
     # Calculate cost (SendCertified: $11.00 per letter - includes printing, certified mail, and return receipt electronic)
     cost_per_letter_cents = 1100
@@ -190,8 +206,8 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
         batch_id=batch_id,
         letter_count=len(batch_letters),
         cost_cents=total_cost_cents,
-        status='uploaded',
-        uploaded_at=datetime.utcnow()
+        status="uploaded",
+        uploaded_at=datetime.utcnow(),
     )
     db.add(letter_batch)
 
@@ -200,7 +216,7 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
     deadline_ids = []
 
     for letter in letters:
-        if letter.id in [bl['letter_id'] for bl in batch_letters]:
+        if letter.id in [bl["letter_id"] for bl in batch_letters]:
             letter.sent_via_letterstream = True
             letter.sent_at = now
             letter.tracking_number = f"SCM{letter.id:06d}"
@@ -208,12 +224,12 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
             # Create 30-day response deadline
             deadline = CaseDeadline(
                 client_id=letter.client_id,
-                deadline_type='cra_response',
+                deadline_type="cra_response",
                 deadline_date=now + timedelta(days=30),
                 description=f"{letter.bureau} Response Deadline - Round {letter.round_number or 1}",
-                status='pending',
+                status="pending",
                 related_bureau=letter.bureau,
-                round_number=letter.round_number or 1
+                round_number=letter.round_number or 1,
             )
             db.add(deadline)
             db.flush()  # Get deadline ID
@@ -222,11 +238,11 @@ def send_letter_batch(db: Session, letter_ids: List[int]) -> Dict:
     db.commit()
 
     return {
-        'batch_id': batch_id,
-        'letter_count': len(batch_letters),
-        'cost_cents': total_cost_cents,
-        'deadline_ids': deadline_ids,
-        'sent_at': now.isoformat()
+        "batch_id": batch_id,
+        "letter_count": len(batch_letters),
+        "cost_cents": total_cost_cents,
+        "deadline_ids": deadline_ids,
+        "sent_at": now.isoformat(),
     }
 
 
@@ -253,23 +269,25 @@ def check_tracking(batch_id: str) -> Dict:
             tracking_file.seek(0)
 
             # Parse tracking CSV
-            csv_reader = csv.DictReader(io.TextIOWrapper(tracking_file, encoding='utf-8'))
+            csv_reader = csv.DictReader(
+                io.TextIOWrapper(tracking_file, encoding="utf-8")
+            )
             tracking_data = list(csv_reader)
 
             return {
-                'batch_id': batch_id,
-                'tracking_available': True,
-                'tracking_data': tracking_data,
-                'retrieved_at': datetime.utcnow().isoformat()
+                "batch_id": batch_id,
+                "tracking_available": True,
+                "tracking_data": tracking_data,
+                "retrieved_at": datetime.utcnow().isoformat(),
             }
 
         except IOError:
             # Tracking file not yet available
             return {
-                'batch_id': batch_id,
-                'tracking_available': False,
-                'message': 'Tracking data not yet available',
-                'retrieved_at': datetime.utcnow().isoformat()
+                "batch_id": batch_id,
+                "tracking_available": False,
+                "message": "Tracking data not yet available",
+                "retrieved_at": datetime.utcnow().isoformat(),
             }
 
     finally:
@@ -298,8 +316,8 @@ def update_batch_status(db: Session, batch_id: str) -> Optional[LetterBatch]:
     # Check tracking
     tracking_result = check_tracking(batch_id)
 
-    if tracking_result.get('tracking_available'):
-        batch.status = 'complete'
+    if tracking_result.get("tracking_available"):
+        batch.status = "complete"
         batch.tracking_received_at = datetime.utcnow()
         db.commit()
 
@@ -316,4 +334,4 @@ def get_bureau_address(bureau_name: str) -> Dict:
     Returns:
         Dict with address fields
     """
-    return BUREAU_ADDRESSES.get(bureau_name, BUREAU_ADDRESSES['Equifax'])
+    return BUREAU_ADDRESSES.get(bureau_name, BUREAU_ADDRESSES["Equifax"])

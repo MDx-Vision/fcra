@@ -18,6 +18,7 @@ Usage:
     if config.is_configured('sendgrid'):
         send_email(...)
 """
+
 import os
 import secrets
 from functools import lru_cache
@@ -25,6 +26,7 @@ from functools import lru_cache
 # Load .env file if it exists (for local development)
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass  # python-dotenv not installed, use system env vars
@@ -32,6 +34,7 @@ except ImportError:
 
 class ConfigurationError(Exception):
     """Raised when required configuration is missing."""
+
     pass
 
 
@@ -48,32 +51,32 @@ class Config:
     @property
     def SECRET_KEY(self) -> str:
         """Flask secret key for session encryption. Auto-generated if not set."""
-        return os.environ.get('FLASK_SECRET_KEY') or secrets.token_hex(32)
+        return os.environ.get("FLASK_SECRET_KEY") or secrets.token_hex(32)
 
     @property
     def DEBUG(self) -> bool:
         """Enable Flask debug mode."""
-        return os.environ.get('FLASK_DEBUG', '').lower() in ('true', '1', 'yes')
+        return os.environ.get("FLASK_DEBUG", "").lower() in ("true", "1", "yes")
 
     @property
     def ENV(self) -> str:
         """Flask environment (development, production, testing)."""
-        return os.environ.get('FLASK_ENV', 'development')
+        return os.environ.get("FLASK_ENV", "development")
 
     @property
     def IS_PRODUCTION(self) -> bool:
         """Check if running in production."""
-        return self.ENV == 'production' or os.environ.get('REPLIT_DEPLOYMENT') == '1'
+        return self.ENV == "production" or os.environ.get("REPLIT_DEPLOYMENT") == "1"
 
     @property
     def IS_CI(self) -> bool:
         """Check if running in CI environment."""
-        return os.environ.get('CI', '').lower() == 'true'
+        return os.environ.get("CI", "").lower() == "true"
 
     @property
     def PORT(self) -> int:
         """Server port."""
-        return int(os.environ.get('PORT', 5000))
+        return int(os.environ.get("PORT", 5000))
 
     # =========================================================================
     # DATABASE
@@ -82,7 +85,7 @@ class Config:
     @property
     def DATABASE_URL(self) -> str:
         """PostgreSQL database connection URL."""
-        return os.environ.get('DATABASE_URL', '')
+        return os.environ.get("DATABASE_URL", "")
 
     # =========================================================================
     # LOGGING
@@ -91,7 +94,7 @@ class Config:
     @property
     def LOG_LEVEL(self) -> str:
         """Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)."""
-        return os.environ.get('LOG_LEVEL', 'INFO').upper()
+        return os.environ.get("LOG_LEVEL", "INFO").upper()
 
     # =========================================================================
     # RATE LIMITING
@@ -100,22 +103,22 @@ class Config:
     @property
     def RATE_LIMIT_DEFAULT(self) -> str:
         """Default rate limit for all endpoints."""
-        return os.environ.get('RATE_LIMIT_DEFAULT', '200 per minute')
+        return os.environ.get("RATE_LIMIT_DEFAULT", "200 per minute")
 
     @property
     def RATE_LIMIT_AUTH(self) -> str:
         """Rate limit for authentication endpoints (stricter)."""
-        return os.environ.get('RATE_LIMIT_AUTH', '5 per minute')
+        return os.environ.get("RATE_LIMIT_AUTH", "5 per minute")
 
     @property
     def RATE_LIMIT_API(self) -> str:
         """Rate limit for standard API endpoints."""
-        return os.environ.get('RATE_LIMIT_API', '100 per minute')
+        return os.environ.get("RATE_LIMIT_API", "100 per minute")
 
     @property
     def RATE_LIMIT_ANALYSIS(self) -> str:
         """Rate limit for AI analysis endpoints (expensive operations)."""
-        return os.environ.get('RATE_LIMIT_ANALYSIS', '10 per minute')
+        return os.environ.get("RATE_LIMIT_ANALYSIS", "10 per minute")
 
     # =========================================================================
     # AI / ANTHROPIC
@@ -125,8 +128,9 @@ class Config:
     def ANTHROPIC_API_KEY(self) -> str:
         """Anthropic API key for Claude AI."""
         # Support both naming conventions
-        return (os.environ.get('ANTHROPIC_API_KEY', '') or
-                os.environ.get('FCRA Automation Secure', ''))
+        return os.environ.get("ANTHROPIC_API_KEY", "") or os.environ.get(
+            "FCRA Automation Secure", ""
+        )
 
     # =========================================================================
     # EMAIL (SENDGRID)
@@ -135,17 +139,17 @@ class Config:
     @property
     def SENDGRID_API_KEY(self) -> str:
         """SendGrid API key for email delivery."""
-        return os.environ.get('SENDGRID_API_KEY', '')
+        return os.environ.get("SENDGRID_API_KEY", "")
 
     @property
     def SENDGRID_FROM_EMAIL(self) -> str:
         """Default sender email address."""
-        return os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@fcra-platform.com')
+        return os.environ.get("SENDGRID_FROM_EMAIL", "noreply@fcra-platform.com")
 
     @property
     def SENDGRID_FROM_NAME(self) -> str:
         """Default sender name."""
-        return os.environ.get('SENDGRID_FROM_NAME', 'FCRA Litigation Platform')
+        return os.environ.get("SENDGRID_FROM_NAME", "FCRA Litigation Platform")
 
     # =========================================================================
     # SMS (TWILIO)
@@ -154,17 +158,17 @@ class Config:
     @property
     def TWILIO_ACCOUNT_SID(self) -> str:
         """Twilio account SID."""
-        return os.environ.get('TWILIO_ACCOUNT_SID', '')
+        return os.environ.get("TWILIO_ACCOUNT_SID", "")
 
     @property
     def TWILIO_AUTH_TOKEN(self) -> str:
         """Twilio authentication token."""
-        return os.environ.get('TWILIO_AUTH_TOKEN', '')
+        return os.environ.get("TWILIO_AUTH_TOKEN", "")
 
     @property
     def TWILIO_PHONE_NUMBER(self) -> str:
         """Twilio phone number for sending SMS."""
-        return os.environ.get('TWILIO_PHONE_NUMBER', '')
+        return os.environ.get("TWILIO_PHONE_NUMBER", "")
 
     # =========================================================================
     # PAYMENTS (STRIPE)
@@ -173,12 +177,12 @@ class Config:
     @property
     def STRIPE_SECRET_KEY(self) -> str:
         """Stripe secret API key."""
-        return os.environ.get('STRIPE_SECRET_KEY', '')
+        return os.environ.get("STRIPE_SECRET_KEY", "")
 
     @property
     def STRIPE_WEBHOOK_SECRET(self) -> str:
         """Stripe webhook signing secret."""
-        return os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+        return os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
     # =========================================================================
     # CERTIFIED MAIL (SENDCERTIFIED)
@@ -187,27 +191,27 @@ class Config:
     @property
     def SENDCERTIFIED_API_KEY(self) -> str:
         """SendCertifiedMail API key."""
-        return os.environ.get('SENDCERTIFIEDMAIL_API_KEY', '')
+        return os.environ.get("SENDCERTIFIEDMAIL_API_KEY", "")
 
     @property
     def SENDCERTIFIED_SFTP_HOST(self) -> str:
         """SendCertified SFTP hostname."""
-        return os.environ.get('SENDCERTIFIED_SFTP_HOST', '')
+        return os.environ.get("SENDCERTIFIED_SFTP_HOST", "")
 
     @property
     def SENDCERTIFIED_SFTP_USERNAME(self) -> str:
         """SendCertified SFTP username."""
-        return os.environ.get('SENDCERTIFIED_SFTP_USERNAME', '')
+        return os.environ.get("SENDCERTIFIED_SFTP_USERNAME", "")
 
     @property
     def SENDCERTIFIED_SFTP_PASSWORD(self) -> str:
         """SendCertified SFTP password."""
-        return os.environ.get('SENDCERTIFIED_SFTP_PASSWORD', '')
+        return os.environ.get("SENDCERTIFIED_SFTP_PASSWORD", "")
 
     @property
     def SENDCERTIFIED_SFTP_PORT(self) -> int:
         """SendCertified SFTP port."""
-        return int(os.environ.get('SENDCERTIFIED_SFTP_PORT', 22))
+        return int(os.environ.get("SENDCERTIFIED_SFTP_PORT", 22))
 
     # =========================================================================
     # CREDIT MONITORING SERVICES
@@ -216,37 +220,37 @@ class Config:
     @property
     def SMARTCREDIT_API_KEY(self) -> str:
         """SmartCredit API key."""
-        return os.environ.get('SMARTCREDIT_API_KEY', '')
+        return os.environ.get("SMARTCREDIT_API_KEY", "")
 
     @property
     def IDENTITYIQ_API_KEY(self) -> str:
         """IdentityIQ API key."""
-        return os.environ.get('IDENTITYIQ_API_KEY', '')
+        return os.environ.get("IDENTITYIQ_API_KEY", "")
 
     @property
     def IDENTITYIQ_API_SECRET(self) -> str:
         """IdentityIQ API secret."""
-        return os.environ.get('IDENTITYIQ_API_SECRET', '')
+        return os.environ.get("IDENTITYIQ_API_SECRET", "")
 
     @property
     def EXPERIAN_API_KEY(self) -> str:
         """Experian API key."""
-        return os.environ.get('EXPERIAN_API_KEY', '')
+        return os.environ.get("EXPERIAN_API_KEY", "")
 
     @property
     def EXPERIAN_CLIENT_ID(self) -> str:
         """Experian client ID."""
-        return os.environ.get('EXPERIAN_CLIENT_ID', '')
+        return os.environ.get("EXPERIAN_CLIENT_ID", "")
 
     @property
     def EXPERIAN_CLIENT_SECRET(self) -> str:
         """Experian client secret."""
-        return os.environ.get('EXPERIAN_CLIENT_SECRET', '')
+        return os.environ.get("EXPERIAN_CLIENT_SECRET", "")
 
     @property
     def EXPERIAN_SUBSCRIBER_CODE(self) -> str:
         """Experian subscriber code."""
-        return os.environ.get('EXPERIAN_SUBSCRIBER_CODE', '')
+        return os.environ.get("EXPERIAN_SUBSCRIBER_CODE", "")
 
     # =========================================================================
     # NOTARIZATION (PROOF/NOTARIZE)
@@ -255,17 +259,21 @@ class Config:
     @property
     def NOTARIZE_API_KEY(self) -> str:
         """Notarize/Proof API key."""
-        return os.environ.get('NOTARIZE_API_KEY') or os.environ.get('PROOF_API_KEY', '')
+        return os.environ.get("NOTARIZE_API_KEY") or os.environ.get("PROOF_API_KEY", "")
 
     @property
     def NOTARIZE_WEBHOOK_SECRET(self) -> str:
         """Notarize webhook signing secret."""
-        return os.environ.get('NOTARIZE_WEBHOOK_SECRET', '')
+        return os.environ.get("NOTARIZE_WEBHOOK_SECRET", "")
 
     @property
     def NOTARIZE_SANDBOX(self) -> bool:
         """Use Notarize sandbox environment."""
-        return os.environ.get('NOTARIZE_SANDBOX', 'true').lower() in ('true', '1', 'yes')
+        return os.environ.get("NOTARIZE_SANDBOX", "true").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
     # =========================================================================
     # SECURITY
@@ -274,7 +282,7 @@ class Config:
     @property
     def ENCRYPTION_KEY(self) -> str:
         """Fernet encryption key for sensitive data."""
-        return os.environ.get('FCRA_ENCRYPTION_KEY', '')
+        return os.environ.get("FCRA_ENCRYPTION_KEY", "")
 
     # =========================================================================
     # REPLIT-SPECIFIC
@@ -283,12 +291,12 @@ class Config:
     @property
     def REPLIT_DEV_DOMAIN(self) -> str:
         """Replit development domain."""
-        return os.environ.get('REPLIT_DEV_DOMAIN', '')
+        return os.environ.get("REPLIT_DEV_DOMAIN", "")
 
     @property
     def REPLIT_DEPLOYMENT(self) -> bool:
         """Check if deployed on Replit."""
-        return os.environ.get('REPLIT_DEPLOYMENT') == '1'
+        return os.environ.get("REPLIT_DEPLOYMENT") == "1"
 
     # =========================================================================
     # VALIDATION METHODS
@@ -306,32 +314,37 @@ class Config:
             True if all required env vars are set for the service
         """
         checks = {
-            'anthropic': lambda: bool(self.ANTHROPIC_API_KEY),
-            'sendgrid': lambda: bool(self.SENDGRID_API_KEY),
-            'twilio': lambda: all([
-                self.TWILIO_ACCOUNT_SID,
-                self.TWILIO_AUTH_TOKEN,
-                self.TWILIO_PHONE_NUMBER
-            ]),
-            'stripe': lambda: bool(self.STRIPE_SECRET_KEY),
-            'sendcertified': lambda: all([
-                self.SENDCERTIFIED_SFTP_HOST,
-                self.SENDCERTIFIED_SFTP_USERNAME,
-                self.SENDCERTIFIED_SFTP_PASSWORD
-            ]),
-            'notarize': lambda: bool(self.NOTARIZE_API_KEY),
-            'experian': lambda: all([
-                self.EXPERIAN_API_KEY,
-                self.EXPERIAN_CLIENT_ID,
-                self.EXPERIAN_CLIENT_SECRET
-            ]),
-            'identityiq': lambda: all([
-                self.IDENTITYIQ_API_KEY,
-                self.IDENTITYIQ_API_SECRET
-            ]),
-            'smartcredit': lambda: bool(self.SMARTCREDIT_API_KEY),
-            'database': lambda: bool(self.DATABASE_URL),
-            'encryption': lambda: bool(self.ENCRYPTION_KEY),
+            "anthropic": lambda: bool(self.ANTHROPIC_API_KEY),
+            "sendgrid": lambda: bool(self.SENDGRID_API_KEY),
+            "twilio": lambda: all(
+                [
+                    self.TWILIO_ACCOUNT_SID,
+                    self.TWILIO_AUTH_TOKEN,
+                    self.TWILIO_PHONE_NUMBER,
+                ]
+            ),
+            "stripe": lambda: bool(self.STRIPE_SECRET_KEY),
+            "sendcertified": lambda: all(
+                [
+                    self.SENDCERTIFIED_SFTP_HOST,
+                    self.SENDCERTIFIED_SFTP_USERNAME,
+                    self.SENDCERTIFIED_SFTP_PASSWORD,
+                ]
+            ),
+            "notarize": lambda: bool(self.NOTARIZE_API_KEY),
+            "experian": lambda: all(
+                [
+                    self.EXPERIAN_API_KEY,
+                    self.EXPERIAN_CLIENT_ID,
+                    self.EXPERIAN_CLIENT_SECRET,
+                ]
+            ),
+            "identityiq": lambda: all(
+                [self.IDENTITYIQ_API_KEY, self.IDENTITYIQ_API_SECRET]
+            ),
+            "smartcredit": lambda: bool(self.SMARTCREDIT_API_KEY),
+            "database": lambda: bool(self.DATABASE_URL),
+            "encryption": lambda: bool(self.ENCRYPTION_KEY),
         }
 
         check_func = checks.get(service.lower())
@@ -366,9 +379,17 @@ class Config:
             Dict mapping service names to configured status
         """
         services = [
-            'anthropic', 'sendgrid', 'twilio', 'stripe',
-            'sendcertified', 'notarize', 'experian',
-            'identityiq', 'smartcredit', 'database', 'encryption'
+            "anthropic",
+            "sendgrid",
+            "twilio",
+            "stripe",
+            "sendcertified",
+            "notarize",
+            "experian",
+            "identityiq",
+            "smartcredit",
+            "database",
+            "encryption",
         ]
         return {service: self.is_configured(service) for service in services}
 

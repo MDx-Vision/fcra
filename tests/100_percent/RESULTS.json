@@ -1,10 +1,10 @@
 {
-  "timestamp": "2025-12-26T19:43:31.196041",
+  "timestamp": "2025-12-29T01:40:15.591362",
   "pages_tested": 45,
   "forms_tested": 2,
   "fields_tested": 3,
-  "buttons_clicked": 0,
-  "links_checked": 0,
+  "buttons_clicked": 11,
+  "links_checked": 30,
   "modals_tested": 0,
   "edge_cases_tested": 23,
   "responsive_tests": 12,
@@ -12,248 +12,19 @@
   "issues_found": [
     {
       "type": "page_load",
-      "page": "/dashboard/settlements",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/staff",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/analytics",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/credit-tracker",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/calendar",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/contacts",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/automation-tools",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/letter-queue",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/demand-generator",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/import",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/documents",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/settings",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/integrations",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/billing",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/tasks",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/workflows",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/ml-insights",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/white-label",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/whitelabel",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/franchise",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/affiliates",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/triage",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/escalation",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/case-law",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/knowledge-base",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/sops",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/chexsystems",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/specialty-bureaus",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/furnishers",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/patterns",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/sol",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/cfpb",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/frivolousness",
-      "status": 429
-    },
-    {
-      "type": "page_load",
       "page": "/dashboard/predictive",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/credit-import",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/performance",
-      "status": 429
-    },
-    {
-      "type": "page_load",
-      "page": "/dashboard/suspense-accounts",
-      "status": 429
+      "status": 500
     }
   ],
   "issues_fixed": [],
-  "passed": 11,
-  "failed": 37,
+  "passed": 47,
+  "failed": 1,
   "console_errors": [
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)",
-    "Failed to load resource: the server responded with a status of 429 (TOO MANY REQUESTS)"
+    "Error loading settlement analytics: TypeError: Failed to fetch\n    at HTMLDocument.loadSettlementAnalytics (http://localhost:5001/dashboard/analytics:1448:40)",
+    "Refused to load the font 'data:application/x-font-ttf;charset=utf-8;base64,AAEAAAALAIAAAwAwT1MvMg8SBfAAAAC8AAAAYGNtYXAXVtKNAAABHAAAAFRnYXNwAAAAEAAAAXAAAAAIZ2x5ZgYydxIAAAF4AAAFNGhlYWQUJ7cIAAAGrAAAADZoaGVhB20DzAAABuQAAAAkaG10eCIABhQAAAcIAAAALGxvY2ED4AU6AAAHNAAAABhtYXhwAA8AjAAAB0wAAAAgbmFtZXsr690AAAdsAAABhnBvc3QAAwAAAAAI9AAAACAAAwPAAZAABQAAApkCzAAAAI8CmQLMAAAB6wAzAQkAAAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAAAAAAAABAAADpBgPA/8AAQAPAAEAAAAABAAAAAAAAAAAAAAAgAAAAAAADAAAAAwAAABwAAQADAAAAHAADAAEAAAAcAAQAOAAAAAoACAACAAIAAQAg6Qb//f//AAAAAAAg6QD//f...ABAAAAAAAEAAcAdQABAAAAAAAFAAsAFQABAAAAAAAGAAcASwABAAAAAAAKABoAigADAAEECQABAA4ABwADAAEECQACAA4AZwADAAEECQADAA4APQADAAEECQAEAA4AfAADAAEECQAFABYAIAADAAEECQAGAA4AUgADAAEECQAKADQApGZjaWNvbnMAZgBjAGkAYwBvAG4Ac1ZlcnNpb24gMS4wAFYAZQByAHMAaQBvAG4AIAAxAC4AMGZjaWNvbnMAZgBjAGkAYwBvAG4Ac2ZjaWNvbnMAZgBjAGkAYwBvAG4Ac1JlZ3VsYXIAUgBlAGcAdQBsAGEAcmZjaWNvbnMAZgBjAGkAYwBvAG4Ac0ZvbnQgZ2VuZXJhdGVkIGJ5IEljb01vb24uAEYAbwBuAHQAIABnAGUAbgBlAHIAYQB0AGUAZAAgAGIAeQAgAEkAYwBvAE0AbwBvAG4ALgAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' because it violates the following Content Security Policy directive: \"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com\".\n",
+    "Refused to load the font 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/fonts/bootstrap-icons.woff2?2ab2cbbe07fcebb53bdaa7313bb290f2' because it violates the following Content Security Policy directive: \"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com\".\n",
+    "Refused to load the font 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/fonts/bootstrap-icons.woff?2ab2cbbe07fcebb53bdaa7313bb290f2' because it violates the following Content Security Policy directive: \"font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com\".\n",
+    "Failed to load resource: the server responded with a status of 500 (INTERNAL SERVER ERROR)"
   ],
   "page_errors": []
 }

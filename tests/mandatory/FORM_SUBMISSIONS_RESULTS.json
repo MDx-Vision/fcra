@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-12-26T19:43:31.613509",
+  "timestamp": "2025-12-29T01:40:15.802669",
   "forms_tested": 12,
-  "forms_passed": 1,
-  "forms_failed": 11,
+  "forms_passed": 8,
+  "forms_failed": 4,
   "submissions": [
     {
       "name": "Client Signup",
@@ -22,11 +22,11 @@
       "priority": "critical",
       "page_loaded": true,
       "modal_opened": false,
-      "fields_filled": 2,
-      "submitted": true,
+      "fields_filled": 0,
+      "submitted": false,
       "success_detected": false,
-      "status": "ERROR_SHOWN",
-      "notes": "Error: \u26a0\ufe0f\nInvalid email or password"
+      "status": "FORM_NOT_FOUND",
+      "notes": "Could not find form: form[action*='login'], #loginForm, form"
     },
     {
       "name": "Portal Login",
@@ -46,11 +46,11 @@
       "priority": "critical",
       "page_loaded": true,
       "modal_opened": true,
-      "fields_filled": 2,
-      "submitted": true,
+      "fields_filled": 0,
+      "submitted": false,
       "success_detected": false,
-      "status": "ERROR_SHOWN",
-      "notes": "Error: \u26a0\ufe0f\nInvalid email or password"
+      "status": "FORM_NOT_FOUND",
+      "notes": "Could not find form: #addForm"
     },
     {
       "name": "Save Settings",
@@ -58,95 +58,95 @@
       "priority": "critical",
       "page_loaded": true,
       "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "FILL_FAILED",
-      "notes": "Could not fill any fields"
+      "fields_filled": 2,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Add Affiliate",
       "url": "/dashboard/affiliates",
       "priority": "important",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 429"
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 7,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Add Case Law",
       "url": "/dashboard/case-law",
       "priority": "important",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 429"
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 8,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Create Pattern",
       "url": "/dashboard/patterns",
       "priority": "important",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 3,
       "submitted": false,
       "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 429"
+      "status": "SUBMIT_FAILED",
+      "notes": "Could not click submit button"
     },
     {
       "name": "Create Organization (Franchise)",
       "url": "/dashboard/franchise",
       "priority": "important",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 429"
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 9,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Create Billing Plan",
       "url": "/dashboard/billing",
       "priority": "important",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 429"
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 4,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Import Client",
       "url": "/dashboard/import",
       "priority": "secondary",
-      "page_loaded": false,
+      "page_loaded": true,
       "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 429"
+      "fields_filled": 4,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     },
     {
       "name": "Create White-Label Tenant",
       "url": "/dashboard/white-label",
       "priority": "secondary",
-      "page_loaded": false,
-      "modal_opened": false,
-      "fields_filled": 0,
-      "submitted": false,
-      "success_detected": false,
-      "status": "PAGE_LOAD_FAILED",
-      "notes": "HTTP 429"
+      "page_loaded": true,
+      "modal_opened": true,
+      "fields_filled": 3,
+      "submitted": true,
+      "success_detected": true,
+      "status": "PASS",
+      "notes": ""
     }
   ]
 }

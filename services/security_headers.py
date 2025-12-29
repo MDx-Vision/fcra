@@ -15,8 +15,10 @@ Usage:
     app = Flask(__name__)
     init_security_headers(app)
 """
-from flask import request, redirect, g
+
 from functools import wraps
+
+from flask import g, redirect, request
 
 from services.config import config
 
@@ -43,18 +45,18 @@ def init_security_headers(app, force_https=None, hsts_max_age=31536000):
         # Check if request is already HTTPS
         # Handle reverse proxy headers (X-Forwarded-Proto)
         is_https = (
-            request.is_secure or
-            request.headers.get('X-Forwarded-Proto', 'http') == 'https' or
-            request.headers.get('X-Forwarded-Ssl', '') == 'on'
+            request.is_secure
+            or request.headers.get("X-Forwarded-Proto", "http") == "https"
+            or request.headers.get("X-Forwarded-Ssl", "") == "on"
         )
 
         if not is_https:
             # Skip for health checks and localhost
-            if request.path == '/' or request.host.startswith('localhost'):
+            if request.path == "/" or request.host.startswith("localhost"):
                 return None
 
             # Redirect to HTTPS
-            url = request.url.replace('http://', 'https://', 1)
+            url = request.url.replace("http://", "https://", 1)
             return redirect(url, code=301)
 
         return None
@@ -67,35 +69,31 @@ def init_security_headers(app, force_https=None, hsts_max_age=31536000):
         if force_https or config.IS_PRODUCTION:
             # Strict-Transport-Security (HSTS)
             # Tells browsers to only use HTTPS for this domain
-            response.headers['Strict-Transport-Security'] = (
-                f'max-age={hsts_max_age}; includeSubDomains; preload'
+            response.headers["Strict-Transport-Security"] = (
+                f"max-age={hsts_max_age}; includeSubDomains; preload"
             )
 
         # X-Frame-Options - Prevent clickjacking
         # SAMEORIGIN allows embedding in same-origin frames only
-        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
 
         # X-Content-Type-Options - Prevent MIME type sniffing
-        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers["X-Content-Type-Options"] = "nosniff"
 
         # X-XSS-Protection - Enable browser XSS filter (legacy, but still useful)
-        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers["X-XSS-Protection"] = "1; mode=block"
 
         # Referrer-Policy - Control referrer information
-        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
         # Permissions-Policy - Disable unnecessary browser features
-        response.headers['Permissions-Policy'] = (
-            'geolocation=(), '
-            'microphone=(), '
-            'camera=(), '
-            'payment=(), '
-            'usb=()'
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), " "microphone=(), " "camera=(), " "payment=(), " "usb=()"
         )
 
         # Content-Security-Policy - Prevent XSS and data injection
         # This is a relatively permissive policy - tighten for production
-        if not request.path.startswith('/static/'):
+        if not request.path.startswith("/static/"):
             csp_directives = [
                 "default-src 'self'",
                 "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
@@ -108,12 +106,14 @@ def init_security_headers(app, force_https=None, hsts_max_age=31536000):
                 "base-uri 'self'",
                 "object-src 'none'",
             ]
-            response.headers['Content-Security-Policy'] = '; '.join(csp_directives)
+            response.headers["Content-Security-Policy"] = "; ".join(csp_directives)
 
         # Cache-Control for sensitive pages
-        if request.path.startswith('/api/') or request.path.startswith('/dashboard/'):
-            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, private'
-            response.headers['Pragma'] = 'no-cache'
+        if request.path.startswith("/api/") or request.path.startswith("/dashboard/"):
+            response.headers["Cache-Control"] = (
+                "no-store, no-cache, must-revalidate, private"
+            )
+            response.headers["Pragma"] = "no-cache"
 
         return response
 
@@ -121,7 +121,7 @@ def init_security_headers(app, force_https=None, hsts_max_age=31536000):
     app.config.update(
         SESSION_COOKIE_SECURE=force_https or config.IS_PRODUCTION,
         SESSION_COOKIE_HTTPONLY=True,
-        SESSION_COOKIE_SAMESITE='Lax',
+        SESSION_COOKIE_SAMESITE="Lax",
     )
 
 
@@ -136,30 +136,29 @@ def require_https(f):
         def sensitive_endpoint():
             ...
     """
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         is_https = (
-            request.is_secure or
-            request.headers.get('X-Forwarded-Proto', 'http') == 'https'
+            request.is_secure
+            or request.headers.get("X-Forwarded-Proto", "http") == "https"
         )
 
         if not is_https and config.IS_PRODUCTION:
-            return {
-                'success': False,
-                'error': 'HTTPS required for this endpoint'
-            }, 403
+            return {"success": False, "error": "HTTPS required for this endpoint"}, 403
 
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 # Security header values for reference
 SECURITY_HEADERS = {
-    'Strict-Transport-Security': 'Enforces HTTPS connections',
-    'X-Frame-Options': 'Prevents clickjacking attacks',
-    'X-Content-Type-Options': 'Prevents MIME type sniffing',
-    'X-XSS-Protection': 'Enables browser XSS filter',
-    'Content-Security-Policy': 'Prevents XSS and injection attacks',
-    'Referrer-Policy': 'Controls referrer information leakage',
-    'Permissions-Policy': 'Disables unnecessary browser features',
+    "Strict-Transport-Security": "Enforces HTTPS connections",
+    "X-Frame-Options": "Prevents clickjacking attacks",
+    "X-Content-Type-Options": "Prevents MIME type sniffing",
+    "X-XSS-Protection": "Enables browser XSS filter",
+    "Content-Security-Policy": "Prevents XSS and injection attacks",
+    "Referrer-Policy": "Controls referrer information leakage",
+    "Permissions-Policy": "Disables unnecessary browser features",
 }

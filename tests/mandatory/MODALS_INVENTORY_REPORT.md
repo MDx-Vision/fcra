@@ -1,6 +1,6 @@
 # MODAL TESTING - COMPLETE INVENTORY
 
-**Date:** 2025-12-26T19:43:31.617696
+**Date:** 2025-12-29T01:40:15.806425
 **Target:** 53 modals in templates
 **Tested:** 52 modals
 **Status:** NEEDS WORK
@@ -12,11 +12,11 @@
 | Metric | Count | Percentage |
 |--------|-------|------------|
 | Modals Target | 53 | - |
-| Modals Found | 0 | 0.0% |
+| Modals Found | 39 | 73.6% |
 | Modals Tested | 52 | 100% |
-| PASS (opens & closes) | 0 | 0.0% |
-| PARTIAL (opens only) | 0 | 0.0% |
-| NOT FOUND | 52 | 100.0% |
+| PASS (opens & closes) | 37 | 71.2% |
+| PARTIAL (opens only) | 2 | 3.8% |
+| NOT FOUND | 13 | 25.0% |
 | ERROR | 0 | 0.0% |
 
 ---
@@ -34,88 +34,88 @@
 
 
 ### /dashboard/contacts
-Expected: 4 | Found: 0 | Tested: 4
+Expected: 4 | Found: 4 | Tested: 4
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| contactModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| notesModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| taskModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| docsModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| contactModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| notesModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| taskModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| docsModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/affiliates
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| addAffiliateModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| addAffiliateModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/credit-import
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| credentialModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| credentialModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/performance
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| clearCacheModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| clearCacheModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/patterns
-Expected: 3 | Found: 0 | Tested: 3
+Expected: 3 | Found: 3 | Tested: 3
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| createModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| detailModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| addViolationModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| createModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| detailModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| addViolationModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/franchise
-Expected: 5 | Found: 0 | Tested: 5
+Expected: 5 | Found: 5 | Tested: 5
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| createOrgModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| editOrgModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| membersModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| consolidatedReportModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| transferModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| createOrgModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| editOrgModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| membersModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| consolidatedReportModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| transferModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/furnishers
-Expected: 2 | Found: 0 | Tested: 2
+Expected: 2 | Found: 1 | Tested: 2
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| addModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| addModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 | editModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
 
 ### /dashboard/calendar
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| deadlineModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| deadlineModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/frivolousness
-Expected: 2 | Found: 0 | Tested: 2
+Expected: 2 | Found: 2 | Tested: 2
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| addModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| viewModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| addModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| viewModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/settlements
-Expected: 4 | Found: 0 | Tested: 4
+Expected: 4 | Found: 4 | Tested: 4
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| settlementModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| offerModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| settleModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| paymentModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| settlementModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| offerModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| settleModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| paymentModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/api-management
 Expected: 3 | Found: 0 | Tested: 3
@@ -127,11 +127,11 @@ Expected: 3 | Found: 0 | Tested: 3
 | createWebhookModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
 
 ### /dashboard/specialty-bureaus
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| disputeModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| disputeModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/analysis-review
 Expected: 1 | Found: 0 | Tested: 1
@@ -141,11 +141,11 @@ Expected: 1 | Found: 0 | Tested: 1
 | violationModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
 
 ### /dashboard/documents
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| uploadModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| uploadModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/suspense
 Expected: 3 | Found: 0 | Tested: 3
@@ -157,40 +157,40 @@ Expected: 3 | Found: 0 | Tested: 3
 | detailModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
 
 ### /dashboard/chexsystems
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| newDisputeModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| newDisputeModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/sops
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| sopModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| sopModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/integrations
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| configModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| configModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard
-Expected: 2 | Found: 0 | Tested: 2
+Expected: 2 | Found: 2 | Tested: 2
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| intakeModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| batchModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| intakeModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| batchModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/triage
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| reviewModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| reviewModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/whitelabel-admin
 Expected: 1 | Found: 0 | Tested: 1
@@ -200,28 +200,28 @@ Expected: 1 | Found: 0 | Tested: 1
 | configModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
 
 ### /dashboard/white-label
-Expected: 3 | Found: 0 | Tested: 3
+Expected: 3 | Found: 3 | Tested: 3
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| tenantModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| usersModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| statsModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| tenantModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| usersModal | Yes | Yes | No | PARTIAL | Opens but doesn't close proper |
+| statsModal | Yes | Yes | No | PARTIAL | Opens but doesn't close proper |
 
 ### /dashboard/ml-insights
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| recordOutcomeModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| recordOutcomeModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/case-law
-Expected: 2 | Found: 0 | Tested: 2
+Expected: 2 | Found: 2 | Tested: 2
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| viewModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
-| addModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| viewModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
+| addModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/affiliates/detail
 Expected: 2 | Found: 0 | Tested: 2
@@ -232,18 +232,18 @@ Expected: 2 | Found: 0 | Tested: 2
 | editModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
 
 ### /dashboard/letter-queue
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| dismissModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| dismissModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/billing
-Expected: 1 | Found: 0 | Tested: 1
+Expected: 1 | Found: 1 | Tested: 1
 
 | Modal ID | Found | Opens | Closes | Status | Notes |
 |----------|-------|-------|--------|--------|-------|
-| createPlanModal | No | No | No | NOT_FOUND | Modal element not found in DOM |
+| createPlanModal | Yes | Yes | Yes | PASS | Opens and closes correctly |
 
 ### /dashboard/staff
 Expected: 2 | Found: 0 | Tested: 2
@@ -259,10 +259,10 @@ Expected: 2 | Found: 0 | Tested: 2
 ## Conclusion
 
 - **Total Modals Tested:** 52
-- **Pass Rate:** 0.0%
-- **Opens & Closes:** 0
-- **Opens Only:** 0
-- **Not Found:** 52
+- **Pass Rate:** 71.2%
+- **Opens & Closes:** 37
+- **Opens Only:** 2
+- **Not Found:** 13
 - **Errors:** 0
 
 NEEDS WORK - Some modals have issues
