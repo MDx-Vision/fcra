@@ -154,7 +154,7 @@ def generate_cache_key(*args, **kwargs) -> str:
         'kwargs': sorted(kwargs.items())
     }
     key_str = json.dumps(key_data, sort_keys=True, default=str)
-    return hashlib.md5(key_str.encode()).hexdigest()
+    return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
 
 
 def cached(ttl: int = 300, key_prefix: str = None):
