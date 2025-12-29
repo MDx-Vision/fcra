@@ -15,6 +15,21 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fcra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,12 +48,27 @@ jobs:
         run: pytest tests/ -v --tb=short -q
         env:
           CI: "true"
-          DATABASE_URL: sqlite:///test.db
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
           SECRET_KEY: test-secret-key
 
   cypress-tests:
     name: Cypress E2E Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fcra_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -68,7 +98,7 @@ jobs:
         env:
           CI: "true"
           PORT: "5001"
-          DATABASE_URL: sqlite:///test.db
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
           SECRET_KEY: test-secret-key
 
       - name: Wait for app
