@@ -45,12 +45,30 @@ jobs:
           pip install pytest pytest-cov pytest-asyncio playwright
           playwright install chromium
 
-      - name: Run unit tests
-        run: pytest tests/ -v --tb=short -q --ignore=tests/mandatory
+      - name: Run unit tests with coverage
+        run: pytest tests/ -v --tb=short --ignore=tests/mandatory --cov=. --cov-report=xml --cov-report=term-missing
         env:
           CI: "true"
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/fcra_test
           SECRET_KEY: test-secret-key
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 30
+
+      - name: Coverage summary
+        run: |
+          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          import xml.etree.ElementTree as ET
+          tree = ET.parse('coverage.xml')
+          root = tree.getroot()
+          line_rate = float(root.get('line-rate', 0)) * 100
+          print(f'**Line Coverage: {line_rate:.1f}%**')
+          " >> $GITHUB_STEP_SUMMARY
 
   cypress-tests:
     name: Cypress E2E Tests
