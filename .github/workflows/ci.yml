@@ -237,3 +237,40 @@ jobs:
           echo "### JavaScript (npm audit)" >> $GITHUB_STEP_SUMMARY
           npm ci
           npm audit --audit-level=high || echo "⚠️ Vulnerabilities found (see above)" >> $GITHUB_STEP_SUMMARY
+
+  formatting:
+    name: Code Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install formatters
+        run: pip install black isort
+
+      - name: Check black formatting
+        run: |
+          echo "## Code Formatting" >> $GITHUB_STEP_SUMMARY
+          echo "### Black (Python)" >> $GITHUB_STEP_SUMMARY
+          if black --check app.py services/ 2>&1; then
+            echo "✅ All files formatted correctly" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Some files need formatting. Run: \`black app.py services/\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          black --check app.py services/ --quiet || true
+
+      - name: Check isort imports
+        run: |
+          echo "### isort (Import ordering)" >> $GITHUB_STEP_SUMMARY
+          if isort --check-only app.py services/ 2>&1; then
+            echo "✅ All imports sorted correctly" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Some imports need sorting. Run: \`isort app.py services/\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          isort --check-only app.py services/ --quiet || true
