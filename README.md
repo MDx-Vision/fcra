@@ -69,6 +69,22 @@ npm ci
 npx cypress run
 ```
 
+### Database Migrations
+
+```bash
+# Create a new migration (after modifying models)
+alembic revision --autogenerate -m "Description of changes"
+
+# Apply all pending migrations
+alembic upgrade head
+
+# Rollback one migration
+alembic downgrade -1
+
+# Show current revision
+alembic current
+```
+
 ### Security Scanning
 
 ```bash

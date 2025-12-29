@@ -43,3 +43,4 @@ python-dotenv>=1.0.0
 playwright
 psutil>=5.9.0
 sentry-sdk[flask]>=2.0.0
+alembic>=1.13.0

@@ -43,8 +43,14 @@ RUN pip install --no-cache /wheels/* && rm -rf /wheels
 # Copy application code
 COPY --chown=appuser:appuser . .
 
+# Make entrypoint script executable
+RUN chmod +x scripts/docker-entrypoint.sh
+
 # Switch to non-root user
 USER appuser
+
+# Set entrypoint for migrations
+ENTRYPOINT ["scripts/docker-entrypoint.sh"]
 
 # Environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
