@@ -348,6 +348,9 @@ CORS(
 # Allow large credit report uploads (up to 20MB)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 
+# Track app start time for uptime reporting
+app.config["START_TIME"] = datetime.now()
+
 # Initialize performance monitoring middleware
 request_timing_middleware(app)
 print("✅ Performance monitoring middleware initialized")
@@ -1301,41 +1304,82 @@ a:hover{background:#5b21b6}h1{color:#1f2937}</style></head>
 @app.route("/health")
 def health_check():
     """Basic health check - returns 200 if app is running."""
+    import os
+
+    import psutil
+
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+
     return jsonify(
         {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "1.0.0",
+            "version": os.environ.get("APP_VERSION", "1.0.0"),
+            "uptime_seconds": (
+                datetime.now() - app.config.get("START_TIME", datetime.now())
+            ).total_seconds(),
+            "memory": {
+                "rss_mb": round(memory_info.rss / 1024 / 1024, 2),
+                "vms_mb": round(memory_info.vms / 1024 / 1024, 2),
+            },
+            "cpu_percent": process.cpu_percent(),
         }
     )
 
 
 @app.route("/ready")
 def readiness_check():
-    """Readiness check - verifies database connectivity."""
+    """Readiness check - verifies all dependencies are available."""
+    checks = {
+        "database": {"status": "unknown", "latency_ms": None},
+    }
+    all_ready = True
+
+    # Database check
     try:
+        import time
+
+        start = time.time()
         db = get_db()
         db.execute("SELECT 1")
         db.close()
-        return jsonify(
-            {
-                "status": "ready",
-                "database": "connected",
-                "timestamp": datetime.now().isoformat(),
-            }
-        )
+        latency = (time.time() - start) * 1000
+        checks["database"] = {"status": "connected", "latency_ms": round(latency, 2)}
     except Exception as e:
-        return (
-            jsonify(
-                {
-                    "status": "not_ready",
-                    "database": "disconnected",
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat(),
-                }
-            ),
-            503,
-        )
+        checks["database"] = {"status": "disconnected", "error": str(e)}
+        all_ready = False
+
+    # Cache check (if available)
+    try:
+        from services.performance_service import app_cache
+
+        cache_stats = app_cache.get_stats()
+        checks["cache"] = {
+            "status": "available",
+            "entries": cache_stats.get("total_entries", 0),
+            "hit_rate": cache_stats.get("hit_rate", 0),
+        }
+    except Exception:
+        checks["cache"] = {"status": "not_configured"}
+
+    status_code = 200 if all_ready else 503
+    return (
+        jsonify(
+            {
+                "status": "ready" if all_ready else "not_ready",
+                "timestamp": datetime.now().isoformat(),
+                "checks": checks,
+            }
+        ),
+        status_code,
+    )
+
+
+@app.route("/health/live")
+def liveness_check():
+    """Kubernetes liveness probe - minimal check."""
+    return "OK", 200
 
 
 # =============================================================================

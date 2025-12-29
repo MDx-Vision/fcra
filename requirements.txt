@@ -41,3 +41,4 @@ python-dotenv>=1.0.0
 
 # Testing
 playwright
+psutil>=5.9.0
