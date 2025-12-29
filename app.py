@@ -82,6 +82,8 @@ import uuid
 from datetime import datetime, timedelta
 from functools import wraps
 
+# Initialize Sentry for error tracking (if configured)
+import sentry_sdk
 from flask import (
     Flask,
     g,
@@ -95,6 +97,8 @@ from flask import (
     url_for,
 )
 from flask_cors import CORS
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -251,6 +255,24 @@ from services.workflow_triggers_service import (
     TRIGGER_TYPES,
     WorkflowTriggersService,
 )
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            FlaskIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=0.1,  # 10% of requests for performance monitoring
+        profiles_sample_rate=0.1,  # 10% for profiling
+        environment=os.environ.get("ENVIRONMENT", "development"),
+        release=os.environ.get("APP_VERSION", "1.0.0"),
+        send_default_pii=False,  # Don't send personally identifiable info
+    )
+    app_logger.info("Sentry error tracking initialized")
+else:
+    app_logger.info("Sentry not configured (set SENTRY_DSN to enable)")
 
 app = Flask(__name__)
 

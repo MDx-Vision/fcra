@@ -42,3 +42,4 @@ python-dotenv>=1.0.0
 # Testing
 playwright
 psutil>=5.9.0
+sentry-sdk[flask]>=2.0.0
