@@ -1,5 +1,5 @@
 // Exhaustive test for /admin
-describe.skip('/admin - FCRA Admin Dashboard', () => {
+describe('/admin - FCRA Admin Dashboard', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/admin');
@@ -7,7 +7,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     cy.wait(500); // Allow page to fully render
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('loads without errors', () => {
       cy.url().should('include', '/admin');
       cy.get('body').should('be.visible');
@@ -28,7 +28,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('displays main heading', () => {
       cy.get('h1').should('contain', 'FCRA Automation Admin');
     });
@@ -69,7 +69,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Form Tests - analysisForm', () => {
+  describe('Form Tests - analysisForm', () => {
     it('has correct form attributes', () => {
       cy.get('#analysisForm').scrollIntoView()
         .should('exist')
@@ -129,7 +129,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Dropdown Tests', () => {
+  describe('Dropdown Tests', () => {
     it('provider dropdown has correct options', () => {
       cy.get('#provider option').should('have.length', 4);
       cy.get('#provider option').eq(0).should('contain', 'IdentityIQ.com');
@@ -159,7 +159,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('input type toggle works', () => {
       // Initially HTML is active
       cy.get('[data-type="html"]').should('have.class', 'active');
@@ -201,7 +201,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('PDF Upload Tests', () => {
+  describe('PDF Upload Tests', () => {
     beforeEach(() => {
       cy.get('[data-type="pdf"]').click();
     });
@@ -230,7 +230,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('displays correctly on desktop', () => {
       cy.viewport(1280, 720);
       cy.get('.container').should('be.visible');
@@ -254,7 +254,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('handles empty form submission', () => {
       cy.get('#submitBtn').click();
       cy.get('#name:invalid').should('exist');
@@ -290,7 +290,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Form Labels and Accessibility', () => {
+  describe('Form Labels and Accessibility', () => {
     it('has proper labels for all form fields', () => {
       cy.get('label[for="name"]').should('contain', 'Client Name *');
       cy.get('label[for="email"]').should('contain', 'Client Email');
@@ -310,7 +310,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Button States and Classes', () => {
+  describe('Button States and Classes', () => {
     it('parse button has correct classes and attributes', () => {
       cy.get('#parseBtn')
         .should('have.class', 'btn-secondary')
@@ -329,7 +329,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('Preview Section Structure', () => {
+  describe('Preview Section Structure', () => {
     it('has all preview sections', () => {
       cy.get('.preview-section').should('have.length.at.least', 6);
     });
@@ -340,7 +340,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('File Upload Integration', () => {
+  describe('File Upload Integration', () => {
     it('file input triggers properly', () => {
       cy.get('[data-type="pdf"]').click();
       cy.get('#pdfFile').should('have.attr', 'accept', '.pdf');
@@ -352,7 +352,7 @@ describe.skip('/admin - FCRA Admin Dashboard', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality', () => {
+  describe('JavaScript Functionality', () => {
     it('has required JavaScript functions available', () => {
       cy.window().should('have.property', 'setInputType');
       cy.window().should('have.property', 'parsePdf');

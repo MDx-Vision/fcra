@@ -1,11 +1,11 @@
 // Exhaustive test for /history
-describe.skip('/history Page Tests', () => {
+describe('/history Page Tests', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/history');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/history');
       cy.get('body').should('be.visible');
@@ -36,7 +36,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('Content Tests', () => {
+  describe('Content Tests', () => {
     it('should display JSON data with empty reports array', () => {
       cy.get('pre').should('be.visible');
       cy.get('pre').should('contain', '"reports": []');
@@ -58,7 +58,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('Empty State Tests', () => {
+  describe('Empty State Tests', () => {
     it('should display empty reports array correctly', () => {
       cy.get('pre').should('contain', '"reports": []');
     });
@@ -73,7 +73,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have readable text content', () => {
       cy.get('pre').should('have.css', 'font-family');
       cy.get('pre').should('be.visible');
@@ -85,7 +85,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('pre').should('be.visible');
@@ -105,7 +105,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('JSON Data Validation Tests', () => {
+  describe('JSON Data Validation Tests', () => {
     it('should contain valid JSON structure', () => {
       cy.get('pre').invoke('text').then((text) => {
         expect(() => JSON.parse(text)).to.not.throw();
@@ -129,7 +129,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('Page Structure Tests', () => {
+  describe('Page Structure Tests', () => {
     it('should not have navigation elements', () => {
       cy.get('nav').should('not.exist');
       cy.get('[role="navigation"]').should('not.exist');
@@ -170,7 +170,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('Performance Tests', () => {
+  describe('Performance Tests', () => {
     it('should load within acceptable time', () => {
       const start = Date.now();
       cy.visit('/history').then(() => {
@@ -186,7 +186,7 @@ describe.skip('/history Page Tests', () => {
     });
   });
 
-  describe.skip('Content Integrity Tests', () => {
+  describe('Content Integrity Tests', () => {
     it('should maintain JSON formatting consistency', () => {
       cy.get('pre').should('contain', '{');
       cy.get('pre').should('contain', '}');

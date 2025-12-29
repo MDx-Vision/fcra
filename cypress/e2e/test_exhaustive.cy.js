@@ -1,11 +1,11 @@
 // Exhaustive test for /test
-describe.skip('/test Page Tests', () => {
+describe('/test Page Tests', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/test');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/test');
       cy.get('body').should('be.visible');
@@ -27,7 +27,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Content Tests', () => {
+  describe('Content Tests', () => {
     it('should display the JSON status data', () => {
       cy.get('pre').should('be.visible');
       cy.get('pre').should('contain', 'ready_for');
@@ -55,7 +55,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('JSON Structure Tests', () => {
+  describe('JSON Structure Tests', () => {
     it('should have valid JSON structure in pre element', () => {
       cy.get('pre').then(($pre) => {
         const jsonText = $pre.text();
@@ -84,7 +84,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Responsive Design Tests', () => {
+  describe('Responsive Design Tests', () => {
     const viewports = [
       { device: 'Desktop', width: 1280, height: 720 },
       { device: 'Tablet', width: 768, height: 1024 },
@@ -101,7 +101,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Performance Tests', () => {
+  describe('Performance Tests', () => {
     it('should load content quickly', () => {
       const startTime = Date.now();
       cy.get('pre').should('be.visible').then(() => {
@@ -111,7 +111,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have readable text in pre element', () => {
       cy.get('pre').should('have.css', 'color');
       cy.get('pre').should('not.have.css', 'color', 'rgba(0, 0, 0, 0)');
@@ -123,7 +123,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Data Validation Tests', () => {
+  describe('Data Validation Tests', () => {
     it('should have non-negative reports_received value', () => {
       cy.get('pre').then(($pre) => {
         const jsonData = JSON.parse($pre.text());
@@ -148,7 +148,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle page refresh gracefully', () => {
       cy.reload();
       cy.get('pre').should('be.visible');
@@ -163,7 +163,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Content Persistence Tests', () => {
+  describe('Content Persistence Tests', () => {
     it('should maintain JSON formatting', () => {
       cy.get('pre').should('contain', '{');
       cy.get('pre').should('contain', '}');
@@ -180,7 +180,7 @@ describe.skip('/test Page Tests', () => {
     });
   });
 
-  describe.skip('Element Positioning Tests', () => {
+  describe('Element Positioning Tests', () => {
     it('should have pre element positioned correctly', () => {
       cy.get('pre').should('be.visible');
       cy.get('pre').then(($el) => {

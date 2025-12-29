@@ -1,11 +1,11 @@
 // Exhaustive test for /signup/welcome
-describe.skip('/signup/welcome Page Tests', () => {
+describe('/signup/welcome Page Tests', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/signup/welcome');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/signup/welcome');
       cy.get('body').should('be.visible');
@@ -28,7 +28,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Header/Navigation Tests', () => {
+  describe('Header/Navigation Tests', () => {
     it('should display header', () => {
       cy.get('header.header').should('be.visible');
     });
@@ -69,7 +69,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Main Content Tests', () => {
+  describe('Main Content Tests', () => {
     it('should display main content area', () => {
       cy.get('main.main-content').should('be.visible');
     });
@@ -90,7 +90,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Progress Steps Tests', () => {
+  describe('Progress Steps Tests', () => {
     it('should display progress steps container', () => {
       cy.get('.progress-steps').should('be.visible');
     });
@@ -132,7 +132,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Content Grid Tests', () => {
+  describe('Content Grid Tests', () => {
     it('should display content grid', () => {
       cy.get('.content-grid').should('be.visible');
     });
@@ -146,7 +146,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Welcome Card Tests', () => {
+  describe('Welcome Card Tests', () => {
     it('should display success icon', () => {
       cy.get('.success-icon').should('be.visible');
       cy.get('.success-icon svg').should('be.visible');
@@ -198,7 +198,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Info Panel Tests', () => {
+  describe('Info Panel Tests', () => {
     it('should display sample analysis card', () => {
       cy.get('.info-panel .info-card').first().should('be.visible');
     });
@@ -298,7 +298,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('.content-grid').should('be.visible');
@@ -321,7 +321,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle missing logo image gracefully', () => {
       cy.get('.logo img').then(($img) => {
         $img[0].onerror();
@@ -334,7 +334,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper heading hierarchy', () => {
       cy.get('h1').should('have.length', 1);
       cy.get('h2').should('have.length', 1);
@@ -356,7 +356,7 @@ describe.skip('/signup/welcome Page Tests', () => {
     });
   });
 
-  describe.skip('Performance Tests', () => {
+  describe('Performance Tests', () => {
     it('should load within reasonable time', () => {
       const start = Date.now();
       cy.visit('/signup/welcome').then(() => {

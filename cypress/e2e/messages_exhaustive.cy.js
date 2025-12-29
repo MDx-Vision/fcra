@@ -1,5 +1,5 @@
 // Exhaustive test for /portal/messages
-describe.skip('Client Portal - Messages Page', () => {
+describe('Client Portal - Messages Page', () => {
   
   beforeEach(() => {
     cy.visit('/portal/login');
@@ -10,7 +10,7 @@ describe.skip('Client Portal - Messages Page', () => {
     cy.visit('/portal/messages');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('eq', 'http://localhost:5001/portal/messages');
       cy.get('body').should('be.visible');
@@ -33,7 +33,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Header Tests', () => {
+  describe('Header Tests', () => {
     it('should display logo and company name', () => {
       cy.get('.logo img').should('exist');
       cy.get('.logo span').should('contain', 'Brightpath Ascend');
@@ -55,7 +55,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Navigation Tabs Tests', () => {
+  describe('Navigation Tabs Tests', () => {
     const tabs = [
       { name: 'Summary', active: true },
       { name: 'Score Progress', active: false },
@@ -83,7 +83,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Summary Tab Tests', () => {
+  describe('Summary Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Summary').click();
     });
@@ -117,7 +117,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Score Progress Tab Tests', () => {
+  describe('Score Progress Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Score Progress').click();
     });
@@ -138,7 +138,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Dispute Timeline Tab Tests', () => {
+  describe('Dispute Timeline Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Dispute Timeline').click();
     });
@@ -160,7 +160,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Status Tab Tests', () => {
+  describe('Status Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Status').click();
     });
@@ -196,7 +196,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Upload Documents Tab Tests', () => {
+  describe('Upload Documents Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Upload Documents').click();
     });
@@ -227,7 +227,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('My Profile Tab Tests', () => {
+  describe('My Profile Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('My Profile').click();
     });
@@ -242,7 +242,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Contact Us Tab Tests', () => {
+  describe('Contact Us Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Contact Us').click();
     });
@@ -268,7 +268,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Refer a Friend Tab Tests', () => {
+  describe('Refer a Friend Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Refer a Friend').click();
     });
@@ -305,7 +305,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Form Validation Tests', () => {
+  describe('Form Validation Tests', () => {
     it('should validate contact form required fields', () => {
       cy.get('.nav-tab').contains('Contact Us').click();
       cy.get('.submit-btn').contains('Send Message').click();
@@ -347,7 +347,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Document Upload Tests', () => {
+  describe('Document Upload Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Upload Documents').click();
     });
@@ -375,7 +375,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Button Interaction Tests', () => {
+  describe('Button Interaction Tests', () => {
     it('should make all submit buttons clickable', () => {
       const buttons = [
         { tab: 'Status', text: 'Show all' },
@@ -404,7 +404,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Responsive Design Tests', () => {
+  describe('Responsive Design Tests', () => {
     const viewports = [
       { width: 1280, height: 720, name: 'Desktop' },
       { width: 768, height: 1024, name: 'Tablet' },
@@ -428,7 +428,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/portal/messages', { statusCode: 500 }).as('serverError');
       
@@ -452,7 +452,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('User Profile Interaction Tests', () => {
+  describe('User Profile Interaction Tests', () => {
     it('should allow clicking on user profile', () => {
       cy.get('.user-profile').click();
       cy.get('.nav-tab').contains('My Profile').should('have.class', 'active');
@@ -463,7 +463,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Table Functionality Tests', () => {
+  describe('Table Functionality Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Status').click();
     });
@@ -479,7 +479,7 @@ describe.skip('Client Portal - Messages Page', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper ARIA labels and roles', () => {
       cy.get('.nav-tabs').should('have.attr', 'role', 'navigation');
     });

@@ -4,7 +4,7 @@
  * Routes covered: 4
  */
 
-describe.skip('Auth - Full QA Suite', () => {
+describe('Auth - Full QA Suite', () => {
   
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123');
@@ -13,7 +13,7 @@ describe.skip('Auth - Full QA Suite', () => {
   // ==========================================
   // SECTION 1: PAGE LOAD & NAVIGATION
   // ==========================================
-  describe.skip('Page Load & Navigation', () => {
+  describe('Page Load & Navigation', () => {
 
     it.skip('should load /staff/login - redirects when logged in', () => {
       cy.visit('/staff/login', { failOnStatusCode: false });
@@ -40,7 +40,7 @@ describe.skip('Auth - Full QA Suite', () => {
   // ==========================================
   // SECTION 2: UI ELEMENTS
   // ==========================================
-  describe.skip('UI Elements', () => {
+  describe('UI Elements', () => {
     it('should display page without errors', () => {
       cy.window().then((win) => {
         cy.spy(win.console, 'error').as('consoleError');
@@ -59,7 +59,7 @@ describe.skip('Auth - Full QA Suite', () => {
   // ==========================================
   // SECTION 3: FORMS & INPUTS
   // ==========================================
-  describe.skip('Forms & Inputs', () => {
+  describe('Forms & Inputs', () => {
     it('should validate required fields', () => {
       cy.get('form').first().then(($form) => {
         if ($form.length) {
@@ -74,7 +74,7 @@ describe.skip('Auth - Full QA Suite', () => {
   // ==========================================
   // SECTION 4: ERROR HANDLING
   // ==========================================
-  describe.skip('Error Handling', () => {
+  describe('Error Handling', () => {
     it('should handle 404 pages', () => {
       cy.request({ url: '/nonexistent-page-12345', failOnStatusCode: false })
         .then((response) => {
@@ -93,7 +93,7 @@ describe.skip('Auth - Full QA Suite', () => {
   // ==========================================
   // SECTION 5: RESPONSIVE DESIGN
   // ==========================================
-  describe.skip('Responsive Design', () => {
+  describe('Responsive Design', () => {
     it('should display on desktop', () => {
       cy.viewport(1280, 720);
       cy.get('body').should('be.visible');

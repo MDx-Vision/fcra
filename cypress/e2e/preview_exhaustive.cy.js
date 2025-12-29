@@ -1,11 +1,11 @@
 // Exhaustive test for /preview
-describe.skip('Credit Report Preview Page', () => {
+describe('Credit Report Preview Page', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/preview');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/preview');
       cy.get('body').should('be.visible');
@@ -27,7 +27,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display all headings correctly', () => {
       cy.get('h1').should('contain.text', 'Brightpath Ascend');
       cy.get('h2').should('contain.text', 'Free Violation Preview');
@@ -64,7 +64,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('File Upload Tests', () => {
+  describe('File Upload Tests', () => {
     it('should display upload zone initially', () => {
       cy.get('#dropZone').should('be.visible');
       cy.get('#uploadPrompt').should('be.visible');
@@ -114,7 +114,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('Analysis Flow Tests', () => {
+  describe('Analysis Flow Tests', () => {
     beforeEach(() => {
       cy.get('#fileInput').selectFile({
         contents: Cypress.Buffer.from('test content'),
@@ -144,7 +144,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('Results Display Tests', () => {
+  describe('Results Display Tests', () => {
     beforeEach(() => {
       const mockResults = {
         success: true,
@@ -221,7 +221,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     beforeEach(() => {
       cy.get('#fileInput').selectFile({
         contents: Cypress.Buffer.from('test content'),
@@ -271,7 +271,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('Responsive Design Tests', () => {
+  describe('Responsive Design Tests', () => {
     const viewports = [
       { device: 'desktop', width: 1280, height: 720 },
       { device: 'tablet', width: 768, height: 1024 },
@@ -308,7 +308,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper heading hierarchy', () => {
       cy.get('h1').should('have.length.at.least', 1);
       cy.get('h2').should('exist');
@@ -334,7 +334,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('User Flow Tests', () => {
+  describe('User Flow Tests', () => {
     it('should complete full analysis flow successfully', () => {
       const mockResults = {
         success: true,
@@ -395,7 +395,7 @@ describe.skip('Credit Report Preview Page', () => {
     });
   });
 
-  describe.skip('Performance Tests', () => {
+  describe('Performance Tests', () => {
     it('should load initial page quickly', () => {
       cy.get('h1').should('be.visible');
       cy.get('#dropZone').should('be.visible');

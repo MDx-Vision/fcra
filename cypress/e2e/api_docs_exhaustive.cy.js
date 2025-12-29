@@ -1,11 +1,11 @@
 // Exhaustive test for /dashboard/api-docs
-describe.skip('/dashboard/api-docs - API Documentation Page', () => {
+describe('/dashboard/api-docs - API Documentation Page', () => {
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/api-docs');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/dashboard/api-docs');
       cy.get('body').should('be.visible');
@@ -29,7 +29,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Headings', () => {
+  describe('UI Element Tests - Headings', () => {
     it('should display H1 heading', () => {
       cy.get('h1').should('contain.text', 'API Documentation');
     });
@@ -99,7 +99,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Buttons', () => {
+  describe('UI Element Tests - Buttons', () => {
     it('should display Manage API Keys button', () => {
       cy.get('a.btn.btn-primary')
         .contains('Manage API Keys')
@@ -127,7 +127,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - API Scopes Table', () => {
+  describe('Table Tests - API Scopes Table', () => {
     it('should display API scopes table headers', () => {
       cy.get('.param-table').first().within(() => {
         cy.get('th').invoke('text').should('match', /^SCOPE$/i);
@@ -140,7 +140,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Rate Limiting Table', () => {
+  describe('Table Tests - Rate Limiting Table', () => {
     it('should display rate limiting table headers', () => {
       cy.get('.param-table').eq(1).within(() => {
         cy.get('th').invoke('text').should('match', /^LIMIT TYPE$/i);
@@ -154,7 +154,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Clients Endpoint Parameters', () => {
+  describe('Table Tests - Clients Endpoint Parameters', () => {
     it('should display clients parameters table headers', () => {
       cy.get('.param-table').eq(2).within(() => {
         cy.get('th').invoke('text').should('match', /^PARAMETER$/i);
@@ -169,7 +169,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Clients GET Parameter', () => {
+  describe('Table Tests - Clients GET Parameter', () => {
     it('should display clients GET parameter table headers', () => {
       cy.get('.param-table').eq(3).within(() => {
         cy.get('th').invoke('text').should('match', /^PARAMETER$/i);
@@ -184,7 +184,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Clients POST Fields', () => {
+  describe('Table Tests - Clients POST Fields', () => {
     it('should display clients POST fields table headers', () => {
       cy.get('.param-table').eq(4).within(() => {
         cy.get('th').invoke('text').should('match', /^FIELD$/i);
@@ -199,7 +199,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Disputes Parameters', () => {
+  describe('Table Tests - Disputes Parameters', () => {
     it('should display disputes parameters table headers', () => {
       cy.get('.param-table').eq(5).within(() => {
         cy.get('th').invoke('text').should('match', /^PARAMETER$/i);
@@ -214,7 +214,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Disputes POST Fields', () => {
+  describe('Table Tests - Disputes POST Fields', () => {
     it('should display disputes POST fields table headers', () => {
       cy.get('.param-table').eq(6).within(() => {
         cy.get('th').invoke('text').should('match', /^FIELD$/i);
@@ -229,7 +229,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Violations Parameters', () => {
+  describe('Table Tests - Violations Parameters', () => {
     it('should display violations parameters table headers', () => {
       cy.get('.param-table').eq(7).within(() => {
         cy.get('th').invoke('text').should('match', /^PARAMETER$/i);
@@ -244,7 +244,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Webhooks Fields', () => {
+  describe('Table Tests - Webhooks Fields', () => {
     it('should display webhooks fields table headers', () => {
       cy.get('.param-table').eq(8).within(() => {
         cy.get('th').invoke('text').should('match', /^FIELD$/i);
@@ -259,7 +259,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table Tests - Error Codes', () => {
+  describe('Table Tests - Error Codes', () => {
     it('should display error codes table headers', () => {
       cy.get('.error-table').within(() => {
         cy.get('th').invoke('text').should('match', /^STATUS CODE$/i);
@@ -273,7 +273,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Navigation Tests', () => {
+  describe('Navigation Tests', () => {
     it('should have functional sidebar navigation', () => {
       cy.get('.sidebar').should('be.visible');
     });
@@ -300,7 +300,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Table of Contents Tests', () => {
+  describe('Table of Contents Tests', () => {
     it('should display table of contents', () => {
       cy.get('.toc').should('be.visible');
       cy.get('.toc h3').should('contain.text', 'Table of Contents');
@@ -323,7 +323,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should navigate to API keys page when clicking Manage API Keys', () => {
       cy.get('a.btn.btn-primary').contains('Manage API Keys').click();
       cy.url().should('include', '/dashboard/api-keys');
@@ -346,7 +346,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Content Tests', () => {
+  describe('Content Tests', () => {
     it('should display API overview content', () => {
       cy.get('#overview .card').should('contain.text', 'The Brightpath Ascend FCRA Platform API');
     });
@@ -366,7 +366,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('.sidebar').should('be.visible');
@@ -387,7 +387,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Visual Elements Tests', () => {
+  describe('Visual Elements Tests', () => {
     it('should have proper card styling', () => {
       cy.get('.card').should('have.length.at.least', 1);
       cy.get('.card').first().should('be.visible');
@@ -405,7 +405,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper heading hierarchy', () => {
       cy.get('h1').should('exist');
       cy.get('h2').should('exist');
@@ -425,7 +425,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle image load errors gracefully', () => {
       cy.get('.logo img').should('have.attr', 'onerror');
     });
@@ -439,7 +439,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Content Verification Tests', () => {
+  describe('Content Verification Tests', () => {
     it('should display all required sections', () => {
       cy.get('#overview').should('exist');
       cy.get('#authentication').should('exist');
@@ -457,7 +457,7 @@ describe.skip('/dashboard/api-docs - API Documentation Page', () => {
     });
   });
 
-  describe.skip('Page Structure Tests', () => {
+  describe('Page Structure Tests', () => {
     it('should have main content area', () => {
       cy.get('.main-content').should('be.visible');
     });

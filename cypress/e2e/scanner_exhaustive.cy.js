@@ -1,12 +1,12 @@
 // Exhaustive test for /scanner
-describe.skip('/scanner - Document Scanner', () => {
+describe('/scanner - Document Scanner', () => {
   beforeEach(() => {
     // Public route - no auth required
     cy.visit('/scanner');
   });
 
   // Page Load Tests
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/scanner');
       cy.get('body').should('be.visible');
@@ -30,7 +30,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Navigation Tests
-  describe.skip('Navigation Tests', () => {
+  describe('Navigation Tests', () => {
     it('should display navigation sidebar', () => {
       cy.get('.sidebar').should('be.visible');
     });
@@ -94,7 +94,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Main Content Tests
-  describe.skip('Main Content Tests', () => {
+  describe('Main Content Tests', () => {
     it('should display page header', () => {
       cy.get('.page-header').should('be.visible');
       cy.get('.page-header h4').should('contain', 'Document Scanner');
@@ -114,7 +114,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Button Tests
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display camera tab button as active', () => {
       cy.get('button.nav-link.active').should('contain', 'Camera').and('be.visible');
     });
@@ -190,7 +190,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Document Type Selection Tests
-  describe.skip('Document Type Selection Tests', () => {
+  describe('Document Type Selection Tests', () => {
     it('should display document type selection step', () => {
       cy.get('#step-select-type').should('be.visible');
       cy.get('#step-select-type h5').should('contain', 'Select Document Type');
@@ -242,7 +242,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Interactive Element Tests
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should handle tab switching functionality', () => {
       cy.get('button.nav-link').contains('Upload').click();
       cy.get('button.nav-link').contains('Upload').should('have.class', 'active');
@@ -276,7 +276,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Responsive Tests
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 800);
       cy.get('.sidebar').should('be.visible');
@@ -302,7 +302,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // File Upload Tests
-  describe.skip('File Upload Tests', () => {
+  describe('File Upload Tests', () => {
     it('should handle file upload functionality', () => {
       cy.get('button.nav-link').contains('Upload').click();
       
@@ -324,7 +324,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Error Handling Tests
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '**/api/**', { statusCode: 500 }).as('serverError');
       cy.get('#btn-capture').click();
@@ -348,7 +348,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Chart Tests (since charts are indicated as present)
-  describe.skip('Chart Tests', () => {
+  describe('Chart Tests', () => {
     it('should display charts if present', () => {
       // Look for common chart containers or canvas elements
       cy.get('canvas, svg, .chart-container').should('exist');
@@ -356,7 +356,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // LocalStorage Tests
-  describe.skip('LocalStorage Tests', () => {
+  describe('LocalStorage Tests', () => {
     it('should save sidebar state to localStorage', () => {
       cy.get('.nav-section[data-section="cases"] .nav-section-title').click();
       cy.window().then((win) => {
@@ -378,7 +378,7 @@ describe.skip('/scanner - Document Scanner', () => {
   });
 
   // Accessibility Tests
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper heading structure', () => {
       cy.get('h4').should('contain', 'Document Scanner');
       cy.get('h5').should('contain', 'Select Document Type');

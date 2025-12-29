@@ -1,5 +1,5 @@
 // Exhaustive test for /portal/create-password
-describe.skip('Client Portal Create Password Page', () => {
+describe('Client Portal Create Password Page', () => {
   beforeEach(() => {
     cy.visit('/portal/login');
     cy.get('input[name="email"]').type('client@example.com');
@@ -9,7 +9,7 @@ describe.skip('Client Portal Create Password Page', () => {
     cy.visit('/portal/create-password');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('eq', Cypress.config().baseUrl + '/portal/create-password');
       cy.title().should('eq', 'Client Portal - Brightpath Ascend');
@@ -27,7 +27,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Header and Navigation Tests', () => {
+  describe('Header and Navigation Tests', () => {
     it('should display the header with logo and user profile', () => {
       cy.get('.header').should('be.visible');
       cy.get('.logo').should('be.visible');
@@ -71,13 +71,13 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Headings Tests', () => {
+  describe('Headings Tests', () => {
     it('should display the main welcome heading', () => {
       cy.get('h2').should('contain.text', 'Welcome to Your Portal');
     });
   });
 
-  describe.skip('Summary Tab Tests', () => {
+  describe('Summary Tab Tests', () => {
     it('should display status banner', () => {
       cy.get('.status-banner.pending').should('be.visible');
       cy.get('.status-banner h2').should('contain.text', 'Welcome to Your Portal');
@@ -115,7 +115,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Score Progress Tab Tests', () => {
+  describe('Score Progress Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Score Progress').click();
     });
@@ -138,7 +138,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Dispute Timeline Tab Tests', () => {
+  describe('Dispute Timeline Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Dispute Timeline').click();
     });
@@ -161,7 +161,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Status Tab Tests', () => {
+  describe('Status Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Status').click();
     });
@@ -211,7 +211,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('My Profile Tab Tests', () => {
+  describe('My Profile Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('My Profile').click();
     });
@@ -230,7 +230,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Contact Us Tab Tests', () => {
+  describe('Contact Us Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Contact Us').click();
     });
@@ -255,7 +255,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Upload Documents Tab Tests', () => {
+  describe('Upload Documents Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Upload Documents').click();
     });
@@ -286,7 +286,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Refer a Friend Tab Tests', () => {
+  describe('Refer a Friend Tab Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Refer a Friend').click();
     });
@@ -307,7 +307,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Form Functionality Tests', () => {
+  describe('Form Functionality Tests', () => {
     it('should validate contact form required fields', () => {
       cy.get('.nav-tab').contains('Contact Us').click();
       cy.get('button').contains('Send Message').click();
@@ -357,7 +357,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Button Functionality Tests', () => {
+  describe('Button Functionality Tests', () => {
     it('should test all status tab buttons', () => {
       cy.get('.nav-tab').contains('Status').click();
       cy.get('button').contains('Show all').should('be.visible').click();
@@ -387,7 +387,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Tab Navigation Tests', () => {
+  describe('Tab Navigation Tests', () => {
     it('should switch between all tabs correctly', () => {
       const tabs = [
         { name: 'Summary', id: 'summary' },
@@ -412,7 +412,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Table Display Tests', () => {
+  describe('Table Display Tests', () => {
     beforeEach(() => {
       cy.get('.nav-tab').contains('Status').click();
     });
@@ -430,7 +430,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Responsive Design Tests', () => {
+  describe('Responsive Design Tests', () => {
     const viewports = [
       { width: 1280, height: 720, name: 'Desktop' },
       { width: 768, height: 1024, name: 'Tablet' },
@@ -449,7 +449,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Interactive Elements Tests', () => {
+  describe('Interactive Elements Tests', () => {
     it('should test all clickable elements are functional', () => {
       cy.get('.nav-tab').each($tab => {
         cy.wrap($tab).should('be.visible').click();
@@ -464,7 +464,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle invalid form data gracefully', () => {
       cy.get('.nav-tab').contains('Refer a Friend').click();
       cy.get('#refEmail').type('invalid-email');
@@ -478,7 +478,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Card and Panel Tests', () => {
+  describe('Card and Panel Tests', () => {
     it('should display all cards in summary tab', () => {
       cy.get('.card').should('have.length.at.least', 1);
       cy.get('.card').each($card => {
@@ -496,7 +496,7 @@ describe.skip('Client Portal Create Password Page', () => {
     });
   });
 
-  describe.skip('Form Action and Method Tests', () => {
+  describe('Form Action and Method Tests', () => {
     it('should verify contact form attributes', () => {
       cy.get('.nav-tab').contains('Contact Us').click();
       cy.get('#contactForm')

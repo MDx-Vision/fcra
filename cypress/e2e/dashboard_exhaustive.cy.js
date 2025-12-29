@@ -1,5 +1,5 @@
 // Exhaustive test for /portal/dashboard
-describe.skip('Client Portal Dashboard', () => {
+describe('Client Portal Dashboard', () => {
   beforeEach(() => {
     cy.visit('/portal/login');
     cy.get('input[name="email"]').type('client@example.com');
@@ -9,7 +9,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Page Load Tests
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the dashboard page without errors', () => {
       cy.visit('/portal/dashboard');
       cy.url().should('include', '/portal/dashboard');
@@ -36,7 +36,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // UI Element Tests
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
@@ -90,12 +90,12 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Form Tests
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
 
-    describe.skip('Contact Form', () => {
+    describe('Contact Form', () => {
       beforeEach(() => {
         cy.get('.nav-tab').contains('Contact Us').click();
       });
@@ -134,7 +134,7 @@ describe.skip('Client Portal Dashboard', () => {
       });
     });
 
-    describe.skip('Document Upload Form', () => {
+    describe('Document Upload Form', () => {
       beforeEach(() => {
         cy.get('.nav-tab').contains('Upload Documents').click();
       });
@@ -189,7 +189,7 @@ describe.skip('Client Portal Dashboard', () => {
       });
     });
 
-    describe.skip('Referral Form', () => {
+    describe('Referral Form', () => {
       beforeEach(() => {
         cy.get('.nav-tab').contains('Refer a Friend').click();
       });
@@ -243,7 +243,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Table Tests
-  describe.skip('Table Tests', () => {
+  describe('Table Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
       cy.get('.nav-tab').contains('Status').click();
@@ -277,7 +277,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Interactive Element Tests
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
@@ -335,7 +335,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // File Upload Tests
-  describe.skip('File Upload Tests', () => {
+  describe('File Upload Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
       cy.get('.nav-tab').contains('Upload Documents').click();
@@ -353,7 +353,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Date Picker Tests
-  describe.skip('Date Picker Tests', () => {
+  describe('Date Picker Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
       cy.get('.nav-tab').contains('Upload Documents').click();
@@ -374,7 +374,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Chart Tests
-  describe.skip('Chart Tests', () => {
+  describe('Chart Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
@@ -401,7 +401,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Responsive Tests
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
@@ -429,7 +429,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Error Handling Tests
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
@@ -465,7 +465,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Navigation Tests
-  describe.skip('Navigation Tests', () => {
+  describe('Navigation Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
@@ -498,7 +498,7 @@ describe.skip('Client Portal Dashboard', () => {
   });
 
   // Content Loading Tests
-  describe.skip('Content Loading Tests', () => {
+  describe('Content Loading Tests', () => {
     beforeEach(() => {
       cy.visit('/portal/dashboard');
     });
