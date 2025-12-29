@@ -23,6 +23,19 @@ A comprehensive credit repair management system built with Flask.
 
 ## Quick Start
 
+### Docker (Recommended)
+
+```bash
+# Start with Docker Compose (includes PostgreSQL)
+docker-compose up
+
+# Or build and run manually
+docker build -t fcra-platform .
+docker run -p 5000:5000 --env-file .env fcra-platform
+```
+
+### Local Development
+
 ```bash
 # Install Python dependencies
 pip install -r requirements.txt

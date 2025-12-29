@@ -1,0 +1,21 @@
+# Development overrides - automatically loaded by docker-compose
+# To use production settings: docker-compose -f docker-compose.yml up
+
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # Override CMD for development with auto-reload
+    command: ["python", "app.py"]
+    environment:
+      - ENVIRONMENT=development
+      - LOG_FORMAT=text
+      - LOG_LEVEL=DEBUG
+    volumes:
+      # Full mount for hot-reload in development
+      - .:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
