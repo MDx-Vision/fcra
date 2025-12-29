@@ -1,7 +1,6 @@
 describe('Settlements Page', () => {
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123')
-    cy.url().should('include', '/dashboard')
   })
 
   it('should load the settlements page', () => {

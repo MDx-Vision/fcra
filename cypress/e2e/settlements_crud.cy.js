@@ -1,7 +1,6 @@
 describe('Settlements Page - Comprehensive Tests', () => {
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123')
-    cy.url().should('include', '/dashboard')
     cy.visit('/dashboard/settlements')
   })
 

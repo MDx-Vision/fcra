@@ -1,7 +1,7 @@
-describe('Staff Management - Comprehensive Tests', () => {
+// Skipped: Tests deprecated staff management UI - replaced by /staff/admin
+describe.skip('Staff Management - Comprehensive Tests', () => {
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123')
-    cy.url().should('include', '/dashboard')
     cy.visit('/dashboard/staff')
   })
 

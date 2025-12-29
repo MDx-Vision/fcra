@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-12-28T05:29:37.249Z",
+  "timestamp": "2025-12-28T07:33:26.022Z",
   "summary": {
     "passed": 43,
     "failed": 7,
@@ -101,15 +101,11 @@
       },
       {
         "folder": "credit_import_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboardcredit-import -- Page Load Tests -- should load the page without errors (failed).png"
-      },
-      {
-        "folder": "credit_import_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboardcredit-import -- should display main H1 heading Brightpath Ascend Group -- before each hook (failed).png"
+        "file": "Staff Login Page - dashboardcredit-import -- should load the page without errors -- before each hook (failed).png"
       },
       {
         "folder": "credit_report_viewer.cy.js",
-        "file": "Credit Report Viewer - Full QA Suite -- should load credit import list page -- before all hook (failed).png"
+        "file": "Credit Report Viewer - Full QA Suite -- should display credit import dashboard -- before each hook (failed).png"
       },
       {
         "folder": "credit_reports.cy.js",
@@ -137,15 +133,7 @@
       },
       {
         "folder": "documents_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboarddocuments -- Page Load Tests -- should load the page without errors (failed).png"
-      },
-      {
-        "folder": "documents_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboarddocuments -- should display all headings correctly -- before each hook (failed).png"
-      },
-      {
-        "folder": "edge_cases.cy.js",
-        "file": "Edge Cases & Error Handling -- Unauthorized Access -- should redirect unauthenticated users from dashboard (failed).png"
+        "file": "Staff Login Page - dashboarddocuments -- should load the page without errors -- before each hook (failed).png"
       },
       {
         "folder": "email_exhaustive.cy.js",
@@ -157,11 +145,7 @@
       },
       {
         "folder": "franchise_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboardfranchise -- Page Load Tests -- should load without errors (failed).png"
-      },
-      {
-        "folder": "franchise_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboardfranchise -- should display company logo -- before each hook (failed).png"
+        "file": "Staff Login Page - dashboardfranchise -- should load without errors -- before each hook (failed).png"
       },
       {
         "folder": "frivolousness_exhaustive.cy.js",
@@ -181,7 +165,15 @@
       },
       {
         "folder": "import_exhaustive.cy.js",
-        "file": "dashboardimport - Staff Login Page -- should load the page without errors -- before each hook (failed).png"
+        "file": "dashboardimport - Staff Login Page -- Page Load Tests -- should load the page without errors (failed).png"
+      },
+      {
+        "folder": "import_exhaustive.cy.js",
+        "file": "dashboardimport - Staff Login Page -- Page Load Tests -- should not return server errors (failed).png"
+      },
+      {
+        "folder": "import_exhaustive.cy.js",
+        "file": "dashboardimport - Staff Login Page -- should display all headings correctly -- before each hook (failed).png"
       },
       {
         "folder": "integrations_exhaustive.cy.js",
@@ -193,11 +185,7 @@
       },
       {
         "folder": "letter_queue_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboardletter-queue -- Page Load Tests -- should load the page without errors (failed).png"
-      },
-      {
-        "folder": "letter_queue_exhaustive.cy.js",
-        "file": "Staff Login Page - dashboardletter-queue -- should display main container -- before each hook (failed).png"
+        "file": "Staff Login Page - dashboardletter-queue -- should load the page without errors -- before each hook (failed).png"
       },
       {
         "folder": "login.cy.js",
@@ -458,6 +446,14 @@
       {
         "folder": "staff_exhaustive.cy.js",
         "file": "Staff - Full QA Suite -- should load dashboardstaff -- before each hook (failed).png"
+      },
+      {
+        "folder": "suspense_accounts_exhaustive.cy.js",
+        "file": "dashboardsuspense-accounts - Staff Login Page -- Page Load Tests -- should load without errors (failed).png"
+      },
+      {
+        "folder": "suspense_accounts_exhaustive.cy.js",
+        "file": "dashboardsuspense-accounts - Staff Login Page -- should display company logo -- before each hook (failed).png"
       }
     ],
     "notBuilt": [],
@@ -566,14 +562,6 @@
       {
         "folder": "edge_cases.cy.js",
         "file": "Edge Cases & Error Handling -- Session Handling -- should handle concurrent sessions (failed).png"
-      },
-      {
-        "folder": "edge_cases.cy.js",
-        "file": "Edge Cases & Error Handling -- Session Handling -- should handle expired session (failed).png"
-      },
-      {
-        "folder": "edge_cases.cy.js",
-        "file": "Edge Cases & Error Handling -- Unauthorized Access -- should prevent staff from accessing other staff data (failed).png"
       },
       {
         "folder": "preview_exhaustive.cy.js",
@@ -725,6 +713,10 @@
       },
       {
         "folder": "success_exhaustive.cy.js",
+        "file": "signupsuccess Page Tests -- Data Integrity Tests -- should clear sensitive data on page reload (failed).png"
+      },
+      {
+        "folder": "success_exhaustive.cy.js",
         "file": "signupsuccess Page Tests -- Data Integrity Tests -- should preserve form data between steps (failed).png"
       },
       {
@@ -762,6 +754,22 @@
       {
         "folder": "success_exhaustive.cy.js",
         "file": "signupsuccess Page Tests -- Service Agreement Tests -- should display agreement checkboxes (failed).png"
+      },
+      {
+        "folder": "sw.js_exhaustive.cy.js",
+        "file": "sw.js - Service Worker Tests -- Error Handling Tests -- should handle invalid requests gracefully (failed).png"
+      },
+      {
+        "folder": "sw.js_exhaustive.cy.js",
+        "file": "sw.js - Service Worker Tests -- Page Load Tests -- should have correct URL (failed).png"
+      },
+      {
+        "folder": "sw.js_exhaustive.cy.js",
+        "file": "sw.js - Service Worker Tests -- Page Load Tests -- should not have console errors (failed).png"
+      },
+      {
+        "folder": "sw.js_exhaustive.cy.js",
+        "file": "sw.js - Service Worker Tests -- Service Worker Registration Tests -- should be registerable as a service worker (failed).png"
       }
     ]
   },

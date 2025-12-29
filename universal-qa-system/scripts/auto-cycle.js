@@ -125,3 +125,46 @@ if (categories.auth.length > 10) {
   console.log('   2. Review changes: git diff');
   console.log('   3. Commit: git add -A && git commit -m "fix: auto-fix test selectors"');
 }
+
+// Step 7: Auto-fix auth if needed
+if (categories.auth.length > 10) {
+  console.log('🔧 STEP 7: Auto-fixing auth issue...\n');
+  
+  // Create test user that doesn't require password change
+  const seedCode = `
+from app import app, db
+from models import Staff
+from werkzeug.security import generate_password_hash
+
+with app.app_context():
+    user = Staff.query.filter_by(email='test@example.com').first()
+    if user:
+        user.password_hash = generate_password_hash('testpass123')
+        user.must_change_password = False
+        user.is_active = True
+    else:
+        user = Staff(
+            email='test@example.com',
+            password_hash=generate_password_hash('testpass123'),
+            first_name='Test',
+            last_name='User',
+            role='admin',
+            must_change_password=False,
+            is_active=True
+        )
+        db.session.add(user)
+    db.session.commit()
+    print('✅ Test user ready: test@example.com / testpass123')
+`;
+  
+  fs.writeFileSync('/tmp/fix_auth.py', seedCode);
+  try {
+    execSync('python /tmp/fix_auth.py 2>&1', { encoding: 'utf8' });
+    console.log('   ✅ Test user created/updated\n');
+    console.log('   🔄 Re-running tests...\n');
+    execSync('node universal-qa-system/scripts/auto-cycle.js', { stdio: 'inherit' });
+  } catch (e) {
+    console.log('   ❌ Could not auto-fix auth: ' + e.message);
+    console.log('   Manual fix needed in seed.py or database\n');
+  }
+}

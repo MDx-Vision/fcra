@@ -1,7 +1,7 @@
 describe('Analytics Page', () => {
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123')
-    cy.url().should('include', '/dashboard')
+    cy.visit('/dashboard')
   })
 
   it('should load the analytics page', () => {

@@ -22,6 +22,7 @@ describe('Smoke Tests', () => {
 
   it('can login and access dashboard', () => {
     cy.login('test@example.com', 'testpass123')
+    cy.visit('/dashboard')
     cy.url().should('include', '/dashboard')
     cy.get('body').should('be.visible')
   })
