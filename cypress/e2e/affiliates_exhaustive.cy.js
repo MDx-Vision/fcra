@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/affiliates
-describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
+describe('Staff Login Page (/dashboard/affiliates)', () => {
   beforeEach(() => {
     cy.visit('/dashboard/affiliates');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       // Page redirects to staff login when not authenticated
       cy.url().should('include', '/staff/login');
@@ -26,7 +26,7 @@ describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display all headings correctly', () => {
       cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
       cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
@@ -62,7 +62,7 @@ describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -145,7 +145,7 @@ describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('.toggle-btn').click();
@@ -175,7 +175,7 @@ describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -200,7 +200,7 @@ describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
       cy.get('[data-testid="email-input"]').type('test@example.com');
@@ -243,7 +243,7 @@ describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form structure for screen readers', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -263,7 +263,7 @@ describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
     });
   });
 
-  describe.skip('Security Tests', () => {
+  describe('Security Tests', () => {
     it('should have proper autocomplete attributes', () => {
       cy.get('[data-testid="email-input"]').should('have.attr', 'autocomplete', 'email');
       cy.get('[data-testid="password-input"]').should('have.attr', 'autocomplete', 'current-password');

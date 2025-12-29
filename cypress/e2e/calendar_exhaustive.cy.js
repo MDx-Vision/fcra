@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/calendar
-describe.skip('Staff Login Page - /dashboard/calendar', () => {
+describe('Staff Login Page - /dashboard/calendar', () => {
   beforeEach(() => {
     cy.visit('/dashboard/calendar');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/calendar');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -23,7 +23,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display the main logo and company name', () => {
       cy.get('.logo img').should('be.visible').and('have.attr', 'src', '/static/images/logo.png');
       cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
@@ -56,7 +56,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display the login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -129,7 +129,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display login button with correct attributes', () => {
       cy.get('[data-testid="login-button"]')
         .should('be.visible')
@@ -168,7 +168,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should navigate to client portal when client login link is clicked', () => {
       cy.get('[data-testid="client-portal-link"]').click();
       cy.url().should('include', '/portal/login');
@@ -186,7 +186,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     const viewports = [
       { width: 1280, height: 720, name: 'desktop' },
       { width: 768, height: 1024, name: 'tablet' },
@@ -206,7 +206,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle server errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: 'Server Error' }).as('serverError');
       
@@ -238,7 +238,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -259,7 +259,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Data TestID Coverage', () => {
+  describe('Data TestID Coverage', () => {
     const testIds = [
       'login-container',
       'login-card',
@@ -278,7 +278,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('Form Validation Edge Cases', () => {
+  describe('Form Validation Edge Cases', () => {
     it('should handle extremely long email addresses', () => {
       const longEmail = 'a'.repeat(100) + '@example.com';
       cy.get('[data-testid="email-input"]').type(longEmail);
@@ -297,7 +297,7 @@ describe.skip('Staff Login Page - /dashboard/calendar', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should execute togglePassword function correctly', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');

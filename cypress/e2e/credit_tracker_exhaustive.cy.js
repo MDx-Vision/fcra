@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/credit-tracker
-describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
+describe('Staff Login Page - /dashboard/credit-tracker', () => {
   beforeEach(() => {
     cy.visit('/dashboard/credit-tracker');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load page without errors', () => {
       cy.url().should('include', '/dashboard/credit-tracker');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -29,7 +29,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display all required headings', () => {
       cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
       cy.get('[data-testid="login-title"]').should('contain', 'Staff Login').should('be.visible');
@@ -70,7 +70,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -155,7 +155,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.get('.toggle-btn').click();
@@ -183,7 +183,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 800);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -214,7 +214,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle server errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Internal Server Error' } }).as('serverError');
       cy.get('[data-testid="email-input"]').type('test@example.com');
@@ -256,7 +256,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -278,7 +278,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should execute togglePassword function correctly', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');
@@ -295,7 +295,7 @@ describe.skip('Staff Login Page - /dashboard/credit-tracker', () => {
     });
   });
 
-  describe.skip('Data Attributes Tests', () => {
+  describe('Data Attributes Tests', () => {
     it('should verify all data-testid attributes are present', () => {
       const testIds = [
         'login-container',

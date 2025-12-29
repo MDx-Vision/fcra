@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/letter-queue
-describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
+describe('Staff Login Page - /dashboard/letter-queue', () => {
   beforeEach(() => {
     cy.visit('/dashboard/letter-queue');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/letter-queue');
       cy.get('body').should('be.visible');
@@ -28,7 +28,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display main container', () => {
       cy.get('[data-testid="login-container"]').should('be.visible');
     });
@@ -66,7 +66,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display login form', () => {
       cy.get('[data-testid="login-form"]').should('be.visible');
       cy.get('#loginForm').should('have.attr', 'method', 'POST');
@@ -133,7 +133,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display login button with correct attributes', () => {
       cy.get('[data-testid="login-button"]').should('be.visible');
       cy.get('#loginBtn').should('have.attr', 'type', 'submit');
@@ -166,7 +166,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('#password').should('have.attr', 'type', 'password');
       cy.get('.toggle-btn').click();
@@ -182,7 +182,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Form Group Structure Tests', () => {
+  describe('Form Group Structure Tests', () => {
     it('should have proper form group structure for email', () => {
       cy.get('.form-group').first().within(() => {
         cy.get('label[for="email"]').should('exist');
@@ -200,7 +200,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -223,7 +223,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -239,7 +239,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle empty form submission', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('#email:invalid').should('exist');
@@ -261,7 +261,7 @@ describe.skip('Staff Login Page - /dashboard/letter-queue', () => {
     });
   });
 
-  describe.skip('Script Functionality Tests', () => {
+  describe('Script Functionality Tests', () => {
     it('should execute togglePassword function', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');

@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/credit-import
-describe.skip('Staff Login Page - /dashboard/credit-import', () => {
+describe('Staff Login Page - /dashboard/credit-import', () => {
   beforeEach(() => {
     cy.visit('/dashboard/credit-import');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/credit-import');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -26,7 +26,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Headings', () => {
+  describe('UI Element Tests - Headings', () => {
     it('should display main H1 heading "Brightpath Ascend Group"', () => {
       cy.contains('h1', 'Brightpath').should('be.visible');
       cy.contains('h1', 'Ascend').should('be.visible');
@@ -39,7 +39,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Logo and Branding', () => {
+  describe('UI Element Tests - Logo and Branding', () => {
     it('should display logo image', () => {
       cy.get('img[src="/static/images/logo.png"]').should('be.visible');
       cy.get('img[alt="Brightpath Ascend Group"]').should('be.visible');
@@ -59,7 +59,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Buttons', () => {
+  describe('UI Element Tests - Buttons', () => {
     it('should display password toggle button', () => {
       cy.get('.toggle-btn').should('be.visible');
       cy.get('.toggle-btn').should('contain', '👁');
@@ -77,7 +77,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Links', () => {
+  describe('UI Element Tests - Links', () => {
     it('should display client portal link', () => {
       cy.get('[data-testid="client-portal-link"]').should('be.visible');
       cy.get('[data-testid="client-portal-link"]').should('have.attr', 'href', '/portal/login');
@@ -91,7 +91,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Form Tests - Login Form Structure', () => {
+  describe('Form Tests - Login Form Structure', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]').should('be.visible');
       cy.get('#loginForm').should('have.attr', 'method', 'POST');
@@ -122,7 +122,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Form Tests - Input Functionality', () => {
+  describe('Form Tests - Input Functionality', () => {
     it('should accept text input in email field', () => {
       cy.get('#email').type('test@example.com');
       cy.get('#email').should('have.value', 'test@example.com');
@@ -141,7 +141,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Form Tests - Password Toggle Functionality', () => {
+  describe('Form Tests - Password Toggle Functionality', () => {
     it('should toggle password visibility', () => {
       cy.get('#password').type('password123');
       cy.get('#password').should('have.attr', 'type', 'password');
@@ -152,7 +152,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Form Tests - Validation', () => {
+  describe('Form Tests - Validation', () => {
     it('should show validation for empty email field', () => {
       cy.get('#password').type('password123');
       cy.get('#loginBtn').click();
@@ -179,7 +179,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Form Tests - Submit Button Behavior', () => {
+  describe('Form Tests - Submit Button Behavior', () => {
     it('should change button state on form submission', () => {
       cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('loginRequest');
       cy.get('#email').type('test@example.com');
@@ -190,7 +190,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests - Form Submission', () => {
+  describe('Interactive Element Tests - Form Submission', () => {
     it('should submit form with valid credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
       cy.get('#email').type('test@example.com');
@@ -216,7 +216,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -239,7 +239,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle server errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('serverError');
       cy.get('#email').type('test@example.com');
@@ -265,7 +265,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -288,7 +288,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Data TestID Coverage', () => {
+  describe('Data TestID Coverage', () => {
     it('should have all expected data-testid elements', () => {
       cy.get('[data-testid="login-container"]').should('exist');
       cy.get('[data-testid="login-card"]').should('exist');
@@ -301,7 +301,7 @@ describe.skip('Staff Login Page - /dashboard/credit-import', () => {
     });
   });
 
-  describe.skip('Security Tests', () => {
+  describe('Security Tests', () => {
     it('should not expose sensitive information in DOM', () => {
       cy.get('#password').type('secretpassword');
       cy.get('#password').should('have.attr', 'type', 'password');

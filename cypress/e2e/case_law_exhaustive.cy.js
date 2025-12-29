@@ -1,11 +1,11 @@
 // Exhaustive test for /dashboard/case-law
-describe.skip('Staff Login Page - /dashboard/case-law', () => {
+describe('Staff Login Page - /dashboard/case-law', () => {
   beforeEach(() => {
     cy.visit('/dashboard/case-law');
   });
 
   // Page Load Tests
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/case-law');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -28,7 +28,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // UI Element Tests
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display the main logo and company name', () => {
       cy.get('.logo img').should('have.attr', 'src', '/static/images/logo.png');
       cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
@@ -64,7 +64,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // Form Tests
-  describe.skip('Login Form Tests', () => {
+  describe('Login Form Tests', () => {
     it('should display the login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]').should('exist');
       cy.get('#loginForm').should('have.attr', 'method', 'POST');
@@ -125,7 +125,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // Interactive Element Tests
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
@@ -154,7 +154,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // Responsive Tests
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -180,7 +180,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // Error Handling Tests
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle empty form submission', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('#email:invalid').should('exist');
@@ -217,7 +217,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // Accessibility Tests
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form structure', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -236,7 +236,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // Data-TestID Validation
-  describe.skip('Data-TestID Validation', () => {
+  describe('Data-TestID Validation', () => {
     it('should have all expected data-testid attributes', () => {
       cy.get('[data-testid="login-container"]').should('exist');
       cy.get('[data-testid="login-card"]').should('exist');
@@ -250,7 +250,7 @@ describe.skip('Staff Login Page - /dashboard/case-law', () => {
   });
 
   // JavaScript Functionality Tests
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function working', () => {
       cy.window().should('have.property', 'togglePassword');
     });

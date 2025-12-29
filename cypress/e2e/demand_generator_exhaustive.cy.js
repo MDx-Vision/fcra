@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/demand-generator
-describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
+describe('Staff Login Page (/dashboard/demand-generator)', () => {
   beforeEach(() => {
     cy.visit('/dashboard/demand-generator');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load page without errors', () => {
       cy.url().should('include', '/dashboard/demand-generator');
       cy.get('body').should('be.visible');
@@ -27,7 +27,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display all headings correctly', () => {
       cy.get('h1').should('contain.text', 'Brightpath Ascend Group');
       cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
@@ -62,7 +62,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]').should('be.visible');
       cy.get('#loginForm').should('have.attr', 'method', 'POST');
@@ -137,7 +137,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display login button with correct attributes', () => {
       cy.get('[data-testid="login-button"]').should('be.visible');
       cy.get('#loginBtn').should('have.attr', 'type', 'submit');
@@ -162,7 +162,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('#password').should('have.attr', 'type', 'password');
       cy.get('.toggle-btn').click();
@@ -193,7 +193,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -224,7 +224,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle empty form submission', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('#email:invalid').should('exist');
@@ -251,7 +251,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -273,7 +273,7 @@ describe.skip('Staff Login Page (/dashboard/demand-generator)', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().its('togglePassword').should('be.a', 'function');
     });

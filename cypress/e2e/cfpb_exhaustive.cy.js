@@ -1,11 +1,11 @@
 // Exhaustive test for /dashboard/cfpb
 
-describe.skip('Staff Login - /dashboard/cfpb', () => {
+describe('Staff Login - /dashboard/cfpb', () => {
   beforeEach(() => {
     cy.visit('/dashboard/cfpb');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/cfpb');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -27,7 +27,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Logo and Branding', () => {
+  describe('UI Element Tests - Logo and Branding', () => {
     it('should display the company logo', () => {
       cy.get('.logo img').should('be.visible').and('have.attr', 'alt', 'Brightpath Ascend Group');
     });
@@ -41,7 +41,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Login Card', () => {
+  describe('UI Element Tests - Login Card', () => {
     it('should display login card container', () => {
       cy.get('[data-testid="login-card"]').should('be.visible');
     });
@@ -65,7 +65,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Form Tests - Login Form', () => {
+  describe('Form Tests - Login Form', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -141,7 +141,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display password toggle button', () => {
       cy.get('.toggle-btn')
         .should('be.visible')
@@ -184,7 +184,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should navigate to client portal when link is clicked', () => {
       cy.get('[data-testid="client-portal-link"]').click();
       cy.url().should('include', '/portal/login');
@@ -204,7 +204,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -227,7 +227,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Form Submission Tests', () => {
+  describe('Form Submission Tests', () => {
     it('should submit form with valid credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 302, headers: { location: '/dashboard' } }).as('loginRequest');
       
@@ -249,7 +249,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle network errors during form submission', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
       
@@ -271,7 +271,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -292,7 +292,7 @@ describe.skip('Staff Login - /dashboard/cfpb', () => {
     });
   });
 
-  describe.skip('Security Tests', () => {
+  describe('Security Tests', () => {
     it('should have autocomplete attributes set correctly', () => {
       cy.get('[data-testid="email-input"]').should('have.attr', 'autocomplete', 'email');
       cy.get('[data-testid="password-input"]').should('have.attr', 'autocomplete', 'current-password');
