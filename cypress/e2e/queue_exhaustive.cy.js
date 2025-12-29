@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/queue
-describe.skip('Staff Login Page - /dashboard/queue', () => {
+describe('Staff Login Page - /dashboard/queue', () => {
   beforeEach(() => {
     cy.visit('/dashboard/queue');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/queue');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -33,7 +33,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display the logo and company branding', () => {
       cy.get('.logo img').should('be.visible').and('have.attr', 'alt', 'Brightpath Ascend Group');
       cy.get('.logo h1').should('contain.text', 'Brightpath').and('contain.text', 'Ascend').and('contain.text', 'Group');
@@ -70,7 +70,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display the login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('exist')
@@ -160,7 +160,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
@@ -191,7 +191,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -219,7 +219,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle form submission with empty fields', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="email-input"]:invalid').should('exist');
@@ -257,7 +257,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form structure for screen readers', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -276,7 +276,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should execute togglePassword function correctly', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');
@@ -297,7 +297,7 @@ describe.skip('Staff Login Page - /dashboard/queue', () => {
     });
   });
 
-  describe.skip('Visual Elements Tests', () => {
+  describe('Visual Elements Tests', () => {
     it('should display password toggle within password field container', () => {
       cy.get('.password-toggle').should('exist');
       cy.get('.password-toggle').within(() => {

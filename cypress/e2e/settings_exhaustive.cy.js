@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/settings
-describe.skip('Staff Login Page', () => {
+describe('Staff Login Page', () => {
   beforeEach(() => {
     cy.visit('/dashboard/settings');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/settings');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -27,7 +27,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display all required headings', () => {
       cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
       cy.get('[data-testid="login-title"]').should('contain', 'Staff Login').and('be.visible');
@@ -54,7 +54,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -138,7 +138,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display login button with correct attributes', () => {
       cy.get('[data-testid="login-button"]')
         .should('be.visible')
@@ -182,7 +182,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should focus on email input when clicking label', () => {
       cy.get('label[for="email"]').click();
       cy.get('[data-testid="email-input"]').should('have.focus');
@@ -203,7 +203,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -231,7 +231,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle server errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Server error' } }).as('serverError');
       
@@ -272,7 +272,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -297,7 +297,7 @@ describe.skip('Staff Login Page', () => {
     });
   });
 
-  describe.skip('Security Tests', () => {
+  describe('Security Tests', () => {
     it('should have autocomplete attributes for security', () => {
       cy.get('[data-testid="email-input"]').should('have.attr', 'autocomplete', 'email');
       cy.get('[data-testid="password-input"]').should('have.attr', 'autocomplete', 'current-password');

@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/knowledge-base
-describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
+describe('Staff Login Page (/dashboard/knowledge-base)', () => {
   beforeEach(() => {
     cy.visit('/dashboard/knowledge-base');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/knowledge-base');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -32,7 +32,7 @@ describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display main container elements', () => {
       cy.get('[data-testid="login-container"]').should('be.visible');
       cy.get('[data-testid="login-card"]').should('be.visible');
@@ -74,7 +74,7 @@ describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -161,7 +161,7 @@ describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').type('password123');
       
@@ -194,7 +194,7 @@ describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -217,7 +217,7 @@ describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
       
@@ -282,7 +282,7 @@ describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -305,7 +305,7 @@ describe.skip('Staff Login Page (/dashboard/knowledge-base)', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().its('togglePassword').should('be.a', 'function');
     });

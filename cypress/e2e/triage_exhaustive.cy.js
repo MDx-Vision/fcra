@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/triage
-describe.skip('Staff Login Page (/dashboard/triage)', () => {
+describe('Staff Login Page (/dashboard/triage)', () => {
   beforeEach(() => {
     cy.visit('/dashboard/triage');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/triage');
       cy.get('body').should('exist');
@@ -25,7 +25,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display the main container', () => {
       cy.get('[data-testid="login-container"]').should('be.visible');
     });
@@ -70,7 +70,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display the login form', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -165,7 +165,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility when eye button is clicked', () => {
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.get('.toggle-btn').click();
@@ -205,7 +205,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -228,7 +228,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle empty form submission', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="email-input"]:invalid').should('exist');
@@ -266,7 +266,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -287,7 +287,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('Browser Compatibility Tests', () => {
+  describe('Browser Compatibility Tests', () => {
     it('should work with different input methods', () => {
       // Test copy/paste
       cy.get('[data-testid="email-input"]').invoke('val', 'test@example.com').trigger('input');
@@ -305,7 +305,7 @@ describe.skip('Staff Login Page (/dashboard/triage)', () => {
     });
   });
 
-  describe.skip('Performance Tests', () => {
+  describe('Performance Tests', () => {
     it('should load page elements within reasonable time', () => {
       cy.get('[data-testid="login-container"]', { timeout: 5000 }).should('be.visible');
       cy.get('[data-testid="login-form"]', { timeout: 3000 }).should('be.visible');

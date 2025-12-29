@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/tasks
-describe.skip('Staff Login Page - /dashboard/tasks', () => {
+describe('Staff Login Page - /dashboard/tasks', () => {
   beforeEach(() => {
     cy.visit('/dashboard/tasks');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/tasks');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -29,8 +29,8 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
-    describe.skip('Logo and Branding', () => {
+  describe('UI Element Tests', () => {
+    describe('Logo and Branding', () => {
       it('should display the company logo', () => {
         cy.get('.logo img').should('be.visible')
           .and('have.attr', 'src', '/static/images/logo.png')
@@ -48,7 +48,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Login Card', () => {
+    describe('Login Card', () => {
       it('should display login container', () => {
         cy.get('[data-testid="login-container"]').should('be.visible');
       });
@@ -67,7 +67,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Headings', () => {
+    describe('Headings', () => {
       it('should display H2 login title', () => {
         cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
       });
@@ -77,7 +77,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Buttons', () => {
+    describe('Buttons', () => {
       it('should display password toggle button', () => {
         cy.get('.toggle-btn').should('be.visible')
           .and('contain.text', '👁')
@@ -102,7 +102,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Client Portal Link', () => {
+    describe('Client Portal Link', () => {
       it('should display client portal link text', () => {
         cy.get('.client-portal-link').should('contain.text', 'Looking for client portal?');
       });
@@ -116,8 +116,8 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
-    describe.skip('Login Form Structure', () => {
+  describe('Form Tests', () => {
+    describe('Login Form Structure', () => {
       it('should display login form with correct attributes', () => {
         cy.get('[data-testid="login-form"]')
           .should('be.visible')
@@ -139,7 +139,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Email Input Field', () => {
+    describe('Email Input Field', () => {
       it('should display email input with correct attributes', () => {
         cy.get('[data-testid="email-input"]')
           .should('be.visible')
@@ -165,7 +165,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Password Input Field', () => {
+    describe('Password Input Field', () => {
       it('should display password input with correct attributes', () => {
         cy.get('[data-testid="password-input"]')
           .should('be.visible')
@@ -195,7 +195,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Password Toggle Functionality', () => {
+    describe('Password Toggle Functionality', () => {
       it('should toggle password visibility', () => {
         cy.get('[data-testid="password-input"]').type('password123');
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
@@ -208,7 +208,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Form Validation', () => {
+    describe('Form Validation', () => {
       it('should validate required email field', () => {
         cy.get('[data-testid="login-button"]').click();
         cy.get('[data-testid="email-input"]:invalid').should('exist');
@@ -234,7 +234,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Form Submission', () => {
+    describe('Form Submission', () => {
       it('should disable button and show loading state on submit', () => {
         cy.get('[data-testid="email-input"]').type('test@example.com');
         cy.get('[data-testid="password-input"]').type('password123');
@@ -257,7 +257,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should navigate to client portal when link is clicked', () => {
       cy.get('[data-testid="client-portal-link"]').click();
       cy.url().should('include', '/portal/login');
@@ -272,8 +272,8 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
-    describe.skip('Desktop View (1280px)', () => {
+  describe('Responsive Tests', () => {
+    describe('Desktop View (1280px)', () => {
       beforeEach(() => {
         cy.viewport(1280, 720);
       });
@@ -286,7 +286,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Tablet View (768px)', () => {
+    describe('Tablet View (768px)', () => {
       beforeEach(() => {
         cy.viewport(768, 1024);
       });
@@ -306,7 +306,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
       });
     });
 
-    describe.skip('Mobile View (375px)', () => {
+    describe('Mobile View (375px)', () => {
       beforeEach(() => {
         cy.viewport(375, 667);
       });
@@ -333,7 +333,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
       
@@ -376,7 +376,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper labels for form inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -396,7 +396,7 @@ describe.skip('Staff Login Page - /dashboard/tasks', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().its('togglePassword').should('be.a', 'function');
     });

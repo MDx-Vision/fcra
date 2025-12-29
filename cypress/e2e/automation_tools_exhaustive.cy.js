@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/automation-tools
-describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
+describe('Staff Login Page - /dashboard/automation-tools', () => {
   beforeEach(() => {
     cy.visit('/dashboard/automation-tools');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/automation-tools');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -28,8 +28,8 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
-    describe.skip('Logo and Brand Elements', () => {
+  describe('UI Element Tests', () => {
+    describe('Logo and Brand Elements', () => {
       it('should display the logo image', () => {
         cy.get('img[alt="Brightpath Ascend Group"]').should('be.visible');
         cy.get('img[src="/static/images/logo.png"]').should('exist');
@@ -50,7 +50,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
       });
     });
 
-    describe.skip('Login Card Elements', () => {
+    describe('Login Card Elements', () => {
       it('should display login card', () => {
         cy.get('[data-testid="login-card"]').should('be.visible');
       });
@@ -68,7 +68,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
       });
     });
 
-    describe.skip('Button Tests', () => {
+    describe('Button Tests', () => {
       it('should display password toggle button', () => {
         cy.get('.toggle-btn')
           .should('be.visible')
@@ -91,8 +91,8 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
-    describe.skip('Login Form Structure', () => {
+  describe('Form Tests', () => {
+    describe('Login Form Structure', () => {
       it('should display login form with correct attributes', () => {
         cy.get('[data-testid="login-form"]')
           .should('be.visible')
@@ -127,7 +127,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
       });
     });
 
-    describe.skip('Form Input Functionality', () => {
+    describe('Form Input Functionality', () => {
       it('should accept text input in email field', () => {
         cy.get('[data-testid="email-input"]')
           .type('test@example.com')
@@ -146,7 +146,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
       });
     });
 
-    describe.skip('Password Toggle Functionality', () => {
+    describe('Password Toggle Functionality', () => {
       it('should toggle password visibility', () => {
         cy.get('[data-testid="password-input"]').type('password123');
         cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
@@ -159,7 +159,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
       });
     });
 
-    describe.skip('Form Validation', () => {
+    describe('Form Validation', () => {
       it('should show validation for empty required fields', () => {
         cy.get('[data-testid="login-button"]').click();
         cy.get('[data-testid="email-input"]').then(($input) => {
@@ -186,7 +186,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
       });
     });
 
-    describe.skip('Form Submit Behavior', () => {
+    describe('Form Submit Behavior', () => {
       it('should disable submit button and show loading state on form submission', () => {
         cy.get('[data-testid="email-input"]').type('test@example.com');
         cy.get('[data-testid="password-input"]').type('password123');
@@ -199,7 +199,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should make client portal link clickable', () => {
       cy.get('[data-testid="client-portal-link"]').click();
       cy.url().should('include', '/portal/login');
@@ -211,7 +211,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -236,7 +236,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle invalid form submissions gracefully', () => {
       cy.get('[data-testid="email-input"]').type('invalid');
       cy.get('[data-testid="login-button"]').click();
@@ -255,7 +255,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -275,7 +275,7 @@ describe.skip('Staff Login Page - /dashboard/automation-tools', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');

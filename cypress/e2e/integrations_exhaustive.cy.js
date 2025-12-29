@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/integrations
-describe.skip('Staff Login Page - /dashboard/integrations', () => {
+describe('Staff Login Page - /dashboard/integrations', () => {
   beforeEach(() => {
     cy.visit('/dashboard/integrations');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load page without errors', () => {
       cy.url().should('include', '/dashboard/integrations');
       cy.get('body').should('be.visible');
@@ -23,7 +23,7 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display main container', () => {
       cy.get('[data-testid="login-container"]').should('be.visible');
     });
@@ -66,7 +66,7 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -140,7 +140,7 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display password toggle button', () => {
       cy.get('.toggle-btn')
         .should('be.visible')
@@ -185,14 +185,14 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('Navigation Tests', () => {
+  describe('Navigation Tests', () => {
     it('should navigate to client portal when link is clicked', () => {
       cy.get('[data-testid="client-portal-link"]').click();
       cy.url().should('include', '/portal/login');
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -215,7 +215,7 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('Form Interaction Tests', () => {
+  describe('Form Interaction Tests', () => {
     it('should handle tab navigation between form fields', () => {
       cy.get('[data-testid="email-input"]').focus().type('{tab}');
       cy.get('[data-testid="password-input"]').should('be.focused');
@@ -237,7 +237,7 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle form submission with empty fields', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="email-input"]').should('have.class', ':invalid');
@@ -252,7 +252,7 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -269,7 +269,7 @@ describe.skip('Staff Login Page - /dashboard/integrations', () => {
     });
   });
 
-  describe.skip('Visual Elements Tests', () => {
+  describe('Visual Elements Tests', () => {
     it('should display form groups correctly', () => {
       cy.get('.form-group').should('have.length', 2);
       cy.get('.form-group').each(($el) => {

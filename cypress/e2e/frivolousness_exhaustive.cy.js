@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/frivolousness
-describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
+describe('Staff Login Page (/dashboard/frivolousness)', () => {
   beforeEach(() => {
     cy.visit('/dashboard/frivolousness');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/frivolousness');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -27,7 +27,7 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display all headings', () => {
       cy.contains('h1', 'Brightpath').should('be.visible');
       cy.contains('h1', 'Ascend').should('be.visible');
@@ -60,8 +60,8 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
-    describe.skip('Login Form', () => {
+  describe('Form Tests', () => {
+    describe('Login Form', () => {
       it('should have correct form attributes', () => {
         cy.get('#loginForm').should('have.attr', 'method', 'POST');
         cy.get('#loginForm').should('have.attr', 'action', '/staff/login');
@@ -141,7 +141,7 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility when eye button is clicked', () => {
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.get('.toggle-btn').click();
@@ -162,7 +162,7 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -190,7 +190,7 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle server errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Server error' } }).as('serverError');
       
@@ -228,7 +228,7 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form structure', () => {
       cy.get('form').should('have.length', 1);
       cy.get('label[for="email"]').should('exist');
@@ -248,7 +248,7 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('Data Attribute Tests', () => {
+  describe('Data Attribute Tests', () => {
     it('should have all required data-testid attributes', () => {
       cy.get('[data-testid="login-container"]').should('exist');
       cy.get('[data-testid="login-card"]').should('exist');
@@ -261,7 +261,7 @@ describe.skip('Staff Login Page (/dashboard/frivolousness)', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().its('togglePassword').should('be.a', 'function');
     });

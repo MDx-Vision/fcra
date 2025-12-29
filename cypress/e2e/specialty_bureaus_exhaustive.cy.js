@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/specialty-bureaus
-describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
+describe('Staff Login Page - /dashboard/specialty-bureaus', () => {
   beforeEach(() => {
     cy.visit('/dashboard/specialty-bureaus');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/specialty-bureaus');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -25,7 +25,7 @@ describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
   });
 
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display the main logo and company name', () => {
       cy.get('.logo img').should('be.visible').and('have.attr', 'src', '/static/images/logo.png');
       cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
@@ -65,7 +65,7 @@ describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
   });
 
-  describe.skip('Form Tests', () => {
+  describe('Form Tests', () => {
     it('should have login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]')
         .should('have.attr', 'method', 'POST')
@@ -148,7 +148,7 @@ describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.get('.toggle-btn').click();
@@ -172,7 +172,7 @@ describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -200,7 +200,7 @@ describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle form submission with empty fields', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="email-input"]:invalid').should('exist');
@@ -238,7 +238,7 @@ describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form structure for screen readers', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -262,7 +262,7 @@ describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
     });
   });
 
-  describe.skip('Data Validation Tests', () => {
+  describe('Data Validation Tests', () => {
     it('should maintain form state during interaction', () => {
       cy.get('[data-testid="email-input"]').type('test@example.com');
       cy.get('[data-testid="password-input"]').type('password123');

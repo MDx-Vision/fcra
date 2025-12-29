@@ -1,11 +1,11 @@
 // Exhaustive test for /dashboard/signups
-describe.skip('/dashboard/signups - Staff Login Page', () => {
+describe('/dashboard/signups - Staff Login Page', () => {
   beforeEach(() => {
     cy.visit('/dashboard/signups');
   });
 
   // Page Load Tests
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/dashboard/signups');
       cy.get('body').should('be.visible');
@@ -28,7 +28,7 @@ describe.skip('/dashboard/signups - Staff Login Page', () => {
   });
 
   // UI Element Tests
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display main container', () => {
       cy.get('[data-testid="login-container"]').should('be.visible');
     });
@@ -72,7 +72,7 @@ describe.skip('/dashboard/signups - Staff Login Page', () => {
   });
 
   // Form Tests
-  describe.skip('Login Form Tests', () => {
+  describe('Login Form Tests', () => {
     it('should display login form', () => {
       cy.get('[data-testid="login-form"]')
         .should('be.visible')
@@ -181,7 +181,7 @@ describe.skip('/dashboard/signups - Staff Login Page', () => {
   });
 
   // Interactive Element Tests
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should make login button clickable', () => {
       cy.get('[data-testid="login-button"]').should('not.be.disabled').click();
     });
@@ -201,7 +201,7 @@ describe.skip('/dashboard/signups - Staff Login Page', () => {
   });
 
   // Responsive Tests
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -222,7 +222,7 @@ describe.skip('/dashboard/signups - Staff Login Page', () => {
   });
 
   // Error Handling Tests
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle empty form submission', () => {
       cy.get('[data-testid="login-button"]').click();
       cy.get('[data-testid="email-input"]').should('have.focus');
@@ -244,7 +244,7 @@ describe.skip('/dashboard/signups - Staff Login Page', () => {
   });
 
   // Accessibility Tests
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -266,7 +266,7 @@ describe.skip('/dashboard/signups - Staff Login Page', () => {
   });
 
   // Content Tests
-  describe.skip('Content Tests', () => {
+  describe('Content Tests', () => {
     it('should display correct company branding', () => {
       cy.get('h1').should('contain.text', 'Brightpath');
       cy.get('h1 span').should('contain.text', 'Ascend');

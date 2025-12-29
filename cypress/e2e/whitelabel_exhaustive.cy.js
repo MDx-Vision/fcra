@@ -1,11 +1,11 @@
 // Exhaustive test for /dashboard/whitelabel
-describe.skip('Staff Login - Whitelabel Dashboard', () => {
+describe('Staff Login - Whitelabel Dashboard', () => {
   beforeEach(() => {
     cy.visit('/dashboard/whitelabel');
   });
 
   // Page Load Tests
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('loads the page without errors', () => {
       cy.url().should('include', '/dashboard/whitelabel');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -32,7 +32,7 @@ describe.skip('Staff Login - Whitelabel Dashboard', () => {
   });
 
   // UI Element Tests
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('displays main logo and company branding', () => {
       cy.get('.logo img').should('be.visible').and('have.attr', 'alt', 'Brightpath Ascend Group');
       cy.get('h1').should('contain.text', 'Brightpath').and('contain.text', 'Ascend').and('contain.text', 'Group');
@@ -70,7 +70,7 @@ describe.skip('Staff Login - Whitelabel Dashboard', () => {
   });
 
   // Form Tests
-  describe.skip('Login Form Tests', () => {
+  describe('Login Form Tests', () => {
     it('displays login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]').should('be.visible')
         .and('have.attr', 'method', 'POST')
@@ -152,7 +152,7 @@ describe.skip('Staff Login - Whitelabel Dashboard', () => {
   });
 
   // Interactive Element Tests
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('toggles password visibility when eye button is clicked', () => {
       cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.get('button.toggle-btn').click();
@@ -191,7 +191,7 @@ describe.skip('Staff Login - Whitelabel Dashboard', () => {
   });
 
   // Responsive Tests
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('displays correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -223,7 +223,7 @@ describe.skip('Staff Login - Whitelabel Dashboard', () => {
   });
 
   // Error Handling Tests
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('handles server error on form submission', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Server error' } }).as('loginError');
       cy.get('[data-testid="email-input"]').type('test@example.com');
@@ -262,7 +262,7 @@ describe.skip('Staff Login - Whitelabel Dashboard', () => {
   });
 
   // Accessibility Tests
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('has proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');

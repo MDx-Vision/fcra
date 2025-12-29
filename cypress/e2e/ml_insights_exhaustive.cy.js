@@ -1,11 +1,11 @@
 // Exhaustive test for /dashboard/ml-insights
-describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
+describe('/dashboard/ml-insights - Staff Login Page', () => {
   beforeEach(() => {
     cy.visit('/dashboard/ml-insights');
   });
 
   // Page Load Tests
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/dashboard/ml-insights');
       cy.get('body').should('be.visible');
@@ -28,7 +28,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // UI Element Tests
-  describe.skip('UI Element Tests', () => {
+  describe('UI Element Tests', () => {
     it('should display main logo and branding', () => {
       cy.get('.logo img[src="/static/images/logo.png"]').should('be.visible');
       cy.get('.logo img[alt="Brightpath Ascend Group"]').should('be.visible');
@@ -54,7 +54,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Container Structure Tests
-  describe.skip('Container Structure Tests', () => {
+  describe('Container Structure Tests', () => {
     it('should have main login container', () => {
       cy.get('[data-testid="login-container"]').should('be.visible');
     });
@@ -71,7 +71,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Form Tests
-  describe.skip('Login Form Tests', () => {
+  describe('Login Form Tests', () => {
     it('should display login form with correct attributes', () => {
       cy.get('#loginForm[data-testid="login-form"]')
         .should('be.visible')
@@ -137,7 +137,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Button Tests
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display login button with correct attributes', () => {
       cy.get('#loginBtn[data-testid="login-button"]')
         .should('be.visible')
@@ -163,7 +163,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Interactive Element Tests
-  describe.skip('Interactive Element Tests', () => {
+  describe('Interactive Element Tests', () => {
     it('should toggle password visibility', () => {
       cy.get('#password[data-testid="password-input"]').should('have.attr', 'type', 'password');
       cy.get('.toggle-btn').click();
@@ -196,7 +196,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Form Submission Tests
-  describe.skip('Form Submission Tests', () => {
+  describe('Form Submission Tests', () => {
     it('should submit form with valid credentials', () => {
       cy.intercept('POST', '/staff/login').as('loginSubmit');
       
@@ -215,7 +215,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Responsive Tests
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -239,7 +239,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Error Handling Tests
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle invalid login credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('invalidLogin');
       
@@ -272,7 +272,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // Accessibility Tests
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels associated with inputs', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -295,7 +295,7 @@ describe.skip('/dashboard/ml-insights - Staff Login Page', () => {
   });
 
   // JavaScript Functionality Tests
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().its('togglePassword').should('be.a', 'function');
     });

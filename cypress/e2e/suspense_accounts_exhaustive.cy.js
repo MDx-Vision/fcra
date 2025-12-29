@@ -1,10 +1,10 @@
 // Exhaustive test for /dashboard/suspense-accounts
-describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
+describe('/dashboard/suspense-accounts - Staff Login Page', () => {
   beforeEach(() => {
     cy.visit('/dashboard/suspense-accounts');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
       cy.url().should('include', '/dashboard/suspense-accounts');
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -28,7 +28,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Logo and Branding', () => {
+  describe('UI Element Tests - Logo and Branding', () => {
     it('should display company logo', () => {
       cy.get('.logo img').should('be.visible').and('have.attr', 'src', '/static/images/logo.png');
       cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
@@ -43,7 +43,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('UI Element Tests - Login Card', () => {
+  describe('UI Element Tests - Login Card', () => {
     it('should display login card container', () => {
       cy.get('[data-testid="login-card"]').should('be.visible');
     });
@@ -67,7 +67,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Form Tests - Login Form', () => {
+  describe('Form Tests - Login Form', () => {
     it('should display login form with correct attributes', () => {
       cy.get('[data-testid="login-form"]').should('be.visible');
       cy.get('#loginForm').should('have.attr', 'method', 'POST');
@@ -134,7 +134,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Button Tests', () => {
+  describe('Button Tests', () => {
     it('should display password toggle button', () => {
       cy.get('.toggle-btn').should('be.visible');
       cy.get('.toggle-btn').should('have.attr', 'type', 'button');
@@ -169,7 +169,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Form Submission Tests', () => {
+  describe('Form Submission Tests', () => {
     it('should submit form with valid credentials', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginSubmit');
       cy.get('[data-testid="email-input"]').type('staff@example.com');
@@ -197,7 +197,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Navigation Tests', () => {
+  describe('Navigation Tests', () => {
     it('should navigate to client portal when link is clicked', () => {
       cy.get('[data-testid="client-portal-link"]').click();
       cy.url().should('include', '/portal/login');
@@ -208,7 +208,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Responsive Design Tests', () => {
+  describe('Responsive Design Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
       cy.get('[data-testid="login-container"]').should('be.visible');
@@ -231,7 +231,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
+  describe('Error Handling Tests', () => {
     it('should handle network errors gracefully', () => {
       cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('serverError');
       cy.get('[data-testid="email-input"]').type('test@example.com');
@@ -257,7 +257,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
+  describe('Accessibility Tests', () => {
     it('should have proper form labels', () => {
       cy.get('label[for="email"]').should('exist');
       cy.get('label[for="password"]').should('exist');
@@ -284,7 +284,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('Data Attribute Tests', () => {
+  describe('Data Attribute Tests', () => {
     it('should have all required data-testid attributes', () => {
       cy.get('[data-testid="login-container"]').should('exist');
       cy.get('[data-testid="login-card"]').should('exist');
@@ -297,7 +297,7 @@ describe.skip('/dashboard/suspense-accounts - Staff Login Page', () => {
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
+  describe('JavaScript Functionality Tests', () => {
     it('should have togglePassword function available', () => {
       cy.window().then((win) => {
         expect(win.togglePassword).to.be.a('function');
