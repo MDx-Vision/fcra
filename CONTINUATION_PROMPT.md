@@ -14,8 +14,8 @@ Copy and paste this into a new conversation to continue where we left off.
 - **4,653 unit tests** - 100% passing (95s runtime)
 - **56/56 services** have dedicated test files (100% coverage)
 - **88 Cypress E2E tests** - 88/88 passing
-- **23 exhaustive tests enabled** - Test login flow (protected routes redirect to /staff/login)
-- **45 exhaustive tests skipped** - Need authenticated page data-testids to be added
+- **51 exhaustive tests enabled** - Test login flow (protected routes redirect to /staff/login)
+- **17 exhaustive tests skipped** - Need authenticated page access or special setup
 
 **Feature Phases - ALL COMPLETE:**
 - Phase 1: Core Platform ✅
