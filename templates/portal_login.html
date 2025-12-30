@@ -278,7 +278,7 @@
             </div>
             {% endif %}
 
-            <div id="loginFormContainer" data-testid="login-form-container">
+            <div id="loginFormContainer" class="{{ 'hidden' if reset_token else '' }}" data-testid="login-form-container">
                 <h2 data-testid="login-title">Welcome Back</h2>
                 <p class="subtitle">Sign in to access your credit repair portal</p>
 
@@ -328,7 +328,7 @@
                 </form>
             </div>
 
-            <div id="resetFormContainer" class="forgot-form" data-testid="reset-form-container">
+            <div id="resetFormContainer" class="forgot-form{{ ' active' if reset_token else '' }}" data-testid="reset-form-container">
                 <h2>Set New Password</h2>
                 <p class="subtitle">Create a strong password for your account</p>
 

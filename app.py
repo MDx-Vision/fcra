@@ -7410,6 +7410,10 @@ def portal_redirect():
     """Redirect /portal to portal dashboard or login"""
     if "client_id" in session:
         return redirect(url_for("portal.dashboard"))
+    # Preserve query parameters (like ?token=xxx for password reset)
+    query_string = request.query_string.decode()
+    if query_string:
+        return redirect(f"/portal/login?{query_string}")
     return redirect(url_for("portal_login"))
 
 
@@ -7510,7 +7514,9 @@ def portal_login():
     if request.method == "GET":
         if "client_id" in session:
             return redirect("/portal/dashboard")
-        return render_template("portal_login.html")
+        # Pass reset token if present in query params
+        reset_token = request.args.get("token", "")
+        return render_template("portal_login.html", reset_token=reset_token)
 
     db = get_db()
     try:
