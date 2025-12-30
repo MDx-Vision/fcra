@@ -31,7 +31,7 @@ beforeEach(() => {
 
 | # | Test File | Route | Template | Status |
 |---|-----------|-------|----------|--------|
-| 1 | `billing_exhaustive` | `/dashboard/billing` | billing_management.html | [ ] |
+| 1 | `billing_exhaustive` | `/dashboard/billing` | billing_management.html | [x] |
 | 2 | `contacts_exhaustive` | `/dashboard/contacts` | contacts.html | [ ] |
 | 3 | `documents_exhaustive` | `/dashboard/documents` | documents.html | [ ] |
 | 4 | `settings_exhaustive` | `/dashboard/settings` | settings.html | [ ] |
@@ -102,14 +102,14 @@ beforeEach(() => {
 
 ## Progress
 
-- [ ] Priority 1: 0/10 complete
+- [ ] Priority 1: 1/10 complete
 - [ ] Priority 2: 0/12 complete
 - [ ] Priority 3: 0/7 complete
 - [ ] Priority 4: 0/5 complete
 - [ ] Priority 5: 0/4 complete
 - [ ] Priority 6: 0/3 complete
 
-**Total: 0/41 complete**
+**Total: 1/41 complete**
 
 ---
 
