@@ -31,9 +31,9 @@
   - 12 redirect routes (covered by target pages)
   - 5 already covered by existing working tests
   - 5 invalid routes (don't exist or are JSON APIs)
-- **Remaining**: 34 broken tests need authentication fixes (7 fixed so far)
+- **Remaining**: 33 broken tests need authentication fixes (8 fixed so far)
 
-**Next Step**: Fix remaining 34 broken tests (add `cy.login()` + test real page content)
+**Next Step**: Fix remaining 33 broken tests (add `cy.login()` + test real page content)
 
 **Fixed**:
 - `billing_exhaustive.cy.js` - 38 tests passing
@@ -43,6 +43,7 @@
 - `calendar_exhaustive.cy.js` - 27 tests passing
 - `tasks_exhaustive.cy.js` - 29 tests passing
 - `signups_exhaustive.cy.js` - 47 tests passing
+- `affiliates_exhaustive.cy.js` - 64 tests passing
 
 **Related Docs**:
 - `EXHAUSTIVE_TESTS_FEATURE_BACKLOG.md` - Feature specs from tests
