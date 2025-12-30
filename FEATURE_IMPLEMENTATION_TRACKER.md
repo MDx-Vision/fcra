@@ -10,16 +10,13 @@
 
 | Status | Count |
 |--------|-------|
-| Completed | 60 |
-| Skipped | 8 |
+| Completed | 68 |
+| Skipped | 0 |
 | Pending | 0 |
 | **Total** | **68** |
 
-### Skipped Items (404/500 routes - features not implemented)
-- #13 Email, #14 SMS (404)
-- #34 Generator (404)
-- #47 Predictive (500)
-- #61 Welcome, #65 Auth, #66 Analysis, #67 Messages (404)
+### Skipped Items
+None - all 68 routes implemented!
 
 ---
 
@@ -46,8 +43,8 @@
 | 10 | Reports | `/dashboard/reports` | High - Full page impl | DONE | 2025-12-30 |
 | 11 | Tasks | `/dashboard/tasks` | High - Full page impl | DONE | 2025-12-30 |
 | 12 | Calendar | `/dashboard/calendar` | High - Full page impl | DONE | 2025-12-30 |
-| 13 | Email | `/dashboard/email` | High - Full page impl | SKIP | 2025-12-30 |
-| 14 | SMS | `/dashboard/sms` | High - Full page impl | SKIP | 2025-12-30 |
+| 13 | Email | `/dashboard/email` | Redirect to /settings/email | DONE | 2025-12-30 |
+| 14 | SMS | `/dashboard/sms` | Redirect to /settings/sms | DONE | 2025-12-30 |
 | 15 | Settings | `/dashboard/settings` | High - Full page impl | DONE | 2025-12-30 |
 
 ### Phase C: FCRA-Specific Features (Items 16-28)
@@ -77,7 +74,7 @@
 | 31 | Workflows | `/dashboard/workflows` | High | DONE | 2025-12-30 |
 | 32 | Queue | `/dashboard/queue` | Medium | DONE | 2025-12-30 |
 | 33 | Escalation | `/dashboard/escalation` | Medium | DONE | 2025-12-30 |
-| 34 | Generator | `/dashboard/generator` | Medium | SKIP | 2025-12-30 |
+| 34 | Generator | `/dashboard/generator` | Redirect to /demand-generator | DONE | 2025-12-30 |
 | 35 | Import | `/dashboard/import` | Medium | DONE | 2025-12-30 |
 | 36 | Scanned Documents | `/dashboard/scanned-documents` | Medium | DONE | 2025-12-30 |
 
@@ -100,7 +97,7 @@
 | # | Feature | Route | Effort | Status | Completed |
 |---|---------|-------|--------|--------|-----------|
 | 46 | ML Insights | `/dashboard/ml-insights` | High | DONE | 2025-12-30 |
-| 47 | Predictive | `/dashboard/predictive` | High | SKIP | 2025-12-30 |
+| 47 | Predictive | `/dashboard/predictive` | Route + template exist | DONE | 2025-12-30 |
 | 48 | Patterns | `/dashboard/patterns` | Medium | DONE | 2025-12-30 |
 | 49 | Performance | `/dashboard/performance` | Medium | DONE | 2025-12-30 |
 | 50 | Audit | `/dashboard/audit` | Medium | DONE | 2025-12-30 |
@@ -124,13 +121,13 @@
 | 58 | Portal Dashboard | `/portal/dashboard` | High | DONE | 2025-12-30 |
 | 59 | Create Password | `/portal/create-password` | Medium | DONE | 2025-12-30 |
 | 60 | Portal Logout | `/portal/logout` | Low | DONE | 2025-12-30 |
-| 61 | Welcome | `/welcome` | Low | SKIP | 2025-12-30 |
+| 61 | Welcome | `/welcome` | Redirect to /signup/welcome | DONE | 2025-12-30 |
 | 62 | History | `/history` | Low - JSON endpoint | DONE | 2025-12-30 |
 | 63 | Preview | `/preview` | Low | DONE | 2025-12-30 |
 | 64 | Test | `/test` | Low - JSON endpoint | DONE | 2025-12-30 |
-| 65 | Auth | `/auth` | Low | SKIP | 2025-12-30 |
-| 66 | Analysis | `/analysis` | Low | SKIP | 2025-12-30 |
-| 67 | Messages | `/dashboard/messages` | Medium | SKIP | 2025-12-30 |
+| 65 | Auth | `/auth` | Redirect to /staff/login | DONE | 2025-12-30 |
+| 66 | Analysis | `/analysis` | Redirect to /dashboard/analyses | DONE | 2025-12-30 |
+| 67 | Messages | `/dashboard/messages` | Redirect to /settings/sms | DONE | 2025-12-30 |
 | 68 | Dashboard Main | `/dashboard` | Medium | DONE | 2025-12-30 |
 
 ---

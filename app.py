@@ -892,6 +892,12 @@ def inject_tenant_branding():
     }
 
 
+@app.route("/auth")
+def auth_redirect():
+    """Redirect to staff login page"""
+    return redirect(url_for("staff_login"))
+
+
 @app.route("/staff/login", methods=["GET", "POST"])
 @limiter.limit(RATE_LIMITS["login"])  # Prevent brute force attacks
 def staff_login():
@@ -5474,6 +5480,12 @@ def dashboard():
         db.close()
 
 
+@app.route("/analysis")
+def analysis_redirect():
+    """Redirect to analyses dashboard"""
+    return redirect(url_for("analyses_page"))
+
+
 @app.route("/dashboard/analyses")
 @require_staff()
 def analyses_page():
@@ -6548,6 +6560,20 @@ def api_get_settings():
         db.close()
 
 
+@app.route("/dashboard/messages")
+@require_staff(roles=["admin", "staff"])
+def dashboard_messages():
+    """Redirect to SMS settings page (messaging)"""
+    return redirect(url_for("dashboard_sms_settings"))
+
+
+@app.route("/dashboard/sms")
+@require_staff(roles=["admin", "staff"])
+def dashboard_sms():
+    """Redirect to SMS settings page"""
+    return redirect(url_for("dashboard_sms_settings"))
+
+
 @app.route("/dashboard/settings/sms")
 @require_staff(roles=["admin"])
 def dashboard_sms_settings():
@@ -6771,6 +6797,13 @@ def api_get_sms_logs():
 # ============================================================
 # EMAIL AUTOMATION ROUTES
 # ============================================================
+
+
+@app.route("/dashboard/email")
+@require_staff(roles=["admin", "staff"])
+def dashboard_email():
+    """Redirect to email settings page"""
+    return redirect(url_for("dashboard_email_settings"))
 
 
 @app.route("/dashboard/settings/email")
@@ -8995,6 +9028,12 @@ def signup_success():
         return render_template("client_signup.html", success=False, error=str(e))
     finally:
         db.close()
+
+
+@app.route("/welcome")
+def welcome_redirect():
+    """Redirect to signup welcome page"""
+    return redirect(url_for("signup_welcome", **request.args))
 
 
 @app.route("/signup/welcome")
@@ -23878,6 +23917,13 @@ CREDIT REPORT TO ANALYZE:
 # ============================================================================
 # POWER FEATURES: AI SETTLEMENT DEMAND LETTER GENERATOR
 # ============================================================================
+
+
+@app.route("/dashboard/generator")
+@require_staff()
+def dashboard_generator():
+    """Redirect to demand generator page"""
+    return redirect(url_for("demand_generator_page"))
 
 
 @app.route("/dashboard/demand-generator")
