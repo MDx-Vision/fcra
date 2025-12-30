@@ -31,9 +31,9 @@
   - 12 redirect routes (covered by target pages)
   - 5 already covered by existing working tests
   - 5 invalid routes (don't exist or are JSON APIs)
-- **Remaining**: 30 broken tests need authentication fixes (11 fixed so far)
+- **Remaining**: 29 broken tests need authentication fixes (12 fixed so far)
 - **Priority 1 COMPLETE**: All 10 core business page tests fixed
-- **Priority 2 IN PROGRESS**: 1/12 FCRA-specific feature tests fixed
+- **Priority 2 IN PROGRESS**: 2/12 FCRA-specific feature tests fixed
 
 **Next Step**: Continue fixing Priority 2 tests (FCRA-Specific Features)
 
@@ -49,6 +49,7 @@
 - `settlements_exhaustive.cy.js` - 60 tests passing
 - `admin_exhaustive.cy.js` - 66 tests passing
 - `letter_queue_exhaustive.cy.js` - 53 tests passing
+- `credit_import_exhaustive.cy.js` - 61 tests passing
 
 **Related Docs**:
 - `EXHAUSTIVE_TESTS_FEATURE_BACKLOG.md` - Feature specs from tests
