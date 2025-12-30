@@ -33,11 +33,12 @@
   - 5 invalid routes (don't exist or are JSON APIs)
 - **Remaining**: 41 broken tests need authentication fixes
 
-**Next Step**: Fix remaining 39 broken tests (add `cy.login()` + test real page content)
+**Next Step**: Fix remaining 38 broken tests (add `cy.login()` + test real page content)
 
 **Fixed**:
 - `billing_exhaustive.cy.js` - 38 tests passing
 - `contacts_exhaustive.cy.js` - 33 tests passing
+- `documents_exhaustive.cy.js` - 32 tests passing
 
 **Related Docs**:
 - `EXHAUSTIVE_TESTS_FEATURE_BACKLOG.md` - Feature specs from tests
