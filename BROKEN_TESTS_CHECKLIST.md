@@ -46,7 +46,7 @@ beforeEach(() => {
 
 | # | Test File | Route | Template | Status |
 |---|-----------|-------|----------|--------|
-| 11 | `letter_queue_exhaustive` | `/dashboard/letter-queue` | letter_queue.html | [ ] |
+| 11 | `letter_queue_exhaustive` | `/dashboard/letter-queue` | letter_queue.html | [x] |
 | 12 | `credit_import_exhaustive` | `/dashboard/credit-import` | credit_import.html | [ ] |
 | 13 | `credit_tracker_exhaustive` | `/dashboard/credit-tracker` | credit_tracker.html | [ ] |
 | 14 | `demand_generator_exhaustive` | `/dashboard/demand-generator` | demand_generator.html | [ ] |
@@ -103,13 +103,13 @@ beforeEach(() => {
 ## Progress
 
 - [x] Priority 1: 10/10 complete
-- [ ] Priority 2: 0/12 complete
+- [ ] Priority 2: 1/12 complete
 - [ ] Priority 3: 0/7 complete
 - [ ] Priority 4: 0/5 complete
 - [ ] Priority 5: 0/4 complete
 - [ ] Priority 6: 0/3 complete
 
-**Total: 10/41 complete**
+**Total: 11/41 complete**
 
 ---
 
