@@ -50,7 +50,7 @@ beforeEach(() => {
 | 12 | `credit_import_exhaustive` | `/dashboard/credit-import` | credit_import.html | [x] |
 | 13 | `credit_tracker_exhaustive` | `/dashboard/credit-tracker` | credit_tracker.html | [x] |
 | 14 | `demand_generator_exhaustive` | `/dashboard/demand-generator` | demand_generator.html | [x] |
-| 15 | `furnishers_exhaustive` | `/dashboard/furnishers` | furnishers.html | [ ] |
+| 15 | `furnishers_exhaustive` | `/dashboard/furnishers` | furnishers.html | [x] |
 | 16 | `case_law_exhaustive` | `/dashboard/case-law` | case_law.html | [ ] |
 | 17 | `cfpb_exhaustive` | `/dashboard/cfpb` | cfpb_complaints.html | [ ] |
 | 18 | `chexsystems_exhaustive` | `/dashboard/chexsystems` | chexsystems.html | [ ] |
@@ -103,13 +103,13 @@ beforeEach(() => {
 ## Progress
 
 - [x] Priority 1: 10/10 complete
-- [ ] Priority 2: 4/12 complete
+- [ ] Priority 2: 5/12 complete
 - [ ] Priority 3: 0/7 complete
 - [ ] Priority 4: 0/5 complete
 - [ ] Priority 5: 0/4 complete
 - [ ] Priority 6: 0/3 complete
 
-**Total: 14/41 complete**
+**Total: 15/41 complete**
 
 ---
 
