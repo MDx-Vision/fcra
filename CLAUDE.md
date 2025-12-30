@@ -21,15 +21,28 @@
 
 ### Current Work (2025-12-30)
 
-**Task**: Feature Implementation - Sequential Build
+**Task**: Exhaustive Test Cleanup & Fix
 
-**Current Item**: ✅ ALL COMPLETE
+**Status**: Audited and cleaned up broken exhaustive tests
 
-**Tracker**: See `FEATURE_IMPLEMENTATION_TRACKER.md` for full queue (68 items)
+**Broken Tests Audit**:
+- Started with 63 broken `*_exhaustive.cy.js.broken` files
+- Deleted 22 redundant/invalid tests:
+  - 12 redirect routes (covered by target pages)
+  - 5 already covered by existing working tests
+  - 5 invalid routes (don't exist or are JSON APIs)
+- **Remaining**: 41 broken tests need authentication fixes
+
+**Next Step**: Fix 41 remaining broken tests (add `cy.login()` + test real page content)
 
 **Related Docs**:
 - `EXHAUSTIVE_TESTS_FEATURE_BACKLOG.md` - Feature specs from tests
 - `EXHAUSTIVE_TESTS_REQUIREMENTS.md` - data-testid requirements
+- `BROKEN_TESTS_CHECKLIST.md` - Prioritized fix list for 41 tests
+
+### Previous Work (2025-12-30)
+
+**Task**: Feature Implementation - Sequential Build
 
 **Progress**: 68/68 complete (100%)
 
@@ -64,11 +77,11 @@
 2. **Deprecated tests skipped**: `/dashboard/staff` now redirects to `/staff/admin?section=team`
 3. **Defensive test patterns**: Made tests handle optional/dynamic elements
 
-### Exhaustive Tests: Feature Backlog
-68 `*_exhaustive.cy.js` files define future features. Full analysis in `EXHAUSTIVE_TESTS_FEATURE_BACKLOG.md`:
-- **5 fully specified pages**: Staff Login, Portal Login, API Management, API Docs, PWA
-- **48 dashboard routes**: Pending authenticated implementations
-- **~80 data-testid selectors**: UI elements to build
+### Exhaustive Tests: Status
+- **Working**: 5 exhaustive tests passing (portal, api_keys, api_docs, manifest.json, sw.js)
+- **Broken**: 41 `*_exhaustive.cy.js.broken` files need auth fixes
+- **Deleted**: 22 redundant tests removed (redirects, duplicates, invalid routes)
+- Full analysis in `EXHAUSTIVE_TESTS_FEATURE_BACKLOG.md`
 
 ### Older Work (2025-12-28)
 
