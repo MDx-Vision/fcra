@@ -39,7 +39,7 @@ beforeEach(() => {
 | 6 | `tasks_exhaustive` | `/dashboard/tasks` | task_queue.html | [x] |
 | 7 | `signups_exhaustive` | `/dashboard/signups` | signups.html | [x] |
 | 8 | `affiliates_exhaustive` | `/dashboard/affiliates` | affiliates.html | [x] |
-| 9 | `settlements_exhaustive` | `/dashboard/settlements` | settlements.html | [ ] |
+| 9 | `settlements_exhaustive` | `/dashboard/settlements` | settlements.html | [x] |
 | 10 | `admin_exhaustive` | `/admin` | admin.html | [ ] |
 
 ## Priority 2: FCRA-Specific Features (12 tests)
@@ -102,14 +102,14 @@ beforeEach(() => {
 
 ## Progress
 
-- [ ] Priority 1: 8/10 complete
+- [ ] Priority 1: 9/10 complete
 - [ ] Priority 2: 0/12 complete
 - [ ] Priority 3: 0/7 complete
 - [ ] Priority 4: 0/5 complete
 - [ ] Priority 5: 0/4 complete
 - [ ] Priority 6: 0/3 complete
 
-**Total: 8/41 complete**
+**Total: 9/41 complete**
 
 ---
 
