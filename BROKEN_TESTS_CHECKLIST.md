@@ -35,7 +35,7 @@ beforeEach(() => {
 | 2 | `contacts_exhaustive` | `/dashboard/contacts` | contacts.html | [x] |
 | 3 | `documents_exhaustive` | `/dashboard/documents` | documents.html | [x] |
 | 4 | `settings_exhaustive` | `/dashboard/settings` | settings.html | [x] |
-| 5 | `calendar_exhaustive` | `/dashboard/calendar` | calendar.html | [ ] |
+| 5 | `calendar_exhaustive` | `/dashboard/calendar` | calendar.html | [x] |
 | 6 | `tasks_exhaustive` | `/dashboard/tasks` | task_queue.html | [ ] |
 | 7 | `signups_exhaustive` | `/dashboard/signups` | signups.html | [ ] |
 | 8 | `affiliates_exhaustive` | `/dashboard/affiliates` | affiliates.html | [ ] |
@@ -102,14 +102,14 @@ beforeEach(() => {
 
 ## Progress
 
-- [ ] Priority 1: 4/10 complete
+- [ ] Priority 1: 5/10 complete
 - [ ] Priority 2: 0/12 complete
 - [ ] Priority 3: 0/7 complete
 - [ ] Priority 4: 0/5 complete
 - [ ] Priority 5: 0/4 complete
 - [ ] Priority 6: 0/3 complete
 
-**Total: 4/41 complete**
+**Total: 5/41 complete**
 
 ---
 
