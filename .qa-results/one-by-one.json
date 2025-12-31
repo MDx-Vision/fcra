@@ -1,130 +1,335 @@
 {
-  "timestamp": "2025-12-30T05:25:22.717Z",
+  "timestamp": "2025-12-30T20:20:10.938Z",
   "results": [
+    {
+      "file": "admin_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "46.0"
+    },
+    {
+      "file": "affiliates_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "76.0"
+    },
     {
       "file": "analytics.cy.js",
       "status": "❌ FAIL",
-      "duration": "25.1"
+      "duration": "117.9"
     },
     {
       "file": "api_docs_exhaustive.cy.js",
-      "status": "❌ FAIL",
-      "duration": "12.8"
+      "status": "✅ PASS",
+      "duration": "51.2"
     },
     {
       "file": "api_endpoints.cy.js",
       "status": "✅ PASS",
-      "duration": "18.3"
+      "duration": "20.5"
     },
     {
       "file": "api_keys_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "30.6"
+    },
+    {
+      "file": "audit_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "50.3"
+    },
+    {
+      "file": "automation_tools_exhaustive.cy.js",
       "status": "❌ FAIL",
-      "duration": "11.0"
+      "duration": "91.0"
+    },
+    {
+      "file": "billing_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "51.5"
+    },
+    {
+      "file": "calendar_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "26.0"
+    },
+    {
+      "file": "case_law_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "57.7"
+    },
+    {
+      "file": "cfpb_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "40.5"
+    },
+    {
+      "file": "chexsystems_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "66.3"
     },
     {
       "file": "client_portal.cy.js",
       "status": "✅ PASS",
-      "duration": "22.9"
+      "duration": "25.8"
     },
     {
       "file": "clients.cy.js",
-      "status": "❌ FAIL",
-      "duration": "45.4"
+      "status": "✅ PASS",
+      "duration": "17.2"
     },
     {
       "file": "clients_crud.cy.js",
-      "status": "❌ FAIL",
-      "duration": "11.1"
+      "status": "✅ PASS",
+      "duration": "70.0"
+    },
+    {
+      "file": "contacts_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "32.0"
     },
     {
       "file": "create_item.cy.js",
       "status": "✅ PASS",
-      "duration": "10.2"
+      "duration": "10.3"
+    },
+    {
+      "file": "credit_import_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "47.8"
     },
     {
       "file": "credit_report_viewer.cy.js",
-      "status": "❌ FAIL",
-      "duration": "25.1"
+      "status": "✅ PASS",
+      "duration": "17.5"
     },
     {
       "file": "credit_reports.cy.js",
-      "status": "❌ FAIL",
-      "duration": "10.8"
+      "status": "✅ PASS",
+      "duration": "28.3"
+    },
+    {
+      "file": "credit_tracker_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "39.5"
     },
     {
       "file": "dashboard.cy.js",
-      "status": "❌ FAIL",
-      "duration": "10.5"
+      "status": "✅ PASS",
+      "duration": "19.0"
+    },
+    {
+      "file": "demand_generator_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "43.8"
     },
     {
       "file": "dispute_letters.cy.js",
-      "status": "❌ FAIL",
-      "duration": "10.6"
+      "status": "✅ PASS",
+      "duration": "28.9"
+    },
+    {
+      "file": "documents_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "31.4"
     },
     {
       "file": "edge_cases.cy.js",
+      "status": "✅ PASS",
+      "duration": "42.9"
+    },
+    {
+      "file": "escalation_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "46.2"
+    },
+    {
+      "file": "franchise_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "60.8"
+    },
+    {
+      "file": "frivolousness_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "62.3"
+    },
+    {
+      "file": "furnishers_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "53.7"
+    },
+    {
+      "file": "import_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "28.9"
+    },
+    {
+      "file": "integrations_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "41.6"
+    },
+    {
+      "file": "knowledge_base_exhaustive.cy.js",
       "status": "❌ FAIL",
-      "duration": "37.4"
+      "duration": "103.2"
+    },
+    {
+      "file": "letter_queue_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "37.2"
     },
     {
       "file": "login.cy.js",
-      "status": "❌ FAIL",
-      "duration": "11.6"
+      "status": "✅ PASS",
+      "duration": "16.3"
     },
     {
       "file": "manifest.json_exhaustive.cy.js",
       "status": "✅ PASS",
-      "duration": "12.9"
+      "duration": "15.9"
+    },
+    {
+      "file": "ml_insights_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "44.9"
+    },
+    {
+      "file": "patterns_exhaustive.cy.js",
+      "status": "❌ FAIL",
+      "duration": "35.7"
     },
     {
       "file": "payments.cy.js",
       "status": "✅ PASS",
-      "duration": "16.8"
+      "duration": "18.5"
+    },
+    {
+      "file": "performance_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "29.0"
     },
     {
       "file": "portal_exhaustive.cy.js",
       "status": "✅ PASS",
-      "duration": "44.2"
+      "duration": "48.0"
     },
     {
       "file": "portal_login.cy.js",
       "status": "✅ PASS",
-      "duration": "15.0"
+      "duration": "17.3"
+    },
+    {
+      "file": "predictive_exhaustive.cy.js",
+      "status": "❌ FAIL",
+      "duration": "13.1"
+    },
+    {
+      "file": "preview_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "18.1"
+    },
+    {
+      "file": "scanned_documents_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "32.1"
+    },
+    {
+      "file": "scanner_exhaustive.cy.js",
+      "status": "❌ FAIL",
+      "duration": "84.3"
+    },
+    {
+      "file": "settings_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "27.1"
     },
     {
       "file": "settlements.cy.js",
-      "status": "❌ FAIL",
-      "duration": "46.9"
+      "status": "✅ PASS",
+      "duration": "17.6"
     },
     {
       "file": "settlements_crud.cy.js",
-      "status": "❌ FAIL",
-      "duration": "10.9"
+      "status": "✅ PASS",
+      "duration": "97.5"
+    },
+    {
+      "file": "settlements_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "46.2"
     },
     {
       "file": "signup_flow.cy.js",
       "status": "✅ PASS",
-      "duration": "30.4"
+      "duration": "39.1"
+    },
+    {
+      "file": "signups_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "46.9"
     },
     {
       "file": "smoke.cy.js",
+      "status": "✅ PASS",
+      "duration": "13.1"
+    },
+    {
+      "file": "sol_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "52.9"
+    },
+    {
+      "file": "sops_exhaustive.cy.js",
       "status": "❌ FAIL",
-      "duration": "24.8"
+      "duration": "120.0"
+    },
+    {
+      "file": "specialty_bureaus_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "104.6"
     },
     {
       "file": "staff_crud.cy.js",
       "status": "✅ PASS",
-      "duration": "12.1"
+      "duration": "10.8"
+    },
+    {
+      "file": "suspense_accounts_exhaustive.cy.js",
+      "status": "❌ FAIL",
+      "duration": "67.2"
     },
     {
       "file": "sw.js_exhaustive.cy.js",
       "status": "✅ PASS",
-      "duration": "14.6"
+      "duration": "15.5"
+    },
+    {
+      "file": "tasks_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "39.8"
+    },
+    {
+      "file": "triage_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "85.4"
+    },
+    {
+      "file": "va_approval_exhaustive.cy.js",
+      "status": "❌ FAIL",
+      "duration": "81.3"
     },
     {
       "file": "welcome_page.cy.js",
       "status": "✅ PASS",
-      "duration": "15.6"
+      "duration": "17.1"
+    },
+    {
+      "file": "white_label_exhaustive.cy.js",
+      "status": "❌ FAIL",
+      "duration": "120.0"
+    },
+    {
+      "file": "workflows_exhaustive.cy.js",
+      "status": "✅ PASS",
+      "duration": "68.9"
     }
   ]
 }

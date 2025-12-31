@@ -216,7 +216,7 @@ describe('Violation Patterns - /dashboard/patterns', () => {
     it('should close modal when close button clicked', () => {
       cy.get('.header .btn-primary').click();
       cy.get('.modal-overlay.active').should('exist');
-      cy.get('.modal-close').click();
+      cy.get('.modal-close').first().click();
       cy.get('.modal-overlay').should('not.have.class', 'active');
     });
   });

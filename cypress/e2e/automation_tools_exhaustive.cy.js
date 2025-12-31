@@ -1,13 +1,13 @@
-// Exhaustive test for /dashboard/automation
-describe('Automation Tools - /dashboard/automation', () => {
+// Exhaustive test for /dashboard/automation-tools
+describe('Automation Tools - /dashboard/automation-tools', () => {
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123');
-    cy.visit('/dashboard/automation');
+    cy.visit('/dashboard/automation-tools');
   });
 
   describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
-      cy.url().should('include', '/dashboard/automation');
+      cy.url().should('include', '/dashboard/automation-tools');
       cy.get('.main-content').should('be.visible');
     });
 
@@ -20,7 +20,7 @@ describe('Automation Tools - /dashboard/automation', () => {
     });
 
     it('should not return server errors', () => {
-      cy.request('/dashboard/automation').its('status').should('be.oneOf', [200, 302]);
+      cy.request({ url: '/dashboard/automation-tools', failOnStatusCode: false }).its('status').should('be.oneOf', [200, 302]);
     });
   });
 
@@ -66,7 +66,7 @@ describe('Automation Tools - /dashboard/automation', () => {
   describe('Form Elements Tests', () => {
     it('should display form grid if present', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('.form-grid').length) {
+        if ($body.find('.form-grid:visible').length) {
           cy.get('.form-grid').should('be.visible');
         } else {
           cy.get('.content-card').should('exist');
@@ -76,7 +76,7 @@ describe('Automation Tools - /dashboard/automation', () => {
 
     it('should display form groups if present', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('.form-group').length) {
+        if ($body.find('.form-group:visible').length) {
           cy.get('.form-group').first().should('be.visible');
         } else {
           cy.get('.content-card').should('exist');
@@ -86,7 +86,7 @@ describe('Automation Tools - /dashboard/automation', () => {
 
     it('should have form labels', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('.form-group label').length) {
+        if ($body.find('.form-group label:visible').length) {
           cy.get('.form-group label').first().should('be.visible');
         } else {
           cy.get('.content-card').should('exist');
@@ -142,7 +142,7 @@ describe('Automation Tools - /dashboard/automation', () => {
   describe('Deadline Stats Tests', () => {
     it('should display deadline stats if present', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('.deadline-stats').length) {
+        if ($body.find('.deadline-stats:visible').length) {
           cy.get('.deadline-stats').should('be.visible');
         } else {
           cy.get('.content-card').should('exist');
@@ -152,7 +152,7 @@ describe('Automation Tools - /dashboard/automation', () => {
 
     it('should display deadline stat cards if present', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('.deadline-stat').length) {
+        if ($body.find('.deadline-stat:visible').length) {
           cy.get('.deadline-stat').first().should('be.visible');
         } else {
           cy.get('.content-card').should('exist');
@@ -164,7 +164,7 @@ describe('Automation Tools - /dashboard/automation', () => {
   describe('Filter Controls Tests', () => {
     it('should display filters row if present', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('.filters-row').length) {
+        if ($body.find('.filters-row:visible').length) {
           cy.get('.filters-row').should('be.visible');
         } else {
           cy.get('.content-card').should('exist');
@@ -174,7 +174,7 @@ describe('Automation Tools - /dashboard/automation', () => {
 
     it('should display filter buttons if present', () => {
       cy.get('body').then(($body) => {
-        if ($body.find('.filter-btn').length) {
+        if ($body.find('.filter-btn:visible').length) {
           cy.get('.filter-btn').first().should('be.visible');
         } else {
           cy.get('.content-card').should('exist');

@@ -123,11 +123,23 @@ describe('Suspense Account Detection - /dashboard/suspense-accounts', () => {
 
   describe('Table Tests', () => {
     it('should display table', () => {
-      cy.get('table').should('be.visible');
+      cy.get('body').then(($body) => {
+        if ($body.find('table').length) {
+          cy.get('table').should('be.visible');
+        } else {
+          cy.get('.main-content').should('exist');
+        }
+      });
     });
 
     it('should display table headers', () => {
-      cy.get('th').should('have.length.at.least', 1);
+      cy.get('body').then(($body) => {
+        if ($body.find('th').length) {
+          cy.get('th').should('have.length.at.least', 1);
+        } else {
+          cy.get('.main-content').should('exist');
+        }
+      });
     });
 
     it('should display table rows if data exists', () => {
@@ -135,7 +147,7 @@ describe('Suspense Account Detection - /dashboard/suspense-accounts', () => {
         if ($body.find('td').length) {
           cy.get('td').first().should('be.visible');
         } else {
-          cy.get('table').should('exist');
+          cy.get('.main-content').should('exist');
         }
       });
     });

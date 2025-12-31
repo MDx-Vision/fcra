@@ -5904,7 +5904,56 @@ def dashboard_analytics():
 @require_staff(roles=["admin", "attorney"])
 def dashboard_predictive():
     """Predictive Analytics Dashboard - renders analytics template with predictive section"""
-    return render_template("predictive_analytics.html")
+    # Default empty data for all template variables
+    default_data = {
+        "revenue_forecast": {"success": False, "forecasts": []},
+        "caseload_forecast": {"success": False, "forecasts": []},
+        "growth_opportunities": [],
+        "workload_distribution": {"success": False, "distribution": []},
+        "revenue_trends": {"success": False, "trends": []},
+        "top_clients": {"success": False, "top_clients": []},
+        "leaderboard": {"success": False, "staff": []},
+        "summary": {"success": False, "totals": {}},
+    }
+
+    try:
+        # Get predictive analytics data
+        revenue_forecast = predictive_analytics_service.forecast_revenue(months_ahead=3)
+        caseload_forecast = predictive_analytics_service.forecast_caseload(months_ahead=3)
+
+        # Get growth opportunities for top clients
+        db = get_db()
+        clients = db.query(Client).order_by(Client.created_at.desc()).limit(10).all()
+        growth_opportunities = []
+        for client in clients:
+            opp = predictive_analytics_service.identify_growth_opportunities(client.id)
+            if opp.get("success"):
+                growth_opportunities.append({"client": client, **opp})
+
+        # Get workload distribution
+        workload_distribution = attorney_analytics_service.get_workload_distribution()
+
+        # Get leaderboard data
+        leaderboard = attorney_analytics_service.get_leaderboard()
+
+        db.close()
+
+        return render_template(
+            "predictive_analytics.html",
+            revenue_forecast=revenue_forecast,
+            caseload_forecast=caseload_forecast,
+            growth_opportunities=growth_opportunities,
+            workload_distribution=workload_distribution,
+            revenue_trends={"success": True, "trends": []},
+            top_clients={"success": True, "top_clients": []},
+            leaderboard=leaderboard,
+            summary={"success": True, "totals": {}},
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # Return template with empty/default data on error
+        return render_template("predictive_analytics.html", **default_data)
 
 
 @app.route("/api/analytics/revenue-forecast")
