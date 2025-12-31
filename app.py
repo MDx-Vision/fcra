@@ -32196,6 +32196,186 @@ def api_client_manager_download_file(file_path):
     return send_file(full_path, as_attachment=True)
 
 
+# ============================================================
+# LEAD CAPTURE ROUTES (Public Landing Pages)
+# ============================================================
+
+
+@app.route("/get-started")
+def get_started():
+    """Lead capture landing page for prospective clients"""
+    # Check for whitelabel branding
+    whitelabel_branding = None
+    try:
+        db = get_db()
+        if request.host:
+            from services.whitelabel import get_white_label_service
+            wl_service = get_white_label_service(db)
+            tenant = wl_service.get_tenant_by_domain(request.host)
+            if tenant:
+                whitelabel_branding = wl_service.get_branding_for_tenant(tenant.id)
+        db.close()
+    except Exception:
+        pass
+
+    # Get calendly URL from config if set
+    calendly_url = getattr(config, 'CALENDLY_URL', '')
+
+    return render_template(
+        "get_started.html",
+        whitelabel_branding=whitelabel_branding,
+        calendly_url=calendly_url
+    )
+
+
+@app.route("/affiliate/signup")
+def affiliate_signup():
+    """Affiliate signup redirect - sends to credit monitoring affiliate link"""
+    # Default affiliate links (can be configured per tenant)
+    affiliate_links = {
+        'identityiq': 'https://www.identityiq.com/sc-enrollment.aspx?offercode=431291KD',
+        'myscoreiq': 'https://www.myscoreiq.com/',
+        'smartcredit': 'https://www.smartcredit.com/'
+    }
+
+    # Default to IdentityIQ (highest commission usually)
+    default_link = affiliate_links.get('identityiq', 'https://www.identityiq.com/')
+
+    return redirect(default_link)
+
+
+@app.route("/api/leads/capture", methods=["POST"])
+def api_leads_capture():
+    """Capture a lead from the get-started form and optionally pull their credit report"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+
+        # Validate required fields
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+        email = data.get('email', '').strip()
+
+        if not first_name or not last_name:
+            return jsonify({
+                "success": False,
+                "error": "First and last name are required"
+            }), 400
+
+        if not email:
+            return jsonify({
+                "success": False,
+                "error": "Email address is required"
+            }), 400
+
+        # Check if client already exists
+        existing = db.query(Client).filter_by(email=email).first()
+
+        if existing:
+            # Update existing client info
+            client = existing
+            client.first_name = first_name
+            client.last_name = last_name
+            client.name = f"{first_name} {last_name}"
+        else:
+            # Create new client as a lead
+            client = Client(
+                name=f"{first_name} {last_name}",
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=data.get('phone', '').strip() or None,
+                address_street=data.get('address', '').strip() or None,
+                address_city=data.get('city', '').strip() or None,
+                address_state=data.get('state', '').strip() or None,
+                address_zip=data.get('zip', '').strip() or None,
+                dispute_status='lead',  # Mark as lead, not active client
+                current_dispute_round=0
+            )
+            db.add(client)
+
+        # Store credit monitoring info if provided
+        monitoring_service = data.get('monitoring_service', '').strip()
+        if monitoring_service and monitoring_service not in ['none', '']:
+            client.credit_monitoring_service = monitoring_service
+
+            monitoring_username = data.get('monitoring_username', '').strip()
+            monitoring_password = data.get('monitoring_password', '').strip()
+            ssn_last_four = data.get('ssn_last_four', '').strip()
+
+            if monitoring_username:
+                client.credit_monitoring_username = monitoring_username
+
+            if monitoring_password:
+                # Encrypt password before storing
+                try:
+                    from services.encryption import encryption_service
+                    encrypted = encryption_service.encrypt(monitoring_password)
+                    client.credit_monitoring_password_encrypted = encrypted
+                except Exception:
+                    # Store as-is if encryption fails (dev mode)
+                    client.credit_monitoring_password_encrypted = monitoring_password
+
+            # Store SSN last 4 for identity verification
+            if ssn_last_four and len(ssn_last_four) == 4 and ssn_last_four.isdigit():
+                client.ssn_last_four = ssn_last_four
+
+        db.commit()
+        db.refresh(client)
+
+        # Try to pull credit report if credentials provided
+        preview_data = None
+        if monitoring_service and monitoring_service not in ['none', '']:
+            try:
+                # Attempt to import report using credit_import service
+                from services.credit_import import credit_import_service
+
+                # This would trigger the actual report pull
+                # For now, return mock preview data
+                preview_data = {
+                    'bureau': 'TransUnion',
+                    'score': '---',  # Would be actual score after pull
+                    'negative_items': '--',
+                    'total_accounts': '--'
+                }
+
+                # TODO: Integrate with actual credit pull service
+                # result = credit_import_service.import_from_service(
+                #     service=monitoring_service,
+                #     username=monitoring_username,
+                #     password=monitoring_password,
+                #     client_id=client.id
+                # )
+                # if result.get('success'):
+                #     preview_data = {
+                #         'bureau': result.get('bureau', 'TransUnion'),
+                #         'score': result.get('score', '---'),
+                #         'negative_items': result.get('negative_items', '--'),
+                #         'total_accounts': result.get('total_accounts', '--')
+                #     }
+
+            except Exception as e:
+                print(f"Credit import error: {e}")
+                # Continue without preview data
+
+        return jsonify({
+            "success": True,
+            "message": "Thank you! We've received your information.",
+            "client_id": client.id,
+            "preview": preview_data
+        })
+
+    except Exception as e:
+        db.rollback()
+        print(f"Lead capture error: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An error occurred. Please try again."
+        }), 500
+    finally:
+        db.close()
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

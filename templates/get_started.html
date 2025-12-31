@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Started - Free Credit Report Analysis | {{ whitelabel_branding.organization_name if whitelabel_branding and whitelabel_branding.organization_name else 'Brightpath Ascend Group' }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/whitelabel_branding.html' ignore missing %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo img {
+            height: 70px;
+            margin-bottom: 20px;
+            background: transparent;
+        }
+        .logo h1 {
+            color: white;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .logo h1 span {
+            color: #84cc16;
+        }
+        .tagline {
+            color: rgba(255,255,255,0.7);
+            font-size: 18px;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+        }
+        .card-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        .card-header h2 {
+            color: #1a1a2e;
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+        .card-header p {
+            color: #64748b;
+            font-size: 15px;
+        }
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        .step {
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            max-width: 200px;
+        }
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #84cc16, #22c55e);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            margin: 0 auto 12px;
+        }
+        .step-text {
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .form-section {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .form-group {
+            margin-bottom: 22px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: white;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #84cc16;
+            box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.1);
+        }
+        .form-group input::placeholder {
+            color: #9ca3af;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .monitoring-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .monitoring-section h3 {
+            color: #1e3a5f;
+            font-size: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .monitoring-section h3::before {
+            content: '📊';
+        }
+        .no-monitoring {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .no-monitoring a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .no-monitoring a:hover {
+            text-decoration: underline;
+        }
+        .no-monitoring span {
+            color: #64748b;
+            font-size: 13px;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #84cc16, #22c55e);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(132, 204, 22, 0.35);
+        }
+        .submit-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .consult-btn {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            color: #1e3a5f;
+            border: 2px solid #1e3a5f;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .consult-btn:hover {
+            background: #1e3a5f;
+            color: white;
+        }
+        .alert {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Preview Section */
+        .preview-section {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e5e7eb;
+        }
+        .preview-section.active {
+            display: block;
+        }
+        .preview-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .preview-header h3 {
+            color: #1a1a2e;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .preview-header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+        .preview-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .bureau-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e3a5f;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .preview-stat {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+        .preview-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .preview-stat-value.score { color: #f59e0b; }
+        .preview-stat-value.negative { color: #dc2626; }
+        .preview-stat-value.positive { color: #22c55e; }
+        .preview-stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .preview-blur {
+            position: relative;
+            overflow: hidden;
+        }
+        .preview-blur-content {
+            filter: blur(6px);
+            pointer-events: none;
+        }
+        .blur-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        .blur-overlay p {
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        .unlock-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #84cc16, #22c55e);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .unlock-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(132, 204, 22, 0.3);
+        }
+        .trust-badges {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .trust-badge {
+            text-align: center;
+            color: #64748b;
+            font-size: 13px;
+        }
+        .trust-badge-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        .footer-note {
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 12px;
+            margin-top: 30px;
+            padding: 0 20px;
+        }
+        .footer-note a {
+            color: rgba(255,255,255,0.7);
+        }
+
+        @media (max-width: 600px) {
+            .main-card {
+                padding: 30px 20px;
+            }
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            .steps {
+                gap: 20px;
+            }
+            .preview-stats {
+                grid-template-columns: 1fr;
+            }
+            .trust-badges {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                {% if whitelabel_branding and whitelabel_branding.logo_url %}
+                <img src="{{ whitelabel_branding.logo_url }}" alt="{{ whitelabel_branding.organization_name|default('Logo', true) }}" onerror="this.style.display='none'">
+                {% else %}
+                <img src="/static/images/logo.png" alt="Brightpath Ascend Group" onerror="this.style.display='none'">
+                {% endif %}
+                {% if whitelabel_branding and whitelabel_branding.organization_name %}
+                {% set name_parts = whitelabel_branding.organization_name.split(' ') %}
+                {% if name_parts|length > 1 %}
+                <h1>{{ name_parts[:-1]|join(' ') }} <span style="color: {{ whitelabel_branding.accent_color or '#84cc16' }}">{{ name_parts[-1] }}</span></h1>
+                {% else %}
+                <h1>{{ whitelabel_branding.organization_name }}</h1>
+                {% endif %}
+                {% else %}
+                <h1>Brightpath <span>Ascend</span> Group</h1>
+                {% endif %}
+            </div>
+            <p class="tagline">Discover errors on your credit report and take the first step toward financial freedom.</p>
+        </header>
+
+        <div class="main-card" data-testid="get-started-card">
+            <div class="card-header">
+                <h2>Get Your Free Credit Analysis</h2>
+                <p>We'll pull your report and show you what's impacting your score</p>
+            </div>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-text">Enter Your Info</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-text">Connect Monitoring</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-text">See Results</div>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <form id="getStartedForm" class="form-section" data-testid="get-started-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="first_name" placeholder="John" required data-testid="first-name-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="last_name" placeholder="Smith" required data-testid="last-name-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="john.smith@email.com" required data-testid="email-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567" data-testid="phone-input">
+                </div>
+
+                <div class="form-group">
+                    <label for="address">Street Address</label>
+                    <input type="text" id="address" name="address" placeholder="123 Main Street" data-testid="address-input">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city" placeholder="New York" data-testid="city-input">
+                    </div>
+                    <div class="form-group" style="max-width: 100px;">
+                        <label for="state">State</label>
+                        <input type="text" id="state" name="state" placeholder="NY" maxlength="2" data-testid="state-input">
+                    </div>
+                    <div class="form-group" style="max-width: 120px;">
+                        <label for="zip">ZIP Code</label>
+                        <input type="text" id="zip" name="zip" placeholder="10001" maxlength="10" data-testid="zip-input">
+                    </div>
+                </div>
+
+                <div class="monitoring-section">
+                    <h3>Credit Monitoring Service</h3>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <select id="monitoringService" name="monitoring_service" data-testid="monitoring-service-select">
+                            <option value="">Select your service...</option>
+                            <option value="identityiq">IdentityIQ</option>
+                            <option value="myscoreiq">MyScoreIQ</option>
+                            <option value="smartcredit">SmartCredit</option>
+                            <option value="creditkarma">Credit Karma</option>
+                            <option value="experian">Experian</option>
+                            <option value="transunion">TransUnion</option>
+                            <option value="privacyguard">Privacy Guard</option>
+                            <option value="other">Other Service</option>
+                            <option value="none">I don't have one</option>
+                        </select>
+                    </div>
+                    <div class="no-monitoring" id="noMonitoringHelp" style="display: none;">
+                        <span>Don't have a credit monitoring service?</span><br>
+                        <a href="{{ url_for('affiliate_signup') if url_for else '/affiliate/signup' }}" target="_blank" data-testid="affiliate-link">
+                            Sign up through our affiliate link (recommended)
+                        </a>
+                    </div>
+                    <div id="credentialsSection" style="display: none; margin-top: 15px;">
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label for="monitoringUsername">Monitoring Username/Email</label>
+                            <input type="text" id="monitoringUsername" name="monitoring_username" placeholder="Your login email" data-testid="monitoring-username-input">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 12px;">
+                            <label for="monitoringPassword">Monitoring Password</label>
+                            <input type="password" id="monitoringPassword" name="monitoring_password" placeholder="Your login password" data-testid="monitoring-password-input">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="ssnLast4">Last 4 of SSN <span style="color: #dc2626;">*</span></label>
+                            <input type="text" id="ssnLast4" name="ssn_last_four" placeholder="1234" maxlength="4" pattern="[0-9]{4}" style="max-width: 100px;" required data-testid="ssn-last4-input">
+                        </div>
+                        <p style="font-size: 11px; color: #64748b; margin-top: 8px;">
+                            Your credentials are encrypted and used only to pull your credit report. SSN last 4 is required for identity verification.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn" data-testid="submit-btn">
+                    Analyze My Credit Report
+                </button>
+
+                <button type="button" class="consult-btn" onclick="openCalendly()" data-testid="consultation-btn">
+                    <span>📅</span> Book Free Consultation Instead
+                </button>
+            </form>
+
+            <!-- Preview Section (shown after form submission) -->
+            <div class="preview-section" id="previewSection" data-testid="preview-section">
+                <div class="preview-header">
+                    <h3>Your Credit Report Preview</h3>
+                    <p>Here's a glimpse of what we found (1 bureau shown)</p>
+                </div>
+
+                <div class="preview-card">
+                    <div class="bureau-badge" id="previewBureau">
+                        <span>📊</span> <span id="bureauName">TransUnion</span>
+                    </div>
+
+                    <div class="preview-stats">
+                        <div class="preview-stat">
+                            <div class="preview-stat-value score" id="previewScore">--</div>
+                            <div class="preview-stat-label">Credit Score</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="preview-stat-value negative" id="previewNegative">--</div>
+                            <div class="preview-stat-label">Negative Items</div>
+                        </div>
+                        <div class="preview-stat">
+                            <div class="preview-stat-value positive" id="previewAccounts">--</div>
+                            <div class="preview-stat-label">Total Accounts</div>
+                        </div>
+                    </div>
+
+                    <div class="preview-blur">
+                        <div class="preview-blur-content" id="blurredContent">
+                            <div style="height: 120px; background: #f1f5f9; border-radius: 8px; margin-bottom: 10px;"></div>
+                            <div style="height: 80px; background: #f1f5f9; border-radius: 8px;"></div>
+                        </div>
+                        <div class="blur-overlay">
+                            <p>Full report analysis available</p>
+                            <button class="unlock-btn" onclick="openCalendly()" data-testid="unlock-btn">
+                                Book Consultation to Unlock
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="submit-btn" onclick="openCalendly()" style="margin-top: 20px;" data-testid="final-cta-btn">
+                    <span>📅</span> Get Your Full Analysis - Book Now
+                </button>
+            </div>
+
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <div class="trust-badge-icon">🔒</div>
+                    <div>Bank-Level Security</div>
+                </div>
+                <div class="trust-badge">
+                    <div class="trust-badge-icon">✓</div>
+                    <div>FCRA Compliant</div>
+                </div>
+                <div class="trust-badge">
+                    <div class="trust-badge-icon">⭐</div>
+                    <div>5-Star Rated</div>
+                </div>
+            </div>
+        </div>
+
+        <p class="footer-note">
+            By submitting, you agree to our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>.
+            Your information is secure and will never be sold.
+        </p>
+    </div>
+
+    <script>
+        // Show/hide credential fields based on monitoring service selection
+        document.getElementById('monitoringService').addEventListener('change', function() {
+            const value = this.value;
+            const noMonitoringHelp = document.getElementById('noMonitoringHelp');
+            const credentialsSection = document.getElementById('credentialsSection');
+
+            if (value === 'none' || value === '') {
+                noMonitoringHelp.style.display = value === 'none' ? 'block' : 'none';
+                credentialsSection.style.display = 'none';
+            } else {
+                noMonitoringHelp.style.display = 'none';
+                credentialsSection.style.display = 'block';
+            }
+        });
+
+        // Form submission
+        document.getElementById('getStartedForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const alertContainer = document.getElementById('alertContainer');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Analyzing Your Report...';
+
+            const formData = {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                zip: document.getElementById('zip').value,
+                monitoring_service: document.getElementById('monitoringService').value,
+                monitoring_username: document.getElementById('monitoringUsername').value,
+                monitoring_password: document.getElementById('monitoringPassword').value,
+                ssn_last_four: document.getElementById('ssnLast4').value
+            };
+
+            try {
+                const response = await fetch('/api/leads/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show preview section
+                    if (data.preview) {
+                        document.getElementById('bureauName').textContent = data.preview.bureau || 'TransUnion';
+                        document.getElementById('previewScore').textContent = data.preview.score || '---';
+                        document.getElementById('previewNegative').textContent = data.preview.negative_items || '--';
+                        document.getElementById('previewAccounts').textContent = data.preview.total_accounts || '--';
+                    }
+                    document.getElementById('previewSection').classList.add('active');
+                    document.querySelector('.form-section').style.display = 'none';
+
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-success">
+                            <span>✓</span> ${data.message || 'Report analyzed! See your preview below.'}
+                        </div>
+                    `;
+                } else {
+                    alertContainer.innerHTML = `
+                        <div class="alert alert-error">
+                            <span>⚠️</span> ${data.error || 'Could not analyze report. Please try again.'}
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = 'Analyze My Credit Report';
+                }
+            } catch (error) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-error">
+                        <span>⚠️</span> Connection error. Please try again.
+                    </div>
+                `;
+                btn.disabled = false;
+                btn.textContent = 'Analyze My Credit Report';
+            }
+        });
+
+        // Calendly integration
+        function openCalendly() {
+            // Check if we have Calendly URL configured, otherwise show contact modal
+            const calendlyUrl = '{{ calendly_url|default("", true) }}';
+            if (calendlyUrl) {
+                window.open(calendlyUrl, '_blank');
+            } else {
+                // Fallback - show alert with contact info
+                alert('To schedule your free consultation, please call us at (555) 123-4567 or email info@brightpathascend.com');
+            }
+        }
+
+        // Phone number formatting
+        document.getElementById('phone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 10) {
+                value = value.slice(0, 10);
+                e.target.value = `(${value.slice(0,3)}) ${value.slice(3,6)}-${value.slice(6)}`;
+            }
+        });
+    </script>
+</body>
+</html>

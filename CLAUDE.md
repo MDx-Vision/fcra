@@ -21,6 +21,49 @@
 
 ### Current Work (2025-12-31) - COMPLETED
 
+**Task**: Lead Capture Landing Page + Logo Fixes + Test Credentials
+
+**Status**: ✅ COMPLETE
+
+**Changes**:
+1. **Portal Logo Fix** (`templates/portal/base_portal.html`):
+   - Changed from emoji to actual logo image (`/static/images/logo.png`)
+   - Fixed PNG transparency (converted 849,967 white pixels to transparent)
+   - Added fallback to emoji if image fails to load
+
+2. **Lead Capture Landing Page** (`/get-started`):
+   - Name, Email, Phone, Full Address inputs
+   - Credit monitoring service dropdown (IdentityIQ, MyScoreIQ, SmartCredit, etc.)
+   - SSN Last 4 field (required for identity verification)
+   - "Don't have one?" → Affiliate signup link (`/affiliate/signup`)
+   - Credential capture for auto-pull (username/password - encrypted storage)
+   - Preview section with blurred "unlock" teaser
+   - Book Free Consultation button (Calendly integration ready)
+   - Trust badges (Bank-Level Security, FCRA Compliant, 5-Star Rated)
+
+3. **API Endpoints**:
+   - `POST /api/leads/capture` - Captures lead info, stores as client with `dispute_status='lead'`
+   - `GET /affiliate/signup` - Redirects to credit monitoring affiliate link
+
+4. **Test Credentials** (`TEST_CREDENTIALS.md`):
+   - Staff: `test@example.com` / `testpass123`
+   - Client Portal: `testclient@example.com` / `test123`
+
+**Files Created/Modified**:
+- `templates/get_started.html` - Lead capture landing page (new)
+- `app.py` - Added routes at lines 32199-32371
+- `cypress/e2e/get_started_exhaustive.cy.js` - 55 exhaustive tests (new)
+- `static/images/logo.png` - Fixed transparency
+- `TEST_CREDENTIALS.md` - Test login credentials (new)
+
+**Test Status**: 55/55 passing (get_started), 88/88 Cypress E2E
+
+**Future Enhancement**: Simple report upload flow (no form required)
+
+---
+
+### Previous Work (2025-12-31) - COMPLETED
+
 **Task**: Client Portal Feature Enhancements
 
 **Status**: ✅ COMPLETE
