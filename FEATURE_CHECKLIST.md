@@ -179,6 +179,17 @@
 - [x] Tracking number visibility
 - [x] Progress timeline visualization
 
+### Document Upload System (December 2025)
+- [x] Multi-document type support (CRA Response, ID/Proof, Court Order, Other)
+- [x] CRA Response details with bureau checkboxes + round selection
+- [x] ID/Proof multi-file upload (DL front/back, SSN front/back, Utility Bill)
+- [x] Required vs optional file indicators
+
+### Secondary Bureau Freeze Status (`/portal/status`)
+- [x] Display freeze status for 9 secondary bureaus
+- [x] Bureaus: Innovis, ChexSystems, Clarity Services, LexisNexis, CoreLogic Teletrack, Factor Trust, MicroBilt/PRBC, LexisNexis Risk Solutions, DataX Ltd
+- [x] Status tracking per bureau (Active/Frozen/Pending)
+
 ### Communication System
 - [x] Email notifications (SendGrid)
 - [x] SMS updates (Twilio)
@@ -374,5 +385,5 @@ Reference: `DEEP_DIVE_GAP_ANALYSIS.md` and `attached_assets/BAG_CRM_Features_FCR
 
 ---
 
-**Last Updated:** December 25, 2025
+**Last Updated:** December 31, 2025
 **Platform Status:** Production Ready - All Security Complete - Awaiting 2 External Credentials

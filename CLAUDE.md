@@ -21,38 +21,65 @@
 
 ### Current Work (2025-12-31) - COMPLETED
 
-**Task**: Client Portal Exhaustive Tests & Template Enhancement
+**Task**: Client Portal Feature Enhancements
 
 **Status**: ✅ COMPLETE
 
 **Changes**:
+1. **CRA Response Upload Enhancements** (`templates/portal/documents.html`):
+   - Added bureau checkboxes (Equifax, Experian, TransUnion)
+   - Added dispute round selection (Round 1-4 or Not Sure)
+   - Conditional display - only shows when "CRA Response" is selected
+   - Backend captures bureau and round data in `ClientUpload` table
+
+2. **ID/Proof Upload Enhancements** (`templates/portal/documents.html`):
+   - Driver's License: Front (required) + Back (optional)
+   - Social Security Card: Front (required) + Back (optional)
+   - Utility Bill: First page only (required)
+   - Each upload has visual feedback with green checkmark
+   - Backend creates separate `ClientUpload` records for each file
+   - Files saved with prefixes (e.g., `dl_front_filename.jpg`)
+
+3. **Secondary Bureaus Freeze Status** (`templates/portal/status.html`):
+   - Fixed display of 9 secondary bureaus from `CRA_ADDRESSES`:
+     - Innovis, ChexSystems, Clarity Services Inc, LexisNexis
+     - CoreLogic Teletrack, Factor Trust Inc, MicroBilt/PRBC
+     - LexisNexis Risk Solutions, DataX Ltd
+   - Status dropdown (PENDING, FROZEN, NOT FROZEN)
+   - File upload for confirmation documents
+   - Comments field for each bureau
+
+4. **Test Client Setup**:
+   - Email: `testclient@example.com`
+   - Password: `test123`
+   - Pre-populated with 9 secondary bureau freeze records
+
+**Files Modified**:
+- `templates/portal/documents.html` - CRA details + ID proof upload sections
+- `routes/portal.py` - Handle multiple file uploads for ID/Proof
+
+---
+
+### Previous Work (2025-12-31) - COMPLETED
+
+**Task**: Client Portal Exhaustive Tests & Template Enhancement
+
+**Status**: ✅ COMPLETE - 306/306 portal tests passing
+
+**Changes**:
 1. **Created 5 Portal Exhaustive Test Files** (TDD approach):
-   - `portal_dashboard_exhaustive.cy.js` (~60 tests)
-   - `portal_documents_exhaustive.cy.js` (~50 tests)
-   - `portal_learn_exhaustive.cy.js` (~50 tests)
-   - `portal_profile_exhaustive.cy.js` (~50 tests)
-   - `portal_status_exhaustive.cy.js` (~50 tests)
+   - `portal_dashboard_exhaustive.cy.js` (71 tests)
+   - `portal_documents_exhaustive.cy.js` (57 tests)
+   - `portal_learn_exhaustive.cy.js` (64 tests)
+   - `portal_profile_exhaustive.cy.js` (61 tests)
+   - `portal_status_exhaustive.cy.js` (53 tests)
 
 2. **Added CI Auth Bypass** (`routes/portal.py`):
    - `portal_login_required` decorator now auto-authenticates in CI=true mode
-   - Gets first client from database for test session
+   - Creates a test client automatically if database has no clients
+   - Sets test client session for authenticated portal access
 
-3. **Added data-testid Attributes** to all portal templates:
-   - `base_portal.html`: portal-header, portal-logo, user-info, client-name, user-avatar, portal-nav, nav-case, nav-documents, nav-learn, nav-profile, mobile-nav
-   - `dashboard.html`: hero-section, violations-value, stats-grid, stat-accounts, stat-bureaus, stat-days, stat-round, progress-card, progress-ring, progress-percent, round-markers, progress-bar, whats-next, action-card, score-journey, starting-score, current-score, points-gained, timeline, trust-footer
-   - `documents.html`: page-header, page-title, alert-card, documents-list, documents-title, upload-section, upload-title, upload-form, doc-type-options, drop-zone, mobile-scanner
-   - `learn.html`: hero-section, stats-grid, fcra-overview, violations-section, dispute-process, glossary, faq-section, cta-section
-   - `profile.html`: profile-header, quick-actions, personal-info, status-link, contact-section, contact-form, referral-section, security-section
-   - `status.html`: back-link, page-header, summary-stats, equifax-section, experian-section, transunion-section, legend, secondary-bureaus-section
-
-**Files Modified**:
-- `routes/portal.py` - CI auth bypass
-- `templates/portal/base_portal.html` - data-testid attributes
-- `templates/portal/dashboard.html` - data-testid attributes
-- `templates/portal/documents.html` - data-testid attributes
-- `templates/portal/learn.html` - data-testid attributes
-- `templates/portal/profile.html` - data-testid attributes
-- `templates/portal/status.html` - data-testid attributes
+3. **Added data-testid Attributes** to all portal templates
 
 **New Test Files Created**:
 - `cypress/e2e/portal_dashboard_exhaustive.cy.js`

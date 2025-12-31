@@ -221,54 +221,115 @@ def upload_document():
     if not current_user:
         return redirect(url_for('portal_login'))
 
-    file = request.files.get('document')
     doc_type = request.form.get('doc_type', 'other')
     notes = request.form.get('notes', '')
 
-    if file and file.filename:
-        db = get_db()
-        try:
-            client = db.query(Client).filter_by(id=get_client_id()).first()
-            if not client:
-                flash('Client not found', 'error')
-                return redirect(url_for('portal.documents'))
+    # Get CRA response specific fields
+    bureau_equifax = request.form.get('bureau_equifax')
+    bureau_experian = request.form.get('bureau_experian')
+    bureau_transunion = request.form.get('bureau_transunion')
+    response_round = request.form.get('response_round')
 
-            # Secure the filename
-            filename = secure_filename(file.filename)
+    # Build bureau string from checkboxes
+    bureaus = []
+    if bureau_equifax:
+        bureaus.append('Equifax')
+    if bureau_experian:
+        bureaus.append('Experian')
+    if bureau_transunion:
+        bureaus.append('TransUnion')
+    bureau_str = ', '.join(bureaus) if bureaus else None
 
-            # Create upload directory
-            upload_dir = os.path.join('static', 'client_uploads', str(client.id))
-            os.makedirs(upload_dir, exist_ok=True)
+    # Parse round
+    dispute_round = None
+    if response_round and response_round.isdigit():
+        dispute_round = int(response_round)
 
-            # Save file
-            file_path = os.path.join(upload_dir, filename)
-            file.save(file_path)
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=get_client_id()).first()
+        if not client:
+            flash('Client not found', 'error')
+            return redirect(url_for('portal.documents'))
 
-            # Get file size
-            file_size = os.path.getsize(file_path)
+        # Create upload directory
+        upload_dir = os.path.join('static', 'client_uploads', str(client.id))
+        os.makedirs(upload_dir, exist_ok=True)
 
-            # Create document record using ClientUpload (has all needed fields)
-            doc = ClientUpload(
-                client_id=client.id,
-                category='portal_upload',
-                document_type=doc_type,
-                file_name=filename,
-                file_path=file_path,
-                file_size=file_size,
-                file_type=file.content_type or 'application/octet-stream',
-                notes=notes,
-                uploaded_at=datetime.now()
-            )
-            db.add(doc)
-            db.commit()
+        files_uploaded = 0
 
-            flash('Document uploaded successfully!', 'success')
-        except Exception as e:
-            flash(f'Error uploading document: {str(e)}', 'error')
-        finally:
-            db.close()
-    else:
-        flash('No file selected', 'error')
+        # Handle ID/Proof uploads (multiple files)
+        if doc_type == 'id_proof':
+            id_files = {
+                'dl_front': ('Driver License Front', True),
+                'dl_back': ('Driver License Back', False),
+                'ssn_front': ('Social Security Card Front', True),
+                'ssn_back': ('Social Security Card Back', False),
+                'utility_bill': ('Utility Bill', True)
+            }
+
+            for field_name, (doc_label, required) in id_files.items():
+                file = request.files.get(field_name)
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    # Add prefix to distinguish files
+                    prefixed_filename = f"{field_name}_{filename}"
+                    file_path = os.path.join(upload_dir, prefixed_filename)
+                    file.save(file_path)
+                    file_size = os.path.getsize(file_path)
+
+                    doc = ClientUpload(
+                        client_id=client.id,
+                        category='id_verification',
+                        document_type=field_name,
+                        file_name=prefixed_filename,
+                        file_path=file_path,
+                        file_size=file_size,
+                        file_type=file.content_type or 'application/octet-stream',
+                        notes=f"{doc_label} - {notes}" if notes else doc_label,
+                        uploaded_at=datetime.now()
+                    )
+                    db.add(doc)
+                    files_uploaded += 1
+
+            if files_uploaded > 0:
+                db.commit()
+                flash(f'{files_uploaded} ID document(s) uploaded successfully!', 'success')
+            else:
+                flash('No ID files selected', 'error')
+
+        else:
+            # Standard single file upload
+            file = request.files.get('document')
+            if file and file.filename:
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(upload_dir, filename)
+                file.save(file_path)
+                file_size = os.path.getsize(file_path)
+
+                doc = ClientUpload(
+                    client_id=client.id,
+                    category='portal_upload',
+                    document_type=doc_type,
+                    file_name=filename,
+                    file_path=file_path,
+                    file_size=file_size,
+                    file_type=file.content_type or 'application/octet-stream',
+                    notes=notes,
+                    bureau=bureau_str,
+                    dispute_round=dispute_round,
+                    uploaded_at=datetime.now()
+                )
+                db.add(doc)
+                db.commit()
+                flash('Document uploaded successfully!', 'success')
+            else:
+                flash('No file selected', 'error')
+
+    except Exception as e:
+        flash(f'Error uploading document: {str(e)}', 'error')
+    finally:
+        db.close()
 
     return redirect(url_for('portal.documents'))
 
