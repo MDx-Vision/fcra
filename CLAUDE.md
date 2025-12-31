@@ -19,6 +19,10 @@
 - Phase 7: Credit Monitoring Auto-Import ✅
 - Phase 8: BAG CRM Feature Parity ✅
 
+### Documentation
+- `ARCHITECTURE.md` - Tech stack, project structure, database models, services, API endpoints
+- `FEATURE_BACKLOG.md` - Upcoming features and priorities
+
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 1**: Client Communication Automation (wire up workflow triggers + SMS opt-in)
