@@ -474,6 +474,18 @@
                     <input type="tel" id="phone" name="phone" placeholder="(555) 123-4567" data-testid="phone-input">
                 </div>
 
+                <!-- Communication Preferences -->
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="display: flex; align-items: center; cursor: pointer; font-weight: 400;">
+                        <input type="checkbox" name="sms_opt_in" id="smsOptIn" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #22c55e;" data-testid="sms-opt-in-checkbox">
+                        <span style="font-size: 14px; color: #374151;">Send me text updates about my case</span>
+                    </label>
+                    <label style="display: flex; align-items: center; cursor: pointer; font-weight: 400;">
+                        <input type="checkbox" name="email_opt_in" id="emailOptIn" checked style="width: 18px; height: 18px; margin-right: 10px; accent-color: #22c55e;" data-testid="email-opt-in-checkbox">
+                        <span style="font-size: 14px; color: #374151;">Send me email updates about my case</span>
+                    </label>
+                </div>
+
                 <div class="form-group">
                     <label for="address">Street Address</label>
                     <input type="text" id="address" name="address" placeholder="123 Main Street" data-testid="address-input">

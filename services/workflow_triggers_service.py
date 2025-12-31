@@ -817,11 +817,15 @@ class WorkflowTriggersService:
     def _action_send_sms(
         session, client_id: int, params: Dict[str, Any], event_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Send SMS action"""
+        """Send SMS action - only sends if client has opted in"""
         try:
             client = session.query(Client).filter(Client.id == client_id).first()
             if not client or not client.phone:
                 return {"success": False, "error": "Client phone not found"}
+
+            # Check SMS opt-in before sending
+            if not getattr(client, 'sms_opt_in', False):
+                return {"success": False, "error": "Client has not opted in for SMS", "skipped": True}
 
             from services.task_queue_service import TaskQueueService
 

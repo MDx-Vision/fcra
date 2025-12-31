@@ -294,6 +294,23 @@ def upload_document():
 
             if files_uploaded > 0:
                 db.commit()
+
+                # Fire document_uploaded trigger for ID/proof uploads
+                try:
+                    from services.workflow_triggers_service import WorkflowTriggersService
+                    WorkflowTriggersService.evaluate_triggers(
+                        "document_uploaded",
+                        {
+                            "client_id": client.id,
+                            "client_name": client.name,
+                            "document_type": "id_proof",
+                            "document_name": f"{files_uploaded} ID document(s)",
+                            "uploaded_by": "client",
+                        },
+                    )
+                except Exception as trigger_error:
+                    print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
+
                 flash(f'{files_uploaded} ID document(s) uploaded successfully!', 'success')
             else:
                 flash('No ID files selected', 'error')
@@ -322,6 +339,41 @@ def upload_document():
                 )
                 db.add(doc)
                 db.commit()
+
+                # Fire response_received trigger for CRA responses
+                if doc_type == 'cra_response' and bureau_str:
+                    try:
+                        from services.workflow_triggers_service import WorkflowTriggersService
+                        for bureau in bureaus:
+                            WorkflowTriggersService.evaluate_triggers(
+                                "response_received",
+                                {
+                                    "client_id": client.id,
+                                    "client_name": client.name,
+                                    "bureau": bureau,
+                                    "response_type": "mail",
+                                    "round_number": dispute_round,
+                                },
+                            )
+                    except Exception as trigger_error:
+                        print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
+
+                # Fire document_uploaded trigger
+                try:
+                    from services.workflow_triggers_service import WorkflowTriggersService
+                    WorkflowTriggersService.evaluate_triggers(
+                        "document_uploaded",
+                        {
+                            "client_id": client.id,
+                            "client_name": client.name,
+                            "document_type": doc_type,
+                            "document_name": filename,
+                            "uploaded_by": "client",
+                        },
+                    )
+                except Exception as trigger_error:
+                    print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
+
                 flash('Document uploaded successfully!', 'success')
             else:
                 flash('No file selected', 'error')

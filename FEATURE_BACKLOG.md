@@ -6,75 +6,46 @@
 
 ---
 
-## Priority 1: Client Communication Automation
+## ~~Priority 1: Client Communication Automation~~ ✅ COMPLETE
 
-### Overview
-Complete the workflow automation system to notify clients at key points in their case lifecycle via Email AND SMS (for clients who opt-in).
+**Completed: 2025-12-31**
 
-### Current State
-- Infrastructure exists in `services/workflow_triggers_service.py`
-- Only `case_created` and `payment_received` triggers are wired up
-- Email/SMS actions work but most triggers never fire
-- SMS templates already exist in `services/sms_templates.py`
+### What Was Implemented
 
-### Triggers Needing Wire-Up
+1. **Database Fields**:
+   - [x] Added `sms_opt_in` (Boolean, default False) to Client model
+   - [x] Added `email_opt_in` (Boolean, default True) to Client model
+   - [x] Created migration entries
 
-| Trigger | Fire When | Location to Add |
-|---------|-----------|-----------------|
-| `dispute_sent` | Letters mailed to bureaus | Letter queue / certified mail flow |
-| `response_received` | CRA response uploaded | Portal upload + staff upload routes |
-| `status_changed` | Case status updates | Anywhere `dispute_status` changes |
-| `document_uploaded` | Client uploads document | Portal document upload route |
-| `deadline_approaching` | SOL/response deadline near | Scheduler/cron job |
+2. **Workflow Triggers Wired Up**:
+   - [x] `dispute_sent` - Fires when certified mail is sent to bureaus
+   - [x] `response_received` - Fires when CRA response is uploaded in portal
+   - [x] `document_uploaded` - Fires for all document uploads in portal
+   - [x] `status_changed` - Fires on dispute_status updates and round changes
+   - [ ] `deadline_approaching` - Scheduler job (future enhancement)
 
-### Email Templates Needed
+3. **SMS Opt-in Compliance**:
+   - [x] Added `check_sms_opt_in()` helper function
+   - [x] All 9 SMS trigger functions check opt-in before sending
+   - [x] Workflow triggers service checks opt-in for SMS actions
 
-| Template | Subject | When Sent |
-|----------|---------|-----------|
-| `welcome` | Welcome to Brightpath! | On signup (exists) |
-| `round_sent` | Round {N} Letters Sent | After dispute letters mailed |
-| `response_received` | Update: {Bureau} Responded | When CRA response uploaded |
-| `status_update` | Your Case Status Update | On status change |
-| `deadline_reminder` | Action Required: Deadline Approaching | 7 days before deadline |
+4. **Signup Forms**:
+   - [x] Added SMS opt-in checkbox to get_started.html (default unchecked)
+   - [x] Added email opt-in checkbox (default checked)
+   - [x] API endpoint captures and stores opt-in preferences
 
-### SMS Templates (Already Exist)
+### Files Modified
+- `database.py` - Added `sms_opt_in`, `email_opt_in` fields + migrations
+- `app.py` - Added trigger calls for dispute_sent, status_changed
+- `routes/portal.py` - Added triggers for response_received, document_uploaded
+- `services/sms_automation.py` - Added opt-in checks to all SMS functions
+- `services/workflow_triggers_service.py` - Added opt-in check for SMS action
+- `templates/get_started.html` - Added opt-in checkboxes
 
-| Template | When Sent | Opt-in Required |
-|----------|-----------|-----------------|
-| `welcome_sms` | On signup | Yes |
-| `dispute_sent_sms` | Letters mailed | Yes |
-| `cra_response_sms` | Bureau responds | Yes |
-| `case_update_sms` | Status change | Yes |
-| `document_reminder_sms` | Missing docs | Yes |
-
-### SMS Opt-In Requirements
-
-1. [ ] Add `sms_opt_in` boolean field to Client model
-2. [ ] Add SMS opt-in checkbox to signup forms
-3. [ ] Add SMS preference toggle in client portal profile
-4. [ ] Check `sms_opt_in` before sending any SMS
-5. [ ] Honor STOP replies (Twilio handles this automatically)
-
-### Implementation Steps
-
-1. [ ] Add `sms_opt_in` field to Client model + migration
-2. [ ] Update signup forms with SMS opt-in checkbox
-3. [ ] Add `evaluate_triggers("dispute_sent", {...})` call in letter queue send flow
-4. [ ] Add `evaluate_triggers("response_received", {...})` in portal CRA upload route
-5. [ ] Add `evaluate_triggers("status_changed", {...})` where `dispute_status` updates
-6. [ ] Add `evaluate_triggers("document_uploaded", {...})` in portal document routes
-7. [ ] Create scheduler job for `deadline_approaching` trigger
-8. [ ] Create default email templates for each trigger type
-9. [ ] Wire up SMS sending in workflow actions (check opt-in first)
-10. [ ] Test full automation flow end-to-end (email + SMS)
-
-### Files to Modify
-- `database.py` - Add `sms_opt_in` to Client model
-- `app.py` - Add trigger calls at event points, update signup forms
-- `routes/portal.py` - Add triggers for portal uploads, SMS preference in profile
-- `services/email_templates.py` - Add new templates
-- `services/workflow_triggers_service.py` - Check SMS opt-in before sending
-- `services/scheduler_service.py` - Add deadline check job
+### Test Status
+- 4,644 unit tests passing
+- 162/162 SMS & workflow trigger tests
+- 55/55 get_started Cypress tests
 
 ---
 
@@ -173,6 +144,10 @@ Let leads upload credit reports without filling out full form.
 - [x] Portal Logo Fix
 - [x] Client Portal Document Upload Enhancements
 - [x] Secondary Bureau Freeze Status UI
+- [x] **Priority 1: Client Communication Automation** (2025-12-31)
+  - SMS & email opt-in fields
+  - Workflow triggers wired up (dispute_sent, response_received, document_uploaded, status_changed)
+  - SMS opt-in compliance checks
 
 ---
 

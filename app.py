@@ -9313,12 +9313,29 @@ def api_cra_response_upload():
         db.add(cra_response)
 
         client = db.query(Client).filter_by(id=int(client_id)).first()
+        old_status = None
         if client:
+            old_status = client.dispute_status
             client.last_bureau_response_at = datetime.utcnow()
             if response_type in ["verified", "investigating"]:
                 client.dispute_status = "waiting_response"
             elif response_type == "deleted":
                 client.dispute_status = "active"
+
+            # Fire status_changed trigger if status actually changed
+            if old_status != client.dispute_status:
+                try:
+                    WorkflowTriggersService.evaluate_triggers(
+                        "status_changed",
+                        {
+                            "client_id": client.id,
+                            "client_name": client.name,
+                            "old_status": old_status,
+                            "new_status": client.dispute_status,
+                        },
+                    )
+                except Exception as trigger_error:
+                    print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
 
         if response_type == "deleted" or items_deleted > 0:
             dispute_items = (
@@ -15533,12 +15550,33 @@ def api_send_certified_mail():
             dispute_round,
         )
 
+        if not result.get("success"):
+            return jsonify({"success": False, "error": result.get("error", "Failed to send letter")}), 400
+
+        # Fire dispute_sent trigger for automation
+        if bureau and dispute_round:
+            try:
+                client = db.query(Client).filter(Client.id == client_id).first()
+                if client:
+                    WorkflowTriggersService.evaluate_triggers(
+                        "dispute_sent",
+                        {
+                            "client_id": client_id,
+                            "client_name": client.name,
+                            "bureau": bureau,
+                            "round_number": dispute_round,
+                            "tracking_number": result.get("tracking_number"),
+                        },
+                    )
+            except Exception as trigger_error:
+                print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
+
         return jsonify(
             {
                 "success": True,
                 "order_id": result["order_id"],
                 "tracking_number": result["tracking_number"],
-                "cost": result["cost"],
+                "cost": result.get("estimated_cost"),
                 "mock_mode": not is_certified_mail_configured(),
                 "message": "Certified mail order created",
             }
@@ -31536,11 +31574,27 @@ def api_client_manager_set_round():
             return jsonify({"success": False, "error": "Client not found"}), 404
 
         old_round = client.current_dispute_round or 0
+        old_status = client.dispute_status
         client.current_dispute_round = new_round
         client.dispute_status = "active" if new_round > 0 else "new"
         client.round_started_at = datetime.utcnow() if new_round > 0 else None
 
         db.commit()
+
+        # Fire status_changed trigger if status changed
+        if old_status != client.dispute_status:
+            try:
+                WorkflowTriggersService.evaluate_triggers(
+                    "status_changed",
+                    {
+                        "client_id": client.id,
+                        "client_name": client.name,
+                        "old_status": old_status,
+                        "new_status": client.dispute_status,
+                    },
+                )
+            except Exception as trigger_error:
+                print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
 
         return jsonify(
             {
@@ -31575,11 +31629,13 @@ def api_client_manager_bulk_set_round():
         updated = []
         errors = []
 
+        status_changes = []  # Track status changes for triggers
         for client_id in client_ids:
             try:
                 client = db.query(Client).filter_by(id=client_id).first()
                 if client:
                     old_round = client.current_dispute_round or 0
+                    old_status = client.dispute_status
                     client.current_dispute_round = new_round
                     client.dispute_status = "active" if new_round > 0 else "new"
                     client.round_started_at = (
@@ -31588,12 +31644,27 @@ def api_client_manager_bulk_set_round():
                     updated.append(
                         {"id": client_id, "name": client.name, "old_round": old_round}
                     )
+                    # Track for trigger firing after commit
+                    if old_status != client.dispute_status:
+                        status_changes.append({
+                            "client_id": client.id,
+                            "client_name": client.name,
+                            "old_status": old_status,
+                            "new_status": client.dispute_status,
+                        })
                 else:
                     errors.append({"id": client_id, "error": "Client not found"})
             except Exception as e:
                 errors.append({"id": client_id, "error": str(e)})
 
         db.commit()
+
+        # Fire status_changed triggers after commit
+        for change in status_changes:
+            try:
+                WorkflowTriggersService.evaluate_triggers("status_changed", change)
+            except Exception as trigger_error:
+                print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
 
         return jsonify(
             {
@@ -32290,7 +32361,9 @@ def api_leads_capture():
                 address_state=data.get('state', '').strip() or None,
                 address_zip=data.get('zip', '').strip() or None,
                 dispute_status='lead',  # Mark as lead, not active client
-                current_dispute_round=0
+                current_dispute_round=0,
+                sms_opt_in=data.get('sms_opt_in', False),
+                email_opt_in=data.get('email_opt_in', True)
             )
             db.add(client)
 

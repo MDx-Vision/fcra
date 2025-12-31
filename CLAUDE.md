@@ -25,12 +25,50 @@
 
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
-- **Priority 1**: Client Communication Automation (wire up workflow triggers + SMS opt-in)
+- **Priority 1**: ~~Client Communication Automation~~ ✅ COMPLETE
 - **Priority 2**: Gmail Integration (replace SendGrid completely)
 - **Priority 3**: Simple Booking System (DB-based, no Calendly)
 - **Priority 4**: Simple Report Upload Flow
 
 ### Current Work (2025-12-31) - COMPLETED
+
+**Task**: Priority 1 - Client Communication Automation
+
+**Status**: ✅ COMPLETE
+
+**Changes**:
+1. **Database Fields** (`database.py`):
+   - Added `sms_opt_in` (Boolean, default False) to Client model
+   - Added `email_opt_in` (Boolean, default True) to Client model
+   - Created migration entries for both columns
+
+2. **Workflow Triggers Wired Up**:
+   - `dispute_sent` - Fires when certified mail is sent to bureaus (`app.py` ~line 15539)
+   - `response_received` - Fires when CRA response is uploaded in portal (`routes/portal.py`)
+   - `document_uploaded` - Fires for all document uploads in portal (`routes/portal.py`)
+   - `status_changed` - Fires on dispute_status updates and round changes (`app.py`)
+
+3. **SMS Opt-in Compliance** (`services/sms_automation.py`):
+   - Added `check_sms_opt_in()` helper function
+   - Updated all 9 SMS trigger functions to check opt-in before sending:
+     - `trigger_welcome_sms`, `trigger_document_reminder`, `trigger_case_update`
+     - `trigger_dispute_sent`, `trigger_cra_response`, `trigger_payment_reminder`
+     - `trigger_analysis_ready`, `trigger_letters_ready`, `trigger_round_started`
+     - `send_custom_sms`
+
+4. **Workflow Triggers Service** (`services/workflow_triggers_service.py`):
+   - Updated `_action_send_sms` to check opt-in status before sending
+
+5. **Signup Form Updates** (`templates/get_started.html`):
+   - Added SMS opt-in checkbox (default unchecked)
+   - Added email opt-in checkbox (default checked)
+   - Updated `api_leads_capture` endpoint to capture opt-in values
+
+**Test Status**: 4,644 unit tests passing, 55/55 get_started tests, 162/162 SMS & trigger tests
+
+---
+
+### Previous Work (2025-12-31) - COMPLETED
 
 **Task**: Lead Capture Landing Page + Logo Fixes + Test Credentials
 

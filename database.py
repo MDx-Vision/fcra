@@ -203,6 +203,10 @@ class Client(Base):
     starred = Column(Boolean, default=False)  # Star/favorite toggle
     phone_verified = Column(Boolean, default=False)  # Phone verified checkbox
     portal_posted = Column(Boolean, default=False)  # Portal posted status
+
+    # Communication preferences
+    sms_opt_in = Column(Boolean, default=False)  # Client opted in for SMS notifications
+    email_opt_in = Column(Boolean, default=True)  # Client opted in for email notifications (default on)
     assigned_to = Column(Integer, ForeignKey('staff.id'), nullable=True)  # Assigned staff member
     employer_company = Column(String(255))  # Employer/company name for client
 
@@ -4474,6 +4478,9 @@ def init_db():
         ("letter_queue", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         # Phase 8: BAG CRM Feature Parity - Tags and Quick Links
         ("clients", "employer_company", "VARCHAR(255)"),
+        # Communication preferences for automation
+        ("clients", "sms_opt_in", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "email_opt_in", "BOOLEAN DEFAULT TRUE"),
         ("client_tags", "id", "SERIAL PRIMARY KEY"),
         ("client_tags", "name", "VARCHAR(100) UNIQUE NOT NULL"),
         ("client_tags", "color", "VARCHAR(7) DEFAULT '#6366f1'"),
