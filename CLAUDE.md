@@ -21,9 +21,9 @@
 
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
-- **Priority 1**: Client Communication Automation (wire up workflow triggers)
-- **Priority 2**: Gmail Integration (replace SendGrid)
-- **Priority 3**: Simple Booking System (no Calendly needed)
+- **Priority 1**: Client Communication Automation (wire up workflow triggers + SMS opt-in)
+- **Priority 2**: Gmail Integration (replace SendGrid completely)
+- **Priority 3**: Simple Booking System (DB-based, no Calendly)
 - **Priority 4**: Simple Report Upload Flow
 
 ### Current Work (2025-12-31) - COMPLETED

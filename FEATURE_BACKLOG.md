@@ -78,39 +78,24 @@ Complete the workflow automation system to notify clients at key points in their
 
 ---
 
-## Priority 2: Gmail for Transactional + SendGrid for Campaigns
+## Priority 2: Gmail Integration (Replace SendGrid)
 
 ### Overview
-Use Gmail for transactional emails (notifications, updates). Keep SendGrid for marketing campaigns.
-
-### Email Strategy
-
-| Email Type | Service | Why |
-|------------|---------|-----|
-| Welcome emails | Gmail | Replies go to real inbox |
-| Status updates | Gmail | Personal feel |
-| Round notifications | Gmail | Transactional |
-| CRA response alerts | Gmail | Transactional |
-| Marketing campaigns | SendGrid | Built for bulk, tracking, templates |
-| Newsletter | SendGrid | Open/click tracking |
-
-### Why This Approach
-- Gmail: Already paying for Google Workspace, replies go to real inbox, personal feel
-- SendGrid: Keep for campaigns where you need tracking, bulk sending, templates
+Switch all email sending from SendGrid to Gmail. Simpler, already paid for, replies go to real inbox.
 
 ### Current State
-- `services/email_service.py` uses SendGrid API for everything
-- Need to add Gmail option for transactional
+- `services/email_service.py` uses SendGrid API
+- Environment vars: `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, `SENDGRID_FROM_NAME`
 
 ### Implementation Steps
 
 1. [ ] Create Gmail App Password (requires 2FA on Google account)
-2. [ ] Create `services/gmail_service.py` for transactional emails
-3. [ ] Keep `services/email_service.py` (SendGrid) for campaigns
-4. [ ] Update workflow triggers to use Gmail for notifications
-5. [ ] Add `EMAIL_PROVIDER` config to choose per-email-type
-6. [ ] Update `services/config.py` for Gmail vars
-7. [ ] Test both email paths
+2. [ ] Rewrite `services/email_service.py` to use `smtplib` with Gmail SMTP
+3. [ ] Update environment variables to `GMAIL_USER`, `GMAIL_APP_PASSWORD`
+4. [ ] Update `services/config.py` for new config vars
+5. [ ] Remove SendGrid dependency from `requirements.txt`
+6. [ ] Update all tests in `tests/test_email_service.py`
+7. [ ] Test email sending end-to-end
 
 ### Gmail SMTP Settings
 ```
@@ -119,15 +104,15 @@ Port: 587 (TLS) or 465 (SSL)
 Auth: App Password (not regular password)
 ```
 
-### Environment Variables (New)
+### Environment Variables
 ```
 GMAIL_USER=your-email@yourdomain.com
 GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
 ```
 
-### Limits to Remember
-- Google Workspace: 2,000 emails/day (transactional)
-- SendGrid: Use for campaigns beyond Gmail limits
+### Limits
+- Google Workspace: 2,000 emails/day
+- Personal Gmail: 500 emails/day
 
 ---
 
@@ -196,8 +181,8 @@ Let leads upload credit reports without filling out full form.
 
 ## Notes
 
-- **Email strategy**: Gmail for transactional (notifications), SendGrid for campaigns
+- **Email**: Gmail only (replacing SendGrid completely)
 - **SMS**: Twilio (no alternative), requires client opt-in
-- Automation (Priority 1) can start with existing SendGrid, switch to Gmail later
+- Automation (Priority 1) can start with existing SendGrid, switch to Gmail after Priority 2
 - Booking (Priority 3) can be done independently
 - Priority 1 is the biggest value-add for client experience
