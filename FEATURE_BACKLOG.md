@@ -116,36 +116,33 @@ GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
 
 ---
 
-## Priority 3: Simple Booking System
+## Priority 3: Post-Analysis Q&A Booking
 
 ### Overview
-Allow leads/clients to book consultations without Calendly.
+After first analysis is complete, clients can book a 15-minute Q&A call if they have questions.
 
-### Options
+### Flow
+1. Client receives first analysis
+2. Reviews results in portal
+3. Has questions? → Book 15-min call
+4. Pick available time slot
+5. Confirmation email sent to both parties
 
-**Option A: Simple DB-based booking (Recommended to start)**
-- Staff sets available time slots manually
-- Clients pick from available slots
-- No Google Calendar sync
-- Confirmation emails via Gmail
+### Features
+- 15-minute slots only
+- Staff sets available times
+- Client picks from open slots
+- Email confirmation (Gmail)
+- Simple, no Google Calendar sync needed
 
-**Option B: Full Google Calendar integration**
-- Reads staff calendar for availability
-- Creates events on booking
-- Requires OAuth2 setup
-- More complex, more maintenance
+### Implementation Steps
 
-### Recommendation
-Start with Option A. Add Google Calendar sync later only if needed.
-
-### Implementation Steps (Option A)
-
-1. [ ] Create `AvailableSlot` model (date, time, duration, is_booked)
-2. [ ] Create staff UI to manage available slots
-3. [ ] Create public booking page showing open slots
-4. [ ] Create booking confirmation flow
-5. [ ] Send confirmation email to client + staff
-6. [ ] Add to lead capture page (`/get-started`)
+1. [ ] Create `BookingSlot` model (date, time, duration=15, is_booked, client_id)
+2. [ ] Create staff UI to set available slots (bulk create: "Mon-Fri 2pm-5pm")
+3. [ ] Add "Book Q&A Call" button to portal after analysis complete
+4. [ ] Create booking page showing open 15-min slots
+5. [ ] Send confirmation email to client + staff on booking
+6. [ ] Add booking to client's case notes automatically
 
 ---
 
