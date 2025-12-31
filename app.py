@@ -982,7 +982,7 @@ def staff_login():
             if staff.force_password_change:
                 return render_template("staff_login.html", force_change=True)
 
-            return redirect("/staff/")
+            return redirect("/dashboard")
 
         except Exception as e:
             print(f"Login error: {e}")
@@ -993,7 +993,7 @@ def staff_login():
             db.close()
 
     if "staff_id" in session:
-        return redirect("/staff/")
+        return redirect("/dashboard")
 
     return render_template("staff_login.html")
 
@@ -1027,7 +1027,7 @@ def staff_change_password():
             staff.force_password_change = False
             staff.updated_at = datetime.utcnow()
             db.commit()
-            return redirect("/staff/")
+            return redirect("/dashboard")
     except Exception as e:
         print(f"Password change error: {e}")
         return render_template(
@@ -1157,8 +1157,27 @@ def api_staff_login():
 @app.route("/dashboard/staff")
 @require_staff(roles=["admin"])
 def dashboard_staff():
-    """Redirect to new staff portal admin with team section"""
-    return redirect(url_for("staff_portal.admin", section="team"))
+    """Staff management page in old dashboard style"""
+    db = get_db()
+    try:
+        staff_members = db.query(Staff).order_by(Staff.created_at.desc()).all()
+
+        # Calculate stats
+        stats = {
+            "total": len(staff_members),
+            "admins": sum(1 for s in staff_members if s.role == "admin"),
+            "attorneys": sum(1 for s in staff_members if s.role == "attorney"),
+            "paralegals": sum(1 for s in staff_members if s.role == "paralegal"),
+        }
+
+        return render_template(
+            "staff_management.html",
+            staff_members=staff_members,
+            stats=stats,
+            active_page="staff"
+        )
+    finally:
+        db.close()
 
 
 @app.route("/api/staff/add", methods=["POST"])
@@ -31623,10 +31642,10 @@ def api_client_manager_run_analysis():
                 jsonify(
                     {
                         "success": False,
-                        "error": "No credit report found for this client",
+                        "error": "No credit report found for this client. Please import a credit report first.",
                     }
                 ),
-                404,
+                400,
             )
 
         if not credit_report.report_html:

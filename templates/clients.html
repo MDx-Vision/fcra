@@ -1145,11 +1145,26 @@
 
         // Search
         function searchClients() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('#clientTableBody tr').forEach(row => {
-                const name = row.querySelector('.client-name')?.textContent.toLowerCase() || '';
-                const email = row.querySelector('.client-email')?.textContent.toLowerCase() || '';
-                row.style.display = (name.includes(query) || email.includes(query)) ? '' : 'none';
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#clientTableBody tr');
+
+            if (!query) {
+                // Show all rows if search is empty
+                rows.forEach(row => row.style.display = '');
+                return;
+            }
+
+            rows.forEach(row => {
+                const name = (row.dataset.name || '').toLowerCase();
+                const email = (row.dataset.email || '').toLowerCase();
+                const phone = (row.dataset.phone || '').toLowerCase().replace(/[^0-9]/g, '');
+                const queryDigits = query.replace(/[^0-9]/g, '');
+
+                const matchesName = name.includes(query);
+                const matchesEmail = email.includes(query);
+                const matchesPhone = queryDigits.length >= 3 && phone.includes(queryDigits);
+
+                row.style.display = (matchesName || matchesEmail || matchesPhone) ? '' : 'none';
             });
         }
 

@@ -4,15 +4,15 @@
 {% block content %}
 
 <!-- Header -->
-<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;" data-testid="page-header">
     <div class="animate-fade-in">
-        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Documents</h2>
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;" data-testid="page-title">Documents</h2>
         <p style="font-size: 15px; color: #6b7280; margin: 0;">Upload bureau responses and download your case materials.</p>
     </div>
 </div>
 
 <!-- Alert -->
-<div class="card animate-fade-in-up" data-delay="200" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="200" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; margin-bottom: 24px;" data-testid="alert-card">
     <div style="display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
         <div style="font-size: 24px;">⚡</div>
         <div style="flex: 1; min-width: 200px;">
@@ -23,8 +23,8 @@
 </div>
 
 <!-- Documents List -->
-<div class="card animate-fade-in-up" data-delay="300" style="margin-bottom: 24px;">
-    <div class="card-title">📁 Your Case Documents</div>
+<div class="card animate-fade-in-up" data-delay="300" style="margin-bottom: 24px;" data-testid="documents-list">
+    <div class="card-title" data-testid="documents-title">📁 Your Case Documents</div>
     <p style="color: #6b7280; margin-bottom: 20px;">Download your dispute letters, analysis reports, and uploaded documents.</p>
 
     <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -46,14 +46,14 @@
 </div>
 
 <!-- Upload Section -->
-<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
-    <div class="card-title">📤 Upload Documents</div>
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;" data-testid="upload-section">
+    <div class="card-title" data-testid="upload-title">📤 Upload Documents</div>
     <p style="color: #6b7280; margin-bottom: 24px;">Select document type and upload files related to your case.</p>
 
-    <form action="{{ url_for('portal.upload_document') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ url_for('portal.upload_document') }}" method="POST" enctype="multipart/form-data" data-testid="upload-form">
         
         <!-- Document Types -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;" class="stats-grid-responsive">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="doc-type-options">
             <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: rgba(13, 148, 136, 0.05); border: 2px solid #0d9488; border-radius: 12px; cursor: pointer;">
                 <input type="radio" name="doc_type" value="cra_response" checked style="display: none;">
                 <span style="font-size: 28px; margin-bottom: 8px;">📩</span>
@@ -93,7 +93,7 @@
         </div>
 
         <!-- Drop Zone -->
-        <div style="border: 2px dashed #d1d5db; border-radius: 16px; padding: 48px 24px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.2s ease;">
+        <div style="border: 2px dashed #d1d5db; border-radius: 16px; padding: 48px 24px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.2s ease;" data-testid="drop-zone">
             <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
             <p style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">
                 <label for="document" style="color: #0d9488; text-decoration: underline; cursor: pointer;">Click to upload</label> or drag and drop
@@ -116,7 +116,7 @@
 </div>
 
 <!-- Mobile Scanner -->
-<div class="card animate-fade-in-up" data-delay="500" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-align: center; padding: 32px; border: none;">
+<div class="card animate-fade-in-up" data-delay="500" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-align: center; padding: 32px; border: none;" data-testid="mobile-scanner">
     <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
     <h4 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: white; margin: 0 0 12px 0;">Scan with Your Phone</h4>
     <p style="font-size: 15px; color: #9ca3af; margin: 0 0 24px 0; line-height: 1.5;">Use your phone's camera to scan documents instantly. Perfect for CRA responses and collection letters.</p>

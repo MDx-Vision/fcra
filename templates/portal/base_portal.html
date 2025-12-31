@@ -38,28 +38,28 @@
     <!-- Accessibility: Skip to main content link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <header class="header" role="banner">
-        <div class="logo">
+    <header class="header" role="banner" data-testid="portal-header">
+        <div class="logo" data-testid="portal-logo">
             <div class="logo-icon">⚖️</div>
             <span class="logo-text">Brightpath</span>
         </div>
-        <div class="user-info">
-            <span class="user-name">{{ current_user.first_name if current_user.first_name else 'Client' }}</span>
-            <div class="user-avatar">{{ (current_user.first_name or 'C')[0] }}</div>
+        <div class="user-info" data-testid="user-info">
+            <span class="user-name" data-testid="client-name">{{ current_user.first_name if current_user.first_name else 'Client' }}</span>
+            <div class="user-avatar" data-testid="user-avatar">{{ (current_user.first_name or 'C')[0] }}</div>
         </div>
     </header>
 
-    <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
-        <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}">
+    <nav class="nav-tabs" role="navigation" aria-label="Main navigation" data-testid="portal-nav">
+        <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="nav-case">
             <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
         </a>
-        <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}">
+        <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
             <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
         </a>
-        <a href="{{ url_for('portal.learn') }}" class="nav-tab {% if active_tab == 'learn' %}active{% endif %}">
+        <a href="{{ url_for('portal.learn') }}" class="nav-tab {% if active_tab == 'learn' %}active{% endif %}" data-testid="nav-learn">
             <span class="nav-icon" aria-hidden="true">📖</span><span class="nav-label">Learn</span>
         </a>
-        <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}">
+        <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="nav-profile">
             <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
         </a>
     </nav>
@@ -77,17 +77,17 @@
         {% block content %}{% endblock %}
     </main>
 
-    <nav class="mobile-nav">
-        <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}">
+    <nav class="mobile-nav" data-testid="mobile-nav">
+        <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="mobile-nav-case">
             <span>📊</span><span>Case</span>
         </a>
-        <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}">
+        <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="mobile-nav-documents">
             <span>📁</span><span>Documents</span>
         </a>
-        <a href="{{ url_for('portal.learn') }}" class="mobile-nav-tab {% if active_tab == 'learn' %}active{% endif %}">
+        <a href="{{ url_for('portal.learn') }}" class="mobile-nav-tab {% if active_tab == 'learn' %}active{% endif %}" data-testid="mobile-nav-learn">
             <span>📖</span><span>Learn</span>
         </a>
-        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}">
+        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>
         </a>
     </nav>

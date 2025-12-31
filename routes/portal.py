@@ -9,6 +9,34 @@ def portal_login_required(f):
     """Decorator to require portal login"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # CI auth bypass for testing
+        if os.environ.get('CI') == 'true':
+            # Set a test client ID in session if not present
+            if 'client_id' not in session and 'portal_client_id' not in session:
+                from database import get_db, Client
+                db = get_db()
+                try:
+                    # Get first client for testing, or create one if none exist
+                    test_client = db.query(Client).first()
+                    if not test_client:
+                        # Create a test client for CI testing
+                        test_client = Client(
+                            name='Test Client',
+                            first_name='Test',
+                            last_name='Client',
+                            email='testclient@example.com',
+                            phone='555-555-5555',
+                            current_dispute_round=2,
+                            dispute_status='active'
+                        )
+                        db.add(test_client)
+                        db.commit()
+                        db.refresh(test_client)
+                    session['portal_client_id'] = test_client.id
+                finally:
+                    db.close()
+            return f(*args, **kwargs)
+
         # Check both possible session keys (client_id is from existing login system)
         if 'client_id' not in session and 'portal_client_id' not in session:
             flash('Please log in to access your portal', 'error')

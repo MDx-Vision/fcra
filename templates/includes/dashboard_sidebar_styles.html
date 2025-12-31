@@ -21,7 +21,7 @@
         border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .logo img { height: 35px; margin-right: 10px; }
-    .logo .highlight { color: #84cc16; }
+    .logo .highlight { color: #22c55e; }
     
     .sidebar-nav {
         flex: 1;
@@ -41,47 +41,53 @@
     }
     
     .nav-section {
-        margin-bottom: 5px;
+        margin-bottom: 8px;
     }
-    
+
     .nav-section-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 15px;
+        padding: 12px 15px;
         color: #64748b;
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.8px;
         cursor: pointer;
         border-radius: 8px;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         user-select: none;
     }
     .nav-section-title:hover {
-        background: rgba(255,255,255,0.05);
-        color: #94a3b8;
+        background: rgba(255,255,255,0.06);
+        color: #cbd5e1;
     }
-    
+
     .nav-section-title .chevron {
-        width: 16px;
-        height: 16px;
-        transition: transform 0.3s ease;
+        width: 14px;
+        height: 14px;
+        opacity: 0.6;
+        transition: transform 0.25s ease, opacity 0.2s ease;
+    }
+    .nav-section-title:hover .chevron {
+        opacity: 1;
     }
     .nav-section-title .chevron.rotated {
         transform: rotate(180deg);
     }
-    
+
     .nav-section-items {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease, opacity 0.3s ease;
+        transition: max-height 0.25s ease-out, opacity 0.2s ease-out;
         opacity: 0;
+        padding-left: 8px;
     }
     .nav-section-items.expanded {
-        max-height: 500px;
+        max-height: 600px;
         opacity: 1;
+        transition: max-height 0.35s ease-in, opacity 0.25s ease-in;
     }
     
     .nav-item {
@@ -100,8 +106,8 @@
         color: white;
     }
     .nav-item.active {
-        background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
-        color: #1a1a2e;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
         font-weight: 600;
     }
     .nav-item svg {
@@ -109,6 +115,30 @@
         height: 18px;
         margin-right: 12px;
         flex-shrink: 0;
+    }
+
+    /* Pinned navigation item (always visible) */
+    .nav-item.pinned {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .nav-item.pinned:hover {
+        background: rgba(255,255,255,0.15);
+        border-color: rgba(255,255,255,0.2);
+    }
+    .nav-item.pinned.active {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        border-color: transparent;
+        color: white;
+    }
+
+    /* Navigation divider */
+    .nav-divider {
+        height: 1px;
+        background: rgba(255,255,255,0.1);
+        margin: 10px 15px;
     }
     
     .sidebar-user {

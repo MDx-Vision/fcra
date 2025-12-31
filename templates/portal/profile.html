@@ -4,7 +4,7 @@
 {% block content %}
 
 <!-- Profile Header -->
-<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;">
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;" data-testid="profile-header">
     <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
         <div style="width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.2);">
             <span style="font-size: 36px; font-weight: 700; color: white;">{{ (current_user.first_name or 'C')[0] }}</span>
@@ -21,7 +21,7 @@
 </div>
 
 <!-- Quick Actions -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="quick-actions">
     <a href="{{ url_for('portal.documents') }}" class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
         <div style="font-size: 32px; margin-bottom: 12px;">📤</div>
         <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Upload Document</div>
@@ -37,7 +37,7 @@
 </div>
 
 <!-- Personal Info -->
-<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;" data-testid="personal-info">
     <div class="card-title">👤 Personal Information</div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="two-col-responsive">
         <div>
@@ -61,7 +61,7 @@
 </div>
 
 <!-- Detailed Status Link -->
-<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px; background: #f9fafb; border: 1px solid #e5e7eb;">
+<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px; background: #f9fafb; border: 1px solid #e5e7eb;" data-testid="status-link">
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
         <div>
             <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 4px 0;">📋 Detailed Bureau Status</h4>
@@ -74,7 +74,7 @@
 </div>
 
 <!-- Contact -->
-<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;" data-testid="contact-section">
     <div class="card-title">📞 Get in Touch</div>
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
         <a href="tel:9179094051" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
@@ -103,7 +103,7 @@
     <!-- Message Form -->
     <div style="background: #f9fafb; border-radius: 12px; padding: 24px;">
         <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Send Us a Message</h4>
-        <form action="{{ url_for('portal.send_message') }}" method="POST">
+        <form action="{{ url_for('portal.send_message') }}" method="POST" data-testid="contact-form">
                         <div style="margin-bottom: 16px;">
                 <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Subject</label>
                 <select name="subject" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white;">
@@ -124,7 +124,7 @@
 </div>
 
 <!-- Referral -->
-<div class="card animate-fade-in-up" data-delay="700" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; margin-bottom: 24px; border: none;">
+<div class="card animate-fade-in-up" data-delay="700" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; margin-bottom: 24px; border: none;" data-testid="referral-section">
     <div style="text-align: center; margin-bottom: 24px;">
         <div style="font-size: 48px; margin-bottom: 16px;">🎁</div>
         <h3 style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; margin: 0 0 8px 0;">Know Someone Who Could Use Our Services?</h3>
@@ -164,7 +164,7 @@
 </div>
 
 <!-- Account Status -->
-<div class="card animate-fade-in-up" data-delay="800">
+<div class="card animate-fade-in-up" data-delay="800" data-testid="security-section">
     <div class="card-title">🔐 Security & Account</div>
 
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
