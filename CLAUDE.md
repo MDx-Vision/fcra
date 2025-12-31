@@ -19,6 +19,13 @@
 - Phase 7: Credit Monitoring Auto-Import ✅
 - Phase 8: BAG CRM Feature Parity ✅
 
+### Feature Backlog
+See `FEATURE_BACKLOG.md` for upcoming work:
+- **Priority 1**: Client Communication Automation (wire up workflow triggers)
+- **Priority 2**: Gmail Integration (replace SendGrid)
+- **Priority 3**: Simple Booking System (no Calendly needed)
+- **Priority 4**: Simple Report Upload Flow
+
 ### Current Work (2025-12-31) - COMPLETED
 
 **Task**: Lead Capture Landing Page + Logo Fixes + Test Credentials
