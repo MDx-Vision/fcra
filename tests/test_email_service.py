@@ -1,11 +1,12 @@
 """
 Unit tests for Email Service
-Tests for SendGrid email functionality including single emails, bulk emails,
+Tests for Gmail SMTP email functionality including single emails, bulk emails,
 attachments, PDF attachments, and configuration checks.
 """
 import pytest
 import base64
 import os
+import smtplib
 from unittest.mock import Mock, MagicMock, patch, mock_open
 import sys
 
@@ -13,16 +14,18 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.email_service import (
-    get_sendgrid_api_key,
-    get_sendgrid_client,
+    get_gmail_credentials,
     get_from_email,
     get_from_name,
     send_email,
     send_bulk_email,
+    is_email_configured,
     is_sendgrid_configured,
     send_email_with_pdf,
     DEFAULT_FROM_EMAIL,
     DEFAULT_FROM_NAME,
+    GMAIL_SMTP_HOST,
+    GMAIL_SMTP_PORT,
 )
 
 
@@ -30,91 +33,47 @@ from services.email_service import (
 
 
 @pytest.fixture
-def mock_sendgrid_client():
-    """Create a mock SendGrid client."""
-    mock_client = Mock()
-    mock_response = Mock()
-    mock_response.status_code = 202
-    mock_response.headers = {"X-Message-Id": "test-message-id-123"}
-    mock_client.send.return_value = mock_response
-    return mock_client
+def mock_smtp():
+    """Create a mock SMTP connection."""
+    mock_server = MagicMock()
+    mock_server.__enter__ = MagicMock(return_value=mock_server)
+    mock_server.__exit__ = MagicMock(return_value=False)
+    return mock_server
 
 
 @pytest.fixture
-def reset_sendgrid_client():
-    """Reset the global SendGrid client before and after each test."""
-    import services.email_service as email_service
-    original_client = email_service._sendgrid_client
-    email_service._sendgrid_client = None
-    yield
-    email_service._sendgrid_client = original_client
+def gmail_env():
+    """Set up Gmail environment variables."""
+    with patch.dict(os.environ, {
+        "GMAIL_USER": "test@gmail.com",
+        "GMAIL_APP_PASSWORD": "test-app-password"
+    }):
+        yield
 
 
-# ============== get_sendgrid_api_key Tests ==============
+# ============== get_gmail_credentials Tests ==============
 
 
-class TestGetSendgridApiKey:
-    """Tests for get_sendgrid_api_key function."""
+class TestGetGmailCredentials:
+    """Tests for get_gmail_credentials function."""
 
-    def test_get_sendgrid_api_key_success(self):
-        """Test getting API key when it's configured."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "test-api-key-123"}):
-            api_key = get_sendgrid_api_key()
-            assert api_key == "test-api-key-123"
+    def test_get_gmail_credentials_success(self):
+        """Test getting credentials when they're configured."""
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "user@gmail.com",
+            "GMAIL_APP_PASSWORD": "secret-password"
+        }):
+            user, password = get_gmail_credentials()
+            assert user == "user@gmail.com"
+            assert password == "secret-password"
 
-    def test_get_sendgrid_api_key_missing(self):
-        """Test ValueError is raised when API key is missing."""
+    def test_get_gmail_credentials_missing(self):
+        """Test getting credentials when missing."""
         with patch.dict(os.environ, {}, clear=True):
-            # Ensure SENDGRID_API_KEY is not in environment
-            if "SENDGRID_API_KEY" in os.environ:
-                del os.environ["SENDGRID_API_KEY"]
             with patch.object(os.environ, "get", return_value=None):
-                with pytest.raises(ValueError) as exc_info:
-                    get_sendgrid_api_key()
-                assert "SendGrid API key not configured" in str(exc_info.value)
-
-    def test_get_sendgrid_api_key_empty_string(self):
-        """Test ValueError is raised when API key is empty string."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": ""}):
-            with pytest.raises(ValueError) as exc_info:
-                get_sendgrid_api_key()
-            assert "SendGrid API key not configured" in str(exc_info.value)
-
-
-# ============== get_sendgrid_client Tests ==============
-
-
-class TestGetSendgridClient:
-    """Tests for get_sendgrid_client function."""
-
-    def test_get_sendgrid_client_creates_client(self, reset_sendgrid_client):
-        """Test that client is created on first call."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "test-api-key"}):
-            with patch("services.email_service.SendGridAPIClient") as mock_sg:
-                mock_sg.return_value = Mock()
-                client = get_sendgrid_client()
-                mock_sg.assert_called_once_with("test-api-key")
-                assert client is not None
-
-    def test_get_sendgrid_client_reuses_client(self, reset_sendgrid_client):
-        """Test that subsequent calls reuse the same client."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "test-api-key"}):
-            with patch("services.email_service.SendGridAPIClient") as mock_sg:
-                mock_instance = Mock()
-                mock_sg.return_value = mock_instance
-
-                client1 = get_sendgrid_client()
-                client2 = get_sendgrid_client()
-
-                # Should only be called once (singleton pattern)
-                mock_sg.assert_called_once()
-                assert client1 is client2
-
-    def test_get_sendgrid_client_raises_on_missing_key(self, reset_sendgrid_client):
-        """Test that client creation fails without API key."""
-        with patch.object(os.environ, "get", return_value=None):
-            with pytest.raises(ValueError):
-                get_sendgrid_client()
+                user, password = get_gmail_credentials()
+                assert user is None
+                assert password is None
 
 
 # ============== get_from_email Tests ==============
@@ -126,17 +85,19 @@ class TestGetFromEmail:
     def test_get_from_email_default(self):
         """Test default from email is returned."""
         with patch.dict(os.environ, {}, clear=True):
-            # Remove SENDGRID_FROM_EMAIL if it exists
-            env_copy = os.environ.copy()
-            if "SENDGRID_FROM_EMAIL" in env_copy:
-                del env_copy["SENDGRID_FROM_EMAIL"]
-            with patch.dict(os.environ, env_copy, clear=True):
+            with patch.object(os.environ, "get", side_effect=lambda k, d=None: d):
                 email = get_from_email()
                 assert email == DEFAULT_FROM_EMAIL
 
+    def test_get_from_email_from_gmail_user(self):
+        """Test from email uses GMAIL_USER when set."""
+        with patch.dict(os.environ, {"GMAIL_USER": "myemail@gmail.com"}):
+            email = get_from_email()
+            assert email == "myemail@gmail.com"
+
     def test_get_from_email_custom(self):
         """Test custom from email from environment."""
-        with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "custom@example.com"}):
+        with patch.dict(os.environ, {"EMAIL_FROM_ADDRESS": "custom@example.com"}):
             email = get_from_email()
             assert email == "custom@example.com"
 
@@ -151,15 +112,15 @@ class TestGetFromName:
         """Test default from name is returned."""
         with patch.dict(os.environ, {}, clear=True):
             env_copy = os.environ.copy()
-            if "SENDGRID_FROM_NAME" in env_copy:
-                del env_copy["SENDGRID_FROM_NAME"]
+            if "EMAIL_FROM_NAME" in env_copy:
+                del env_copy["EMAIL_FROM_NAME"]
             with patch.dict(os.environ, env_copy, clear=True):
                 name = get_from_name()
                 assert name == DEFAULT_FROM_NAME
 
     def test_get_from_name_custom(self):
         """Test custom from name from environment."""
-        with patch.dict(os.environ, {"SENDGRID_FROM_NAME": "Custom Sender"}):
+        with patch.dict(os.environ, {"EMAIL_FROM_NAME": "Custom Sender"}):
             name = get_from_name()
             assert name == "Custom Sender"
 
@@ -170,20 +131,20 @@ class TestGetFromName:
 class TestSendEmail:
     """Tests for send_email function."""
 
-    def test_send_email_success(self, mock_sendgrid_client):
+    def test_send_email_success(self, mock_smtp, gmail_env):
         """Test successful email sending."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test Subject",
-                    html_content="<p>Hello World</p>"
-                )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test Subject",
+                html_content="<p>Hello World</p>"
+            )
 
-                assert result["success"] is True
-                assert result["message_id"] == "test-message-id-123"
-                assert result["status_code"] == 202
-                assert result["error"] is None
+            assert result["success"] is True
+            assert result["message_id"] is not None
+            assert result["message_id"].startswith("gmail-")
+            assert result["status_code"] == 200
+            assert result["error"] is None
 
     def test_send_email_no_recipient(self):
         """Test email fails with no recipient."""
@@ -208,35 +169,46 @@ class TestSendEmail:
         assert result["success"] is False
         assert "No recipient email provided" in result["error"]
 
-    def test_send_email_with_plain_content(self, mock_sendgrid_client):
-        """Test email with explicit plain text content."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test Subject",
-                    html_content="<p>Hello World</p>",
-                    plain_content="Hello World"
-                )
-
-                assert result["success"] is True
-                mock_sendgrid_client.send.assert_called_once()
-
-    def test_send_email_auto_generates_plain_content(self, mock_sendgrid_client):
-        """Test that plain content is auto-generated from HTML."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
+    def test_send_email_not_configured(self):
+        """Test email fails when Gmail not configured."""
+        with patch.dict(os.environ, {}, clear=True):
+            with patch.object(os.environ, "get", return_value=None):
                 result = send_email(
                     to_email="recipient@example.com",
                     subject="Test",
-                    html_content="<p>Test <b>content</b></p>"
+                    html_content="<p>Hello</p>"
                 )
 
-                assert result["success"] is True
+                assert result["success"] is False
+                assert "Gmail not configured" in result["error"]
 
-    def test_send_email_with_custom_from_email(self, mock_sendgrid_client):
+    def test_send_email_with_plain_content(self, mock_smtp, gmail_env):
+        """Test email with explicit plain text content."""
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test Subject",
+                html_content="<p>Hello World</p>",
+                plain_content="Hello World"
+            )
+
+            assert result["success"] is True
+            mock_smtp.sendmail.assert_called_once()
+
+    def test_send_email_auto_generates_plain_content(self, mock_smtp, gmail_env):
+        """Test that plain content is auto-generated from HTML."""
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test",
+                html_content="<p>Test <b>content</b></p>"
+            )
+
+            assert result["success"] is True
+
+    def test_send_email_with_custom_from_email(self, mock_smtp, gmail_env):
         """Test email with custom from email."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
+        with patch("smtplib.SMTP", return_value=mock_smtp):
             result = send_email(
                 to_email="recipient@example.com",
                 subject="Test",
@@ -247,115 +219,112 @@ class TestSendEmail:
 
             assert result["success"] is True
 
-    def test_send_email_with_attachments(self, mock_sendgrid_client):
+    def test_send_email_with_attachments(self, mock_smtp, gmail_env):
         """Test email with attachments."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                attachments = [
-                    {
-                        "content": base64.b64encode(b"test content").decode(),
-                        "filename": "test.txt",
-                        "type": "text/plain"
-                    }
-                ]
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            attachments = [
+                {
+                    "content": base64.b64encode(b"test content").decode(),
+                    "filename": "test.txt",
+                    "type": "text/plain"
+                }
+            ]
 
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test with attachment",
-                    html_content="<p>See attachment</p>",
-                    attachments=attachments
-                )
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test with attachment",
+                html_content="<p>See attachment</p>",
+                attachments=attachments
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
-    def test_send_email_with_multiple_attachments(self, mock_sendgrid_client):
+    def test_send_email_with_multiple_attachments(self, mock_smtp, gmail_env):
         """Test email with multiple attachments."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                attachments = [
-                    {
-                        "content": base64.b64encode(b"content1").decode(),
-                        "filename": "file1.txt",
-                        "type": "text/plain"
-                    },
-                    {
-                        "content": base64.b64encode(b"content2").decode(),
-                        "filename": "file2.txt",
-                        "type": "text/plain"
-                    }
-                ]
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            attachments = [
+                {
+                    "content": base64.b64encode(b"content1").decode(),
+                    "filename": "file1.txt",
+                    "type": "text/plain"
+                },
+                {
+                    "content": base64.b64encode(b"content2").decode(),
+                    "filename": "file2.txt",
+                    "type": "text/plain"
+                }
+            ]
 
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test with attachments",
-                    html_content="<p>See attachments</p>",
-                    attachments=attachments
-                )
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test with attachments",
+                html_content="<p>See attachments</p>",
+                attachments=attachments
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
-    def test_send_email_attachment_with_defaults(self, mock_sendgrid_client):
+    def test_send_email_attachment_with_defaults(self, mock_smtp, gmail_env):
         """Test email attachment uses defaults for missing fields."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                # Attachment with minimal data - should use defaults
-                attachments = [{}]
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            # Attachment with minimal data - should use defaults
+            attachments = [{"content": base64.b64encode(b"test").decode()}]
 
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test",
-                    html_content="<p>Test</p>",
-                    attachments=attachments
-                )
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test",
+                html_content="<p>Test</p>",
+                attachments=attachments
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
-    def test_send_email_sendgrid_error(self):
-        """Test email handling of SendGrid errors."""
-        mock_client = Mock()
-        mock_client.send.side_effect = Exception("SendGrid API Error")
+    def test_send_email_authentication_error(self, gmail_env):
+        """Test email handling of authentication errors."""
+        mock_server = MagicMock()
+        mock_server.__enter__ = MagicMock(return_value=mock_server)
+        mock_server.__exit__ = MagicMock(return_value=False)
+        mock_server.login.side_effect = smtplib.SMTPAuthenticationError(535, b"Authentication failed")
 
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test",
-                    html_content="<p>Hello</p>"
-                )
+        with patch("smtplib.SMTP", return_value=mock_server):
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test",
+                html_content="<p>Hello</p>"
+            )
 
-                assert result["success"] is False
-                assert result["message_id"] is None
-                assert "SendGrid API Error" in result["error"]
+            assert result["success"] is False
+            assert "authentication failed" in result["error"].lower()
 
-    def test_send_email_no_headers_in_response(self, mock_sendgrid_client):
-        """Test email handles response without headers."""
-        mock_sendgrid_client.send.return_value.headers = None
+    def test_send_email_smtp_error(self, gmail_env):
+        """Test email handling of SMTP errors."""
+        mock_server = MagicMock()
+        mock_server.__enter__ = MagicMock(return_value=mock_server)
+        mock_server.__exit__ = MagicMock(return_value=False)
+        mock_server.sendmail.side_effect = smtplib.SMTPException("SMTP Error")
 
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test",
-                    html_content="<p>Hello</p>"
-                )
+        with patch("smtplib.SMTP", return_value=mock_server):
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test",
+                html_content="<p>Hello</p>"
+            )
 
-                assert result["success"] is True
-                assert result["message_id"] == ""
+            assert result["success"] is False
+            assert "SMTP error" in result["error"]
 
-    def test_send_email_missing_message_id_header(self, mock_sendgrid_client):
-        """Test email handles response without X-Message-Id header."""
-        mock_sendgrid_client.send.return_value.headers = {}
+    def test_send_email_general_error(self, gmail_env):
+        """Test email handling of general errors."""
+        with patch("smtplib.SMTP", side_effect=Exception("Connection failed")):
+            result = send_email(
+                to_email="recipient@example.com",
+                subject="Test",
+                html_content="<p>Hello</p>"
+            )
 
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="recipient@example.com",
-                    subject="Test",
-                    html_content="<p>Hello</p>"
-                )
-
-                assert result["success"] is True
-                assert result["message_id"] == ""
+            assert result["success"] is False
+            assert result["message_id"] is None
+            assert "Connection failed" in result["error"]
 
 
 # ============== send_bulk_email Tests ==============
@@ -364,28 +333,27 @@ class TestSendEmail:
 class TestSendBulkEmail:
     """Tests for send_bulk_email function."""
 
-    def test_send_bulk_email_all_success(self, mock_sendgrid_client):
+    def test_send_bulk_email_all_success(self, mock_smtp, gmail_env):
         """Test bulk email with all successful sends."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                recipients = [
-                    "user1@example.com",
-                    "user2@example.com",
-                    "user3@example.com"
-                ]
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            recipients = [
+                "user1@example.com",
+                "user2@example.com",
+                "user3@example.com"
+            ]
 
-                result = send_bulk_email(
-                    recipients=recipients,
-                    subject="Bulk Test",
-                    html_content="<p>Hello everyone</p>"
-                )
+            result = send_bulk_email(
+                recipients=recipients,
+                subject="Bulk Test",
+                html_content="<p>Hello everyone</p>"
+            )
 
-                assert result["total"] == 3
-                assert result["sent"] == 3
-                assert result["failed"] == 0
-                assert len(result["results"]) == 3
-                for r in result["results"]:
-                    assert r["success"] is True
+            assert result["total"] == 3
+            assert result["sent"] == 3
+            assert result["failed"] == 0
+            assert len(result["results"]) == 3
+            for r in result["results"]:
+                assert r["success"] is True
 
     def test_send_bulk_email_partial_failure(self):
         """Test bulk email with some failures."""
@@ -441,57 +409,77 @@ class TestSendBulkEmail:
         assert result["failed"] == 0
         assert result["results"] == []
 
-    def test_send_bulk_email_with_plain_content(self, mock_sendgrid_client):
+    def test_send_bulk_email_with_plain_content(self, mock_smtp, gmail_env):
         """Test bulk email with explicit plain content."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_bulk_email(
-                    recipients=["user@example.com"],
-                    subject="Test",
-                    html_content="<p>Hello</p>",
-                    plain_content="Hello"
-                )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_bulk_email(
+                recipients=["user@example.com"],
+                subject="Test",
+                html_content="<p>Hello</p>",
+                plain_content="Hello"
+            )
 
-                assert result["sent"] == 1
+            assert result["sent"] == 1
 
-    def test_send_bulk_email_result_includes_email(self, mock_sendgrid_client):
+    def test_send_bulk_email_result_includes_email(self, mock_smtp, gmail_env):
         """Test bulk email results include recipient email."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_bulk_email(
-                    recipients=["specific@example.com"],
-                    subject="Test",
-                    html_content="<p>Hello</p>"
-                )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_bulk_email(
+                recipients=["specific@example.com"],
+                subject="Test",
+                html_content="<p>Hello</p>"
+            )
 
-                assert result["results"][0]["email"] == "specific@example.com"
+            assert result["results"][0]["email"] == "specific@example.com"
 
 
-# ============== is_sendgrid_configured Tests ==============
+# ============== is_email_configured Tests ==============
+
+
+class TestIsEmailConfigured:
+    """Tests for is_email_configured function."""
+
+    def test_is_email_configured_true(self):
+        """Test returns True when Gmail credentials are set."""
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password"
+        }):
+            assert is_email_configured() is True
+
+    def test_is_email_configured_false_missing_user(self):
+        """Test returns False when user is missing."""
+        with patch.dict(os.environ, {"GMAIL_APP_PASSWORD": "password"}, clear=True):
+            assert is_email_configured() is False
+
+    def test_is_email_configured_false_missing_password(self):
+        """Test returns False when password is missing."""
+        with patch.dict(os.environ, {"GMAIL_USER": "user@gmail.com"}, clear=True):
+            assert is_email_configured() is False
+
+    def test_is_email_configured_false_both_missing(self):
+        """Test returns False when both are missing."""
+        with patch.dict(os.environ, {}, clear=True):
+            with patch.object(os.environ, "get", return_value=None):
+                assert is_email_configured() is False
 
 
 class TestIsSendgridConfigured:
-    """Tests for is_sendgrid_configured function."""
+    """Tests for legacy is_sendgrid_configured function (now checks Gmail)."""
 
     def test_is_sendgrid_configured_true(self):
-        """Test returns True when API key is set."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "test-key"}):
+        """Test returns True when Gmail is configured (legacy compatibility)."""
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password"
+        }):
             assert is_sendgrid_configured() is True
 
-    def test_is_sendgrid_configured_false_missing(self):
-        """Test returns False when API key is missing."""
-        with patch.object(os.environ, "get", return_value=None):
-            assert is_sendgrid_configured() is False
-
-    def test_is_sendgrid_configured_false_empty(self):
-        """Test returns False when API key is empty."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": ""}):
-            assert is_sendgrid_configured() is False
-
-    def test_is_sendgrid_configured_exception_handling(self):
-        """Test returns False on exception."""
-        with patch.object(os.environ, "get", side_effect=Exception("Unexpected error")):
-            assert is_sendgrid_configured() is False
+    def test_is_sendgrid_configured_false(self):
+        """Test returns False when Gmail is not configured."""
+        with patch.dict(os.environ, {}, clear=True):
+            with patch.object(os.environ, "get", return_value=None):
+                assert is_sendgrid_configured() is False
 
 
 # ============== send_email_with_pdf Tests ==============
@@ -500,60 +488,57 @@ class TestIsSendgridConfigured:
 class TestSendEmailWithPdf:
     """Tests for send_email_with_pdf function."""
 
-    def test_send_email_with_pdf_success(self, mock_sendgrid_client):
+    def test_send_email_with_pdf_success(self, mock_smtp, gmail_env):
         """Test successful PDF email sending."""
         pdf_content = b"%PDF-1.4 test pdf content"
 
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                with patch("builtins.open", mock_open(read_data=pdf_content)):
-                    result = send_email_with_pdf(
-                        to_email="recipient@example.com",
-                        subject="PDF Test",
-                        html_content="<p>See attached PDF</p>",
-                        pdf_path="/path/to/document.pdf"
-                    )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            with patch("builtins.open", mock_open(read_data=pdf_content)):
+                result = send_email_with_pdf(
+                    to_email="recipient@example.com",
+                    subject="PDF Test",
+                    html_content="<p>See attached PDF</p>",
+                    pdf_path="/path/to/document.pdf"
+                )
 
-                    assert result["success"] is True
+                assert result["success"] is True
 
-    def test_send_email_with_pdf_custom_filename(self, mock_sendgrid_client):
+    def test_send_email_with_pdf_custom_filename(self, mock_smtp, gmail_env):
         """Test PDF email with custom filename."""
         pdf_content = b"%PDF-1.4 test"
 
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                with patch("builtins.open", mock_open(read_data=pdf_content)):
-                    result = send_email_with_pdf(
-                        to_email="recipient@example.com",
-                        subject="PDF Test",
-                        html_content="<p>See attached</p>",
-                        pdf_path="/path/to/document.pdf",
-                        pdf_filename="custom_name.pdf"
-                    )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            with patch("builtins.open", mock_open(read_data=pdf_content)):
+                result = send_email_with_pdf(
+                    to_email="recipient@example.com",
+                    subject="PDF Test",
+                    html_content="<p>See attached</p>",
+                    pdf_path="/path/to/document.pdf",
+                    pdf_filename="custom_name.pdf"
+                )
 
-                    assert result["success"] is True
+                assert result["success"] is True
 
-    def test_send_email_with_pdf_uses_basename_as_default_filename(self, mock_sendgrid_client):
+    def test_send_email_with_pdf_uses_basename_as_default_filename(self, mock_smtp, gmail_env):
         """Test PDF email uses file basename when no custom filename provided."""
         pdf_content = b"%PDF-1.4 test"
 
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                with patch("builtins.open", mock_open(read_data=pdf_content)):
-                    with patch("services.email_service.send_email") as mock_send:
-                        mock_send.return_value = {"success": True, "message_id": "123", "error": None}
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            with patch("builtins.open", mock_open(read_data=pdf_content)):
+                with patch("services.email_service.send_email") as mock_send:
+                    mock_send.return_value = {"success": True, "message_id": "123", "error": None}
 
-                        send_email_with_pdf(
-                            to_email="recipient@example.com",
-                            subject="Test",
-                            html_content="<p>Test</p>",
-                            pdf_path="/some/path/report.pdf"
-                        )
+                    send_email_with_pdf(
+                        to_email="recipient@example.com",
+                        subject="Test",
+                        html_content="<p>Test</p>",
+                        pdf_path="/some/path/report.pdf"
+                    )
 
-                        # Check that send_email was called with correct attachment filename
-                        call_args = mock_send.call_args
-                        attachments = call_args[1]["attachments"]
-                        assert attachments[0]["filename"] == "report.pdf"
+                    # Check that send_email was called with correct attachment filename
+                    call_args = mock_send.call_args
+                    attachments = call_args[1]["attachments"]
+                    assert attachments[0]["filename"] == "report.pdf"
 
     def test_send_email_with_pdf_file_not_found(self):
         """Test PDF email handles file not found."""
@@ -594,28 +579,27 @@ class TestSendEmailWithPdf:
             assert result["success"] is False
             assert "Error attaching PDF" in result["error"]
 
-    def test_send_email_with_pdf_base64_encoding(self, mock_sendgrid_client):
+    def test_send_email_with_pdf_base64_encoding(self, mock_smtp, gmail_env):
         """Test PDF content is properly base64 encoded."""
         pdf_content = b"Test PDF Content"
         expected_b64 = base64.b64encode(pdf_content).decode()
 
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                with patch("builtins.open", mock_open(read_data=pdf_content)):
-                    with patch("services.email_service.send_email") as mock_send:
-                        mock_send.return_value = {"success": True, "message_id": "123", "error": None}
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            with patch("builtins.open", mock_open(read_data=pdf_content)):
+                with patch("services.email_service.send_email") as mock_send:
+                    mock_send.return_value = {"success": True, "message_id": "123", "error": None}
 
-                        send_email_with_pdf(
-                            to_email="recipient@example.com",
-                            subject="Test",
-                            html_content="<p>Test</p>",
-                            pdf_path="/path/to/file.pdf"
-                        )
+                    send_email_with_pdf(
+                        to_email="recipient@example.com",
+                        subject="Test",
+                        html_content="<p>Test</p>",
+                        pdf_path="/path/to/file.pdf"
+                    )
 
-                        call_args = mock_send.call_args
-                        attachments = call_args[1]["attachments"]
-                        assert attachments[0]["content"] == expected_b64
-                        assert attachments[0]["type"] == "application/pdf"
+                    call_args = mock_send.call_args
+                    attachments = call_args[1]["attachments"]
+                    assert attachments[0]["content"] == expected_b64
+                    assert attachments[0]["type"] == "application/pdf"
 
 
 # ============== Default Constants Tests ==============
@@ -632,6 +616,14 @@ class TestDefaultConstants:
         """Test DEFAULT_FROM_NAME has expected value."""
         assert DEFAULT_FROM_NAME == "Brightpath Ascend Group"
 
+    def test_gmail_smtp_host(self):
+        """Test GMAIL_SMTP_HOST has expected value."""
+        assert GMAIL_SMTP_HOST == "smtp.gmail.com"
+
+    def test_gmail_smtp_port(self):
+        """Test GMAIL_SMTP_PORT has expected value."""
+        assert GMAIL_SMTP_PORT == 587
+
 
 # ============== Integration-like Tests ==============
 
@@ -639,17 +631,17 @@ class TestDefaultConstants:
 class TestEmailServiceIntegration:
     """Integration-like tests for email service workflow."""
 
-    def test_full_email_workflow(self, mock_sendgrid_client, reset_sendgrid_client):
+    def test_full_email_workflow(self, mock_smtp):
         """Test complete email sending workflow."""
-        with patch("services.email_service.SendGridAPIClient", return_value=mock_sendgrid_client):
+        with patch("smtplib.SMTP", return_value=mock_smtp):
             with patch.dict(os.environ, {
-                "SENDGRID_API_KEY": "test-key",
-                "SENDGRID_FROM_EMAIL": "sender@example.com",
-                "SENDGRID_FROM_NAME": "Test Sender"
+                "GMAIL_USER": "sender@gmail.com",
+                "GMAIL_APP_PASSWORD": "test-password",
+                "EMAIL_FROM_NAME": "Test Sender"
             }):
                 # Verify configuration
-                assert is_sendgrid_configured() is True
-                assert get_from_email() == "sender@example.com"
+                assert is_email_configured() is True
+                assert get_from_email() == "sender@gmail.com"
                 assert get_from_name() == "Test Sender"
 
                 # Send single email
@@ -661,56 +653,54 @@ class TestEmailServiceIntegration:
 
                 assert result["success"] is True
 
-    def test_bulk_email_workflow(self, mock_sendgrid_client):
+    def test_bulk_email_workflow(self, mock_smtp, gmail_env):
         """Test bulk email sending workflow."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                recipients = [f"user{i}@example.com" for i in range(5)]
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            recipients = [f"user{i}@example.com" for i in range(5)]
 
-                result = send_bulk_email(
-                    recipients=recipients,
-                    subject="Bulk Email",
-                    html_content="<p>Newsletter content</p>"
-                )
+            result = send_bulk_email(
+                recipients=recipients,
+                subject="Bulk Email",
+                html_content="<p>Newsletter content</p>"
+            )
 
-                assert result["total"] == 5
-                assert result["sent"] == 5
-                assert result["failed"] == 0
+            assert result["total"] == 5
+            assert result["sent"] == 5
+            assert result["failed"] == 0
 
-    def test_email_with_complex_html_content(self, mock_sendgrid_client):
+    def test_email_with_complex_html_content(self, mock_smtp, gmail_env):
         """Test email with complex HTML content."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                html_content = """
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; }
-                        .header { background-color: #4CAF50; padding: 20px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="header">
-                        <h1>Welcome!</h1>
-                    </div>
-                    <p>Dear Customer,</p>
-                    <p>Thank you for your order.</p>
-                    <table border="1">
-                        <tr><th>Item</th><th>Price</th></tr>
-                        <tr><td>Widget</td><td>$10.00</td></tr>
-                    </table>
-                </body>
-                </html>
-                """
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            html_content = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    .header { background-color: #4CAF50; padding: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Welcome!</h1>
+                </div>
+                <p>Dear Customer,</p>
+                <p>Thank you for your order.</p>
+                <table border="1">
+                    <tr><th>Item</th><th>Price</th></tr>
+                    <tr><td>Widget</td><td>$10.00</td></tr>
+                </table>
+            </body>
+            </html>
+            """
 
-                result = send_email(
-                    to_email="customer@example.com",
-                    subject="Your Order Confirmation",
-                    html_content=html_content
-                )
+            result = send_email(
+                to_email="customer@example.com",
+                subject="Your Order Confirmation",
+                html_content=html_content
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
 
 # ============== Edge Cases ==============
@@ -719,95 +709,92 @@ class TestEmailServiceIntegration:
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
-    def test_send_email_with_unicode_content(self, mock_sendgrid_client):
+    def test_send_email_with_unicode_content(self, mock_smtp, gmail_env):
         """Test email with unicode characters."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="user@example.com",
-                    subject="Test with unicode: cafe",
-                    html_content="<p>Hello Cafe!</p>"
-                )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_email(
+                to_email="user@example.com",
+                subject="Test with unicode: cafe",
+                html_content="<p>Hello Cafe!</p>"
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
-    def test_send_email_with_special_characters_in_subject(self, mock_sendgrid_client):
+    def test_send_email_with_special_characters_in_subject(self, mock_smtp, gmail_env):
         """Test email with special characters in subject."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="user@example.com",
-                    subject="Test & <Special> Characters!",
-                    html_content="<p>Test</p>"
-                )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_email(
+                to_email="user@example.com",
+                subject="Test & <Special> Characters!",
+                html_content="<p>Test</p>"
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
-    def test_send_email_with_very_long_content(self, mock_sendgrid_client):
+    def test_send_email_with_very_long_content(self, mock_smtp, gmail_env):
         """Test email with very long HTML content."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                long_content = "<p>" + ("x" * 100000) + "</p>"
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            long_content = "<p>" + ("x" * 100000) + "</p>"
 
-                result = send_email(
-                    to_email="user@example.com",
-                    subject="Long Email",
-                    html_content=long_content
-                )
+            result = send_email(
+                to_email="user@example.com",
+                subject="Long Email",
+                html_content=long_content
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
-    def test_send_bulk_email_single_recipient(self, mock_sendgrid_client):
+    def test_send_bulk_email_single_recipient(self, mock_smtp, gmail_env):
         """Test bulk email with single recipient."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_bulk_email(
-                    recipients=["single@example.com"],
-                    subject="Single Recipient Bulk",
-                    html_content="<p>Hello</p>"
-                )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_bulk_email(
+                recipients=["single@example.com"],
+                subject="Single Recipient Bulk",
+                html_content="<p>Hello</p>"
+            )
 
-                assert result["total"] == 1
-                assert result["sent"] == 1
+            assert result["total"] == 1
+            assert result["sent"] == 1
 
-    def test_send_email_with_empty_html_content(self, mock_sendgrid_client):
+    def test_send_email_with_empty_html_content(self, mock_smtp, gmail_env):
         """Test email with empty HTML content."""
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                result = send_email(
-                    to_email="user@example.com",
-                    subject="Empty Content Test",
-                    html_content=""
-                )
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            result = send_email(
+                to_email="user@example.com",
+                subject="Empty Content Test",
+                html_content=""
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True
 
-    def test_send_email_with_whitespace_only_recipient(self):
+    def test_send_email_with_whitespace_only_recipient(self, gmail_env):
         """Test email with whitespace-only recipient."""
-        result = send_email(
-            to_email="   ",
-            subject="Test",
-            html_content="<p>Hello</p>"
-        )
+        # Whitespace should still attempt to send (SMTP will validate)
+        with patch("smtplib.SMTP") as mock_smtp_class:
+            mock_server = MagicMock()
+            mock_server.__enter__ = MagicMock(return_value=mock_server)
+            mock_server.__exit__ = MagicMock(return_value=False)
+            mock_smtp_class.return_value = mock_server
 
-        # Whitespace should be considered as "no recipient"
-        # The actual behavior depends on implementation - may succeed or fail
-        assert "success" in result
+            result = send_email(
+                to_email="   ",
+                subject="Test",
+                html_content="<p>Hello</p>"
+            )
 
-    def test_plain_content_generation_strips_html_tags(self, mock_sendgrid_client):
+            # Whitespace is considered as having a recipient
+            assert "success" in result
+
+    def test_plain_content_generation_strips_html_tags(self, mock_smtp, gmail_env):
         """Test that auto-generated plain content properly strips HTML tags."""
-        # This test verifies the regex in send_email properly strips HTML
-        with patch("services.email_service.get_sendgrid_client", return_value=mock_sendgrid_client):
-            with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@example.com"}):
-                # The function uses re.sub(r"<[^>]+>", "", html_content) to strip tags
-                html = "<div><p>Hello <b>World</b></p></div>"
+        with patch("smtplib.SMTP", return_value=mock_smtp):
+            # The function uses re.sub(r"<[^>]+>", "", html_content) to strip tags
+            html = "<div><p>Hello <b>World</b></p></div>"
 
-                # We can verify by checking the call was successful
-                # The plain_content generation is internal
-                result = send_email(
-                    to_email="user@example.com",
-                    subject="Test",
-                    html_content=html
-                )
+            result = send_email(
+                to_email="user@example.com",
+                subject="Test",
+                html_content=html
+            )
 
-                assert result["success"] is True
+            assert result["success"] is True

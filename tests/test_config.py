@@ -334,50 +334,62 @@ class TestAnthropicApiKey:
             assert cfg.ANTHROPIC_API_KEY == ""
 
 
-# ============== Email (SendGrid) Tests ==============
+# ============== Email (Gmail SMTP) Tests ==============
 
 
-class TestSendGridConfig:
-    """Tests for SendGrid configuration properties."""
+class TestGmailConfig:
+    """Tests for Gmail SMTP configuration properties."""
 
-    def test_sendgrid_api_key_from_env(self):
-        """Test SENDGRID_API_KEY from environment."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "SG.test123"}):
+    def test_gmail_user_from_env(self):
+        """Test GMAIL_USER from environment."""
+        with patch.dict(os.environ, {"GMAIL_USER": "test@gmail.com"}):
             cfg = create_clean_config()
-            assert cfg.SENDGRID_API_KEY == "SG.test123"
+            assert cfg.GMAIL_USER == "test@gmail.com"
 
-    def test_sendgrid_api_key_empty_default(self):
-        """Test SENDGRID_API_KEY defaults to empty string."""
-        env = {k: v for k, v in os.environ.items() if k != "SENDGRID_API_KEY"}
+    def test_gmail_user_empty_default(self):
+        """Test GMAIL_USER defaults to empty string."""
+        env = {k: v for k, v in os.environ.items() if k != "GMAIL_USER"}
         with patch.dict(os.environ, env, clear=True):
             cfg = create_clean_config()
-            assert cfg.SENDGRID_API_KEY == ""
+            assert cfg.GMAIL_USER == ""
 
-    def test_sendgrid_from_email_from_env(self):
-        """Test SENDGRID_FROM_EMAIL from environment."""
-        with patch.dict(os.environ, {"SENDGRID_FROM_EMAIL": "test@custom.com"}):
+    def test_gmail_app_password_from_env(self):
+        """Test GMAIL_APP_PASSWORD from environment."""
+        with patch.dict(os.environ, {"GMAIL_APP_PASSWORD": "test-password"}):
             cfg = create_clean_config()
-            assert cfg.SENDGRID_FROM_EMAIL == "test@custom.com"
+            assert cfg.GMAIL_APP_PASSWORD == "test-password"
 
-    def test_sendgrid_from_email_default(self):
-        """Test SENDGRID_FROM_EMAIL default value."""
-        env = {k: v for k, v in os.environ.items() if k != "SENDGRID_FROM_EMAIL"}
+    def test_gmail_app_password_empty_default(self):
+        """Test GMAIL_APP_PASSWORD defaults to empty string."""
+        env = {k: v for k, v in os.environ.items() if k != "GMAIL_APP_PASSWORD"}
         with patch.dict(os.environ, env, clear=True):
             cfg = create_clean_config()
-            assert cfg.SENDGRID_FROM_EMAIL == "noreply@fcra-platform.com"
+            assert cfg.GMAIL_APP_PASSWORD == ""
 
-    def test_sendgrid_from_name_from_env(self):
-        """Test SENDGRID_FROM_NAME from environment."""
-        with patch.dict(os.environ, {"SENDGRID_FROM_NAME": "Custom Name"}):
+    def test_email_from_address_from_env(self):
+        """Test EMAIL_FROM_ADDRESS from environment."""
+        with patch.dict(os.environ, {"EMAIL_FROM_ADDRESS": "test@custom.com"}):
             cfg = create_clean_config()
-            assert cfg.SENDGRID_FROM_NAME == "Custom Name"
+            assert cfg.EMAIL_FROM_ADDRESS == "test@custom.com"
 
-    def test_sendgrid_from_name_default(self):
-        """Test SENDGRID_FROM_NAME default value."""
-        env = {k: v for k, v in os.environ.items() if k != "SENDGRID_FROM_NAME"}
+    def test_email_from_address_uses_gmail_user(self):
+        """Test EMAIL_FROM_ADDRESS uses GMAIL_USER when not set."""
+        with patch.dict(os.environ, {"GMAIL_USER": "myemail@gmail.com"}, clear=True):
+            cfg = create_clean_config()
+            assert cfg.EMAIL_FROM_ADDRESS == "myemail@gmail.com"
+
+    def test_email_from_name_from_env(self):
+        """Test EMAIL_FROM_NAME from environment."""
+        with patch.dict(os.environ, {"EMAIL_FROM_NAME": "Custom Name"}):
+            cfg = create_clean_config()
+            assert cfg.EMAIL_FROM_NAME == "Custom Name"
+
+    def test_email_from_name_default(self):
+        """Test EMAIL_FROM_NAME default value."""
+        env = {k: v for k, v in os.environ.items() if k != "EMAIL_FROM_NAME"}
         with patch.dict(os.environ, env, clear=True):
             cfg = create_clean_config()
-            assert cfg.SENDGRID_FROM_NAME == "FCRA Litigation Platform"
+            assert cfg.EMAIL_FROM_NAME == "Brightpath Ascend Group"
 
 
 # ============== SMS (Twilio) Tests ==============
@@ -709,18 +721,39 @@ class TestIsConfigured:
             cfg = create_clean_config()
             assert cfg.is_configured("anthropic") is False
 
-    def test_is_configured_sendgrid_true(self):
-        """Test is_configured returns True for sendgrid when key is set."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "SG.test"}):
+    def test_is_configured_gmail_true(self):
+        """Test is_configured returns True for gmail when credentials are set."""
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password"
+        }):
             cfg = create_clean_config()
-            assert cfg.is_configured("sendgrid") is True
+            assert cfg.is_configured("gmail") is True
 
-    def test_is_configured_sendgrid_false(self):
-        """Test is_configured returns False for sendgrid when key is not set."""
-        env = {k: v for k, v in os.environ.items() if k != "SENDGRID_API_KEY"}
+    def test_is_configured_gmail_false(self):
+        """Test is_configured returns False for gmail when credentials are not set."""
+        env = {k: v for k, v in os.environ.items() if k not in ["GMAIL_USER", "GMAIL_APP_PASSWORD"]}
         with patch.dict(os.environ, env, clear=True):
             cfg = create_clean_config()
-            assert cfg.is_configured("sendgrid") is False
+            assert cfg.is_configured("gmail") is False
+
+    def test_is_configured_email_alias(self):
+        """Test is_configured 'email' is an alias for gmail."""
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password"
+        }):
+            cfg = create_clean_config()
+            assert cfg.is_configured("email") is True
+
+    def test_is_configured_sendgrid_legacy(self):
+        """Test is_configured 'sendgrid' now checks gmail (legacy compatibility)."""
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password"
+        }):
+            cfg = create_clean_config()
+            assert cfg.is_configured("sendgrid") is True
 
     def test_is_configured_twilio_true(self):
         """Test is_configured returns True for twilio when all keys are set."""
@@ -884,11 +917,14 @@ class TestIsConfigured:
 
     def test_is_configured_case_insensitive(self):
         """Test is_configured is case-insensitive."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "SG.test"}):
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password"
+        }):
             cfg = create_clean_config()
-            assert cfg.is_configured("SENDGRID") is True
-            assert cfg.is_configured("SendGrid") is True
-            assert cfg.is_configured("sendgrid") is True
+            assert cfg.is_configured("GMAIL") is True
+            assert cfg.is_configured("Gmail") is True
+            assert cfg.is_configured("gmail") is True
 
 
 # ============== validate_required Tests ==============
@@ -900,46 +936,47 @@ class TestValidateRequired:
     def test_validate_required_passes_when_configured(self):
         """Test validate_required passes when all services are configured."""
         with patch.dict(os.environ, {
-            "SENDGRID_API_KEY": "SG.test",
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password",
             "STRIPE_SECRET_KEY": "sk_test"
         }):
             cfg = create_clean_config()
             # Should not raise
-            cfg.validate_required("sendgrid", "stripe")
+            cfg.validate_required("gmail", "stripe")
 
     def test_validate_required_raises_when_missing(self):
         """Test validate_required raises ConfigurationError when service is missing."""
-        env = {k: v for k, v in os.environ.items() if k != "SENDGRID_API_KEY"}
+        env = {k: v for k, v in os.environ.items() if k not in ["GMAIL_USER", "GMAIL_APP_PASSWORD"]}
         with patch.dict(os.environ, env, clear=True):
             cfg = create_clean_config()
             with pytest.raises(ConfigurationError) as exc_info:
-                cfg.validate_required("sendgrid")
-            assert "sendgrid" in str(exc_info.value)
+                cfg.validate_required("gmail")
+            assert "gmail" in str(exc_info.value)
             assert "Missing configuration" in str(exc_info.value)
 
     def test_validate_required_lists_all_missing(self):
         """Test validate_required lists all missing services."""
-        env = {k: v for k, v in os.environ.items() if k not in ["SENDGRID_API_KEY", "STRIPE_SECRET_KEY"]}
+        env = {k: v for k, v in os.environ.items() if k not in ["GMAIL_USER", "GMAIL_APP_PASSWORD", "STRIPE_SECRET_KEY"]}
         with patch.dict(os.environ, env, clear=True):
             cfg = create_clean_config()
             with pytest.raises(ConfigurationError) as exc_info:
-                cfg.validate_required("sendgrid", "stripe")
+                cfg.validate_required("gmail", "stripe")
             error_message = str(exc_info.value)
-            assert "sendgrid" in error_message
+            assert "gmail" in error_message
             assert "stripe" in error_message
 
     def test_validate_required_partial_configuration(self):
         """Test validate_required with some services configured."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "SG.test"}):
-            env = {k: v for k, v in os.environ.items() if k != "STRIPE_SECRET_KEY"}
-            env["SENDGRID_API_KEY"] = "SG.test"
-            with patch.dict(os.environ, env, clear=True):
-                cfg = create_clean_config()
-                with pytest.raises(ConfigurationError) as exc_info:
-                    cfg.validate_required("sendgrid", "stripe")
-                error_message = str(exc_info.value)
-                assert "stripe" in error_message
-                assert "sendgrid" not in error_message
+        env = {k: v for k, v in os.environ.items() if k != "STRIPE_SECRET_KEY"}
+        env["GMAIL_USER"] = "test@gmail.com"
+        env["GMAIL_APP_PASSWORD"] = "test-password"
+        with patch.dict(os.environ, env, clear=True):
+            cfg = create_clean_config()
+            with pytest.raises(ConfigurationError) as exc_info:
+                cfg.validate_required("gmail", "stripe")
+            error_message = str(exc_info.value)
+            assert "stripe" in error_message
+            assert "gmail" not in error_message
 
     def test_validate_required_no_services(self):
         """Test validate_required with no services passes."""
@@ -965,7 +1002,7 @@ class TestGetStatus:
         cfg = create_clean_config()
         status = cfg.get_status()
         expected_services = [
-            "anthropic", "sendgrid", "twilio", "stripe", "sendcertified",
+            "anthropic", "gmail", "twilio", "stripe", "sendcertified",
             "notarize", "experian", "identityiq", "smartcredit",
             "database", "encryption"
         ]
@@ -981,14 +1018,14 @@ class TestGetStatus:
 
     def test_get_status_reflects_configuration(self):
         """Test get_status reflects actual configuration state."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "SG.test"}):
-            env = {k: v for k, v in os.environ.items() if k != "STRIPE_SECRET_KEY"}
-            env["SENDGRID_API_KEY"] = "SG.test"
-            with patch.dict(os.environ, env, clear=True):
-                cfg = create_clean_config()
-                status = cfg.get_status()
-                assert status["sendgrid"] is True
-                assert status["stripe"] is False
+        env = {k: v for k, v in os.environ.items() if k != "STRIPE_SECRET_KEY"}
+        env["GMAIL_USER"] = "test@gmail.com"
+        env["GMAIL_APP_PASSWORD"] = "test-password"
+        with patch.dict(os.environ, env, clear=True):
+            cfg = create_clean_config()
+            status = cfg.get_status()
+            assert status["gmail"] is True
+            assert status["stripe"] is False
 
 
 # ============== __repr__ Tests ==============
@@ -1006,10 +1043,13 @@ class TestRepr:
 
     def test_repr_contains_configured_services(self):
         """Test __repr__ contains configured services."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "SG.test"}):
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "test@gmail.com",
+            "GMAIL_APP_PASSWORD": "test-password"
+        }):
             cfg = create_clean_config()
             repr_str = repr(cfg)
-            assert "sendgrid" in repr_str
+            assert "gmail" in repr_str
 
     def test_repr_format(self):
         """Test __repr__ has expected format."""
@@ -1079,10 +1119,13 @@ class TestEdgeCases:
 
     def test_whitespace_env_var(self):
         """Test whitespace-only environment variables."""
-        with patch.dict(os.environ, {"SENDGRID_API_KEY": "   "}):
+        with patch.dict(os.environ, {
+            "GMAIL_USER": "   ",
+            "GMAIL_APP_PASSWORD": "   "
+        }):
             cfg = create_clean_config()
             # Whitespace is truthy, so this should be True
-            assert cfg.is_configured("sendgrid") is True
+            assert cfg.is_configured("gmail") is True
 
     def test_special_characters_in_env_var(self):
         """Test environment variables with special characters."""
@@ -1094,9 +1137,9 @@ class TestEdgeCases:
     def test_unicode_in_env_var(self):
         """Test environment variables with unicode characters."""
         unicode_value = "test-\u00e9\u00e8\u00ea"
-        with patch.dict(os.environ, {"SENDGRID_FROM_NAME": unicode_value}):
+        with patch.dict(os.environ, {"EMAIL_FROM_NAME": unicode_value}):
             cfg = create_clean_config()
-            assert cfg.SENDGRID_FROM_NAME == unicode_value
+            assert cfg.EMAIL_FROM_NAME == unicode_value
 
     def test_very_long_env_var(self):
         """Test environment variables with very long values."""

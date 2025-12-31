@@ -31,7 +31,7 @@ bleach>=6.0.0
 # External Services
 stripe
 twilio
-sendgrid
+# sendgrid - removed, using Gmail SMTP instead
 paramiko
 
 # Utilities

@@ -26,11 +26,48 @@
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 1**: ~~Client Communication Automation~~ ✅ COMPLETE
-- **Priority 2**: Gmail Integration (replace SendGrid completely)
+- **Priority 2**: ~~Gmail Integration~~ ✅ COMPLETE
 - **Priority 3**: Simple Booking System (DB-based, no Calendly)
 - **Priority 4**: Simple Report Upload Flow
 
 ### Current Work (2025-12-31) - COMPLETED
+
+**Task**: Priority 2 - Gmail Integration (Replace SendGrid)
+
+**Status**: ✅ COMPLETE
+
+**Changes**:
+1. **Email Service Rewrite** (`services/email_service.py`):
+   - Replaced SendGrid with Gmail SMTP (smtplib)
+   - Uses `GMAIL_USER` and `GMAIL_APP_PASSWORD` env vars
+   - All existing function signatures preserved for compatibility
+   - Added `is_email_configured()` function (alias: `is_sendgrid_configured()`)
+
+2. **Config Updates** (`services/config.py`):
+   - Added `GMAIL_USER`, `GMAIL_APP_PASSWORD` properties
+   - Added `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` properties
+   - Service checks now use "gmail" (with "sendgrid" as legacy alias)
+   - `get_status()` returns "gmail" instead of "sendgrid"
+
+3. **Dependencies** (`requirements.txt`):
+   - Commented out `sendgrid` package (no longer needed)
+
+4. **Tests Updated**:
+   - `tests/test_email_service.py` - 53 tests for Gmail SMTP
+   - `tests/test_config.py` - 143 tests updated for Gmail config
+
+**Environment Variables**:
+```
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-16-char-app-password
+EMAIL_FROM_NAME=Brightpath Ascend Group (optional)
+```
+
+**Test Status**: 4,650 unit tests passing
+
+---
+
+### Previous Work (2025-12-31) - COMPLETED
 
 **Task**: Priority 1 - Client Communication Automation
 

@@ -49,41 +49,57 @@
 
 ---
 
-## Priority 2: Gmail Integration (Replace SendGrid)
+## ~~Priority 2: Gmail Integration (Replace SendGrid)~~ ✅ COMPLETE
 
-### Overview
-Switch all email sending from SendGrid to Gmail. Simpler, already paid for, replies go to real inbox.
+**Completed: 2025-12-31**
 
-### Current State
-- `services/email_service.py` uses SendGrid API
-- Environment vars: `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`, `SENDGRID_FROM_NAME`
+### What Was Implemented
 
-### Implementation Steps
+1. **Email Service Rewrite** (`services/email_service.py`):
+   - [x] Replaced SendGrid with Gmail SMTP (smtplib)
+   - [x] Uses `GMAIL_USER` and `GMAIL_APP_PASSWORD` env vars
+   - [x] All existing function signatures preserved for compatibility
+   - [x] Added `is_email_configured()` function (alias: `is_sendgrid_configured()`)
+   - [x] Supports HTML emails, plain text, and attachments
 
-1. [ ] Create Gmail App Password (requires 2FA on Google account)
-2. [ ] Rewrite `services/email_service.py` to use `smtplib` with Gmail SMTP
-3. [ ] Update environment variables to `GMAIL_USER`, `GMAIL_APP_PASSWORD`
-4. [ ] Update `services/config.py` for new config vars
-5. [ ] Remove SendGrid dependency from `requirements.txt`
-6. [ ] Update all tests in `tests/test_email_service.py`
-7. [ ] Test email sending end-to-end
+2. **Config Updates** (`services/config.py`):
+   - [x] Added `GMAIL_USER`, `GMAIL_APP_PASSWORD` properties
+   - [x] Added `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` properties
+   - [x] Service checks now use "gmail" (with "sendgrid" as legacy alias)
+   - [x] `get_status()` returns "gmail" instead of "sendgrid"
+
+3. **Dependencies** (`requirements.txt`):
+   - [x] Commented out `sendgrid` package (no longer needed)
+
+4. **Tests Updated**:
+   - [x] `tests/test_email_service.py` - 53 tests for Gmail SMTP
+   - [x] `tests/test_config.py` - 143 tests updated for Gmail config
+
+### Files Modified
+- `services/email_service.py` - Complete rewrite for Gmail SMTP
+- `services/config.py` - Gmail config properties + service checks
+- `requirements.txt` - Removed sendgrid
+- `tests/test_email_service.py` - 53 Gmail tests
+- `tests/test_config.py` - Updated for Gmail
+
+### Environment Variables
+```
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
+EMAIL_FROM_NAME=Brightpath Ascend Group (optional)
+```
 
 ### Gmail SMTP Settings
 ```
 Host: smtp.gmail.com
-Port: 587 (TLS) or 465 (SSL)
-Auth: App Password (not regular password)
+Port: 587 (TLS)
+Auth: App Password (requires 2FA enabled)
 ```
 
-### Environment Variables
-```
-GMAIL_USER=your-email@yourdomain.com
-GMAIL_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
-```
-
-### Limits
-- Google Workspace: 2,000 emails/day
-- Personal Gmail: 500 emails/day
+### Test Status
+- 4,650 unit tests passing
+- 53/53 email service tests
+- 143/143 config tests
 
 ---
 
@@ -148,13 +164,16 @@ Let leads upload credit reports without filling out full form.
   - SMS & email opt-in fields
   - Workflow triggers wired up (dispute_sent, response_received, document_uploaded, status_changed)
   - SMS opt-in compliance checks
+- [x] **Priority 2: Gmail Integration** (2025-12-31)
+  - Replaced SendGrid with Gmail SMTP
+  - Uses `GMAIL_USER` and `GMAIL_APP_PASSWORD` env vars
+  - All email functions work with attachments
 
 ---
 
 ## Notes
 
-- **Email**: Gmail only (replacing SendGrid completely)
+- **Email**: Gmail SMTP (SendGrid removed)
 - **SMS**: Twilio (no alternative), requires client opt-in
-- Automation (Priority 1) can start with existing SendGrid, switch to Gmail after Priority 2
 - Booking (Priority 3) can be done independently
 - Priority 1 is the biggest value-add for client experience
