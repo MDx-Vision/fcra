@@ -462,6 +462,47 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
+## Upcoming Features
+
+### Priority 9: Light/Dark Mode Toggle
+
+**Status**: Backlog
+
+**Description**: Add theme switching capability across all portals (Staff Dashboard, Client Portal, Affiliate Portal).
+
+**Implementation Plan**:
+
+1. **CSS Variables for Theming**:
+   - Define CSS custom properties for colors (background, text, borders, accents)
+   - Create light theme and dark theme variable sets
+   - Apply variables across all templates
+
+2. **Theme Toggle Component**:
+   - Sun/moon icon toggle button in header
+   - Smooth transition animation between themes
+   - Consistent placement across all portals
+
+3. **Persistence**:
+   - Store preference in localStorage
+   - Optional: Store in user profile for cross-device sync
+
+4. **System Preference Detection**:
+   - Respect `prefers-color-scheme` media query
+   - Auto-switch based on OS/browser settings
+   - Manual override takes precedence
+
+5. **Templates to Update**:
+   - Staff Dashboard (`templates/includes/dashboard_sidebar.html`, all dashboard pages)
+   - Client Portal (`templates/portal/base_portal.html`)
+   - Affiliate Portal (`templates/affiliate_portal/base.html`)
+
+**Estimated Scope**:
+- CSS variables file (~200 lines)
+- JS toggle logic (~50 lines)
+- Template updates (minor)
+
+---
+
 ## Notes
 
 - **Email**: Gmail SMTP (SendGrid removed)
