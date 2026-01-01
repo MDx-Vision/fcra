@@ -207,6 +207,12 @@ class Client(Base):
     # Communication preferences
     sms_opt_in = Column(Boolean, default=False)  # Client opted in for SMS notifications
     email_opt_in = Column(Boolean, default=True)  # Client opted in for email notifications (default on)
+
+    # Lead scoring
+    lead_score = Column(Integer, default=0)  # 0-100 priority score based on credit report analysis
+    lead_score_factors = Column(JSON)  # Breakdown of scoring factors
+    lead_scored_at = Column(DateTime)  # When the score was last calculated
+
     assigned_to = Column(Integer, ForeignKey('staff.id'), nullable=True)  # Assigned staff member
     employer_company = Column(String(255))  # Employer/company name for client
 
@@ -4569,6 +4575,10 @@ def init_db():
         # Communication preferences for automation
         ("clients", "sms_opt_in", "BOOLEAN DEFAULT FALSE"),
         ("clients", "email_opt_in", "BOOLEAN DEFAULT TRUE"),
+        # Lead scoring
+        ("clients", "lead_score", "INTEGER DEFAULT 0"),
+        ("clients", "lead_score_factors", "JSONB"),
+        ("clients", "lead_scored_at", "TIMESTAMP"),
         ("client_tags", "id", "SERIAL PRIMARY KEY"),
         ("client_tags", "name", "VARCHAR(100) UNIQUE NOT NULL"),
         ("client_tags", "color", "VARCHAR(7) DEFAULT '#6366f1'"),

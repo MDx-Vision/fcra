@@ -371,6 +371,23 @@
         .score-medium { background: #fef3c7; color: #92400e; }
         .score-low { background: #fee2e2; color: #991b1b; }
 
+        /* Lead Score Badges */
+        .lead-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 22px;
+            padding: 0 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .lead-high { background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); color: white; }
+        .lead-medium { background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%); color: #1a1a2e; }
+        .lead-low { background: #e2e8f0; color: #64748b; }
+        .lead-unscored { background: #334155; color: #64748b; border: 1px dashed #475569; }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -623,6 +640,7 @@
                         <th>Follow Up</th>
                         <th>Flags</th>
                         <th>Score</th>
+                        <th>Lead</th>
                         <th>Portal</th>
                         <th>Actions</th>
                     </tr>
@@ -719,6 +737,17 @@
                                 {{ case.score }}
                             </span>
                             {% else %}-{% endif %}
+                        </td>
+                        <td>
+                            {% if case.lead_score %}
+                            <span class="lead-badge {% if case.lead_score >= 70 %}lead-high{% elif case.lead_score >= 40 %}lead-medium{% else %}lead-low{% endif %}"
+                                  data-testid="client-lead-score-{{ case.id }}"
+                                  title="Lead Priority Score">
+                                {{ case.lead_score }}
+                            </span>
+                            {% else %}
+                            <span class="lead-badge lead-unscored" onclick="scoreClient({{ case.id }})" style="cursor: pointer;" title="Click to calculate score">--</span>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="portal-badge {% if case.portal_posted %}portal-posted{% else %}portal-not-posted{% endif %}"
@@ -1082,6 +1111,41 @@
                 const data = await res.json();
                 if (data.success) {
                     location.reload();
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Calculate lead score
+        async function scoreClient(clientId) {
+            try {
+                showToast('Calculating lead score...', 'info');
+                const res = await fetch('/api/clients/' + clientId + '/score', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Lead score: ' + data.score + ' (' + data.priority + ')', 'success');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Scoring failed', 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        // Score all clients
+        async function scoreAllClients() {
+            if (!confirm('Score all clients? This may take a moment.')) return;
+            try {
+                showToast('Scoring all clients...', 'info');
+                const res = await fetch('/api/leads/score-all', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Scored ' + data.scored + ' clients. High: ' + data.high_priority + ', Medium: ' + data.medium_priority + ', Low: ' + data.low_priority, 'success');
+                    location.reload();
+                } else {
+                    showToast(data.error || 'Scoring failed', 'error');
                 }
             } catch (err) {
                 showToast('Error: ' + err.message, 'error');

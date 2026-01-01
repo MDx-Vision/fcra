@@ -267,9 +267,63 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
+## Priority 6: Lead Scoring ✅ COMPLETE
+
+**Completed: 2026-01-01**
+
+### What Was Implemented
+
+1. **Database Fields** (`database.py`):
+   - [x] `lead_score` (Integer 0-100) - Priority score
+   - [x] `lead_score_factors` (JSON) - Breakdown of scoring factors
+   - [x] `lead_scored_at` (DateTime) - When last scored
+
+2. **LeadScoringService** (`services/lead_scoring_service.py`):
+   - [x] `calculate_score()` - Calculate score without saving
+   - [x] `update_client_score()` - Calculate and save score
+   - [x] `score_all_clients()` - Batch score all clients
+   - [x] `get_top_leads()` - Get highest priority leads
+   - [x] `get_score_distribution()` - Distribution by priority
+
+3. **Scoring Factors**:
+   - Collections: +15 pts each (capped at 40)
+   - Charge-offs: +12 pts each
+   - Public records: +20 pts each
+   - Late payments: +5 pts each
+   - Inquiries: +2 pts each
+   - Violations: +10 pts each (litigation potential)
+   - Status bonus: up to +10 pts
+
+4. **API Endpoints**:
+   - `GET /api/clients/<id>/score` - Get client score
+   - `POST /api/clients/<id>/score` - Calculate & save score
+   - `POST /api/leads/score-all` - Batch score all
+   - `GET /api/leads/top` - Top leads by score
+   - `GET /api/leads/distribution` - Score distribution
+
+5. **UI Updates** (`templates/clients.html`):
+   - [x] Lead score column with color badges
+   - [x] Click unscored clients to calculate
+   - [x] HIGH (red/orange), MEDIUM (yellow), LOW (gray) badges
+
+6. **Auto-scoring**:
+   - [x] Triggered after credit report analysis
+
+### Files Created/Modified
+- `database.py` - Added lead_score fields + migration
+- `services/lead_scoring_service.py` (NEW) - 400+ lines
+- `app.py` - Added 5 API endpoints + auto-score hook
+- `templates/clients.html` - Lead column + styles + JS
+- `tests/test_lead_scoring_service.py` (NEW) - 29 tests
+
+### Test Status
+- 29/29 lead scoring tests passing
+
+---
+
 ## Notes
 
 - **Email**: Gmail SMTP (SendGrid removed)
 - **SMS**: Twilio (A2P campaign pending carrier approval)
-- All 5 priorities complete!
+- All 6 priorities complete!
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap

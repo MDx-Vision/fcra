@@ -6289,6 +6289,8 @@ def dashboard_clients():
                         client.current_dispute_step if client else "intake"
                     ),
                     "phone": client.phone if client else None,
+                    # Lead scoring
+                    "lead_score": client.lead_score if client else None,
                 }
             )
 
@@ -13805,6 +13807,69 @@ def api_remove_client_tag(client_id, tag_id):
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
+
+
+# ============================================================
+# LEAD SCORING ENDPOINTS
+# ============================================================
+
+
+@app.route("/api/clients/<int:client_id>/score", methods=["GET"])
+@require_staff()
+def api_get_client_score(client_id):
+    """Get lead score for a client"""
+    from services.lead_scoring_service import LeadScoringService
+
+    result = LeadScoringService.calculate_score(client_id)
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404
+
+
+@app.route("/api/clients/<int:client_id>/score", methods=["POST"])
+@require_staff()
+def api_update_client_score(client_id):
+    """Calculate and save lead score for a client"""
+    from services.lead_scoring_service import LeadScoringService
+
+    result = LeadScoringService.update_client_score(client_id)
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 500
+
+
+@app.route("/api/leads/score-all", methods=["POST"])
+@require_staff()
+def api_score_all_leads():
+    """Rescore all clients in the database"""
+    from services.lead_scoring_service import LeadScoringService
+
+    data = request.get_json() or {}
+    limit = data.get("limit")  # Optional limit for batch processing
+
+    result = LeadScoringService.score_all_clients(limit=limit)
+    return jsonify(result)
+
+
+@app.route("/api/leads/top", methods=["GET"])
+@require_staff()
+def api_get_top_leads():
+    """Get top leads by score"""
+    from services.lead_scoring_service import LeadScoringService
+
+    limit = request.args.get("limit", 10, type=int)
+    leads = LeadScoringService.get_top_leads(limit=limit)
+    return jsonify({"success": True, "leads": leads})
+
+
+@app.route("/api/leads/distribution", methods=["GET"])
+@require_staff()
+def api_get_lead_distribution():
+    """Get distribution of lead scores"""
+    from services.lead_scoring_service import LeadScoringService
+
+    distribution = LeadScoringService.get_score_distribution()
+    return jsonify({"success": True, "distribution": distribution})
 
 
 # ============================================================
@@ -31784,6 +31849,15 @@ def api_client_manager_run_analysis():
             )
             analysis.stage = 1
             db.commit()
+
+            # Update lead score after analysis
+            try:
+                from services.lead_scoring_service import score_client
+                score_result = score_client(client_id)
+                if score_result.get("success"):
+                    print(f"✅ Lead score updated: {client.name} = {score_result.get('score')} ({score_result.get('priority')})")
+            except Exception as score_error:
+                print(f"⚠️ Lead scoring failed: {score_error}")
 
             return jsonify(
                 {
