@@ -292,17 +292,18 @@
 | [ ] Write Cypress tests | | Optional |
 | [x] Finalize & document | ✅ | FEATURE_BACKLOG.md updated |
 
-### 9.3 SMS Templates
+### 9.3 SMS Templates ✅ COMPLETE
 > Quick-send common messages
 
 | Step | Status | Notes |
 |------|--------|-------|
-| [ ] Create `SMSTemplate` model | | name, message, category |
-| [ ] Create template management UI | | CRUD for templates |
-| [ ] Add quick-send buttons | | Client view actions |
-| [ ] Integrate with SMS service | | Use templates for automation |
-| [ ] Write unit tests | | |
-| [ ] Finalize & document | | |
+| [x] Create `SMSTemplate` model | ✅ | template_type, name, message, category, variables, is_custom, is_active |
+| [x] Create `SMSTemplateService` | ✅ | Full CRUD + render + duplicate + seed |
+| [x] Add 15 API endpoints | ✅ | GET/POST/PUT/DELETE + categories, variables, stats, render, seed, send |
+| [x] Create template management UI | ✅ | `/dashboard/sms-templates` - Full CRUD + char counter + preview |
+| [x] Integrate with SMS service | ✅ | `/api/sms-templates/send` endpoint |
+| [x] Write unit tests | ✅ | 65 tests passing |
+| [x] Finalize & document | ✅ | Sidebar link added, 10 default templates seeded |
 
 ### 9.4 Voicemail Drops
 > Pre-recorded messages via Twilio

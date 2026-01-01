@@ -1053,6 +1053,23 @@ class EmailTemplate(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class SMSTemplate(Base):
+    """Store SMS templates for client communications"""
+    __tablename__ = 'sms_templates'
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_type = Column(String(50), nullable=False, unique=True)  # e.g., 'welcome', 'dispute_sent'
+    name = Column(String(200), nullable=False)  # Human-readable name
+    category = Column(String(50), default='general')  # welcome, updates, reminders, notifications, etc.
+    description = Column(Text)  # What this template is for
+    message = Column(Text, nullable=False)  # The SMS message content
+    variables = Column(JSON)  # Supported variables: [{name, description, example}]
+    is_custom = Column(Boolean, default=False)  # True if user-created, False if system default
+    is_active = Column(Boolean, default=True)  # Can be disabled without deleting
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class DripCampaign(Base):
     """Automated email sequences for client follow-ups"""
     __tablename__ = 'drip_campaigns'

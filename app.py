@@ -14477,6 +14477,268 @@ def drip_campaigns_page():
 
 
 # ============================================================
+# SMS TEMPLATES - Client SMS Communications
+# ============================================================
+
+from services.sms_template_service import (
+    SMSTemplateService,
+    SMS_CATEGORIES,
+    SMS_VARIABLES,
+    seed_default_sms_templates,
+)
+
+
+@app.route("/api/sms-templates", methods=["GET"])
+@require_staff()
+def api_list_sms_templates():
+    """List all SMS templates with optional filtering"""
+    category = request.args.get("category")
+    is_active = request.args.get("is_active")
+    is_custom = request.args.get("is_custom")
+    search = request.args.get("search")
+
+    # Convert string params to bool
+    if is_active is not None:
+        is_active = is_active.lower() == "true"
+    if is_custom is not None:
+        is_custom = is_custom.lower() == "true"
+
+    templates = SMSTemplateService.list_templates(
+        category=category,
+        is_active=is_active,
+        is_custom=is_custom,
+        search=search,
+    )
+
+    return jsonify({
+        "success": True,
+        "templates": templates,
+        "categories": SMS_CATEGORIES,
+    })
+
+
+@app.route("/api/sms-templates/stats", methods=["GET"])
+@require_staff()
+def api_sms_template_stats():
+    """Get SMS template statistics"""
+    stats = SMSTemplateService.get_template_stats()
+    return jsonify({"success": True, "stats": stats})
+
+
+@app.route("/api/sms-templates/categories", methods=["GET"])
+@require_staff()
+def api_sms_template_categories():
+    """Get available SMS template categories"""
+    return jsonify({
+        "success": True,
+        "categories": SMS_CATEGORIES,
+    })
+
+
+@app.route("/api/sms-templates/variables", methods=["GET"])
+@require_staff()
+def api_sms_template_variables():
+    """Get common SMS template variables"""
+    return jsonify({
+        "success": True,
+        "variables": SMS_VARIABLES,
+    })
+
+
+@app.route("/api/sms-templates/<int:template_id>", methods=["GET"])
+@require_staff()
+def api_get_sms_template(template_id):
+    """Get a specific SMS template by ID"""
+    template = SMSTemplateService.get_template(template_id=template_id)
+
+    if not template:
+        return jsonify({"success": False, "error": "Template not found"}), 404
+
+    return jsonify({"success": True, "template": template})
+
+
+@app.route("/api/sms-templates", methods=["POST"])
+@require_staff()
+def api_create_sms_template():
+    """Create a new SMS template"""
+    data = request.json
+
+    required = ["template_type", "name", "message"]
+    for field in required:
+        if not data.get(field):
+            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+
+    result = SMSTemplateService.create_template(
+        template_type=data["template_type"],
+        name=data["name"],
+        message=data["message"],
+        category=data.get("category", "general"),
+        description=data.get("description"),
+        variables=data.get("variables", []),
+        is_custom=True,
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>", methods=["PUT"])
+@require_staff()
+def api_update_sms_template(template_id):
+    """Update an SMS template"""
+    data = request.json
+
+    result = SMSTemplateService.update_template(
+        template_id=template_id,
+        name=data.get("name"),
+        message=data.get("message"),
+        category=data.get("category"),
+        description=data.get("description"),
+        variables=data.get("variables"),
+        is_active=data.get("is_active"),
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_sms_template(template_id):
+    """Delete an SMS template"""
+    result = SMSTemplateService.delete_template(template_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>/duplicate", methods=["POST"])
+@require_staff()
+def api_duplicate_sms_template(template_id):
+    """Duplicate an SMS template"""
+    data = request.json or {}
+
+    result = SMSTemplateService.duplicate_template(
+        template_id=template_id,
+        new_name=data.get("name"),
+        new_type=data.get("template_type"),
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>/render", methods=["POST"])
+@require_staff()
+def api_render_sms_template(template_id):
+    """Render an SMS template with variable substitution"""
+    data = request.json or {}
+    variables = data.get("variables", {})
+
+    result = SMSTemplateService.render_template(
+        template_id=template_id,
+        variables=variables,
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/seed", methods=["POST"])
+@require_staff()
+def api_seed_sms_templates():
+    """Seed default SMS templates"""
+    result = seed_default_sms_templates()
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 500
+
+
+@app.route("/api/sms-templates/send", methods=["POST"])
+@require_staff()
+def api_send_sms_from_template():
+    """Send an SMS using a template"""
+    data = request.json
+
+    if not data.get("template_id") and not data.get("template_type"):
+        return jsonify({"success": False, "error": "Must provide template_id or template_type"}), 400
+    if not data.get("client_id") and not data.get("phone"):
+        return jsonify({"success": False, "error": "Must provide client_id or phone number"}), 400
+
+    # Get client info if client_id provided
+    phone = data.get("phone")
+    client_name = data.get("client_name", "")
+    first_name = data.get("first_name", "")
+
+    if data.get("client_id"):
+        session = SessionLocal()
+        try:
+            client = session.query(Client).filter(Client.id == data["client_id"]).first()
+            if client:
+                phone = phone or client.phone
+                client_name = client_name or client.name
+                first_name = first_name or (client.name.split()[0] if client.name else "")
+        finally:
+            session.close()
+
+    if not phone:
+        return jsonify({"success": False, "error": "No phone number available"}), 400
+
+    # Render the template
+    variables = data.get("variables", {})
+    variables.setdefault("client_name", client_name)
+    variables.setdefault("first_name", first_name)
+    variables.setdefault("phone", phone)
+
+    result = SMSTemplateService.render_template(
+        template_id=data.get("template_id"),
+        template_type=data.get("template_type"),
+        variables=variables,
+    )
+
+    if not result["success"]:
+        return jsonify(result), 400
+
+    # Send the SMS
+    try:
+        from services.sms_service import send_sms
+        sms_result = send_sms(phone, result["message"])
+
+        if sms_result.get("success"):
+            return jsonify({
+                "success": True,
+                "message": "SMS sent successfully",
+                "sms_sid": sms_result.get("sid"),
+                "char_count": result["char_count"],
+                "segments": result["segments"],
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": sms_result.get("error", "Failed to send SMS"),
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"SMS service error: {str(e)}",
+        }), 500
+
+
+@app.route("/dashboard/sms-templates")
+@require_staff()
+def sms_templates_page():
+    """SMS templates management page"""
+    return render_template("sms_templates.html")
+
+
+# ============================================================
 # DOCUMENT CENTER - Client Upload Management
 # ============================================================
 
