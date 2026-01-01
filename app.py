@@ -13984,6 +13984,201 @@ def api_delete_quick_link(slot_number):
 
 
 # ============================================================
+# EMAIL TEMPLATES LIBRARY
+# ============================================================
+
+from services.email_template_service import (
+    EmailTemplateService,
+    seed_default_templates,
+    TEMPLATE_CATEGORIES,
+    COMMON_VARIABLES,
+)
+
+
+@app.route("/api/email-templates/library", methods=["GET"])
+@require_staff()
+def api_list_email_templates_library():
+    """List all email templates with optional filtering"""
+    category = request.args.get("category")
+    is_active = request.args.get("is_active")
+    is_custom = request.args.get("is_custom")
+    search = request.args.get("search")
+
+    # Convert string params to bool
+    if is_active is not None:
+        is_active = is_active.lower() == "true"
+    if is_custom is not None:
+        is_custom = is_custom.lower() == "true"
+
+    templates = EmailTemplateService.list_templates(
+        category=category,
+        is_active=is_active,
+        is_custom=is_custom,
+        search=search,
+    )
+
+    return jsonify({
+        "success": True,
+        "templates": templates,
+        "categories": TEMPLATE_CATEGORIES,
+    })
+
+
+@app.route("/api/email-templates/stats", methods=["GET"])
+@require_staff()
+def api_email_template_stats():
+    """Get email template statistics"""
+    stats = EmailTemplateService.get_template_stats()
+    return jsonify({"success": True, "stats": stats})
+
+
+@app.route("/api/email-templates/categories", methods=["GET"])
+@require_staff()
+def api_email_template_categories():
+    """Get available template categories"""
+    return jsonify({
+        "success": True,
+        "categories": TEMPLATE_CATEGORIES,
+    })
+
+
+@app.route("/api/email-templates/variables", methods=["GET"])
+@require_staff()
+def api_email_template_variables():
+    """Get common template variables"""
+    return jsonify({
+        "success": True,
+        "variables": COMMON_VARIABLES,
+    })
+
+
+@app.route("/api/email-templates/library/<int:template_id>", methods=["GET"])
+@require_staff()
+def api_get_email_template_by_id(template_id):
+    """Get a specific email template by ID"""
+    template = EmailTemplateService.get_template(template_id=template_id)
+
+    if not template:
+        return jsonify({"success": False, "error": "Template not found"}), 404
+
+    return jsonify({"success": True, "template": template})
+
+
+@app.route("/api/email-templates/library", methods=["POST"])
+@require_staff()
+def api_create_email_template_library():
+    """Create a new email template"""
+    data = request.json
+
+    required = ["template_type", "name", "subject", "html_content"]
+    for field in required:
+        if not data.get(field):
+            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+
+    result = EmailTemplateService.create_template(
+        template_type=data["template_type"],
+        name=data["name"],
+        subject=data["subject"],
+        html_content=data["html_content"],
+        category=data.get("category", "general"),
+        description=data.get("description"),
+        plain_text_content=data.get("plain_text_content"),
+        variables=data.get("variables", []),
+        is_custom=True,
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>", methods=["PUT"])
+@require_staff()
+def api_update_email_template_library(template_id):
+    """Update an email template"""
+    data = request.json
+
+    result = EmailTemplateService.update_template(
+        template_id=template_id,
+        name=data.get("name"),
+        subject=data.get("subject"),
+        html_content=data.get("html_content"),
+        category=data.get("category"),
+        description=data.get("description"),
+        plain_text_content=data.get("plain_text_content"),
+        variables=data.get("variables"),
+        is_active=data.get("is_active"),
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_email_template_library(template_id):
+    """Delete an email template"""
+    result = EmailTemplateService.delete_template(template_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>/duplicate", methods=["POST"])
+@require_staff()
+def api_duplicate_email_template_library(template_id):
+    """Duplicate an email template"""
+    data = request.json or {}
+
+    result = EmailTemplateService.duplicate_template(
+        template_id=template_id,
+        new_name=data.get("name"),
+        new_type=data.get("template_type"),
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>/render", methods=["POST"])
+@require_staff()
+def api_render_email_template_library(template_id):
+    """Render an email template with variable substitution"""
+    data = request.json or {}
+    variables = data.get("variables", {})
+
+    result = EmailTemplateService.render_template(
+        template_id=template_id,
+        variables=variables,
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/seed", methods=["POST"])
+@require_staff()
+def api_seed_email_templates():
+    """Seed default system templates"""
+    result = seed_default_templates()
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 500
+
+
+@app.route("/dashboard/email-templates")
+@require_staff()
+def email_templates_page():
+    """Email templates management page"""
+    return render_template("email_templates.html")
+
+
+# ============================================================
 # DOCUMENT CENTER - Client Upload Management
 # ============================================================
 

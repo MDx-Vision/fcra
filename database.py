@@ -1034,15 +1034,21 @@ class EmailLog(Base):
 
 
 class EmailTemplate(Base):
-    """Store custom email templates created with Unlayer visual editor"""
+    """Store email templates for client communications"""
     __tablename__ = 'email_templates'
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    template_type = Column(String(50), nullable=False, unique=True)
+    template_type = Column(String(50), nullable=False, unique=True)  # e.g., 'welcome', 'dispute_sent'
+    name = Column(String(200), nullable=False)  # Human-readable name
+    category = Column(String(50), default='general')  # welcome, updates, reminders, notifications, etc.
+    description = Column(Text)  # What this template is for
     subject = Column(String(500), nullable=False)
     html_content = Column(Text)
-    design_json = Column(Text)
-    is_custom = Column(Boolean, default=False)
+    plain_text_content = Column(Text)  # Plain text version for fallback
+    design_json = Column(Text)  # For visual editor (Unlayer)
+    variables = Column(JSON)  # Supported variables: [{name, description, example}]
+    is_custom = Column(Boolean, default=False)  # True if user-created, False if system default
+    is_active = Column(Boolean, default=True)  # Can be disabled without deleting
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -4653,6 +4659,21 @@ def init_db():
         ("client_messages", "read_at", "TIMESTAMP"),
         ("client_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("client_messages", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Email Templates Library
+        ("email_templates", "id", "SERIAL PRIMARY KEY"),
+        ("email_templates", "template_type", "VARCHAR(50) UNIQUE NOT NULL"),
+        ("email_templates", "name", "VARCHAR(200) NOT NULL"),
+        ("email_templates", "category", "VARCHAR(50) DEFAULT 'general'"),
+        ("email_templates", "description", "TEXT"),
+        ("email_templates", "subject", "VARCHAR(500) NOT NULL"),
+        ("email_templates", "html_content", "TEXT"),
+        ("email_templates", "plain_text_content", "TEXT"),
+        ("email_templates", "design_json", "TEXT"),
+        ("email_templates", "variables", "JSONB"),
+        ("email_templates", "is_custom", "BOOLEAN DEFAULT FALSE"),
+        ("email_templates", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("email_templates", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("email_templates", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()
