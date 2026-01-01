@@ -51,6 +51,9 @@
     </header>
 
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation" data-testid="portal-nav">
+        <a href="{{ url_for('portal.onboarding') }}" class="nav-tab {% if active_tab == 'onboarding' %}active{% endif %}" data-testid="nav-onboarding">
+            <span class="nav-icon" aria-hidden="true">🚀</span><span class="nav-label">Setup</span>
+        </a>
         <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="nav-case">
             <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
         </a>

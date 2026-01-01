@@ -4118,6 +4118,49 @@ class ClientMessage(Base):
     staff = relationship("Staff", backref="client_messages")
 
 
+class OnboardingProgress(Base):
+    """Track client onboarding wizard progress"""
+    __tablename__ = 'onboarding_progress'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, unique=True, index=True)
+
+    # Step completion status
+    personal_info_completed = Column(Boolean, default=False)
+    personal_info_completed_at = Column(DateTime, nullable=True)
+
+    id_documents_completed = Column(Boolean, default=False)
+    id_documents_completed_at = Column(DateTime, nullable=True)
+
+    ssn_card_completed = Column(Boolean, default=False)
+    ssn_card_completed_at = Column(DateTime, nullable=True)
+
+    proof_of_address_completed = Column(Boolean, default=False)
+    proof_of_address_completed_at = Column(DateTime, nullable=True)
+
+    credit_monitoring_completed = Column(Boolean, default=False)
+    credit_monitoring_completed_at = Column(DateTime, nullable=True)
+
+    agreement_completed = Column(Boolean, default=False)
+    agreement_completed_at = Column(DateTime, nullable=True)
+
+    payment_completed = Column(Boolean, default=False)
+    payment_completed_at = Column(DateTime, nullable=True)
+
+    # Overall progress
+    current_step = Column(String(50), default='personal_info')
+    completion_percentage = Column(Integer, default=0)
+    is_complete = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    client = relationship("Client", backref="onboarding_progress")
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)

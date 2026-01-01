@@ -747,3 +747,97 @@ def messages():
         return redirect(url_for('portal_login'))
 
     return render_template('portal/messages.html', current_user=current_user)
+
+
+@portal.route('/onboarding')
+@portal_login_required
+def onboarding():
+    """Onboarding wizard page"""
+    from database import get_db
+    from services.onboarding_service import get_onboarding_service
+
+    current_user = get_current_user()
+    if not current_user:
+        return redirect(url_for('portal_login'))
+
+    db = get_db()
+    try:
+        service = get_onboarding_service(db)
+        progress = service.get_progress_summary(get_client_id())
+        return render_template('portal/onboarding.html',
+                               current_user=current_user,
+                               progress=progress)
+    finally:
+        db.close()
+
+
+@portal.route('/api/onboarding/progress', methods=['GET'])
+@portal_login_required
+def api_onboarding_progress():
+    """Get onboarding progress for current client"""
+    from flask import jsonify
+    from database import get_db
+    from services.onboarding_service import get_onboarding_service
+
+    db = get_db()
+    try:
+        service = get_onboarding_service(db)
+        progress = service.get_progress_summary(get_client_id())
+        return jsonify({'success': True, 'progress': progress})
+    finally:
+        db.close()
+
+
+@portal.route('/api/onboarding/sync', methods=['POST'])
+@portal_login_required
+def api_onboarding_sync():
+    """Sync onboarding progress based on actual data"""
+    from flask import jsonify
+    from database import get_db
+    from services.onboarding_service import get_onboarding_service
+
+    db = get_db()
+    try:
+        service = get_onboarding_service(db)
+        result = service.sync_progress(get_client_id())
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/onboarding/complete-step', methods=['POST'])
+@portal_login_required
+def api_onboarding_complete_step():
+    """Mark an onboarding step as complete"""
+    from flask import jsonify
+    from database import get_db
+    from services.onboarding_service import get_onboarding_service
+
+    step_key = request.json.get('step') if request.is_json else request.form.get('step')
+    if not step_key:
+        return jsonify({'success': False, 'error': 'Step key required'}), 400
+
+    db = get_db()
+    try:
+        service = get_onboarding_service(db)
+        result = service.complete_step(get_client_id(), step_key)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/onboarding/next-step', methods=['GET'])
+@portal_login_required
+def api_onboarding_next_step():
+    """Get the next incomplete onboarding step"""
+    from flask import jsonify
+    from database import get_db
+    from services.onboarding_service import get_onboarding_service
+
+    db = get_db()
+    try:
+        service = get_onboarding_service(db)
+        next_step = service.get_next_step(get_client_id())
+        return jsonify({'success': True, 'next_step': next_step})
+    finally:
+        db.close()
