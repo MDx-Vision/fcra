@@ -3,11 +3,11 @@
 ## Current Status (2026-01-01)
 
 ### Test Status: 100% PASSING
-- **Unit tests**: 4,683 passing (57 test files, ~95s runtime)
+- **Unit tests**: 4,738 passing (58 test files, ~95s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Full QA suite**: All tests pass
-- **Service coverage**: 57/57 services have dedicated test files (100%)
+- **Service coverage**: 58/58 services have dedicated test files (100%)
 
 ### Feature Phases
 - Phase 1: Core Platform ✅
@@ -30,66 +30,91 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 3**: ~~Q&A Booking + Live Messaging~~ ✅ COMPLETE
 - **Priority 4**: ~~Simple Report Upload Flow~~ ✅ COMPLETE
 
-### Current Work (2026-01-01) - IN PROGRESS
+### Current Work (2026-01-01) - COMPLETED
 
-**Task**: Feature Implementation - Progress Timeline (6.1)
+**Task**: CROA Document Signing Workflow
 
 **Status**: ✅ COMPLETE
 
 **Changes**:
-1. **TimelineEvent Model** (`database.py`):
-   - `client_id`, `event_type`, `event_category`, `title`, `description`, `icon`
-   - `related_type`, `related_id` for linking to entities
-   - `metadata_json` for flexible extra data
-   - `is_milestone`, `is_visible`, `event_date` timestamps
+1. **CROAProgress Model** (`database.py`):
+   - Tracks client progress through 7 CROA documents
+   - Fields for each document's signed_at timestamp
+   - Cancellation period tracking (starts_at, ends_at, waived, cancelled_at)
+   - Overall progress: current_document, documents_completed, is_complete
 
-2. **TimelineService** (`services/timeline_service.py`):
-   - 30+ event types defined (signup, documents, disputes, responses, etc.)
-   - Methods: `create_event`, `get_timeline`, `get_recent_events`, `get_milestones`
-   - `get_progress_summary` - tracks 7 journey stages
-   - `backfill_events` - creates events from existing client data
-   - Helper functions: `log_signup_event`, `log_document_uploaded`, `log_dispute_sent`, etc.
+2. **CROASigningService** (`services/croa_signing_service.py` - 650 lines):
+   - 7 CROA documents defined with order, required status
+   - Methods: `get_or_create_progress`, `get_progress_summary`, `get_document`
+   - `get_current_document` - next document to sign
+   - `sign_document` - signs with signature capture (drawn/typed)
+   - `skip_optional_document` - skip HIPAA (optional)
+   - `get_cancellation_status`, `cancel_service` - 3-day cancellation period
+   - `waive_cancellation_period`, `can_begin_services`
+   - `_calculate_cancellation_end` - 3 business days (excludes weekends)
+   - Signature image saving to static/signatures/
 
-3. **Portal Timeline Page** (`templates/portal/timeline.html`):
-   - Progress summary with 7-stage visual indicator
-   - Filter tabs: All Events, Milestones, Onboarding, Documents, Disputes, Responses
-   - Timeline UI with icons, dates, categories
-   - Load more pagination
+3. **CROA API Endpoints** (`routes/portal.py`):
+   - `GET /portal/agreements` - Signing page
+   - `GET /portal/api/croa/progress` - Get signing progress
+   - `GET /portal/api/croa/document/<code>` - Get document template
+   - `GET /portal/api/croa/current-document` - Get next to sign
+   - `POST /portal/api/croa/sign` - Sign a document
+   - `POST /portal/api/croa/skip-optional` - Skip optional doc
+   - `GET /portal/api/croa/cancellation-status` - Cancellation info
+   - `POST /portal/api/croa/cancel` - Cancel during 3-day period
+   - `GET /portal/api/croa/can-begin-services` - Check if ready
 
-4. **Portal Dashboard Enhancement** (`templates/portal/dashboard.html`):
-   - "Recent Activity" card with 4 latest events
-   - Link to full journey page
+4. **Agreements Page** (`templates/portal/agreements.html`):
+   - 7-step progress indicator
+   - Document viewer with scrollable content
+   - Scroll-to-bottom requirement before signing
+   - Signature capture: canvas (drawn) or typed name input
+   - Sign button enabled after scroll + signature
+   - Skip button for optional documents
+   - Cancellation notice with countdown
+   - Complete state with success message
 
-5. **Portal Navigation** (`templates/portal/base_portal.html`):
-   - Added "Journey" tab with chart icon
+5. **Onboarding Wizard Update** (`templates/portal/onboarding.html`):
+   - Agreement step now links to full CROA flow
+   - Lists 7 documents to sign
+   - Shows 3-day cancellation rights notice
 
-6. **API Endpoints** (`routes/portal.py`):
-   - `GET /portal/timeline` - Timeline page
-   - `GET /portal/api/timeline` - Get events with filters
-   - `GET /portal/api/timeline/recent` - Recent events
-   - `GET /portal/api/timeline/milestones` - Milestones only
-   - `GET /portal/api/timeline/progress` - Progress summary
-   - `POST /portal/api/timeline/backfill` - Backfill events
-
-7. **Workflow Hooks** (`routes/portal.py`):
-   - Document upload → timeline event
-   - CRA response received → timeline event
-
-8. **Unit Tests** (`tests/test_timeline_service.py`):
-   - 30 tests covering all service methods
+6. **Unit Tests** (`tests/test_croa_signing_service.py` - 55 tests):
+   - Constants and configuration tests
+   - Progress creation/retrieval tests
+   - Document signing order tests (Rights Disclosure first)
+   - Cancellation period tests
+   - Service eligibility tests
+   - CROA compliance tests
 
 **Files Created**:
-- `services/timeline_service.py` (450+ lines)
-- `templates/portal/timeline.html`
-- `tests/test_timeline_service.py`
+- `services/croa_signing_service.py` (650 lines)
+- `templates/portal/agreements.html`
+- `tests/test_croa_signing_service.py` (55 tests)
 
 **Files Modified**:
-- `database.py` - Added TimelineEvent model
-- `routes/portal.py` - Added 6 timeline routes + workflow hooks
-- `templates/portal/base_portal.html` - Added Journey nav tab
-- `templates/portal/dashboard.html` - Added Recent Activity section
+- `database.py` - Added CROAProgress model
+- `routes/portal.py` - Added 9 CROA API endpoints
+- `templates/portal/onboarding.html` - Updated agreement step
+- `load_croa_documents.py` - Fixed document path
 
-**Test Status**: 30/30 timeline tests passing
+**Test Status**: 55/55 CROA tests passing
+
+**CROA Compliance Features**:
+- Rights Disclosure MUST be signed before any contract
+- 3 business day cancellation period (excludes weekends)
+- Sequential document signing enforced
+- IP address and user agent captured for audit
+- Signature images saved with timestamps
+
+---
+
+### Previous Work (2026-01-01) - COMPLETED
+
+**Task**: Feature Implementation - Progress Timeline (6.1)
+
+**Status**: ✅ COMPLETE
 
 ---
 

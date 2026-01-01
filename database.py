@@ -1650,6 +1650,41 @@ class ClientDocumentSignature(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class CROAProgress(Base):
+    """Track client progress through CROA document signing workflow"""
+    __tablename__ = 'croa_progress'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, unique=True, index=True)
+
+    # Document signing timestamps (in order)
+    rights_disclosure_signed_at = Column(DateTime)  # CROA_01 - MUST sign first
+    lpoa_signed_at = Column(DateTime)  # CROA_02 - Limited Power of Attorney
+    service_agreement_signed_at = Column(DateTime)  # CROA_03 - Main contract
+    cancellation_notice_signed_at = Column(DateTime)  # CROA_04 - Right to cancel
+    service_completion_signed_at = Column(DateTime)  # CROA_05 - Auth to begin work
+    hipaa_signed_at = Column(DateTime)  # CROA_06 - Health info (optional)
+    welcome_packet_signed_at = Column(DateTime)  # CROA_07 - Welcome info
+
+    # Cancellation period tracking
+    cancellation_period_starts_at = Column(DateTime)  # When contract was signed
+    cancellation_period_ends_at = Column(DateTime)  # 3 business days after contract
+    cancellation_waived = Column(Boolean, default=False)  # If client waived waiting period
+    cancelled_at = Column(DateTime)  # If client cancelled during period
+
+    # Overall progress
+    current_document = Column(String(50), default='CROA_01_RIGHTS_DISCLOSURE')
+    documents_completed = Column(Integer, default=0)
+    total_documents = Column(Integer, default=7)
+    is_complete = Column(Boolean, default=False)
+    completed_at = Column(DateTime)
+
+    # Metadata
+    last_activity_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class CaseTriage(Base):
     """AI-powered case triage for priority scoring and queue assignment"""
     __tablename__ = 'case_triage'

@@ -584,34 +584,39 @@
 <div class="step-modal" id="modal-agreement" data-testid="modal-agreement">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 class="modal-title">Service Agreement</h2>
+            <h2 class="modal-title">Service Agreements</h2>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
-        <form id="form-agreement" onsubmit="submitStep(event, 'agreement')">
-            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; max-height: 300px; overflow-y: auto; margin-bottom: 20px; font-size: 14px; color: #475569;">
-                <h4 style="margin-bottom: 12px;">Credit Repair Service Agreement</h4>
-                <p style="margin-bottom: 12px;">By signing this agreement, you authorize Brightpath Ascend Group to act on your behalf in disputing inaccurate, incomplete, or unverifiable information on your credit reports with the three major credit bureaus (Equifax, Experian, and TransUnion).</p>
-                <p style="margin-bottom: 12px;">You understand that:</p>
-                <ul style="margin-left: 20px; margin-bottom: 12px;">
-                    <li>Results are not guaranteed</li>
-                    <li>The dispute process typically takes 30-45 days per round</li>
-                    <li>You will receive regular updates on your case progress</li>
-                    <li>You can cancel services at any time</li>
-                </ul>
-                <p>This agreement is governed by the Credit Repair Organizations Act (CROA) and applicable state laws.</p>
+        <div style="text-align: center; padding: 20px 0;">
+            <div style="font-size: 64px; margin-bottom: 20px;">📋</div>
+            <h3 style="font-size: 20px; font-weight: 600; color: #1a1a2e; margin-bottom: 12px;">CROA Required Documents</h3>
+            <p style="color: #64748b; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                Federal law requires you to review and sign 7 important documents before we can begin working on your credit repair case. This process ensures your rights are protected.
+            </p>
+
+            <div style="background: #f0fdfa; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left;">
+                <div style="font-size: 14px; font-weight: 600; color: #319795; margin-bottom: 12px;">Documents you'll sign:</div>
+                <ol style="font-size: 13px; color: #475569; margin-left: 20px; line-height: 1.8;">
+                    <li>Consumer Credit File Rights Disclosure</li>
+                    <li>Limited Power of Attorney</li>
+                    <li>Service Agreement</li>
+                    <li>Notice of Right to Cancel</li>
+                    <li>Service Completion Authorization</li>
+                    <li>HIPAA Authorization (optional)</li>
+                    <li>Client Welcome Packet</li>
+                </ol>
             </div>
-            <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                    <input type="checkbox" id="agree_terms" name="agreement_signed" required style="width: 20px; height: 20px;" data-testid="checkbox-agree">
-                    <span>I have read and agree to the Service Agreement</span>
-                </label>
+
+            <div style="background: #fef3c7; border-radius: 8px; padding: 12px; margin-bottom: 24px;">
+                <div style="font-size: 13px; color: #92400e;">
+                    <strong>3-Day Right to Cancel:</strong> After signing, you have 3 business days to cancel without any charges.
+                </div>
             </div>
-            <div class="form-group">
-                <label for="signature">Type your full name as signature</label>
-                <input type="text" id="signature" name="signature" placeholder="John Doe" required data-testid="input-signature">
-            </div>
-            <button type="submit" class="btn-primary" data-testid="save-agreement">Sign Agreement</button>
-        </form>
+
+            <a href="{{ url_for('portal.agreements') }}" class="btn-primary" style="display: inline-block; text-decoration: none; padding: 14px 40px;" data-testid="start-agreements">
+                Review & Sign Documents
+            </a>
+        </div>
     </div>
 </div>
 

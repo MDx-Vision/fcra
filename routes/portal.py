@@ -967,3 +967,181 @@ def api_backfill_timeline():
         return jsonify(result)
     finally:
         db.close()
+
+
+# ============================================================================
+# CROA Signing Routes
+# ============================================================================
+
+@portal.route('/agreements')
+@portal_login_required
+def croa_agreements():
+    """CROA document signing page"""
+    return render_template(
+        'portal/agreements.html',
+        active_tab='onboarding',
+        current_user=get_current_user()
+    )
+
+
+@portal.route('/api/croa/progress', methods=['GET'])
+@portal_login_required
+def api_croa_progress():
+    """Get CROA signing progress"""
+    from flask import jsonify
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.get_progress_summary(get_client_id())
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/croa/document/<document_code>', methods=['GET'])
+@portal_login_required
+def api_croa_get_document(document_code):
+    """Get a specific CROA document"""
+    from flask import jsonify
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.get_document(document_code)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/croa/current-document', methods=['GET'])
+@portal_login_required
+def api_croa_current_document():
+    """Get the current document to sign"""
+    from flask import jsonify
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.get_current_document(get_client_id())
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/croa/sign', methods=['POST'])
+@portal_login_required
+def api_croa_sign_document():
+    """Sign a CROA document"""
+    from flask import jsonify, request
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    data = request.get_json() or {}
+    document_code = data.get('document_code')
+    signature_data = data.get('signature_data')
+    signature_type = data.get('signature_type', 'drawn')
+
+    if not document_code:
+        return jsonify({'success': False, 'error': 'Document code required'}), 400
+
+    if not signature_data:
+        return jsonify({'success': False, 'error': 'Signature required'}), 400
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.sign_document(
+            client_id=get_client_id(),
+            document_code=document_code,
+            signature_data=signature_data,
+            signature_type=signature_type,
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None
+        )
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/croa/skip-optional', methods=['POST'])
+@portal_login_required
+def api_croa_skip_optional():
+    """Skip an optional document"""
+    from flask import jsonify, request
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    data = request.get_json() or {}
+    document_code = data.get('document_code')
+
+    if not document_code:
+        return jsonify({'success': False, 'error': 'Document code required'}), 400
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.skip_optional_document(get_client_id(), document_code)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/croa/cancellation-status', methods=['GET'])
+@portal_login_required
+def api_croa_cancellation_status():
+    """Get cancellation period status"""
+    from flask import jsonify
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.get_cancellation_status(get_client_id())
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/croa/cancel', methods=['POST'])
+@portal_login_required
+def api_croa_cancel_service():
+    """Cancel service during cancellation period"""
+    from flask import jsonify, request
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    data = request.get_json() or {}
+    reason = data.get('reason')
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.cancel_service(get_client_id(), reason)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/croa/can-begin-services', methods=['GET'])
+@portal_login_required
+def api_croa_can_begin_services():
+    """Check if services can begin"""
+    from flask import jsonify
+    from database import get_db
+    from services.croa_signing_service import get_croa_signing_service
+
+    db = get_db()
+    try:
+        service = get_croa_signing_service(db)
+        result = service.can_begin_services(get_client_id())
+        return jsonify(result)
+    finally:
+        db.close()
