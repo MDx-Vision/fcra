@@ -1,0 +1,159 @@
+{% extends "affiliate_portal/base.html" %}
+{% set active_page = 'dashboard' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title" data-testid="page-title">Welcome back, {{ affiliate.name }}!</h1>
+    <p class="page-subtitle">Here's your affiliate performance overview</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid" data-testid="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-label">Total Referrals</div>
+        <div class="stat-value" data-testid="total-referrals">{{ affiliate.total_referrals or 0 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Earnings</div>
+        <div class="stat-value" data-testid="total-earnings">${{ "%.2f"|format(affiliate.total_earnings or 0) }}</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-label">Pending Earnings</div>
+        <div class="stat-value" data-testid="pending-earnings">${{ "%.2f"|format(affiliate.pending_earnings or 0) }}</div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-label">Paid Out</div>
+        <div class="stat-value" data-testid="paid-out">${{ "%.2f"|format(affiliate.paid_out or 0) }}</div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <!-- Recent Commissions -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Commissions</h3>
+            <a href="{{ url_for('affiliate_portal.commissions') }}" class="btn btn-secondary">View All</a>
+        </div>
+        <table data-testid="recent-commissions-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in recent_commissions %}
+                <tr>
+                    <td>{{ c.created_at.strftime('%b %d') if c.created_at else '-' }}</td>
+                    <td>{{ c.trigger_type or 'Referral' }}</td>
+                    <td class="money">${{ "%.2f"|format(c.commission_amount or 0) }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if c.status == 'paid' else 'warning' if c.status == 'pending' else 'secondary' }}">
+                            {{ c.status or 'pending' }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #64748b; padding: 40px;">
+                        No commissions yet. Share your referral link to start earning!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Recent Payouts -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Payouts</h3>
+            <a href="{{ url_for('affiliate_portal.payouts') }}" class="btn btn-secondary">View All</a>
+        </div>
+        <table data-testid="recent-payouts-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in recent_payouts %}
+                <tr>
+                    <td>{{ p.created_at.strftime('%b %d') if p.created_at else '-' }}</td>
+                    <td class="money">${{ "%.2f"|format(p.amount or 0) }}</td>
+                    <td>{{ p.payout_method or '-' }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if p.status == 'completed' else 'warning' if p.status == 'pending' else 'info' }}">
+                            {{ p.status or 'pending' }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #64748b; padding: 40px;">
+                        No payouts yet
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="margin-top: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Quick Actions</h3>
+    </div>
+    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+        <a href="{{ url_for('affiliate_portal.referral_link') }}" class="btn btn-primary" data-testid="get-referral-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Get Referral Link
+        </a>
+        <a href="{{ url_for('affiliate_portal.clients') }}" class="btn btn-secondary" data-testid="view-clients">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            View Clients ({{ referred_clients }})
+        </a>
+        <a href="{{ url_for('affiliate_portal.settings') }}" class="btn btn-secondary" data-testid="update-settings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82"/></svg>
+            Update Payout Info
+        </a>
+    </div>
+</div>
+
+{% if sub_affiliates %}
+<!-- Sub-Affiliates -->
+<div class="card" style="margin-top: 20px;">
+    <div class="card-header">
+        <h3 class="card-title">Your Sub-Affiliates</h3>
+    </div>
+    <table data-testid="sub-affiliates-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Referrals</th>
+                <th>Your Earnings (L2)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in sub_affiliates %}
+            <tr>
+                <td>{{ sub.name }}</td>
+                <td><code>{{ sub.affiliate_code }}</code></td>
+                <td>{{ sub.total_referrals or 0 }}</td>
+                <td class="money">${{ "%.2f"|format((sub.total_referrals or 0) * (affiliate.commission_rate_2 or 0.05) * 100) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

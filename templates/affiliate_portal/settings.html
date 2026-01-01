@@ -1,0 +1,203 @@
+{% extends "affiliate_portal/base.html" %}
+{% set active_page = 'settings' %}
+
+{% block title %}Settings{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .settings-section {
+        margin-bottom: 30px;
+    }
+    .settings-section h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #94a3b8;
+        margin-bottom: 8px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #22c55e;
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+    }
+    .form-group input::placeholder {
+        color: #475569;
+    }
+    .form-group small {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #64748b;
+    }
+    .btn-save {
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title" data-testid="page-title">Settings</h1>
+    <p class="page-subtitle">Manage your affiliate account settings</p>
+</div>
+
+<!-- Profile Settings -->
+<div class="card">
+    <div class="settings-section">
+        <h3>Profile Information</h3>
+        <form method="POST" action="{{ url_for('affiliate_portal.settings') }}" data-testid="profile-form">
+            <input type="hidden" name="action" value="update_profile">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" value="{{ affiliate.name }}" required data-testid="name-input">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" value="{{ affiliate.email }}" disabled>
+                    <small>Contact support to change your email</small>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" value="{{ affiliate.phone or '' }}" data-testid="phone-input">
+                </div>
+                <div class="form-group">
+                    <label for="company_name">Company Name (Optional)</label>
+                    <input type="text" id="company_name" name="company_name" value="{{ affiliate.company_name or '' }}" data-testid="company-input">
+                </div>
+            </div>
+            <button type="submit" class="btn-save" data-testid="save-profile-btn">Save Profile</button>
+        </form>
+    </div>
+</div>
+
+<!-- Payout Settings -->
+<div class="card">
+    <div class="settings-section">
+        <h3>Payout Information</h3>
+        <form method="POST" action="{{ url_for('affiliate_portal.settings') }}" data-testid="payout-form">
+            <input type="hidden" name="action" value="update_payout">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="payout_method">Payout Method</label>
+                    <select id="payout_method" name="payout_method" data-testid="payout-method-select">
+                        <option value="">Select Method</option>
+                        <option value="paypal" {% if affiliate.payout_method == 'paypal' %}selected{% endif %}>PayPal</option>
+                        <option value="venmo" {% if affiliate.payout_method == 'venmo' %}selected{% endif %}>Venmo</option>
+                        <option value="zelle" {% if affiliate.payout_method == 'zelle' %}selected{% endif %}>Zelle</option>
+                        <option value="check" {% if affiliate.payout_method == 'check' %}selected{% endif %}>Check</option>
+                        <option value="bank_transfer" {% if affiliate.payout_method == 'bank_transfer' %}selected{% endif %}>Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="payout_account">Account Details</label>
+                    <input type="text" id="payout_account" name="payout_account"
+                           value="{{ affiliate.payout_details.account if affiliate.payout_details else '' }}"
+                           placeholder="PayPal email, Venmo handle, etc." data-testid="payout-account-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="payout_notes">Additional Notes</label>
+                <textarea id="payout_notes" name="payout_notes" rows="2"
+                          placeholder="Any special instructions for payouts"
+                          data-testid="payout-notes-input">{{ affiliate.payout_details.notes if affiliate.payout_details else '' }}</textarea>
+            </div>
+            <button type="submit" class="btn-save" data-testid="save-payout-btn">Save Payout Info</button>
+        </form>
+    </div>
+</div>
+
+<!-- Change Password -->
+<div class="card">
+    <div class="settings-section">
+        <h3>Change Password</h3>
+        <form method="POST" action="{{ url_for('affiliate_portal.settings') }}" data-testid="password-form">
+            <input type="hidden" name="action" value="change_password">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" id="current_password" name="current_password" data-testid="current-password-input">
+                </div>
+                <div></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" id="new_password" name="new_password" minlength="6" data-testid="new-password-input">
+                    <small>Minimum 6 characters</small>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" minlength="6" data-testid="confirm-password-input">
+                </div>
+            </div>
+            <button type="submit" class="btn-save" data-testid="change-password-btn">Change Password</button>
+        </form>
+    </div>
+</div>
+
+<!-- Account Info -->
+<div class="card">
+    <div class="settings-section">
+        <h3>Account Information</h3>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; color: #94a3b8;">
+            <div>
+                <div style="font-size: 12px; margin-bottom: 4px;">Affiliate Code</div>
+                <div style="font-size: 18px; font-family: monospace; color: #22c55e;">{{ affiliate.affiliate_code }}</div>
+            </div>
+            <div>
+                <div style="font-size: 12px; margin-bottom: 4px;">Account Status</div>
+                <div style="font-size: 18px;">
+                    <span class="badge badge-{{ 'success' if affiliate.status == 'active' else 'warning' }}">{{ affiliate.status }}</span>
+                </div>
+            </div>
+            <div>
+                <div style="font-size: 12px; margin-bottom: 4px;">Member Since</div>
+                <div style="font-size: 18px; color: #e2e8f0;">{{ affiliate.created_at.strftime('%B %d, %Y') if affiliate.created_at else 'Unknown' }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

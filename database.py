@@ -814,7 +814,12 @@ class Affiliate(Base):
     commission_rate_2 = Column(Float, default=0.05)
     
     status = Column(String(50), default='pending')
-    
+
+    # Authentication for affiliate portal
+    password_hash = Column(String(255))
+    last_login = Column(DateTime)
+    login_count = Column(Integer, default=0)
+
     payout_method = Column(String(50))
     payout_details = Column(JSON)
     
@@ -853,6 +858,39 @@ class Commission(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     affiliate = relationship("Affiliate", backref="commissions")
+
+
+class AffiliatePayout(Base):
+    """Track affiliate payout history"""
+    __tablename__ = 'affiliate_payouts'
+
+    id = Column(Integer, primary_key=True, index=True)
+    affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=False)
+
+    # Payout details
+    amount = Column(Float, nullable=False)
+    payout_method = Column(String(50))  # paypal, bank_transfer, check, venmo
+    payout_reference = Column(String(255))  # Transaction ID, check number, etc.
+
+    # Status
+    status = Column(String(50), default='pending')  # pending, processing, completed, failed
+
+    # Period covered
+    period_start = Column(DateTime)
+    period_end = Column(DateTime)
+
+    # Commission IDs included in this payout
+    commission_ids = Column(JSON)  # List of commission IDs
+
+    notes = Column(Text)
+    processed_by_id = Column(Integer, ForeignKey('staff.id'))
+    processed_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    affiliate = relationship("Affiliate", backref="payouts")
+    processed_by = relationship("Staff")
 
 
 class SignupDraft(Base):
@@ -4187,6 +4225,24 @@ def init_db():
         ("commissions", "payout_id", "INTEGER"),
         ("commissions", "notes", "TEXT"),
         ("commissions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("affiliate_payouts", "id", "SERIAL PRIMARY KEY"),
+        ("affiliate_payouts", "affiliate_id", "INTEGER NOT NULL REFERENCES affiliates(id)"),
+        ("affiliate_payouts", "amount", "FLOAT NOT NULL"),
+        ("affiliate_payouts", "payout_method", "VARCHAR(50)"),
+        ("affiliate_payouts", "payout_reference", "VARCHAR(255)"),
+        ("affiliate_payouts", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("affiliate_payouts", "period_start", "TIMESTAMP"),
+        ("affiliate_payouts", "period_end", "TIMESTAMP"),
+        ("affiliate_payouts", "commission_ids", "JSON"),
+        ("affiliate_payouts", "notes", "TEXT"),
+        ("affiliate_payouts", "processed_by_id", "INTEGER REFERENCES staff(id)"),
+        ("affiliate_payouts", "processed_at", "TIMESTAMP"),
+        ("affiliate_payouts", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("affiliate_payouts", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Affiliate portal authentication columns
+        ("affiliates", "password_hash", "VARCHAR(255)"),
+        ("affiliates", "last_login", "TIMESTAMP"),
+        ("affiliates", "login_count", "INTEGER DEFAULT 0"),
         ("case_triage", "id", "SERIAL PRIMARY KEY"),
         ("case_triage", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
         ("case_triage", "analysis_id", "INTEGER REFERENCES analyses(id)"),

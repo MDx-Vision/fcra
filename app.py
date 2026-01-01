@@ -296,9 +296,13 @@ app.secret_key = config.SECRET_KEY
 
 # Register blueprints
 from routes.portal import portal
+from routes.affiliate_portal import affiliate_portal
 
 app.register_blueprint(portal)
 print("✅ Portal blueprint registered")
+
+app.register_blueprint(affiliate_portal)
+print("✅ Affiliate portal blueprint registered")
 
 # Initialize Swagger/OpenAPI documentation
 from flasgger import Swagger
@@ -21365,13 +21369,10 @@ def dashboard_cfpb_detail(complaint_id):
 
 
 @app.route("/dashboard/affiliates")
-@require_staff(roles=["admin"])
+@require_staff()
 def dashboard_affiliates():
-    """Affiliate management dashboard"""
-    stats = affiliate_service.get_dashboard_stats()
-    affiliates = affiliate_service.get_all_affiliates()
-
-    return render_template("affiliates.html", stats=stats, affiliates=affiliates)
+    """Affiliate Dashboard - Track referrals, commissions, and payouts"""
+    return render_template("affiliate_dashboard.html")
 
 
 @app.route("/dashboard/affiliate/<int:affiliate_id>")
@@ -34235,6 +34236,7 @@ def api_get_total_unread():
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
+
 
 
 @app.errorhandler(404)

@@ -1,771 +1,556 @@
 """
-Affiliate Commission Service - Two-Level Commission System
+Affiliate Service for Brightpath Ascend FCRA Platform
 
-Handles affiliate referral tracking, commission calculations, and payout processing.
+Manages affiliates, referrals, commissions, and payouts.
+Supports two-level affiliate structure with parent/sub-affiliate relationships.
 """
 
-import random
-import string
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+import uuid
+from datetime import datetime, timedelta
+from typing import Optional, List, Dict, Any
 
-from database import Affiliate, Client, Commission, get_db
-
-
-def generate_affiliate_code(name: Optional[str] = None) -> str:
-    """Generate a unique affiliate code"""
-    if name:
-        prefix = "".join(c.upper() for c in name[:3] if c.isalpha())
-        if len(prefix) < 3:
-            prefix = prefix + "X" * (3 - len(prefix))
-    else:
-        prefix = "".join(random.choices(string.ascii_uppercase, k=3))
-
-    suffix = "".join(random.choices(string.digits, k=5))
-    code = f"{prefix}{suffix}"
-
-    session = get_db()
-    try:
-        existing = (
-            session.query(Affiliate).filter(Affiliate.affiliate_code == code).first()
-        )
-        if existing:
-            return generate_affiliate_code(name)
-        return code
-    finally:
-        session.close()
+from database import (
+    SessionLocal,
+    Affiliate,
+    Commission,
+    AffiliatePayout,
+    Client,
+)
 
 
-def validate_affiliate_code(code: str) -> dict:
-    """Validate if an affiliate code exists and is active"""
-    if not code:
-        return {"valid": False, "message": "No code provided"}
+# Affiliate status options
+AFFILIATE_STATUSES = {
+    "pending": "Pending Approval",
+    "active": "Active",
+    "suspended": "Suspended",
+    "inactive": "Inactive",
+}
 
-    session = get_db()
-    try:
-        affiliate = (
-            session.query(Affiliate)
-            .filter(Affiliate.affiliate_code == code.upper().strip())
-            .first()
-        )
+# Commission trigger types
+COMMISSION_TRIGGERS = {
+    "signup": "Client Signup",
+    "payment": "Payment Received",
+    "subscription": "Subscription Started",
+    "milestone": "Milestone Reached",
+}
 
-        if not affiliate:
-            return {"valid": False, "message": "Invalid affiliate code"}
+# Payout methods
+PAYOUT_METHODS = {
+    "paypal": "PayPal",
+    "bank_transfer": "Bank Transfer",
+    "check": "Check",
+    "venmo": "Venmo",
+    "zelle": "Zelle",
+}
 
-        if affiliate.status != "active":
-            return {"valid": False, "message": "Affiliate is not currently active"}
-
-        return {
-            "valid": True,
-            "affiliate_id": affiliate.id,
-            "affiliate_name": affiliate.name,
-            "message": "Valid affiliate code",
-        }
-    finally:
-        session.close()
+# Payout statuses
+PAYOUT_STATUSES = {
+    "pending": "Pending",
+    "processing": "Processing",
+    "completed": "Completed",
+    "failed": "Failed",
+}
 
 
-def process_referral(client_id: int, affiliate_code: str) -> dict:
-    """Link a client to an affiliate via referral code"""
-    if not affiliate_code:
-        return {"success": False, "message": "No affiliate code provided"}
+def generate_affiliate_code(name: str) -> str:
+    """Generate a unique affiliate code based on name"""
+    prefix = "".join(c for c in name.upper() if c.isalpha())[:3]
+    if len(prefix) < 3:
+        prefix = prefix.ljust(3, "X")
+    suffix = uuid.uuid4().hex[:5].upper()
+    return f"{prefix}{suffix}"
 
-    session = get_db()
-    try:
-        affiliate = (
-            session.query(Affiliate)
-            .filter(
-                Affiliate.affiliate_code == affiliate_code.upper().strip(),
-                Affiliate.status == "active",
+
+class AffiliateService:
+    """Service for managing affiliates and commissions"""
+
+    @staticmethod
+    def create_affiliate(
+        name: str,
+        email: str,
+        phone: str = None,
+        company_name: str = None,
+        affiliate_code: str = None,
+        parent_affiliate_id: int = None,
+        commission_rate_1: float = 0.10,
+        commission_rate_2: float = 0.05,
+        payout_method: str = None,
+        payout_details: dict = None,
+        session=None,
+    ) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            existing = session.query(Affiliate).filter(Affiliate.email == email).first()
+            if existing:
+                return {"success": False, "error": f"Affiliate with email '{email}' already exists"}
+
+            if not affiliate_code:
+                affiliate_code = generate_affiliate_code(name)
+
+            code_exists = session.query(Affiliate).filter(Affiliate.affiliate_code == affiliate_code).first()
+            if code_exists:
+                affiliate_code = generate_affiliate_code(name)
+
+            if parent_affiliate_id:
+                parent = session.query(Affiliate).filter(Affiliate.id == parent_affiliate_id).first()
+                if not parent:
+                    return {"success": False, "error": "Parent affiliate not found"}
+
+            affiliate = Affiliate(
+                name=name, email=email, phone=phone, company_name=company_name,
+                affiliate_code=affiliate_code, parent_affiliate_id=parent_affiliate_id,
+                commission_rate_1=commission_rate_1, commission_rate_2=commission_rate_2,
+                status="pending", payout_method=payout_method, payout_details=payout_details or {},
             )
-            .first()
-        )
 
-        if not affiliate:
-            return {"success": False, "message": "Invalid or inactive affiliate code"}
+            session.add(affiliate)
+            session.commit()
+            session.refresh(affiliate)
 
-        client = session.query(Client).filter(Client.id == client_id).first()
-        if not client:
-            return {"success": False, "message": "Client not found"}
+            return {"success": True, "affiliate_id": affiliate.id, "affiliate_code": affiliate.affiliate_code,
+                    "message": f"Affiliate '{name}' created successfully"}
 
-        if client.referred_by_affiliate_id:
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def update_affiliate(affiliate_id: int, name: str = None, phone: str = None, company_name: str = None,
+                         commission_rate_1: float = None, commission_rate_2: float = None, status: str = None,
+                         payout_method: str = None, payout_details: dict = None, session=None) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            affiliate = session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+            if not affiliate:
+                return {"success": False, "error": "Affiliate not found"}
+
+            if name is not None: affiliate.name = name
+            if phone is not None: affiliate.phone = phone
+            if company_name is not None: affiliate.company_name = company_name
+            if commission_rate_1 is not None: affiliate.commission_rate_1 = commission_rate_1
+            if commission_rate_2 is not None: affiliate.commission_rate_2 = commission_rate_2
+            if status is not None: affiliate.status = status
+            if payout_method is not None: affiliate.payout_method = payout_method
+            if payout_details is not None: affiliate.payout_details = payout_details
+
+            affiliate.updated_at = datetime.utcnow()
+            session.commit()
+            return {"success": True, "message": f"Affiliate '{affiliate.name}' updated successfully"}
+
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def get_affiliate(affiliate_id: int = None, affiliate_code: str = None, email: str = None,
+                      session=None) -> Optional[Dict[str, Any]]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            query = session.query(Affiliate)
+            if affiliate_id:
+                affiliate = query.filter(Affiliate.id == affiliate_id).first()
+            elif affiliate_code:
+                affiliate = query.filter(Affiliate.affiliate_code == affiliate_code).first()
+            elif email:
+                affiliate = query.filter(Affiliate.email == email).first()
+            else:
+                return None
+
+            if not affiliate:
+                return None
+
+            sub_count = session.query(Affiliate).filter(Affiliate.parent_affiliate_id == affiliate.id).count()
+
             return {
-                "success": False,
-                "message": "Client already has an affiliate referral",
+                "id": affiliate.id, "name": affiliate.name, "email": affiliate.email,
+                "phone": affiliate.phone, "company_name": affiliate.company_name,
+                "affiliate_code": affiliate.affiliate_code, "parent_affiliate_id": affiliate.parent_affiliate_id,
+                "commission_rate_1": affiliate.commission_rate_1, "commission_rate_2": affiliate.commission_rate_2,
+                "status": affiliate.status, "status_label": AFFILIATE_STATUSES.get(affiliate.status, affiliate.status),
+                "payout_method": affiliate.payout_method, "payout_details": affiliate.payout_details,
+                "total_referrals": affiliate.total_referrals, "total_earnings": affiliate.total_earnings,
+                "pending_earnings": affiliate.pending_earnings, "paid_out": affiliate.paid_out,
+                "sub_affiliates_count": sub_count,
+                "created_at": affiliate.created_at.isoformat() if affiliate.created_at else None,
+                "updated_at": affiliate.updated_at.isoformat() if affiliate.updated_at else None,
             }
+        finally:
+            if close_session:
+                session.close()
 
-        client.referred_by_affiliate_id = affiliate.id
+    @staticmethod
+    def list_affiliates(status: str = None, parent_id: int = None, search: str = None,
+                        include_stats: bool = True, session=None) -> List[Dict[str, Any]]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
 
-        affiliate.total_referrals = (affiliate.total_referrals or 0) + 1
-
-        session.commit()
-
-        return {
-            "success": True,
-            "affiliate_id": affiliate.id,
-            "affiliate_name": affiliate.name,
-            "message": f"Client linked to affiliate {affiliate.name}",
-        }
-    except Exception as e:
-        session.rollback()
-        return {"success": False, "message": f"Error processing referral: {str(e)}"}
-    finally:
-        session.close()
-
-
-def calculate_commission(client_id: int, trigger_type: str, amount: float) -> dict:
-    """
-    Calculate and create commission records for two-level affiliate system.
-
-    Two-level logic:
-    - Level 1 (Direct): Affiliate who directly referred the client gets commission_rate_1 (default 10%)
-    - Level 2 (Parent): Parent of the referring affiliate gets commission_rate_2 (default 5%)
-    """
-    if not amount or amount <= 0:
-        return {"success": False, "message": "Invalid amount"}
-
-    session = get_db()
-    try:
-        client = session.query(Client).filter(Client.id == client_id).first()
-        if not client:
-            return {"success": False, "message": "Client not found"}
-
-        if not client.referred_by_affiliate_id:
-            return {"success": False, "message": "Client has no affiliate referral"}
-
-        affiliate = (
-            session.query(Affiliate)
-            .filter(Affiliate.id == client.referred_by_affiliate_id)
-            .first()
-        )
-
-        if not affiliate:
-            return {"success": False, "message": "Referring affiliate not found"}
-
-        if affiliate.status != "active":
-            return {"success": False, "message": "Referring affiliate is not active"}
-
-        commissions_created = []
-
-        level_1_rate = affiliate.commission_rate_1 or 0.10
-        level_1_amount = round(amount * level_1_rate, 2)
-
-        commission_1 = Commission(
-            affiliate_id=affiliate.id,
-            client_id=client_id,
-            level=1,
-            trigger_type=trigger_type,
-            trigger_amount=amount,
-            commission_rate=level_1_rate,
-            commission_amount=level_1_amount,
-            status="pending",
-            notes=f"Level 1 commission from {trigger_type}: ${amount:.2f} x {level_1_rate*100:.0f}%",
-        )
-        session.add(commission_1)
-
-        affiliate.total_earnings = (affiliate.total_earnings or 0) + level_1_amount
-        affiliate.pending_earnings = (affiliate.pending_earnings or 0) + level_1_amount
-
-        commissions_created.append(
-            {
-                "level": 1,
-                "affiliate_id": affiliate.id,
-                "affiliate_name": affiliate.name,
-                "rate": level_1_rate,
-                "amount": level_1_amount,
-            }
-        )
-
-        if affiliate.parent_affiliate_id:
-            parent = (
-                session.query(Affiliate)
-                .filter(
-                    Affiliate.id == affiliate.parent_affiliate_id,
-                    Affiliate.status == "active",
-                )
-                .first()
-            )
-
-            if parent:
-                level_2_rate = parent.commission_rate_2 or 0.05
-                level_2_amount = round(amount * level_2_rate, 2)
-
-                commission_2 = Commission(
-                    affiliate_id=parent.id,
-                    client_id=client_id,
-                    level=2,
-                    trigger_type=trigger_type,
-                    trigger_amount=amount,
-                    commission_rate=level_2_rate,
-                    commission_amount=level_2_amount,
-                    status="pending",
-                    notes=f"Level 2 commission via {affiliate.name} from {trigger_type}: ${amount:.2f} x {level_2_rate*100:.0f}%",
-                )
-                session.add(commission_2)
-
-                parent.total_earnings = (parent.total_earnings or 0) + level_2_amount
-                parent.pending_earnings = (
-                    parent.pending_earnings or 0
-                ) + level_2_amount
-
-                commissions_created.append(
-                    {
-                        "level": 2,
-                        "affiliate_id": parent.id,
-                        "affiliate_name": parent.name,
-                        "rate": level_2_rate,
-                        "amount": level_2_amount,
-                    }
+        try:
+            query = session.query(Affiliate)
+            if status:
+                query = query.filter(Affiliate.status == status)
+            if parent_id is not None:
+                if parent_id == 0:
+                    query = query.filter(Affiliate.parent_affiliate_id == None)
+                else:
+                    query = query.filter(Affiliate.parent_affiliate_id == parent_id)
+            if search:
+                pattern = f"%{search}%"
+                query = query.filter(
+                    (Affiliate.name.ilike(pattern)) | (Affiliate.email.ilike(pattern)) |
+                    (Affiliate.company_name.ilike(pattern)) | (Affiliate.affiliate_code.ilike(pattern))
                 )
 
-        session.commit()
-
-        return {
-            "success": True,
-            "message": f"Created {len(commissions_created)} commission record(s)",
-            "commissions": commissions_created,
-        }
-    except Exception as e:
-        session.rollback()
-        return {"success": False, "message": f"Error calculating commission: {str(e)}"}
-    finally:
-        session.close()
-
-
-def get_affiliate_stats(affiliate_id: int) -> dict:
-    """Get comprehensive performance metrics for an affiliate"""
-    session = get_db()
-    try:
-        affiliate = (
-            session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
-        )
-        if not affiliate:
-            return {"success": False, "message": "Affiliate not found"}
-
-        referred_clients = (
-            session.query(Client)
-            .filter(Client.referred_by_affiliate_id == affiliate_id)
-            .all()
-        )
-
-        converted_clients = [c for c in referred_clients if c.payment_status == "paid"]
-        conversion_rate = (
-            (len(converted_clients) / len(referred_clients) * 100)
-            if referred_clients
-            else 0
-        )
-
-        level_1_commissions = (
-            session.query(Commission)
-            .filter(Commission.affiliate_id == affiliate_id, Commission.level == 1)
-            .all()
-        )
-
-        level_2_commissions = (
-            session.query(Commission)
-            .filter(Commission.affiliate_id == affiliate_id, Commission.level == 2)
-            .all()
-        )
-
-        pending_commissions = (
-            session.query(Commission)
-            .filter(
-                Commission.affiliate_id == affiliate_id, Commission.status == "pending"
-            )
-            .all()
-        )
-
-        paid_commissions = (
-            session.query(Commission)
-            .filter(
-                Commission.affiliate_id == affiliate_id, Commission.status == "paid"
-            )
-            .all()
-        )
-
-        sub_affiliates = (
-            session.query(Affiliate)
-            .filter(Affiliate.parent_affiliate_id == affiliate_id)
-            .all()
-        )
-
-        return {
-            "success": True,
-            "affiliate_id": affiliate_id,
-            "affiliate_name": affiliate.name,
-            "affiliate_code": affiliate.affiliate_code,
-            "status": affiliate.status,
-            "total_referrals": affiliate.total_referrals or 0,
-            "converted_referrals": len(converted_clients),
-            "conversion_rate": round(conversion_rate, 1),
-            "level_1_count": len(level_1_commissions),
-            "level_1_earnings": sum(c.commission_amount for c in level_1_commissions),
-            "level_2_count": len(level_2_commissions),
-            "level_2_earnings": sum(c.commission_amount for c in level_2_commissions),
-            "total_earnings": affiliate.total_earnings or 0,
-            "pending_earnings": affiliate.pending_earnings or 0,
-            "paid_out": affiliate.paid_out or 0,
-            "pending_commissions": len(pending_commissions),
-            "paid_commissions": len(paid_commissions),
-            "sub_affiliates": len(sub_affiliates),
-            "parent_affiliate_id": affiliate.parent_affiliate_id,
-            "commission_rate_1": affiliate.commission_rate_1 or 0.10,
-            "commission_rate_2": affiliate.commission_rate_2 or 0.05,
-            "payout_method": affiliate.payout_method,
-            "created_at": (
-                affiliate.created_at.isoformat() if affiliate.created_at else None
-            ),
-        }
-    finally:
-        session.close()
-
-
-def process_payout(
-    affiliate_id: int, amount: float, payout_method: Optional[str] = None, notes: Optional[str] = None
-) -> Dict[str, Any]:
-    """Process a payout to an affiliate, marking commissions as paid"""
-    if not amount or amount <= 0:
-        return {"success": False, "message": "Invalid payout amount"}
-
-    session = get_db()
-    try:
-        affiliate = (
-            session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
-        )
-        if not affiliate:
-            return {"success": False, "message": "Affiliate not found"}
-
-        if (affiliate.pending_earnings or 0) < amount:
-            return {
-                "success": False,
-                "message": f"Insufficient pending earnings. Available: ${affiliate.pending_earnings:.2f}",
-            }
-
-        payout_id = int(datetime.utcnow().timestamp())
-
-        pending_commissions = (
-            session.query(Commission)
-            .filter(
-                Commission.affiliate_id == affiliate_id, Commission.status == "pending"
-            )
-            .order_by(Commission.created_at)
-            .all()
-        )
-
-        remaining = amount
-        commissions_paid = 0
-
-        for commission in pending_commissions:
-            if remaining <= 0:
-                break
-
-            if commission.commission_amount <= remaining:
-                commission.status = "paid"
-                commission.paid_at = datetime.utcnow()
-                commission.payout_id = payout_id
-                if notes:
-                    commission.notes = (commission.notes or "") + f" | Payout: {notes}"
-
-                remaining -= commission.commission_amount
-                commissions_paid += 1
-
-        affiliate.pending_earnings = (affiliate.pending_earnings or 0) - amount
-        affiliate.paid_out = (affiliate.paid_out or 0) + amount
-
-        session.commit()
-
-        return {
-            "success": True,
-            "message": f"Payout of ${amount:.2f} processed successfully",
-            "payout_id": payout_id,
-            "commissions_paid": commissions_paid,
-            "remaining_pending": affiliate.pending_earnings,
-        }
-    except Exception as e:
-        session.rollback()
-        return {"success": False, "message": f"Error processing payout: {str(e)}"}
-    finally:
-        session.close()
-
-
-def get_commission_history(affiliate_id: int, limit: int = 50) -> list:
-    """Get commission history for an affiliate"""
-    session = get_db()
-    try:
-        commissions = (
-            session.query(Commission)
-            .filter(Commission.affiliate_id == affiliate_id)
-            .order_by(Commission.created_at.desc())
-            .limit(limit)
-            .all()
-        )
-
-        result = []
-        for c in commissions:
-            client = session.query(Client).filter(Client.id == c.client_id).first()
-            client_name = (
-                f"{client.first_name or ''} {client.last_name or ''}".strip()
-                if client
-                else "Unknown"
-            )
-
-            result.append(
-                {
-                    "id": c.id,
-                    "client_id": c.client_id,
-                    "client_name": client_name,
-                    "level": c.level,
-                    "trigger_type": c.trigger_type,
-                    "trigger_amount": c.trigger_amount,
-                    "commission_rate": c.commission_rate,
-                    "commission_amount": c.commission_amount,
-                    "status": c.status,
-                    "paid_at": c.paid_at.isoformat() if c.paid_at else None,
-                    "payout_id": c.payout_id,
-                    "notes": c.notes,
-                    "created_at": c.created_at.isoformat() if c.created_at else None,
-                }
-            )
-
-        return result
-    finally:
-        session.close()
-
-
-def get_referral_tree(affiliate_id: int) -> dict:
-    """Get the referral tree for an affiliate (sub-affiliates and their stats)"""
-    session = get_db()
-    try:
-        affiliate = (
-            session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
-        )
-        if not affiliate:
-            return {"success": False, "message": "Affiliate not found"}
-
-        sub_affiliates = (
-            session.query(Affiliate)
-            .filter(Affiliate.parent_affiliate_id == affiliate_id)
-            .all()
-        )
-
-        tree = {
-            "affiliate_id": affiliate.id,
-            "name": affiliate.name,
-            "affiliate_code": affiliate.affiliate_code,
-            "total_referrals": affiliate.total_referrals or 0,
-            "total_earnings": affiliate.total_earnings or 0,
-            "children": [],
-        }
-
-        for sub in sub_affiliates:
-            tree["children"].append(
-                {
-                    "affiliate_id": sub.id,
-                    "name": sub.name,
-                    "affiliate_code": sub.affiliate_code,
-                    "total_referrals": sub.total_referrals or 0,
-                    "total_earnings": sub.total_earnings or 0,
-                    "status": sub.status,
-                    "created_at": (
-                        sub.created_at.isoformat() if sub.created_at else None
-                    ),
-                }
-            )
-
-        return {"success": True, "tree": tree}
-    finally:
-        session.close()
-
-
-def create_affiliate(
-    name: str,
-    email: str,
-    phone: Optional[str] = None,
-    company_name: Optional[str] = None,
-    parent_affiliate_id: Optional[int] = None,
-    commission_rate_1: float = 0.10,
-    commission_rate_2: float = 0.05,
-    payout_method: Optional[str] = None,
-    payout_details: Optional[Dict[str, Any]] = None,
-    status: str = "pending",
-) -> Dict[str, Any]:
-    """Create a new affiliate"""
-    session = get_db()
-    try:
-        existing = (
-            session.query(Affiliate)
-            .filter(Affiliate.email == email.lower().strip())
-            .first()
-        )
-        if existing:
-            return {
-                "success": False,
-                "message": "An affiliate with this email already exists",
-            }
-
-        affiliate_code = generate_affiliate_code(name)
-
-        if parent_affiliate_id:
-            parent = (
-                session.query(Affiliate)
-                .filter(Affiliate.id == parent_affiliate_id)
-                .first()
-            )
-            if not parent:
-                return {"success": False, "message": "Parent affiliate not found"}
-
-        affiliate = Affiliate(
-            name=name.strip(),
-            email=email.lower().strip(),
-            phone=phone,
-            company_name=company_name,
-            affiliate_code=affiliate_code,
-            parent_affiliate_id=parent_affiliate_id,
-            commission_rate_1=commission_rate_1,
-            commission_rate_2=commission_rate_2,
-            payout_method=payout_method,
-            payout_details=payout_details,
-            status=status,
-            total_referrals=0,
-            total_earnings=0.0,
-            pending_earnings=0.0,
-            paid_out=0.0,
-        )
-
-        session.add(affiliate)
-        session.commit()
-
-        return {
-            "success": True,
-            "message": "Affiliate created successfully",
-            "affiliate_id": affiliate.id,
-            "affiliate_code": affiliate.affiliate_code,
-        }
-    except Exception as e:
-        session.rollback()
-        return {"success": False, "message": f"Error creating affiliate: {str(e)}"}
-    finally:
-        session.close()
-
-
-def update_affiliate(affiliate_id: int, **kwargs) -> dict:
-    """Update affiliate information"""
-    session = get_db()
-    try:
-        affiliate = (
-            session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
-        )
-        if not affiliate:
-            return {"success": False, "message": "Affiliate not found"}
-
-        allowed_fields = [
-            "name",
-            "email",
-            "phone",
-            "company_name",
-            "parent_affiliate_id",
-            "commission_rate_1",
-            "commission_rate_2",
-            "status",
-            "payout_method",
-            "payout_details",
-        ]
-
-        for key, value in kwargs.items():
-            if key in allowed_fields and value is not None:
-                setattr(affiliate, key, value)
-
-        affiliate.updated_at = datetime.utcnow()
-        session.commit()
-
-        return {
-            "success": True,
-            "message": "Affiliate updated successfully",
-            "affiliate_id": affiliate.id,
-        }
-    except Exception as e:
-        session.rollback()
-        return {"success": False, "message": f"Error updating affiliate: {str(e)}"}
-    finally:
-        session.close()
-
-
-def get_all_affiliates(status: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
-    """Get all affiliates with optional status filter"""
-    session = get_db()
-    try:
-        query = session.query(Affiliate)
-
-        if status:
-            query = query.filter(Affiliate.status == status)
-
-        affiliates = query.order_by(Affiliate.created_at.desc()).limit(limit).all()
-
-        result = []
-        for a in affiliates:
-            referred_clients = (
-                session.query(Client)
-                .filter(Client.referred_by_affiliate_id == a.id)
-                .count()
-            )
-
-            result.append(
-                {
-                    "id": a.id,
-                    "name": a.name,
-                    "email": a.email,
-                    "phone": a.phone,
-                    "company_name": a.company_name,
-                    "affiliate_code": a.affiliate_code,
+            affiliates = query.order_by(Affiliate.created_at.desc()).all()
+            results = []
+            for a in affiliates:
+                data = {
+                    "id": a.id, "name": a.name, "email": a.email, "phone": a.phone,
+                    "company_name": a.company_name, "affiliate_code": a.affiliate_code,
                     "parent_affiliate_id": a.parent_affiliate_id,
-                    "commission_rate_1": a.commission_rate_1,
-                    "commission_rate_2": a.commission_rate_2,
-                    "status": a.status,
-                    "payout_method": a.payout_method,
-                    "total_referrals": a.total_referrals or 0,
-                    "actual_referrals": referred_clients,
-                    "total_earnings": a.total_earnings or 0,
-                    "pending_earnings": a.pending_earnings or 0,
-                    "paid_out": a.paid_out or 0,
+                    "commission_rate_1": a.commission_rate_1, "commission_rate_2": a.commission_rate_2,
+                    "status": a.status, "status_label": AFFILIATE_STATUSES.get(a.status, a.status),
+                    "total_referrals": a.total_referrals, "total_earnings": a.total_earnings,
+                    "pending_earnings": a.pending_earnings, "paid_out": a.paid_out,
                     "created_at": a.created_at.isoformat() if a.created_at else None,
                 }
-            )
-
-        return result
-    finally:
-        session.close()
-
-
-def get_affiliate_by_id(affiliate_id: int) -> Optional[Dict[str, Any]]:
-    """Get a single affiliate by ID"""
-    session = get_db()
-    try:
-        affiliate = (
-            session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
-        )
-        if not affiliate:
-            return None
-
-        parent = None
-        if affiliate.parent_affiliate_id:
-            parent_affiliate = (
-                session.query(Affiliate)
-                .filter(Affiliate.id == affiliate.parent_affiliate_id)
-                .first()
-            )
-            if parent_affiliate:
-                parent = {
-                    "id": parent_affiliate.id,
-                    "name": parent_affiliate.name,
-                    "affiliate_code": parent_affiliate.affiliate_code,
-                }
-
-        return {
-            "id": affiliate.id,
-            "user_id": affiliate.user_id,
-            "name": affiliate.name,
-            "email": affiliate.email,
-            "phone": affiliate.phone,
-            "company_name": affiliate.company_name,
-            "affiliate_code": affiliate.affiliate_code,
-            "parent_affiliate_id": affiliate.parent_affiliate_id,
-            "parent": parent,
-            "commission_rate_1": affiliate.commission_rate_1,
-            "commission_rate_2": affiliate.commission_rate_2,
-            "status": affiliate.status,
-            "payout_method": affiliate.payout_method,
-            "payout_details": affiliate.payout_details,
-            "total_referrals": affiliate.total_referrals or 0,
-            "total_earnings": affiliate.total_earnings or 0,
-            "pending_earnings": affiliate.pending_earnings or 0,
-            "paid_out": affiliate.paid_out or 0,
-            "created_at": (
-                affiliate.created_at.isoformat() if affiliate.created_at else None
-            ),
-            "updated_at": (
-                affiliate.updated_at.isoformat() if affiliate.updated_at else None
-            ),
-        }
-    finally:
-        session.close()
-
-
-def apply_for_affiliate(
-    name: str,
-    email: str,
-    phone: Optional[str] = None,
-    company_name: Optional[str] = None,
-    payout_method: Optional[str] = None,
-    payout_details: Optional[Dict[str, Any]] = None,
-    referrer_code: Optional[str] = None,
-) -> Dict[str, Any]:
-    """Public endpoint for affiliate application"""
-    parent_affiliate_id = None
-
-    if referrer_code:
-        session = get_db()
-        try:
-            parent = (
-                session.query(Affiliate)
-                .filter(
-                    Affiliate.affiliate_code == referrer_code.upper().strip(),
-                    Affiliate.status == "active",
-                )
-                .first()
-            )
-            if parent:
-                parent_affiliate_id = parent.id
+                if include_stats:
+                    data["sub_affiliates_count"] = session.query(Affiliate).filter(
+                        Affiliate.parent_affiliate_id == a.id).count()
+                results.append(data)
+            return results
         finally:
-            session.close()
+            if close_session:
+                session.close()
 
-    return create_affiliate(
-        name=name,
-        email=email,
-        phone=phone,
-        company_name=company_name,
-        parent_affiliate_id=parent_affiliate_id,
-        payout_method=payout_method,
-        payout_details=payout_details,
-        status="pending",
-    )
+    @staticmethod
+    def delete_affiliate(affiliate_id: int, session=None) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            affiliate = session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+            if not affiliate:
+                return {"success": False, "error": "Affiliate not found"}
+            if affiliate.total_referrals > 0:
+                return {"success": False, "error": "Cannot delete affiliate with existing referrals"}
+            sub_count = session.query(Affiliate).filter(Affiliate.parent_affiliate_id == affiliate_id).count()
+            if sub_count > 0:
+                return {"success": False, "error": "Cannot delete affiliate with sub-affiliates"}
+
+            name = affiliate.name
+            session.delete(affiliate)
+            session.commit()
+            return {"success": True, "message": f"Affiliate '{name}' deleted"}
+
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def record_referral(affiliate_code: str, client_id: int, trigger_type: str = "signup",
+                        trigger_amount: float = 0.0, session=None) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            affiliate = session.query(Affiliate).filter(Affiliate.affiliate_code == affiliate_code).first()
+            if not affiliate:
+                return {"success": False, "error": "Affiliate code not found"}
+            if affiliate.status != "active":
+                return {"success": False, "error": "Affiliate is not active"}
+
+            client = session.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return {"success": False, "error": "Client not found"}
+
+            commissions_created = []
+            rate_1 = affiliate.commission_rate_1
+            amount_1 = trigger_amount * rate_1
+
+            commission_1 = Commission(
+                affiliate_id=affiliate.id, client_id=client_id, level=1,
+                trigger_type=trigger_type, trigger_amount=trigger_amount,
+                commission_rate=rate_1, commission_amount=amount_1, status="pending",
+            )
+            session.add(commission_1)
+            affiliate.total_referrals += 1
+            affiliate.pending_earnings += amount_1
+            affiliate.total_earnings += amount_1
+            commissions_created.append({"affiliate_id": affiliate.id, "level": 1, "amount": amount_1})
+
+            if affiliate.parent_affiliate_id:
+                parent = session.query(Affiliate).filter(Affiliate.id == affiliate.parent_affiliate_id).first()
+                if parent and parent.status == "active":
+                    rate_2 = parent.commission_rate_2
+                    amount_2 = trigger_amount * rate_2
+                    commission_2 = Commission(
+                        affiliate_id=parent.id, client_id=client_id, level=2,
+                        trigger_type=trigger_type, trigger_amount=trigger_amount,
+                        commission_rate=rate_2, commission_amount=amount_2, status="pending",
+                    )
+                    session.add(commission_2)
+                    parent.pending_earnings += amount_2
+                    parent.total_earnings += amount_2
+                    commissions_created.append({"affiliate_id": parent.id, "level": 2, "amount": amount_2})
+
+            session.commit()
+            return {"success": True, "affiliate_id": affiliate.id, "commissions": commissions_created,
+                    "message": f"Referral recorded, {len(commissions_created)} commission(s) created"}
+
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def get_commissions(affiliate_id: int = None, client_id: int = None, status: str = None,
+                        trigger_type: str = None, session=None) -> List[Dict[str, Any]]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            query = session.query(Commission)
+            if affiliate_id: query = query.filter(Commission.affiliate_id == affiliate_id)
+            if client_id: query = query.filter(Commission.client_id == client_id)
+            if status: query = query.filter(Commission.status == status)
+            if trigger_type: query = query.filter(Commission.trigger_type == trigger_type)
+
+            commissions = query.order_by(Commission.created_at.desc()).all()
+            return [{
+                "id": c.id, "affiliate_id": c.affiliate_id, "client_id": c.client_id,
+                "level": c.level, "trigger_type": c.trigger_type,
+                "trigger_type_label": COMMISSION_TRIGGERS.get(c.trigger_type, c.trigger_type),
+                "trigger_amount": c.trigger_amount, "commission_rate": c.commission_rate,
+                "commission_amount": c.commission_amount, "status": c.status,
+                "paid_at": c.paid_at.isoformat() if c.paid_at else None,
+                "payout_id": c.payout_id, "notes": c.notes,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+            } for c in commissions]
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def create_payout(affiliate_id: int, amount: float, payout_method: str = None,
+                      payout_reference: str = None, commission_ids: List[int] = None,
+                      notes: str = None, processed_by_id: int = None, session=None) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            affiliate = session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+            if not affiliate:
+                return {"success": False, "error": "Affiliate not found"}
+            if amount > affiliate.pending_earnings:
+                return {"success": False, "error": f"Amount exceeds pending earnings (${affiliate.pending_earnings:.2f})"}
+
+            payout = AffiliatePayout(
+                affiliate_id=affiliate_id, amount=amount,
+                payout_method=payout_method or affiliate.payout_method,
+                payout_reference=payout_reference, status="pending",
+                commission_ids=commission_ids or [], notes=notes, processed_by_id=processed_by_id,
+            )
+            session.add(payout)
+            session.commit()
+            session.refresh(payout)
+            return {"success": True, "payout_id": payout.id,
+                    "message": f"Payout of ${amount:.2f} created for {affiliate.name}"}
+
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def process_payout(payout_id: int, payout_reference: str = None,
+                       processed_by_id: int = None, session=None) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            payout = session.query(AffiliatePayout).filter(AffiliatePayout.id == payout_id).first()
+            if not payout:
+                return {"success": False, "error": "Payout not found"}
+            if payout.status == "completed":
+                return {"success": False, "error": "Payout already completed"}
+
+            affiliate = session.query(Affiliate).filter(Affiliate.id == payout.affiliate_id).first()
+            if not affiliate:
+                return {"success": False, "error": "Affiliate not found"}
+
+            payout.status = "completed"
+            payout.processed_at = datetime.utcnow()
+            if payout_reference: payout.payout_reference = payout_reference
+            if processed_by_id: payout.processed_by_id = processed_by_id
+
+            affiliate.pending_earnings -= payout.amount
+            affiliate.paid_out += payout.amount
+
+            if payout.commission_ids:
+                for cid in payout.commission_ids:
+                    commission = session.query(Commission).filter(Commission.id == cid).first()
+                    if commission:
+                        commission.status = "paid"
+                        commission.paid_at = datetime.utcnow()
+                        commission.payout_id = payout.id
+
+            session.commit()
+            return {"success": True, "message": f"Payout of ${payout.amount:.2f} processed successfully"}
+
+        except Exception as e:
+            session.rollback()
+            return {"success": False, "error": str(e)}
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def get_payouts(affiliate_id: int = None, status: str = None, session=None) -> List[Dict[str, Any]]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            query = session.query(AffiliatePayout)
+            if affiliate_id: query = query.filter(AffiliatePayout.affiliate_id == affiliate_id)
+            if status: query = query.filter(AffiliatePayout.status == status)
+
+            payouts = query.order_by(AffiliatePayout.created_at.desc()).all()
+            return [{
+                "id": p.id, "affiliate_id": p.affiliate_id, "amount": p.amount,
+                "payout_method": p.payout_method,
+                "payout_method_label": PAYOUT_METHODS.get(p.payout_method, p.payout_method),
+                "payout_reference": p.payout_reference, "status": p.status,
+                "status_label": PAYOUT_STATUSES.get(p.status, p.status),
+                "commission_ids": p.commission_ids, "notes": p.notes,
+                "processed_by_id": p.processed_by_id,
+                "processed_at": p.processed_at.isoformat() if p.processed_at else None,
+                "created_at": p.created_at.isoformat() if p.created_at else None,
+            } for p in payouts]
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def get_affiliate_stats(affiliate_id: int = None, session=None) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            if affiliate_id:
+                affiliate = session.query(Affiliate).filter(Affiliate.id == affiliate_id).first()
+                if not affiliate:
+                    return {"error": "Affiliate not found"}
+
+                commissions = session.query(Commission).filter(Commission.affiliate_id == affiliate_id).all()
+                pending = sum(c.commission_amount for c in commissions if c.status == "pending")
+                paid = sum(c.commission_amount for c in commissions if c.status == "paid")
+
+                sub_affiliates = session.query(Affiliate).filter(Affiliate.parent_affiliate_id == affiliate_id).all()
+
+                return {
+                    "affiliate_id": affiliate_id, "total_referrals": affiliate.total_referrals,
+                    "total_earnings": affiliate.total_earnings, "pending_earnings": pending, "paid_out": paid,
+                    "commission_count": len(commissions),
+                    "pending_commission_count": len([c for c in commissions if c.status == "pending"]),
+                    "sub_affiliates": [{"id": s.id, "name": s.name, "total_referrals": s.total_referrals,
+                                        "total_earnings": s.total_earnings} for s in sub_affiliates],
+                }
+            else:
+                total = session.query(Affiliate).count()
+                active = session.query(Affiliate).filter(Affiliate.status == "active").count()
+                pending_aff = session.query(Affiliate).filter(Affiliate.status == "pending").count()
+                total_comm = session.query(Commission).count()
+                pending_comm = session.query(Commission).filter(Commission.status == "pending").count()
+
+                all_affiliates = session.query(Affiliate).all()
+                total_earnings = sum(a.total_earnings for a in all_affiliates)
+                total_pending = sum(a.pending_earnings for a in all_affiliates)
+                total_paid = sum(a.paid_out for a in all_affiliates)
+                total_referrals = sum(a.total_referrals for a in all_affiliates)
+
+                return {
+                    "total_affiliates": total, "active_affiliates": active, "pending_affiliates": pending_aff,
+                    "total_commissions": total_comm, "pending_commissions": pending_comm,
+                    "total_referrals": total_referrals, "total_earnings": total_earnings,
+                    "total_pending": total_pending, "total_paid": total_paid,
+                }
+        finally:
+            if close_session:
+                session.close()
+
+    @staticmethod
+    def get_dashboard_data(session=None) -> Dict[str, Any]:
+        close_session = False
+        if session is None:
+            session = SessionLocal()
+            close_session = True
+
+        try:
+            stats = AffiliateService.get_affiliate_stats(session=session)
+            top_affiliates = session.query(Affiliate).filter(Affiliate.status == "active").order_by(
+                Affiliate.total_referrals.desc()).limit(5).all()
+            recent_payouts = session.query(AffiliatePayout).order_by(AffiliatePayout.created_at.desc()).limit(5).all()
+            pending_count = session.query(AffiliatePayout).filter(AffiliatePayout.status == "pending").count()
+
+            return {
+                "stats": stats,
+                "top_affiliates": [{"id": a.id, "name": a.name, "affiliate_code": a.affiliate_code,
+                                    "total_referrals": a.total_referrals, "total_earnings": a.total_earnings}
+                                   for a in top_affiliates],
+                "recent_payouts": [{"id": p.id, "affiliate_id": p.affiliate_id, "amount": p.amount,
+                                    "status": p.status, "created_at": p.created_at.isoformat() if p.created_at else None}
+                                   for p in recent_payouts],
+                "pending_payout_count": pending_count,
+            }
+        finally:
+            if close_session:
+                session.close()
 
 
-def get_dashboard_stats() -> dict:
-    """Get summary stats for the affiliate dashboard"""
-    session = get_db()
-    try:
-        total_affiliates = session.query(Affiliate).count()
-        active_affiliates = (
-            session.query(Affiliate).filter(Affiliate.status == "active").count()
-        )
-        pending_affiliates = (
-            session.query(Affiliate).filter(Affiliate.status == "pending").count()
-        )
+def get_affiliate_by_code(code: str) -> Optional[Dict]:
+    return AffiliateService.get_affiliate(affiliate_code=code)
 
-        all_affiliates = session.query(Affiliate).all()
-        total_pending_payouts = sum(a.pending_earnings or 0 for a in all_affiliates)
-        total_paid = sum(a.paid_out or 0 for a in all_affiliates)
-        total_earnings = sum(a.total_earnings or 0 for a in all_affiliates)
-
-        total_referrals = (
-            session.query(Client)
-            .filter(Client.referred_by_affiliate_id.isnot(None))
-            .count()
-        )
-
-        pending_commissions = (
-            session.query(Commission).filter(Commission.status == "pending").count()
-        )
-
-        return {
-            "total_affiliates": total_affiliates,
-            "active_affiliates": active_affiliates,
-            "pending_affiliates": pending_affiliates,
-            "total_referrals": total_referrals,
-            "total_pending_payouts": total_pending_payouts,
-            "total_paid": total_paid,
-            "total_earnings": total_earnings,
-            "pending_commissions": pending_commissions,
-        }
-    finally:
-        session.close()
+def record_client_referral(affiliate_code: str, client_id: int, amount: float = 0) -> Dict:
+    return AffiliateService.record_referral(affiliate_code=affiliate_code, client_id=client_id,
+                                            trigger_type="signup", trigger_amount=amount)
