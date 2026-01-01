@@ -195,6 +195,13 @@ class SchedulerService:
             "payload": {},
             "cron_expression": "0 8 * * *",  # Daily at 8 AM
         },
+        # Drip Campaigns - Process due drip campaign emails
+        {
+            "name": "Process Drip Campaign Emails",
+            "task_type": "process_drip_emails",
+            "payload": {},
+            "cron_expression": "0 * * * *",  # Every hour
+        },
     ]
 
     @staticmethod

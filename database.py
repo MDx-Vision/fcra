@@ -1,6 +1,6 @@
 import os
 from typing import Any
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Time, Boolean, Float, ForeignKey, event, JSON, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Time, Boolean, Float, ForeignKey, event, JSON, text, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -1051,6 +1051,133 @@ class EmailTemplate(Base):
     is_active = Column(Boolean, default=True)  # Can be disabled without deleting
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class DripCampaign(Base):
+    """Automated email sequences for client follow-ups"""
+    __tablename__ = 'drip_campaigns'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+
+    # Trigger conditions
+    trigger_type = Column(String(50), nullable=False)  # signup, status_change, manual, tag_added
+    trigger_value = Column(String(100))  # e.g., status value, tag name
+
+    # Campaign settings
+    is_active = Column(Boolean, default=True)
+    send_window_start = Column(Integer, default=9)  # Hour to start sending (9 AM)
+    send_window_end = Column(Integer, default=17)  # Hour to stop sending (5 PM)
+    send_on_weekends = Column(Boolean, default=False)
+
+    # Stats
+    total_enrolled = Column(Integer, default=0)
+    total_completed = Column(Integer, default=0)
+
+    created_by_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    steps = relationship("DripStep", back_populates="campaign", cascade="all, delete-orphan", order_by="DripStep.step_order")
+    enrollments = relationship("DripEnrollment", back_populates="campaign", cascade="all, delete-orphan")
+
+
+class DripStep(Base):
+    """Individual step in a drip campaign"""
+    __tablename__ = 'drip_steps'
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey('drip_campaigns.id', ondelete='CASCADE'), nullable=False)
+
+    step_order = Column(Integer, nullable=False)  # 1, 2, 3, etc.
+    name = Column(String(200))  # Optional step name
+
+    # Timing
+    delay_days = Column(Integer, default=1)  # Days after previous step (or enrollment)
+    delay_hours = Column(Integer, default=0)  # Additional hours
+
+    # Email content
+    email_template_id = Column(Integer, ForeignKey('email_templates.id'))  # Use existing template
+    subject = Column(String(500))  # Override subject if not using template
+    html_content = Column(Text)  # Override content if not using template
+
+    # Conditions
+    condition_type = Column(String(50))  # none, if_opened, if_not_opened, if_clicked
+    condition_value = Column(String(100))  # For if_clicked, the link to check
+
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    campaign = relationship("DripCampaign", back_populates="steps")
+    email_template = relationship("EmailTemplate")
+
+
+class DripEnrollment(Base):
+    """Track client enrollment in drip campaigns"""
+    __tablename__ = 'drip_enrollments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey('drip_campaigns.id', ondelete='CASCADE'), nullable=False)
+    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+
+    # Current progress
+    current_step = Column(Integer, default=0)  # 0 = not started, 1 = first step sent, etc.
+    status = Column(String(20), default='active')  # active, paused, completed, cancelled
+
+    # Timing
+    enrolled_at = Column(DateTime, default=datetime.utcnow)
+    next_send_at = Column(DateTime)  # When to send next step
+    last_sent_at = Column(DateTime)  # When last step was sent
+    completed_at = Column(DateTime)
+
+    # Tracking
+    emails_sent = Column(Integer, default=0)
+    emails_opened = Column(Integer, default=0)
+    emails_clicked = Column(Integer, default=0)
+
+    # Metadata
+    paused_reason = Column(String(200))
+    cancelled_reason = Column(String(200))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    campaign = relationship("DripCampaign", back_populates="enrollments")
+    client = relationship("Client")
+
+    # Unique constraint - one enrollment per client per campaign
+    __table_args__ = (
+        UniqueConstraint('campaign_id', 'client_id', name='uq_drip_enrollment_campaign_client'),
+    )
+
+
+class DripEmailLog(Base):
+    """Log of emails sent through drip campaigns"""
+    __tablename__ = 'drip_email_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    enrollment_id = Column(Integer, ForeignKey('drip_enrollments.id', ondelete='CASCADE'), nullable=False)
+    step_id = Column(Integer, ForeignKey('drip_steps.id', ondelete='SET NULL'))
+
+    subject = Column(String(500))
+    sent_at = Column(DateTime, default=datetime.utcnow)
+
+    # Tracking
+    opened_at = Column(DateTime)
+    clicked_at = Column(DateTime)
+    click_url = Column(String(500))
+
+    # Delivery status
+    status = Column(String(20), default='sent')  # sent, delivered, opened, clicked, bounced, failed
+    error_message = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CaseDeadline(Base):
@@ -4674,6 +4801,65 @@ def init_db():
         ("email_templates", "is_active", "BOOLEAN DEFAULT TRUE"),
         ("email_templates", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("email_templates", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Campaigns
+        ("drip_campaigns", "id", "SERIAL PRIMARY KEY"),
+        ("drip_campaigns", "name", "VARCHAR(200) NOT NULL"),
+        ("drip_campaigns", "description", "TEXT"),
+        ("drip_campaigns", "trigger_type", "VARCHAR(50) NOT NULL"),
+        ("drip_campaigns", "trigger_value", "VARCHAR(100)"),
+        ("drip_campaigns", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("drip_campaigns", "send_window_start", "INTEGER DEFAULT 9"),
+        ("drip_campaigns", "send_window_end", "INTEGER DEFAULT 17"),
+        ("drip_campaigns", "send_on_weekends", "BOOLEAN DEFAULT FALSE"),
+        ("drip_campaigns", "total_enrolled", "INTEGER DEFAULT 0"),
+        ("drip_campaigns", "total_completed", "INTEGER DEFAULT 0"),
+        ("drip_campaigns", "created_by_id", "INTEGER REFERENCES staff(id)"),
+        ("drip_campaigns", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_campaigns", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Steps
+        ("drip_steps", "id", "SERIAL PRIMARY KEY"),
+        ("drip_steps", "campaign_id", "INTEGER NOT NULL REFERENCES drip_campaigns(id) ON DELETE CASCADE"),
+        ("drip_steps", "step_order", "INTEGER NOT NULL"),
+        ("drip_steps", "name", "VARCHAR(200)"),
+        ("drip_steps", "delay_days", "INTEGER DEFAULT 1"),
+        ("drip_steps", "delay_hours", "INTEGER DEFAULT 0"),
+        ("drip_steps", "email_template_id", "INTEGER REFERENCES email_templates(id)"),
+        ("drip_steps", "subject", "VARCHAR(500)"),
+        ("drip_steps", "html_content", "TEXT"),
+        ("drip_steps", "condition_type", "VARCHAR(50)"),
+        ("drip_steps", "condition_value", "VARCHAR(100)"),
+        ("drip_steps", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("drip_steps", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_steps", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Enrollments
+        ("drip_enrollments", "id", "SERIAL PRIMARY KEY"),
+        ("drip_enrollments", "campaign_id", "INTEGER NOT NULL REFERENCES drip_campaigns(id) ON DELETE CASCADE"),
+        ("drip_enrollments", "client_id", "INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE"),
+        ("drip_enrollments", "current_step", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "status", "VARCHAR(20) DEFAULT 'active'"),
+        ("drip_enrollments", "enrolled_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_enrollments", "next_send_at", "TIMESTAMP"),
+        ("drip_enrollments", "last_sent_at", "TIMESTAMP"),
+        ("drip_enrollments", "completed_at", "TIMESTAMP"),
+        ("drip_enrollments", "emails_sent", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "emails_opened", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "emails_clicked", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "paused_reason", "VARCHAR(200)"),
+        ("drip_enrollments", "cancelled_reason", "VARCHAR(200)"),
+        ("drip_enrollments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_enrollments", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Email Logs
+        ("drip_email_logs", "id", "SERIAL PRIMARY KEY"),
+        ("drip_email_logs", "enrollment_id", "INTEGER NOT NULL REFERENCES drip_enrollments(id) ON DELETE CASCADE"),
+        ("drip_email_logs", "step_id", "INTEGER REFERENCES drip_steps(id) ON DELETE SET NULL"),
+        ("drip_email_logs", "subject", "VARCHAR(500)"),
+        ("drip_email_logs", "sent_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_email_logs", "opened_at", "TIMESTAMP"),
+        ("drip_email_logs", "clicked_at", "TIMESTAMP"),
+        ("drip_email_logs", "click_url", "VARCHAR(500)"),
+        ("drip_email_logs", "status", "VARCHAR(20) DEFAULT 'sent'"),
+        ("drip_email_logs", "error_message", "TEXT"),
+        ("drip_email_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

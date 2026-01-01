@@ -391,9 +391,80 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
+## Priority 8: Drip Campaigns (Automated Follow-up Sequences) ✅ COMPLETE
+
+**Completed: 2026-01-01**
+
+### What Was Implemented
+
+1. **Database Models** (`database.py`):
+   - [x] `DripCampaign` - Campaign settings (name, trigger, send window)
+   - [x] `DripStep` - Individual email steps with delays
+   - [x] `DripEnrollment` - Track client progress through campaigns
+   - [x] `DripEmailLog` - Log sent emails for tracking
+   - [x] Created migration entries for all 4 tables
+
+2. **DripCampaignService** (`services/drip_campaign_service.py`):
+   - [x] Campaign CRUD (create, update, delete, get, list)
+   - [x] Step management (add, update, delete, reorder)
+   - [x] Enrollment management (enroll, pause, resume, cancel)
+   - [x] Email processing for scheduled job
+   - [x] Campaign statistics
+
+3. **API Endpoints** (22 endpoints):
+   - [x] `GET /api/drip-campaigns` - List campaigns
+   - [x] `POST /api/drip-campaigns` - Create campaign
+   - [x] `GET /api/drip-campaigns/<id>` - Get campaign
+   - [x] `PUT /api/drip-campaigns/<id>` - Update campaign
+   - [x] `DELETE /api/drip-campaigns/<id>` - Delete campaign
+   - [x] `GET /api/drip-campaigns/<id>/stats` - Campaign stats
+   - [x] `POST /api/drip-campaigns/<id>/steps` - Add step
+   - [x] `PUT /api/drip-campaigns/steps/<id>` - Update step
+   - [x] `DELETE /api/drip-campaigns/steps/<id>` - Delete step
+   - [x] `POST /api/drip-campaigns/<id>/steps/reorder` - Reorder
+   - [x] `GET /api/drip-campaigns/enrollments` - List enrollments
+   - [x] `POST /api/drip-campaigns/<id>/enroll/<client_id>` - Enroll
+   - [x] Pause, resume, cancel enrollment endpoints
+   - [x] `POST /api/drip-campaigns/process` - Manual process trigger
+
+4. **Scheduled Job**:
+   - [x] Added to `scheduler_service.py` BUILT_IN_SCHEDULES
+   - [x] "Process Drip Campaign Emails" runs hourly
+
+5. **Campaign Management UI** (`templates/drip_campaigns.html`):
+   - [x] Stats dashboard (Total, Active, Enrolled, Completed)
+   - [x] Campaign grid with filtering (status, trigger type, search)
+   - [x] Create/Edit campaign modal with step builder
+   - [x] Enrollments tab with status management
+   - [x] Manual process trigger button
+
+6. **Trigger Types Supported**:
+   - `signup` - New client signup
+   - `status_change` - Dispute status change
+   - `report_uploaded` - Credit report uploaded
+   - `analysis_complete` - Analysis complete
+   - `dispute_sent` - Dispute sent to bureaus
+   - `response_received` - Bureau response received
+   - `manual` - Manual enrollment
+   - `tag_added` - Tag added to client
+
+### Files Created/Modified
+- `database.py` - Added 4 models + migrations
+- `services/drip_campaign_service.py` (NEW) - 1,090 lines
+- `services/scheduler_service.py` - Added scheduled job
+- `app.py` - Added 22 API endpoints + page route
+- `templates/drip_campaigns.html` (NEW) - Full UI
+- `templates/includes/dashboard_sidebar.html` - Added sidebar link
+- `tests/test_drip_campaign_service.py` (NEW) - 40 tests
+
+### Test Status
+- 40/40 drip campaign service tests passing
+
+---
+
 ## Notes
 
 - **Email**: Gmail SMTP (SendGrid removed)
 - **SMS**: Twilio (A2P campaign pending carrier approval)
-- All 7 priorities complete!
+- All 8 priorities complete!
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap

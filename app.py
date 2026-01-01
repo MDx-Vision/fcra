@@ -14179,6 +14179,304 @@ def email_templates_page():
 
 
 # ============================================================
+# DRIP CAMPAIGNS - Automated Email Sequences
+# ============================================================
+
+from services.drip_campaign_service import DripCampaignService
+
+
+@app.route("/api/drip-campaigns/trigger-types", methods=["GET"])
+@require_staff()
+def api_get_drip_trigger_types():
+    """Get all available trigger types"""
+    return jsonify({
+        "success": True,
+        "trigger_types": DripCampaignService.get_trigger_types()
+    })
+
+
+@app.route("/api/drip-campaigns/enrollment-statuses", methods=["GET"])
+@require_staff()
+def api_get_enrollment_statuses():
+    """Get all enrollment status options"""
+    return jsonify({
+        "success": True,
+        "statuses": DripCampaignService.get_enrollment_statuses()
+    })
+
+
+@app.route("/api/drip-campaigns", methods=["GET"])
+@require_staff()
+def api_list_drip_campaigns():
+    """List all drip campaigns with optional filtering"""
+    is_active = request.args.get("is_active")
+    trigger_type = request.args.get("trigger_type")
+
+    # Convert string to boolean
+    if is_active is not None:
+        is_active = is_active.lower() == "true"
+
+    campaigns = DripCampaignService.list_campaigns(
+        is_active=is_active,
+        trigger_type=trigger_type
+    )
+    return jsonify({"success": True, "campaigns": campaigns})
+
+
+@app.route("/api/drip-campaigns", methods=["POST"])
+@require_staff()
+def api_create_drip_campaign():
+    """Create a new drip campaign"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    name = data.get("name")
+    trigger_type = data.get("trigger_type")
+
+    if not name or not trigger_type:
+        return jsonify({"success": False, "error": "Name and trigger_type are required"}), 400
+
+    # Get current staff ID
+    staff_id = session.get("staff_id")
+
+    result = DripCampaignService.create_campaign(
+        name=name,
+        trigger_type=trigger_type,
+        trigger_value=data.get("trigger_value"),
+        description=data.get("description"),
+        send_window_start=data.get("send_window_start", 9),
+        send_window_end=data.get("send_window_end", 17),
+        send_on_weekends=data.get("send_on_weekends", False),
+        created_by_id=staff_id,
+        steps=data.get("steps")
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>", methods=["GET"])
+@require_staff()
+def api_get_drip_campaign(campaign_id):
+    """Get a drip campaign by ID"""
+    include_steps = request.args.get("include_steps", "true").lower() == "true"
+    campaign = DripCampaignService.get_campaign(campaign_id, include_steps=include_steps)
+
+    if campaign:
+        return jsonify({"success": True, "campaign": campaign})
+    return jsonify({"success": False, "error": "Campaign not found"}), 404
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>", methods=["PUT"])
+@require_staff()
+def api_update_drip_campaign(campaign_id):
+    """Update a drip campaign"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    result = DripCampaignService.update_campaign(campaign_id, **data)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_drip_campaign(campaign_id):
+    """Delete a drip campaign"""
+    result = DripCampaignService.delete_campaign(campaign_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/stats", methods=["GET"])
+@require_staff()
+def api_get_drip_campaign_stats(campaign_id):
+    """Get statistics for a drip campaign"""
+    result = DripCampaignService.get_campaign_stats(campaign_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404
+
+
+# ============== DRIP CAMPAIGN STEPS ==============
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/steps", methods=["POST"])
+@require_staff()
+def api_add_drip_step(campaign_id):
+    """Add a step to a drip campaign"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    template_id = data.get("template_id")
+    delay_days = data.get("delay_days")
+
+    if template_id is None or delay_days is None:
+        return jsonify({"success": False, "error": "template_id and delay_days are required"}), 400
+
+    result = DripCampaignService.add_step(
+        campaign_id=campaign_id,
+        template_id=template_id,
+        delay_days=delay_days,
+        delay_hours=data.get("delay_hours", 0),
+        subject_override=data.get("subject_override"),
+        step_order=data.get("step_order")
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/steps/<int:step_id>", methods=["PUT"])
+@require_staff()
+def api_update_drip_step(step_id):
+    """Update a drip campaign step"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    result = DripCampaignService.update_step(step_id, **data)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/steps/<int:step_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_drip_step(step_id):
+    """Delete a drip campaign step"""
+    result = DripCampaignService.delete_step(step_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/steps/reorder", methods=["POST"])
+@require_staff()
+def api_reorder_drip_steps(campaign_id):
+    """Reorder steps in a drip campaign"""
+    data = request.get_json()
+    if not data or "step_ids" not in data:
+        return jsonify({"success": False, "error": "step_ids array required"}), 400
+
+    result = DripCampaignService.reorder_steps(campaign_id, data["step_ids"])
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+# ============== DRIP ENROLLMENTS ==============
+
+@app.route("/api/drip-campaigns/enrollments", methods=["GET"])
+@require_staff()
+def api_list_drip_enrollments():
+    """List drip campaign enrollments with optional filtering"""
+    campaign_id = request.args.get("campaign_id", type=int)
+    client_id = request.args.get("client_id", type=int)
+    status = request.args.get("status")
+
+    result = DripCampaignService.list_enrollments(
+        campaign_id=campaign_id,
+        client_id=client_id,
+        status=status
+    )
+    return jsonify(result)
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/enroll/<int:client_id>", methods=["POST"])
+@require_staff()
+def api_enroll_client_in_campaign(campaign_id, client_id):
+    """Enroll a client in a drip campaign"""
+    data = request.get_json() or {}
+
+    result = DripCampaignService.enroll_client(
+        campaign_id=campaign_id,
+        client_id=client_id,
+        trigger_source=data.get("trigger_source", "manual"),
+        skip_if_enrolled=data.get("skip_if_enrolled", True)
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>", methods=["GET"])
+@require_staff()
+def api_get_drip_enrollment(enrollment_id):
+    """Get a specific enrollment"""
+    enrollment = DripCampaignService.get_enrollment(enrollment_id)
+
+    if enrollment:
+        return jsonify({"success": True, "enrollment": enrollment})
+    return jsonify({"success": False, "error": "Enrollment not found"}), 404
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/pause", methods=["POST"])
+@require_staff()
+def api_pause_drip_enrollment(enrollment_id):
+    """Pause an enrollment"""
+    data = request.get_json() or {}
+    result = DripCampaignService.pause_enrollment(enrollment_id, reason=data.get("reason"))
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/resume", methods=["POST"])
+@require_staff()
+def api_resume_drip_enrollment(enrollment_id):
+    """Resume a paused enrollment"""
+    result = DripCampaignService.resume_enrollment(enrollment_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/cancel", methods=["POST"])
+@require_staff()
+def api_cancel_drip_enrollment(enrollment_id):
+    """Cancel an enrollment"""
+    data = request.get_json() or {}
+    result = DripCampaignService.cancel_enrollment(enrollment_id, reason=data.get("reason"))
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+# ============== DRIP PROCESSING ==============
+
+@app.route("/api/drip-campaigns/process", methods=["POST"])
+@require_staff()
+def api_process_drip_emails():
+    """Manually trigger drip email processing (admin use)"""
+    result = DripCampaignService.process_due_emails()
+    return jsonify(result)
+
+
+@app.route("/dashboard/drip-campaigns")
+@require_staff()
+def drip_campaigns_page():
+    """Drip campaigns management page"""
+    return render_template("drip_campaigns.html")
+
+
+# ============================================================
 # DOCUMENT CENTER - Client Upload Management
 # ============================================================
 
