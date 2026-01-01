@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2025-12-31)
+## Current Status (2026-01-01)
 
 ### Test Status: 100% PASSING
 - **Unit tests**: 4,653 passing (56 test files, ~95s runtime)
@@ -27,10 +27,101 @@
 See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 1**: ~~Client Communication Automation~~ ✅ COMPLETE
 - **Priority 2**: ~~Gmail Integration~~ ✅ COMPLETE
-- **Priority 3**: Simple Booking System (DB-based, no Calendly)
-- **Priority 4**: Simple Report Upload Flow
+- **Priority 3**: ~~Q&A Booking + Live Messaging~~ ✅ COMPLETE
+- **Priority 4**: ~~Simple Report Upload Flow~~ ✅ COMPLETE
 
-### Current Work (2025-12-31) - COMPLETED
+### Current Work (2026-01-01) - COMPLETED
+
+**Task**: Portal UX Improvements + Priority 4 Simple Report Upload
+
+**Status**: ✅ ALL COMPLETE
+
+**Changes**:
+1. **Secondary Bureau Freeze UI Overhaul** (`templates/portal/status.html`):
+   - Added "What to Watch For in Your Mail" priority action card (yellow)
+   - Shows exactly which bureaus client is waiting on letters from
+   - Progress bar with X/9 complete visual indicator
+   - Smart grouping: Pending (yellow, first), Not Frozen (red), Frozen (green, collapsed)
+   - Pulsing indicator on pending items
+   - Auto-collapse completed items when >3
+
+2. **Auto-Create Secondary Bureaus** (`routes/portal.py`):
+   - Status page now auto-creates 9 secondary bureau records if none exist
+   - Works for both magic link and password login flows
+   - Ensures clients always see their freeze tracking
+
+3. **Test Client Portal Login**:
+   - Created test client: `testclient@example.com` / `test123`
+   - Fixed portal_password_hash field usage
+
+4. **Priority 4: Simple Report Upload** (`/upload-report`):
+   - Minimal form: Name, Email, File upload only
+   - Drag & drop with visual feedback
+   - Creates lead with `dispute_status='report_uploaded'`
+   - Sends confirmation email
+   - Triggers workflow for staff notification
+   - Trust badges + link to full signup form
+
+5. **Expected Response Dates + Overdue Tracking**:
+   - Shows "Expected by: [date]" (30 days from freeze request)
+   - Tracks `freeze_requested_at` for each bureau
+   - Overdue bureaus highlighted in red with ⚠️ warning
+   - Card turns red when responses are overdue
+   - CTA for client to contact staff for follow-up help
+
+**Files Created/Modified**:
+- `templates/portal/status.html` - Complete secondary bureau section rewrite + expected dates
+- `routes/portal.py` - Auto-create bureaus, calculate expected dates, track overdue
+- `templates/upload_report.html` - Simple upload page (new)
+- `app.py` - Added `/upload-report` route and API endpoint
+- `database.py` - Uses `freeze_requested_at` field on SecondaryBureauFreeze
+
+---
+
+### Previous Work (2025-12-31) - COMPLETED
+
+**Task**: Priority 3 - Q&A Booking System + Live Support Messaging
+
+**Status**: ✅ COMPLETE
+
+**Changes**:
+1. **Database Models** (`database.py`):
+   - `BookingSlot` - Staff-created available time slots (date, time, duration, staff_id)
+   - `Booking` - Client bookings with status tracking (confirmed, cancelled, completed)
+   - `ClientMessage` - Live support messages between clients and staff
+   - Created migration entries for all 3 tables
+
+2. **Booking API Endpoints** (`app.py`):
+   - Staff: `GET/POST /api/booking-slots`, `PUT/DELETE /api/booking-slots/<id>`
+   - Staff: `GET /api/bookings`, `PUT /api/bookings/<id>/status`
+   - Portal: `GET /api/portal/booking-slots`, `GET/POST/DELETE /api/portal/bookings`
+   - Bulk slot creation with date range, time range, and days of week filter
+   - Confirmation emails sent on booking
+
+3. **Messaging API Endpoints** (`app.py`):
+   - Portal: `GET/POST /api/portal/messages`, `GET /api/portal/messages/unread-count`
+   - Staff: `GET /api/messages/clients`, `GET/POST /api/messages/client/<id>`
+   - Staff: `GET /api/messages/unread-total`
+
+4. **Portal UI** (`templates/portal/`):
+   - `booking.html` - Client booking page with slot selection and booking management
+   - `messages.html` - Live chat interface for client support
+   - `base_portal.html` - Updated navigation with Messages and Book Call tabs
+
+5. **Staff UI** (`templates/`):
+   - `booking_management.html` - Slot creation, booking management, stats
+   - `messaging.html` - Inbox with conversations, chat interface, unread badges
+   - `includes/dashboard_sidebar.html` - Added Bookings and Messages links
+
+**Files Created/Modified**:
+- `database.py` - 3 new models + migrations
+- `app.py` - ~400 lines of booking + messaging endpoints
+- `routes/portal.py` - booking and messages routes
+- 4 new templates + 2 updated templates
+
+---
+
+### Previous Work (2025-12-31) - COMPLETED
 
 **Task**: Priority 2 - Gmail Integration (Replace SendGrid)
 
@@ -55,15 +146,6 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 4. **Tests Updated**:
    - `tests/test_email_service.py` - 53 tests for Gmail SMTP
    - `tests/test_config.py` - 143 tests updated for Gmail config
-
-**Environment Variables**:
-```
-GMAIL_USER=your-email@gmail.com
-GMAIL_APP_PASSWORD=your-16-char-app-password
-EMAIL_FROM_NAME=Brightpath Ascend Group (optional)
-```
-
-**Test Status**: 4,650 unit tests passing
 
 ---
 

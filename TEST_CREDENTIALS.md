@@ -25,6 +25,8 @@
 - **Staff Login**: [/staff/login](/staff/login)
 - **Client Portal**: [/portal/login](/portal/login)
 - **Lead Capture Page**: [/get-started](/get-started)
+- **Simple Report Upload**: [/upload-report](/upload-report)
+- **Portal Status (Freeze Tracking)**: [/portal/status](/portal/status)
 
 ---
 
@@ -36,5 +38,5 @@
 
 ---
 
-*Last updated: 2025-12-31*
-*Credentials verified: 2025-12-31*
+*Last updated: 2026-01-01*
+*Credentials verified: 2026-01-01*

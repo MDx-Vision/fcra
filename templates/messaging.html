@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Messages - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .messaging-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+            height: calc(100vh - 160px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        /* Clients List */
+        .clients-list {
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+        }
+
+        .client-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .client-item:hover {
+            background: #f8fafc;
+        }
+        .client-item.active {
+            background: #f0fdf4;
+            border-left: 3px solid #22c55e;
+        }
+        .client-item.has-unread {
+            background: #fef3c7;
+        }
+
+        .client-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .client-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .client-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .client-preview {
+            font-size: 13px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .client-meta {
+            text-align: right;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+        .client-time {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-bottom: 4px;
+        }
+        .unread-badge {
+            display: inline-block;
+            background: #ef4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+        }
+        .chat-client-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .chat-client-email {
+            font-size: 13px;
+            color: #64748b;
+            margin-left: 12px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: #f8fafc;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+        .message-bubble.client {
+            background: white;
+            border: 1px solid #e2e8f0;
+            margin-right: auto;
+        }
+        .message-bubble.staff {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            margin-left: auto;
+        }
+        .message-text {
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .message-time {
+            font-size: 11px;
+            margin-top: 6px;
+            opacity: 0.7;
+        }
+        .message-bubble.client .message-time {
+            text-align: left;
+        }
+        .message-bubble.staff .message-time {
+            text-align: right;
+        }
+
+        .reply-container {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+        .reply-form {
+            display: flex;
+            gap: 12px;
+        }
+        .reply-form textarea {
+            flex: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+        }
+        .reply-form textarea:focus {
+            outline: none;
+            border-color: #22c55e;
+        }
+        .reply-form button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+        .reply-form button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        }
+
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+            text-align: center;
+            padding: 48px;
+        }
+        .empty-chat-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 1200px) {
+            .messaging-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    {% set active_page = 'messaging' %}
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Client Messages</h1>
+                <p class="header-subtitle">Respond to client support requests</p>
+            </div>
+            <div id="unread-badge" style="display: none; background: #ef4444; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600;">
+                <span id="total-unread">0</span> unread
+            </div>
+        </div>
+
+        <div class="messaging-grid">
+            <!-- Clients List -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Conversations</h2>
+                </div>
+                <div class="clients-list" id="clients-list">
+                    <div style="text-align: center; padding: 48px; color: #64748b;">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="card">
+                <div class="chat-container" id="chat-container">
+                    <div class="empty-chat">
+                        <div class="empty-chat-icon">Select a conversation</div>
+                        <p>Choose a client from the list to view and reply to their messages.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let selectedClientId = null;
+        let pollInterval = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClients();
+            loadUnreadCount();
+
+            // Poll for updates every 30 seconds
+            pollInterval = setInterval(() => {
+                loadClients();
+                loadUnreadCount();
+                if (selectedClientId) {
+                    loadMessages(selectedClientId, false);
+                }
+            }, 30000);
+        });
+
+        function loadUnreadCount() {
+            fetch('/api/messages/unread-total')
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('unread-badge');
+                    const count = data.unread_count || 0;
+                    if (count > 0) {
+                        document.getElementById('total-unread').textContent = count;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                });
+        }
+
+        function loadClients() {
+            fetch('/api/messages/clients')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('clients-list');
+                    const clients = data.clients || [];
+
+                    if (clients.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 48px; color: #64748b;">
+                                <div style="font-size: 32px; margin-bottom: 12px;">No messages yet</div>
+                                <p>Client messages will appear here.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = clients.map(c => {
+                        const initial = (c.client_name || 'C').charAt(0).toUpperCase();
+                        const time = c.latest_at ? formatTime(c.latest_at) : '';
+
+                        return `
+                            <div class="client-item ${c.client_id === selectedClientId ? 'active' : ''} ${c.unread_count > 0 ? 'has-unread' : ''}"
+                                 onclick="selectClient(${c.client_id}, '${escapeHtml(c.client_name || '')}', '${escapeHtml(c.client_email || '')}')">
+                                <div class="client-avatar">${initial}</div>
+                                <div class="client-info">
+                                    <div class="client-name">${escapeHtml(c.client_name || 'Unknown')}</div>
+                                    <div class="client-preview">${escapeHtml(c.latest_message || 'No messages')}</div>
+                                </div>
+                                <div class="client-meta">
+                                    <div class="client-time">${time}</div>
+                                    ${c.unread_count > 0 ? `<span class="unread-badge">${c.unread_count}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                })
+                .catch(err => {
+                    console.error('Error loading clients:', err);
+                });
+        }
+
+        function selectClient(clientId, clientName, clientEmail) {
+            selectedClientId = clientId;
+
+            // Update active state
+            document.querySelectorAll('.client-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            event.currentTarget.classList.remove('has-unread');
+
+            // Update chat container
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = `
+                <div class="chat-header">
+                    <span class="chat-client-name">${escapeHtml(clientName)}</span>
+                    <span class="chat-client-email">${escapeHtml(clientEmail)}</span>
+                </div>
+                <div class="messages-container" id="messages-container">
+                    <div style="text-align: center; color: #64748b;">Loading messages...</div>
+                </div>
+                <div class="reply-container">
+                    <form class="reply-form" id="reply-form">
+                        <textarea id="reply-text" rows="2" placeholder="Type your reply..."
+                            onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendReply(); }"></textarea>
+                        <button type="submit">Send</button>
+                    </form>
+                </div>
+            `;
+
+            document.getElementById('reply-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                sendReply();
+            });
+
+            loadMessages(clientId, true);
+        }
+
+        function loadMessages(clientId, scroll = true) {
+            fetch(`/api/messages/client/${clientId}`)
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('messages-container');
+                    if (!container) return;
+
+                    const messages = data.messages || [];
+
+                    if (messages.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; color: #64748b; padding: 48px;">
+                                No messages in this conversation.
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = messages.map(m => {
+                        const isStaff = m.sender_type === 'staff';
+                        const time = formatTime(m.created_at);
+
+                        return `
+                            <div class="message-bubble ${isStaff ? 'staff' : 'client'}">
+                                <div class="message-text">${escapeHtml(m.message)}</div>
+                                <div class="message-time">${time}${isStaff && m.staff_name ? ' - ' + escapeHtml(m.staff_name) : ''}</div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    if (scroll) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+
+                    // Refresh unread count
+                    loadUnreadCount();
+                    loadClients();
+                })
+                .catch(err => {
+                    console.error('Error loading messages:', err);
+                });
+        }
+
+        function sendReply() {
+            if (!selectedClientId) return;
+
+            const textarea = document.getElementById('reply-text');
+            const message = textarea.value.trim();
+            if (!message) return;
+
+            textarea.disabled = true;
+
+            fetch(`/api/messages/client/${selectedClientId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            })
+            .then(r => r.json())
+            .then(data => {
+                textarea.disabled = false;
+                if (data.success) {
+                    textarea.value = '';
+                    loadMessages(selectedClientId, true);
+                } else {
+                    alert(data.error || 'Error sending message');
+                }
+            })
+            .catch(err => {
+                textarea.disabled = false;
+                console.error('Error sending reply:', err);
+                alert('Error sending message. Please try again.');
+            });
+        }
+
+        function formatTime(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) return 'Just now';
+            if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

@@ -16719,6 +16719,20 @@ def calendar_dashboard():
     return render_template("calendar.html")
 
 
+@app.route("/dashboard/booking-management")
+@require_staff()
+def booking_management():
+    """Staff page to manage Q&A call bookings and time slots"""
+    return render_template("booking_management.html")
+
+
+@app.route("/dashboard/messaging")
+@require_staff()
+def messaging_dashboard():
+    """Staff page to respond to client messages"""
+    return render_template("messaging.html")
+
+
 @app.route("/api/calendar/events")
 def get_calendar_events():
     """
@@ -32445,6 +32459,951 @@ def api_leads_capture():
             "success": False,
             "error": "An error occurred. Please try again."
         }), 500
+    finally:
+        db.close()
+
+
+@app.route("/upload-report")
+def upload_report():
+    """Simple report upload page - minimal form for quick lead capture"""
+    return render_template("upload_report.html")
+
+
+@app.route("/api/leads/upload-report", methods=["POST"])
+def api_leads_upload_report():
+    """Handle simple report upload from leads - minimal info required"""
+    db = get_db()
+    try:
+        from werkzeug.utils import secure_filename
+        from services.workflow_triggers_service import trigger_event
+
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        file = request.files.get('report')
+
+        # Validate required fields
+        if not name:
+            return jsonify({"success": False, "error": "Name is required"}), 400
+        if not email:
+            return jsonify({"success": False, "error": "Email is required"}), 400
+        if not file or not file.filename:
+            return jsonify({"success": False, "error": "Please upload a credit report"}), 400
+
+        # Validate file type
+        allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in allowed_extensions:
+            return jsonify({"success": False, "error": "File must be PDF, JPG, or PNG"}), 400
+
+        # Split name into first/last
+        name_parts = name.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        # Check if client already exists
+        existing = db.query(Client).filter_by(email=email).first()
+
+        if existing:
+            client = existing
+            # Update name if not already set
+            if not client.first_name:
+                client.first_name = first_name
+            if not client.last_name:
+                client.last_name = last_name
+            if not client.name:
+                client.name = name
+        else:
+            # Create new client as a lead
+            client = Client(
+                name=name,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                dispute_status='report_uploaded',
+                current_dispute_round=0,
+                email_opt_in=True
+            )
+            db.add(client)
+            db.flush()  # Get client ID
+
+        # Save the uploaded file
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        final_filename = f"report_{timestamp}_{filename}"
+
+        upload_dir = os.path.join('static', 'client_uploads', str(client.id), 'reports')
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, final_filename)
+        file.save(file_path)
+
+        # Create upload record
+        try:
+            upload = ClientUpload(
+                client_id=client.id,
+                document_type='credit_report',
+                file_name=filename,
+                file_path=file_path,
+                file_size=os.path.getsize(file_path),
+                category='credit_report',
+                notes='Uploaded via simple upload form'
+            )
+            db.add(upload)
+        except Exception as e:
+            print(f"Upload record error: {e}")
+
+        db.commit()
+
+        # Send confirmation email
+        try:
+            from services.email_service import send_email
+            send_email(
+                to_email=email,
+                subject="We've Received Your Credit Report - Brightpath Ascend",
+                html_content=f"""
+                <h2>Thank you, {first_name}!</h2>
+                <p>We've received your credit report and our team will analyze it shortly.</p>
+                <p>You can expect to hear from us within 24 hours with your free credit analysis.</p>
+                <p>In the meantime, feel free to:</p>
+                <ul>
+                    <li><a href="https://brightpathascend.com/get-started">Complete your profile</a> for faster processing</li>
+                    <li>Reply to this email with any questions</li>
+                </ul>
+                <p>Best regards,<br>The Brightpath Ascend Team</p>
+                """
+            )
+        except Exception as e:
+            print(f"Confirmation email error: {e}")
+
+        # Trigger workflow event for staff notification
+        try:
+            trigger_event('document_uploaded', {
+                'client_id': client.id,
+                'document_type': 'credit_report',
+                'file_name': filename,
+                'source': 'simple_upload_form'
+            })
+        except Exception as e:
+            print(f"Trigger error: {e}")
+
+        return jsonify({
+            "success": True,
+            "message": "Report uploaded successfully",
+            "client_id": client.id
+        })
+
+    except Exception as e:
+        db.rollback()
+        print(f"Report upload error: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An error occurred. Please try again."
+        }), 500
+    finally:
+        db.close()
+
+
+# =============================================================================
+# BOOKING SYSTEM - Q&A Call Scheduling
+# =============================================================================
+
+@app.route('/api/booking-slots', methods=['GET'])
+@require_staff()
+def api_get_booking_slots():
+    """Get all booking slots (staff view)"""
+    db = get_db()
+    try:
+        from database import BookingSlot, Booking, Client
+        from datetime import date, timedelta
+
+        # Parse filters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        show_booked = request.args.get('show_booked', 'true').lower() == 'true'
+
+        query = db.query(BookingSlot)
+
+        # Default to next 30 days if no date range specified
+        if not start_date:
+            start_date = date.today()
+        else:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+
+        if not end_date:
+            end_date = start_date + timedelta(days=30)
+        else:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        query = query.filter(
+            BookingSlot.slot_date >= start_date,
+            BookingSlot.slot_date <= end_date
+        )
+
+        if not show_booked:
+            query = query.filter(BookingSlot.is_booked == False)
+
+        slots = query.order_by(BookingSlot.slot_date, BookingSlot.slot_time).all()
+
+        result = []
+        for slot in slots:
+            slot_data = {
+                'id': slot.id,
+                'date': slot.slot_date.isoformat(),
+                'time': slot.slot_time.strftime('%H:%M'),
+                'duration': slot.duration_minutes,
+                'is_available': slot.is_available,
+                'is_booked': slot.is_booked,
+                'booking': None
+            }
+
+            if slot.is_booked and slot.booking:
+                client = db.query(Client).filter(Client.id == slot.booking.client_id).first()
+                slot_data['booking'] = {
+                    'id': slot.booking.id,
+                    'client_id': slot.booking.client_id,
+                    'client_name': client.name if client else 'Unknown',
+                    'client_email': client.email if client else '',
+                    'notes': slot.booking.notes,
+                    'status': slot.booking.status
+                }
+
+            result.append(slot_data)
+
+        return jsonify({'success': True, 'slots': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/booking-slots', methods=['POST'])
+@require_staff()
+def api_create_booking_slots():
+    """Create booking slots (bulk create by staff)"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+        from datetime import time, timedelta
+
+        data = request.get_json()
+
+        # Support single slot or bulk creation
+        if 'slots' in data:
+            # Bulk create: list of {date, time} objects
+            slots_data = data['slots']
+        elif 'start_date' in data and 'end_date' in data:
+            # Generate slots for date range
+            start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+            end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+            start_time = datetime.strptime(data.get('start_time', '09:00'), '%H:%M').time()
+            end_time = datetime.strptime(data.get('end_time', '17:00'), '%H:%M').time()
+            days_of_week = data.get('days_of_week', [0, 1, 2, 3, 4])  # Mon-Fri default
+
+            slots_data = []
+            current_date = start_date
+            while current_date <= end_date:
+                if current_date.weekday() in days_of_week:
+                    current_time = datetime.combine(current_date, start_time)
+                    end_datetime = datetime.combine(current_date, end_time)
+
+                    while current_time < end_datetime:
+                        slots_data.append({
+                            'date': current_date.isoformat(),
+                            'time': current_time.strftime('%H:%M')
+                        })
+                        current_time += timedelta(minutes=15)
+
+                current_date += timedelta(days=1)
+        else:
+            # Single slot
+            slots_data = [{
+                'date': data['date'],
+                'time': data['time']
+            }]
+
+        created_count = 0
+        staff_id = session.get('staff_id')
+
+        for slot_data in slots_data:
+            slot_date = datetime.strptime(slot_data['date'], '%Y-%m-%d').date()
+            slot_time = datetime.strptime(slot_data['time'], '%H:%M').time()
+
+            # Check for existing slot at same date/time
+            existing = db.query(BookingSlot).filter(
+                BookingSlot.slot_date == slot_date,
+                BookingSlot.slot_time == slot_time
+            ).first()
+
+            if not existing:
+                slot = BookingSlot(
+                    slot_date=slot_date,
+                    slot_time=slot_time,
+                    duration_minutes=15,
+                    is_available=True,
+                    is_booked=False,
+                    staff_id=staff_id
+                )
+                db.add(slot)
+                created_count += 1
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Created {created_count} booking slots',
+            'created_count': created_count
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/booking-slots/<int:slot_id>', methods=['PUT'])
+@require_staff()
+def api_update_booking_slot(slot_id):
+    """Update a booking slot (toggle availability)"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+
+        slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
+        if not slot:
+            return jsonify({'success': False, 'error': 'Slot not found'}), 404
+
+        data = request.get_json()
+
+        if 'is_available' in data:
+            slot.is_available = data['is_available']
+
+        slot.updated_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Slot updated',
+            'slot': {
+                'id': slot.id,
+                'is_available': slot.is_available,
+                'is_booked': slot.is_booked
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/booking-slots/<int:slot_id>', methods=['DELETE'])
+@require_staff()
+def api_delete_booking_slot(slot_id):
+    """Delete a booking slot (only if not booked)"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+
+        slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
+        if not slot:
+            return jsonify({'success': False, 'error': 'Slot not found'}), 404
+
+        if slot.is_booked:
+            return jsonify({'success': False, 'error': 'Cannot delete booked slot'}), 400
+
+        db.delete(slot)
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Slot deleted'})
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/bookings', methods=['GET'])
+@require_staff()
+def api_get_bookings():
+    """Get all bookings (staff view)"""
+    db = get_db()
+    try:
+        from database import Booking, BookingSlot, Client
+
+        status_filter = request.args.get('status')
+
+        query = db.query(Booking).join(BookingSlot)
+
+        if status_filter:
+            query = query.filter(Booking.status == status_filter)
+
+        bookings = query.order_by(BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc()).all()
+
+        result = []
+        for booking in bookings:
+            client = db.query(Client).filter(Client.id == booking.client_id).first()
+            result.append({
+                'id': booking.id,
+                'slot': {
+                    'id': booking.slot.id,
+                    'date': booking.slot.slot_date.isoformat(),
+                    'time': booking.slot.slot_time.strftime('%H:%M'),
+                    'duration': booking.slot.duration_minutes
+                },
+                'client': {
+                    'id': client.id if client else None,
+                    'name': client.name if client else 'Unknown',
+                    'email': client.email if client else '',
+                    'phone': client.phone or client.mobile if client else ''
+                },
+                'booking_type': booking.booking_type,
+                'notes': booking.notes,
+                'status': booking.status,
+                'booked_at': booking.booked_at.isoformat() if booking.booked_at else None,
+                'confirmation_sent': booking.confirmation_sent
+            })
+
+        return jsonify({'success': True, 'bookings': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/bookings/<int:booking_id>/status', methods=['PUT'])
+@require_staff()
+def api_update_booking_status(booking_id):
+    """Update booking status (complete, no_show, etc.)"""
+    db = get_db()
+    try:
+        from database import Booking
+
+        booking = db.query(Booking).filter(Booking.id == booking_id).first()
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+
+        data = request.get_json()
+        new_status = data.get('status')
+
+        if new_status not in ['confirmed', 'cancelled', 'completed', 'no_show']:
+            return jsonify({'success': False, 'error': 'Invalid status'}), 400
+
+        booking.status = new_status
+
+        if new_status == 'completed':
+            booking.completed_at = datetime.utcnow()
+        elif new_status == 'cancelled':
+            booking.cancelled_at = datetime.utcnow()
+            # Free up the slot
+            booking.slot.is_booked = False
+
+        booking.updated_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Booking marked as {new_status}',
+            'status': new_status
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# Portal Booking Endpoints (for clients)
+
+@app.route('/api/portal/booking-slots', methods=['GET'])
+def api_portal_get_available_slots():
+    """Get available booking slots for clients to book"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+        from datetime import date, timedelta
+
+        # Only show slots in the next 14 days
+        start_date = date.today()
+        end_date = start_date + timedelta(days=14)
+
+        slots = db.query(BookingSlot).filter(
+            BookingSlot.slot_date >= start_date,
+            BookingSlot.slot_date <= end_date,
+            BookingSlot.is_available == True,
+            BookingSlot.is_booked == False
+        ).order_by(BookingSlot.slot_date, BookingSlot.slot_time).all()
+
+        # Group by date for easier UI display
+        slots_by_date = {}
+        for slot in slots:
+            date_str = slot.slot_date.isoformat()
+            if date_str not in slots_by_date:
+                slots_by_date[date_str] = {
+                    'date': date_str,
+                    'day_name': slot.slot_date.strftime('%A'),
+                    'slots': []
+                }
+            slots_by_date[date_str]['slots'].append({
+                'id': slot.id,
+                'time': slot.slot_time.strftime('%H:%M'),
+                'time_display': slot.slot_time.strftime('%I:%M %p'),
+                'duration': slot.duration_minutes
+            })
+
+        return jsonify({
+            'success': True,
+            'dates': list(slots_by_date.values())
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/bookings', methods=['POST'])
+def api_portal_create_booking():
+    """Create a booking (client books a slot)"""
+    db = get_db()
+    try:
+        from database import BookingSlot, Booking, Client
+        from services.email_service import send_email
+
+        # Get client from session
+        client_id = session.get('portal_client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in to book'}), 401
+
+        data = request.get_json()
+        slot_id = data.get('slot_id')
+        notes = data.get('notes', '').strip()
+
+        if not slot_id:
+            return jsonify({'success': False, 'error': 'Please select a time slot'}), 400
+
+        # Check slot is available
+        slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
+        if not slot:
+            return jsonify({'success': False, 'error': 'Time slot not found'}), 404
+
+        if not slot.is_available or slot.is_booked:
+            return jsonify({'success': False, 'error': 'This time slot is no longer available'}), 400
+
+        # Create booking
+        booking = Booking(
+            slot_id=slot_id,
+            client_id=client_id,
+            booking_type='qa_call',
+            notes=notes,
+            status='confirmed',
+            booked_at=datetime.utcnow()
+        )
+        db.add(booking)
+
+        # Mark slot as booked
+        slot.is_booked = True
+
+        db.commit()
+        db.refresh(booking)
+
+        # Get client info for confirmation email
+        client = db.query(Client).filter(Client.id == client_id).first()
+
+        # Send confirmation email
+        if client and client.email:
+            try:
+                html_content = f"""
+                <h2>Booking Confirmed!</h2>
+                <p>Hi {client.name},</p>
+                <p>Your Q&A call has been scheduled:</p>
+                <ul>
+                    <li><strong>Date:</strong> {slot.slot_date.strftime('%A, %B %d, %Y')}</li>
+                    <li><strong>Time:</strong> {slot.slot_time.strftime('%I:%M %p')}</li>
+                    <li><strong>Duration:</strong> 15 minutes</li>
+                </ul>
+                <p>We'll call you at the phone number on file. Please have any questions ready!</p>
+                <p>If you need to reschedule, please log into your portal.</p>
+                <p>Thank you,<br>Brightpath Ascend Team</p>
+                """
+                result = send_email(
+                    to_email=client.email,
+                    subject="Q&A Call Confirmed - Brightpath Ascend",
+                    html_content=html_content
+                )
+                if result.get('success'):
+                    booking.confirmation_sent = True
+                    booking.confirmation_sent_at = datetime.utcnow()
+                    db.commit()
+            except Exception as e:
+                print(f"Failed to send confirmation email: {e}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Your Q&A call has been scheduled!',
+            'booking': {
+                'id': booking.id,
+                'date': slot.slot_date.isoformat(),
+                'time': slot.slot_time.strftime('%I:%M %p'),
+                'duration': slot.duration_minutes
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/bookings', methods=['GET'])
+def api_portal_get_my_bookings():
+    """Get client's own bookings"""
+    db = get_db()
+    try:
+        from database import Booking, BookingSlot
+
+        client_id = session.get('portal_client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        bookings = db.query(Booking).join(BookingSlot).filter(
+            Booking.client_id == client_id,
+            Booking.status.in_(['confirmed', 'completed'])
+        ).order_by(BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc()).all()
+
+        result = []
+        for booking in bookings:
+            result.append({
+                'id': booking.id,
+                'date': booking.slot.slot_date.isoformat(),
+                'date_display': booking.slot.slot_date.strftime('%A, %B %d, %Y'),
+                'time': booking.slot.slot_time.strftime('%I:%M %p'),
+                'duration': booking.slot.duration_minutes,
+                'status': booking.status,
+                'notes': booking.notes
+            })
+
+        return jsonify({'success': True, 'bookings': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/bookings/<int:booking_id>', methods=['DELETE'])
+def api_portal_cancel_booking(booking_id):
+    """Cancel a booking (client cancels their own booking)"""
+    db = get_db()
+    try:
+        from database import Booking
+
+        client_id = session.get('portal_client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        booking = db.query(Booking).filter(
+            Booking.id == booking_id,
+            Booking.client_id == client_id
+        ).first()
+
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+
+        if booking.status != 'confirmed':
+            return jsonify({'success': False, 'error': 'Cannot cancel this booking'}), 400
+
+        # Cancel booking and free up slot
+        booking.status = 'cancelled'
+        booking.cancelled_at = datetime.utcnow()
+        booking.slot.is_booked = False
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Booking cancelled successfully'
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================
+# CLIENT PORTAL MESSAGING (LIVE SUPPORT)
+# =============================================================
+
+
+@app.route('/api/portal/messages', methods=['GET'])
+def api_portal_get_messages():
+    """Get all messages for the current client"""
+    db = get_db()
+    try:
+        from database import ClientMessage, Staff
+
+        client_id = session.get('portal_client_id') or session.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        messages = db.query(ClientMessage).filter(
+            ClientMessage.client_id == client_id
+        ).order_by(ClientMessage.created_at.asc()).all()
+
+        # Mark unread staff messages as read
+        for msg in messages:
+            if msg.sender_type == 'staff' and not msg.is_read:
+                msg.is_read = True
+                msg.read_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'messages': [{
+                'id': m.id,
+                'message': m.message,
+                'sender_type': m.sender_type,
+                'is_read': m.is_read,
+                'created_at': m.created_at.isoformat() if m.created_at else None,
+                'staff_name': (db.query(Staff).get(m.staff_id).full_name if m.staff_id else None)
+            } for m in messages]
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/messages', methods=['POST'])
+def api_portal_send_message():
+    """Send a message from the client"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        client_id = session.get('portal_client_id') or session.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        data = request.get_json() or {}
+        message_text = data.get('message', '').strip()
+
+        if not message_text:
+            return jsonify({'success': False, 'error': 'Message is required'}), 400
+
+        if len(message_text) > 5000:
+            return jsonify({'success': False, 'error': 'Message too long (max 5000 characters)'}), 400
+
+        message = ClientMessage(
+            client_id=client_id,
+            message=message_text,
+            sender_type='client',
+            is_read=False
+        )
+        db.add(message)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'message': message.message,
+                'sender_type': message.sender_type,
+                'created_at': message.created_at.isoformat() if message.created_at else None
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/messages/unread-count', methods=['GET'])
+def api_portal_unread_count():
+    """Get count of unread messages for the client"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        client_id = session.get('portal_client_id') or session.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        count = db.query(ClientMessage).filter(
+            ClientMessage.client_id == client_id,
+            ClientMessage.sender_type == 'staff',
+            ClientMessage.is_read == False
+        ).count()
+
+        return jsonify({'success': True, 'unread_count': count})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================
+# STAFF MESSAGING ENDPOINTS
+# =============================================================
+
+
+@app.route('/api/messages/clients', methods=['GET'])
+@require_staff()
+def api_get_messaging_clients():
+    """Get all clients with messages (for staff view)"""
+    db = get_db()
+    try:
+        from database import ClientMessage, Client
+
+        # Get distinct clients with messages
+        subq = db.query(ClientMessage.client_id).distinct()
+        clients_with_messages = db.query(Client).filter(
+            Client.id.in_(subq)
+        ).all()
+
+        result = []
+        for client in clients_with_messages:
+            # Get latest message and unread count
+            latest = db.query(ClientMessage).filter(
+                ClientMessage.client_id == client.id
+            ).order_by(ClientMessage.created_at.desc()).first()
+
+            unread = db.query(ClientMessage).filter(
+                ClientMessage.client_id == client.id,
+                ClientMessage.sender_type == 'client',
+                ClientMessage.is_read == False
+            ).count()
+
+            result.append({
+                'client_id': client.id,
+                'client_name': client.name,
+                'client_email': client.email,
+                'latest_message': latest.message[:100] if latest else None,
+                'latest_at': latest.created_at.isoformat() if latest and latest.created_at else None,
+                'unread_count': unread
+            })
+
+        # Sort by latest message, unread first
+        result.sort(key=lambda x: (-(x['unread_count'] or 0), x['latest_at'] or ''), reverse=False)
+
+        return jsonify({'success': True, 'clients': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/messages/client/<int:client_id>', methods=['GET'])
+@require_staff()
+def api_get_client_messages(client_id):
+    """Get all messages for a specific client"""
+    db = get_db()
+    try:
+        from database import ClientMessage, Staff
+
+        messages = db.query(ClientMessage).filter(
+            ClientMessage.client_id == client_id
+        ).order_by(ClientMessage.created_at.asc()).all()
+
+        # Mark unread client messages as read
+        for msg in messages:
+            if msg.sender_type == 'client' and not msg.is_read:
+                msg.is_read = True
+                msg.read_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'messages': [{
+                'id': m.id,
+                'message': m.message,
+                'sender_type': m.sender_type,
+                'is_read': m.is_read,
+                'created_at': m.created_at.isoformat() if m.created_at else None,
+                'staff_name': (db.query(Staff).get(m.staff_id).full_name if m.staff_id else None)
+            } for m in messages]
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/messages/client/<int:client_id>', methods=['POST'])
+@require_staff()
+def api_send_client_message(client_id):
+    """Send a message to a client (from staff)"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        staff_id = session.get('staff_id')
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+        data = request.get_json() or {}
+        message_text = data.get('message', '').strip()
+
+        if not message_text:
+            return jsonify({'success': False, 'error': 'Message is required'}), 400
+
+        message = ClientMessage(
+            client_id=client_id,
+            staff_id=staff_id,
+            message=message_text,
+            sender_type='staff',
+            is_read=False
+        )
+        db.add(message)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'message': message.message,
+                'sender_type': message.sender_type,
+                'created_at': message.created_at.isoformat() if message.created_at else None
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/messages/unread-total', methods=['GET'])
+@require_staff()
+def api_get_total_unread():
+    """Get total unread messages from all clients"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        count = db.query(ClientMessage).filter(
+            ClientMessage.sender_type == 'client',
+            ClientMessage.is_read == False
+        ).count()
+
+        return jsonify({'success': True, 'unread_count': count})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
 

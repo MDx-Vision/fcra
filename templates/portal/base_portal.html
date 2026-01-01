@@ -57,8 +57,11 @@
         <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
             <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
         </a>
-        <a href="{{ url_for('portal.learn') }}" class="nav-tab {% if active_tab == 'learn' %}active{% endif %}" data-testid="nav-learn">
-            <span class="nav-icon" aria-hidden="true">📖</span><span class="nav-label">Learn</span>
+        <a href="{{ url_for('portal.messages') }}" class="nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="nav-messages">
+            <span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Messages</span>
+        </a>
+        <a href="{{ url_for('portal.booking') }}" class="nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="nav-booking">
+            <span class="nav-icon" aria-hidden="true">📞</span><span class="nav-label">Book Call</span>
         </a>
         <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="nav-profile">
             <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
@@ -83,10 +86,13 @@
             <span>📊</span><span>Case</span>
         </a>
         <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="mobile-nav-documents">
-            <span>📁</span><span>Documents</span>
+            <span>📁</span><span>Docs</span>
         </a>
-        <a href="{{ url_for('portal.learn') }}" class="mobile-nav-tab {% if active_tab == 'learn' %}active{% endif %}" data-testid="mobile-nav-learn">
-            <span>📖</span><span>Learn</span>
+        <a href="{{ url_for('portal.messages') }}" class="mobile-nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="mobile-nav-messages">
+            <span>💬</span><span>Chat</span>
+        </a>
+        <a href="{{ url_for('portal.booking') }}" class="mobile-nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="mobile-nav-booking">
+            <span>📞</span><span>Book</span>
         </a>
         <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>

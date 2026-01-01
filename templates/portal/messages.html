@@ -1,0 +1,160 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'messages' %}
+{% block title %}Messages{% endblock %}
+{% block content %}
+
+<!-- Hero Section -->
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 32px 24px; margin-bottom: 24px; border: none;" data-testid="messages-hero">
+    <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; margin: 0 0 8px 0;">Live Support</h2>
+    <p style="font-size: 14px; opacity: 0.8; margin: 0;">Chat with our team - we typically respond within 24 hours</p>
+</div>
+
+<!-- Chat Container -->
+<div class="card animate-fade-in-up" style="display: flex; flex-direction: column; height: calc(100vh - 350px); min-height: 400px;" data-testid="chat-container">
+    <!-- Messages List -->
+    <div id="messages-list" style="flex: 1; overflow-y: auto; padding: 24px;" data-testid="messages-list">
+        <div style="text-align: center; padding: 48px; color: #6b7280;">
+            Loading messages...
+        </div>
+    </div>
+
+    <!-- Message Input -->
+    <div style="border-top: 1px solid #e5e7eb; padding: 16px 24px;" data-testid="message-input">
+        <form id="message-form" style="display: flex; gap: 12px;">
+            <textarea id="message-text" placeholder="Type your message..." rows="2"
+                style="flex: 1; border: 1px solid #d1d5db; border-radius: 12px; padding: 12px 16px; font-size: 14px; resize: none; font-family: inherit;"
+                onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"></textarea>
+            <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; align-self: flex-end;">
+                Send
+            </button>
+        </form>
+        <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">Press Enter to send, Shift+Enter for new line</p>
+    </div>
+</div>
+
+<!-- Helpful Info -->
+<div style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;" class="stats-grid-responsive" data-testid="support-info">
+    <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 8px;">24h</div>
+        <div style="font-size: 13px; color: #0f766e; font-weight: 500;">Response Time</div>
+    </div>
+    <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 8px;">M-F</div>
+        <div style="font-size: 13px; color: #0f766e; font-weight: 500;">9am - 5pm EST</div>
+    </div>
+    <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 8px;">100%</div>
+        <div style="font-size: 13px; color: #0f766e; font-weight: 500;">Secure & Private</div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let pollInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadMessages();
+
+    // Poll for new messages every 30 seconds
+    pollInterval = setInterval(loadMessages, 30000);
+
+    // Form submit handler
+    document.getElementById('message-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendMessage();
+    });
+});
+
+function loadMessages() {
+    fetch('/api/portal/messages')
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('messages-list');
+            const messages = data.messages || [];
+
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 48px; color: #6b7280;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">Start a Conversation</div>
+                        <p style="font-size: 14px;">Send us a message and we'll respond as soon as possible.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map(m => {
+                const isClient = m.sender_type === 'client';
+                const date = new Date(m.created_at);
+                const timeStr = date.toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+
+                return `
+                    <div style="display: flex; justify-content: ${isClient ? 'flex-end' : 'flex-start'}; margin-bottom: 16px;" data-testid="message-bubble">
+                        <div style="max-width: 70%; padding: 12px 16px; border-radius: 16px; background: ${isClient ? 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)' : '#f3f4f6'}; color: ${isClient ? 'white' : '#1e3a5f'};">
+                            ${!isClient && m.staff_name ? `<div style="font-size: 11px; font-weight: 600; opacity: 0.8; margin-bottom: 4px;">Brightpath Team</div>` : ''}
+                            <div style="font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(m.message)}</div>
+                            <div style="font-size: 11px; opacity: 0.7; margin-top: 6px; text-align: ${isClient ? 'right' : 'left'};">${timeStr}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        })
+        .catch(err => {
+            console.error('Error loading messages:', err);
+        });
+}
+
+function sendMessage() {
+    const textarea = document.getElementById('message-text');
+    const message = textarea.value.trim();
+
+    if (!message) return;
+
+    // Disable input while sending
+    textarea.disabled = true;
+
+    fetch('/api/portal/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
+    })
+    .then(r => r.json())
+    .then(data => {
+        textarea.disabled = false;
+        if (data.success) {
+            textarea.value = '';
+            loadMessages();
+        } else {
+            alert(data.error || 'Error sending message');
+        }
+    })
+    .catch(err => {
+        textarea.disabled = false;
+        console.error('Error sending message:', err);
+        alert('Error sending message. Please try again.');
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Cleanup on page leave
+window.addEventListener('beforeunload', function() {
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+});
+</script>
+{% endblock %}

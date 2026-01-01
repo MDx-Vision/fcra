@@ -526,6 +526,31 @@ def status():
             try:
                 secondary_bureaus = db.query(SecondaryBureauFreeze).filter_by(client_id=client.id).all()
 
+                # Auto-create secondary bureau records if they don't exist
+                if not secondary_bureaus:
+                    default_bureaus = [
+                        "Innovis",
+                        "ChexSystems",
+                        "Clarity Services Inc",
+                        "LexisNexis",
+                        "CoreLogic Teletrack",
+                        "Factor Trust Inc",
+                        "MicroBilt / PRBC",
+                        "LexisNexis Risk Solutions",
+                        "DataX Ltd",
+                    ]
+                    for bureau_name in default_bureaus:
+                        freeze = SecondaryBureauFreeze(
+                            client_id=client.id,
+                            bureau_name=bureau_name,
+                            status="PENDING",
+                            freeze_requested_at=datetime.now()
+                        )
+                        db.add(freeze)
+                    db.commit()
+                    # Re-query after creation
+                    secondary_bureaus = db.query(SecondaryBureauFreeze).filter_by(client_id=client.id).all()
+
                 # Check which bureaus have uploaded confirmations
                 uploads = db.query(ClientUpload).filter_by(
                     client_id=client.id,
@@ -537,12 +562,33 @@ def status():
             except:
                 pass
 
+        # Calculate expected dates for pending bureaus
+        today = datetime.now()
+        response_days = 30  # Expected response time in days
+
+        # Find earliest pending request date and calculate expected date
+        earliest_pending = None
+        overdue_bureaus = []
+        for b in secondary_bureaus:
+            if b.status and b.status.upper() == 'PENDING' and b.freeze_requested_at:
+                expected_date = b.freeze_requested_at + timedelta(days=response_days)
+                if not earliest_pending or b.freeze_requested_at < earliest_pending:
+                    earliest_pending = b.freeze_requested_at
+                if today > expected_date:
+                    overdue_bureaus.append(b.bureau_name)
+
+        expected_by_date = (earliest_pending + timedelta(days=response_days)).strftime('%B %d, %Y') if earliest_pending else None
+
         return render_template('portal/status.html',
             current_user=current_user,
             client=client,
             accounts=accounts,
             secondary_bureaus=secondary_bureaus,
-            bureau_uploads=bureau_uploads
+            bureau_uploads=bureau_uploads,
+            today=today,
+            response_days=response_days,
+            expected_by_date=expected_by_date,
+            overdue_bureaus=overdue_bureaus
         )
     finally:
         db.close()
@@ -681,3 +727,23 @@ def download_freeze_confirmation(bureau_id):
             return redirect(url_for('portal.status'))
     finally:
         db.close()
+
+@portal.route('/booking')
+@portal_login_required
+def booking():
+    """Q&A Call booking page"""
+    current_user = get_current_user()
+    if not current_user:
+        return redirect(url_for('portal_login'))
+
+    return render_template('portal/booking.html', current_user=current_user)
+
+@portal.route('/messages')
+@portal_login_required
+def messages():
+    """Live support messaging page"""
+    current_user = get_current_user()
+    if not current_user:
+        return redirect(url_for('portal_login'))
+
+    return render_template('portal/messages.html', current_user=current_user)

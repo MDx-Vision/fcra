@@ -103,53 +103,91 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
-## Priority 3: Post-Analysis Q&A Booking
+## ~~Priority 3: Post-Analysis Q&A Booking + Live Messaging~~ ✅ COMPLETE
 
-### Overview
-After first analysis is complete, clients can book a 15-minute Q&A call if they have questions.
+**Completed: 2025-12-31**
 
-### Flow
-1. Client receives first analysis
-2. Reviews results in portal
-3. Has questions? → Book 15-min call
-4. Pick available time slot
-5. Confirmation email sent to both parties
+### What Was Implemented
 
-### Features
-- 15-minute slots only
-- Staff sets available times
-- Client picks from open slots
-- Email confirmation (Gmail)
-- Simple, no Google Calendar sync needed
+1. **Database Models** (`database.py`):
+   - [x] `BookingSlot` - Available time slots (date, time, duration, staff_id)
+   - [x] `Booking` - Client bookings (slot_id, client_id, status, notes)
+   - [x] `ClientMessage` - Live support messages (client_id, staff_id, message, sender_type)
+   - [x] Created migration entries for all 3 tables
 
-### Implementation Steps
+2. **Booking System**:
+   - [x] Staff API: `/api/booking-slots` (GET/POST), `/api/booking-slots/<id>` (PUT/DELETE)
+   - [x] Staff API: `/api/bookings` (GET), `/api/bookings/<id>/status` (PUT)
+   - [x] Portal API: `/api/portal/booking-slots` (GET), `/api/portal/bookings` (GET/POST/DELETE)
+   - [x] Bulk slot creation with date range, time range, and days of week
+   - [x] Confirmation email sent on booking
 
-1. [ ] Create `BookingSlot` model (date, time, duration=15, is_booked, client_id)
-2. [ ] Create staff UI to set available slots (bulk create: "Mon-Fri 2pm-5pm")
-3. [ ] Add "Book Q&A Call" button to portal after analysis complete
-4. [ ] Create booking page showing open 15-min slots
-5. [ ] Send confirmation email to client + staff on booking
-6. [ ] Add booking to client's case notes automatically
+3. **Portal Booking UI** (`templates/portal/booking.html`):
+   - [x] Hero section with booking CTA
+   - [x] "Your Scheduled Calls" section showing upcoming bookings
+   - [x] Available time slots grid with date filter (7/14/30 days)
+   - [x] Booking confirmation modal with notes field
+   - [x] Cancel booking with confirmation modal
+
+4. **Staff Booking Management** (`templates/booking_management.html`):
+   - [x] Stats: Total slots, Available, Booked, Today's calls
+   - [x] Tabs: Bookings list + Time slots list
+   - [x] Quick create for single slot
+   - [x] Bulk slot creation modal (date range, days of week, time range)
+   - [x] Booking details modal with complete/cancel actions
+
+5. **Live Support Messaging**:
+   - [x] Portal API: `/api/portal/messages` (GET/POST), `/api/portal/messages/unread-count`
+   - [x] Staff API: `/api/messages/clients`, `/api/messages/client/<id>` (GET/POST)
+   - [x] Staff API: `/api/messages/unread-total`
+   - [x] Portal messaging page (`templates/portal/messages.html`) with chat UI
+   - [x] Staff messaging page (`templates/messaging.html`) with inbox + chat
+
+6. **Navigation Updates**:
+   - [x] Portal: Added "Messages" and "Book Call" tabs
+   - [x] Staff Sidebar: Added "Bookings" and "Messages" links
+
+### Files Modified/Created
+- `database.py` - Added BookingSlot, Booking, ClientMessage models
+- `app.py` - Added ~400 lines of booking + messaging API endpoints
+- `routes/portal.py` - Added booking and messages routes
+- `templates/portal/booking.html` - Client booking page (new)
+- `templates/portal/messages.html` - Client messaging page (new)
+- `templates/portal/base_portal.html` - Updated navigation
+- `templates/booking_management.html` - Staff booking page (new)
+- `templates/messaging.html` - Staff messaging page (new)
+- `templates/includes/dashboard_sidebar.html` - Added sidebar links
 
 ---
 
-## Priority 4: Simple Report Upload Flow
+## ~~Priority 4: Simple Report Upload Flow~~ ✅ COMPLETE
 
-### Overview
-Let leads upload credit reports without filling out full form.
+**Completed: 2026-01-01**
 
-### Concept
-- Minimal form: Name, Email, Upload file
-- Auto-extract info from report if possible
-- Convert to lead, follow up later
+### What Was Implemented
 
-### Implementation Steps
+1. **Simple Upload Page** (`/upload-report`):
+   - [x] Minimal form: Name, Email, File upload
+   - [x] Drag & drop file upload with visual feedback
+   - [x] PDF, JPG, PNG support (up to 25MB)
+   - [x] Mobile-responsive design
+   - [x] Success state with CTA to complete profile
 
-1. [ ] Create simple upload page (`/upload-report`)
-2. [ ] Accept PDF/image uploads
-3. [ ] Store as lead with `dispute_status='report_uploaded'`
-4. [ ] Send confirmation email
-5. [ ] Staff notification for new uploads
+2. **API Endpoint** (`/api/leads/upload-report`):
+   - [x] Creates client with `dispute_status='report_uploaded'`
+   - [x] Saves file to `static/client_uploads/{client_id}/reports/`
+   - [x] Creates ClientUpload record
+   - [x] Sends confirmation email
+   - [x] Triggers `document_uploaded` workflow event
+
+3. **Features**:
+   - [x] Trust badges (Bank-Level Security, FCRA Compliant, No Credit Check)
+   - [x] Link to full signup form for more details
+   - [x] Error handling with user-friendly messages
+
+### Files Created/Modified
+- `templates/upload_report.html` - Simple upload page (new)
+- `app.py` - Added `/upload-report` route and `/api/leads/upload-report` endpoint
 
 ---
 
@@ -160,6 +198,14 @@ Let leads upload credit reports without filling out full form.
 - [x] Portal Logo Fix
 - [x] Client Portal Document Upload Enhancements
 - [x] Secondary Bureau Freeze Status UI
+- [x] **Secondary Bureau Freeze UI Overhaul** (2026-01-01)
+  - "What to Watch For in Your Mail" priority action card
+  - Progress bar (X/9 complete)
+  - Smart grouping: Pending first, Frozen collapsed
+  - Auto-create bureau records on status page load
+  - **Expected response dates**: Shows "Expected by: [date]" (30 days)
+  - **Overdue tracking**: Red warning when past 30 days, ⚠️ icons on overdue bureaus
+  - CTA for client to contact staff for follow-up help
 - [x] **Priority 1: Client Communication Automation** (2025-12-31)
   - SMS & email opt-in fields
   - Workflow triggers wired up (dispute_sent, response_received, document_uploaded, status_changed)
@@ -168,6 +214,16 @@ Let leads upload credit reports without filling out full form.
   - Replaced SendGrid with Gmail SMTP
   - Uses `GMAIL_USER` and `GMAIL_APP_PASSWORD` env vars
   - All email functions work with attachments
+- [x] **Priority 3: Q&A Booking + Live Messaging** (2025-12-31)
+  - Client booking portal with available time slots
+  - Staff booking management with bulk slot creation
+  - Live support messaging in portal
+  - Staff messaging inbox for responding to clients
+- [x] **Priority 4: Simple Report Upload Flow** (2026-01-01)
+  - Minimal upload page at `/upload-report`
+  - Name, email, file upload only
+  - Auto-creates lead with `dispute_status='report_uploaded'`
+  - Confirmation email + staff notification
 
 ---
 
@@ -175,5 +231,4 @@ Let leads upload credit reports without filling out full form.
 
 - **Email**: Gmail SMTP (SendGrid removed)
 - **SMS**: Twilio (no alternative), requires client opt-in
-- Booking (Priority 3) can be done independently
-- Priority 1 is the biggest value-add for client experience
+- All 4 priorities complete! Ready for new feature requests.

@@ -1,6 +1,6 @@
 import os
 from typing import Any
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Boolean, Float, ForeignKey, event, JSON, text
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Time, Boolean, Float, ForeignKey, event, JSON, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -3836,6 +3836,94 @@ class TradelineStatus(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class BookingSlot(Base):
+    """Available time slots for Q&A calls - created by staff"""
+    __tablename__ = 'booking_slots'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Slot timing
+    slot_date = Column(Date, nullable=False, index=True)
+    slot_time = Column(Time, nullable=False)  # Start time
+    duration_minutes = Column(Integer, default=15)  # Fixed 15-min slots
+
+    # Availability
+    is_available = Column(Boolean, default=True)  # Staff can disable slots
+    is_booked = Column(Boolean, default=False)
+
+    # Staff who created/owns this slot
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    booking = relationship("Booking", back_populates="slot", uselist=False)
+
+
+class Booking(Base):
+    """Client bookings for Q&A calls"""
+    __tablename__ = 'bookings'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Link to slot and client
+    slot_id = Column(Integer, ForeignKey('booking_slots.id'), nullable=False, unique=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Booking details
+    booking_type = Column(String(50), default='qa_call')  # qa_call, consultation, etc.
+    notes = Column(Text, nullable=True)  # Client's questions/notes
+
+    # Status tracking
+    status = Column(String(20), default='confirmed')  # confirmed, cancelled, completed, no_show
+
+    # Confirmation tracking
+    confirmation_sent = Column(Boolean, default=False)
+    confirmation_sent_at = Column(DateTime, nullable=True)
+    reminder_sent = Column(Boolean, default=False)
+    reminder_sent_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    booked_at = Column(DateTime, default=datetime.utcnow)
+    cancelled_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    slot = relationship("BookingSlot", back_populates="booking")
+    client = relationship("Client", backref="bookings")
+
+
+class ClientMessage(Base):
+    """Messages between clients and staff for live support"""
+    __tablename__ = 'client_messages'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Conversation participants
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True, index=True)  # Null for client messages
+
+    # Message content
+    message = Column(Text, nullable=False)
+    sender_type = Column(String(20), nullable=False)  # 'client' or 'staff'
+
+    # Status tracking
+    is_read = Column(Boolean, default=False)
+    read_at = Column(DateTime, nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="messages")
+    staff = relationship("Staff", backref="client_messages")
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -4520,8 +4608,43 @@ def init_db():
         ("client_document_signatures", "signed_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("client_document_signatures", "signed_document_path", "VARCHAR(500)"),
         ("client_document_signatures", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Booking system for Q&A calls
+        ("booking_slots", "id", "SERIAL PRIMARY KEY"),
+        ("booking_slots", "slot_date", "DATE NOT NULL"),
+        ("booking_slots", "slot_time", "TIME NOT NULL"),
+        ("booking_slots", "duration_minutes", "INTEGER DEFAULT 15"),
+        ("booking_slots", "is_available", "BOOLEAN DEFAULT TRUE"),
+        ("booking_slots", "is_booked", "BOOLEAN DEFAULT FALSE"),
+        ("booking_slots", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("booking_slots", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("booking_slots", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bookings", "id", "SERIAL PRIMARY KEY"),
+        ("bookings", "slot_id", "INTEGER NOT NULL REFERENCES booking_slots(id) UNIQUE"),
+        ("bookings", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("bookings", "booking_type", "VARCHAR(50) DEFAULT 'qa_call'"),
+        ("bookings", "notes", "TEXT"),
+        ("bookings", "status", "VARCHAR(20) DEFAULT 'confirmed'"),
+        ("bookings", "confirmation_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bookings", "confirmation_sent_at", "TIMESTAMP"),
+        ("bookings", "reminder_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bookings", "reminder_sent_at", "TIMESTAMP"),
+        ("bookings", "booked_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bookings", "cancelled_at", "TIMESTAMP"),
+        ("bookings", "completed_at", "TIMESTAMP"),
+        ("bookings", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bookings", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Client Messages (Live Support)
+        ("client_messages", "id", "SERIAL PRIMARY KEY"),
+        ("client_messages", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("client_messages", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("client_messages", "message", "TEXT NOT NULL"),
+        ("client_messages", "sender_type", "VARCHAR(20) NOT NULL"),
+        ("client_messages", "is_read", "BOOLEAN DEFAULT FALSE"),
+        ("client_messages", "read_at", "TIMESTAMP"),
+        ("client_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_messages", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
-    
+
     conn = engine.connect()
     try:
         for table, column, column_type in migrate_columns:
