@@ -503,6 +503,72 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
+### Priority 10: White Label Partner Portal
+
+**Status**: Backlog
+
+**Description**: Create a dedicated portal where white label partners (law firms, credit repair agencies) can log in and manage their own branding, users, and clients.
+
+**Current State**:
+- ✅ `WhiteLabelTenant` model exists with branding fields
+- ✅ `WhiteLabelService` for tenant management
+- ✅ Staff admin page for managing tenants
+- ❌ No partner login/authentication
+- ❌ No self-service branding management
+- ❌ No partner dashboard
+
+**Implementation Plan**:
+
+1. **Partner Authentication**:
+   - Add `password_hash`, `last_login` to WhiteLabelTenant or create WhiteLabelUser model
+   - Login/logout routes at `/partner/login`
+   - Session-based auth (similar to affiliate portal)
+
+2. **Partner Dashboard** (`/partner/dashboard`):
+   - Stats: Total clients, Active disputes, Revenue, Team members
+   - Recent activity feed
+   - Quick actions
+
+3. **Branding Management** (`/partner/branding`):
+   - Logo upload (main + favicon)
+   - Color picker (primary, secondary, accent)
+   - Company info (name, address, phone, email)
+   - Custom CSS/JS editor
+   - Live preview
+
+4. **Team Management** (`/partner/team`):
+   - Invite team members
+   - Role management (admin, staff, viewer)
+   - Activity logs
+
+5. **Client Management** (`/partner/clients`):
+   - View their clients only (filtered by tenant_id)
+   - Client status overview
+   - Export functionality
+
+6. **Analytics** (`/partner/analytics`):
+   - Client acquisition over time
+   - Dispute success rates
+   - Revenue tracking
+
+7. **Templates to Create**:
+   - `templates/partner_portal/base.html`
+   - `templates/partner_portal/login.html`
+   - `templates/partner_portal/dashboard.html`
+   - `templates/partner_portal/branding.html`
+   - `templates/partner_portal/team.html`
+   - `templates/partner_portal/clients.html`
+   - `templates/partner_portal/analytics.html`
+   - `templates/partner_portal/settings.html`
+
+**Database Changes**:
+- Add auth fields to WhiteLabelTenant or create WhiteLabelUser model
+- Add `tenant_id` foreign key to Client model (if not exists)
+
+**Estimated Scope**: Medium-Large (similar to Affiliate Portal)
+
+---
+
 ## Notes
 
 - **Email**: Gmail SMTP (SendGrid removed)
