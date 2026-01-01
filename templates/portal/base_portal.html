@@ -57,6 +57,9 @@
         <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="nav-case">
             <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
         </a>
+        <a href="{{ url_for('portal.timeline') }}" class="nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="nav-timeline">
+            <span class="nav-icon" aria-hidden="true">📈</span><span class="nav-label">Journey</span>
+        </a>
         <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
             <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
         </a>

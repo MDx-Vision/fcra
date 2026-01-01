@@ -355,6 +355,12 @@ def upload_document():
                                     "round_number": dispute_round,
                                 },
                             )
+                            # Log timeline event for each bureau response
+                            try:
+                                from services.timeline_service import log_response_received
+                                log_response_received(db, client.id, bureau, doc.id)
+                            except Exception as timeline_error:
+                                print(f"⚠️  Timeline event error (non-fatal): {timeline_error}")
                     except Exception as trigger_error:
                         print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
 
@@ -373,6 +379,13 @@ def upload_document():
                     )
                 except Exception as trigger_error:
                     print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
+
+                # Log timeline event
+                try:
+                    from services.timeline_service import log_document_uploaded
+                    log_document_uploaded(db, client.id, doc_type, doc.id)
+                except Exception as timeline_error:
+                    print(f"⚠️  Timeline event error (non-fatal): {timeline_error}")
 
                 flash('Document uploaded successfully!', 'success')
             else:
@@ -839,5 +852,118 @@ def api_onboarding_next_step():
         service = get_onboarding_service(db)
         next_step = service.get_next_step(get_client_id())
         return jsonify({'success': True, 'next_step': next_step})
+    finally:
+        db.close()
+
+
+# ============================================================================
+# Timeline Routes
+# ============================================================================
+
+@portal.route('/timeline')
+@portal_login_required
+def timeline():
+    """Timeline page showing client journey"""
+    return render_template(
+        'portal/timeline.html',
+        active_tab='timeline',
+        current_user=get_current_user()
+    )
+
+
+@portal.route('/api/timeline', methods=['GET'])
+@portal_login_required
+def api_get_timeline():
+    """Get timeline events for the current client"""
+    from flask import jsonify, request
+    from database import get_db
+    from services.timeline_service import get_timeline_service
+
+    db = get_db()
+    try:
+        service = get_timeline_service(db)
+
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        category = request.args.get('category')
+        milestones_only = request.args.get('milestones_only', 'false').lower() == 'true'
+
+        result = service.get_timeline(
+            client_id=get_client_id(),
+            limit=limit,
+            offset=offset,
+            category=category,
+            milestones_only=milestones_only
+        )
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/timeline/recent', methods=['GET'])
+@portal_login_required
+def api_get_recent_timeline():
+    """Get most recent timeline events"""
+    from flask import jsonify, request
+    from database import get_db
+    from services.timeline_service import get_timeline_service
+
+    db = get_db()
+    try:
+        service = get_timeline_service(db)
+        limit = request.args.get('limit', 5, type=int)
+        events = service.get_recent_events(get_client_id(), limit=limit)
+        return jsonify({'success': True, 'events': events})
+    finally:
+        db.close()
+
+
+@portal.route('/api/timeline/milestones', methods=['GET'])
+@portal_login_required
+def api_get_milestones():
+    """Get milestone events for progress display"""
+    from flask import jsonify
+    from database import get_db
+    from services.timeline_service import get_timeline_service
+
+    db = get_db()
+    try:
+        service = get_timeline_service(db)
+        milestones = service.get_milestones(get_client_id())
+        return jsonify({'success': True, 'milestones': milestones})
+    finally:
+        db.close()
+
+
+@portal.route('/api/timeline/progress', methods=['GET'])
+@portal_login_required
+def api_get_timeline_progress():
+    """Get progress summary for the client journey"""
+    from flask import jsonify
+    from database import get_db
+    from services.timeline_service import get_timeline_service
+
+    db = get_db()
+    try:
+        service = get_timeline_service(db)
+        progress = service.get_progress_summary(get_client_id())
+        return jsonify(progress)
+    finally:
+        db.close()
+
+
+@portal.route('/api/timeline/backfill', methods=['POST'])
+@portal_login_required
+def api_backfill_timeline():
+    """Backfill timeline events from existing client data"""
+    from flask import jsonify
+    from database import get_db
+    from services.timeline_service import get_timeline_service
+
+    db = get_db()
+    try:
+        service = get_timeline_service(db)
+        result = service.backfill_events(get_client_id())
+        return jsonify(result)
     finally:
         db.close()

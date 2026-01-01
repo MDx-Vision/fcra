@@ -569,6 +569,77 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
+### Priority 11: CROA Document Signing Workflow
+
+**Status**: Backlog
+
+**Description**: Integrate the full 7-document CROA signing workflow into the client portal onboarding process with proper sequential signing and compliance tracking.
+
+**Current State**:
+- ✅ 7 CROA HTML documents exist in `/docs/htm/`
+- ✅ `DocumentTemplate` model with CROA fields
+- ✅ `ESignatureRequest` model for signature tracking
+- ✅ `esignature_service.py` with token-based signing
+- ❌ Onboarding has single "agreement" checkbox (not full CROA flow)
+- ❌ No sequential document signing in portal
+- ❌ No cancellation period tracking
+- ❌ Documents not loaded into database yet
+
+**CROA Compliance Requirements**:
+1. Rights Disclosure MUST be signed BEFORE any contract
+2. Client has 3 business days to cancel after signing contract
+3. No services can begin until cancellation period expires
+4. All documents must be signed in order
+
+**Implementation Plan**:
+
+1. **Load Documents to Database**:
+   - Run `load_croa_documents.py` to populate DocumentTemplate table
+   - Verify all 7 documents load correctly
+
+2. **Update Onboarding Wizard**:
+   - Replace single "agreement" step with CROA document flow
+   - Show each document in sequence with scroll-to-bottom before sign
+   - Signature capture pad for each document
+   - Track `signed_at` timestamp for each document
+
+3. **CROA Progress Tracking** (new model or extend OnboardingProgress):
+   - `rights_disclosure_signed_at`
+   - `lpoa_signed_at`
+   - `service_agreement_signed_at`
+   - `cancellation_notice_signed_at`
+   - `cancellation_period_ends_at` (3 business days after contract)
+   - `service_completion_signed_at`
+   - `hipaa_signed_at` (optional)
+   - `welcome_packet_signed_at`
+
+4. **Cancellation Period Workflow**:
+   - Show "Cancellation period expires: [date]" in portal
+   - Block service start until cancellation period ends
+   - Client can cancel during period via button
+   - After period ends, show "Service Completion Authorization" step
+
+5. **Portal UI Updates**:
+   - Document viewer with full text display
+   - Signature capture canvas
+   - Progress indicator (1/7, 2/7, etc.)
+   - Download signed documents link
+
+6. **Compliance Features**:
+   - Audit log of all signature events
+   - IP address capture with each signature
+   - Timestamp verification
+   - PDF generation of signed documents
+
+**Database Changes**:
+- Populate `document_templates` table with CROA docs
+- Add CROA progress fields to OnboardingProgress or create CROAProgress model
+- Add `cancellation_period_ends_at` to Client model
+
+**Estimated Scope**: Medium (extend existing e-signature infrastructure)
+
+---
+
 ## Notes
 
 - **Email**: Gmail SMTP (SendGrid removed)

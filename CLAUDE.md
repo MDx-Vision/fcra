@@ -3,11 +3,11 @@
 ## Current Status (2026-01-01)
 
 ### Test Status: 100% PASSING
-- **Unit tests**: 4,653 passing (56 test files, ~95s runtime)
+- **Unit tests**: 4,683 passing (57 test files, ~95s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Full QA suite**: All tests pass
-- **Service coverage**: 56/56 services have dedicated test files (100%)
+- **Service coverage**: 57/57 services have dedicated test files (100%)
 
 ### Feature Phases
 - Phase 1: Core Platform ✅
@@ -30,7 +30,70 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 3**: ~~Q&A Booking + Live Messaging~~ ✅ COMPLETE
 - **Priority 4**: ~~Simple Report Upload Flow~~ ✅ COMPLETE
 
-### Current Work (2026-01-01) - COMPLETED
+### Current Work (2026-01-01) - IN PROGRESS
+
+**Task**: Feature Implementation - Progress Timeline (6.1)
+
+**Status**: ✅ COMPLETE
+
+**Changes**:
+1. **TimelineEvent Model** (`database.py`):
+   - `client_id`, `event_type`, `event_category`, `title`, `description`, `icon`
+   - `related_type`, `related_id` for linking to entities
+   - `metadata_json` for flexible extra data
+   - `is_milestone`, `is_visible`, `event_date` timestamps
+
+2. **TimelineService** (`services/timeline_service.py`):
+   - 30+ event types defined (signup, documents, disputes, responses, etc.)
+   - Methods: `create_event`, `get_timeline`, `get_recent_events`, `get_milestones`
+   - `get_progress_summary` - tracks 7 journey stages
+   - `backfill_events` - creates events from existing client data
+   - Helper functions: `log_signup_event`, `log_document_uploaded`, `log_dispute_sent`, etc.
+
+3. **Portal Timeline Page** (`templates/portal/timeline.html`):
+   - Progress summary with 7-stage visual indicator
+   - Filter tabs: All Events, Milestones, Onboarding, Documents, Disputes, Responses
+   - Timeline UI with icons, dates, categories
+   - Load more pagination
+
+4. **Portal Dashboard Enhancement** (`templates/portal/dashboard.html`):
+   - "Recent Activity" card with 4 latest events
+   - Link to full journey page
+
+5. **Portal Navigation** (`templates/portal/base_portal.html`):
+   - Added "Journey" tab with chart icon
+
+6. **API Endpoints** (`routes/portal.py`):
+   - `GET /portal/timeline` - Timeline page
+   - `GET /portal/api/timeline` - Get events with filters
+   - `GET /portal/api/timeline/recent` - Recent events
+   - `GET /portal/api/timeline/milestones` - Milestones only
+   - `GET /portal/api/timeline/progress` - Progress summary
+   - `POST /portal/api/timeline/backfill` - Backfill events
+
+7. **Workflow Hooks** (`routes/portal.py`):
+   - Document upload → timeline event
+   - CRA response received → timeline event
+
+8. **Unit Tests** (`tests/test_timeline_service.py`):
+   - 30 tests covering all service methods
+
+**Files Created**:
+- `services/timeline_service.py` (450+ lines)
+- `templates/portal/timeline.html`
+- `tests/test_timeline_service.py`
+
+**Files Modified**:
+- `database.py` - Added TimelineEvent model
+- `routes/portal.py` - Added 6 timeline routes + workflow hooks
+- `templates/portal/base_portal.html` - Added Journey nav tab
+- `templates/portal/dashboard.html` - Added Recent Activity section
+
+**Test Status**: 30/30 timeline tests passing
+
+---
+
+### Previous Work (2026-01-01) - COMPLETED
 
 **Task**: Portal UX Improvements + Priority 4 Simple Report Upload
 

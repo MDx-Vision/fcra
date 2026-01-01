@@ -1,7 +1,9 @@
+2026-01-01 18:02:50 | INFO     | app                  | Starting FCRA Litigation Platform...
 ✅ Anthropic API client initialized
-Traceback (most recent call last):
-  File "/Users/rafaelrodriguez/fcra/app.py", line 34, in <module>
-    from database import init_db, get_db, Client, CreditReport, Analysis, DisputeLetter, Violation, Standing, Damages, CaseScore, Case, CaseEvent, Document, Notification, Settlement, AnalysisQueue, CRAResponse, DisputeItem, SecondaryBureauFreeze, ClientReferral, SignupDraft, Task, ClientNote, ClientDocument, SignupSettings, ClientUpload, SMSLog, EmailLog, EmailTemplate, CreditScoreSnapshot, CreditScoreProjection, CaseDeadline, Staff, STAFF_ROLES, check_staff_permission, Furnisher, FurnisherStats, CFPBComplaint, Affiliate, Commission, CaseTriage, CaseLawCitation, EscalationRecommendation, NotarizeTransaction, CreditPullRequest, WhiteLabelTenant, TenantUser, TenantClient, SUBSCRIPTION_TIERS, FranchiseOrganization, OrganizationMembership, OrganizationClient, InterOrgTransfer, FRANCHISE_ORG_TYPES, FRANCHISE_MEMBER_ROLES, WhiteLabelConfig, FONT_FAMILIES, LetterQueue, KnowledgeContent, Metro2Code, SOP, ChexSystemsDispute, FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger, SuspenseAccountFinding, ViolationPattern, PatternInstance, SpecialtyBureauDispute, SPECIALTY_BUREAUS, SPECIALTY_DISPUTE_TYPES, SPECIALTY_LETTER_TYPES, SPECIALTY_RESPONSE_OUTCOMES, CreditMonitoringCredential, CREDIT_MONITORING_SERVICES, LetterBatch, TradelineStatus, AutomationMetrics
-  File "/Users/rafaelrodriguez/fcra/database.py", line 9, in <module>
-    raise ValueError("DATABASE_URL environment variable is not set")
-ValueError: DATABASE_URL environment variable is not set
+2026-01-01 18:02:53 | INFO     | app                  | Sentry not configured (set SENTRY_DSN to enable)
+2026-01-01 18:02:53 | INFO     | app                  | Request logging middleware initialized
+2026-01-01 18:02:53 | INFO     | app                  | Flask app initialized
+2026-01-01 18:02:53 | INFO     | app                  | Rate limiting initialized
+2026-01-01 18:02:53 | INFO     | app                  | Security headers initialized
+✅ Portal blueprint registered
+2026-01-01 18:02:53 | INFO     | app                  | Swagger API documentation initialized at /api/docs/

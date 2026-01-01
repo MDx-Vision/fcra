@@ -1027,6 +1027,34 @@ class ClientUpload(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class TimelineEvent(Base):
+    """Track client journey events for visual timeline display"""
+    __tablename__ = 'timeline_events'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Event details
+    event_type = Column(String(50), nullable=False, index=True)  # signup, document_uploaded, analysis_complete, dispute_sent, response_received, etc.
+    event_category = Column(String(50), default='general')  # onboarding, documents, disputes, responses, status
+    title = Column(String(200), nullable=False)  # Human-readable title
+    description = Column(Text)  # Optional detailed description
+    icon = Column(String(50))  # Font Awesome icon class
+
+    # Related entities
+    related_type = Column(String(50))  # dispute_letter, client_upload, analysis, cra_response, etc.
+    related_id = Column(Integer)  # ID of the related entity
+
+    # Metadata
+    metadata_json = Column(JSON)  # Extra event data (bureau, round, etc.)
+    is_milestone = Column(Boolean, default=False)  # Major events shown prominently
+    is_visible = Column(Boolean, default=True)  # Can hide system events
+
+    # Timestamps
+    event_date = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class SignupSettings(Base):
     """Store configurable signup settings as key-value pairs"""
     __tablename__ = 'signup_settings'
