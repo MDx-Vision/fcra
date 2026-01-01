@@ -335,17 +335,18 @@ class TestSendSms:
         assert "Invalid phone number format" in result["error"]
 
     def test_send_sms_no_twilio_phone_configured(self, mock_twilio_client):
-        """Test SMS fails when no Twilio phone number is configured."""
+        """Test SMS fails when no Twilio phone number or Messaging Service is configured."""
         with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
             with patch("services.sms_service.get_twilio_phone_number", return_value=None):
-                result = send_sms(
-                    to_number="5551234567",
-                    message="Test message"
-                )
+                with patch("services.sms_service.get_messaging_service_sid", return_value=None):
+                    result = send_sms(
+                        to_number="5551234567",
+                        message="Test message"
+                    )
 
-                assert result["success"] is False
-                assert result["message_sid"] is None
-                assert "No Twilio phone number configured" in result["error"]
+                    assert result["success"] is False
+                    assert result["message_sid"] is None
+                    assert "No Twilio phone number or Messaging Service configured" in result["error"]
 
     def test_send_sms_with_custom_from_number(self, mock_twilio_client):
         """Test SMS with custom from number."""
@@ -363,6 +364,23 @@ class TestSendSms:
                 from_="+15557654321",
                 to="+15559876543"
             )
+
+    def test_send_sms_with_messaging_service(self, mock_twilio_client):
+        """Test SMS with Messaging Service SID (A2P 10DLC compliance)."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch("services.sms_service.get_messaging_service_sid", return_value="MG1234567890abcdef"):
+                result = send_sms(
+                    to_number="5559876543",
+                    message="Test message via Messaging Service"
+                )
+
+                assert result["success"] is True
+                assert "MessagingService:MG1234567890abcdef" in result["from"]
+                mock_twilio_client.messages.create.assert_called_once_with(
+                    body="Test message via Messaging Service",
+                    messaging_service_sid="MG1234567890abcdef",
+                    to="+15559876543"
+                )
 
     def test_send_sms_twilio_exception(self, mock_twilio_client):
         """Test SMS handling of Twilio API errors."""

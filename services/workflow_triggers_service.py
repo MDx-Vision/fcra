@@ -365,6 +365,122 @@ DEFAULT_TRIGGERS = [
         ],
         "priority": 10,
     },
+    # Secondary Bureau Freeze Deadline Triggers
+    {
+        "name": "Secondary Bureau Response Due Soon",
+        "description": "Notifies client when secondary bureau freeze response should arrive soon (25 days)",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "secondary_bureau_due_soon"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "bureau_response_soon",
+                    "subject": "Your {bureau_name} Freeze Response Should Arrive Soon!",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "bureau_response_soon",
+                    "message": "Good news! Your {bureau_name} freeze confirmation should arrive in the mail within the next 5 days. Watch your mailbox!",
+                },
+            },
+        ],
+        "priority": 6,
+    },
+    {
+        "name": "Secondary Bureau Response Overdue",
+        "description": "Alerts client and staff when secondary bureau hasn't responded after 30+ days",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "secondary_bureau_overdue"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "bureau_response_overdue",
+                    "subject": "Action Needed: {bureau_name} Response Overdue",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "bureau_response_overdue",
+                    "message": "Your {bureau_name} freeze response is overdue ({days_overdue} days). Please contact us for assistance - we can help follow up.",
+                },
+            },
+            {
+                "type": "add_note",
+                "params": {
+                    "note_text": "{bureau_name} freeze response overdue by {days_overdue} days - follow-up needed",
+                    "note_type": "deadline",
+                },
+            },
+        ],
+        "priority": 8,
+    },
+    # CRA Response Deadline Triggers
+    {
+        "name": "CRA Response Due Soon",
+        "description": "Notifies client when CRA dispute response should arrive soon",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "cra_response_due_soon"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "cra_response_soon",
+                    "subject": "Watch Your Mail: Dispute Response Expected Soon",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "cra_response_soon",
+                    "message": "Watch your mailbox! Your credit bureau dispute response should arrive within {days_remaining} days.",
+                },
+            },
+        ],
+        "priority": 6,
+    },
+    {
+        "name": "CRA Response Overdue",
+        "description": "Escalates when CRA hasn't responded to dispute within required timeframe",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "cra_response_overdue"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "cra_response_overdue",
+                    "subject": "IMPORTANT: Credit Bureau Response Overdue - We're Taking Action",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "cra_response_overdue",
+                    "message": "The credit bureau is {days_overdue} days overdue on your dispute. This may be an FCRA violation - we're following up!",
+                },
+            },
+            {
+                "type": "create_task",
+                "params": {
+                    "task_type": "escalate_cra_overdue",
+                    "payload": {"client_id": "{client_id}"},
+                    "priority": 2,
+                },
+            },
+            {
+                "type": "add_note",
+                "params": {
+                    "note_text": "CRA response overdue by {days_overdue} days - potential FCRA violation, escalation task created",
+                    "note_type": "violation",
+                },
+            },
+        ],
+        "priority": 9,
+    },
 ]
 
 
@@ -375,6 +491,10 @@ def install_automation_triggers(db):
         "Analyze Response and Progress Round",
         "No Response After 35 Days",
         "Reinsertion Detected",
+        "Secondary Bureau Response Due Soon",
+        "Secondary Bureau Response Overdue",
+        "CRA Response Due Soon",
+        "CRA Response Overdue",
     ]
 
     created_count = 0

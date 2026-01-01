@@ -227,8 +227,49 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
+## Priority 5: Deadline Approaching Scheduler ✅ COMPLETE
+
+**Completed: 2026-01-01**
+
+### What Was Implemented
+
+1. **Deadline Checker Service** (`services/deadline_checker_service.py`):
+   - [x] `check_all_deadlines()` - Main entry point for scheduled job
+   - [x] `check_secondary_bureau_deadlines()` - Check freeze responses
+   - [x] `check_cra_response_deadlines()` - Check dispute responses
+   - [x] `check_sol_deadlines()` - Check statute of limitations
+   - [x] `get_deadline_summary()` - Per-client deadline summary
+
+2. **Scheduled Job** (daily at 8 AM):
+   - [x] Added to `scheduler_service.py` BUILT_IN_SCHEDULES
+   - [x] Task type: `check_deadlines`
+
+3. **Workflow Triggers Added**:
+   - [x] "Secondary Bureau Response Due Soon" (25 days)
+   - [x] "Secondary Bureau Response Overdue" (31+ days)
+   - [x] "CRA Response Due Soon" (5 days before deadline)
+   - [x] "CRA Response Overdue" (5+ days past deadline)
+
+4. **Notifications**:
+   - [x] Email notifications for all deadline types
+   - [x] SMS notifications (opt-in required)
+   - [x] Case notes for overdue items
+   - [x] Escalation tasks for violations
+
+### Files Created/Modified
+- `services/deadline_checker_service.py` (NEW) - Main service
+- `services/scheduler_service.py` - Added scheduled job
+- `services/workflow_triggers_service.py` - Added 4 new triggers
+- `tests/test_deadline_checker_service.py` (NEW) - 22 tests
+
+### Test Status
+- 22/22 deadline checker tests passing
+
+---
+
 ## Notes
 
 - **Email**: Gmail SMTP (SendGrid removed)
-- **SMS**: Twilio (no alternative), requires client opt-in
-- All 4 priorities complete! Ready for new feature requests.
+- **SMS**: Twilio (A2P campaign pending carrier approval)
+- All 5 priorities complete!
+- See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap

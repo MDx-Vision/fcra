@@ -191,6 +191,11 @@ class Config:
         """Twilio phone number for sending SMS."""
         return os.environ.get("TWILIO_PHONE_NUMBER", "")
 
+    @property
+    def TWILIO_MESSAGING_SERVICE_SID(self) -> str:
+        """Twilio Messaging Service SID for A2P 10DLC compliance."""
+        return os.environ.get("TWILIO_MESSAGING_SERVICE_SID", "")
+
     # =========================================================================
     # PAYMENTS (STRIPE)
     # =========================================================================

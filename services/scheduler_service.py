@@ -188,6 +188,13 @@ class SchedulerService:
             },
             "cron_expression": "0 9 * * *",
         },
+        # Deadline Approaching Notifications - Checks all deadline types and sends notifications
+        {
+            "name": "Check All Approaching Deadlines",
+            "task_type": "check_deadlines",
+            "payload": {},
+            "cron_expression": "0 8 * * *",  # Daily at 8 AM
+        },
     ]
 
     @staticmethod

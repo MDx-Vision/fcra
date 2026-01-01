@@ -13,11 +13,12 @@ _twilio_client = None
 def get_twilio_credentials():
     """
     Get Twilio credentials from environment variables.
-    Returns dict with account_sid, auth_token, phone_number.
+    Returns dict with account_sid, auth_token, phone_number, messaging_service_sid.
     """
     account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
     auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
     phone_number = os.environ.get("TWILIO_PHONE_NUMBER")
+    messaging_service_sid = os.environ.get("TWILIO_MESSAGING_SERVICE_SID")
 
     if not account_sid or not auth_token:
         raise ValueError(
@@ -28,6 +29,7 @@ def get_twilio_credentials():
         "account_sid": account_sid,
         "auth_token": auth_token,
         "phone_number": phone_number,
+        "messaging_service_sid": messaging_service_sid,
     }
 
 
@@ -48,6 +50,11 @@ def get_twilio_client():
 def get_twilio_phone_number():
     """Get the configured Twilio phone number for sending SMS."""
     return os.environ.get("TWILIO_PHONE_NUMBER")
+
+
+def get_messaging_service_sid():
+    """Get the configured Twilio Messaging Service SID for A2P 10DLC compliance."""
+    return os.environ.get("TWILIO_MESSAGING_SERVICE_SID")
 
 
 def format_phone_number(phone):
@@ -80,6 +87,7 @@ def send_sms(to_number, message, from_number=None):
         to_number: Recipient phone number (any format, will be normalized)
         message: Message body (max 1600 characters for long SMS)
         from_number: Optional sender number (defaults to configured Twilio number)
+                    Ignored if TWILIO_MESSAGING_SERVICE_SID is configured (uses A2P 10DLC)
 
     Returns:
         dict with 'success', 'message_sid', 'error' keys
@@ -95,17 +103,31 @@ def send_sms(to_number, message, from_number=None):
 
         client = get_twilio_client()
 
-        if from_number is None:
-            from_number = get_twilio_phone_number()
+        # Prefer Messaging Service for A2P 10DLC compliance
+        messaging_service_sid = get_messaging_service_sid()
 
-        if not from_number:
-            return {
-                "success": False,
-                "message_sid": None,
-                "error": "No Twilio phone number configured",
-            }
+        if messaging_service_sid:
+            # Use Messaging Service (A2P 10DLC compliant)
+            sms = client.messages.create(
+                body=message,
+                messaging_service_sid=messaging_service_sid,
+                to=formatted_to
+            )
+            sender = f"MessagingService:{messaging_service_sid}"
+        else:
+            # Fall back to direct phone number
+            if from_number is None:
+                from_number = get_twilio_phone_number()
 
-        sms = client.messages.create(body=message, from_=from_number, to=formatted_to)
+            if not from_number:
+                return {
+                    "success": False,
+                    "message_sid": None,
+                    "error": "No Twilio phone number or Messaging Service configured",
+                }
+
+            sms = client.messages.create(body=message, from_=from_number, to=formatted_to)
+            sender = from_number
 
         return {
             "success": True,
@@ -113,7 +135,7 @@ def send_sms(to_number, message, from_number=None):
             "error": None,
             "status": sms.status,
             "to": formatted_to,
-            "from": from_number,
+            "from": sender,
         }
 
     except Exception as e:
