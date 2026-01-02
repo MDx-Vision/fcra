@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Free Credit Analysis - Brightpath Ascend</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #f8fafc;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #22c55e;
+            margin-bottom: 8px;
+        }
+
+        .greeting {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .greeting span {
+            color: #22c55e;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 16px;
+        }
+
+        /* Main Card */
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 32px;
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .card-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-header p {
+            color: #94a3b8;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-number.negative {
+            color: #ef4444;
+        }
+
+        .stat-number.violations {
+            color: #f59e0b;
+        }
+
+        .stat-number.value {
+            color: #22c55e;
+            font-size: 28px;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Violations Found */
+        .violations-section {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .violations-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .violations-icon {
+            font-size: 24px;
+        }
+
+        .violations-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f59e0b;
+        }
+
+        .violation-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .violation-tag {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* Value Section */
+        .value-section {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.1) 100%);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .value-label {
+            color: #86efac;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .value-amount {
+            font-size: 48px;
+            font-weight: 700;
+            color: #22c55e;
+            margin-bottom: 8px;
+        }
+
+        .value-note {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Blurred Teaser */
+        .blurred-section {
+            position: relative;
+            margin-bottom: 32px;
+        }
+
+        .blurred-content {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 32px;
+            filter: blur(6px);
+            user-select: none;
+        }
+
+        .blurred-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 16px;
+        }
+
+        .lock-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .unlock-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .unlock-price {
+            color: #22c55e;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        /* CTA Buttons */
+        .cta-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .btn-primary {
+            display: block;
+            width: 100%;
+            padding: 18px 32px;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-secondary {
+            display: block;
+            width: 100%;
+            padding: 18px 32px;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 16px;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        /* Trust Badges */
+        .trust-section {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 40px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .trust-icon {
+            font-size: 18px;
+        }
+
+        /* Already Paid State */
+        .full-analysis-unlocked {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border: 2px solid rgba(34, 197, 94, 0.5);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .unlocked-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #22c55e;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-number {
+                font-size: 36px;
+            }
+
+            .value-amount {
+                font-size: 36px;
+            }
+
+            .trust-section {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .analysis-card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Brightpath Ascend</div>
+            <h1 class="greeting">Hi, <span>{{ client_name }}</span>!</h1>
+            <p class="subtitle">Here's what we found in your credit report</p>
+        </div>
+
+        <div class="analysis-card">
+            <div class="card-header">
+                <h2>Your Free Analysis Results</h2>
+                <p>Based on {{ teaser.bureaus_analyzed }} bureau analyzed</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-number negative">{{ teaser.negative_items }}</div>
+                    <div class="stat-label">Negative Items Found</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number violations">{{ teaser.potential_violations }}</div>
+                    <div class="stat-label">Potential Violations</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number value">${{ "{:,}".format(teaser.min_value) }} - ${{ "{:,}".format(teaser.max_value) }}</div>
+                    <div class="stat-label">Estimated Case Value</div>
+                </div>
+            </div>
+
+            <!-- Violations Found -->
+            <div class="violations-section">
+                <div class="violations-header">
+                    <span class="violations-icon">⚠️</span>
+                    <span class="violations-title">Potential FCRA Violations Detected</span>
+                </div>
+                <div class="violation-tags">
+                    {% for violation in teaser.violation_types %}
+                    <span class="violation-tag">{{ violation }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Estimated Value -->
+            <div class="value-section">
+                <div class="value-label">Your Case Could Be Worth</div>
+                <div class="value-amount">${{ "{:,}".format(teaser.min_value) }} - ${{ "{:,}".format(teaser.max_value) }}</div>
+                <div class="value-note">Based on similar cases and FCRA statutory damages</div>
+            </div>
+
+            {% if not analysis_paid %}
+            <!-- Blurred Full Report Teaser -->
+            <div class="blurred-section">
+                <div class="blurred-content">
+                    <h3>Full Item-by-Item Breakdown</h3>
+                    <p>Account: CAPITAL ONE - Late Payment 2022</p>
+                    <p>Account: DISCOVER - Collection $2,450</p>
+                    <p>Account: MEDICAL COLLECTION - $890</p>
+                    <p>Priority: HIGH - Remove First</p>
+                    <p>Strategy: FCRA 623 Dispute Method</p>
+                </div>
+                <div class="blurred-overlay">
+                    <div class="lock-icon">🔒</div>
+                    <div class="unlock-text">Unlock Full Analysis</div>
+                    <div class="unlock-price">$199</div>
+                </div>
+            </div>
+
+            <!-- CTA Buttons -->
+            <div class="cta-section">
+                <a href="/analysis/{{ token }}/purchase" class="btn-primary">
+                    Get Full Analysis - $199
+                </a>
+                <a href="https://calendly.com/brightpathascend/consultation" target="_blank" class="btn-secondary">
+                    Book Free Consultation First
+                </a>
+            </div>
+
+            {% else %}
+            <!-- Already Paid - Show Proceed Button -->
+            <div class="full-analysis-unlocked">
+                <div class="unlocked-badge">
+                    <span>✓</span> Full Analysis Unlocked
+                </div>
+                <p style="color: #94a3b8; margin-bottom: 16px;">
+                    Your full analysis is ready. Proceed to view your complete breakdown and start your credit repair journey.
+                </p>
+            </div>
+
+            <div class="cta-section">
+                <a href="/portal/onboarding?from=analysis" class="btn-primary">
+                    View Full Analysis & Start Program
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="trust-section">
+            <div class="trust-badge">
+                <span class="trust-icon">🔒</span>
+                Bank-Level Security
+            </div>
+            <div class="trust-badge">
+                <span class="trust-icon">⚖️</span>
+                FCRA Compliant
+            </div>
+            <div class="trust-badge">
+                <span class="trust-icon">⭐</span>
+                5-Star Rated
+            </div>
+        </div>
+
+        <!-- Credit Applied Notice (for paid users) -->
+        {% if analysis_paid %}
+        <div style="text-align: center; margin-top: 32px; padding: 16px; background: rgba(34, 197, 94, 0.1); border-radius: 12px;">
+            <p style="color: #22c55e; font-weight: 500;">
+                ✓ Your $199 analysis fee will be credited toward your first round of disputes!
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Track page view
+        console.log('Free analysis page viewed');
+    </script>
+</body>
+</html>

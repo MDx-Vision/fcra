@@ -216,6 +216,26 @@ class Client(Base):
     assigned_to = Column(Integer, ForeignKey('staff.id'), nullable=True)  # Assigned staff member
     employer_company = Column(String(255))  # Employer/company name for client
 
+    # Client Journey Stage Tracking
+    # Stages: lead, analysis_paid, onboarding, pending_payment, active, payment_failed, cancelled
+    client_stage = Column(String(30), default='lead', index=True)
+
+    # Free/Paid Analysis Tracking
+    free_analysis_token = Column(String(64), unique=True, index=True)  # Token for /analysis/<token> page
+    analysis_payment_id = Column(String(100))  # Stripe PaymentIntent ID for $199 analysis
+    analysis_paid_at = Column(DateTime)  # When they paid for full analysis
+    analysis_credit_applied = Column(Boolean, default=False)  # True when $199 credited to Round 1
+
+    # Round Payment Tracking
+    round_1_amount_due = Column(Integer)  # Amount due for Round 1 in cents (49700 - 19900 = 29800)
+    current_round_payment_id = Column(String(100))  # Stripe PaymentIntent for current round
+    last_round_paid_at = Column(DateTime)  # When the last round was paid
+    total_paid = Column(Integer, default=0)  # Total amount paid in cents
+
+    # Prepay Package Tracking
+    prepay_package = Column(String(50))  # starter, standard, complete, unlimited
+    prepay_rounds_remaining = Column(Integer)  # Rounds remaining if prepaid
+
     organization_id = Column(Integer, nullable=True, index=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)

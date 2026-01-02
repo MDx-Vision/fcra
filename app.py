@@ -33237,6 +33237,14 @@ def api_leads_capture():
             if ssn_last_four and len(ssn_last_four) == 4 and ssn_last_four.isdigit():
                 client.ssn_last_four = ssn_last_four
 
+        # Generate free analysis token if not exists
+        if not client.free_analysis_token:
+            client.free_analysis_token = secrets.token_urlsafe(32)
+
+        # Set client stage
+        if not client.client_stage or client.client_stage == 'lead':
+            client.client_stage = 'lead'
+
         db.commit()
         db.refresh(client)
 
@@ -33256,21 +33264,6 @@ def api_leads_capture():
                     'total_accounts': '--'
                 }
 
-                # TODO: Integrate with actual credit pull service
-                # result = credit_import_service.import_from_service(
-                #     service=monitoring_service,
-                #     username=monitoring_username,
-                #     password=monitoring_password,
-                #     client_id=client.id
-                # )
-                # if result.get('success'):
-                #     preview_data = {
-                #         'bureau': result.get('bureau', 'TransUnion'),
-                #         'score': result.get('score', '---'),
-                #         'negative_items': result.get('negative_items', '--'),
-                #         'total_accounts': result.get('total_accounts', '--')
-                #     }
-
             except Exception as e:
                 print(f"Credit import error: {e}")
                 # Continue without preview data
@@ -33279,6 +33272,8 @@ def api_leads_capture():
             "success": True,
             "message": "Thank you! We've received your information.",
             "client_id": client.id,
+            "analysis_token": client.free_analysis_token,
+            "analysis_url": f"/analysis/{client.free_analysis_token}",
             "preview": preview_data
         })
 
@@ -33428,6 +33423,209 @@ def api_leads_upload_report():
             "success": False,
             "error": "An error occurred. Please try again."
         }), 500
+    finally:
+        db.close()
+
+
+# =============================================================================
+# FREE ANALYSIS FLOW - Teaser → Purchase → Full Analysis
+# =============================================================================
+
+@app.route("/analysis/<token>")
+def view_free_analysis(token):
+    """View the free teaser analysis page (no login required)"""
+    from services.free_analysis_service import get_free_analysis_service
+
+    db = get_db()
+    try:
+        service = get_free_analysis_service(db)
+        result = service.get_teaser_analysis(token)
+
+        if not result.get('success'):
+            return render_template(
+                "error.html",
+                error="Analysis not found",
+                message="This analysis link is invalid or has expired."
+            ), 404
+
+        return render_template(
+            "free_analysis.html",
+            token=token,
+            client_name=result.get('client_name', 'there'),
+            client_stage=result.get('client_stage', 'lead'),
+            analysis_paid=result.get('analysis_paid', False),
+            teaser=result.get('teaser', {})
+        )
+    finally:
+        db.close()
+
+
+@app.route("/analysis/<token>/purchase", methods=["GET", "POST"])
+def purchase_full_analysis(token):
+    """Purchase the full $199 analysis"""
+    db = get_db()
+    try:
+        # Find client by token
+        client = db.query(Client).filter(
+            Client.free_analysis_token == token
+        ).first()
+
+        if not client:
+            return render_template(
+                "error.html",
+                error="Analysis not found",
+                message="This analysis link is invalid or has expired."
+            ), 404
+
+        # Check if already paid
+        if client.client_stage in ['analysis_paid', 'onboarding', 'pending_payment', 'active']:
+            return redirect(f"/analysis/{token}")
+
+        if request.method == "GET":
+            # Show payment page
+            return render_template(
+                "analysis_purchase.html",
+                token=token,
+                client_name=client.first_name or client.name.split()[0],
+                price=199,
+                stripe_publishable_key=getattr(config, 'STRIPE_PUBLISHABLE_KEY', '')
+            )
+
+        # POST - Process payment
+        from services.stripe_client import stripe_client
+
+        try:
+            # Create Stripe payment intent for $199
+            payment_intent = stripe_client.create_payment_intent(
+                amount=19900,  # $199 in cents
+                customer_email=client.email,
+                metadata={
+                    'client_id': client.id,
+                    'type': 'full_analysis',
+                    'token': token
+                }
+            )
+
+            return jsonify({
+                "success": True,
+                "client_secret": payment_intent.client_secret
+            })
+
+        except Exception as e:
+            print(f"Stripe error: {e}")
+            return jsonify({
+                "success": False,
+                "error": "Payment processing failed. Please try again."
+            }), 500
+
+    finally:
+        db.close()
+
+
+@app.route("/api/analysis/confirm-payment", methods=["POST"])
+def confirm_analysis_payment():
+    """Confirm payment and unlock full analysis"""
+    from services.free_analysis_service import get_free_analysis_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        token = data.get('token')
+        payment_intent_id = data.get('payment_intent_id')
+
+        if not token or not payment_intent_id:
+            return jsonify({
+                "success": False,
+                "error": "Missing payment information"
+            }), 400
+
+        # Find client
+        client = db.query(Client).filter(
+            Client.free_analysis_token == token
+        ).first()
+
+        if not client:
+            return jsonify({
+                "success": False,
+                "error": "Client not found"
+            }), 404
+
+        # Mark analysis as paid
+        service = get_free_analysis_service(db)
+        result = service.mark_analysis_paid(client.id, payment_intent_id)
+
+        if result.get('success'):
+            return jsonify({
+                "success": True,
+                "message": "Payment confirmed! Your full analysis is now available.",
+                "redirect_url": f"/analysis/{token}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Failed to confirm payment')
+            }), 500
+
+    except Exception as e:
+        print(f"Payment confirmation error: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An error occurred confirming payment"
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route("/analysis/<token>/proceed", methods=["POST"])
+def proceed_to_program(token):
+    """Move from analysis_paid to onboarding (ready to start program)"""
+    from services.free_analysis_service import get_free_analysis_service
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(
+            Client.free_analysis_token == token
+        ).first()
+
+        if not client:
+            return jsonify({
+                "success": False,
+                "error": "Client not found"
+            }), 404
+
+        if client.client_stage != 'analysis_paid':
+            return jsonify({
+                "success": False,
+                "error": "Please purchase the full analysis first"
+            }), 400
+
+        service = get_free_analysis_service(db)
+        result = service.proceed_to_onboarding(client.id)
+
+        if result.get('success'):
+            # Generate portal password reset link if no password set
+            if not client.portal_password_hash:
+                client.password_reset_token = secrets.token_urlsafe(32)
+                client.password_reset_expires = datetime.utcnow() + timedelta(days=7)
+                db.commit()
+
+                return jsonify({
+                    "success": True,
+                    "message": "Welcome to the program!",
+                    "redirect_url": f"/portal/login?token={client.password_reset_token}"
+                })
+
+            return jsonify({
+                "success": True,
+                "message": "Welcome to the program!",
+                "redirect_url": "/portal/onboarding"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Failed to proceed')
+            }), 500
+
     finally:
         db.close()
 
