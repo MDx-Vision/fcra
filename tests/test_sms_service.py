@@ -20,6 +20,14 @@ from services.sms_service import (
     send_bulk_sms,
     get_sms_status,
     is_twilio_configured,
+    # WhatsApp functions
+    get_whatsapp_number,
+    format_whatsapp_number,
+    send_whatsapp,
+    send_whatsapp_template,
+    send_bulk_whatsapp,
+    is_whatsapp_configured,
+    send_message,
 )
 
 
@@ -891,3 +899,284 @@ class TestEdgeCases:
                 # Should still only create one client
                 mock_twilio.assert_called_once()
                 assert all(c is clients[0] for c in clients)
+
+
+# =============================================================================
+# WhatsApp Tests
+# =============================================================================
+
+
+class TestGetWhatsappNumber:
+    """Tests for get_whatsapp_number function."""
+
+    def test_get_whatsapp_number_configured(self):
+        """Test getting WhatsApp number when configured."""
+        with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+            number = get_whatsapp_number()
+            assert number == "whatsapp:+15551234567"
+
+    def test_get_whatsapp_number_already_prefixed(self):
+        """Test WhatsApp number already has prefix."""
+        with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "whatsapp:+15551234567"}):
+            number = get_whatsapp_number()
+            assert number == "whatsapp:+15551234567"
+
+    def test_get_whatsapp_number_not_configured(self):
+        """Test getting WhatsApp number when not configured."""
+        with patch.dict(os.environ, {}, clear=True):
+            number = get_whatsapp_number()
+            assert number is None
+
+
+class TestFormatWhatsappNumber:
+    """Tests for format_whatsapp_number function."""
+
+    def test_format_whatsapp_number_10_digit(self):
+        """Test 10-digit phone number gets whatsapp prefix."""
+        result = format_whatsapp_number("5551234567")
+        assert result == "whatsapp:+15551234567"
+
+    def test_format_whatsapp_number_with_dashes(self):
+        """Test phone number with dashes."""
+        result = format_whatsapp_number("555-123-4567")
+        assert result == "whatsapp:+15551234567"
+
+    def test_format_whatsapp_number_invalid(self):
+        """Test invalid phone number returns None."""
+        result = format_whatsapp_number("123")
+        assert result is None
+
+    def test_format_whatsapp_number_none(self):
+        """Test None input returns None."""
+        result = format_whatsapp_number(None)
+        assert result is None
+
+
+class TestSendWhatsapp:
+    """Tests for send_whatsapp function."""
+
+    def test_send_whatsapp_success(self, mock_twilio_client):
+        """Test successful WhatsApp message sending."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+                result = send_whatsapp(
+                    to_number="5559876543",
+                    message="Hello via WhatsApp!"
+                )
+
+                assert result["success"] is True
+                assert result["message_sid"] == "SM123456789"
+                assert result["channel"] == "whatsapp"
+                assert result["to"] == "whatsapp:+15559876543"
+                assert result["from"] == "whatsapp:+15551234567"
+
+    def test_send_whatsapp_invalid_number(self):
+        """Test WhatsApp fails with invalid phone number."""
+        result = send_whatsapp(
+            to_number="123",
+            message="Test message"
+        )
+
+        assert result["success"] is False
+        assert "Invalid phone number format" in result["error"]
+
+    def test_send_whatsapp_no_number_configured(self, mock_twilio_client):
+        """Test WhatsApp fails when no WhatsApp number configured."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch("services.sms_service.get_whatsapp_number", return_value=None):
+                result = send_whatsapp(
+                    to_number="5551234567",
+                    message="Test message"
+                )
+
+                assert result["success"] is False
+                assert "No WhatsApp number configured" in result["error"]
+
+    def test_send_whatsapp_with_custom_from(self, mock_twilio_client):
+        """Test WhatsApp with custom from number."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            result = send_whatsapp(
+                to_number="5559876543",
+                message="Test message",
+                from_number="+15557654321"
+            )
+
+            assert result["success"] is True
+            assert result["from"] == "whatsapp:+15557654321"
+
+    def test_send_whatsapp_exception(self, mock_twilio_client):
+        """Test WhatsApp handling of API errors."""
+        mock_twilio_client.messages.create.side_effect = Exception("WhatsApp API Error")
+
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+                result = send_whatsapp(
+                    to_number="5559876543",
+                    message="Test message"
+                )
+
+                assert result["success"] is False
+                assert "WhatsApp API Error" in result["error"]
+
+
+class TestSendWhatsappTemplate:
+    """Tests for send_whatsapp_template function."""
+
+    def test_send_whatsapp_template_success(self, mock_twilio_client):
+        """Test successful WhatsApp template message."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+                result = send_whatsapp_template(
+                    to_number="5559876543",
+                    template_sid="HX1234567890",
+                    template_variables={"name": "John", "date": "2024-01-15"}
+                )
+
+                assert result["success"] is True
+                assert result["template_sid"] == "HX1234567890"
+                assert result["channel"] == "whatsapp"
+
+    def test_send_whatsapp_template_no_variables(self, mock_twilio_client):
+        """Test WhatsApp template without variables."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+                result = send_whatsapp_template(
+                    to_number="5559876543",
+                    template_sid="HX1234567890"
+                )
+
+                assert result["success"] is True
+
+    def test_send_whatsapp_template_invalid_number(self):
+        """Test WhatsApp template fails with invalid number."""
+        result = send_whatsapp_template(
+            to_number="123",
+            template_sid="HX1234567890"
+        )
+
+        assert result["success"] is False
+        assert "Invalid phone number format" in result["error"]
+
+
+class TestSendBulkWhatsapp:
+    """Tests for send_bulk_whatsapp function."""
+
+    def test_send_bulk_whatsapp_all_success(self, mock_twilio_client):
+        """Test bulk WhatsApp with all successful sends."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+                recipients = ["5559876541", "5559876542", "5559876543"]
+
+                result = send_bulk_whatsapp(
+                    recipients=recipients,
+                    message="Bulk WhatsApp test"
+                )
+
+                assert result["total"] == 3
+                assert result["sent"] == 3
+                assert result["failed"] == 0
+                assert result["channel"] == "whatsapp"
+
+    def test_send_bulk_whatsapp_partial_failure(self):
+        """Test bulk WhatsApp with some failures."""
+        call_count = [0]
+
+        def mock_send_whatsapp(phone, message, from_number=None):
+            call_count[0] += 1
+            if call_count[0] == 2:
+                return {"success": False, "message_sid": None, "error": "Invalid"}
+            return {"success": True, "message_sid": f"SM{call_count[0]}", "error": None}
+
+        with patch("services.sms_service.send_whatsapp", side_effect=mock_send_whatsapp):
+            result = send_bulk_whatsapp(
+                recipients=["5559876541", "invalid", "5559876543"],
+                message="Test"
+            )
+
+            assert result["sent"] == 2
+            assert result["failed"] == 1
+
+    def test_send_bulk_whatsapp_empty_recipients(self):
+        """Test bulk WhatsApp with empty recipients."""
+        result = send_bulk_whatsapp(recipients=[], message="Test")
+
+        assert result["total"] == 0
+        assert result["sent"] == 0
+        assert result["channel"] == "whatsapp"
+
+
+class TestIsWhatsappConfigured:
+    """Tests for is_whatsapp_configured function."""
+
+    def test_is_whatsapp_configured_true(self, twilio_env_vars):
+        """Test returns True when all credentials are set."""
+        env_with_whatsapp = {**twilio_env_vars, "TWILIO_WHATSAPP_NUMBER": "+15559999999"}
+        with patch.dict(os.environ, env_with_whatsapp):
+            assert is_whatsapp_configured() is True
+
+    def test_is_whatsapp_configured_false_no_whatsapp_number(self, twilio_env_vars):
+        """Test returns False when WhatsApp number is missing."""
+        with patch.dict(os.environ, twilio_env_vars, clear=True):
+            assert is_whatsapp_configured() is False
+
+    def test_is_whatsapp_configured_false_no_credentials(self):
+        """Test returns False when Twilio credentials missing."""
+        with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15559999999"}, clear=True):
+            assert is_whatsapp_configured() is False
+
+
+class TestSendMessage:
+    """Tests for universal send_message function."""
+
+    def test_send_message_sms(self, mock_twilio_client):
+        """Test send_message routes to SMS."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_PHONE_NUMBER": "+15551234567"}):
+                result = send_message(
+                    to_number="5559876543",
+                    message="Test via SMS",
+                    channel="sms"
+                )
+
+                assert result["success"] is True
+
+    def test_send_message_whatsapp(self, mock_twilio_client):
+        """Test send_message routes to WhatsApp."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+                result = send_message(
+                    to_number="5559876543",
+                    message="Test via WhatsApp",
+                    channel="whatsapp"
+                )
+
+                assert result["success"] is True
+                assert result["channel"] == "whatsapp"
+
+    def test_send_message_whatsapp_template(self, mock_twilio_client):
+        """Test send_message with WhatsApp template."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_WHATSAPP_NUMBER": "+15551234567"}):
+                result = send_message(
+                    to_number="5559876543",
+                    message="",
+                    channel="whatsapp",
+                    template_sid="HX123456",
+                    template_variables={"name": "Test"}
+                )
+
+                assert result["success"] is True
+                assert result["template_sid"] == "HX123456"
+
+    def test_send_message_default_sms(self, mock_twilio_client):
+        """Test send_message defaults to SMS."""
+        with patch("services.sms_service.get_twilio_client", return_value=mock_twilio_client):
+            with patch.dict(os.environ, {"TWILIO_PHONE_NUMBER": "+15551234567"}):
+                result = send_message(
+                    to_number="5559876543",
+                    message="Default channel test"
+                )
+
+                assert result["success"] is True
+                # SMS doesn't include channel in response
+                assert result.get("channel") != "whatsapp"

@@ -33909,9 +33909,9 @@ def api_run_all_jobs():
 # =============================================================================
 
 @app.route("/api/webhooks/stripe", methods=["POST"])
-def stripe_webhook():
+def stripe_webhook_handler():
     """
-    Handle Stripe webhook events.
+    Handle Stripe webhook events for Client Journey workflow.
 
     Events handled:
     - payment_intent.succeeded
