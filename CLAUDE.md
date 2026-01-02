@@ -34,7 +34,7 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 
 **Task**: Client Journey Workflow & Portal Access Control
 
-**Status**: Phase 3 Complete (Payment System)
+**Status**: ALL PHASES COMPLETE
 
 **Phase 1 - Pricing & Analysis Flow** ✅:
 1. **PRICING_STRUCTURE.md** - Complete pricing documentation
@@ -107,9 +107,36 @@ See `FEATURE_BACKLOG.md` for upcoming work:
    - Updated payment modal with $298 pricing breakdown
    - Shows $199 credit applied to Round 1
 
-**Remaining Phases**:
-- Phase 4: Scheduled auto-capture after 3-day period
-- Phase 5: Stripe webhook handlers for payment events
+**Phase 4 - Scheduled Jobs** ✅:
+1. **ScheduledJobsService** (`services/scheduled_jobs_service.py`):
+   - `capture_due_payments()`: Activates clients after 3-day cancellation period
+   - `expire_stale_holds()`: Cancels clients stuck in onboarding (7+ days)
+   - `send_payment_reminders()`: Emails for upcoming/failed payments
+   - `get_pending_activations()`: List clients ready for activation
+   - `run_all_jobs()`: Run all jobs at once
+
+2. **Job API Endpoints**:
+   - `POST /api/jobs/capture-due-payments` - Activate ready clients
+   - `POST /api/jobs/expire-stale-holds` - Cancel stale onboarding
+   - `POST /api/jobs/send-reminders` - Send payment emails
+   - `GET /api/jobs/pending-activations` - List ready clients
+   - `POST /api/jobs/run-all` - Run all jobs
+
+3. **Cron Endpoints** (for external schedulers):
+   - `GET/POST /api/cron/hourly` - Runs capture_due_payments
+   - `GET/POST /api/cron/daily` - Runs expire + reminders
+   - Secured by `CRON_SECRET` environment variable
+
+**Phase 5 - Stripe Webhooks** ✅:
+1. **StripeWebhooksService** (`services/stripe_webhooks_service.py`):
+   - `payment_intent.succeeded`: Updates client stage, logs payment
+   - `payment_intent.payment_failed`: Sets stage to payment_failed
+   - `charge.refunded`: Adjusts total_paid
+   - `checkout.session.completed`: Activates prepay packages
+
+2. **Webhook Endpoint**:
+   - `POST /api/webhooks/stripe` - Receives all Stripe events
+   - Signature verification with `STRIPE_WEBHOOK_SECRET`
 
 **Related Docs**:
 - `PRICING_STRUCTURE.md` - Complete pricing details

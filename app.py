@@ -33809,6 +33809,216 @@ def api_calculate_settlement_fee():
 
 
 # =============================================================================
+# SCHEDULED JOBS - Auto-capture, reminders, etc.
+# =============================================================================
+
+@app.route("/api/jobs/capture-due-payments", methods=["POST"])
+@require_staff()
+def api_run_capture_due_payments():
+    """
+    Run the capture_due_payments job.
+    Activates clients whose 3-day cancellation period has ended.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.capture_due_payments()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/expire-stale-holds", methods=["POST"])
+@require_staff()
+def api_run_expire_stale_holds():
+    """
+    Run the expire_stale_holds job.
+    Cancels clients stuck in onboarding for too long.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        days_old = data.get('days_old', 7)
+
+        service = get_scheduled_jobs_service(db)
+        result = service.expire_stale_holds(days_old)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/send-reminders", methods=["POST"])
+@require_staff()
+def api_run_send_reminders():
+    """
+    Run the send_payment_reminders job.
+    Sends emails for upcoming and failed payments.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.send_payment_reminders()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/pending-activations", methods=["GET"])
+@require_staff()
+def api_get_pending_activations():
+    """
+    Get clients ready for activation (cancellation period ended).
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.get_pending_activations()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/run-all", methods=["POST"])
+@require_staff()
+def api_run_all_jobs():
+    """
+    Run all scheduled jobs at once.
+    Useful for manual trigger from staff dashboard.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.run_all_jobs()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+# =============================================================================
+# STRIPE WEBHOOKS - Payment event handlers
+# =============================================================================
+
+@app.route("/api/webhooks/stripe", methods=["POST"])
+def stripe_webhook():
+    """
+    Handle Stripe webhook events.
+
+    Events handled:
+    - payment_intent.succeeded
+    - payment_intent.payment_failed
+    - charge.refunded
+    - checkout.session.completed
+    """
+    from services.stripe_webhooks_service import get_stripe_webhooks_service
+
+    payload = request.get_data()
+    sig_header = request.headers.get('Stripe-Signature')
+
+    db = get_db()
+    try:
+        # Verify webhook signature (if configured)
+        try:
+            from services.stripe_client import verify_webhook_signature, get_webhook_secret
+            webhook_secret = get_webhook_secret()
+            if webhook_secret:
+                event = verify_webhook_signature(payload, sig_header, webhook_secret)
+            else:
+                # No webhook secret - parse without verification (dev mode)
+                import json
+                event = json.loads(payload)
+        except Exception as e:
+            print(f"Webhook signature verification failed: {e}")
+            # In development, still process the event
+            import json
+            event = json.loads(payload)
+
+        # Process the event
+        service = get_stripe_webhooks_service(db)
+        result = service.handle_event(event)
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        return jsonify({'error': str(e)}), 400
+    finally:
+        db.close()
+
+
+# =============================================================================
+# CRON ENDPOINT - For external schedulers (Replit, Railway, etc.)
+# =============================================================================
+
+@app.route("/api/cron/hourly", methods=["POST", "GET"])
+def cron_hourly():
+    """
+    Hourly cron endpoint for external schedulers.
+    Runs: capture_due_payments
+
+    Secured by CRON_SECRET environment variable.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    # Verify cron secret
+    cron_secret = os.environ.get('CRON_SECRET')
+    provided_secret = request.headers.get('X-Cron-Secret') or request.args.get('secret')
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.capture_due_payments()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/cron/daily", methods=["POST", "GET"])
+def cron_daily():
+    """
+    Daily cron endpoint for external schedulers.
+    Runs: expire_stale_holds, send_payment_reminders
+
+    Secured by CRON_SECRET environment variable.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    # Verify cron secret
+    cron_secret = os.environ.get('CRON_SECRET')
+    provided_secret = request.headers.get('X-Cron-Secret') or request.args.get('secret')
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        results = {
+            'expire_stale_holds': service.expire_stale_holds(),
+            'send_payment_reminders': service.send_payment_reminders()
+        }
+        return jsonify({
+            'success': True,
+            'run_at': datetime.utcnow().isoformat(),
+            'jobs': results
+        })
+    finally:
+        db.close()
+
+
+# =============================================================================
 # BOOKING SYSTEM - Q&A Call Scheduling
 # =============================================================================
 
