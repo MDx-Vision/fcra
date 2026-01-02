@@ -208,6 +208,14 @@ class Client(Base):
     sms_opt_in = Column(Boolean, default=False)  # Client opted in for SMS notifications
     email_opt_in = Column(Boolean, default=True)  # Client opted in for email notifications (default on)
 
+    # WhatsApp preferences
+    whatsapp_opt_in = Column(Boolean, default=False)  # Client opted in for WhatsApp notifications
+    whatsapp_number = Column(String(20))  # WhatsApp number (may differ from phone)
+    whatsapp_verified = Column(Boolean, default=False)  # Number verified via code
+    whatsapp_verified_at = Column(DateTime)  # When verification completed
+    whatsapp_verification_code = Column(String(6))  # Current verification code
+    whatsapp_verification_expires = Column(DateTime)  # Code expiration
+
     # Lead scoring
     lead_score = Column(Integer, default=0)  # 0-100 priority score based on credit report analysis
     lead_score_factors = Column(JSON)  # Breakdown of scoring factors
@@ -1088,7 +1096,7 @@ class SignupSettings(Base):
 class SMSLog(Base):
     """Log all SMS send attempts for tracking and debugging"""
     __tablename__ = 'sms_logs'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
     phone_number = Column(String(20))
@@ -1098,8 +1106,51 @@ class SMSLog(Base):
     twilio_sid = Column(String(50))
     sent_at = Column(DateTime, default=datetime.utcnow)
     error_message = Column(Text, nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class WhatsAppMessage(Base):
+    """Log all WhatsApp messages (inbound and outbound) for document intake and notifications"""
+    __tablename__ = 'whatsapp_messages'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+
+    # Message identifiers
+    twilio_sid = Column(String(50), unique=True, index=True)
+    direction = Column(String(10), nullable=False)  # 'inbound' or 'outbound'
+
+    # Content
+    from_number = Column(String(25))  # whatsapp:+1234567890
+    to_number = Column(String(25))
+    body = Column(Text)
+
+    # Media attachments (for document intake)
+    has_media = Column(Boolean, default=False)
+    media_count = Column(Integer, default=0)
+    media_url = Column(String(500))  # Primary media URL
+    media_type = Column(String(100))  # image/jpeg, application/pdf, etc.
+    media_processed = Column(Boolean, default=False)
+
+    # Linking to uploads (when media is processed)
+    upload_id = Column(Integer, ForeignKey('client_uploads.id'), nullable=True)
+
+    # Template info (for outbound messages)
+    template_sid = Column(String(50))  # Twilio Content Template SID
+    template_name = Column(String(100))  # e.g., 'document_request', 'status_update'
+    template_variables = Column(JSON)  # Variables sent with template
+
+    # Status tracking
+    status = Column(String(20), default='sent')  # sent, delivered, read, failed
+    error_code = Column(String(20))
+    error_message = Column(Text)
+
+    # Metadata
+    profile_name = Column(String(255))  # WhatsApp profile name of sender
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class EmailLog(Base):
@@ -4916,6 +4967,13 @@ def init_db():
         # Communication preferences for automation
         ("clients", "sms_opt_in", "BOOLEAN DEFAULT FALSE"),
         ("clients", "email_opt_in", "BOOLEAN DEFAULT TRUE"),
+        # WhatsApp integration
+        ("clients", "whatsapp_opt_in", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "whatsapp_number", "VARCHAR(20)"),
+        ("clients", "whatsapp_verified", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "whatsapp_verified_at", "TIMESTAMP"),
+        ("clients", "whatsapp_verification_code", "VARCHAR(6)"),
+        ("clients", "whatsapp_verification_expires", "TIMESTAMP"),
         # Lead scoring
         ("clients", "lead_score", "INTEGER DEFAULT 0"),
         ("clients", "lead_score_factors", "JSONB"),
@@ -5074,6 +5132,29 @@ def init_db():
         ("white_label_tenants", "last_login", "TIMESTAMP"),
         ("white_label_tenants", "password_reset_token", "VARCHAR(100) UNIQUE"),
         ("white_label_tenants", "password_reset_expires", "TIMESTAMP"),
+        # WhatsApp message logging for document intake and notifications
+        ("whatsapp_messages", "id", "SERIAL PRIMARY KEY"),
+        ("whatsapp_messages", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("whatsapp_messages", "twilio_sid", "VARCHAR(50) UNIQUE"),
+        ("whatsapp_messages", "direction", "VARCHAR(10) NOT NULL"),
+        ("whatsapp_messages", "from_number", "VARCHAR(25)"),
+        ("whatsapp_messages", "to_number", "VARCHAR(25)"),
+        ("whatsapp_messages", "body", "TEXT"),
+        ("whatsapp_messages", "has_media", "BOOLEAN DEFAULT FALSE"),
+        ("whatsapp_messages", "media_count", "INTEGER DEFAULT 0"),
+        ("whatsapp_messages", "media_url", "VARCHAR(500)"),
+        ("whatsapp_messages", "media_type", "VARCHAR(100)"),
+        ("whatsapp_messages", "media_processed", "BOOLEAN DEFAULT FALSE"),
+        ("whatsapp_messages", "upload_id", "INTEGER REFERENCES client_uploads(id)"),
+        ("whatsapp_messages", "template_sid", "VARCHAR(50)"),
+        ("whatsapp_messages", "template_name", "VARCHAR(100)"),
+        ("whatsapp_messages", "template_variables", "JSONB"),
+        ("whatsapp_messages", "status", "VARCHAR(20) DEFAULT 'sent'"),
+        ("whatsapp_messages", "error_code", "VARCHAR(20)"),
+        ("whatsapp_messages", "error_message", "TEXT"),
+        ("whatsapp_messages", "profile_name", "VARCHAR(255)"),
+        ("whatsapp_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("whatsapp_messages", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

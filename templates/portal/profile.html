@@ -123,6 +123,224 @@
     </div>
 </div>
 
+<!-- WhatsApp Notifications -->
+<div class="card animate-fade-in-up" data-delay="650" style="margin-bottom: 24px;" data-testid="whatsapp-section">
+    <div class="card-title">💬 WhatsApp Notifications</div>
+    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
+        Get case updates and send documents via WhatsApp for faster communication.
+    </p>
+
+    <div id="whatsapp-status" style="margin-bottom: 20px;">
+        <!-- Status will be loaded dynamically -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #9ca3af;" id="whatsapp-status-indicator"></div>
+            <span style="font-size: 14px; color: #6b7280;" id="whatsapp-status-text">Loading...</span>
+        </div>
+    </div>
+
+    <!-- WhatsApp Number Input -->
+    <div id="whatsapp-setup" style="display: none;">
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">WhatsApp Number</label>
+            <div style="display: flex; gap: 12px;">
+                <input type="tel" id="whatsapp-number" placeholder="+1 (555) 123-4567"
+                       value="{{ client.phone|default('') if client else '' }}"
+                       style="flex: 1; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px;">
+                <button type="button" id="send-verification-btn" onclick="requestWhatsAppVerification()"
+                        style="padding: 12px 20px; background: #25D366; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                    Send Code
+                </button>
+            </div>
+            <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">
+                We'll send a verification code to this number via WhatsApp.
+            </p>
+        </div>
+    </div>
+
+    <!-- Verification Code Input -->
+    <div id="whatsapp-verify" style="display: none;">
+        <div style="padding: 16px; background: #fef3c7; border-radius: 8px; margin-bottom: 16px;">
+            <p style="font-size: 14px; color: #92400e; margin: 0;">
+                <strong>Verification code sent!</strong> Check your WhatsApp for a 6-digit code.
+            </p>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Enter Verification Code</label>
+            <div style="display: flex; gap: 12px;">
+                <input type="text" id="verification-code" placeholder="123456" maxlength="6"
+                       style="flex: 1; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 18px; letter-spacing: 4px; text-align: center;">
+                <button type="button" id="verify-btn" onclick="verifyWhatsApp()"
+                        style="padding: 12px 20px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    Verify
+                </button>
+            </div>
+        </div>
+        <button type="button" onclick="showWhatsAppSetup()" style="padding: 8px 16px; background: transparent; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; cursor: pointer;">
+            ← Change Number
+        </button>
+    </div>
+
+    <!-- Verified State -->
+    <div id="whatsapp-verified" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: rgba(13, 148, 136, 0.1); border-radius: 8px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center;">
+                    <span style="color: white; font-size: 20px;">✓</span>
+                </div>
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #0d9488;">WhatsApp Verified</div>
+                    <div style="font-size: 13px; color: #6b7280;" id="verified-number"></div>
+                </div>
+            </div>
+            <button type="button" onclick="optOutWhatsApp()" style="padding: 8px 16px; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                Disable
+            </button>
+        </div>
+        <p style="font-size: 13px; color: #6b7280; margin: 0;">
+            You'll receive case updates and can send us documents via WhatsApp. Send <strong>HELP</strong> anytime for available commands.
+        </p>
+    </div>
+</div>
+
+<script>
+// WhatsApp verification functions
+function loadWhatsAppStatus() {
+    fetch('/api/portal/whatsapp/status')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                updateWhatsAppUI(data);
+            }
+        })
+        .catch(err => {
+            document.getElementById('whatsapp-status-text').textContent = 'Unable to load status';
+        });
+}
+
+function updateWhatsAppUI(data) {
+    const statusIndicator = document.getElementById('whatsapp-status-indicator');
+    const statusText = document.getElementById('whatsapp-status-text');
+    const setupDiv = document.getElementById('whatsapp-setup');
+    const verifyDiv = document.getElementById('whatsapp-verify');
+    const verifiedDiv = document.getElementById('whatsapp-verified');
+    const verifiedNumber = document.getElementById('verified-number');
+
+    if (data.whatsapp_verified && data.whatsapp_opt_in) {
+        // Verified and opted in
+        statusIndicator.style.background = '#25D366';
+        statusText.textContent = 'WhatsApp notifications enabled';
+        setupDiv.style.display = 'none';
+        verifyDiv.style.display = 'none';
+        verifiedDiv.style.display = 'block';
+        verifiedNumber.textContent = data.whatsapp_number || '';
+    } else {
+        // Not verified
+        statusIndicator.style.background = '#9ca3af';
+        statusText.textContent = 'WhatsApp not enabled';
+        setupDiv.style.display = 'block';
+        verifyDiv.style.display = 'none';
+        verifiedDiv.style.display = 'none';
+    }
+}
+
+function showWhatsAppSetup() {
+    document.getElementById('whatsapp-setup').style.display = 'block';
+    document.getElementById('whatsapp-verify').style.display = 'none';
+}
+
+function requestWhatsAppVerification() {
+    const number = document.getElementById('whatsapp-number').value.trim();
+    if (!number) {
+        alert('Please enter your WhatsApp number');
+        return;
+    }
+
+    const btn = document.getElementById('send-verification-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    fetch('/api/portal/whatsapp/request-verification', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({whatsapp_number: number})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('whatsapp-setup').style.display = 'none';
+            document.getElementById('whatsapp-verify').style.display = 'block';
+        } else {
+            alert(data.error || 'Failed to send verification code');
+        }
+    })
+    .catch(err => {
+        alert('Error sending verification code');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Send Code';
+    });
+}
+
+function verifyWhatsApp() {
+    const code = document.getElementById('verification-code').value.trim();
+    if (!code || code.length !== 6) {
+        alert('Please enter the 6-digit verification code');
+        return;
+    }
+
+    const btn = document.getElementById('verify-btn');
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+
+    fetch('/api/portal/whatsapp/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({code: code})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            loadWhatsAppStatus();
+        } else {
+            alert(data.error || 'Invalid verification code');
+        }
+    })
+    .catch(err => {
+        alert('Error verifying code');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Verify';
+    });
+}
+
+function optOutWhatsApp() {
+    if (!confirm('Are you sure you want to disable WhatsApp notifications?')) {
+        return;
+    }
+
+    fetch('/api/portal/whatsapp/opt-out', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            loadWhatsAppStatus();
+        } else {
+            alert(data.error || 'Failed to opt out');
+        }
+    })
+    .catch(err => {
+        alert('Error opting out');
+    });
+}
+
+// Load status on page load
+document.addEventListener('DOMContentLoaded', loadWhatsAppStatus);
+</script>
+
 <!-- Referral -->
 <div class="card animate-fade-in-up" data-delay="700" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; margin-bottom: 24px; border: none;" data-testid="referral-section">
     <div style="text-align: center; margin-bottom: 24px;">

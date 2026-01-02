@@ -34828,6 +34828,335 @@ def api_get_total_unread():
         db.close()
 
 
+# =============================================================================
+# WHATSAPP WEBHOOKS - Twilio WhatsApp message handlers
+# =============================================================================
+
+@app.route("/api/webhooks/whatsapp", methods=["POST"])
+def whatsapp_webhook():
+    """
+    Handle incoming WhatsApp messages from Twilio.
+
+    This endpoint receives:
+    - Inbound messages from clients (text, images, documents)
+    - Status updates for outbound messages
+
+    Features:
+    - Document intake: Clients can send photos of IDs, credit reports, etc.
+    - Keyword commands: STATUS, HELP
+    - Auto-replies within 24hr window
+    """
+    from twilio.request_validator import RequestValidator
+
+    db = get_db()
+    try:
+        # Get Twilio signature for validation
+        signature = request.headers.get('X-Twilio-Signature', '')
+
+        # Validate Twilio signature (if auth token is configured)
+        twilio_auth_token = os.environ.get('TWILIO_AUTH_TOKEN', '')
+        if twilio_auth_token:
+            validator = RequestValidator(twilio_auth_token)
+            # Build the full URL including query params
+            url = request.url
+            params = request.form.to_dict()
+
+            if not validator.validate(url, params, signature):
+                print(f"WhatsApp webhook: Invalid Twilio signature")
+                return "Invalid signature", 403
+
+        # Parse the incoming message data
+        from_number = request.form.get('From', '')  # whatsapp:+1234567890
+        to_number = request.form.get('To', '')
+        body = request.form.get('Body', '')
+        message_sid = request.form.get('MessageSid', '')
+        num_media = int(request.form.get('NumMedia', 0))
+        profile_name = request.form.get('ProfileName', '')
+
+        # Status callback fields (for outbound message updates)
+        message_status = request.form.get('MessageStatus', '')
+        error_code = request.form.get('ErrorCode', '')
+        error_message = request.form.get('ErrorMessage', '')
+
+        # Import the webhook service
+        from services.whatsapp_webhook_service import get_whatsapp_webhook_service
+
+        service = get_whatsapp_webhook_service(db)
+
+        # Handle status callbacks for outbound messages
+        if message_status and not from_number.startswith('whatsapp:'):
+            result = service.handle_status_callback(
+                message_sid=message_sid,
+                status=message_status,
+                error_code=error_code,
+                error_message=error_message
+            )
+            return '', 200
+
+        # Handle incoming message
+        media_urls = []
+        media_types = []
+        for i in range(num_media):
+            media_url = request.form.get(f'MediaUrl{i}', '')
+            media_type = request.form.get(f'MediaContentType{i}', '')
+            if media_url:
+                media_urls.append(media_url)
+                media_types.append(media_type)
+
+        result = service.process_incoming(
+            from_number=from_number,
+            to_number=to_number,
+            body=body,
+            message_sid=message_sid,
+            profile_name=profile_name,
+            media_urls=media_urls,
+            media_types=media_types
+        )
+
+        # Return TwiML response if provided
+        twiml_response = result.get('twiml', '')
+        if twiml_response:
+            return twiml_response, 200, {'Content-Type': 'application/xml'}
+
+        return '', 200
+
+    except Exception as e:
+        print(f"WhatsApp webhook error: {e}")
+        import traceback
+        traceback.print_exc()
+        return '', 200  # Always return 200 to Twilio to prevent retries
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/request-verification", methods=["POST"])
+def portal_whatsapp_request_verification():
+    """
+    Request WhatsApp verification code.
+    Client provides their WhatsApp number and receives a verification code.
+    """
+    from flask import session
+    import random
+    from datetime import datetime, timedelta
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    whatsapp_number = data.get('whatsapp_number', '').strip()
+
+    if not whatsapp_number:
+        return jsonify({'success': False, 'error': 'WhatsApp number is required'}), 400
+
+    db = get_db()
+    try:
+        from database import Client
+        from services.sms_service import format_whatsapp_number, send_whatsapp
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Generate 6-digit verification code
+        verification_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+        # Store code and expiration (10 minutes)
+        client.whatsapp_number = whatsapp_number
+        client.whatsapp_verification_code = verification_code
+        client.whatsapp_verification_expires = datetime.utcnow() + timedelta(minutes=10)
+        client.whatsapp_verified = False
+        db.commit()
+
+        # Send verification code via WhatsApp
+        # Note: This uses the 24hr reply window or requires an approved template
+        message = f"Your verification code is: {verification_code}\n\nEnter this code in your portal to enable WhatsApp notifications."
+
+        result = send_whatsapp(
+            to_number=whatsapp_number,
+            message=message
+        )
+
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': 'Verification code sent to your WhatsApp'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Failed to send verification code')
+            }), 500
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/verify", methods=["POST"])
+def portal_whatsapp_verify():
+    """
+    Verify WhatsApp number with code.
+    """
+    from flask import session
+    from datetime import datetime
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    code = data.get('code', '').strip()
+
+    if not code:
+        return jsonify({'success': False, 'error': 'Verification code is required'}), 400
+
+    db = get_db()
+    try:
+        from database import Client
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Check if code matches and hasn't expired
+        if not client.whatsapp_verification_code:
+            return jsonify({'success': False, 'error': 'No verification pending'}), 400
+
+        if client.whatsapp_verification_expires and client.whatsapp_verification_expires < datetime.utcnow():
+            return jsonify({'success': False, 'error': 'Verification code expired'}), 400
+
+        if client.whatsapp_verification_code != code:
+            return jsonify({'success': False, 'error': 'Invalid verification code'}), 400
+
+        # Mark as verified
+        client.whatsapp_verified = True
+        client.whatsapp_verified_at = datetime.utcnow()
+        client.whatsapp_opt_in = True
+        client.whatsapp_verification_code = None  # Clear code
+        client.whatsapp_verification_expires = None
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'WhatsApp verified successfully'
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/status", methods=["GET"])
+def portal_whatsapp_status():
+    """
+    Get client's WhatsApp verification status.
+    """
+    from flask import session
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    db = get_db()
+    try:
+        from database import Client
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'whatsapp_opt_in': client.whatsapp_opt_in or False,
+            'whatsapp_number': client.whatsapp_number,
+            'whatsapp_verified': client.whatsapp_verified or False
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/opt-out", methods=["POST"])
+def portal_whatsapp_opt_out():
+    """
+    Opt out of WhatsApp notifications.
+    """
+    from flask import session
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    db = get_db()
+    try:
+        from database import Client
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        client.whatsapp_opt_in = False
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Opted out of WhatsApp notifications'
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# Staff endpoint to request document via WhatsApp
+@app.route("/api/clients/<int:client_id>/whatsapp/request-document", methods=["POST"])
+@require_staff()
+def api_request_document_via_whatsapp(client_id):
+    """
+    Staff can request a specific document from a client via WhatsApp.
+    """
+    data = request.get_json() or {}
+    document_type = data.get('document_type', '')
+    custom_message = data.get('custom_message', '')
+
+    if not document_type:
+        return jsonify({'success': False, 'error': 'Document type is required'}), 400
+
+    db = get_db()
+    try:
+        from database import Client
+        from services.whatsapp_automation import trigger_whatsapp_document_request
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        if not client.whatsapp_verified:
+            return jsonify({'success': False, 'error': 'Client has not verified WhatsApp'}), 400
+
+        result = trigger_whatsapp_document_request(
+            db=db,
+            client_id=client_id,
+            document_type=document_type,
+            custom_message=custom_message
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
 
 @app.errorhandler(404)
 def handle_404_error(error):
