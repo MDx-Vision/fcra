@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-portal="client">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Client Portal{% endblock %} - Brightpath</title>
+
+    {# Theme: Flash Prevention (must be before stylesheets) #}
+    {% include 'includes/theme_head.html' %}
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,8 +18,8 @@
             position: absolute;
             top: -40px;
             left: 0;
-            background: #1a1a2e;
-            color: white;
+            background: var(--theme-bg-inverse, #1a1a2e);
+            color: var(--theme-text-inverse, white);
             padding: 8px 16px;
             z-index: 10000;
             text-decoration: none;
@@ -28,7 +31,7 @@
         }
         /* Focus visible for keyboard navigation */
         *:focus-visible {
-            outline: 3px solid #319795;
+            outline: 3px solid var(--theme-accent, #319795);
             outline-offset: 2px;
         }
     </style>
@@ -45,6 +48,8 @@
             <span class="logo-text">Brightpath</span>
         </div>
         <div class="user-info" data-testid="user-info">
+            {# Theme Toggle Button #}
+            {% include 'includes/theme_toggle.html' %}
             <span class="user-name" data-testid="client-name">{{ current_user.first_name if current_user.first_name else 'Client' }}</span>
             <div class="user-avatar" data-testid="user-avatar">{{ (current_user.first_name or 'C')[0] }}</div>
         </div>
@@ -120,7 +125,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}" style="padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; background: {% if category == 'success' %}#d1fae5{% else %}#fee2e2{% endif %}; color: {% if category == 'success' %}#065f46{% else %}#991b1b{% endif %};">
+                    <div class="alert alert-{{ category }}" style="padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; background: {% if category == 'success' %}var(--theme-success-bg, #d1fae5){% else %}var(--theme-danger-bg, #fee2e2){% endif %}; color: {% if category == 'success' %}var(--theme-success, #065f46){% else %}var(--theme-danger, #991b1b){% endif %};">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -166,6 +171,7 @@
     </nav>
 
     <script src="{{ url_for('static', filename='js/portal-redesign.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-service.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -297,12 +297,16 @@ app.secret_key = config.SECRET_KEY
 # Register blueprints
 from routes.portal import portal
 from routes.affiliate_portal import affiliate_portal
+from routes.partner import partner_bp
 
 app.register_blueprint(portal)
 print("✅ Portal blueprint registered")
 
 app.register_blueprint(affiliate_portal)
 print("✅ Affiliate portal blueprint registered")
+
+app.register_blueprint(partner_bp)
+print("✅ Partner portal blueprint registered")
 
 # Initialize Swagger/OpenAPI documentation
 from flasgger import Swagger

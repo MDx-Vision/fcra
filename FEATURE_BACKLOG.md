@@ -462,112 +462,163 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
+## ~~Priority 9: Light/Dark Mode Toggle~~ ✅ COMPLETE
+
+**Completed: 2026-01-02**
+
+### What Was Implemented
+
+1. **CSS Variables System** (`static/css/theme-variables.css` - 280 lines):
+   - [x] Base color palette (grays, navy, teal, green, status colors)
+   - [x] Semantic theme variables for light mode (default)
+   - [x] Dark mode overrides via `[data-theme="dark"]`
+   - [x] Portal-specific accent colors (client=teal, staff/affiliate=green)
+   - [x] Utility classes (.bg-theme-primary, .text-theme-primary, etc.)
+   - [x] Smooth transitions for theme switching
+
+2. **Theme Service** (`static/js/theme-service.js` - 200 lines):
+   - [x] `ThemeService.init()` - Initialize on page load
+   - [x] `ThemeService.toggle()` - Switch between light/dark
+   - [x] `ThemeService.getSystemPreference()` - Detect OS preference
+   - [x] `ThemeService.getSavedTheme()` - Read from localStorage
+   - [x] `watchSystemPreference()` - Auto-switch on system change
+   - [x] `updateMetaThemeColor()` - Update mobile browser UI color
+
+3. **Template Includes**:
+   - [x] `templates/includes/theme_head.html` - Flash prevention script + CSS
+   - [x] `templates/includes/theme_toggle.html` - Reusable toggle button
+
+4. **Client Portal Updates**:
+   - [x] `templates/portal/base_portal.html` - Added theme includes + toggle
+   - [x] `static/css/portal-redesign.css` - Converted to theme variables
+   - [x] Updated nav, cards, forms, mobile nav with theme vars
+
+5. **Staff Dashboard Updates**:
+   - [x] `templates/includes/dashboard_sidebar_styles.html` - Theme head + vars
+   - [x] `templates/includes/dashboard_sidebar.html` - Toggle button + script
+   - [x] Sidebar stays dark in both themes (professional look)
+
+6. **Affiliate Portal Updates**:
+   - [x] `templates/affiliate_portal/base.html` - Full theme variable conversion
+   - [x] Toggle button in sidebar header
+   - [x] All elements use semantic theme variables
+
+### Files Created
+- `static/css/theme-variables.css` (280 lines)
+- `static/js/theme-service.js` (200 lines)
+- `templates/includes/theme_head.html`
+- `templates/includes/theme_toggle.html`
+- `cypress/e2e/theme_toggle.cy.js` (200 lines)
+
+### Files Modified
+- `templates/portal/base_portal.html`
+- `static/css/portal-redesign.css`
+- `templates/includes/dashboard_sidebar_styles.html`
+- `templates/includes/dashboard_sidebar.html`
+- `templates/affiliate_portal/base.html`
+
+### Features
+- Light mode default
+- Respects `prefers-color-scheme` system preference
+- localStorage persistence across sessions
+- Smooth CSS transitions on theme change
+- Portal-specific accent colors
+- Mobile meta theme-color support
+
+---
+
+## ~~Priority 10: White Label Partner Portal~~ ✅ COMPLETE
+
+**Completed: 2026-01-02**
+
+### What Was Implemented
+
+1. **Database Changes** (`database.py`):
+   - [x] Added `admin_email` to WhiteLabelTenant (unique, for partner login)
+   - [x] Added `admin_password_hash` to WhiteLabelTenant
+   - [x] Added `last_login`, `password_reset_token`, `password_reset_expires`
+   - [x] Added migration entries for all new columns
+
+2. **Partner Portal Routes** (`routes/partner.py` - 700+ lines):
+   - [x] Authentication: `/partner/login`, `/partner/logout`, `/partner/forgot-password`, `/partner/reset-password/<token>`
+   - [x] Dashboard: `/partner/dashboard` with stats and quick actions
+   - [x] Branding: `/partner/branding` + API endpoints for logo/favicon upload
+   - [x] Clients: `/partner/clients` with search, filter, CSV export
+   - [x] Team: `/partner/team` with invite/remove member functionality
+   - [x] Analytics: `/partner/analytics` with charts and metrics
+   - [x] Settings: `/partner/settings` with password change, API key management
+   - [x] CI auth bypass for testing (creates test partner automatically)
+
+3. **API Endpoints**:
+   - [x] `PUT /partner/api/branding` - Update branding settings
+   - [x] `POST /partner/api/branding/logo` - Upload logo
+   - [x] `POST /partner/api/branding/favicon` - Upload favicon
+   - [x] `GET /partner/api/clients` - Get clients as JSON
+   - [x] `GET /partner/api/clients/export` - Export clients as CSV
+   - [x] `GET/POST /partner/api/team` - List/invite team members
+   - [x] `DELETE /partner/api/team/<id>` - Remove team member
+   - [x] `GET /partner/api/analytics/summary` - Analytics data
+   - [x] `PUT /partner/api/settings` - Update settings
+   - [x] `PUT /partner/api/settings/password` - Change password
+   - [x] `POST /partner/api/settings/regenerate-api-key` - Regenerate API key
+
+4. **Templates Created** (`templates/partner_portal/`):
+   - [x] `base.html` - Base template with sidebar, theme support
+   - [x] `login.html` - Login page with branding
+   - [x] `forgot_password.html` - Password reset request
+   - [x] `reset_password.html` - Password reset form
+   - [x] `dashboard.html` - Stats, quick actions, recent clients
+   - [x] `branding.html` - Logo upload, colors, company info, custom CSS
+   - [x] `clients.html` - Client list with search/filter/export
+   - [x] `team.html` - Team management with invite modal
+   - [x] `analytics.html` - Stats, chart (Chart.js), metrics
+   - [x] `settings.html` - Account settings, password change, API keys
+
+5. **Features**:
+   - [x] Session-based authentication for partners
+   - [x] Password reset with secure tokens
+   - [x] Self-service branding (logo, favicon, colors, CSS)
+   - [x] Team member invitation with role assignment
+   - [x] Client filtering by tenant (only see their clients)
+   - [x] CSV export of client data
+   - [x] Analytics with Chart.js visualization
+   - [x] API key management and webhook configuration
+   - [x] Light/dark mode theme support
+
+6. **Cypress Tests** (`cypress/e2e/partner_portal.cy.js` - 40+ tests):
+   - [x] Login page tests
+   - [x] Forgot password tests
+   - [x] Dashboard tests (CI auth)
+   - [x] Clients page tests
+   - [x] Branding page tests
+   - [x] Team page tests
+   - [x] Analytics page tests
+   - [x] Settings page tests
+   - [x] Navigation tests
+   - [x] Theme support tests
+   - [x] API endpoint tests
+
+### Files Created
+- `routes/partner.py` (700+ lines)
+- `templates/partner_portal/base.html`
+- `templates/partner_portal/login.html`
+- `templates/partner_portal/forgot_password.html`
+- `templates/partner_portal/reset_password.html`
+- `templates/partner_portal/dashboard.html`
+- `templates/partner_portal/branding.html`
+- `templates/partner_portal/clients.html`
+- `templates/partner_portal/team.html`
+- `templates/partner_portal/analytics.html`
+- `templates/partner_portal/settings.html`
+- `cypress/e2e/partner_portal.cy.js`
+
+### Files Modified
+- `database.py` - Added auth fields to WhiteLabelTenant + migrations
+- `app.py` - Registered partner blueprint
+
+---
+
 ## Upcoming Features
-
-### Priority 9: Light/Dark Mode Toggle
-
-**Status**: Backlog
-
-**Description**: Add theme switching capability across all portals (Staff Dashboard, Client Portal, Affiliate Portal).
-
-**Implementation Plan**:
-
-1. **CSS Variables for Theming**:
-   - Define CSS custom properties for colors (background, text, borders, accents)
-   - Create light theme and dark theme variable sets
-   - Apply variables across all templates
-
-2. **Theme Toggle Component**:
-   - Sun/moon icon toggle button in header
-   - Smooth transition animation between themes
-   - Consistent placement across all portals
-
-3. **Persistence**:
-   - Store preference in localStorage
-   - Optional: Store in user profile for cross-device sync
-
-4. **System Preference Detection**:
-   - Respect `prefers-color-scheme` media query
-   - Auto-switch based on OS/browser settings
-   - Manual override takes precedence
-
-5. **Templates to Update**:
-   - Staff Dashboard (`templates/includes/dashboard_sidebar.html`, all dashboard pages)
-   - Client Portal (`templates/portal/base_portal.html`)
-   - Affiliate Portal (`templates/affiliate_portal/base.html`)
-
-**Estimated Scope**:
-- CSS variables file (~200 lines)
-- JS toggle logic (~50 lines)
-- Template updates (minor)
-
----
-
-### Priority 10: White Label Partner Portal
-
-**Status**: Backlog
-
-**Description**: Create a dedicated portal where white label partners (law firms, credit repair agencies) can log in and manage their own branding, users, and clients.
-
-**Current State**:
-- ✅ `WhiteLabelTenant` model exists with branding fields
-- ✅ `WhiteLabelService` for tenant management
-- ✅ Staff admin page for managing tenants
-- ❌ No partner login/authentication
-- ❌ No self-service branding management
-- ❌ No partner dashboard
-
-**Implementation Plan**:
-
-1. **Partner Authentication**:
-   - Add `password_hash`, `last_login` to WhiteLabelTenant or create WhiteLabelUser model
-   - Login/logout routes at `/partner/login`
-   - Session-based auth (similar to affiliate portal)
-
-2. **Partner Dashboard** (`/partner/dashboard`):
-   - Stats: Total clients, Active disputes, Revenue, Team members
-   - Recent activity feed
-   - Quick actions
-
-3. **Branding Management** (`/partner/branding`):
-   - Logo upload (main + favicon)
-   - Color picker (primary, secondary, accent)
-   - Company info (name, address, phone, email)
-   - Custom CSS/JS editor
-   - Live preview
-
-4. **Team Management** (`/partner/team`):
-   - Invite team members
-   - Role management (admin, staff, viewer)
-   - Activity logs
-
-5. **Client Management** (`/partner/clients`):
-   - View their clients only (filtered by tenant_id)
-   - Client status overview
-   - Export functionality
-
-6. **Analytics** (`/partner/analytics`):
-   - Client acquisition over time
-   - Dispute success rates
-   - Revenue tracking
-
-7. **Templates to Create**:
-   - `templates/partner_portal/base.html`
-   - `templates/partner_portal/login.html`
-   - `templates/partner_portal/dashboard.html`
-   - `templates/partner_portal/branding.html`
-   - `templates/partner_portal/team.html`
-   - `templates/partner_portal/clients.html`
-   - `templates/partner_portal/analytics.html`
-   - `templates/partner_portal/settings.html`
-
-**Database Changes**:
-- Add auth fields to WhiteLabelTenant or create WhiteLabelUser model
-- Add `tenant_id` foreign key to Client model (if not exists)
-
-**Estimated Scope**: Medium-Large (similar to Affiliate Portal)
-
----
 
 ### Priority 11: CROA Document Signing Workflow
 

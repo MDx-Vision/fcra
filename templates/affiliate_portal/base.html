@@ -1,46 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-portal="affiliate">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Affiliate Portal{% endblock %} - Brightpath Ascend</title>
+
+    {# Theme: Flash Prevention (must be before stylesheets) #}
+    {% include 'includes/theme_head.html' %}
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: var(--theme-bg-secondary, linear-gradient(135deg, #0f172a 0%, #1e293b 100%));
             min-height: 100vh;
-            color: #e2e8f0;
+            color: var(--theme-text-primary, #e2e8f0);
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        
+
         .sidebar {
             position: fixed;
             left: 0;
             top: 0;
             bottom: 0;
             width: 260px;
-            background: rgba(15, 23, 42, 0.95);
-            border-right: 1px solid rgba(255,255,255,0.1);
+            background: var(--theme-sidebar-bg, rgba(15, 23, 42, 0.95));
+            border-right: 1px solid var(--theme-sidebar-border, rgba(255,255,255,0.1));
             padding: 20px 0;
             z-index: 100;
+            transition: background 0.2s ease, border-color 0.2s ease;
         }
-        
+
         .logo {
             padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--theme-sidebar-border, rgba(255,255,255,0.1));
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .logo h1 {
+        .logo-text h1 {
             font-size: 20px;
             font-weight: 700;
-            background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+            background: var(--theme-gradient-accent, linear-gradient(135deg, #22c55e 0%, #10b981 100%));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .logo span {
+        .logo-text span {
             font-size: 12px;
-            color: #64748b;
+            color: var(--theme-sidebar-text-muted, #64748b);
+        }
+
+        /* Theme toggle button */
+        .affiliate-theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            background: var(--theme-sidebar-hover, rgba(255,255,255,0.05));
+            color: var(--theme-sidebar-text-muted, #94a3b8);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .affiliate-theme-toggle:hover {
+            background: var(--theme-accent-bg, rgba(34, 197, 94, 0.15));
+            color: var(--theme-accent, #22c55e);
+        }
+        .affiliate-theme-toggle .theme-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .nav-item {
@@ -48,32 +82,32 @@
             align-items: center;
             gap: 12px;
             padding: 12px 20px;
-            color: #94a3b8;
+            color: var(--theme-sidebar-text-muted, #94a3b8);
             text-decoration: none;
             transition: all 0.2s;
             border-left: 3px solid transparent;
         }
         .nav-item:hover {
-            background: rgba(34, 197, 94, 0.1);
-            color: #22c55e;
+            background: var(--theme-accent-bg, rgba(34, 197, 94, 0.1));
+            color: var(--theme-accent, #22c55e);
         }
         .nav-item.active {
-            background: rgba(34, 197, 94, 0.15);
-            color: #22c55e;
-            border-left-color: #22c55e;
+            background: var(--theme-accent-bg, rgba(34, 197, 94, 0.15));
+            color: var(--theme-accent, #22c55e);
+            border-left-color: var(--theme-accent, #22c55e);
         }
         .nav-item svg {
             width: 20px;
             height: 20px;
         }
-        
+
         .user-section {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
             padding: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid var(--theme-sidebar-border, rgba(255,255,255,0.1));
             background: rgba(0,0,0,0.2);
         }
         .user-info {
@@ -86,7 +120,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+            background: var(--theme-gradient-accent, linear-gradient(135deg, #22c55e 0%, #10b981 100%));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -96,18 +130,19 @@
         .user-name {
             font-weight: 500;
             font-size: 14px;
+            color: var(--theme-sidebar-text, white);
         }
         .user-code {
             font-size: 12px;
-            color: #64748b;
+            color: var(--theme-sidebar-text-muted, #64748b);
             font-family: monospace;
         }
         .logout-btn {
             display: block;
             width: 100%;
             padding: 10px;
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
+            background: var(--theme-danger-bg, rgba(239, 68, 68, 0.2));
+            color: var(--theme-danger, #f87171);
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -119,11 +154,13 @@
         .logout-btn:hover {
             background: rgba(239, 68, 68, 0.3);
         }
-        
+
         .main-content {
             margin-left: 260px;
             padding: 30px;
             min-height: 100vh;
+            background: var(--theme-bg-primary, transparent);
+            transition: background-color 0.2s ease;
         }
         
         .page-header {
@@ -133,12 +170,13 @@
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 8px;
+            color: var(--theme-text-primary, inherit);
         }
         .page-subtitle {
-            color: #64748b;
+            color: var(--theme-text-muted, #64748b);
             font-size: 14px;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -146,33 +184,35 @@
             margin-bottom: 30px;
         }
         .stat-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--theme-card-bg, rgba(30, 41, 59, 0.5));
+            border: 1px solid var(--theme-card-border, rgba(255,255,255,0.1));
             border-radius: 16px;
             padding: 20px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
         }
-        .stat-card.primary { border-color: rgba(34, 197, 94, 0.5); }
-        .stat-card.warning { border-color: rgba(234, 179, 8, 0.5); }
-        .stat-card.info { border-color: rgba(59, 130, 246, 0.5); }
+        .stat-card.primary { border-color: var(--theme-success, rgba(34, 197, 94, 0.5)); }
+        .stat-card.warning { border-color: var(--theme-warning, rgba(234, 179, 8, 0.5)); }
+        .stat-card.info { border-color: var(--theme-info, rgba(59, 130, 246, 0.5)); }
         .stat-label {
             font-size: 13px;
-            color: #64748b;
+            color: var(--theme-text-muted, #64748b);
             margin-bottom: 8px;
         }
         .stat-value {
             font-size: 32px;
             font-weight: 700;
-            color: #22c55e;
+            color: var(--theme-success, #22c55e);
         }
-        .stat-card.warning .stat-value { color: #eab308; }
-        .stat-card.info .stat-value { color: #3b82f6; }
-        
+        .stat-card.warning .stat-value { color: var(--theme-warning, #eab308); }
+        .stat-card.info .stat-value { color: var(--theme-info, #3b82f6); }
+
         .card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--theme-card-bg, rgba(30, 41, 59, 0.5));
+            border: 1px solid var(--theme-card-border, rgba(255,255,255,0.1));
             border-radius: 16px;
             padding: 24px;
             margin-bottom: 20px;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
         }
         .card-header {
             display: flex;
@@ -183,6 +223,7 @@
         .card-title {
             font-size: 18px;
             font-weight: 600;
+            color: var(--theme-text-primary, inherit);
         }
         
         table {
@@ -194,17 +235,18 @@
             padding: 12px;
             font-size: 12px;
             font-weight: 600;
-            color: #64748b;
+            color: var(--theme-text-muted, #64748b);
             text-transform: uppercase;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--theme-border-primary, rgba(255,255,255,0.1));
         }
         td {
             padding: 14px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid var(--theme-border-secondary, rgba(255,255,255,0.05));
             font-size: 14px;
+            color: var(--theme-text-secondary, inherit);
         }
         tr:hover {
-            background: rgba(255,255,255,0.02);
+            background: var(--theme-table-row-hover, rgba(255,255,255,0.02));
         }
         
         .badge {
@@ -213,12 +255,12 @@
             font-size: 12px;
             font-weight: 500;
         }
-        .badge-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-        .badge-warning { background: rgba(234, 179, 8, 0.2); color: #eab308; }
-        .badge-info { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
-        .badge-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-        .badge-secondary { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
-        
+        .badge-success { background: var(--theme-success-bg, rgba(34, 197, 94, 0.2)); color: var(--theme-success, #22c55e); }
+        .badge-warning { background: var(--theme-warning-bg, rgba(234, 179, 8, 0.2)); color: var(--theme-warning, #eab308); }
+        .badge-info { background: var(--theme-info-bg, rgba(59, 130, 246, 0.2)); color: var(--theme-info, #3b82f6); }
+        .badge-danger { background: var(--theme-danger-bg, rgba(239, 68, 68, 0.2)); color: var(--theme-danger, #f87171); }
+        .badge-secondary { background: rgba(100, 116, 139, 0.2); color: var(--theme-text-muted, #94a3b8); }
+
         .btn {
             padding: 10px 20px;
             border-radius: 8px;
@@ -233,29 +275,29 @@
             text-decoration: none;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            background: var(--theme-gradient-accent, linear-gradient(135deg, #22c55e 0%, #16a34a 100%));
             color: white;
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+            box-shadow: 0 4px 12px var(--theme-accent-bg, rgba(34, 197, 94, 0.4));
         }
         .btn-secondary {
             background: rgba(100, 116, 139, 0.2);
-            color: #94a3b8;
+            color: var(--theme-text-muted, #94a3b8);
         }
-        
+
         .alert {
             padding: 12px 16px;
             border-radius: 8px;
             margin-bottom: 20px;
             font-size: 14px;
         }
-        .alert-success { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .alert-error { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        
-        .money { color: #22c55e; font-weight: 600; }
-        .money.pending { color: #eab308; }
+        .alert-success { background: var(--theme-success-bg, rgba(34, 197, 94, 0.2)); color: var(--theme-success, #22c55e); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .alert-error { background: var(--theme-danger-bg, rgba(239, 68, 68, 0.2)); color: var(--theme-danger, #f87171); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .money { color: var(--theme-success, #22c55e); font-weight: 600; }
+        .money.pending { color: var(--theme-warning, #eab308); }
         
         @media (max-width: 1024px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -272,8 +314,17 @@
 <body>
     <nav class="sidebar">
         <div class="logo">
-            <h1>Affiliate Portal</h1>
-            <span>Brightpath Ascend</span>
+            <div class="logo-text">
+                <h1>Affiliate Portal</h1>
+                <span>Brightpath Ascend</span>
+            </div>
+            <button type="button" data-theme-toggle class="affiliate-theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+                <span class="theme-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </span>
+            </button>
         </div>
         
         <a href="{{ url_for('affiliate_portal.dashboard') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" data-testid="nav-dashboard">
@@ -325,6 +376,7 @@
         {% block content %}{% endblock %}
     </main>
     
+    <script src="{{ url_for('static', filename='js/theme-service.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

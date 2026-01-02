@@ -2616,10 +2616,17 @@ class WhiteLabelTenant(Base):
     
     api_key = Column(String(100), unique=True, index=True)
     webhook_url = Column(String(500))
-    
+
+    # Partner portal authentication
+    admin_email = Column(String(255), unique=True, index=True)
+    admin_password_hash = Column(String(255))
+    last_login = Column(DateTime)
+    password_reset_token = Column(String(100), unique=True, index=True)
+    password_reset_expires = Column(DateTime)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     users = relationship("TenantUser", back_populates="tenant", cascade="all, delete-orphan")
     clients = relationship("TenantClient", back_populates="tenant", cascade="all, delete-orphan")
     
@@ -2650,6 +2657,8 @@ class WhiteLabelTenant(Base):
             'features_enabled': self.features_enabled or {},
             'api_key': self.api_key,
             'webhook_url': self.webhook_url,
+            'admin_email': self.admin_email,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -5059,6 +5068,12 @@ def init_db():
         ("drip_email_logs", "status", "VARCHAR(20) DEFAULT 'sent'"),
         ("drip_email_logs", "error_message", "TEXT"),
         ("drip_email_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Partner portal authentication for WhiteLabelTenant
+        ("white_label_tenants", "admin_email", "VARCHAR(255) UNIQUE"),
+        ("white_label_tenants", "admin_password_hash", "VARCHAR(255)"),
+        ("white_label_tenants", "last_login", "TIMESTAMP"),
+        ("white_label_tenants", "password_reset_token", "VARCHAR(100) UNIQUE"),
+        ("white_label_tenants", "password_reset_expires", "TIMESTAMP"),
     ]
 
     conn = engine.connect()

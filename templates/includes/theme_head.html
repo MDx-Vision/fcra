@@ -1,0 +1,38 @@
+{#
+    Theme Head Include - Flash Prevention
+
+    Include this in the <head> of your base template BEFORE any stylesheets.
+    This prevents flash of wrong theme on page load.
+
+    Usage:
+        <head>
+            {% include 'includes/theme_head.html' %}
+            <link rel="stylesheet" href="...">
+        </head>
+#}
+
+<!-- Theme: Flash Prevention Script (must be in <head> before stylesheets) -->
+<script>
+(function() {
+    // Get saved theme or detect system preference
+    var theme;
+    try {
+        theme = localStorage.getItem('brightpath-theme');
+    } catch (e) {}
+
+    if (!theme) {
+        // Check system preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+        } else {
+            theme = 'light';
+        }
+    }
+
+    // Apply theme immediately to prevent flash
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
+
+<!-- Theme Variables CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/theme-variables.css') }}">

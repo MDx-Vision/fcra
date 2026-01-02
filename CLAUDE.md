@@ -29,8 +29,84 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 2**: ~~Gmail Integration~~ ✅ COMPLETE
 - **Priority 3**: ~~Q&A Booking + Live Messaging~~ ✅ COMPLETE
 - **Priority 4**: ~~Simple Report Upload Flow~~ ✅ COMPLETE
+- **Priority 5**: ~~Deadline Approaching Scheduler~~ ✅ COMPLETE
+- **Priority 6**: ~~Lead Scoring~~ ✅ COMPLETE
+- **Priority 7**: ~~Email Templates Library~~ ✅ COMPLETE
+- **Priority 8**: ~~Drip Campaigns~~ ✅ COMPLETE
+- **Priority 9**: ~~Light/Dark Mode Toggle~~ ✅ COMPLETE
+- **Priority 10**: ~~White Label Partner Portal~~ ✅ COMPLETE
 
-### Current Work (2026-01-02) - IN PROGRESS
+### Current Work (2026-01-02) - COMPLETE
+
+**Task**: Priority 10 - White Label Partner Portal
+
+**Status**: ✅ COMPLETE
+
+**What Was Implemented**:
+1. **Database Changes** (`database.py`):
+   - Added auth fields to WhiteLabelTenant: `admin_email`, `admin_password_hash`, `last_login`, `password_reset_token`, `password_reset_expires`
+   - Added migration entries
+
+2. **Partner Portal Routes** (`routes/partner.py` - 700+ lines):
+   - Authentication: login, logout, forgot password, reset password
+   - Dashboard: stats, quick actions, recent clients
+   - Branding: logo/favicon upload, colors, company info, custom CSS
+   - Clients: list with search, filter, CSV export
+   - Team: invite/remove members, role management
+   - Analytics: stats, charts, metrics
+   - Settings: account settings, password change, API key management
+
+3. **Templates Created** (`templates/partner_portal/`):
+   - `base.html` - Base template with sidebar, theme support
+   - `login.html`, `forgot_password.html`, `reset_password.html`
+   - `dashboard.html`, `branding.html`, `clients.html`
+   - `team.html`, `analytics.html`, `settings.html`
+
+4. **Features**:
+   - Session-based authentication for partners
+   - Password reset with secure tokens
+   - Self-service branding management
+   - Team member invitation with roles
+   - Client filtering by tenant
+   - CSV export, Chart.js analytics
+   - Light/dark mode support
+
+5. **Cypress Tests** (`cypress/e2e/partner_portal.cy.js` - 40+ tests)
+
+---
+
+### Previous Work (2026-01-02) - COMPLETED
+
+**Task**: Priority 9 - Light/Dark Mode Toggle
+
+**Status**: ✅ COMPLETE
+
+**What Was Implemented**:
+1. **CSS Variables System** (`static/css/theme-variables.css`):
+   - Semantic theme variables for light mode (default)
+   - Dark mode overrides via `[data-theme="dark"]`
+   - Portal-specific accent colors (client=teal, staff/affiliate=green)
+   - Utility classes for theme-aware styling
+
+2. **Theme Service** (`static/js/theme-service.js`):
+   - Toggle between light/dark modes
+   - Detect and respect OS system preference
+   - Persist preference in localStorage
+   - Auto-switch on system preference change
+
+3. **Template Updates**:
+   - `templates/includes/theme_head.html` - Flash prevention
+   - `templates/includes/theme_toggle.html` - Reusable toggle button
+   - Client Portal, Staff Dashboard, Affiliate Portal all updated
+
+4. **Cypress Tests** (`cypress/e2e/theme_toggle.cy.js`):
+   - Toggle functionality tests
+   - Persistence tests
+   - System preference tests
+
+---
+
+### Previous Work (2026-01-02) - COMPLETED
 
 **Task**: Client Journey Workflow & Portal Access Control
 

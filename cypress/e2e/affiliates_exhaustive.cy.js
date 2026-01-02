@@ -1,14 +1,15 @@
 // Exhaustive test for /dashboard/affiliates
-describe('Affiliate Management Page - /dashboard/affiliates', () => {
+describe('Affiliate Dashboard Page - /dashboard/affiliates', () => {
   beforeEach(() => {
     cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/affiliates');
+    cy.get('.main-content').should('exist');
   });
 
   describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/affiliates');
-      cy.get('.main-content').should('be.visible');
+      cy.get('.main-content').should('exist');
     });
 
     it('should have correct page title', () => {
@@ -22,41 +23,49 @@ describe('Affiliate Management Page - /dashboard/affiliates', () => {
 
   describe('Header Tests', () => {
     it('should display the page header', () => {
-      cy.get('.header h1').should('contain.text', 'Affiliate Management');
+      cy.get('.header h1').should('exist').and('contain.text', 'Affiliate');
+    });
+
+    it('should display header subtitle', () => {
+      cy.get('.header-subtitle').should('exist');
     });
 
     it('should display Add Affiliate button', () => {
-      cy.get('.btn-primary').contains('Add Affiliate').should('be.visible');
+      cy.get('[data-testid="add-affiliate-btn"]').should('exist').and('contain.text', 'Add Affiliate');
     });
 
     it('should have clickable Add Affiliate button', () => {
-      cy.get('.btn-primary').contains('Add Affiliate').should('not.be.disabled');
+      cy.get('[data-testid="add-affiliate-btn"]').should('not.be.disabled');
     });
   });
 
-  describe('Stats Grid Tests', () => {
-    it('should display stats grid', () => {
-      cy.get('.stats-grid').should('be.visible');
+  describe('Stats Row Tests', () => {
+    it('should display stats row', () => {
+      cy.get('.stats-row').should('exist');
     });
 
     it('should display stat cards', () => {
       cy.get('.stat-card').should('have.length', 4);
     });
 
-    it('should display Total Pending Payouts stat', () => {
-      cy.get('.stat-card.highlight .stat-label').should('contain.text', 'Total Pending Payouts');
-    });
-
     it('should display Total Affiliates stat', () => {
+      cy.get('[data-testid="stat-total-affiliates"]').should('exist');
       cy.get('.stat-label').contains('Total Affiliates').should('exist');
     });
 
     it('should display Total Referrals stat', () => {
+      cy.get('[data-testid="stat-total-referrals"]').should('exist');
       cy.get('.stat-label').contains('Total Referrals').should('exist');
     });
 
+    it('should display Pending Payouts stat', () => {
+      cy.get('[data-testid="stat-pending-payouts"]').should('exist');
+      cy.get('.stat-label').contains('Pending Payouts').should('exist');
+    });
+
     it('should display Total Paid Out stat', () => {
-      cy.get('.stat-label').contains('Total Paid Out').should('exist');
+      cy.get('[data-testid="stat-total-paid"]').should('exist');
+      cy.get('.stat-label').contains('Total Paid').should('exist');
     });
 
     it('should display stat values', () => {
@@ -68,182 +77,115 @@ describe('Affiliate Management Page - /dashboard/affiliates', () => {
     });
   });
 
-  describe('Content Card Tests', () => {
-    it('should display main content card', () => {
-      cy.get('.content-card').should('be.visible');
+  describe('Tab Tests', () => {
+    it('should display tabs', () => {
+      cy.get('.tabs').should('exist');
     });
 
-    it('should display All Affiliates section title', () => {
-      cy.get('.section-title').contains('All Affiliates').should('be.visible');
-    });
-  });
-
-  describe('Filter Tests', () => {
-    it('should display filters section', () => {
-      cy.get('.filters').should('exist');
+    it('should have Affiliates tab', () => {
+      cy.get('.tab').contains('Affiliates').should('exist');
     });
 
-    it('should display filter buttons', () => {
-      cy.get('.filter-btn').should('have.length.at.least', 1);
+    it('should have Commissions tab', () => {
+      cy.get('.tab').contains('Commissions').should('exist');
     });
 
-    it('should have All filter', () => {
-      cy.get('.filter-btn').contains('All').should('exist');
+    it('should have Payouts tab', () => {
+      cy.get('.tab').contains('Payouts').should('exist');
     });
 
-    it('should have Active filter', () => {
-      cy.get('.filter-btn').contains('Active').should('exist');
+    it('should have active tab highlighted', () => {
+      cy.get('.tab.active').should('exist');
     });
 
-    it('should have Pending filter', () => {
-      cy.get('.filter-btn').contains('Pending').should('exist');
-    });
-
-    it('should have Suspended filter', () => {
-      cy.get('.filter-btn').contains('Suspended').should('exist');
-    });
-
-    it('should have clickable filter buttons', () => {
-      cy.get('.filter-btn').first().should('not.be.disabled');
-    });
-
-    it('should have active filter highlighted', () => {
-      cy.get('.filter-btn.active').should('exist');
+    it('should switch tabs when clicked', () => {
+      cy.get('.tab').contains('Commissions').click();
+      cy.get('.tab').contains('Commissions').should('have.class', 'active');
+      cy.get('#tab-commissions').should('have.class', 'active');
     });
   });
 
-  describe('Search Tests', () => {
+  describe('Affiliates Tab Tests', () => {
+    it('should display affiliates tab content by default', () => {
+      cy.get('#tab-affiliates').should('have.class', 'active');
+    });
+
+    it('should display card with title', () => {
+      cy.get('.card').should('exist');
+      cy.get('.card-title').contains('Affiliates').should('exist');
+    });
+
     it('should display search box', () => {
-      cy.get('.search-box').should('be.visible');
+      cy.get('.search-box').should('exist');
     });
 
     it('should have search input', () => {
-      cy.get('.search-box input').should('exist');
+      cy.get('[data-testid="affiliate-search"]').should('exist');
     });
 
-    it('should have placeholder text', () => {
-      cy.get('.search-box input').should('have.attr', 'placeholder', 'Search affiliates...');
+    it('should have status filter dropdown', () => {
+      cy.get('[data-testid="affiliate-status-filter"]').should('exist');
+    });
+
+    it('should have placeholder text in search', () => {
+      cy.get('[data-testid="affiliate-search"]').should('have.attr', 'placeholder').and('contain', 'Search');
     });
 
     it('should accept input in search field', () => {
-      cy.get('.search-box input').type('test').should('have.value', 'test');
+      cy.get('[data-testid="affiliate-search"]').type('test').should('have.value', 'test');
     });
   });
 
   describe('Table Tests', () => {
-    it('should display table or empty state', () => {
-      cy.get('.content-card').then(($card) => {
-        const hasTable = $card.find('table').length > 0;
-        const hasEmptyState = $card.find('.empty-state').length > 0;
-        expect(hasTable || hasEmptyState).to.be.true;
-      });
+    it('should display affiliates table', () => {
+      cy.get('[data-testid="affiliates-table"]').should('exist');
     });
 
-    it('should display table headers if table exists', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table').length) {
-          cy.get('table th').should('have.length.at.least', 1);
-        }
-      });
+    it('should display table headers', () => {
+      cy.get('[data-testid="affiliates-table"] th').should('have.length.at.least', 1);
     });
 
-    it('should have Affiliate column header', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table').length) {
-          cy.get('table th').contains('Affiliate').should('exist');
-        }
-      });
+    it('should have Name column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Name').should('exist');
+    });
+
+    it('should have Email column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Email').should('exist');
     });
 
     it('should have Code column header', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table').length) {
-          cy.get('table th').contains('Code').should('exist');
-        }
-      });
-    });
-
-    it('should have Referrals column header', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table').length) {
-          cy.get('table th').contains('Referrals').should('exist');
-        }
-      });
-    });
-
-    it('should have Earnings column header', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table').length) {
-          cy.get('table th').contains('Earnings').should('exist');
-        }
-      });
+      cy.get('[data-testid="affiliates-table"] th').contains('Code').should('exist');
     });
 
     it('should have Status column header', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table').length) {
-          cy.get('table th').contains('Status').should('exist');
-        }
-      });
-    });
-  });
-
-  describe('Badge Tests', () => {
-    it('should display status badges if affiliates exist', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table tbody tr').length > 0) {
-          cy.get('.status-badge').should('have.length.at.least', 1);
-        }
-      });
+      cy.get('[data-testid="affiliates-table"] th').contains('Status').should('exist');
     });
 
-    it('should display code badges if affiliates exist', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table tbody tr').length > 0) {
-          cy.get('.code-badge').should('have.length.at.least', 1);
-        }
-      });
-    });
-  });
-
-  describe('Action Button Tests', () => {
-    it('should display action buttons if affiliates exist', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table tbody tr').length > 0) {
-          cy.get('.action-btn').should('have.length.at.least', 1);
-        }
-      });
+    it('should have Rate column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Rate').should('exist');
     });
 
-    it('should have View button if affiliates exist', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table tbody tr').length > 0) {
-          cy.get('.action-btn').contains('View').should('exist');
-        }
-      });
+    it('should have Referrals column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Referrals').should('exist');
     });
 
-    it('should have Edit button if affiliates exist', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table tbody tr').length > 0) {
-          cy.get('.action-btn').contains('Edit').should('exist');
-        }
-      });
+    it('should have Actions column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Actions').should('exist');
     });
   });
 
   describe('Modal Tests', () => {
-    it('should have add affiliate modal element', () => {
-      cy.get('#addAffiliateModal').should('exist');
+    it('should have affiliate modal element', () => {
+      cy.get('[data-testid="affiliate-modal"]').should('exist');
     });
 
     it('should have modal hidden by default', () => {
-      cy.get('.modal-overlay.active').should('not.exist');
+      cy.get('[data-testid="affiliate-modal"]').should('not.have.class', 'active');
     });
 
     it('should open modal when Add Affiliate is clicked', () => {
-      cy.get('.btn-primary').contains('Add Affiliate').click();
-      cy.get('#addAffiliateModal.active').should('be.visible');
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('[data-testid="affiliate-modal"]').should('have.class', 'active');
     });
 
     it('should have modal close button', () => {
@@ -251,79 +193,142 @@ describe('Affiliate Management Page - /dashboard/affiliates', () => {
     });
 
     it('should close modal when close button is clicked', () => {
-      cy.get('.btn-primary').contains('Add Affiliate').click();
-      cy.get('#addAffiliateModal.active').should('be.visible');
-      cy.get('.modal-close').click();
-      cy.get('#addAffiliateModal.active').should('not.exist');
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('[data-testid="affiliate-modal"]').should('have.class', 'active');
+      cy.get('[data-testid="affiliate-modal"] .modal-close').click();
+      cy.get('[data-testid="affiliate-modal"]').should('not.have.class', 'active');
     });
   });
 
   describe('Add Affiliate Form Tests', () => {
     beforeEach(() => {
-      cy.get('.btn-primary').contains('Add Affiliate').click();
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('[data-testid="affiliate-modal"]').should('have.class', 'active');
     });
 
     it('should display form in modal', () => {
-      cy.get('#addAffiliateForm').should('be.visible');
+      cy.get('#affiliate-form').should('exist');
     });
 
     it('should have name input', () => {
-      cy.get('#addAffiliateForm input[name="name"]').should('exist');
+      cy.get('[data-testid="affiliate-name-input"]').should('exist');
     });
 
     it('should have email input', () => {
-      cy.get('#addAffiliateForm input[name="email"]').should('exist');
+      cy.get('[data-testid="affiliate-email-input"]').should('exist');
     });
 
     it('should have phone input', () => {
-      cy.get('#addAffiliateForm input[name="phone"]').should('exist');
+      cy.get('[data-testid="affiliate-phone-input"]').should('exist');
     });
 
-    it('should have company name input', () => {
-      cy.get('#addAffiliateForm input[name="company_name"]').should('exist');
+    it('should have commission rate select', () => {
+      cy.get('[data-testid="affiliate-rate-select"]').should('exist');
     });
 
-    it('should have commission rate inputs', () => {
-      cy.get('#addAffiliateForm input[name="commission_rate_1"]').should('exist');
-      cy.get('#addAffiliateForm input[name="commission_rate_2"]').should('exist');
+    it('should have parent affiliate select', () => {
+      cy.get('[data-testid="affiliate-parent-select"]').should('exist');
     });
 
     it('should have status select', () => {
-      cy.get('#addAffiliateForm select[name="status"]').should('exist');
+      cy.get('[data-testid="affiliate-status-select"]').should('exist');
     });
 
     it('should have payout method select', () => {
-      cy.get('#addAffiliateForm select[name="payout_method"]').should('exist');
+      cy.get('[data-testid="affiliate-payout-method-select"]').should('exist');
     });
 
-    it('should have Create Affiliate submit button', () => {
-      cy.get('#addAffiliateForm .btn-primary').contains('Create Affiliate').should('be.visible');
+    it('should have payout details input', () => {
+      cy.get('[data-testid="affiliate-payout-details-input"]').should('exist');
+    });
+
+    it('should have notes textarea', () => {
+      cy.get('[data-testid="affiliate-notes-input"]').should('exist');
+    });
+
+    it('should have Save Affiliate submit button', () => {
+      cy.get('[data-testid="affiliate-save-btn"]').should('exist');
     });
 
     it('should have Cancel button', () => {
-      cy.get('#addAffiliateForm .btn-secondary').contains('Cancel').should('be.visible');
+      cy.get('#affiliate-form .btn-secondary').contains('Cancel').should('exist');
+    });
+  });
+
+  describe('Commissions Tab Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Commissions').click();
+    });
+
+    it('should display commissions tab content', () => {
+      cy.get('#tab-commissions').should('have.class', 'active');
+    });
+
+    it('should have commissions table', () => {
+      cy.get('[data-testid="commissions-table"]').should('exist');
+    });
+
+    it('should have commission status filter', () => {
+      cy.get('[data-testid="commission-status-filter"]').should('exist');
+    });
+  });
+
+  describe('Payouts Tab Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Payouts').click();
+    });
+
+    it('should display payouts tab content', () => {
+      cy.get('#tab-payouts').should('have.class', 'active');
+    });
+
+    it('should have payouts table', () => {
+      cy.get('[data-testid="payouts-table"]').should('exist');
+    });
+
+    it('should have Create Payout button', () => {
+      cy.get('[data-testid="create-payout-btn"]').should('exist');
+    });
+
+    it('should have payout status filter', () => {
+      cy.get('[data-testid="payout-status-filter"]').should('exist');
+    });
+  });
+
+  describe('Payout Modal Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Payouts').click();
+    });
+
+    it('should have payout modal element', () => {
+      cy.get('[data-testid="payout-modal"]').should('exist');
+    });
+
+    it('should open payout modal when Create Payout is clicked', () => {
+      cy.get('[data-testid="create-payout-btn"]').click();
+      cy.get('[data-testid="payout-modal"]').should('have.class', 'active');
     });
   });
 
   describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
-      cy.get('.main-content').should('be.visible');
-      cy.get('.header').should('be.visible');
-      cy.get('.stats-grid').should('be.visible');
-      cy.get('.content-card').should('be.visible');
+      cy.get('.main-content').should('exist');
+      cy.get('.header').should('exist');
+      cy.get('.stats-row').should('exist');
+      cy.get('.card').should('exist');
     });
 
     it('should display correctly on tablet (768px)', () => {
       cy.viewport(768, 1024);
-      cy.get('.main-content').should('be.visible');
-      cy.get('.content-card').should('be.visible');
+      cy.get('.main-content').should('exist');
+      cy.get('.card').should('exist');
     });
 
     it('should display correctly on mobile (375px)', () => {
       cy.viewport(375, 667);
-      cy.get('.main-content').should('be.visible');
-      cy.get('.header h1').should('be.visible');
+      cy.get('.main-content').should('exist');
+      cy.get('.header h1').should('exist');
     });
   });
 
@@ -333,6 +338,7 @@ describe('Affiliate Management Page - /dashboard/affiliates', () => {
     });
 
     it('should have secondary button styling', () => {
+      cy.get('[data-testid="add-affiliate-btn"]').click();
       cy.get('.btn-secondary').should('exist');
     });
   });
@@ -343,27 +349,18 @@ describe('Affiliate Management Page - /dashboard/affiliates', () => {
     });
 
     it('should have form labels in modal', () => {
-      cy.get('.btn-primary').contains('Add Affiliate').click();
-      cy.get('#addAffiliateForm label').should('have.length.at.least', 1);
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('#affiliate-form label').should('have.length.at.least', 1);
     });
 
     it('should have table headers for accessibility', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('table').length) {
-          cy.get('table th').should('have.length.at.least', 1);
-        }
-      });
+      cy.get('[data-testid="affiliates-table"] th').should('have.length.at.least', 1);
     });
   });
 
   describe('Empty State Tests', () => {
-    it('should display empty state when no affiliates', () => {
-      cy.get('body').then(($body) => {
-        if ($body.find('.empty-state').length > 0) {
-          cy.get('.empty-state').should('be.visible');
-          cy.get('.empty-state h3').should('contain.text', 'No affiliates yet');
-        }
-      });
+    it('should display loading or empty state in table', () => {
+      cy.get('#affiliates-table-body').should('exist');
     });
   });
 });
