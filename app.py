@@ -33631,6 +33631,184 @@ def proceed_to_program(token):
 
 
 # =============================================================================
+# ROUND PAYMENT SYSTEM - Charge per round when letters are sent
+# =============================================================================
+
+@app.route("/api/clients/<int:client_id>/payment/round", methods=["POST"])
+@require_staff()
+def api_create_round_payment(client_id):
+    """
+    Create a payment intent for a dispute round.
+    Staff calls this before sending letters.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        round_number = data.get('round_number')
+
+        service = get_client_payment_service(db)
+        result = service.create_round_payment_intent(client_id, round_number)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/round/confirm", methods=["POST"])
+@require_staff()
+def api_confirm_round_payment(client_id):
+    """
+    Confirm a round payment was successful.
+    Enables letter sending for that round.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        payment_intent_id = data.get('payment_intent_id')
+        round_number = data.get('round_number')
+
+        if not payment_intent_id or not round_number:
+            return jsonify({
+                "success": False,
+                "error": "Missing payment_intent_id or round_number"
+            }), 400
+
+        service = get_client_payment_service(db)
+        result = service.confirm_round_payment(client_id, payment_intent_id, round_number)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/charge-round", methods=["POST"])
+@require_staff()
+def api_charge_for_round(client_id):
+    """
+    Charge a client for a round using saved payment method.
+    Called by staff when ready to send letters.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        round_number = data.get('round_number')
+        payment_method_id = data.get('payment_method_id')
+
+        if not round_number:
+            return jsonify({
+                "success": False,
+                "error": "Round number required"
+            }), 400
+
+        service = get_client_payment_service(db)
+        result = service.charge_for_round(client_id, round_number, payment_method_id)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            status_code = 400 if result.get('requires_payment') else 500
+            return jsonify(result), status_code
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/summary", methods=["GET"])
+@require_staff()
+def api_get_payment_summary(client_id):
+    """Get payment summary for a client."""
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        service = get_client_payment_service(db)
+        result = service.get_payment_summary(client_id)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/prepay", methods=["POST"])
+@require_staff()
+def api_create_prepay_checkout(client_id):
+    """
+    Create a checkout session for a prepay package.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        package_key = data.get('package')
+        financed = data.get('financed', False)
+        success_url = data.get('success_url')
+        cancel_url = data.get('cancel_url')
+
+        if not package_key:
+            return jsonify({
+                "success": False,
+                "error": "Package required"
+            }), 400
+
+        service = get_client_payment_service(db)
+        result = service.create_prepay_checkout(
+            client_id, package_key, financed, success_url, cancel_url
+        )
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/settlement-fee/calculate", methods=["POST"])
+@require_staff()
+def api_calculate_settlement_fee():
+    """Calculate the settlement fee for a given amount."""
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        settlement_amount = data.get('settlement_amount')
+
+        if not settlement_amount:
+            return jsonify({
+                "success": False,
+                "error": "Settlement amount required"
+            }), 400
+
+        # Convert to cents if provided in dollars
+        if isinstance(settlement_amount, float) or settlement_amount < 1000:
+            settlement_amount = int(settlement_amount * 100)
+
+        service = get_client_payment_service(db)
+        result = service.calculate_settlement_fee(settlement_amount)
+        result['success'] = True
+
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+# =============================================================================
 # BOOKING SYSTEM - Q&A Call Scheduling
 # =============================================================================
 

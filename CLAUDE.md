@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-01)
+## Current Status (2026-01-02)
 
 ### Test Status: 100% PASSING
 - **Unit tests**: 4,738 passing (58 test files, ~95s runtime)
@@ -30,7 +30,94 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 3**: ~~Q&A Booking + Live Messaging~~ ✅ COMPLETE
 - **Priority 4**: ~~Simple Report Upload Flow~~ ✅ COMPLETE
 
-### Current Work (2026-01-01) - COMPLETED
+### Current Work (2026-01-02) - IN PROGRESS
+
+**Task**: Client Journey Workflow & Portal Access Control
+
+**Status**: Phase 3 Complete (Payment System)
+
+**Phase 1 - Pricing & Analysis Flow** ✅:
+1. **PRICING_STRUCTURE.md** - Complete pricing documentation
+   - Free teaser analysis (upload PDF)
+   - Full analysis: $199 (credited toward Round 1)
+   - Round 1: $497 ($298 after $199 credit)
+   - Round 2+: $297/round
+   - Settlement fee: 30%
+   - Prepay packages with discounts
+
+2. **Database Fields** (`database.py`):
+   - `client_stage`: lead, analysis_paid, onboarding, pending_payment, active, payment_failed, cancelled
+   - `free_analysis_token`: Token for /analysis/<token> page
+   - `analysis_payment_id`, `analysis_paid_at`: Track $199 payment
+   - `round_1_amount_due`: $298 after credit applied
+   - `total_paid`: Running total of payments
+
+3. **Free Analysis Service** (`services/free_analysis_service.py`):
+   - `create_lead_from_upload()`: Creates lead with analysis token
+   - `get_teaser_analysis()`: Returns summary (# items, violations, value range)
+   - `mark_analysis_paid()`: Updates stage after $199 payment
+   - `proceed_to_onboarding()`: Moves to onboarding stage
+
+4. **Free Analysis Page** (`templates/free_analysis.html`):
+   - Shows teaser data (negative items, violations, estimated value)
+   - Blurred full analysis preview
+   - CTA: "Get Full Analysis - $199"
+
+**Phase 2 - Portal Access Control** ✅:
+1. **Stage-Based Route Decorators** (`routes/portal.py`):
+   - `@require_full_access`: Only active clients (dashboard, documents, timeline, etc.)
+   - `@require_onboarding_access`: Onboarding + active clients (profile, agreements)
+   - `@require_stage(*stages)`: Custom stage requirements
+
+2. **Portal Navigation** (`templates/portal/base_portal.html`):
+   - Conditionally shows/hides nav items based on client_stage
+   - Onboarding clients: Setup, Agreements, Profile, Logout only
+   - Active clients: Full navigation (Case, Journey, Documents, Messages, etc.)
+
+3. **Access Matrix**:
+   | Page | lead | onboarding | pending_payment | active | payment_failed |
+   |------|------|------------|-----------------|--------|----------------|
+   | Dashboard | ❌ | ❌ | ❌ | ✅ | ❌ |
+   | Onboarding | ❌ | ✅ | ✅ | ✅ | ✅ |
+   | Agreements | ❌ | ✅ | ✅ | ✅ | ❌ |
+   | Profile | ❌ | ✅ | ✅ | ✅ | ✅ |
+   | Documents | ❌ | ❌ | ❌ | ✅ | ❌ |
+   | Timeline | ❌ | ❌ | ❌ | ✅ | ❌ |
+
+**Phase 3 - Payment System** ✅:
+1. **ClientPaymentService** (`services/client_payment_service.py`):
+   - `create_analysis_payment_intent()`: Creates $199 payment
+   - `confirm_analysis_payment()`: Confirms and applies credit
+   - `create_round_payment_intent()`: Creates round payment
+   - `confirm_round_payment()`: Confirms round payment
+   - `charge_for_round()`: Charges saved payment method
+   - Prepay packages: Starter ($749), Standard ($1,295), Complete ($1,795), Unlimited ($2,000)
+   - Settlement fee calculator (30%)
+
+2. **Payment API Endpoints** (`app.py`):
+   - `POST /api/clients/<id>/payment/round` - Create round payment
+   - `POST /api/clients/<id>/payment/round/confirm` - Confirm payment
+   - `POST /api/clients/<id>/payment/charge-round` - Auto-charge
+   - `GET /api/clients/<id>/payment/summary` - Payment history
+   - `POST /api/clients/<id>/payment/prepay` - Prepay package checkout
+   - `POST /api/settlement-fee/calculate` - Calculate 30% fee
+
+3. **Onboarding Updates** (`templates/portal/onboarding.html`):
+   - Stage-based status banners (pending_payment, payment_failed, active)
+   - Updated payment modal with $298 pricing breakdown
+   - Shows $199 credit applied to Round 1
+
+**Remaining Phases**:
+- Phase 4: Scheduled auto-capture after 3-day period
+- Phase 5: Stripe webhook handlers for payment events
+
+**Related Docs**:
+- `PRICING_STRUCTURE.md` - Complete pricing details
+- `IMPLEMENTATION_PLAN_CLIENT_JOURNEY.md` - Full workflow specification
+
+---
+
+### Previous Work (2026-01-01) - COMPLETED
 
 **Task**: CROA Document Signing Workflow
 

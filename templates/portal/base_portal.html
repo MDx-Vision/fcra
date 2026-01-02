@@ -50,27 +50,69 @@
         </div>
     </header>
 
+    {# Determine client stage for navigation - default to 'active' for legacy clients #}
+    {% set client_stage = current_user.client.client_stage if current_user and current_user.client else 'active' %}
+    {% set has_full_access = client_stage == 'active' %}
+    {% set is_onboarding = client_stage in ['onboarding', 'pending_payment', 'payment_failed'] %}
+
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation" data-testid="portal-nav">
+        {# Setup/Onboarding - always visible during onboarding phase #}
+        {% if is_onboarding or has_full_access %}
         <a href="{{ url_for('portal.onboarding') }}" class="nav-tab {% if active_tab == 'onboarding' %}active{% endif %}" data-testid="nav-onboarding">
             <span class="nav-icon" aria-hidden="true">🚀</span><span class="nav-label">Setup</span>
         </a>
+        {% endif %}
+
+        {# Agreements - visible during onboarding phase #}
+        {% if is_onboarding %}
+        <a href="{{ url_for('portal.croa_agreements') }}" class="nav-tab {% if active_tab == 'agreements' %}active{% endif %}" data-testid="nav-agreements">
+            <span class="nav-icon" aria-hidden="true">📝</span><span class="nav-label">Agreements</span>
+        </a>
+        {% endif %}
+
+        {# Case Dashboard - only for active clients #}
+        {% if has_full_access %}
         <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="nav-case">
             <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
         </a>
+        {% endif %}
+
+        {# Journey/Timeline - only for active clients #}
+        {% if has_full_access %}
         <a href="{{ url_for('portal.timeline') }}" class="nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="nav-timeline">
             <span class="nav-icon" aria-hidden="true">📈</span><span class="nav-label">Journey</span>
         </a>
+        {% endif %}
+
+        {# Documents - only for active clients #}
+        {% if has_full_access %}
         <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
             <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
         </a>
+        {% endif %}
+
+        {# Messages - only for active clients #}
+        {% if has_full_access %}
         <a href="{{ url_for('portal.messages') }}" class="nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="nav-messages">
             <span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Messages</span>
         </a>
+        {% endif %}
+
+        {# Book Call - only for active clients #}
+        {% if has_full_access %}
         <a href="{{ url_for('portal.booking') }}" class="nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="nav-booking">
             <span class="nav-icon" aria-hidden="true">📞</span><span class="nav-label">Book Call</span>
         </a>
+        {% endif %}
+
+        {# Profile - always visible during onboarding and active #}
         <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="nav-profile">
             <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
+        </a>
+
+        {# Logout - always visible #}
+        <a href="{{ url_for('portal_logout') }}" class="nav-tab" data-testid="nav-logout">
+            <span class="nav-icon" aria-hidden="true">🚪</span><span class="nav-label">Logout</span>
         </a>
     </nav>
 
@@ -88,6 +130,23 @@
     </main>
 
     <nav class="mobile-nav" data-testid="mobile-nav">
+        {# Mobile nav also respects stage-based access #}
+        {% if is_onboarding %}
+        {# Onboarding mobile nav: Setup and Profile only #}
+        <a href="{{ url_for('portal.onboarding') }}" class="mobile-nav-tab {% if active_tab == 'onboarding' %}active{% endif %}" data-testid="mobile-nav-onboarding">
+            <span>🚀</span><span>Setup</span>
+        </a>
+        <a href="{{ url_for('portal.croa_agreements') }}" class="mobile-nav-tab {% if active_tab == 'agreements' %}active{% endif %}" data-testid="mobile-nav-agreements">
+            <span>📝</span><span>Sign</span>
+        </a>
+        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
+            <span>👤</span><span>Profile</span>
+        </a>
+        <a href="{{ url_for('portal_logout') }}" class="mobile-nav-tab" data-testid="mobile-nav-logout">
+            <span>🚪</span><span>Exit</span>
+        </a>
+        {% else %}
+        {# Active clients get full mobile nav #}
         <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="mobile-nav-case">
             <span>📊</span><span>Case</span>
         </a>
@@ -103,6 +162,7 @@
         <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>
         </a>
+        {% endif %}
     </nav>
 
     <script src="{{ url_for('static', filename='js/portal-redesign.js') }}"></script>

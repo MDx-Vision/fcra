@@ -1,9 +1,72 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, session, jsonify
 from functools import wraps
 from datetime import datetime, timedelta
 import os
 
 portal = Blueprint('portal', __name__, url_prefix='/portal')
+
+# =============================================================================
+# CLIENT STAGE ACCESS CONTROL
+# =============================================================================
+# Stages: lead, analysis_paid, onboarding, pending_payment, active, payment_failed, cancelled
+#
+# Access Matrix:
+# - lead: NO portal access (only /analysis/<token>)
+# - analysis_paid: NO portal access (must proceed to onboarding)
+# - onboarding: Only onboarding, agreements, profile
+# - pending_payment: Only onboarding, agreements, profile (waiting for day 3)
+# - active: FULL access
+# - payment_failed: Only onboarding, profile (must fix payment)
+# - cancelled: NO access
+# =============================================================================
+
+# Pages accessible during onboarding (before full access)
+ONBOARDING_ALLOWED_PAGES = [
+    'portal.onboarding',
+    'portal.agreements',
+    'portal.profile',
+    'portal.api_update_profile',
+    'portal.api_croa_progress',
+    'portal.api_croa_document',
+    'portal.api_croa_current_document',
+    'portal.api_croa_sign',
+    'portal.api_croa_skip_optional',
+    'portal.api_croa_cancellation_status',
+    'portal.api_croa_cancel',
+    'portal.api_croa_can_begin_services',
+    'portal.api_onboarding_sync',
+    'portal.api_onboarding_complete_step',
+    'portal.api_onboarding_upload',
+]
+
+# Stages that have full portal access
+FULL_ACCESS_STAGES = ['active']
+
+# Stages that have limited (onboarding) access
+LIMITED_ACCESS_STAGES = ['onboarding', 'pending_payment', 'payment_failed']
+
+# Stages that have NO portal access
+NO_ACCESS_STAGES = ['lead', 'analysis_paid', 'cancelled']
+
+
+def get_client_stage():
+    """Get the current client's stage from database"""
+    from database import get_db, Client
+
+    client_id = get_client_id()
+    if not client_id:
+        return None
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if client:
+            # Default to 'active' for legacy clients without stage set
+            return client.client_stage or 'active'
+        return None
+    finally:
+        db.close()
+
 
 def portal_login_required(f):
     """Decorator to require portal login"""
@@ -27,7 +90,8 @@ def portal_login_required(f):
                             email='testclient@example.com',
                             phone='555-555-5555',
                             current_dispute_round=2,
-                            dispute_status='active'
+                            dispute_status='active',
+                            client_stage='active'  # Full access for testing
                         )
                         db.add(test_client)
                         db.commit()
@@ -42,6 +106,95 @@ def portal_login_required(f):
             flash('Please log in to access your portal', 'error')
             return redirect(url_for('portal_login'))
         return f(*args, **kwargs)
+    return decorated_function
+
+
+def require_stage(*allowed_stages):
+    """
+    Decorator to require specific client stages for access.
+
+    Usage:
+        @require_stage('active')  # Only active clients
+        @require_stage('active', 'onboarding')  # Active or onboarding
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # Skip stage check in CI mode
+            if os.environ.get('CI') == 'true':
+                return f(*args, **kwargs)
+
+            stage = get_client_stage()
+
+            if stage is None:
+                flash('Please log in to access your portal', 'error')
+                return redirect(url_for('portal_login'))
+
+            if stage not in allowed_stages:
+                # Redirect based on current stage
+                if stage in NO_ACCESS_STAGES:
+                    flash('Please complete your signup first', 'info')
+                    return redirect(url_for('get_started'))
+                elif stage in LIMITED_ACCESS_STAGES:
+                    flash('Please complete your onboarding first', 'info')
+                    return redirect(url_for('portal.onboarding'))
+                else:
+                    # Unknown stage, redirect to onboarding
+                    return redirect(url_for('portal.onboarding'))
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+
+def require_full_access(f):
+    """Decorator to require full portal access (active stage only)"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Skip stage check in CI mode
+        if os.environ.get('CI') == 'true':
+            return f(*args, **kwargs)
+
+        stage = get_client_stage()
+
+        if stage is None:
+            flash('Please log in to access your portal', 'error')
+            return redirect(url_for('portal_login'))
+
+        if stage not in FULL_ACCESS_STAGES:
+            if stage in NO_ACCESS_STAGES:
+                flash('Please complete your signup first', 'info')
+                return redirect(url_for('get_started'))
+            else:
+                flash('Please complete your onboarding to access this page', 'info')
+                return redirect(url_for('portal.onboarding'))
+
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def require_onboarding_access(f):
+    """Decorator for pages accessible during onboarding"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Skip stage check in CI mode
+        if os.environ.get('CI') == 'true':
+            return f(*args, **kwargs)
+
+        stage = get_client_stage()
+
+        if stage is None:
+            flash('Please log in to access your portal', 'error')
+            return redirect(url_for('portal_login'))
+
+        # Allow if active OR in limited access stages
+        if stage in FULL_ACCESS_STAGES or stage in LIMITED_ACCESS_STAGES:
+            return f(*args, **kwargs)
+
+        # No access stages
+        flash('Please complete your signup first', 'info')
+        return redirect(url_for('get_started'))
+
     return decorated_function
 
 def get_client_id():
@@ -76,8 +229,9 @@ def get_current_user():
 @portal.route('/dashboard')
 @portal.route('/')
 @portal_login_required
+@require_full_access
 def dashboard():
-    """Main dashboard/case overview page"""
+    """Main dashboard/case overview page - requires ACTIVE stage"""
     from database import get_db, Client, DisputeItem, Violation, SecondaryBureauFreeze, Analysis, Damages
 
     current_user = get_current_user()
@@ -171,8 +325,9 @@ def dashboard():
 
 @portal.route('/documents')
 @portal_login_required
+@require_full_access
 def documents():
-    """Documents page"""
+    """Documents page - requires ACTIVE stage"""
     from database import get_db, Client, ClientUpload
 
     current_user = get_current_user()
@@ -427,8 +582,9 @@ def download_document(doc_id):
 
 @portal.route('/learn')
 @portal_login_required
+@require_full_access
 def learn():
-    """Learn/Education page"""
+    """Learn/Education page - requires ACTIVE stage"""
     current_user = get_current_user()
     if not current_user:
         return redirect(url_for('portal_login'))
@@ -437,6 +593,7 @@ def learn():
 
 @portal.route('/profile')
 @portal_login_required
+@require_onboarding_access
 def profile():
     """Profile page"""
     from database import get_db, Client
@@ -512,8 +669,9 @@ def submit_referral():
 
 @portal.route('/status')
 @portal_login_required
+@require_full_access
 def status():
-    """Detailed bureau status page"""
+    """Detailed bureau status page - requires ACTIVE stage"""
     from database import get_db, Client, DisputeItem, SecondaryBureauFreeze, ClientUpload
 
     current_user = get_current_user()
@@ -743,8 +901,9 @@ def download_freeze_confirmation(bureau_id):
 
 @portal.route('/booking')
 @portal_login_required
+@require_full_access
 def booking():
-    """Q&A Call booking page"""
+    """Q&A Call booking page - requires ACTIVE stage"""
     current_user = get_current_user()
     if not current_user:
         return redirect(url_for('portal_login'))
@@ -753,8 +912,9 @@ def booking():
 
 @portal.route('/messages')
 @portal_login_required
+@require_full_access
 def messages():
-    """Live support messaging page"""
+    """Live support messaging page - requires ACTIVE stage"""
     current_user = get_current_user()
     if not current_user:
         return redirect(url_for('portal_login'))
@@ -764,8 +924,9 @@ def messages():
 
 @portal.route('/onboarding')
 @portal_login_required
+@require_onboarding_access
 def onboarding():
-    """Onboarding wizard page"""
+    """Onboarding wizard page - accessible during onboarding"""
     from database import get_db
     from services.onboarding_service import get_onboarding_service
 
@@ -862,8 +1023,9 @@ def api_onboarding_next_step():
 
 @portal.route('/timeline')
 @portal_login_required
+@require_full_access
 def timeline():
-    """Timeline page showing client journey"""
+    """Timeline page showing client journey - requires ACTIVE stage"""
     return render_template(
         'portal/timeline.html',
         active_tab='timeline',
@@ -873,8 +1035,9 @@ def timeline():
 
 @portal.route('/api/timeline', methods=['GET'])
 @portal_login_required
+@require_full_access
 def api_get_timeline():
-    """Get timeline events for the current client"""
+    """Get timeline events for the current client - requires ACTIVE stage"""
     from flask import jsonify, request
     from database import get_db
     from services.timeline_service import get_timeline_service
@@ -902,8 +1065,9 @@ def api_get_timeline():
 
 @portal.route('/api/timeline/recent', methods=['GET'])
 @portal_login_required
+@require_full_access
 def api_get_recent_timeline():
-    """Get most recent timeline events"""
+    """Get most recent timeline events - requires ACTIVE stage"""
     from flask import jsonify, request
     from database import get_db
     from services.timeline_service import get_timeline_service
@@ -920,8 +1084,9 @@ def api_get_recent_timeline():
 
 @portal.route('/api/timeline/milestones', methods=['GET'])
 @portal_login_required
+@require_full_access
 def api_get_milestones():
-    """Get milestone events for progress display"""
+    """Get milestone events for progress display - requires ACTIVE stage"""
     from flask import jsonify
     from database import get_db
     from services.timeline_service import get_timeline_service
@@ -937,8 +1102,9 @@ def api_get_milestones():
 
 @portal.route('/api/timeline/progress', methods=['GET'])
 @portal_login_required
+@require_full_access
 def api_get_timeline_progress():
-    """Get progress summary for the client journey"""
+    """Get progress summary for the client journey - requires ACTIVE stage"""
     from flask import jsonify
     from database import get_db
     from services.timeline_service import get_timeline_service
@@ -954,8 +1120,9 @@ def api_get_timeline_progress():
 
 @portal.route('/api/timeline/backfill', methods=['POST'])
 @portal_login_required
+@require_full_access
 def api_backfill_timeline():
-    """Backfill timeline events from existing client data"""
+    """Backfill timeline events from existing client data - requires ACTIVE stage"""
     from flask import jsonify
     from database import get_db
     from services.timeline_service import get_timeline_service
@@ -975,8 +1142,9 @@ def api_backfill_timeline():
 
 @portal.route('/agreements')
 @portal_login_required
+@require_onboarding_access
 def croa_agreements():
-    """CROA document signing page"""
+    """CROA document signing page - accessible during onboarding"""
     return render_template(
         'portal/agreements.html',
         active_tab='onboarding',
@@ -986,8 +1154,9 @@ def croa_agreements():
 
 @portal.route('/api/croa/progress', methods=['GET'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_progress():
-    """Get CROA signing progress"""
+    """Get CROA signing progress - accessible during onboarding"""
     from flask import jsonify
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service
@@ -1003,8 +1172,9 @@ def api_croa_progress():
 
 @portal.route('/api/croa/document/<document_code>', methods=['GET'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_get_document(document_code):
-    """Get a specific CROA document"""
+    """Get a specific CROA document - accessible during onboarding"""
     from flask import jsonify
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service
@@ -1020,8 +1190,9 @@ def api_croa_get_document(document_code):
 
 @portal.route('/api/croa/current-document', methods=['GET'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_current_document():
-    """Get the current document to sign"""
+    """Get the current document to sign - accessible during onboarding"""
     from flask import jsonify
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service
@@ -1037,8 +1208,9 @@ def api_croa_current_document():
 
 @portal.route('/api/croa/sign', methods=['POST'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_sign_document():
-    """Sign a CROA document"""
+    """Sign a CROA document - accessible during onboarding"""
     from flask import jsonify, request
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service
@@ -1072,8 +1244,9 @@ def api_croa_sign_document():
 
 @portal.route('/api/croa/skip-optional', methods=['POST'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_skip_optional():
-    """Skip an optional document"""
+    """Skip an optional document - accessible during onboarding"""
     from flask import jsonify, request
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service
@@ -1095,8 +1268,9 @@ def api_croa_skip_optional():
 
 @portal.route('/api/croa/cancellation-status', methods=['GET'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_cancellation_status():
-    """Get cancellation period status"""
+    """Get cancellation period status - accessible during onboarding"""
     from flask import jsonify
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service
@@ -1112,8 +1286,9 @@ def api_croa_cancellation_status():
 
 @portal.route('/api/croa/cancel', methods=['POST'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_cancel_service():
-    """Cancel service during cancellation period"""
+    """Cancel service during cancellation period - accessible during onboarding"""
     from flask import jsonify, request
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service
@@ -1132,8 +1307,9 @@ def api_croa_cancel_service():
 
 @portal.route('/api/croa/can-begin-services', methods=['GET'])
 @portal_login_required
+@require_onboarding_access
 def api_croa_can_begin_services():
-    """Check if services can begin"""
+    """Check if services can begin - accessible during onboarding"""
     from flask import jsonify
     from database import get_db
     from services.croa_signing_service import get_croa_signing_service

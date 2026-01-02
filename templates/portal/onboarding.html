@@ -364,6 +364,48 @@
         <p>Follow these steps to get started with your credit repair journey</p>
     </div>
 
+    {# Client Stage Status Banner #}
+    {% set client_stage = current_user.client.client_stage if current_user and current_user.client else 'onboarding' %}
+
+    {% if client_stage == 'pending_payment' %}
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #f59e0b;" data-testid="cancellation-notice">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">⏳</span>
+            <div>
+                <div style="font-weight: 600; color: #92400e; margin-bottom: 4px;">3-Day Cancellation Period Active</div>
+                <div style="font-size: 14px; color: #a16207;">
+                    Your agreements have been signed. You have 3 business days to cancel if you change your mind.
+                    Once this period ends, we'll charge your card and begin sending your dispute letters.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif client_stage == 'payment_failed' %}
+    <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #ef4444;" data-testid="payment-failed-notice">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">⚠️</span>
+            <div>
+                <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px;">Payment Failed</div>
+                <div style="font-size: 14px; color: #b91c1c;">
+                    We couldn't process your payment. Please update your payment method below to continue.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif client_stage == 'active' %}
+    <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #22c55e;" data-testid="active-notice">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">✅</span>
+            <div>
+                <div style="font-weight: 600; color: #166534; margin-bottom: 4px;">Your Case is Active!</div>
+                <div style="font-size: 14px; color: #15803d;">
+                    Your dispute letters are being prepared. Check your <a href="{{ url_for('portal.dashboard') }}" style="color: #166534; font-weight: 600;">Case Dashboard</a> for updates.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Progress Section -->
     <div class="progress-section" data-testid="progress-section">
         <div class="progress-header">
@@ -624,27 +666,42 @@
 <div class="step-modal" id="modal-payment" data-testid="modal-payment">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 class="modal-title">Payment Setup</h2>
+            <h2 class="modal-title">Round 1 Payment</h2>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <form id="form-payment" onsubmit="submitStep(event, 'payment')">
-            <p style="color: #64748b; margin-bottom: 20px;">Complete your payment to begin the credit repair process.</p>
-            <div style="background: #f0fdf4; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
-                <div style="font-size: 14px; color: #64748b; margin-bottom: 8px;">Service Fee</div>
-                <div style="font-size: 36px; font-weight: 700; color: #16a34a;">$99</div>
-                <div style="font-size: 14px; color: #64748b;">One-time setup + first month</div>
+            <p style="color: #64748b; margin-bottom: 20px;">Your payment will be charged when we send your Round 1 dispute letters (after the 3-day cancellation period).</p>
+
+            <!-- Pricing breakdown -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #64748b;">Round 1 Base Price</span>
+                    <span style="color: #1a1a2e;">$497</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                    <span style="color: #22c55e;">Analysis Credit Applied</span>
+                    <span style="color: #22c55e;">-$199</span>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; display: flex; justify-content: space-between;">
+                    <span style="font-weight: 600; color: #1a1a2e;">Your Total</span>
+                    <span style="font-size: 24px; font-weight: 700; color: #16a34a;">$298</span>
+                </div>
             </div>
+
+            <div style="background: #fef3c7; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+                <div style="font-size: 13px; color: #92400e;">
+                    <strong>Note:</strong> You won't be charged until the 3-day cancellation period ends and your dispute letters are ready to send.
+                </div>
+            </div>
+
             <div class="form-group">
                 <label for="payment_method">Payment Method</label>
                 <select id="payment_method" name="payment_method" required data-testid="select-payment">
                     <option value="">Select payment method...</option>
                     <option value="stripe">Credit/Debit Card</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="cashapp">Cash App</option>
-                    <option value="zelle">Zelle</option>
                 </select>
             </div>
-            <button type="submit" class="btn-primary" data-testid="save-payment">Proceed to Payment</button>
+            <button type="submit" class="btn-primary" data-testid="save-payment">Add Payment Method</button>
         </form>
     </div>
 </div>
