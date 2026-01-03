@@ -36952,7 +36952,7 @@ def api_request_document_via_whatsapp(client_id):
 
 
 @app.route("/api/batch/action-types", methods=["GET"])
-@login_required
+@require_staff()
 def api_batch_action_types():
     """Get available batch action types"""
     from services.batch_processing_service import BatchProcessingService
@@ -36965,7 +36965,7 @@ def api_batch_action_types():
 
 
 @app.route("/api/batch/jobs", methods=["GET"])
-@login_required
+@require_staff()
 def api_batch_list_jobs():
     """List batch jobs with optional filtering"""
     from services.batch_processing_service import BatchProcessingService
@@ -36990,7 +36990,7 @@ def api_batch_list_jobs():
 
 
 @app.route("/api/batch/jobs", methods=["POST"])
-@login_required
+@require_staff()
 def api_batch_create_job():
     """Create a new batch job"""
     from services.batch_processing_service import BatchProcessingService
@@ -37040,7 +37040,7 @@ def api_batch_create_job():
 
 
 @app.route("/api/batch/jobs/<int:job_id>", methods=["GET"])
-@login_required
+@require_staff()
 def api_batch_get_job(job_id):
     """Get a batch job by ID"""
     from services.batch_processing_service import BatchProcessingService
@@ -37058,7 +37058,7 @@ def api_batch_get_job(job_id):
 
 
 @app.route("/api/batch/jobs/<int:job_id>/progress", methods=["GET"])
-@login_required
+@require_staff()
 def api_batch_job_progress(job_id):
     """Get real-time progress of a batch job"""
     from services.batch_processing_service import BatchProcessingService
@@ -37076,7 +37076,7 @@ def api_batch_job_progress(job_id):
 
 
 @app.route("/api/batch/jobs/<int:job_id>/execute", methods=["POST"])
-@login_required
+@require_staff()
 def api_batch_execute_job(job_id):
     """Execute a pending batch job"""
     from services.batch_processing_service import BatchProcessingService
@@ -37096,7 +37096,7 @@ def api_batch_execute_job(job_id):
 
 
 @app.route("/api/batch/jobs/<int:job_id>/cancel", methods=["POST"])
-@login_required
+@require_staff()
 def api_batch_cancel_job(job_id):
     """Cancel a batch job"""
     from services.batch_processing_service import BatchProcessingService
@@ -37116,7 +37116,7 @@ def api_batch_cancel_job(job_id):
 
 
 @app.route("/api/batch/jobs/<int:job_id>/retry", methods=["POST"])
-@login_required
+@require_staff()
 def api_batch_retry_job(job_id):
     """Retry failed items in a batch job"""
     from services.batch_processing_service import BatchProcessingService
@@ -37137,7 +37137,7 @@ def api_batch_retry_job(job_id):
 
 
 @app.route("/api/batch/stats", methods=["GET"])
-@login_required
+@require_staff()
 def api_batch_stats():
     """Get batch processing statistics"""
     from services.batch_processing_service import BatchProcessingService
@@ -37152,7 +37152,7 @@ def api_batch_stats():
 
 
 @app.route("/api/batch/history", methods=["GET"])
-@login_required
+@require_staff()
 def api_batch_history():
     """Get batch job history"""
     from services.batch_processing_service import BatchProcessingService
@@ -37170,7 +37170,7 @@ def api_batch_history():
 
 
 @app.route("/dashboard/batch-jobs", methods=["GET"])
-@login_required
+@require_staff()
 def dashboard_batch_jobs():
     """Batch jobs history page"""
     return render_template("batch_jobs.html")
@@ -37182,7 +37182,7 @@ def dashboard_batch_jobs():
 
 
 @app.route("/api/staff-performance/activity-types", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_activity_types():
     """Get available activity types"""
     from services.staff_performance_service import ACTIVITY_TYPES
@@ -37193,7 +37193,7 @@ def api_staff_performance_activity_types():
 
 
 @app.route("/api/staff-performance/log", methods=["POST"])
-@login_required
+@require_staff()
 def api_staff_performance_log():
     """Log a staff activity"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37232,7 +37232,7 @@ def api_staff_performance_log():
 
 
 @app.route("/api/staff-performance/dashboard", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_dashboard():
     """Get staff performance dashboard summary"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37247,7 +37247,7 @@ def api_staff_performance_dashboard():
 
 
 @app.route("/api/staff-performance/leaderboard", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_leaderboard():
     """Get staff leaderboard"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37268,7 +37268,7 @@ def api_staff_performance_leaderboard():
 
 
 @app.route("/api/staff-performance/staff/<int:staff_id>/metrics", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_metrics(staff_id):
     """Get performance metrics for a specific staff member"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37292,7 +37292,7 @@ def api_staff_performance_metrics(staff_id):
 
 
 @app.route("/api/staff-performance/staff/<int:staff_id>/activities", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_activities(staff_id):
     """Get recent activities for a staff member"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37316,7 +37316,7 @@ def api_staff_performance_activities(staff_id):
 
 
 @app.route("/api/staff-performance/team/metrics", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_team_metrics():
     """Get aggregate metrics for all staff"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37339,7 +37339,7 @@ def api_staff_performance_team_metrics():
 
 
 @app.route("/api/staff-performance/trend", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_trend():
     """Get performance trend over time"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37360,7 +37360,7 @@ def api_staff_performance_trend():
 
 
 @app.route("/api/staff-performance/recent", methods=["GET"])
-@login_required
+@require_staff()
 def api_staff_performance_recent():
     """Get recent team activities"""
     from services.staff_performance_service import StaffPerformanceService
@@ -37377,7 +37377,7 @@ def api_staff_performance_recent():
 
 
 @app.route("/dashboard/staff-performance", methods=["GET"])
-@login_required
+@require_staff()
 def dashboard_staff_performance():
     """Staff performance dashboard page"""
     return render_template("staff_performance.html")
@@ -37388,7 +37388,7 @@ def dashboard_staff_performance():
 # =====================================================================
 
 @app.route("/api/client-success/dashboard", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_dashboard():
     """Get dashboard summary for client success metrics"""
     from services.client_success_service import ClientSuccessService
@@ -37403,7 +37403,7 @@ def api_client_success_dashboard():
 
 
 @app.route("/api/client-success/aggregate", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_aggregate():
     """Get aggregate success report"""
     from services.client_success_service import ClientSuccessService
@@ -37420,7 +37420,7 @@ def api_client_success_aggregate():
 
 
 @app.route("/api/client-success/client/<int:client_id>", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_client(client_id):
     """Get success summary for a specific client"""
     from services.client_success_service import ClientSuccessService
@@ -37438,7 +37438,7 @@ def api_client_success_client(client_id):
 
 
 @app.route("/api/client-success/client/<int:client_id>/snapshot", methods=["POST"])
-@login_required
+@require_staff()
 def api_client_success_create_snapshot(client_id):
     """Create a new success metric snapshot for a client"""
     from services.client_success_service import ClientSuccessService
@@ -37459,7 +37459,7 @@ def api_client_success_create_snapshot(client_id):
 
 
 @app.route("/api/client-success/client/<int:client_id>/history", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_history(client_id):
     """Get snapshot history for a client"""
     from services.client_success_service import ClientSuccessService
@@ -37476,7 +37476,7 @@ def api_client_success_history(client_id):
 
 
 @app.route("/api/client-success/top-performers", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_top_performers():
     """Get top performing clients"""
     from services.client_success_service import ClientSuccessService
@@ -37495,7 +37495,7 @@ def api_client_success_top_performers():
 
 
 @app.route("/api/client-success/trend", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_trend():
     """Get success metrics trend over time"""
     from services.client_success_service import ClientSuccessService
@@ -37514,7 +37514,7 @@ def api_client_success_trend():
 
 
 @app.route("/api/client-success/bureau-breakdown", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_bureau_breakdown():
     """Get success metrics broken down by bureau"""
     from services.client_success_service import ClientSuccessService
@@ -37529,7 +37529,7 @@ def api_client_success_bureau_breakdown():
 
 
 @app.route("/api/client-success/update-all", methods=["POST"])
-@login_required
+@require_staff()
 def api_client_success_update_all():
     """Create snapshots for all active clients"""
     from services.client_success_service import ClientSuccessService
@@ -37547,7 +37547,7 @@ def api_client_success_update_all():
 
 
 @app.route("/api/client-success/export", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_success_export():
     """Export success metrics data"""
     from services.client_success_service import ClientSuccessService
@@ -37578,7 +37578,7 @@ def api_client_success_export():
 
 
 @app.route("/dashboard/client-success", methods=["GET"])
-@login_required
+@require_staff()
 def dashboard_client_success():
     """Client success metrics dashboard page"""
     return render_template("client_success.html")
@@ -37589,7 +37589,7 @@ def dashboard_client_success():
 # =====================================================================
 
 @app.route("/api/ai-dispute-writer/dashboard", methods=["GET"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_dashboard():
     """Get dashboard data for AI Dispute Writer"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37609,7 +37609,7 @@ def api_ai_dispute_writer_dashboard():
 
 
 @app.route("/api/ai-dispute-writer/rounds", methods=["GET"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_rounds():
     """Get information about all dispute rounds"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37624,7 +37624,7 @@ def api_ai_dispute_writer_rounds():
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/context", methods=["GET"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_context(client_id):
     """Get client context for letter generation"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37652,7 +37652,7 @@ def api_ai_dispute_writer_context(client_id):
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/suggest", methods=["GET"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_suggest(client_id):
     """Get AI suggestion for next action"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37670,7 +37670,7 @@ def api_ai_dispute_writer_suggest(client_id):
 
 
 @app.route("/api/ai-dispute-writer/generate", methods=["POST"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_generate():
     """Generate dispute letters using AI"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37704,7 +37704,7 @@ def api_ai_dispute_writer_generate():
 
 
 @app.route("/api/ai-dispute-writer/generate-quick", methods=["POST"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_generate_quick():
     """Generate a quick single letter"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37740,7 +37740,7 @@ def api_ai_dispute_writer_generate_quick():
 
 
 @app.route("/api/ai-dispute-writer/regenerate", methods=["POST"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_regenerate():
     """Regenerate a letter with feedback"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37775,7 +37775,7 @@ def api_ai_dispute_writer_regenerate():
 
 
 @app.route("/api/ai-dispute-writer/save", methods=["POST"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_save():
     """Save a generated letter"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37813,7 +37813,7 @@ def api_ai_dispute_writer_save():
 
 
 @app.route("/api/ai-dispute-writer/client/<int:client_id>/letters", methods=["GET"])
-@login_required
+@require_staff()
 def api_ai_dispute_writer_letters(client_id):
     """Get saved letters for a client"""
     from services.ai_dispute_writer_service import AIDisputeWriterService
@@ -37840,7 +37840,7 @@ def api_ai_dispute_writer_letters(client_id):
 
 
 @app.route("/dashboard/ai-dispute-writer", methods=["GET"])
-@login_required
+@require_staff()
 def dashboard_ai_dispute_writer():
     """AI Dispute Writer dashboard page"""
     return render_template("ai_dispute_writer.html")
@@ -37851,7 +37851,7 @@ def dashboard_ai_dispute_writer():
 # =============================================================================
 
 @app.route("/api/roi-calculator/dashboard", methods=["GET"])
-@login_required
+@require_staff()
 def api_roi_calculator_dashboard():
     """Get ROI calculator dashboard summary"""
     try:
@@ -37864,7 +37864,7 @@ def api_roi_calculator_dashboard():
 
 
 @app.route("/api/roi-calculator/calculate/<int:client_id>", methods=["POST"])
-@login_required
+@require_staff()
 def api_roi_calculator_calculate(client_id):
     """Calculate ROI for a specific client"""
     try:
@@ -37888,7 +37888,7 @@ def api_roi_calculator_calculate(client_id):
 
 
 @app.route("/api/roi-calculator/quick-estimate", methods=["POST"])
-@login_required
+@require_staff()
 def api_roi_calculator_quick_estimate():
     """Quick ROI estimate without client data"""
     try:
@@ -37913,7 +37913,7 @@ def api_roi_calculator_quick_estimate():
 
 
 @app.route("/api/roi-calculator/client/<int:client_id>", methods=["GET"])
-@login_required
+@require_staff()
 def api_roi_calculator_client_history(client_id):
     """Get calculation history for a client"""
     try:
@@ -37929,7 +37929,7 @@ def api_roi_calculator_client_history(client_id):
 
 
 @app.route("/api/roi-calculator/calculation/<int:calculation_id>", methods=["GET"])
-@login_required
+@require_staff()
 def api_roi_calculator_get_calculation(calculation_id):
     """Get a specific calculation"""
     try:
@@ -37945,7 +37945,7 @@ def api_roi_calculator_get_calculation(calculation_id):
 
 
 @app.route("/api/roi-calculator/stats", methods=["GET"])
-@login_required
+@require_staff()
 def api_roi_calculator_stats():
     """Get aggregate statistics"""
     try:
@@ -37961,7 +37961,7 @@ def api_roi_calculator_stats():
 
 
 @app.route("/api/roi-calculator/export", methods=["GET"])
-@login_required
+@require_staff()
 def api_roi_calculator_export():
     """Export calculations as CSV"""
     try:
@@ -37997,7 +37997,7 @@ def api_roi_calculator_export():
 
 
 @app.route("/dashboard/roi-calculator", methods=["GET"])
-@login_required
+@require_staff()
 def dashboard_roi_calculator():
     """ROI Calculator dashboard page"""
     return render_template("roi_calculator.html")
@@ -38008,7 +38008,7 @@ def dashboard_roi_calculator():
 # =============================================================================
 
 @app.route("/api/payment-plans", methods=["GET"])
-@login_required
+@require_staff()
 def api_payment_plans_list():
     """List payment plans with filtering"""
     try:
@@ -38033,7 +38033,7 @@ def api_payment_plans_list():
 
 
 @app.route("/api/payment-plans", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_create():
     """Create a new payment plan"""
     try:
@@ -38070,7 +38070,7 @@ def api_payment_plans_create():
 
 
 @app.route("/api/payment-plans/<int:plan_id>", methods=["GET"])
-@login_required
+@require_staff()
 def api_payment_plans_get(plan_id):
     """Get a payment plan with installments"""
     try:
@@ -38086,7 +38086,7 @@ def api_payment_plans_get(plan_id):
 
 
 @app.route("/api/payment-plans/<int:plan_id>", methods=["PUT"])
-@login_required
+@require_staff()
 def api_payment_plans_update(plan_id):
     """Update a payment plan"""
     try:
@@ -38102,7 +38102,7 @@ def api_payment_plans_update(plan_id):
 
 
 @app.route("/api/payment-plans/<int:plan_id>/payment", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_record_payment(plan_id):
     """Record a payment against a plan"""
     try:
@@ -38130,7 +38130,7 @@ def api_payment_plans_record_payment(plan_id):
 
 
 @app.route("/api/payment-plans/<int:plan_id>/pause", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_pause(plan_id):
     """Pause a payment plan"""
     try:
@@ -38146,7 +38146,7 @@ def api_payment_plans_pause(plan_id):
 
 
 @app.route("/api/payment-plans/<int:plan_id>/resume", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_resume(plan_id):
     """Resume a paused payment plan"""
     try:
@@ -38160,7 +38160,7 @@ def api_payment_plans_resume(plan_id):
 
 
 @app.route("/api/payment-plans/<int:plan_id>/cancel", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_cancel(plan_id):
     """Cancel a payment plan"""
     try:
@@ -38176,7 +38176,7 @@ def api_payment_plans_cancel(plan_id):
 
 
 @app.route("/api/payment-plans/<int:plan_id>/default", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_default(plan_id):
     """Mark a payment plan as defaulted"""
     try:
@@ -38192,7 +38192,7 @@ def api_payment_plans_default(plan_id):
 
 
 @app.route("/api/payment-plans/installments/<int:installment_id>/waive", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_waive_installment(installment_id):
     """Waive an installment"""
     try:
@@ -38208,7 +38208,7 @@ def api_payment_plans_waive_installment(installment_id):
 
 
 @app.route("/api/payment-plans/dashboard", methods=["GET"])
-@login_required
+@require_staff()
 def api_payment_plans_dashboard():
     """Get payment plans dashboard summary"""
     try:
@@ -38222,7 +38222,7 @@ def api_payment_plans_dashboard():
 
 
 @app.route("/api/payment-plans/due-soon", methods=["GET"])
-@login_required
+@require_staff()
 def api_payment_plans_due_soon():
     """Get installments due soon"""
     try:
@@ -38238,7 +38238,7 @@ def api_payment_plans_due_soon():
 
 
 @app.route("/api/payment-plans/overdue", methods=["GET"])
-@login_required
+@require_staff()
 def api_payment_plans_overdue():
     """Get overdue installments"""
     try:
@@ -38252,7 +38252,7 @@ def api_payment_plans_overdue():
 
 
 @app.route("/api/payment-plans/check-late", methods=["POST"])
-@login_required
+@require_staff()
 def api_payment_plans_check_late():
     """Check for late payments and apply late fees"""
     try:
@@ -38266,7 +38266,7 @@ def api_payment_plans_check_late():
 
 
 @app.route("/api/payment-plans/export", methods=["GET"])
-@login_required
+@require_staff()
 def api_payment_plans_export():
     """Export payment plans as CSV"""
     try:
@@ -38298,7 +38298,7 @@ def api_payment_plans_export():
 
 
 @app.route("/api/clients/<int:client_id>/payment-plans", methods=["GET"])
-@login_required
+@require_staff()
 def api_client_payment_plans(client_id):
     """Get payment plans for a specific client"""
     try:
@@ -38312,7 +38312,7 @@ def api_client_payment_plans(client_id):
 
 
 @app.route("/dashboard/payment-plans", methods=["GET"])
-@login_required
+@require_staff()
 def dashboard_payment_plans():
     """Payment Plans management dashboard"""
     return render_template("payment_plans.html")
