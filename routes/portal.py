@@ -1391,7 +1391,8 @@ def api_croa_can_begin_services():
 @require_full_access
 def portal_invoices():
     """Client invoice history page"""
-    return render_template('portal/invoices.html')
+    current_user = get_current_user()
+    return render_template('portal/invoices.html', current_user=current_user)
 
 
 @portal.route('/api/invoices', methods=['GET'])
@@ -1489,7 +1490,8 @@ def api_portal_invoice_pdf(invoice_id):
 @require_full_access
 def portal_payment_plans():
     """Client payment plans page"""
-    return render_template('portal/payment_plans.html')
+    current_user = get_current_user()
+    return render_template('portal/payment_plans.html', current_user=current_user)
 
 
 @portal.route('/api/payment-plans', methods=['GET'])
