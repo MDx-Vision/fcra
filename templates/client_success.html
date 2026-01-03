@@ -1,0 +1,663 @@
+{% extends "includes/dashboard_base.html" %}
+
+{% block title %}Client Success Metrics{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--bg-secondary, #f8f9fa);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid var(--border-color, #e5e7eb);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary, #1f2937);
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-value.positive {
+        color: #22c55e;
+    }
+
+    .stat-value.negative {
+        color: #ef4444;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-secondary, #6b7280);
+    }
+
+    .dashboard-section {
+        background: var(--bg-primary, #fff);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-color, #e5e7eb);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .section-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary, #1f2937);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    .performers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .performer-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .performer-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color, #e5e7eb);
+    }
+
+    .performer-item:last-child {
+        border-bottom: none;
+    }
+
+    .performer-rank {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin-right: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .performer-rank.gold {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: white;
+    }
+
+    .performer-rank.silver {
+        background: linear-gradient(135deg, #9ca3af, #6b7280);
+        color: white;
+    }
+
+    .performer-rank.bronze {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        color: white;
+    }
+
+    .performer-rank.default {
+        background: var(--bg-secondary, #f3f4f6);
+        color: var(--text-secondary, #6b7280);
+    }
+
+    .performer-info {
+        flex: 1;
+    }
+
+    .performer-name {
+        font-weight: 600;
+        color: var(--text-primary, #1f2937);
+    }
+
+    .performer-details {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #6b7280);
+    }
+
+    .performer-metric {
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+
+    .grade-distribution {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .grade-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-align: center;
+        min-width: 60px;
+    }
+
+    .grade-a-plus { background: #22c55e; color: white; }
+    .grade-a { background: #4ade80; color: white; }
+    .grade-b-plus { background: #86efac; color: #166534; }
+    .grade-b { background: #fbbf24; color: #78350f; }
+    .grade-c-plus { background: #fcd34d; color: #78350f; }
+    .grade-c { background: #fb923c; color: white; }
+    .grade-d { background: #f87171; color: white; }
+    .grade-f { background: #ef4444; color: white; }
+
+    .bureau-breakdown {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    .bureau-card {
+        background: var(--bg-secondary, #f8f9fa);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .bureau-name {
+        font-weight: 600;
+        color: var(--text-primary, #1f2937);
+        margin-bottom: 0.5rem;
+    }
+
+    .bureau-stat {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #22c55e;
+    }
+
+    .bureau-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary, #6b7280);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: #22c55e;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #16a34a;
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary, #f3f4f6);
+        color: var(--text-primary, #1f2937);
+        border: 1px solid var(--border-color, #e5e7eb);
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-tertiary, #e5e7eb);
+    }
+
+    .period-selector {
+        display: flex;
+        gap: 0.25rem;
+        background: var(--bg-secondary, #f3f4f6);
+        padding: 0.25rem;
+        border-radius: 8px;
+    }
+
+    .period-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: var(--text-secondary, #6b7280);
+        transition: all 0.2s;
+    }
+
+    .period-btn.active {
+        background: white;
+        color: var(--text-primary, #1f2937);
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        color: var(--text-secondary, #6b7280);
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .performers-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .bureau-breakdown {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content" style="padding: 2rem;">
+    <!-- Page Header -->
+    <div class="section-header" style="margin-bottom: 1.5rem;">
+        <div>
+            <h1 class="section-title" style="font-size: 1.5rem;">Client Success Metrics</h1>
+            <p style="color: var(--text-secondary, #6b7280); margin-top: 0.25rem;">
+                Track items deleted, score improvements, and client outcomes
+            </p>
+        </div>
+        <div class="action-buttons">
+            <button class="btn-action btn-secondary" onclick="exportData()">
+                Export CSV
+            </button>
+            <button class="btn-action btn-primary" onclick="updateAllSnapshots()">
+                Update All Metrics
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <div class="stat-value" id="totalClients">-</div>
+            <div class="stat-label">Total Clients</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="completedCases">-</div>
+            <div class="stat-label">Completed Cases</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value positive" id="totalDeleted">-</div>
+            <div class="stat-label">Items Deleted</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="avgDeletionRate">-</div>
+            <div class="stat-label">Avg Deletion Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value positive" id="avgScoreImprovement">-</div>
+            <div class="stat-label">Avg Score Improvement</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="estimatedValue">-</div>
+            <div class="stat-label">Est. Value Recovered</div>
+        </div>
+    </div>
+
+    <!-- Trend Chart -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2 class="section-title">Success Trend</h2>
+            <div class="period-selector">
+                <button class="period-btn" data-period="week" onclick="changePeriod('week')">Week</button>
+                <button class="period-btn active" data-period="month" onclick="changePeriod('month')">Month</button>
+                <button class="period-btn" data-period="quarter" onclick="changePeriod('quarter')">Quarter</button>
+                <button class="period-btn" data-period="year" onclick="changePeriod('year')">Year</button>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="performers-grid">
+        <!-- Top Performers by Deletion Rate -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">Top by Deletion Rate</h2>
+            </div>
+            <ul class="performer-list" id="topByDeletion">
+                <li class="loading-spinner">Loading...</li>
+            </ul>
+        </div>
+
+        <!-- Top Performers by Score Improvement -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">Top by Score Improvement</h2>
+            </div>
+            <ul class="performer-list" id="topByScore">
+                <li class="loading-spinner">Loading...</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Bureau Breakdown -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2 class="section-title">Bureau Breakdown</h2>
+        </div>
+        <div class="bureau-breakdown" id="bureauBreakdown">
+            <div class="bureau-card">
+                <div class="bureau-name">Equifax</div>
+                <div class="bureau-stat" id="equifaxDeleted">-</div>
+                <div class="bureau-label">Items Deleted</div>
+            </div>
+            <div class="bureau-card">
+                <div class="bureau-name">Experian</div>
+                <div class="bureau-stat" id="experianDeleted">-</div>
+                <div class="bureau-label">Items Deleted</div>
+            </div>
+            <div class="bureau-card">
+                <div class="bureau-name">TransUnion</div>
+                <div class="bureau-stat" id="transunionDeleted">-</div>
+                <div class="bureau-label">Items Deleted</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Distribution -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2 class="section-title">Success Grade Distribution</h2>
+        </div>
+        <div class="grade-distribution" id="gradeDistribution">
+            <div class="loading-spinner">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let trendChart = null;
+    let currentPeriod = 'month';
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboard();
+        loadBureauBreakdown();
+
+        // Auto-refresh every 60 seconds
+        setInterval(loadDashboard, 60000);
+    });
+
+    async function loadDashboard() {
+        try {
+            const response = await fetch('/api/client-success/dashboard');
+            const data = await response.json();
+
+            if (data.success) {
+                updateStats(data.stats);
+                updateTopPerformers(data.top_by_deletion_rate, 'topByDeletion', 'deletion_rate');
+                updateTopPerformers(data.top_by_score_improvement, 'topByScore', 'avg_score_change');
+                updateGradeDistribution(data.grade_distribution);
+                updateTrendChart(data.trend_data);
+            }
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+        }
+    }
+
+    function updateStats(stats) {
+        document.getElementById('totalClients').textContent = stats.total_clients || 0;
+        document.getElementById('completedCases').textContent = stats.completed_cases || 0;
+        document.getElementById('totalDeleted').textContent = stats.total_items_deleted || 0;
+        document.getElementById('avgDeletionRate').textContent = (stats.avg_deletion_rate || 0) + '%';
+        document.getElementById('avgScoreImprovement').textContent = '+' + (stats.avg_score_improvement || 0);
+        document.getElementById('estimatedValue').textContent = '$' + (stats.total_estimated_value || 0).toLocaleString();
+    }
+
+    function updateTopPerformers(performers, containerId, metricKey) {
+        const container = document.getElementById(containerId);
+
+        if (!performers || performers.length === 0) {
+            container.innerHTML = '<li class="performer-item" style="color: var(--text-secondary);">No data available</li>';
+            return;
+        }
+
+        container.innerHTML = performers.map((p, i) => {
+            let rankClass = 'default';
+            if (i === 0) rankClass = 'gold';
+            else if (i === 1) rankClass = 'silver';
+            else if (i === 2) rankClass = 'bronze';
+
+            let metricValue = '';
+            if (metricKey === 'deletion_rate') {
+                metricValue = p.deletion_rate + '%';
+            } else if (metricKey === 'avg_score_change') {
+                metricValue = '+' + (p.avg_score_change || 0);
+            }
+
+            return `
+                <li class="performer-item">
+                    <div class="performer-rank ${rankClass}">${i + 1}</div>
+                    <div class="performer-info">
+                        <div class="performer-name">${p.client_name || 'Unknown'}</div>
+                        <div class="performer-details">
+                            ${p.items_deleted || 0} deleted | Round ${p.dispute_rounds || 0} | ${p.days_in_program || 0} days
+                        </div>
+                    </div>
+                    <div class="performer-metric" style="color: #22c55e;">${metricValue}</div>
+                </li>
+            `;
+        }).join('');
+    }
+
+    function updateGradeDistribution(grades) {
+        const container = document.getElementById('gradeDistribution');
+
+        if (!grades) {
+            container.innerHTML = '<div style="color: var(--text-secondary);">No data available</div>';
+            return;
+        }
+
+        const gradeOrder = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
+        const gradeClasses = {
+            'A+': 'grade-a-plus',
+            'A': 'grade-a',
+            'B+': 'grade-b-plus',
+            'B': 'grade-b',
+            'C+': 'grade-c-plus',
+            'C': 'grade-c',
+            'D': 'grade-d',
+            'F': 'grade-f'
+        };
+
+        container.innerHTML = gradeOrder.map(grade => {
+            const count = grades[grade] || 0;
+            return `
+                <div class="grade-badge ${gradeClasses[grade]}">
+                    ${grade}: ${count}
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function loadBureauBreakdown() {
+        try {
+            const response = await fetch('/api/client-success/bureau-breakdown');
+            const data = await response.json();
+
+            if (data.success && data.items_deleted) {
+                document.getElementById('equifaxDeleted').textContent = data.items_deleted.equifax || 0;
+                document.getElementById('experianDeleted').textContent = data.items_deleted.experian || 0;
+                document.getElementById('transunionDeleted').textContent = data.items_deleted.transunion || 0;
+            }
+        } catch (error) {
+            console.error('Error loading bureau breakdown:', error);
+        }
+    }
+
+    function updateTrendChart(trendData) {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+
+        if (trendChart) {
+            trendChart.destroy();
+        }
+
+        if (!trendData || trendData.length === 0) {
+            return;
+        }
+
+        const labels = trendData.map(d => d.date);
+        const deletedData = trendData.map(d => d.total_deleted || 0);
+        const deletionRateData = trendData.map(d => d.avg_deletion_rate || 0);
+
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Items Deleted',
+                        data: deletedData,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Avg Deletion Rate %',
+                        data: deletionRateData,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        tension: 0.3,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Items Deleted'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Deletion Rate %'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function changePeriod(period) {
+        currentPeriod = period;
+
+        // Update button states
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.period === period) {
+                btn.classList.add('active');
+            }
+        });
+
+        try {
+            const response = await fetch(`/api/client-success/trend?period=${period}`);
+            const data = await response.json();
+
+            if (data.success) {
+                updateTrendChart(data.trend);
+            }
+        } catch (error) {
+            console.error('Error loading trend:', error);
+        }
+    }
+
+    async function updateAllSnapshots() {
+        if (!confirm('This will update success metrics for all active clients. Continue?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/client-success/update-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ snapshot_type: 'manual' })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(`Updated ${data.snapshots_created} client metrics (${data.errors} errors)`);
+                loadDashboard();
+            } else {
+                alert('Error updating metrics');
+            }
+        } catch (error) {
+            console.error('Error updating metrics:', error);
+            alert('Error updating metrics');
+        }
+    }
+
+    function exportData() {
+        window.location.href = '/api/client-success/export';
+    }
+</script>
+{% endblock %}

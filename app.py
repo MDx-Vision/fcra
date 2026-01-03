@@ -37383,6 +37383,207 @@ def dashboard_staff_performance():
     return render_template("staff_performance.html")
 
 
+# =====================================================================
+# CLIENT SUCCESS METRICS API ENDPOINTS
+# =====================================================================
+
+@app.route("/api/client-success/dashboard", methods=["GET"])
+@login_required
+def api_client_success_dashboard():
+    """Get dashboard summary for client success metrics"""
+    from services.client_success_service import ClientSuccessService
+
+    service = ClientSuccessService(g.db_session)
+    summary = service.get_dashboard_summary()
+
+    return jsonify({
+        "success": True,
+        **summary,
+    })
+
+
+@app.route("/api/client-success/aggregate", methods=["GET"])
+@login_required
+def api_client_success_aggregate():
+    """Get aggregate success report"""
+    from services.client_success_service import ClientSuccessService
+
+    period = request.args.get("period", "all")
+
+    service = ClientSuccessService(g.db_session)
+    report = service.get_aggregate_report(period=period)
+
+    return jsonify({
+        "success": True,
+        **report,
+    })
+
+
+@app.route("/api/client-success/client/<int:client_id>", methods=["GET"])
+@login_required
+def api_client_success_client(client_id):
+    """Get success summary for a specific client"""
+    from services.client_success_service import ClientSuccessService
+
+    service = ClientSuccessService(g.db_session)
+    summary = service.get_client_summary(client_id)
+
+    if "error" in summary:
+        return jsonify({"success": False, "error": summary["error"]}), 404
+
+    return jsonify({
+        "success": True,
+        **summary,
+    })
+
+
+@app.route("/api/client-success/client/<int:client_id>/snapshot", methods=["POST"])
+@login_required
+def api_client_success_create_snapshot(client_id):
+    """Create a new success metric snapshot for a client"""
+    from services.client_success_service import ClientSuccessService
+
+    data = request.get_json() or {}
+    snapshot_type = data.get("snapshot_type", "manual")
+
+    service = ClientSuccessService(g.db_session)
+    snapshot = service.create_snapshot(client_id, snapshot_type)
+
+    if not snapshot:
+        return jsonify({"success": False, "error": "Failed to create snapshot"}), 400
+
+    return jsonify({
+        "success": True,
+        "snapshot": snapshot.to_dict(),
+    })
+
+
+@app.route("/api/client-success/client/<int:client_id>/history", methods=["GET"])
+@login_required
+def api_client_success_history(client_id):
+    """Get snapshot history for a client"""
+    from services.client_success_service import ClientSuccessService
+
+    limit = int(request.args.get("limit", 12))
+
+    service = ClientSuccessService(g.db_session)
+    history = service.get_snapshot_history(client_id, limit=limit)
+
+    return jsonify({
+        "success": True,
+        "history": [s.to_dict() for s in history],
+    })
+
+
+@app.route("/api/client-success/top-performers", methods=["GET"])
+@login_required
+def api_client_success_top_performers():
+    """Get top performing clients"""
+    from services.client_success_service import ClientSuccessService
+
+    limit = int(request.args.get("limit", 10))
+    metric = request.args.get("metric", "deletion_rate")
+
+    service = ClientSuccessService(g.db_session)
+    performers = service.get_top_performers(limit=limit, metric=metric)
+
+    return jsonify({
+        "success": True,
+        "metric": metric,
+        "performers": performers,
+    })
+
+
+@app.route("/api/client-success/trend", methods=["GET"])
+@login_required
+def api_client_success_trend():
+    """Get success metrics trend over time"""
+    from services.client_success_service import ClientSuccessService
+
+    period = request.args.get("period", "month")
+    granularity = request.args.get("granularity", "day")
+
+    service = ClientSuccessService(g.db_session)
+    trend = service.get_success_trend(period=period, granularity=granularity)
+
+    return jsonify({
+        "success": True,
+        "period": period,
+        "trend": trend,
+    })
+
+
+@app.route("/api/client-success/bureau-breakdown", methods=["GET"])
+@login_required
+def api_client_success_bureau_breakdown():
+    """Get success metrics broken down by bureau"""
+    from services.client_success_service import ClientSuccessService
+
+    service = ClientSuccessService(g.db_session)
+    breakdown = service.get_bureau_breakdown()
+
+    return jsonify({
+        "success": True,
+        **breakdown,
+    })
+
+
+@app.route("/api/client-success/update-all", methods=["POST"])
+@login_required
+def api_client_success_update_all():
+    """Create snapshots for all active clients"""
+    from services.client_success_service import ClientSuccessService
+
+    data = request.get_json() or {}
+    snapshot_type = data.get("snapshot_type", "periodic")
+
+    service = ClientSuccessService(g.db_session)
+    result = service.update_all_clients(snapshot_type=snapshot_type)
+
+    return jsonify({
+        "success": True,
+        **result,
+    })
+
+
+@app.route("/api/client-success/export", methods=["GET"])
+@login_required
+def api_client_success_export():
+    """Export success metrics data"""
+    from services.client_success_service import ClientSuccessService
+    import csv
+    import io
+
+    client_ids = request.args.get("client_ids")
+    if client_ids:
+        client_ids = [int(id) for id in client_ids.split(",")]
+    else:
+        client_ids = None
+
+    service = ClientSuccessService(g.db_session)
+    data = service.export_success_data(client_ids=client_ids)
+
+    # Create CSV
+    output = io.StringIO()
+    if data:
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "text/csv"
+    response.headers["Content-Disposition"] = "attachment; filename=client_success_metrics.csv"
+
+    return response
+
+
+@app.route("/dashboard/client-success", methods=["GET"])
+@login_required
+def dashboard_client_success():
+    """Client success metrics dashboard page"""
+    return render_template("client_success.html")
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

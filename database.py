@@ -4994,6 +4994,99 @@ class StaffActivity(Base):
         }
 
 
+class ClientSuccessMetric(Base):
+    """Track client success metrics - items deleted, score improvements"""
+    __tablename__ = 'client_success_metrics'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Snapshot date (when metrics were calculated)
+    snapshot_date = Column(Date, nullable=False, index=True)
+    snapshot_type = Column(String(30), default='periodic')  # periodic, round_complete, manual
+
+    # Initial state (from first analysis)
+    initial_negative_items = Column(Integer, default=0)
+    initial_equifax_score = Column(Integer)
+    initial_experian_score = Column(Integer)
+    initial_transunion_score = Column(Integer)
+    initial_avg_score = Column(Integer)
+
+    # Current state
+    current_negative_items = Column(Integer, default=0)
+    current_equifax_score = Column(Integer)
+    current_experian_score = Column(Integer)
+    current_transunion_score = Column(Integer)
+    current_avg_score = Column(Integer)
+
+    # Items breakdown by type
+    items_deleted = Column(Integer, default=0)
+    items_verified = Column(Integer, default=0)
+    items_updated = Column(Integer, default=0)
+    items_in_progress = Column(Integer, default=0)
+
+    # Items by bureau
+    equifax_items_deleted = Column(Integer, default=0)
+    experian_items_deleted = Column(Integer, default=0)
+    transunion_items_deleted = Column(Integer, default=0)
+
+    # Score improvements
+    equifax_score_change = Column(Integer, default=0)
+    experian_score_change = Column(Integer, default=0)
+    transunion_score_change = Column(Integer, default=0)
+    avg_score_change = Column(Integer, default=0)
+
+    # Success metrics
+    deletion_rate = Column(Float, default=0)  # items_deleted / initial_negative_items
+    dispute_rounds_completed = Column(Integer, default=0)
+    days_in_program = Column(Integer, default=0)
+    estimated_value_recovered = Column(Float, default=0)  # Based on violations
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    case_complete = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'snapshot_date': self.snapshot_date.isoformat() if self.snapshot_date else None,
+            'snapshot_type': self.snapshot_type,
+            'initial_negative_items': self.initial_negative_items,
+            'initial_equifax_score': self.initial_equifax_score,
+            'initial_experian_score': self.initial_experian_score,
+            'initial_transunion_score': self.initial_transunion_score,
+            'initial_avg_score': self.initial_avg_score,
+            'current_negative_items': self.current_negative_items,
+            'current_equifax_score': self.current_equifax_score,
+            'current_experian_score': self.current_experian_score,
+            'current_transunion_score': self.current_transunion_score,
+            'current_avg_score': self.current_avg_score,
+            'items_deleted': self.items_deleted,
+            'items_verified': self.items_verified,
+            'items_updated': self.items_updated,
+            'items_in_progress': self.items_in_progress,
+            'equifax_items_deleted': self.equifax_items_deleted,
+            'experian_items_deleted': self.experian_items_deleted,
+            'transunion_items_deleted': self.transunion_items_deleted,
+            'equifax_score_change': self.equifax_score_change,
+            'experian_score_change': self.experian_score_change,
+            'transunion_score_change': self.transunion_score_change,
+            'avg_score_change': self.avg_score_change,
+            'deletion_rate': self.deletion_rate,
+            'dispute_rounds_completed': self.dispute_rounds_completed,
+            'days_in_program': self.days_in_program,
+            'estimated_value_recovered': self.estimated_value_recovered,
+            'is_active': self.is_active,
+            'case_complete': self.case_complete,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class PushSubscription(Base):
     """Web Push notification subscriptions for clients and staff"""
     __tablename__ = 'push_subscriptions'
@@ -6189,6 +6282,41 @@ def init_db():
         ("staff_activities", "was_escalated", "BOOLEAN DEFAULT FALSE"),
         ("staff_activities", "required_revision", "BOOLEAN DEFAULT FALSE"),
         ("staff_activities", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Client Success Metrics
+        ("client_success_metrics", "id", "SERIAL PRIMARY KEY"),
+        ("client_success_metrics", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("client_success_metrics", "snapshot_date", "DATE NOT NULL"),
+        ("client_success_metrics", "snapshot_type", "VARCHAR(30) DEFAULT 'periodic'"),
+        ("client_success_metrics", "initial_negative_items", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "initial_equifax_score", "INTEGER"),
+        ("client_success_metrics", "initial_experian_score", "INTEGER"),
+        ("client_success_metrics", "initial_transunion_score", "INTEGER"),
+        ("client_success_metrics", "initial_avg_score", "INTEGER"),
+        ("client_success_metrics", "current_negative_items", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "current_equifax_score", "INTEGER"),
+        ("client_success_metrics", "current_experian_score", "INTEGER"),
+        ("client_success_metrics", "current_transunion_score", "INTEGER"),
+        ("client_success_metrics", "current_avg_score", "INTEGER"),
+        ("client_success_metrics", "items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "items_verified", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "items_updated", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "items_in_progress", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "equifax_items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "experian_items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "transunion_items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "equifax_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "experian_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "transunion_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "avg_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "deletion_rate", "FLOAT DEFAULT 0"),
+        ("client_success_metrics", "dispute_rounds_completed", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "days_in_program", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "estimated_value_recovered", "FLOAT DEFAULT 0"),
+        ("client_success_metrics", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("client_success_metrics", "case_complete", "BOOLEAN DEFAULT FALSE"),
+        ("client_success_metrics", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_success_metrics", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()
