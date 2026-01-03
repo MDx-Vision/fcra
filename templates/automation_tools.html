@@ -488,6 +488,7 @@
 
         <div class="top-nav">
             <button class="top-nav-btn active" data-tab="freeze-letters" onclick="switchTab('freeze-letters')">Freeze Letters</button>
+            <button class="top-nav-btn" data-tab="pii-correction" onclick="switchTab('pii-correction')">PII Correction</button>
             <button class="top-nav-btn" data-tab="validation-letters" onclick="switchTab('validation-letters')">Validation Letters</button>
             <button class="top-nav-btn" data-tab="deadlines" onclick="switchTab('deadlines')">Deadlines</button>
             <button class="top-nav-btn" data-tab="dispute-rounds" onclick="switchTab('dispute-rounds')">Dispute Rounds</button>
@@ -598,6 +599,125 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-pii-correction" class="tab-content">
+            <div class="content-card">
+                <div class="section-title">Generate PII Correction Letters</div>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                    Use this tool for clients with clean credit who only need PII corrections (incorrect names, addresses, phone numbers, or employers removed from their credit reports).
+                </p>
+
+                <div class="form-group" style="max-width: 400px;">
+                    <label>Select Client</label>
+                    <select id="piiClientSelect">
+                        <option value="">-- Select a Client --</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.first_name }} {{ client.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="bureau-section">
+                    <div class="bureau-section-title">
+                        <span>Target Bureaus</span>
+                    </div>
+                    <div class="bureau-checkboxes">
+                        <label class="bureau-checkbox">
+                            <input type="checkbox" id="pii-equifax" value="Equifax" checked>
+                            <span class="checkmark"></span>
+                            <span class="bureau-name">Equifax</span>
+                        </label>
+                        <label class="bureau-checkbox">
+                            <input type="checkbox" id="pii-experian" value="Experian" checked>
+                            <span class="checkmark"></span>
+                            <span class="bureau-name">Experian</span>
+                        </label>
+                        <label class="bureau-checkbox">
+                            <input type="checkbox" id="pii-transunion" value="TransUnion" checked>
+                            <span class="checkmark"></span>
+                            <span class="bureau-name">TransUnion</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 20px;">Incorrect PII to DELETE</div>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">
+                    Enter incorrect information that should be removed from the credit reports. Add one item per line.
+                </p>
+
+                <div class="form-group">
+                    <label>Incorrect Names (one per line)</label>
+                    <textarea id="piiIncorrectNames" rows="3" placeholder="JOHN DOE JR&#10;J DOE&#10;JOHNNY DOE"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Incorrect Addresses (one per line)</label>
+                    <textarea id="piiIncorrectAddresses" rows="3" placeholder="123 OLD ST, OLDTOWN, CA 90000&#10;456 PREVIOUS AVE, PASTCITY, TX 75001"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Incorrect Phone Numbers (one per line)</label>
+                    <textarea id="piiIncorrectPhones" rows="2" placeholder="555-123-4567&#10;555-987-6543"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Incorrect Employers (one per line)</label>
+                    <textarea id="piiIncorrectEmployers" rows="2" placeholder="OLD COMPANY INC&#10;PREVIOUS EMPLOYER LLC"></textarea>
+                </div>
+
+                <div class="section-title" style="margin-top: 20px;">Correct PII to KEEP (Optional)</div>
+                <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">
+                    If left blank, the client's current information from their profile will be used.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Correct Name</label>
+                        <input type="text" id="piiCorrectName" placeholder="Uses client's name if blank">
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Phone</label>
+                        <input type="text" id="piiCorrectPhone" placeholder="Uses client's phone if blank">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Correct Address</label>
+                        <input type="text" id="piiCorrectAddress" placeholder="Uses client's address if blank">
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Employer</label>
+                        <input type="text" id="piiCorrectEmployer" placeholder="Leave blank to remove all employers">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="generatePIICorrection()" id="generatePIIBtn" style="margin-top: 20px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Generate PII Correction Letters
+                </button>
+            </div>
+
+            <div class="content-card">
+                <div class="section-title">Generated PII Correction Letters</div>
+                <div id="piiLettersResult" style="display: none;">
+                    <div class="alert alert-success" style="margin-bottom: 15px;">
+                        <strong>Letters Generated Successfully!</strong>
+                        <p id="piiLettersInfo"></p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="downloadPIIPDF()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download PDF
+                        </button>
+                        <button class="btn btn-secondary" onclick="downloadPIIDocx()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download Word
+                        </button>
+                    </div>
+                </div>
+                <div id="piiLettersEmpty">
+                    <p class="empty-state">No PII correction letters generated yet. Fill out the form above and click "Generate PII Correction Letters".</p>
                 </div>
             </div>
         </div>
@@ -1978,6 +2098,115 @@
         
         function downloadFreezeDocx(batchId) {
             window.open(`/api/freeze-letters/download/${batchId}?format=docx`, '_blank');
+        }
+
+        // ============================================================
+        // PII Correction Letters
+        // ============================================================
+
+        let currentPIIResult = null;
+
+        function parseMultilineInput(textareaId) {
+            const value = document.getElementById(textareaId).value.trim();
+            if (!value) return [];
+            return value.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        }
+
+        async function generatePIICorrection() {
+            const clientId = document.getElementById('piiClientSelect').value;
+            if (!clientId) {
+                showToast('Please select a client', true);
+                return;
+            }
+
+            // Get selected bureaus
+            const bureaus = [];
+            if (document.getElementById('pii-equifax').checked) bureaus.push('Equifax');
+            if (document.getElementById('pii-experian').checked) bureaus.push('Experian');
+            if (document.getElementById('pii-transunion').checked) bureaus.push('TransUnion');
+
+            if (bureaus.length === 0) {
+                showToast('Please select at least one bureau', true);
+                return;
+            }
+
+            // Get incorrect PII
+            const incorrectPII = {
+                names: parseMultilineInput('piiIncorrectNames'),
+                addresses: parseMultilineInput('piiIncorrectAddresses'),
+                phones: parseMultilineInput('piiIncorrectPhones'),
+                employers: parseMultilineInput('piiIncorrectEmployers'),
+            };
+
+            // Check if at least one incorrect item is specified
+            const hasItems = Object.values(incorrectPII).some(arr => arr.length > 0);
+            if (!hasItems) {
+                showToast('Please enter at least one incorrect PII item to correct', true);
+                return;
+            }
+
+            // Get correct PII (optional)
+            const correctPII = {};
+            const correctName = document.getElementById('piiCorrectName').value.trim();
+            const correctPhone = document.getElementById('piiCorrectPhone').value.trim();
+            const correctAddress = document.getElementById('piiCorrectAddress').value.trim();
+            const correctEmployer = document.getElementById('piiCorrectEmployer').value.trim();
+
+            if (correctName) correctPII.name = correctName;
+            if (correctPhone) correctPII.phone = correctPhone;
+            if (correctAddress) correctPII.address = correctAddress;
+            if (correctEmployer) correctPII.employer = correctEmployer;
+
+            const btn = document.getElementById('generatePIIBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Generating...';
+
+            try {
+                const response = await fetch('/api/pii-correction/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        client_id: parseInt(clientId),
+                        bureaus: bureaus,
+                        incorrect_pii: incorrectPII,
+                        correct_pii: Object.keys(correctPII).length > 0 ? correctPII : null,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentPIIResult = data;
+                    document.getElementById('piiLettersResult').style.display = 'block';
+                    document.getElementById('piiLettersEmpty').style.display = 'none';
+                    document.getElementById('piiLettersInfo').innerHTML =
+                        `Generated ${data.total_letters} letters for: ${data.bureaus_included.join(', ')}`;
+                    showToast('PII correction letters generated successfully!');
+                } else {
+                    showToast(data.error || 'Failed to generate letters', true);
+                }
+            } catch (error) {
+                showToast('Error generating letters: ' + error.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Generate PII Correction Letters';
+            }
+        }
+
+        function downloadPIIPDF() {
+            if (currentPIIResult && currentPIIResult.pdf_path) {
+                window.open(`/api/pii-correction/download/${currentPIIResult.pdf_path}`, '_blank');
+            } else {
+                showToast('No PDF available', true);
+            }
+        }
+
+        function downloadPIIDocx() {
+            if (currentPIIResult && currentPIIResult.docx_path) {
+                window.open(`/api/pii-correction/download/${currentPIIResult.docx_path}`, '_blank');
+            } else {
+                showToast('No Word document available', true);
+            }
         }
 
         let commonAgencies = [];

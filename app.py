@@ -12806,6 +12806,162 @@ def api_download_freeze_letters(batch_id):
         db.close()
 
 
+# ============================================================================
+# PII CORRECTION LETTERS API
+# ============================================================================
+
+
+@app.route("/api/pii-correction/generate", methods=["POST"])
+def api_generate_pii_correction():
+    """
+    Generate PII correction letters for the Big 3 CRAs.
+
+    Request body:
+    {
+        "client_id": 123,
+        "bureaus": ["Equifax", "Experian", "TransUnion"],  // optional, defaults to all 3
+        "incorrect_pii": {
+            "names": ["JOHN DOE JR", "J DOE"],
+            "addresses": ["123 OLD ST, OLDTOWN, CA 90000"],
+            "phones": ["555-123-4567"],
+            "employers": ["OLD COMPANY INC"]
+        },
+        "correct_pii": {  // optional, uses client data if not provided
+            "name": "John Doe",
+            "address": "456 New St, Newtown, CA 90001",
+            "phone": "555-987-6543",
+            "employer": "Current Company LLC"
+        },
+        "case_number": "PII-20260103-1234"  // optional
+    }
+    """
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get("client_id")
+        bureaus = data.get("bureaus")
+        incorrect_pii = data.get("incorrect_pii", {})
+        correct_pii = data.get("correct_pii")
+        case_number = data.get("case_number")
+
+        if not client_id:
+            return jsonify({"success": False, "error": "Client ID is required"}), 400
+
+        if not incorrect_pii:
+            return jsonify({"success": False, "error": "incorrect_pii is required - specify what PII to correct"}), 400
+
+        # Validate at least one incorrect item
+        has_items = any(
+            incorrect_pii.get(key)
+            for key in ["names", "addresses", "phones", "employers", "ssn_variations"]
+        )
+        if not has_items:
+            return jsonify({
+                "success": False,
+                "error": "incorrect_pii must contain at least one item (names, addresses, phones, employers, or ssn_variations)"
+            }), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        from services.pii_correction_service import generate_pii_correction_letters
+
+        result = generate_pii_correction_letters(
+            client_id=client_id,
+            incorrect_pii=incorrect_pii,
+            correct_pii=correct_pii,
+            bureaus=bureaus,
+            case_number=case_number,
+        )
+
+        if result.get("success"):
+            return jsonify({
+                "success": True,
+                "batch_id": result.get("batch_id"),
+                "pdf_path": result.get("pdf_path"),
+                "docx_path": result.get("docx_path"),
+                "bureaus_included": result.get("bureaus_included"),
+                "total_letters": result.get("total_letters"),
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/pii-correction/download/<path:file_path>")
+def api_download_pii_correction(file_path):
+    """Download PII correction letters PDF or DOCX"""
+    try:
+        # Security: ensure path is within expected directory
+        if not file_path.startswith("static/client_uploads/"):
+            file_path = f"static/client_uploads/{file_path}"
+
+        if not os.path.exists(file_path):
+            return jsonify({"success": False, "error": "File not found"}), 404
+
+        return send_file(file_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/pii-correction", methods=["POST"])
+def api_client_pii_correction(client_id):
+    """
+    Generate PII correction letters for a specific client.
+    Convenience endpoint that takes client_id from URL.
+    """
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        data = request.json or {}
+        incorrect_pii = data.get("incorrect_pii", {})
+        correct_pii = data.get("correct_pii")
+        bureaus = data.get("bureaus")
+        case_number = data.get("case_number")
+
+        if not incorrect_pii:
+            return jsonify({"success": False, "error": "incorrect_pii is required"}), 400
+
+        from services.pii_correction_service import generate_pii_correction_letters
+
+        result = generate_pii_correction_letters(
+            client_id=client_id,
+            incorrect_pii=incorrect_pii,
+            correct_pii=correct_pii,
+            bureaus=bureaus,
+            case_number=case_number,
+        )
+
+        if result.get("success"):
+            return jsonify({
+                "success": True,
+                "batch_id": result.get("batch_id"),
+                "pdf_path": result.get("pdf_path"),
+                "docx_path": result.get("docx_path"),
+                "bureaus_included": result.get("bureaus_included"),
+                "total_letters": result.get("total_letters"),
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route("/api/action-plan/generate/<int:client_id>", methods=["POST"])
 def api_generate_action_plan(client_id):
     """Generate a branded Action Plan PDF for a client"""

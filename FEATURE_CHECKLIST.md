@@ -168,6 +168,39 @@
 
 ---
 
+## ✅ Letter Generation Types (COMPLETE - January 2026)
+
+### Freeze Letters (`services/freeze_letter_service.py`)
+- [x] Primary bureaus (Equifax, Experian, TransUnion)
+- [x] Secondary bureaus (9 total: Innovis, ChexSystems, Clarity, LexisNexis, etc.)
+- [x] PDF and Word document generation
+- [x] Bulk generation for all 12 bureaus
+
+### PII Correction Letters (`services/pii_correction_service.py`)
+- [x] Big 3 CRA correction letters (Equifax, Experian, TransUnion)
+- [x] Incorrect PII identification (names, addresses, phones, employers)
+- [x] Correct PII specification (auto-fills from client data)
+- [x] FCRA Section 1681e(b) legal language
+- [x] PDF and Word document generation
+- [x] Staff UI in Automation Tools (`/dashboard/automation-tools`)
+- [x] API: `POST /api/pii-correction/generate`
+- [x] API: `POST /api/clients/<id>/pii-correction`
+
+### Debt Validation Letters (`services/debt_validation_service.py`)
+- [x] FDCPA-compliant validation letters
+- [x] Collection agency targeting
+- [x] Auto-populate client PII
+- [x] PDF and Word document generation
+
+### Dispute Letters (Rounds 1-4)
+- [x] Round 1: Initial disputes
+- [x] Round 2: Method of Verification demands
+- [x] Round 3: Regulatory escalation
+- [x] Round 4: Pre-arbitration/litigation
+- [x] Per-bureau letter generation
+
+---
+
 ## ✅ Phase 5: Client Portal (COMPLETE)
 
 ### Client-Facing Interface
@@ -396,7 +429,7 @@ Reference: `DEEP_DIVE_GAP_ANALYSIS.md` and `attached_assets/BAG_CRM_Features_FCR
 - ✅ UI: Professional and functional
 - ✅ Automation: Full end-to-end AI automation
 - ✅ Credit Import: MyScoreIQ auto-import working
-- ✅ Letter Generation: All dispute letters + demand letters
+- ✅ Letter Generation: All dispute letters + demand letters + PII correction
 - ✅ CRM Features: Full BAG CRM parity achieved
 - ✅ Security: All security hardening complete
 
@@ -421,6 +454,6 @@ Reference: `DEEP_DIVE_GAP_ANALYSIS.md` and `attached_assets/BAG_CRM_Features_FCR
 **Platform Status:** Production Ready - All Features Complete - Awaiting 2 External Credentials
 
 ### Test Status (January 2026)
-- **Unit Tests**: 5,300+ passing (60+ test files)
+- **Unit Tests**: 5,350+ passing (61+ test files)
 - **Cypress E2E**: 88 specs passing
-- **Service Coverage**: 60/60 services tested
+- **Service Coverage**: 61/61 services tested (includes pii_correction_service)
