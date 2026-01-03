@@ -37584,6 +37584,268 @@ def dashboard_client_success():
     return render_template("client_success.html")
 
 
+# =====================================================================
+# AI DISPUTE WRITER API ENDPOINTS
+# =====================================================================
+
+@app.route("/api/ai-dispute-writer/dashboard", methods=["GET"])
+@login_required
+def api_ai_dispute_writer_dashboard():
+    """Get dashboard data for AI Dispute Writer"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    client_id = request.args.get("client_id", type=int)
+
+    service = AIDisputeWriterService(g.db_session)
+    data = service.get_dashboard_data(client_id=client_id)
+
+    if "error" in data:
+        return jsonify({"success": False, "error": data["error"]}), 400
+
+    return jsonify({
+        "success": True,
+        **data,
+    })
+
+
+@app.route("/api/ai-dispute-writer/rounds", methods=["GET"])
+@login_required
+def api_ai_dispute_writer_rounds():
+    """Get information about all dispute rounds"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    service = AIDisputeWriterService(g.db_session)
+    rounds = service.get_all_rounds_info()
+
+    return jsonify({
+        "success": True,
+        "rounds": rounds,
+    })
+
+
+@app.route("/api/ai-dispute-writer/client/<int:client_id>/context", methods=["GET"])
+@login_required
+def api_ai_dispute_writer_context(client_id):
+    """Get client context for letter generation"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    service = AIDisputeWriterService(g.db_session)
+    context = service.get_client_context(client_id)
+
+    if "error" in context:
+        return jsonify({"success": False, "error": context["error"]}), 404
+
+    # Serialize context
+    return jsonify({
+        "success": True,
+        "client": {
+            "id": context["client"].id,
+            "name": context["client"].name,
+            "email": context["client"].email,
+            "current_round": context["client"].current_dispute_round or 1,
+        },
+        "violations_count": len(context["violations"]),
+        "dispute_items_count": len(context["dispute_items"]),
+        "cra_responses_count": len(context["cra_responses"]),
+        "current_round": context["current_round"],
+    })
+
+
+@app.route("/api/ai-dispute-writer/client/<int:client_id>/suggest", methods=["GET"])
+@login_required
+def api_ai_dispute_writer_suggest(client_id):
+    """Get AI suggestion for next action"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    service = AIDisputeWriterService(g.db_session)
+    suggestion = service.suggest_next_action(client_id)
+
+    if "error" in suggestion:
+        return jsonify({"success": False, "error": suggestion["error"]}), 400
+
+    return jsonify({
+        "success": True,
+        **suggestion,
+    })
+
+
+@app.route("/api/ai-dispute-writer/generate", methods=["POST"])
+@login_required
+def api_ai_dispute_writer_generate():
+    """Generate dispute letters using AI"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    if not client_id:
+        return jsonify({"success": False, "error": "client_id required"}), 400
+
+    round_number = data.get("round", 1)
+    selected_item_ids = data.get("selected_items")
+    bureaus = data.get("bureaus")
+    custom_instructions = data.get("custom_instructions")
+    tone = data.get("tone", "professional")
+
+    service = AIDisputeWriterService(g.db_session)
+    result = service.generate_letters(
+        client_id=client_id,
+        round_number=round_number,
+        selected_item_ids=selected_item_ids,
+        bureaus=bureaus,
+        custom_instructions=custom_instructions,
+        tone=tone,
+    )
+
+    if "error" in result:
+        return jsonify({"success": False, "error": result["error"]}), 400
+
+    return jsonify(result)
+
+
+@app.route("/api/ai-dispute-writer/generate-quick", methods=["POST"])
+@login_required
+def api_ai_dispute_writer_generate_quick():
+    """Generate a quick single letter"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    bureau = data.get("bureau")
+    item_description = data.get("item_description")
+    violation_type = data.get("violation_type")
+
+    if not all([client_id, bureau, item_description, violation_type]):
+        return jsonify({
+            "success": False,
+            "error": "client_id, bureau, item_description, and violation_type required"
+        }), 400
+
+    custom_text = data.get("custom_text")
+
+    service = AIDisputeWriterService(g.db_session)
+    result = service.generate_quick_letter(
+        client_id=client_id,
+        bureau=bureau,
+        item_description=item_description,
+        violation_type=violation_type,
+        custom_text=custom_text,
+    )
+
+    if "error" in result:
+        return jsonify({"success": False, "error": result["error"]}), 400
+
+    return jsonify(result)
+
+
+@app.route("/api/ai-dispute-writer/regenerate", methods=["POST"])
+@login_required
+def api_ai_dispute_writer_regenerate():
+    """Regenerate a letter with feedback"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    bureau = data.get("bureau")
+    original_letter = data.get("original_letter")
+    feedback = data.get("feedback")
+    round_number = data.get("round", 1)
+
+    if not all([client_id, bureau, original_letter, feedback]):
+        return jsonify({
+            "success": False,
+            "error": "client_id, bureau, original_letter, and feedback required"
+        }), 400
+
+    service = AIDisputeWriterService(g.db_session)
+    result = service.regenerate_with_feedback(
+        client_id=client_id,
+        bureau=bureau,
+        original_letter=original_letter,
+        feedback=feedback,
+        round_number=round_number,
+    )
+
+    if "error" in result:
+        return jsonify({"success": False, "error": result["error"]}), 400
+
+    return jsonify(result)
+
+
+@app.route("/api/ai-dispute-writer/save", methods=["POST"])
+@login_required
+def api_ai_dispute_writer_save():
+    """Save a generated letter"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    bureau = data.get("bureau")
+    content = data.get("content")
+    round_number = data.get("round", 1)
+    analysis_id = data.get("analysis_id")
+
+    if not all([client_id, bureau, content]):
+        return jsonify({
+            "success": False,
+            "error": "client_id, bureau, and content required"
+        }), 400
+
+    service = AIDisputeWriterService(g.db_session)
+    try:
+        letter = service.save_letter(
+            client_id=client_id,
+            bureau=bureau,
+            content=content,
+            round_number=round_number,
+            analysis_id=analysis_id,
+        )
+        return jsonify({
+            "success": True,
+            "letter_id": letter.id,
+            "message": "Letter saved successfully",
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/ai-dispute-writer/client/<int:client_id>/letters", methods=["GET"])
+@login_required
+def api_ai_dispute_writer_letters(client_id):
+    """Get saved letters for a client"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    round_number = request.args.get("round", type=int)
+
+    service = AIDisputeWriterService(g.db_session)
+    letters = service.get_saved_letters(client_id, round_number=round_number)
+
+    return jsonify({
+        "success": True,
+        "letters": [
+            {
+                "id": l.id,
+                "bureau": l.bureau,
+                "round": l.round_number,
+                "content": l.letter_content,
+                "created_at": l.created_at.isoformat() if l.created_at else None,
+                "sent_at": l.sent_at.isoformat() if l.sent_at else None,
+            }
+            for l in letters
+        ],
+    })
+
+
+@app.route("/dashboard/ai-dispute-writer", methods=["GET"])
+@login_required
+def dashboard_ai_dispute_writer():
+    """AI Dispute Writer dashboard page"""
+    return render_template("ai_dispute_writer.html")
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
