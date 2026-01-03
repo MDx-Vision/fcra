@@ -110,6 +110,13 @@
         </a>
         {% endif %}
 
+        {# Subscription - only for active clients #}
+        {% if has_full_access %}
+        <a href="{{ url_for('portal.subscription') }}" class="nav-tab {% if active_tab == 'subscription' %}active{% endif %}" data-testid="nav-subscription">
+            <span class="nav-icon" aria-hidden="true">💳</span><span class="nav-label">Subscription</span>
+        </a>
+        {% endif %}
+
         {# Profile - always visible during onboarding and active #}
         <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="nav-profile">
             <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
@@ -163,6 +170,9 @@
         </a>
         <a href="{{ url_for('portal.booking') }}" class="mobile-nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="mobile-nav-booking">
             <span>📞</span><span>Book</span>
+        </a>
+        <a href="{{ url_for('portal.subscription') }}" class="mobile-nav-tab {% if active_tab == 'subscription' %}active{% endif %}" data-testid="mobile-nav-subscription">
+            <span>💳</span><span>Billing</span>
         </a>
         <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>

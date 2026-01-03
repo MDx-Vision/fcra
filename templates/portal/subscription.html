@@ -1,0 +1,676 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Subscription - Client Portal{% endblock %}
+
+{% block extra_head %}
+<style>
+    .subscription-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    /* Current Plan Card */
+    .current-plan-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 30px;
+    }
+    .current-plan-card h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 20px;
+    }
+    .plan-status {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .plan-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+    .plan-badge.active {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+    }
+    .plan-badge.inactive {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+    .plan-badge.past_due {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+    .plan-badge.trialing {
+        background: #fef9c3;
+        color: #854d0e;
+    }
+    .plan-details {
+        flex: 1;
+    }
+    .plan-name {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .plan-price {
+        color: #64748b;
+        font-size: 16px;
+        margin-top: 5px;
+    }
+    .plan-price strong {
+        color: #1a1a2e;
+        font-size: 28px;
+    }
+    .plan-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    /* Status Alerts */
+    .status-alert {
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .status-alert.success {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #166534;
+    }
+    .status-alert.warning {
+        background: #fefce8;
+        border: 1px solid #fef08a;
+        color: #854d0e;
+    }
+    .status-alert.error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+
+    /* Plan Cards */
+    .plans-section {
+        margin-top: 40px;
+    }
+    .plans-section h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 20px;
+    }
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    .plan-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 2px solid transparent;
+        transition: all 0.3s;
+        position: relative;
+    }
+    .plan-card:hover {
+        border-color: #319795;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    .plan-card.current {
+        border-color: #22c55e;
+    }
+    .plan-card.current::after {
+        content: 'Current Plan';
+        position: absolute;
+        top: -12px;
+        right: 20px;
+        background: #22c55e;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .plan-card.popular::before {
+        content: 'Most Popular';
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .plan-card-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .plan-card-name {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 10px;
+    }
+    .plan-card-price {
+        font-size: 36px;
+        font-weight: 700;
+        color: #319795;
+    }
+    .plan-card-price span {
+        font-size: 16px;
+        font-weight: 400;
+        color: #64748b;
+    }
+    .plan-card-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 25px 0;
+    }
+    .plan-card-features li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 8px 0;
+        font-size: 14px;
+        color: #374151;
+    }
+    .plan-card-features li svg {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        color: #22c55e;
+        margin-top: 2px;
+    }
+    .plan-card-btn {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .plan-card-btn.primary {
+        background: linear-gradient(135deg, #319795 0%, #22c55e 100%);
+        color: white;
+    }
+    .plan-card-btn.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+    .plan-card-btn.secondary {
+        background: #f1f5f9;
+        color: #374151;
+    }
+    .plan-card-btn.secondary:hover {
+        background: #e2e8f0;
+    }
+    .plan-card-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Billing Info */
+    .billing-section {
+        margin-top: 40px;
+    }
+    .billing-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .billing-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 20px;
+    }
+    .billing-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    .billing-info-item {
+        padding: 15px;
+        background: #f8fafc;
+        border-radius: 10px;
+    }
+    .billing-info-label {
+        font-size: 12px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    .billing-info-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #319795 0%, #22c55e 100%);
+        color: white;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(49, 151, 149, 0.3);
+    }
+    .btn-secondary {
+        background: white;
+        color: #374151;
+        border: 2px solid #e2e8f0;
+    }
+    .btn-secondary:hover {
+        border-color: #319795;
+    }
+    .btn-danger {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+    .btn-danger:hover {
+        background: #fee2e2;
+    }
+
+    /* No Subscription State */
+    .no-subscription {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 30px;
+    }
+    .no-subscription h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 10px;
+    }
+    .no-subscription p {
+        color: #64748b;
+        margin-bottom: 25px;
+    }
+
+    /* Loading */
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {
+        .plan-status {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .plan-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="subscription-container" data-testid="subscription-container">
+    <!-- Status Alerts -->
+    {% if request.args.get('status') == 'success' %}
+    <div class="status-alert success" data-testid="success-alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span>Your subscription has been activated successfully!</span>
+    </div>
+    {% elif request.args.get('status') == 'cancelled' %}
+    <div class="status-alert warning" data-testid="cancelled-alert">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>Subscription checkout was cancelled. You can try again anytime.</span>
+    </div>
+    {% endif %}
+
+    <!-- Current Subscription -->
+    <div id="currentSubscription" data-testid="current-subscription">
+        <div class="no-subscription" id="noSubscription" style="display: none;">
+            <h2>No Active Subscription</h2>
+            <p>Choose a plan below to get started with your credit restoration journey.</p>
+        </div>
+
+        <div class="current-plan-card" id="subscriptionCard" style="display: none;">
+            <h2>Your Subscription</h2>
+            <div class="plan-status">
+                <div id="planBadge" class="plan-badge active">
+                    <span id="planStatus">Active</span>
+                </div>
+                <div class="plan-details">
+                    <div class="plan-name" id="planName">Loading...</div>
+                    <div class="plan-price">
+                        <strong id="planPrice">$0</strong>/month
+                    </div>
+                </div>
+                <div class="plan-actions">
+                    <button class="btn btn-secondary" onclick="openBillingPortal()" data-testid="manage-billing-btn">
+                        Manage Billing
+                    </button>
+                    <button class="btn btn-danger" id="cancelBtn" onclick="showCancelModal()" style="display: none;" data-testid="cancel-btn">
+                        Cancel Subscription
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cancellation Warning -->
+            <div id="cancelWarning" class="status-alert warning" style="display: none; margin-top: 20px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Your subscription will be cancelled on <strong id="cancelDate"></strong>. You'll continue to have access until then.</span>
+            </div>
+        </div>
+
+        <!-- Billing Info -->
+        <div class="billing-section" id="billingSection" style="display: none;">
+            <div class="billing-card">
+                <h3>Billing Information</h3>
+                <div class="billing-info-grid">
+                    <div class="billing-info-item">
+                        <div class="billing-info-label">Current Period</div>
+                        <div class="billing-info-value" id="currentPeriod">-</div>
+                    </div>
+                    <div class="billing-info-item">
+                        <div class="billing-info-label">Next Payment</div>
+                        <div class="billing-info-value" id="nextPayment">-</div>
+                    </div>
+                    <div class="billing-info-item">
+                        <div class="billing-info-label">Total Paid</div>
+                        <div class="billing-info-value" id="totalPaid">$0.00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Plans -->
+    <div class="plans-section">
+        <h3 id="plansTitle">Choose Your Plan</h3>
+        <div class="plans-grid" id="plansGrid" data-testid="plans-grid">
+            <!-- Plans loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div id="cancelModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 16px; padding: 30px; max-width: 400px; margin: 20px;">
+        <h3 style="margin-bottom: 15px;">Cancel Subscription?</h3>
+        <p style="color: #64748b; margin-bottom: 20px;">Your subscription will remain active until the end of your current billing period. After that, you'll lose access to premium features.</p>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary" onclick="closeCancelModal()" style="flex: 1;">Keep Subscription</button>
+            <button class="btn btn-danger" onclick="confirmCancel()" style="flex: 1;">Yes, Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentSubscription = null;
+    let availablePlans = [];
+
+    // Load subscription and plans on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSubscription();
+        loadPlans();
+    });
+
+    async function loadSubscription() {
+        try {
+            const response = await fetch('/portal/api/subscription');
+            const data = await response.json();
+
+            if (data.success && data.subscription) {
+                currentSubscription = data.subscription;
+                displaySubscription(currentSubscription);
+            } else {
+                document.getElementById('noSubscription').style.display = 'block';
+                document.getElementById('subscriptionCard').style.display = 'none';
+                document.getElementById('billingSection').style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error loading subscription:', error);
+            document.getElementById('noSubscription').style.display = 'block';
+        }
+    }
+
+    function displaySubscription(sub) {
+        if (!sub || sub.status === 'canceled' || !sub.plan) {
+            document.getElementById('noSubscription').style.display = 'block';
+            document.getElementById('subscriptionCard').style.display = 'none';
+            document.getElementById('billingSection').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('noSubscription').style.display = 'none';
+        document.getElementById('subscriptionCard').style.display = 'block';
+        document.getElementById('billingSection').style.display = 'block';
+
+        // Plan info
+        document.getElementById('planName').textContent = sub.plan.display_name || sub.plan.name;
+        document.getElementById('planPrice').textContent = '$' + (sub.plan.price_dollars || 0).toFixed(2);
+
+        // Status badge
+        const badge = document.getElementById('planBadge');
+        const statusText = document.getElementById('planStatus');
+        badge.className = 'plan-badge ' + sub.status;
+        statusText.textContent = sub.status.charAt(0).toUpperCase() + sub.status.slice(1).replace('_', ' ');
+
+        // Cancel button visibility
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (sub.status === 'active' && !sub.cancel_at_period_end) {
+            cancelBtn.style.display = 'inline-flex';
+        } else {
+            cancelBtn.style.display = 'none';
+        }
+
+        // Cancel warning
+        const cancelWarning = document.getElementById('cancelWarning');
+        if (sub.cancel_at_period_end && sub.current_period_end) {
+            cancelWarning.style.display = 'flex';
+            document.getElementById('cancelDate').textContent = new Date(sub.current_period_end).toLocaleDateString();
+        } else {
+            cancelWarning.style.display = 'none';
+        }
+
+        // Billing info
+        if (sub.current_period_start && sub.current_period_end) {
+            const start = new Date(sub.current_period_start).toLocaleDateString();
+            const end = new Date(sub.current_period_end).toLocaleDateString();
+            document.getElementById('currentPeriod').textContent = `${start} - ${end}`;
+        }
+
+        if (sub.next_payment_date) {
+            document.getElementById('nextPayment').textContent = new Date(sub.next_payment_date).toLocaleDateString();
+        }
+
+        document.getElementById('totalPaid').textContent = '$' + ((sub.amount_paid_cents || 0) / 100).toFixed(2);
+
+        // Update plans title
+        document.getElementById('plansTitle').textContent = 'Change Your Plan';
+    }
+
+    async function loadPlans() {
+        try {
+            const response = await fetch('/api/subscriptions/plans');
+            const data = await response.json();
+
+            if (data.success && data.plans) {
+                availablePlans = data.plans;
+                displayPlans(availablePlans);
+            }
+        } catch (error) {
+            console.error('Error loading plans:', error);
+        }
+    }
+
+    function displayPlans(plans) {
+        const grid = document.getElementById('plansGrid');
+        grid.innerHTML = '';
+
+        plans.forEach((plan, index) => {
+            const isCurrent = currentSubscription?.plan?.name === plan.name;
+            const isPopular = plan.name === 'pro';
+
+            const card = document.createElement('div');
+            card.className = 'plan-card' + (isCurrent ? ' current' : '') + (isPopular ? ' popular' : '');
+            card.setAttribute('data-testid', `plan-card-${plan.name}`);
+
+            const featuresHtml = (plan.features || []).map(f => `
+                <li>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    ${f}
+                </li>
+            `).join('');
+
+            card.innerHTML = `
+                <div class="plan-card-header">
+                    <div class="plan-card-name">${plan.display_name}</div>
+                    <div class="plan-card-price">$${plan.price_dollars}<span>/mo</span></div>
+                </div>
+                <ul class="plan-card-features">
+                    ${featuresHtml}
+                </ul>
+                <button class="plan-card-btn ${isCurrent ? 'secondary' : 'primary'}"
+                        onclick="selectPlan('${plan.name}')"
+                        ${isCurrent ? 'disabled' : ''}>
+                    ${isCurrent ? 'Current Plan' : (currentSubscription ? 'Switch to ' + plan.display_name : 'Get Started')}
+                </button>
+            `;
+
+            grid.appendChild(card);
+        });
+    }
+
+    async function selectPlan(planName) {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+
+        try {
+            const response = await fetch('/portal/api/subscription/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan_name: planName })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.url) {
+                window.location.href = data.url;
+            } else {
+                alert(data.error || 'Failed to create checkout session');
+                btn.disabled = false;
+                btn.textContent = 'Get Started';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Get Started';
+        }
+    }
+
+    async function openBillingPortal() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading-spinner"></span>';
+
+        try {
+            const response = await fetch('/portal/api/subscription/billing-portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.url) {
+                window.location.href = data.url;
+            } else {
+                alert(data.error || 'Failed to open billing portal');
+                btn.disabled = false;
+                btn.textContent = 'Manage Billing';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+            btn.disabled = false;
+            btn.textContent = 'Manage Billing';
+        }
+    }
+
+    function showCancelModal() {
+        document.getElementById('cancelModal').style.display = 'flex';
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').style.display = 'none';
+    }
+
+    async function confirmCancel() {
+        closeCancelModal();
+        // Note: Cancel requires staff action for portal users
+        alert('To cancel your subscription, please contact support or use the Manage Billing portal.');
+        openBillingPortal();
+    }
+</script>
+{% endblock %}

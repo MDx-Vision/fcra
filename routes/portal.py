@@ -667,6 +667,22 @@ def submit_referral():
 
     return redirect(url_for('portal.profile'))
 
+
+@portal.route('/subscription')
+@portal_login_required
+@require_full_access
+def subscription():
+    """Subscription management page - requires ACTIVE stage"""
+    current_user = get_current_user()
+    if not current_user:
+        return redirect(url_for('portal_login'))
+
+    return render_template('portal/subscription.html',
+        current_user=current_user,
+        active_page='subscription'
+    )
+
+
 @portal.route('/status')
 @portal_login_required
 @require_full_access

@@ -6576,6 +6576,326 @@ def api_revenue_export():
         db.close()
 
 
+# =============================================================================
+# SUBSCRIPTION MANAGEMENT ENDPOINTS
+# =============================================================================
+
+@app.route("/api/subscriptions/plans")
+def api_subscription_plans():
+    """API: Get available subscription plans"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        plans = service.get_plans(active_only=True)
+        return jsonify({"success": True, "plans": plans})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/subscriptions/sync-plans", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_sync_subscription_plans():
+    """API: Sync subscription plans to Stripe (admin only)"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        results = service.sync_plans_to_stripe()
+        return jsonify({"success": True, "results": results})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription")
+@require_staff()
+def api_get_client_subscription(client_id):
+    """API: Get client's subscription details"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        subscription = service.get_subscription(client_id)
+        return jsonify({"success": True, "subscription": subscription})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/checkout", methods=["POST"])
+@require_staff()
+def api_create_subscription_checkout(client_id):
+    """API: Create a Stripe checkout session for subscription"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        plan_name = data.get("plan_name", "basic")
+
+        # Build URLs
+        base_url = request.host_url.rstrip('/')
+        success_url = data.get("success_url") or f"{base_url}/dashboard/clients/{client_id}?subscription=success"
+        cancel_url = data.get("cancel_url") or f"{base_url}/dashboard/clients/{client_id}?subscription=cancelled"
+
+        service = get_subscription_service(db)
+        result = service.create_checkout_session(
+            client_id=client_id,
+            plan_name=plan_name,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/create", methods=["POST"])
+@require_staff()
+def api_create_subscription(client_id):
+    """API: Create subscription directly with saved payment method"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        plan_name = data.get("plan_name", "basic")
+        payment_method_id = data.get("payment_method_id")
+
+        service = get_subscription_service(db)
+        result = service.create_subscription(
+            client_id=client_id,
+            plan_name=plan_name,
+            payment_method_id=payment_method_id
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/cancel", methods=["POST"])
+@require_staff()
+def api_cancel_subscription(client_id):
+    """API: Cancel client's subscription"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        at_period_end = data.get("at_period_end", True)
+        reason = data.get("reason")
+
+        service = get_subscription_service(db)
+        result = service.cancel_subscription(
+            client_id=client_id,
+            at_period_end=at_period_end,
+            reason=reason
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/reactivate", methods=["POST"])
+@require_staff()
+def api_reactivate_subscription(client_id):
+    """API: Reactivate a subscription scheduled for cancellation"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        result = service.reactivate_subscription(client_id)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/change-plan", methods=["POST"])
+@require_staff()
+def api_change_subscription_plan(client_id):
+    """API: Upgrade or downgrade subscription plan"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        new_plan_name = data.get("plan_name")
+
+        if not new_plan_name:
+            return jsonify({"success": False, "error": "plan_name is required"}), 400
+
+        service = get_subscription_service(db)
+        result = service.change_plan(client_id, new_plan_name)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/billing-portal", methods=["POST"])
+@require_staff()
+def api_create_billing_portal(client_id):
+    """API: Create Stripe billing portal session"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        base_url = request.host_url.rstrip('/')
+        return_url = data.get("return_url") or f"{base_url}/dashboard/clients/{client_id}"
+
+        service = get_subscription_service(db)
+        result = service.create_billing_portal_session(client_id, return_url)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/webhooks/stripe/subscriptions", methods=["POST"])
+def api_stripe_subscription_webhook():
+    """API: Handle Stripe subscription webhooks"""
+    db = get_db()
+    try:
+        import stripe
+        from services.subscription_service import get_subscription_service
+        from services.stripe_client import get_webhook_secret
+
+        payload = request.get_data()
+        sig_header = request.headers.get("Stripe-Signature")
+        webhook_secret = get_webhook_secret()
+
+        # Verify webhook signature
+        if webhook_secret:
+            try:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, webhook_secret
+                )
+            except stripe.error.SignatureVerificationError:
+                return jsonify({"error": "Invalid signature"}), 400
+        else:
+            import json
+            event_data = json.loads(payload)
+            event = stripe.Event.construct_from(event_data, stripe.api_key)
+
+        # Handle the event
+        service = get_subscription_service(db)
+        result = service.handle_webhook_event(event)
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
+
+
+# Portal endpoints for client self-service
+@app.route("/portal/api/subscription")
+def portal_api_get_subscription():
+    """Portal API: Get current client's subscription"""
+    client = get_portal_client()
+    if not client:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        subscription = service.get_subscription(client.id)
+        return jsonify({"success": True, "subscription": subscription})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/portal/api/subscription/checkout", methods=["POST"])
+def portal_api_subscription_checkout():
+    """Portal API: Create checkout session for client"""
+    client = get_portal_client()
+    if not client:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        plan_name = data.get("plan_name", "basic")
+
+        base_url = request.host_url.rstrip('/')
+        success_url = f"{base_url}/portal/subscription?status=success"
+        cancel_url = f"{base_url}/portal/subscription?status=cancelled"
+
+        service = get_subscription_service(db)
+        result = service.create_checkout_session(
+            client_id=client.id,
+            plan_name=plan_name,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/portal/api/subscription/billing-portal", methods=["POST"])
+def portal_api_billing_portal():
+    """Portal API: Create billing portal session for client"""
+    client = get_portal_client()
+    if not client:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        base_url = request.host_url.rstrip('/')
+        return_url = f"{base_url}/portal/subscription"
+
+        service = get_subscription_service(db)
+        result = service.create_billing_portal_session(client.id, return_url)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route("/api/intake", methods=["POST"])
 def api_intake():
     """New client intake endpoint"""

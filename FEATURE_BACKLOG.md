@@ -808,15 +808,69 @@ Track MRR, ARR, churn, LTV, CAC metrics with charts and trends.
 
 ---
 
-### Priority 14: Stripe Subscriptions
-**Status**: Backlog | **Effort**: High
+### ~~Priority 14: Stripe Subscriptions~~ ✅ COMPLETE
+**Completed**: 2026-01-03 | **Effort**: High
 
 Monthly recurring billing with subscription tiers.
-- [ ] Plan tiers: Basic, Pro, Enterprise
-- [ ] Create `Subscription` model
-- [ ] Stripe Billing API integration
-- [ ] Subscription checkout flow
-- [ ] Webhook handlers (success/failure)
+
+#### What Was Implemented
+
+1. **SubscriptionService** (`services/subscription_service.py` - 700+ lines):
+   - [x] Plan tiers: Basic ($49/mo), Pro ($99/mo), Enterprise ($199/mo)
+   - [x] `sync_plans_to_stripe()` - Sync plans to Stripe products/prices
+   - [x] `get_or_create_stripe_customer()` - Customer management
+   - [x] `create_checkout_session()` - Subscription checkout
+   - [x] `create_subscription()` - Direct subscription creation
+   - [x] `cancel_subscription()` - Cancel at period end or immediately
+   - [x] `reactivate_subscription()` - Undo pending cancellation
+   - [x] `change_plan()` - Upgrade/downgrade with proration
+   - [x] `create_billing_portal_session()` - Stripe billing portal access
+   - [x] Webhook handlers for all subscription events
+
+2. **API Endpoints** (`app.py`):
+   - [x] `GET /api/subscriptions/plans` - List available plans
+   - [x] `POST /api/subscriptions/sync-plans` - Admin: Sync to Stripe
+   - [x] `GET /api/clients/<id>/subscription` - Get client subscription
+   - [x] `POST /api/clients/<id>/subscription/checkout` - Create checkout
+   - [x] `POST /api/clients/<id>/subscription/create` - Direct create
+   - [x] `POST /api/clients/<id>/subscription/cancel` - Cancel
+   - [x] `POST /api/clients/<id>/subscription/reactivate` - Reactivate
+   - [x] `POST /api/clients/<id>/subscription/change-plan` - Change plan
+   - [x] `POST /api/clients/<id>/subscription/billing-portal` - Portal access
+   - [x] `POST /api/webhooks/stripe/subscriptions` - Webhook handler
+
+3. **Portal Endpoints**:
+   - [x] `GET /portal/api/subscription` - Get current subscription
+   - [x] `POST /portal/api/subscription/checkout` - Checkout for client
+   - [x] `POST /portal/api/subscription/billing-portal` - Billing portal
+
+4. **Portal UI** (`templates/portal/subscription.html`):
+   - [x] Current plan display with status badge
+   - [x] Plan cards with features list
+   - [x] Checkout flow integration
+   - [x] Billing portal access
+   - [x] Cancellation modal
+   - [x] Responsive design
+
+5. **Navigation**:
+   - [x] Added "Subscription" link to portal nav
+   - [x] Added "Billing" link to mobile nav
+
+6. **Unit Tests** (`tests/test_subscription_service.py` - 31 tests):
+   - [x] Service initialization
+   - [x] Plan management
+   - [x] Customer management
+   - [x] Subscription lifecycle
+   - [x] Webhook handlers
+   - [x] Edge cases and error handling
+
+#### Files Created/Modified
+- `services/subscription_service.py` - NEW (700+ lines)
+- `templates/portal/subscription.html` - NEW (400+ lines)
+- `tests/test_subscription_service.py` - NEW (31 tests)
+- `app.py` - Added 14 subscription endpoints
+- `routes/portal.py` - Added subscription route
+- `templates/portal/base_portal.html` - Added nav links
 
 ---
 
@@ -913,7 +967,8 @@ Track items deleted, score improvements.
 - **SMS**: Twilio (A2P campaign pending carrier approval)
 - **Priorities 1-12**: All complete!
 - **Priority 13**: Revenue Dashboard ✅ COMPLETE (2026-01-03)
-- **Priority 14**: Stripe Subscriptions - Next up
+- **Priority 14**: Stripe Subscriptions ✅ COMPLETE (2026-01-03)
+- **Priority 15**: Invoice Generator - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---
