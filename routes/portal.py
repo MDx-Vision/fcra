@@ -980,6 +980,15 @@ def messages():
     return render_template('portal/messages.html', current_user=current_user)
 
 
+@portal.route('/communication')
+@portal_login_required
+@require_full_access
+def communication():
+    """Combined communication page with messages and booking"""
+    current_user = get_current_user()
+    return render_template('portal/communication.html', current_user=current_user)
+
+
 @portal.route('/onboarding')
 @portal_login_required
 @require_onboarding_access

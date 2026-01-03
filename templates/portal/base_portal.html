@@ -102,17 +102,13 @@
         <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
             <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
         </a>
-        {# 3. Messages - Chat with support #}
-        <a href="{{ url_for('portal.messages') }}" class="nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="nav-messages">
-            <span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Messages</span>
+        {# 3. Communication - Messages + Book Call combined #}
+        <a href="{{ url_for('portal.communication') }}" class="nav-tab {% if active_tab == 'communication' or active_tab == 'messages' or active_tab == 'booking' %}active{% endif %}" data-testid="nav-communication">
+            <span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Contact</span>
         </a>
         {# 4. Journey - Progress timeline #}
         <a href="{{ url_for('portal.timeline') }}" class="nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="nav-timeline">
             <span class="nav-icon" aria-hidden="true">📈</span><span class="nav-label">Journey</span>
-        </a>
-        {# 5. Book Call - Schedule appointments #}
-        <a href="{{ url_for('portal.booking') }}" class="nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="nav-booking">
-            <span class="nav-icon" aria-hidden="true">📞</span><span class="nav-label">Book Call</span>
         </a>
         {# 6. Profile - Settings & Billing (contains Invoices, Plans, Subscription, Status) #}
         <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="nav-profile">
@@ -147,20 +143,20 @@
             <span>👤</span><span>Profile</span>
         </a>
         {% else %}
-        {# Active clients mobile nav: 5 items (most important actions) #}
+        {# Active clients mobile nav: 5 items #}
         <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="mobile-nav-case">
             <span>📊</span><span>Case</span>
         </a>
         <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="mobile-nav-documents">
             <span>📁</span><span>Docs</span>
         </a>
-        <a href="{{ url_for('portal.messages') }}" class="mobile-nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="mobile-nav-messages">
-            <span>💬</span><span>Chat</span>
+        <a href="{{ url_for('portal.communication') }}" class="mobile-nav-tab {% if active_tab == 'communication' or active_tab == 'messages' or active_tab == 'booking' %}active{% endif %}" data-testid="mobile-nav-communication">
+            <span>💬</span><span>Contact</span>
         </a>
         <a href="{{ url_for('portal.timeline') }}" class="mobile-nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="mobile-nav-timeline">
             <span>📈</span><span>Journey</span>
         </a>
-        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status', 'booking'] %}active{% endif %}" data-testid="mobile-nav-profile">
+        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>
         </a>
         {% endif %}
