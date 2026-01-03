@@ -3,11 +3,11 @@
 ## Current Status (2026-01-03)
 
 ### Test Status: 100% PASSING
-- **Unit tests**: 4,860+ passing (61 test files, ~100s runtime)
+- **Unit tests**: 4,890+ passing (62 test files, ~100s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Full QA suite**: All tests pass
-- **Service coverage**: 61/61 services have dedicated test files (100%)
+- **Service coverage**: 62/62 services have dedicated test files (100%)
 
 ### Feature Phases
 - Phase 1: Core Platform ✅
@@ -37,8 +37,37 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 10**: ~~White Label Partner Portal~~ ✅ COMPLETE
 - **Priority 11**: ~~CROA Document Signing Workflow~~ ✅ COMPLETE
 - **Priority 12**: ~~Two-Factor Authentication (2FA)~~ ✅ COMPLETE
+- **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 
 ### Current Work (2026-01-03) - COMPLETE
+
+**Task**: Priority 13 - Revenue Dashboard
+
+**Status**: ✅ COMPLETE
+
+**What Was Implemented**:
+1. **RevenueMetricsService** (`services/revenue_metrics_service.py` - 600 lines):
+   - MRR/ARR, LTV, Churn rate calculations
+   - Revenue by period, payment method, plan
+   - Commission/affiliate metrics
+   - Chart.js data formatting
+   - CSV export
+
+2. **Revenue Dashboard UI** (`templates/revenue_dashboard.html`):
+   - 8 metric cards with Chart.js visualizations
+   - Top affiliates table
+   - Payment/plan breakdown
+   - Responsive design
+
+3. **API Endpoints**:
+   - `GET /dashboard/revenue` - Dashboard page
+   - `GET /api/revenue/*` - Summary, by-period, MRR, churn, export
+
+4. **Unit Tests** (`tests/test_revenue_metrics_service.py` - 31 tests passing)
+
+---
+
+### Previous Work (2026-01-03) - COMPLETE
 
 **Task**: Priority 12 - Two-Factor Authentication (2FA)
 

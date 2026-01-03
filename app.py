@@ -6406,6 +6406,176 @@ def api_revenue_trends():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+# =============================================================================
+# Revenue Dashboard (Priority 13)
+# =============================================================================
+
+@app.route("/dashboard/revenue")
+@require_staff(roles=["admin", "attorney"])
+def dashboard_revenue():
+    """Revenue Dashboard - MRR, LTV, Churn, and Financial Metrics"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+
+        # Get dashboard summary
+        summary = service.get_dashboard_summary()
+        chart_data = service.get_revenue_chart_data('month', 12)
+        top_affiliates = service.get_top_affiliates(5)
+        payment_methods = service.get_revenue_by_payment_method()
+        plans = service.get_revenue_by_plan()
+
+        return render_template(
+            "revenue_dashboard.html",
+            summary=summary,
+            chart_data=chart_data,
+            top_affiliates=top_affiliates,
+            payment_methods=payment_methods,
+            plans=plans,
+            active_page="revenue"
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template(
+            "revenue_dashboard.html",
+            summary={},
+            chart_data={'labels': [], 'datasets': {'revenue': [], 'clients': []}},
+            top_affiliates=[],
+            payment_methods={},
+            plans={},
+            active_page="revenue",
+            error=str(e)
+        )
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/summary")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_summary():
+    """API: Get revenue dashboard summary"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+        summary = service.get_dashboard_summary()
+        return jsonify({"success": True, **summary})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/by-period")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_by_period():
+    """API: Get revenue by time period"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        period = request.args.get("period", "month")
+        limit = request.args.get("limit", 12, type=int)
+
+        service = get_revenue_metrics_service(db)
+        data = service.get_revenue_by_period(period, limit)
+        return jsonify({"success": True, "data": data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/mrr")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_mrr():
+    """API: Get MRR/ARR metrics"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+        mrr = service.get_mrr()
+        mrr_growth = service.get_mrr_growth(6)
+        return jsonify({"success": True, "mrr": mrr, "growth": mrr_growth})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/churn")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_churn():
+    """API: Get churn and retention metrics"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+        churn = service.get_churn_rate(30)
+        cohorts = service.get_client_retention_cohorts(6)
+        return jsonify({"success": True, "churn": churn, "cohorts": cohorts})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/export")
+@require_staff(roles=["admin"])
+def api_revenue_export():
+    """API: Export revenue data as CSV"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        import csv
+        from io import StringIO
+
+        # Parse date filters
+        start_date = None
+        end_date = None
+        if request.args.get("start"):
+            start_date = datetime.fromisoformat(request.args.get("start"))
+        if request.args.get("end"):
+            end_date = datetime.fromisoformat(request.args.get("end"))
+
+        service = get_revenue_metrics_service(db)
+        data = service.export_revenue_data(start_date, end_date)
+
+        # Create CSV
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=[
+            'client_id', 'name', 'email', 'plan', 'amount_dollars',
+            'status', 'method', 'payment_date', 'signup_date'
+        ])
+        writer.writeheader()
+        for row in data:
+            writer.writerow({
+                'client_id': row['client_id'],
+                'name': row['name'],
+                'email': row['email'],
+                'plan': row['plan'],
+                'amount_dollars': row['amount_dollars'],
+                'status': row['status'],
+                'method': row['method'],
+                'payment_date': row['payment_date'],
+                'signup_date': row['signup_date']
+            })
+
+        # Return as downloadable CSV
+        from flask import Response
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=revenue_export.csv'}
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route("/api/intake", methods=["POST"])
 def api_intake():
     """New client intake endpoint"""

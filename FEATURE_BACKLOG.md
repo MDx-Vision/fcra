@@ -750,14 +750,61 @@ Auth: App Password (requires 2FA enabled)
 
 ## Prioritized Backlog (P13-P20)
 
-### Priority 13: Revenue Dashboard
-**Status**: Backlog | **Effort**: Medium
+### ~~Priority 13: Revenue Dashboard~~ ✅ COMPLETE
+**Completed**: 2026-01-03 | **Effort**: Medium
 
 Track MRR, ARR, churn, LTV, CAC metrics with charts and trends.
-- [ ] Create `RevenueMetricsService`
-- [ ] Template: `revenue_dashboard.html`
-- [ ] Historical snapshots (daily)
-- [ ] CSV/Excel export
+
+#### What Was Implemented
+
+1. **RevenueMetricsService** (`services/revenue_metrics_service.py` - 600 lines):
+   - [x] `get_total_revenue()` - Total revenue for period
+   - [x] `get_revenue_by_period()` - Revenue by day/week/month/year
+   - [x] `get_revenue_by_payment_method()` - Breakdown by payment method
+   - [x] `get_revenue_by_plan()` - Breakdown by signup plan
+   - [x] `get_mrr()` - Monthly Recurring Revenue + ARR + ARPU
+   - [x] `get_mrr_growth()` - MRR growth over months
+   - [x] `get_churn_rate()` - Churn and retention rates
+   - [x] `get_client_retention_cohorts()` - Retention by cohorts
+   - [x] `get_ltv()` - Customer Lifetime Value
+   - [x] `get_commission_metrics()` - Affiliate commission tracking
+   - [x] `get_top_affiliates()` - Top performers
+   - [x] `get_dashboard_summary()` - All metrics combined
+   - [x] `get_revenue_chart_data()` - Chart.js formatted data
+   - [x] `export_revenue_data()` - CSV export data
+
+2. **Revenue Dashboard UI** (`templates/revenue_dashboard.html`):
+   - [x] 8 metric cards (Revenue, MRR, LTV, Churn, Signups, Conversion, ARPU, Pending Commissions)
+   - [x] Revenue over time line chart (Chart.js)
+   - [x] Revenue by plan doughnut chart
+   - [x] Top affiliates table
+   - [x] Payment method breakdown
+   - [x] Plan breakdown
+   - [x] CSV export button
+   - [x] Responsive design
+
+3. **API Endpoints** (`app.py`):
+   - [x] `GET /dashboard/revenue` - Dashboard page
+   - [x] `GET /api/revenue/summary` - Dashboard summary API
+   - [x] `GET /api/revenue/by-period` - Revenue by time period
+   - [x] `GET /api/revenue/mrr` - MRR/ARR metrics
+   - [x] `GET /api/revenue/churn` - Churn and retention
+   - [x] `GET /api/revenue/export` - CSV export
+
+4. **Sidebar Navigation**:
+   - [x] Added "Revenue" link in Analytics section
+
+5. **Unit Tests** (`tests/test_revenue_metrics_service.py` - 31 tests):
+   - [x] All service methods tested
+   - [x] Edge cases for zero division
+   - [x] Negative growth handling
+
+#### Files Created/Modified
+- `services/revenue_metrics_service.py` - NEW (600 lines)
+- `templates/revenue_dashboard.html` - NEW (500 lines)
+- `tests/test_revenue_metrics_service.py` - NEW (31 tests)
+- `app.py` - Added revenue endpoints
+- `templates/includes/dashboard_sidebar.html` - Added revenue link
 
 ---
 
@@ -865,7 +912,8 @@ Track items deleted, score improvements.
 - **Email**: Gmail SMTP (SendGrid removed)
 - **SMS**: Twilio (A2P campaign pending carrier approval)
 - **Priorities 1-12**: All complete!
-- **Priority 13**: Revenue Dashboard - Next up
+- **Priority 13**: Revenue Dashboard ✅ COMPLETE (2026-01-03)
+- **Priority 14**: Stripe Subscriptions - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---
