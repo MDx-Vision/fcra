@@ -310,11 +310,11 @@ class OnboardingService:
         return {'success': True, 'message': 'No progress to reset'}
 
     def get_all_incomplete(self, limit: int = 50) -> List[Dict[str, Any]]:
-        """Get all clients with incomplete onboarding"""
+        """Get all clients with incomplete onboarding (most recent first)"""
         # Get clients who have onboarding progress but not complete
         incomplete = self.db.query(OnboardingProgress).filter(
             OnboardingProgress.is_complete == False
-        ).limit(limit).all()
+        ).order_by(OnboardingProgress.created_at.desc()).limit(limit).all()
 
         results = []
         for progress in incomplete:
