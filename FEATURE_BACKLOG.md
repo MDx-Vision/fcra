@@ -1725,6 +1725,69 @@ Progressive Web App for installable mobile experience with offline support.
 
 ---
 
+## ~~Priority 28: Voicemail Drops~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
+
+Automated ringless voicemail drops for client outreach and communication.
+
+### What Was Implemented
+
+1. **Database Models** (`database.py`):
+   - [x] `VoicemailRecording` - Pre-recorded voicemail audio files
+   - [x] `VoicemailDrop` - Individual voicemail drop tracking
+   - [x] `VoicemailCampaign` - Batch voicemail campaigns
+
+2. **VoicemailDropService** (`services/voicemail_drop_service.py`):
+   - [x] Recording management (CRUD)
+   - [x] Multiple provider support (Slybroadcast, Drop Cowboy, Twilio)
+   - [x] Phone number validation and formatting
+   - [x] Scheduled drops
+   - [x] Campaign management (create, start, pause, cancel)
+   - [x] Drop retry and cancellation
+   - [x] Statistics and reporting
+
+3. **API Endpoints** (~20 endpoints):
+   - [x] Recordings: GET/POST/PUT/DELETE `/api/voicemail/recordings`
+   - [x] Drops: GET/POST `/api/voicemail/drops`, retry, cancel
+   - [x] Campaigns: GET/POST, add targets, start, pause, cancel
+   - [x] Stats: GET `/api/voicemail/stats`
+   - [x] Client history: GET `/api/voicemail/clients/<id>/history`
+
+4. **Dashboard UI** (`templates/voicemail_drops.html`):
+   - [x] Recording library with audio preview
+   - [x] Category filtering (welcome, reminder, update, follow_up, payment, custom)
+   - [x] Recent drops table with status badges
+   - [x] Campaign management interface
+   - [x] Quick send modal
+   - [x] File upload with drag-and-drop
+   - [x] Statistics cards
+
+5. **Workflow Triggers Integration**:
+   - [x] New action type: `send_voicemail`
+   - [x] Can trigger voicemail drops from any workflow event
+   - [x] Parameters: `recording_id`, `recording_name`
+
+### Features
+
+- **Multiple Providers**: Slybroadcast, Drop Cowboy, Twilio (with AMD)
+- **Campaign Management**: Create, schedule, and manage batch drops
+- **Recording Library**: Upload, categorize, and preview audio
+- **Workflow Integration**: Trigger drops from automated workflows
+- **Cost Tracking**: Per-drop cost tracking and reporting
+- **Scheduling**: Schedule drops for future delivery
+
+### Files Created/Modified
+- `database.py` - Added 3 new models
+- `services/voicemail_drop_service.py` - NEW (~650 lines)
+- `app.py` - Added ~20 API endpoints
+- `templates/voicemail_drops.html` - NEW (dashboard)
+- `templates/includes/dashboard_sidebar.html` - Added nav link
+- `services/workflow_triggers_service.py` - Added send_voicemail action
+- `tests/test_voicemail_drop_service.py` - NEW (34 tests)
+
+---
+
 ## Future Features (Not Yet Prioritized)
 
 - [x] ~~E-Sign Integration~~ - Already implemented (CROA Signing Service with signature capture)
@@ -1735,7 +1798,7 @@ Progressive Web App for installable mobile experience with offline support.
 - [x] ~~Auto-Pull Credit Reports~~ - Implemented 2026-01-03
 - [x] ~~Letter Template Builder~~ - Implemented 2026-01-03
 - [x] ~~Mobile App (PWA)~~ - Implemented 2026-01-03
-- [ ] Voicemail Drops
+- [x] ~~Voicemail Drops~~ - Implemented 2026-01-03
 
 ### Pending Infrastructure
 
@@ -1764,7 +1827,8 @@ Progressive Web App for installable mobile experience with offline support.
 - **Priority 25**: Auto-Pull Credit Reports ✅ COMPLETE (2026-01-03)
 - **Priority 26**: Letter Template Builder ✅ COMPLETE (2026-01-03)
 - **Priority 27**: Mobile App (PWA) ✅ COMPLETE (2026-01-03)
-- **All P1-P27 priorities complete!**
+- **Priority 28**: Voicemail Drops ✅ COMPLETE (2026-01-03)
+- **All P1-P28 priorities complete!**
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

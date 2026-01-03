@@ -5836,6 +5836,202 @@ class GeneratedLetter(Base):
         }
 
 
+class VoicemailRecording(Base):
+    """Pre-recorded voicemail messages for ringless voicemail drops"""
+    __tablename__ = 'voicemail_recordings'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    category = Column(String(50), default='general')  # welcome, reminder, update, follow_up, custom
+
+    # Audio file
+    file_path = Column(Text, nullable=False)
+    file_name = Column(String(255))
+    file_size_bytes = Column(Integer)
+    duration_seconds = Column(Integer)
+    format = Column(String(20), default='mp3')  # mp3, wav
+
+    # Settings
+    is_active = Column(Boolean, default=True)
+    is_system = Column(Boolean, default=False)  # System templates can't be deleted
+
+    # Usage tracking
+    use_count = Column(Integer, default=0)
+    last_used_at = Column(DateTime)
+
+    # Audit
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    created_by = relationship('Staff', backref='voicemail_recordings')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'category': self.category,
+            'file_path': self.file_path,
+            'file_name': self.file_name,
+            'file_size_bytes': self.file_size_bytes,
+            'duration_seconds': self.duration_seconds,
+            'format': self.format,
+            'is_active': self.is_active,
+            'is_system': self.is_system,
+            'use_count': self.use_count,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class VoicemailDrop(Base):
+    """Track voicemail drop attempts and status"""
+    __tablename__ = 'voicemail_drops'
+
+    id = Column(Integer, primary_key=True, index=True)
+    recording_id = Column(Integer, ForeignKey('voicemail_recordings.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Phone number used
+    phone_number = Column(String(20), nullable=False)
+    phone_type = Column(String(20))  # mobile, landline, voip
+
+    # Trigger info
+    trigger_type = Column(String(50))  # manual, scheduled, workflow, campaign
+    trigger_event = Column(String(100))  # The event that triggered this drop
+    campaign_id = Column(Integer)  # If part of a campaign
+
+    # Status tracking
+    status = Column(String(50), default='pending')  # pending, queued, sent, delivered, failed, cancelled
+    provider = Column(String(50))  # slybroadcast, dropcowboy, twilio
+    provider_id = Column(String(100))  # External ID from provider
+    provider_response = Column(JSON)  # Full response from provider
+
+    # Timing
+    scheduled_at = Column(DateTime)  # When to send (for scheduled drops)
+    queued_at = Column(DateTime)  # When sent to provider queue
+    sent_at = Column(DateTime)  # When actually sent by provider
+    delivered_at = Column(DateTime)  # When delivered to voicemail
+
+    # Error tracking
+    error_code = Column(String(50))
+    error_message = Column(Text)
+    retry_count = Column(Integer, default=0)
+    max_retries = Column(Integer, default=3)
+
+    # Cost tracking
+    cost_cents = Column(Integer)  # Cost in cents
+
+    # Audit
+    initiated_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    recording = relationship('VoicemailRecording', backref='drops')
+    client = relationship('Client', backref='voicemail_drops')
+    initiated_by = relationship('Staff', backref='voicemail_drops')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'recording_id': self.recording_id,
+            'recording_name': self.recording.name if self.recording else None,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'phone_number': self.phone_number,
+            'phone_type': self.phone_type,
+            'trigger_type': self.trigger_type,
+            'trigger_event': self.trigger_event,
+            'campaign_id': self.campaign_id,
+            'status': self.status,
+            'provider': self.provider,
+            'provider_id': self.provider_id,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'queued_at': self.queued_at.isoformat() if self.queued_at else None,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'delivered_at': self.delivered_at.isoformat() if self.delivered_at else None,
+            'error_code': self.error_code,
+            'error_message': self.error_message,
+            'retry_count': self.retry_count,
+            'cost_cents': self.cost_cents,
+            'initiated_by_staff_id': self.initiated_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class VoicemailCampaign(Base):
+    """Voicemail drop campaigns for batch sending"""
+    __tablename__ = 'voicemail_campaigns'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    recording_id = Column(Integer, ForeignKey('voicemail_recordings.id'), nullable=False, index=True)
+
+    # Target settings
+    target_type = Column(String(50), default='manual')  # manual, all_clients, status_filter, tag_filter
+    target_filters = Column(JSON)  # Filter criteria for auto-targeting
+    target_count = Column(Integer, default=0)  # Number of clients targeted
+
+    # Schedule settings
+    status = Column(String(50), default='draft')  # draft, scheduled, in_progress, completed, cancelled, paused
+    scheduled_at = Column(DateTime)  # When to start sending
+    send_window_start = Column(String(10))  # e.g., "09:00" - Only send during these hours
+    send_window_end = Column(String(10))  # e.g., "17:00"
+    send_days = Column(JSON)  # e.g., ["monday", "tuesday", ...] - Days to send
+
+    # Progress tracking
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    total_drops = Column(Integer, default=0)
+    sent_count = Column(Integer, default=0)
+    delivered_count = Column(Integer, default=0)
+    failed_count = Column(Integer, default=0)
+
+    # Cost tracking
+    total_cost_cents = Column(Integer, default=0)
+
+    # Audit
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    recording = relationship('VoicemailRecording', backref='campaigns')
+    created_by = relationship('Staff', backref='voicemail_campaigns')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'recording_id': self.recording_id,
+            'recording_name': self.recording.name if self.recording else None,
+            'target_type': self.target_type,
+            'target_filters': self.target_filters,
+            'target_count': self.target_count,
+            'status': self.status,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'send_window_start': self.send_window_start,
+            'send_window_end': self.send_window_end,
+            'send_days': self.send_days,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'total_drops': self.total_drops,
+            'sent_count': self.sent_count,
+            'delivered_count': self.delivered_count,
+            'failed_count': self.failed_count,
+            'total_cost_cents': self.total_cost_cents,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)

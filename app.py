@@ -39396,6 +39396,484 @@ def dashboard_letter_templates():
         db.close()
 
 
+# ==================== VOICEMAIL DROP ENDPOINTS ====================
+
+@app.route("/api/voicemail/recordings", methods=["GET"])
+@require_staff()
+def api_voicemail_recordings_list():
+    """List all voicemail recordings"""
+    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+
+    service = get_voicemail_drop_service()
+    try:
+        category = request.args.get('category')
+        active_only = request.args.get('active', 'true').lower() == 'true'
+
+        recordings = service.get_recordings(category=category, active_only=active_only)
+        return jsonify({
+            'success': True,
+            'recordings': [r.to_dict() for r in recordings],
+            'categories': VOICEMAIL_CATEGORIES
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings", methods=["POST"])
+@require_staff()
+def api_voicemail_recordings_create():
+    """Create a new voicemail recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+    import os
+    from werkzeug.utils import secure_filename
+
+    # Check for file upload
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+    # Validate file type
+    allowed_extensions = {'mp3', 'wav', 'm4a'}
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in allowed_extensions:
+        return jsonify({'success': False, 'error': f'Invalid file type. Allowed: {", ".join(allowed_extensions)}'}), 400
+
+    # Save file
+    filename = secure_filename(file.filename)
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    filename = f"{timestamp}_{filename}"
+
+    upload_dir = os.path.join('static', 'voicemail')
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, filename)
+    file.save(file_path)
+
+    # Get file size
+    file_size = os.path.getsize(file_path)
+
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.create_recording(
+            name=request.form.get('name', filename),
+            description=request.form.get('description'),
+            category=request.form.get('category', 'custom'),
+            file_path=f'/static/voicemail/{filename}',
+            file_name=filename,
+            file_size_bytes=file_size,
+            duration_seconds=int(request.form.get('duration', 0)) or None,
+            format=ext,
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        }), 201
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_recording_get(recording_id):
+    """Get a specific recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.get_recording(recording_id)
+        if not recording:
+            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["PUT"])
+@require_staff()
+def api_voicemail_recording_update(recording_id):
+    """Update a recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json() or {}
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.update_recording(
+            recording_id,
+            name=data.get('name'),
+            description=data.get('description'),
+            category=data.get('category'),
+            is_active=data.get('is_active')
+        )
+
+        if not recording:
+            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["DELETE"])
+@require_staff()
+def api_voicemail_recording_delete(recording_id):
+    """Delete (deactivate) a recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.delete_recording(recording_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops", methods=["GET"])
+@require_staff()
+def api_voicemail_drops_list():
+    """List voicemail drops with filters"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        drops = service.get_drops(
+            client_id=request.args.get('client_id', type=int),
+            recording_id=request.args.get('recording_id', type=int),
+            status=request.args.get('status'),
+            provider=request.args.get('provider'),
+            limit=request.args.get('limit', 100, type=int),
+            offset=request.args.get('offset', 0, type=int)
+        )
+
+        return jsonify({
+            'success': True,
+            'drops': [d.to_dict() for d in drops]
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops", methods=["POST"])
+@require_staff()
+def api_voicemail_drops_send():
+    """Send a voicemail drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+
+    if not data.get('recording_id') or not data.get('client_id'):
+        return jsonify({'success': False, 'error': 'recording_id and client_id required'}), 400
+
+    # Parse scheduled time if provided
+    scheduled_at = None
+    if data.get('scheduled_at'):
+        try:
+            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.send_drop(
+            recording_id=data['recording_id'],
+            client_id=data['client_id'],
+            phone_number=data.get('phone_number'),
+            trigger_type=data.get('trigger_type', 'manual'),
+            trigger_event=data.get('trigger_event'),
+            scheduled_at=scheduled_at,
+            staff_id=session.get('staff_id'),
+            provider=data.get('provider')
+        )
+
+        status = 201 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_drop_get(drop_id):
+    """Get a specific drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        drop = service.get_drop(drop_id)
+        if not drop:
+            return jsonify({'success': False, 'error': 'Drop not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'drop': drop.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>/retry", methods=["POST"])
+@require_staff()
+def api_voicemail_drop_retry(drop_id):
+    """Retry a failed drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.retry_drop(drop_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>/cancel", methods=["POST"])
+@require_staff()
+def api_voicemail_drop_cancel(drop_id):
+    """Cancel a pending drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.cancel_drop(drop_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/clients/<int:client_id>/history", methods=["GET"])
+@require_staff()
+def api_voicemail_client_history(client_id):
+    """Get voicemail drop history for a client"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        history = service.get_client_drop_history(
+            client_id,
+            limit=request.args.get('limit', 20, type=int)
+        )
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns", methods=["GET"])
+@require_staff()
+def api_voicemail_campaigns_list():
+    """List all campaigns"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        campaigns = service.get_campaigns(
+            status=request.args.get('status')
+        )
+        return jsonify({
+            'success': True,
+            'campaigns': [c.to_dict() for c in campaigns]
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns", methods=["POST"])
+@require_staff()
+def api_voicemail_campaigns_create():
+    """Create a new campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+
+    if not data.get('name') or not data.get('recording_id'):
+        return jsonify({'success': False, 'error': 'name and recording_id required'}), 400
+
+    # Parse scheduled time if provided
+    scheduled_at = None
+    if data.get('scheduled_at'):
+        try:
+            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        campaign = service.create_campaign(
+            name=data['name'],
+            recording_id=data['recording_id'],
+            description=data.get('description'),
+            target_type=data.get('target_type', 'manual'),
+            target_filters=data.get('target_filters'),
+            scheduled_at=scheduled_at,
+            send_window_start=data.get('send_window_start'),
+            send_window_end=data.get('send_window_end'),
+            send_days=data.get('send_days'),
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify({
+            'success': True,
+            'campaign': campaign.to_dict()
+        }), 201
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_campaign_get(campaign_id):
+    """Get a specific campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        campaign = service.get_campaign(campaign_id)
+        if not campaign:
+            return jsonify({'success': False, 'error': 'Campaign not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'campaign': campaign.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/targets", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_add_targets(campaign_id):
+    """Add targets to a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data or not data.get('client_ids'):
+        return jsonify({'success': False, 'error': 'client_ids array required'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.add_targets_to_campaign(campaign_id, data['client_ids'])
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/start", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_start(campaign_id):
+    """Start a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.start_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/pause", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_pause(campaign_id):
+    """Pause a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.pause_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/cancel", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_cancel(campaign_id):
+    """Cancel a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.cancel_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/stats", methods=["GET"])
+@require_staff()
+def api_voicemail_stats():
+    """Get voicemail drop statistics"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        stats = service.get_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/dashboard/voicemail", methods=["GET"])
+@require_staff()
+def dashboard_voicemail():
+    """Voicemail Drops dashboard page"""
+    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+
+    service = get_voicemail_drop_service()
+    try:
+        stats = service.get_stats()
+        recordings = service.get_recordings(active_only=True, limit=50)
+        recent_drops = service.get_drops(limit=20)
+        campaigns = service.get_campaigns(limit=10)
+
+        db = get_db()
+        try:
+            clients = db.query(Client).filter(
+                Client.phone.isnot(None),
+                Client.dispute_status.notin_(['lead', 'cancelled'])
+            ).order_by(Client.name).all()
+
+            return render_template(
+                "voicemail_drops.html",
+                active_page='voicemail',
+                stats=stats,
+                recordings=recordings,
+                recent_drops=recent_drops,
+                campaigns=campaigns,
+                categories=VOICEMAIL_CATEGORIES,
+                clients=clients,
+            )
+        finally:
+            db.close()
+    finally:
+        service.db.close()
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
