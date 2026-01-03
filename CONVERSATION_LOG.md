@@ -72,10 +72,29 @@
   - Version history and restore
   - 6 default system templates
 
+#### Unit Tests Created
+- **AutoPullService Tests** (`tests/test_auto_pull_service.py`): 35 tests
+  - Constants validation (SUPPORTED_SERVICES, FREQUENCIES, PULL_STATUSES)
+  - Static methods (get_supported_services, get_frequencies)
+  - Credential management (add, update, delete, get)
+  - Pull operations (initiate_pull, get_due_pulls, run_scheduled_pulls)
+  - Statistics and validation
+- **LetterTemplateService Tests** (`tests/test_letter_template_service.py`): 46 tests
+  - Constants validation (CATEGORIES, TARGET_TYPES, COMMON_VARIABLES)
+  - Template CRUD operations
+  - Variable extraction and substitution
+  - Version history and restore
+  - Letter generation
+  - Dashboard summary
+
+**Test Result**: 81/81 tests passing
+
 #### Bug Fixes
 1. **SQLAlchemy Reserved Word Error**: Fixed `metadata` → `activity_metadata` in `StaffActivity` model
 2. **Login Password Reset**: Reset password for `test@example.com` to `testpass123`
 3. **Decorator Fix**: Changed `@login_required` → `@require_staff()` in batch processing endpoints
+4. **AutoPullService Import Fix**: Fixed encryption import from non-existent `EncryptionService` class to `encrypt_value`/`decrypt_value` functions
+5. **PULL_STATUSES Constant**: Added missing `PULL_STATUSES` dictionary to auto_pull_service.py
 
 ### Test Credentials
 - **Staff**: `test@example.com` / `testpass123`

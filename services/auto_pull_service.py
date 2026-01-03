@@ -16,7 +16,7 @@ from database import (
     get_db, Client, CreditMonitoringCredential, CreditPullLog,
     CreditReport
 )
-from services.encryption_service import EncryptionService
+from services.encryption import encrypt_value, decrypt_value
 
 
 # Supported credit monitoring services
@@ -77,13 +77,23 @@ STATUS_TIMEOUT = 'timeout'
 STATUS_INVALID_CREDENTIALS = 'invalid_credentials'
 STATUS_SERVICE_UNAVAILABLE = 'service_unavailable'
 
+# Pull statuses dictionary (for easy lookup/iteration)
+PULL_STATUSES = {
+    'pending': STATUS_PENDING,
+    'in_progress': STATUS_IN_PROGRESS,
+    'success': STATUS_SUCCESS,
+    'failed': STATUS_FAILED,
+    'timeout': STATUS_TIMEOUT,
+    'invalid_credentials': STATUS_INVALID_CREDENTIALS,
+    'service_unavailable': STATUS_SERVICE_UNAVAILABLE,
+}
+
 
 class AutoPullService:
     """Service for automatically pulling credit reports"""
 
     def __init__(self):
         self.db = None
-        self.encryption = EncryptionService()
 
     def _get_db(self):
         if not self.db:
@@ -128,8 +138,8 @@ class AutoPullService:
                 return {'success': False, 'error': 'Active credential already exists for this service'}
 
             # Encrypt password
-            encrypted_password = self.encryption.encrypt(password)
-            encrypted_ssn = self.encryption.encrypt(ssn_last4) if ssn_last4 else None
+            encrypted_password = encrypt_value(password)
+            encrypted_ssn = encrypt_value(ssn_last4) if ssn_last4 else None
 
             # Calculate next scheduled import
             next_import = None
@@ -185,7 +195,7 @@ class AutoPullService:
             if username:
                 credential.username = username
             if password:
-                credential.password_encrypted = self.encryption.encrypt(password)
+                credential.password_encrypted = encrypt_value(password)
             if import_frequency:
                 credential.import_frequency = import_frequency
                 if import_frequency in FREQUENCIES and FREQUENCIES[import_frequency]:
@@ -311,7 +321,7 @@ class AutoPullService:
 
         try:
             # Get decrypted password
-            password = self.encryption.decrypt(credential.password_encrypted)
+            password = decrypt_value(credential.password_encrypted)
 
             # Get service connector
             service_key = credential.service_name.lower().replace(' ', '')
@@ -672,7 +682,7 @@ class AutoPullService:
                 return {'success': False, 'error': 'Credential not found'}
 
             # Get decrypted password
-            password = self.encryption.decrypt(credential.password_encrypted)
+            password = decrypt_value(credential.password_encrypted)
 
             # In production, this would attempt a login
             # For now, simulate validation
