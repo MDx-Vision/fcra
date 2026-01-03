@@ -1239,17 +1239,93 @@ Generate customized FCRA dispute letters using AI based on credit reports and CR
 
 ---
 
+## ~~Priority 22: ROI Calculator~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
+
+Calculate potential settlement and recovery values based on violations, items, and historical data.
+- [x] Violation-based statutory damages calculation
+- [x] Actual damages tracking
+- [x] Settlement estimates (conservative, moderate, aggressive, most likely)
+- [x] Litigation potential scoring
+
+#### What Was Implemented
+
+1. **Database Model** (`database.py`):
+   - [x] `ROICalculation` - Store calculation results per client
+   - [x] Violation counts by type (FCRA, FDCPA, TCPA, FCBA)
+   - [x] Statutory and actual damages tracking
+   - [x] Settlement estimate ranges
+   - [x] Litigation score and recommendation
+   - [x] Score improvement and credit value estimates
+   - [x] Migration entries
+
+2. **ROICalculatorService** (`services/roi_calculator_service.py` - 750+ lines):
+   - [x] `calculate_roi()` - Full client ROI calculation
+   - [x] `quick_estimate()` - Quick estimate without client data
+   - [x] `get_client_calculations()` - Calculation history
+   - [x] `get_dashboard_summary()` - Dashboard stats
+   - [x] `get_aggregate_stats()` - Period-based statistics
+   - [x] `export_calculations()` - CSV export
+   - [x] Statutory damages: $100-$1000 per willful FCRA violation
+   - [x] Punitive damages multiplier (2.5x for willful)
+   - [x] Historical deletion rates by item type
+   - [x] Score improvement estimates
+   - [x] Credit value improvement calculation
+
+3. **API Endpoints** (`app.py` - 8 endpoints):
+   - [x] `GET /api/roi-calculator/dashboard` - Dashboard summary
+   - [x] `POST /api/roi-calculator/calculate/<id>` - Calculate client ROI
+   - [x] `POST /api/roi-calculator/quick-estimate` - Quick estimate
+   - [x] `GET /api/roi-calculator/client/<id>` - Client history
+   - [x] `GET /api/roi-calculator/calculation/<id>` - Get specific calculation
+   - [x] `GET /api/roi-calculator/stats` - Aggregate statistics
+   - [x] `GET /api/roi-calculator/export` - CSV export
+   - [x] `GET /dashboard/roi-calculator` - Dashboard page
+
+4. **ROI Calculator Dashboard** (`templates/roi_calculator.html`):
+   - [x] Stats cards: Total Calculations, Avg Estimate, Litigation Recommended, Total Value
+   - [x] Client selector with optional actual damages inputs
+   - [x] Estimate results (Conservative, Moderate, Aggressive, Most Likely)
+   - [x] Violation badges by type
+   - [x] Litigation potential score bar
+   - [x] Recent calculations table
+   - [x] Quick Estimate modal for ad-hoc calculations
+   - [x] Calculation details modal
+   - [x] CSV export
+   - [x] Period filter (week/month/quarter/all)
+
+5. **Calculation Factors**:
+   - FCRA statutory: $100-$1,000 per willful violation
+   - Punitive damages: Up to 2.5x statutory for willful
+   - Attorney fees: Fee shifting estimate
+   - Historical deletion rates: 30-90% by item type
+   - Score improvement: 3-15 points per item type
+   - Credit value: $250 per score point (lifetime savings)
+
+6. **Sidebar Navigation**:
+   - [x] Added "ROI Calculator" link in Analytics section
+
+#### Files Created/Modified
+- `database.py` - Added ROICalculation model + migrations
+- `services/roi_calculator_service.py` - NEW (750+ lines)
+- `app.py` - Added 8 ROI calculator API endpoints
+- `templates/roi_calculator.html` - NEW (dashboard page)
+- `templates/includes/dashboard_sidebar.html` - Added sidebar link
+
+---
+
 ## Future Features (Not Yet Prioritized)
 
 - [x] ~~E-Sign Integration~~ - Already implemented (CROA Signing Service with signature capture)
 - [x] ~~AI Dispute Writer~~ - Implemented 2026-01-03
+- [x] ~~ROI Calculator~~ - Implemented 2026-01-03
 - [ ] Mobile App (PWA)
 - [ ] Auto-Pull Credit Reports
 - [ ] Letter Template Builder
 - [ ] Payment Plans
 - [ ] Voicemail Drops
 - [ ] Bureau Response Tracking
-- [ ] ROI Calculator
 
 ### Pending Infrastructure
 
@@ -1272,7 +1348,8 @@ Generate customized FCRA dispute letters using AI based on credit reports and CR
 - **Priority 19**: Staff Performance ✅ COMPLETE (2026-01-03)
 - **Priority 20**: Client Success Metrics ✅ COMPLETE (2026-01-03)
 - **Priority 21**: AI Dispute Writer ✅ COMPLETE (2026-01-03)
-- **All P1-P21 priorities complete!**
+- **Priority 22**: ROI Calculator ✅ COMPLETE (2026-01-03)
+- **All P1-P22 priorities complete!**
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

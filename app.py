@@ -37846,6 +37846,163 @@ def dashboard_ai_dispute_writer():
     return render_template("ai_dispute_writer.html")
 
 
+# =============================================================================
+# ROI CALCULATOR ENDPOINTS
+# =============================================================================
+
+@app.route("/api/roi-calculator/dashboard", methods=["GET"])
+@login_required
+def api_roi_calculator_dashboard():
+    """Get ROI calculator dashboard summary"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        service = ROICalculatorService()
+        summary = service.get_dashboard_summary()
+        return jsonify({"success": True, **summary})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/calculate/<int:client_id>", methods=["POST"])
+@login_required
+def api_roi_calculator_calculate(client_id):
+    """Calculate ROI for a specific client"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        data = request.get_json() or {}
+
+        actual_damages = data.get('actual_damages')
+        save = data.get('save', True)
+
+        service = ROICalculatorService()
+        result = service.calculate_roi(
+            client_id=client_id,
+            staff_id=session.get('staff_id'),
+            actual_damages=actual_damages,
+            save=save
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/quick-estimate", methods=["POST"])
+@login_required
+def api_roi_calculator_quick_estimate():
+    """Quick ROI estimate without client data"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        data = request.get_json() or {}
+
+        service = ROICalculatorService()
+        result = service.quick_estimate(
+            violations_count=data.get('violations_count', 0),
+            willful_count=data.get('willful_count', 0),
+            collections_count=data.get('collections_count', 0),
+            chargeoffs_count=data.get('chargeoffs_count', 0),
+            late_payments_count=data.get('late_payments_count', 0),
+            inquiries_count=data.get('inquiries_count', 0),
+            public_records_count=data.get('public_records_count', 0),
+            actual_damages=data.get('actual_damages', 0)
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/client/<int:client_id>", methods=["GET"])
+@login_required
+def api_roi_calculator_client_history(client_id):
+    """Get calculation history for a client"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        limit = request.args.get('limit', 10, type=int)
+
+        service = ROICalculatorService()
+        calculations = service.get_client_calculations(client_id, limit=limit)
+
+        return jsonify({"success": True, "calculations": calculations})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/calculation/<int:calculation_id>", methods=["GET"])
+@login_required
+def api_roi_calculator_get_calculation(calculation_id):
+    """Get a specific calculation"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        service = ROICalculatorService()
+        calculation = service.get_calculation(calculation_id)
+
+        if calculation:
+            return jsonify({"success": True, "calculation": calculation})
+        return jsonify({"success": False, "error": "Calculation not found"}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/stats", methods=["GET"])
+@login_required
+def api_roi_calculator_stats():
+    """Get aggregate statistics"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        period = request.args.get('period', 'all')
+
+        service = ROICalculatorService()
+        stats = service.get_aggregate_stats(period=period)
+
+        return jsonify({"success": True, **stats})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/export", methods=["GET"])
+@login_required
+def api_roi_calculator_export():
+    """Export calculations as CSV"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        import csv
+        from io import StringIO
+
+        period = request.args.get('period', 'all')
+        client_ids = request.args.get('client_ids')
+
+        if client_ids:
+            client_ids = [int(x) for x in client_ids.split(',')]
+
+        service = ROICalculatorService()
+        data = service.export_calculations(client_ids=client_ids, period=period)
+
+        if not data:
+            return jsonify({"success": False, "error": "No data to export"}), 404
+
+        # Create CSV
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=roi_calculations_{period}.csv'
+
+        return response
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/dashboard/roi-calculator", methods=["GET"])
+@login_required
+def dashboard_roi_calculator():
+    """ROI Calculator dashboard page"""
+    return render_template("roi_calculator.html")
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

@@ -5178,6 +5178,124 @@ class PushNotificationLog(Base):
         }
 
 
+class ROICalculation(Base):
+    """ROI calculations for potential settlement/recovery value"""
+    __tablename__ = 'roi_calculations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Calculation date
+    calculated_at = Column(DateTime, default=datetime.utcnow, index=True)
+    calculated_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    calculation_type = Column(String(30), default='automatic')  # automatic, manual, updated
+
+    # Violation counts by type
+    fcra_violations_count = Column(Integer, default=0)
+    fdcpa_violations_count = Column(Integer, default=0)
+    tcpa_violations_count = Column(Integer, default=0)
+    fcba_violations_count = Column(Integer, default=0)
+    other_violations_count = Column(Integer, default=0)
+    total_violations = Column(Integer, default=0)
+
+    # Violation severity breakdown
+    willful_violations = Column(Integer, default=0)
+    negligent_violations = Column(Integer, default=0)
+
+    # Statutory damages estimates (FCRA)
+    statutory_damages_min = Column(Float, default=0)  # $100 per willful
+    statutory_damages_max = Column(Float, default=0)  # $1,000 per willful
+    punitive_damages_potential = Column(Float, default=0)
+
+    # Actual damages potential
+    credit_denial_damages = Column(Float, default=0)
+    higher_interest_damages = Column(Float, default=0)
+    emotional_distress_damages = Column(Float, default=0)
+    time_lost_damages = Column(Float, default=0)
+    other_actual_damages = Column(Float, default=0)
+    total_actual_damages = Column(Float, default=0)
+
+    # Attorney fees estimate
+    estimated_attorney_fees = Column(Float, default=0)
+
+    # Items breakdown
+    total_negative_items = Column(Integer, default=0)
+    disputable_items = Column(Integer, default=0)
+    high_value_items = Column(Integer, default=0)  # Collections > $1k, charge-offs, etc.
+    estimated_deletion_rate = Column(Float, default=0)  # Based on historical data
+
+    # Settlement estimates
+    conservative_estimate = Column(Float, default=0)  # Low-end settlement
+    moderate_estimate = Column(Float, default=0)  # Mid-range settlement
+    aggressive_estimate = Column(Float, default=0)  # High-end/litigation
+    most_likely_estimate = Column(Float, default=0)  # Weighted average
+
+    # Litigation potential score (0-100)
+    litigation_score = Column(Integer, default=0)
+    litigation_recommended = Column(Boolean, default=False)
+    litigation_notes = Column(Text)
+
+    # Score improvement value
+    estimated_score_improvement = Column(Integer, default=0)
+    credit_value_improvement = Column(Float, default=0)  # Estimated savings from better rates
+
+    # Summary
+    total_estimated_value = Column(Float, default=0)  # Combined recovery value
+    confidence_level = Column(String(20), default='medium')  # low, medium, high
+
+    # Calculation inputs (for audit)
+    calculation_inputs = Column(JSON)  # Store inputs used for calculation
+    calculation_notes = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'calculated_at': self.calculated_at.isoformat() if self.calculated_at else None,
+            'calculated_by_staff_id': self.calculated_by_staff_id,
+            'calculation_type': self.calculation_type,
+            'fcra_violations_count': self.fcra_violations_count,
+            'fdcpa_violations_count': self.fdcpa_violations_count,
+            'tcpa_violations_count': self.tcpa_violations_count,
+            'fcba_violations_count': self.fcba_violations_count,
+            'other_violations_count': self.other_violations_count,
+            'total_violations': self.total_violations,
+            'willful_violations': self.willful_violations,
+            'negligent_violations': self.negligent_violations,
+            'statutory_damages_min': self.statutory_damages_min,
+            'statutory_damages_max': self.statutory_damages_max,
+            'punitive_damages_potential': self.punitive_damages_potential,
+            'credit_denial_damages': self.credit_denial_damages,
+            'higher_interest_damages': self.higher_interest_damages,
+            'emotional_distress_damages': self.emotional_distress_damages,
+            'time_lost_damages': self.time_lost_damages,
+            'other_actual_damages': self.other_actual_damages,
+            'total_actual_damages': self.total_actual_damages,
+            'estimated_attorney_fees': self.estimated_attorney_fees,
+            'total_negative_items': self.total_negative_items,
+            'disputable_items': self.disputable_items,
+            'high_value_items': self.high_value_items,
+            'estimated_deletion_rate': self.estimated_deletion_rate,
+            'conservative_estimate': self.conservative_estimate,
+            'moderate_estimate': self.moderate_estimate,
+            'aggressive_estimate': self.aggressive_estimate,
+            'most_likely_estimate': self.most_likely_estimate,
+            'litigation_score': self.litigation_score,
+            'litigation_recommended': self.litigation_recommended,
+            'litigation_notes': self.litigation_notes,
+            'estimated_score_improvement': self.estimated_score_improvement,
+            'credit_value_improvement': self.credit_value_improvement,
+            'total_estimated_value': self.total_estimated_value,
+            'confidence_level': self.confidence_level,
+            'calculation_notes': self.calculation_notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -6317,6 +6435,50 @@ def init_db():
         ("client_success_metrics", "case_complete", "BOOLEAN DEFAULT FALSE"),
         ("client_success_metrics", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("client_success_metrics", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # ROI Calculations
+        ("roi_calculations", "id", "SERIAL PRIMARY KEY"),
+        ("roi_calculations", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("roi_calculations", "calculated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("roi_calculations", "calculated_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("roi_calculations", "calculation_type", "VARCHAR(30) DEFAULT 'automatic'"),
+        ("roi_calculations", "fcra_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "fdcpa_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "tcpa_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "fcba_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "other_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "total_violations", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "willful_violations", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "negligent_violations", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "statutory_damages_min", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "statutory_damages_max", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "punitive_damages_potential", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "credit_denial_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "higher_interest_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "emotional_distress_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "time_lost_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "other_actual_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "total_actual_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "estimated_attorney_fees", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "total_negative_items", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "disputable_items", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "high_value_items", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "estimated_deletion_rate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "conservative_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "moderate_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "aggressive_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "most_likely_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "litigation_score", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "litigation_recommended", "BOOLEAN DEFAULT FALSE"),
+        ("roi_calculations", "litigation_notes", "TEXT"),
+        ("roi_calculations", "estimated_score_improvement", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "credit_value_improvement", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "total_estimated_value", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "confidence_level", "VARCHAR(20) DEFAULT 'medium'"),
+        ("roi_calculations", "calculation_inputs", "JSONB"),
+        ("roi_calculations", "calculation_notes", "TEXT"),
+        ("roi_calculations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("roi_calculations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()
