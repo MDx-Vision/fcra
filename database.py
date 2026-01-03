@@ -5483,6 +5483,118 @@ class PaymentPlanPayment(Base):
         }
 
 
+class BureauDisputeTracking(Base):
+    """Track disputes sent to bureaus and their response status"""
+    __tablename__ = 'bureau_dispute_tracking'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), index=True)
+
+    # Bureau info
+    bureau = Column(String(50), nullable=False)  # Equifax, Experian, TransUnion
+    dispute_round = Column(Integer, default=1)
+
+    # Dispute batch info
+    batch_id = Column(String(100), index=True)  # Groups items sent together
+    letter_id = Column(Integer, ForeignKey('dispute_letters.id'))
+    certified_mail_id = Column(Integer, ForeignKey('certified_mail_orders.id'))
+
+    # Items in this dispute
+    item_count = Column(Integer, default=0)
+    item_ids = Column(JSON)  # List of dispute_item IDs included
+
+    # Sending details
+    sent_method = Column(String(50))  # certified_mail, regular_mail, online, fax
+    sent_date = Column(Date, nullable=False)
+    sent_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    tracking_number = Column(String(100))
+    delivery_confirmed = Column(Boolean, default=False)
+    delivery_date = Column(Date)
+
+    # Response deadline (typically 30 days from receipt, 45 for complex)
+    expected_response_date = Column(Date)
+    response_deadline_days = Column(Integer, default=30)
+    is_complex_dispute = Column(Boolean, default=False)  # Extended to 45 days
+
+    # Response tracking
+    response_received = Column(Boolean, default=False)
+    response_date = Column(Date)
+    response_type = Column(String(50))  # verified, deleted, updated, mixed, frivolous, no_response
+    response_document_id = Column(Integer, ForeignKey('cra_responses.id'))
+
+    # Results summary
+    items_deleted = Column(Integer, default=0)
+    items_updated = Column(Integer, default=0)
+    items_verified = Column(Integer, default=0)
+    items_investigating = Column(Integer, default=0)
+
+    # Status tracking
+    status = Column(String(30), default='sent')  # sent, delivered, awaiting_response, response_received, overdue, closed
+    is_overdue = Column(Boolean, default=False)
+    days_overdue = Column(Integer, default=0)
+
+    # Follow-up actions
+    follow_up_required = Column(Boolean, default=False)
+    follow_up_type = Column(String(50))  # none, escalate, refile, attorney_review
+    follow_up_date = Column(Date)
+    follow_up_completed = Column(Boolean, default=False)
+    follow_up_notes = Column(Text)
+
+    # Notifications
+    reminder_sent = Column(Boolean, default=False)
+    reminder_sent_at = Column(DateTime)
+    overdue_alert_sent = Column(Boolean, default=False)
+    overdue_alert_sent_at = Column(DateTime)
+
+    # Notes
+    notes = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        from datetime import date as date_type
+        today = date_type.today()
+        days_since_sent = (today - self.sent_date).days if self.sent_date else 0
+        days_until_deadline = (self.expected_response_date - today).days if self.expected_response_date else 0
+
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'case_id': self.case_id,
+            'bureau': self.bureau,
+            'dispute_round': self.dispute_round,
+            'batch_id': self.batch_id,
+            'letter_id': self.letter_id,
+            'item_count': self.item_count,
+            'sent_method': self.sent_method,
+            'sent_date': self.sent_date.isoformat() if self.sent_date else None,
+            'tracking_number': self.tracking_number,
+            'delivery_confirmed': self.delivery_confirmed,
+            'delivery_date': self.delivery_date.isoformat() if self.delivery_date else None,
+            'expected_response_date': self.expected_response_date.isoformat() if self.expected_response_date else None,
+            'response_deadline_days': self.response_deadline_days,
+            'response_received': self.response_received,
+            'response_date': self.response_date.isoformat() if self.response_date else None,
+            'response_type': self.response_type,
+            'items_deleted': self.items_deleted,
+            'items_updated': self.items_updated,
+            'items_verified': self.items_verified,
+            'items_investigating': self.items_investigating,
+            'status': self.status,
+            'is_overdue': self.is_overdue,
+            'days_overdue': self.days_overdue,
+            'days_since_sent': days_since_sent,
+            'days_until_deadline': days_until_deadline,
+            'follow_up_required': self.follow_up_required,
+            'follow_up_type': self.follow_up_type,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -6739,6 +6851,49 @@ def init_db():
         ("payment_plan_payments", "refund_reason", "VARCHAR(255)"),
         ("payment_plan_payments", "notes", "TEXT"),
         ("payment_plan_payments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # P24: Bureau Response Tracking
+        ("bureau_dispute_tracking", "id", "SERIAL PRIMARY KEY"),
+        ("bureau_dispute_tracking", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("bureau_dispute_tracking", "case_id", "INTEGER REFERENCES cases(id)"),
+        ("bureau_dispute_tracking", "bureau", "VARCHAR(50) NOT NULL"),
+        ("bureau_dispute_tracking", "dispute_round", "INTEGER DEFAULT 1"),
+        ("bureau_dispute_tracking", "batch_id", "VARCHAR(100)"),
+        ("bureau_dispute_tracking", "letter_id", "INTEGER REFERENCES dispute_letters(id)"),
+        ("bureau_dispute_tracking", "certified_mail_id", "INTEGER REFERENCES certified_mail_orders(id)"),
+        ("bureau_dispute_tracking", "item_count", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "item_ids", "JSON"),
+        ("bureau_dispute_tracking", "sent_method", "VARCHAR(50)"),
+        ("bureau_dispute_tracking", "sent_date", "DATE NOT NULL"),
+        ("bureau_dispute_tracking", "sent_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("bureau_dispute_tracking", "tracking_number", "VARCHAR(100)"),
+        ("bureau_dispute_tracking", "delivery_confirmed", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "delivery_date", "DATE"),
+        ("bureau_dispute_tracking", "expected_response_date", "DATE"),
+        ("bureau_dispute_tracking", "response_deadline_days", "INTEGER DEFAULT 30"),
+        ("bureau_dispute_tracking", "is_complex_dispute", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "response_received", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "response_date", "DATE"),
+        ("bureau_dispute_tracking", "response_type", "VARCHAR(50)"),
+        ("bureau_dispute_tracking", "response_document_id", "INTEGER REFERENCES cra_responses(id)"),
+        ("bureau_dispute_tracking", "items_deleted", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "items_updated", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "items_verified", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "items_investigating", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "status", "VARCHAR(30) DEFAULT 'sent'"),
+        ("bureau_dispute_tracking", "is_overdue", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "days_overdue", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "follow_up_required", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "follow_up_type", "VARCHAR(50)"),
+        ("bureau_dispute_tracking", "follow_up_date", "DATE"),
+        ("bureau_dispute_tracking", "follow_up_completed", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "follow_up_notes", "TEXT"),
+        ("bureau_dispute_tracking", "reminder_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "reminder_sent_at", "TIMESTAMP"),
+        ("bureau_dispute_tracking", "overdue_alert_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "overdue_alert_sent_at", "TIMESTAMP"),
+        ("bureau_dispute_tracking", "notes", "TEXT"),
+        ("bureau_dispute_tracking", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bureau_dispute_tracking", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

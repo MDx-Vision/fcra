@@ -38318,6 +38318,360 @@ def dashboard_payment_plans():
     return render_template("payment_plans.html")
 
 
+# ==============================================================================
+# BUREAU RESPONSE TRACKING ENDPOINTS (P24)
+# ==============================================================================
+
+
+@app.route("/api/bureau-tracking/dashboard", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_dashboard():
+    """Get bureau response tracking dashboard summary"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify(summary)
+
+
+@app.route("/api/bureau-tracking", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_list():
+    """List all bureau dispute tracking records"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    bureau = request.args.get('bureau')
+    status = request.args.get('status')
+    client_id = request.args.get('client_id', type=int)
+
+    if client_id:
+        disputes = service.get_client_disputes(client_id, bureau=bureau, status=status)
+    else:
+        disputes = service.get_all_pending(bureau=bureau)
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_create():
+    """Track a new dispute sent to a bureau"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    # Parse sent_date
+    sent_date_str = data.get('sent_date')
+    if sent_date_str:
+        sent_date = datetime.strptime(sent_date_str, '%Y-%m-%d').date()
+    else:
+        sent_date = datetime.now().date()
+
+    result = service.track_dispute_sent(
+        client_id=data.get('client_id'),
+        bureau=data.get('bureau'),
+        sent_date=sent_date,
+        dispute_round=data.get('dispute_round', 1),
+        item_ids=data.get('item_ids'),
+        sent_method=data.get('sent_method', 'certified_mail'),
+        tracking_number=data.get('tracking_number'),
+        letter_id=data.get('letter_id'),
+        certified_mail_id=data.get('certified_mail_id'),
+        case_id=data.get('case_id'),
+        is_complex=data.get('is_complex', False),
+        sent_by_staff_id=session.get('staff_id'),
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_get(tracking_id):
+    """Get a specific tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    tracking = service.get_tracking(tracking_id)
+
+    if tracking:
+        return jsonify({"success": True, "tracking": tracking})
+    return jsonify({"success": False, "error": "Tracking record not found"}), 404
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/delivery", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_confirm_delivery(tracking_id):
+    """Confirm delivery of dispute letter"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    delivery_date = None
+    if data.get('delivery_date'):
+        delivery_date = datetime.strptime(data['delivery_date'], '%Y-%m-%d').date()
+
+    result = service.confirm_delivery(
+        tracking_id=tracking_id,
+        delivery_date=delivery_date,
+        recalculate_deadline=data.get('recalculate_deadline', True)
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/response", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_record_response(tracking_id):
+    """Record a response received from bureau"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    response_date_str = data.get('response_date')
+    if response_date_str:
+        response_date = datetime.strptime(response_date_str, '%Y-%m-%d').date()
+    else:
+        response_date = datetime.now().date()
+
+    result = service.record_response(
+        tracking_id=tracking_id,
+        response_date=response_date,
+        response_type=data.get('response_type'),
+        items_deleted=data.get('items_deleted', 0),
+        items_updated=data.get('items_updated', 0),
+        items_verified=data.get('items_verified', 0),
+        items_investigating=data.get('items_investigating', 0),
+        response_document_id=data.get('response_document_id'),
+        follow_up_required=data.get('follow_up_required', False),
+        follow_up_type=data.get('follow_up_type'),
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/link-response", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_link_response(tracking_id):
+    """Link a CRA response document to tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    result = service.link_cra_response(
+        tracking_id=tracking_id,
+        cra_response_id=data.get('cra_response_id')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/close", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_close(tracking_id):
+    """Close a tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    result = service.close_dispute(
+        tracking_id=tracking_id,
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/follow-up", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_complete_followup(tracking_id):
+    """Mark follow-up as completed"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    result = service.complete_follow_up(
+        tracking_id=tracking_id,
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/check-overdue", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_check_overdue():
+    """Check for overdue disputes and update status"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    result = service.check_overdue_disputes()
+
+    return jsonify(result)
+
+
+@app.route("/api/bureau-tracking/due-soon", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_due_soon():
+    """Get disputes due within N days"""
+    from services.bureau_response_service import BureauResponseService
+
+    days = request.args.get('days', 7, type=int)
+    service = BureauResponseService()
+    disputes = service.get_due_soon(days=days)
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking/overdue", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_overdue():
+    """Get all overdue disputes"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    disputes = service.get_overdue()
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking/bureau-breakdown", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_breakdown():
+    """Get breakdown by bureau"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    breakdown = service.get_bureau_breakdown()
+
+    return jsonify({"success": True, "breakdown": breakdown})
+
+
+@app.route("/api/bureau-tracking/export", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_export():
+    """Export tracking data as CSV"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+    import csv
+    import io
+
+    service = BureauResponseService()
+
+    client_id = request.args.get('client_id', type=int)
+    status = request.args.get('status')
+    bureau = request.args.get('bureau')
+
+    data = service.export_data(
+        client_id=client_id,
+        status=status,
+        bureau=bureau
+    )
+
+    # Create CSV
+    output = io.StringIO()
+    if data:
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = f"attachment; filename=bureau_tracking_{datetime.now().strftime('%Y%m%d')}.csv"
+    response.headers["Content-Type"] = "text/csv"
+
+    return response
+
+
+@app.route("/api/clients/<int:client_id>/bureau-tracking", methods=["GET"])
+@require_staff()
+def api_client_bureau_tracking(client_id):
+    """Get bureau tracking for a specific client"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    bureau = request.args.get('bureau')
+    dispute_round = request.args.get('round', type=int)
+
+    disputes = service.get_client_disputes(
+        client_id=client_id,
+        bureau=bureau,
+        dispute_round=dispute_round
+    )
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/dashboard/bureau-tracking", methods=["GET"])
+@require_staff()
+def dashboard_bureau_tracking():
+    """Bureau Response Tracking dashboard"""
+    from services.bureau_response_service import BureauResponseService
+
+    db = get_db()
+    try:
+        # Get dashboard summary stats
+        stats = BureauResponseService.get_dashboard_summary(db)
+
+        # Get bureau breakdown
+        bureau_stats = BureauResponseService.get_bureau_breakdown(db)
+
+        # Get all pending disputes for the table
+        disputes = BureauResponseService.get_pending(db)
+
+        # Get due soon (within 7 days)
+        due_soon = BureauResponseService.get_due_soon(db, days=7)
+
+        # Get overdue disputes
+        overdue = BureauResponseService.get_overdue(db)
+
+        # Get response type breakdown
+        response_types = BureauResponseService.get_response_type_breakdown(db)
+
+        # Get client list for the tracking modal
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(['lead', 'cancelled'])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "bureau_tracking.html",
+            active_page='bureau-tracking',
+            stats=stats,
+            bureau_stats=bureau_stats,
+            disputes=disputes,
+            due_soon=due_soon,
+            overdue=overdue,
+            response_types=response_types,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
