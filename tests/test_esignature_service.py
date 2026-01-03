@@ -1,39 +1,55 @@
 """
-Unit Tests for Electronic Signature Service.
-Tests for signature request creation, status checking, document retrieval, webhook handling,
-token verification, signature capture, and client signature history management.
-Covers all main functions with mocked database interactions.
+Unit Tests for Electronic Signature Service - Full ESIGN Act Compliance.
+Tests for session management, consent flow, document signing, audit trail,
+CROA compliance, and tamper-evidence verification.
 """
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock, PropertyMock, mock_open
+from unittest.mock import patch, MagicMock, PropertyMock
 import sys
 import os
 import base64
-import tempfile
+import hashlib
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.esignature_service import (
-    create_signature_request,
-    generate_signing_link,
-    verify_signing_token,
-    capture_signature,
-    get_signature_status,
-    get_pending_signatures,
-    send_signature_reminder,
-    cancel_signature_request,
-    get_client_signature_history,
+    # Session Management
+    initiate_signing_session,
+    get_session_by_uuid,
+    complete_signing_session,
+    cancel_signing_session,
+    regenerate_signing_link,
+    # Consent
+    submit_esign_consent,
+    get_esign_consent_disclosure,
+    # Document Review & Signing
+    get_document_for_review,
+    record_document_review_progress,
+    sign_document,
+    # Verification
+    verify_document_integrity,
+    get_session_audit_trail,
+    # CROA Compliance
+    get_croa_compliance_status,
+    cancel_service_during_croa_period,
+    waive_cancellation_period,
+    # Client History
+    get_client_signing_history,
     list_document_types,
-    _ensure_signature_folder,
-    _get_base_url,
-    _generate_token,
-    _update_client_agreement_status,
+    # Helpers
+    _generate_uuid,
+    _generate_certificate_number,
+    _compute_document_hash,
+    _add_business_days,
+    # Constants
     DOCUMENT_TYPES,
     PROVIDER_NAME,
-    TOKEN_EXPIRY_DAYS,
-    SIGNATURE_FOLDER,
+    SESSION_EXPIRY_DAYS,
+    ESIGN_CONSENT_DISCLOSURE,
+    INTENT_STATEMENT,
+    CERT_PREFIX,
 )
 
 
@@ -46,29 +62,29 @@ class TestConstants:
 
     def test_provider_name(self):
         """Test that provider name is set correctly."""
-        assert PROVIDER_NAME == "in_app"
+        assert PROVIDER_NAME == "brightpath_esign"
 
-    def test_token_expiry_days(self):
-        """Test token expiry is set to 7 days."""
-        assert TOKEN_EXPIRY_DAYS == 7
-
-    def test_signature_folder(self):
-        """Test signature folder path is set."""
-        assert SIGNATURE_FOLDER == "static/signatures"
+    def test_session_expiry_days(self):
+        """Test session expiry is 7 days."""
+        assert SESSION_EXPIRY_DAYS == 7
 
     def test_document_types_defined(self):
-        """Test that document types are properly defined."""
+        """Test that document types are defined."""
         assert "client_agreement" in DOCUMENT_TYPES
         assert "limited_poa" in DOCUMENT_TYPES
-        assert "dispute_authorization" in DOCUMENT_TYPES
-        assert "fee_agreement" in DOCUMENT_TYPES
+        assert "rights_disclosure" in DOCUMENT_TYPES
+        assert "cancellation_notice" in DOCUMENT_TYPES
 
-    def test_document_types_display_names(self):
-        """Test document types have proper display names."""
-        assert DOCUMENT_TYPES["client_agreement"] == "Main Service Agreement"
-        assert DOCUMENT_TYPES["limited_poa"] == "Limited Power of Attorney"
-        assert DOCUMENT_TYPES["dispute_authorization"] == "Authorization for Dispute Filing"
-        assert DOCUMENT_TYPES["fee_agreement"] == "Fee Agreement"
+    def test_esign_consent_disclosure_exists(self):
+        """Test consent disclosure HTML is defined."""
+        assert ESIGN_CONSENT_DISCLOSURE is not None
+        assert "Hardware and Software" in ESIGN_CONSENT_DISCLOSURE
+        assert "Paper Copies" in ESIGN_CONSENT_DISCLOSURE
+        assert "Withdraw Consent" in ESIGN_CONSENT_DISCLOSURE
+
+    def test_intent_statement(self):
+        """Test intent statement is defined."""
+        assert "legally binding" in INTENT_STATEMENT.lower()
 
 
 # =============================================================================
@@ -76,1455 +92,730 @@ class TestConstants:
 # =============================================================================
 
 class TestHelperFunctions:
-    """Test helper/utility functions."""
+    """Test internal helper functions."""
 
-    @patch('services.esignature_service.os.makedirs')
-    def test_ensure_signature_folder_creates_directory(self, mock_makedirs):
-        """Test that signature folder is created if it doesn't exist."""
-        result = _ensure_signature_folder()
-        mock_makedirs.assert_called_once_with(SIGNATURE_FOLDER, exist_ok=True)
-        assert result == SIGNATURE_FOLDER
+    def test_generate_uuid(self):
+        """Test UUID generation."""
+        uuid1 = _generate_uuid()
+        uuid2 = _generate_uuid()
+        assert uuid1 != uuid2
+        assert len(uuid1) > 20  # URL-safe tokens are reasonably long
 
-    @patch.dict(os.environ, {"REPLIT_DEV_DOMAIN": "myapp.replit.dev"})
-    def test_get_base_url_with_replit_dev_domain(self):
-        """Test base URL with REPLIT_DEV_DOMAIN set."""
-        result = _get_base_url()
-        assert result == "https://myapp.replit.dev"
+    def test_generate_certificate_number(self):
+        """Test certificate number generation."""
+        cert = _generate_certificate_number()
+        assert cert.startswith(CERT_PREFIX)
+        assert "-" in cert
+        # Format: PREFIX-YYYYMMDD-RANDOM
+        parts = cert.split("-")
+        assert len(parts) == 3
 
-    @patch.dict(os.environ, {"REPLIT_DEV_DOMAIN": "https://myapp.replit.dev"})
-    def test_get_base_url_with_https_prefix(self):
-        """Test base URL when domain already has https prefix."""
-        result = _get_base_url()
-        assert result == "https://myapp.replit.dev"
+    def test_compute_document_hash(self):
+        """Test SHA-256 document hashing."""
+        content = "<html><body>Test document</body></html>"
+        hash1 = _compute_document_hash(content)
+        hash2 = _compute_document_hash(content)
 
-    @patch.dict(os.environ, {"REPLIT_DEV_DOMAIN": "", "REPL_SLUG_URL": "myslug.repl.co"})
-    def test_get_base_url_with_repl_slug(self):
-        """Test base URL with REPL_SLUG_URL fallback."""
-        result = _get_base_url()
-        assert result == "https://myslug.repl.co"
+        # Same content should produce same hash
+        assert hash1 == hash2
+        assert len(hash1) == 64  # SHA-256 produces 64 hex characters
 
-    @patch.dict(os.environ, {"REPLIT_DEV_DOMAIN": "", "REPL_SLUG_URL": ""}, clear=True)
-    def test_get_base_url_empty_when_no_env(self):
-        """Test base URL returns empty string when no env vars set."""
-        # Need to clear the environment variables
-        with patch.dict(os.environ, {}, clear=True):
-            result = _get_base_url()
-            assert result == ""
+        # Different content should produce different hash
+        hash3 = _compute_document_hash(content + " modified")
+        assert hash1 != hash3
 
-    def test_generate_token_returns_string(self):
-        """Test that token generation returns a string."""
-        token = _generate_token()
-        assert isinstance(token, str)
+    def test_add_business_days_weekday(self):
+        """Test adding business days starting on a weekday."""
+        # Monday
+        start = datetime(2024, 12, 16, 14, 0, 0)
+        result = _add_business_days(start, 3)
 
-    def test_generate_token_unique(self):
-        """Test that generated tokens are unique."""
-        tokens = [_generate_token() for _ in range(100)]
-        assert len(set(tokens)) == 100
+        # 3 business days from Monday = Thursday
+        assert result.weekday() == 3  # Thursday
+        assert result.day == 19
+        assert result.hour == 23
+        assert result.minute == 59
 
-    def test_generate_token_url_safe(self):
-        """Test that generated tokens are URL-safe."""
-        token = _generate_token()
-        # URL-safe base64 uses only alphanumeric, dash, and underscore
-        safe_chars = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
-        assert all(c in safe_chars for c in token)
+    def test_add_business_days_weekend(self):
+        """Test adding business days that span a weekend."""
+        # Thursday
+        start = datetime(2024, 12, 19, 10, 0, 0)
+        result = _add_business_days(start, 3)
 
-    def test_generate_token_length(self):
-        """Test that generated token has appropriate length."""
-        token = _generate_token()
-        # secrets.token_urlsafe(32) produces ~43 characters
-        assert len(token) >= 40
+        # 3 business days from Thursday = Tuesday (skips Sat/Sun)
+        assert result.weekday() == 1  # Tuesday
+        assert result.day == 24
 
 
 # =============================================================================
-# Tests for list_document_types()
+# Tests for Session Management
 # =============================================================================
 
-class TestListDocumentTypes:
-    """Test document types listing function."""
-
-    def test_returns_copy_of_dict(self):
-        """Test that function returns a copy, not the original."""
-        result = list_document_types()
-        assert result is not DOCUMENT_TYPES
-        assert result == DOCUMENT_TYPES
-
-    def test_modification_does_not_affect_original(self):
-        """Test that modifying result doesn't affect original."""
-        result = list_document_types()
-        result["test_type"] = "Test Type"
-        assert "test_type" not in DOCUMENT_TYPES
-
-
-# =============================================================================
-# Tests for create_signature_request()
-# =============================================================================
-
-class TestCreateSignatureRequest:
-    """Test signature request creation."""
+class TestSessionManagement:
+    """Test signing session creation and management."""
 
     @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    def test_create_signature_request_success(self, mock_token, mock_base_url, mock_session_class):
-        """Test successful signature request creation."""
-        mock_token.return_value = "test_token_123"
-        mock_base_url.return_value = "https://test.app"
-
+    def test_initiate_signing_session_success(self, mock_session_local):
+        """Test successful session initiation."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session_local.return_value = mock_session
 
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_session.add = MagicMock()
-        mock_session.commit = MagicMock()
-        mock_session.refresh = MagicMock(side_effect=lambda x: setattr(x, 'id', 1))
+        # Mock client exists
+        mock_client = MagicMock()
+        mock_client.id = 1
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_client
 
-        result = create_signature_request(
+        documents = [
+            {"document_name": "Agreement", "document_type": "client_agreement", "document_html": "<p>Test</p>"}
+        ]
+
+        result = initiate_signing_session(
             client_id=1,
-            document_type="client_agreement",
-            document_name="Service Agreement",
-            document_path="/path/to/doc.pdf",
+            documents=documents,
             signer_email="test@example.com",
-            signer_name="Test User"
+            signer_name="John Doe",
         )
 
         assert result["success"] is True
-        assert result["request_id"] is not None
-        assert result["signing_link"] == "https://test.app/sign/test_token_123"
-        assert result["expires_at"] is not None
-        assert result["error"] is None
+        assert "session_uuid" in result
+        assert "signing_link" in result
+        assert result["documents_count"] == 1
 
     @patch('services.esignature_service.SessionLocal')
-    def test_create_signature_request_invalid_document_type(self, mock_session_class):
-        """Test request creation with invalid document type."""
+    def test_initiate_signing_session_client_not_found(self, mock_session_local):
+        """Test session initiation with non-existent client."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session_local.return_value = mock_session
+        mock_session.query.return_value.filter.return_value.first.return_value = None
 
-        result = create_signature_request(
-            client_id=1,
-            document_type="invalid_type",
-            document_name="Test Doc",
-            document_path="/path/to/doc.pdf",
+        result = initiate_signing_session(
+            client_id=999,
+            documents=[{"document_name": "Test"}],
             signer_email="test@example.com",
-            signer_name="Test User"
+            signer_name="John Doe",
         )
-
-        assert result["success"] is False
-        assert "Invalid document type" in result["error"]
-        assert "invalid_type" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    @patch('services.esignature_service.os.path.exists')
-    def test_create_signature_request_nonexistent_document_path(self, mock_exists, mock_token, mock_base_url, mock_session_class):
-        """Test request creation with nonexistent document path logs warning."""
-        mock_token.return_value = "test_token"
-        mock_base_url.return_value = "https://test.app"
-        mock_exists.return_value = False
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.refresh = MagicMock(side_effect=lambda x: setattr(x, 'id', 1))
-
-        # Should still succeed, just log a warning
-        result = create_signature_request(
-            client_id=1,
-            document_type="client_agreement",
-            document_name="Test Doc",
-            document_path="/nonexistent/path.pdf",
-            signer_email="test@example.com",
-            signer_name="Test User"
-        )
-
-        assert result["success"] is True
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    def test_create_signature_request_no_base_url(self, mock_token, mock_base_url, mock_session_class):
-        """Test request creation without base URL uses relative path."""
-        mock_token.return_value = "test_token"
-        mock_base_url.return_value = ""
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.refresh = MagicMock(side_effect=lambda x: setattr(x, 'id', 1))
-
-        result = create_signature_request(
-            client_id=1,
-            document_type="client_agreement",
-            document_name="Test Doc",
-            document_path=None,
-            signer_email="test@example.com",
-            signer_name="Test User"
-        )
-
-        assert result["success"] is True
-        assert result["signing_link"] == "/sign/test_token"
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._generate_token')
-    def test_create_signature_request_database_error(self, mock_token, mock_session_class):
-        """Test request creation handles database errors."""
-        mock_token.return_value = "test_token"
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.commit.side_effect = Exception("Database error")
-
-        result = create_signature_request(
-            client_id=1,
-            document_type="client_agreement",
-            document_name="Test Doc",
-            document_path="/path.pdf",
-            signer_email="test@example.com",
-            signer_name="Test User"
-        )
-
-        assert result["success"] is False
-        assert "Database error" in result["error"]
-        mock_session.rollback.assert_called_once()
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    def test_create_signature_request_all_document_types(self, mock_token, mock_base_url, mock_session_class):
-        """Test request creation works for all valid document types."""
-        mock_token.return_value = "test_token"
-        mock_base_url.return_value = "https://test.app"
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.refresh = MagicMock(side_effect=lambda x: setattr(x, 'id', 1))
-
-        for doc_type in DOCUMENT_TYPES.keys():
-            result = create_signature_request(
-                client_id=1,
-                document_type=doc_type,
-                document_name=f"Test {doc_type}",
-                document_path=None,
-                signer_email="test@example.com",
-                signer_name="Test User"
-            )
-            assert result["success"] is True, f"Failed for document type: {doc_type}"
-
-
-# =============================================================================
-# Tests for generate_signing_link()
-# =============================================================================
-
-class TestGenerateSigningLink:
-    """Test signing link generation/regeneration."""
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    def test_generate_signing_link_success(self, mock_token, mock_base_url, mock_session_class):
-        """Test successful signing link regeneration."""
-        mock_token.return_value = "new_token_456"
-        mock_base_url.return_value = "https://test.app"
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = generate_signing_link(request_id=1)
-
-        assert result["success"] is True
-        assert result["request_id"] == 1
-        assert result["signing_link"] == "https://test.app/sign/new_token_456"
-        assert result["token"] == "new_token_456"
-        assert result["expires_at"] is not None
-        assert result["error"] is None
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_generate_signing_link_request_not_found(self, mock_session_class):
-        """Test link generation when request not found."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.return_value = None
-
-        result = generate_signing_link(request_id=999)
 
         assert result["success"] is False
         assert "not found" in result["error"]
 
     @patch('services.esignature_service.SessionLocal')
-    def test_generate_signing_link_already_signed(self, mock_session_class):
-        """Test link generation fails for already signed document."""
+    def test_get_session_by_uuid_success(self, mock_session_local):
+        """Test getting session by UUID."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session_local.return_value = mock_session
 
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "signed"
-        mock_request.signing_link = "https://old.link"
-        mock_request.external_request_id = "old_token"
-        mock_request.expires_at = datetime.utcnow()
-        mock_session.query().filter().first.return_value = mock_request
+        mock_signing_session = MagicMock()
+        mock_signing_session.session_uuid = "test-uuid"
+        mock_signing_session.expires_at = datetime.utcnow() + timedelta(days=1)
+        mock_signing_session.documents = []
+        mock_signing_session.consent_disclosure_html = "<p>Consent</p>"
+        mock_signing_session.to_dict.return_value = {"session_uuid": "test-uuid"}
 
-        result = generate_signing_link(request_id=1)
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
 
-        assert result["success"] is False
-        assert "already been signed" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._generate_token')
-    def test_generate_signing_link_database_error(self, mock_token, mock_session_class):
-        """Test link generation handles database errors."""
-        mock_token.return_value = "test_token"
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.status = "pending"
-        mock_session.query().filter().first.return_value = mock_request
-        mock_session.commit.side_effect = Exception("Commit failed")
-
-        result = generate_signing_link(request_id=1)
-
-        assert result["success"] is False
-        assert "Commit failed" in result["error"]
-        mock_session.rollback.assert_called_once()
-
-
-# =============================================================================
-# Tests for verify_signing_token()
-# =============================================================================
-
-class TestVerifySigningToken:
-    """Test signing token verification."""
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_success(self, mock_session_class):
-        """Test successful token verification."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.status = "pending"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Service Agreement"
-        mock_request.document_path = "/path/to/doc.pdf"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.created_at = datetime.utcnow()
-
-        mock_client = MagicMock()
-        mock_client.name = "Test Client"
-
-        mock_session.query().filter().first.side_effect = [mock_request, mock_client]
-
-        result = verify_signing_token("valid_token")
-
-        assert result["valid"] is True
-        assert result["request_id"] == 1
-        assert result["request_details"]["client_name"] == "Test Client"
-        assert result["error"] is None
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_invalid(self, mock_session_class):
-        """Test verification of invalid token."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.return_value = None
-
-        result = verify_signing_token("invalid_token")
-
-        assert result["valid"] is False
-        assert "Invalid signing token" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_already_signed(self, mock_session_class):
-        """Test verification fails for already signed document."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "signed"
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = verify_signing_token("signed_token")
-
-        assert result["valid"] is False
-        assert "already been signed" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_expired(self, mock_session_class):
-        """Test verification fails for expired token."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_request.expires_at = datetime.utcnow() - timedelta(days=1)  # Expired
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = verify_signing_token("expired_token")
-
-        assert result["valid"] is False
-        assert "expired" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_no_client_found(self, mock_session_class):
-        """Test verification when client is not found."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.status = "pending"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Test Doc"
-        mock_request.document_path = None
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.created_at = datetime.utcnow()
-
-        mock_session.query().filter().first.side_effect = [mock_request, None]
-
-        result = verify_signing_token("valid_token")
-
-        assert result["valid"] is True
-        assert result["request_details"]["client_name"] == "Unknown"
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_database_error(self, mock_session_class):
-        """Test verification handles database errors."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.side_effect = Exception("Query failed")
-
-        result = verify_signing_token("any_token")
-
-        assert result["valid"] is False
-        assert "Query failed" in result["error"]
-
-
-# =============================================================================
-# Tests for capture_signature()
-# =============================================================================
-
-class TestCaptureSignature:
-    """Test signature capture functionality."""
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._ensure_signature_folder')
-    @patch('services.esignature_service._update_client_agreement_status')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_capture_signature_success(self, mock_file, mock_update_status, mock_ensure_folder, mock_session_class):
-        """Test successful signature capture."""
-        mock_ensure_folder.return_value = SIGNATURE_FOLDER
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.status = "pending"
-        mock_request.document_type = "client_agreement"
-        mock_request.document_path = "/path/to/doc.pdf"
-        mock_session.query().filter().first.return_value = mock_request
-
-        # Base64 encoded PNG signature
-        signature_data = base64.b64encode(b"PNG_SIGNATURE_DATA").decode()
-
-        result = capture_signature(request_id=1, signature_data=signature_data)
+        result = get_session_by_uuid("test-uuid")
 
         assert result["success"] is True
-        assert result["request_id"] == 1
-        assert result["signature_path"] is not None
-        assert result["signed_at"] is not None
-        assert result["error"] is None
+        assert "session" in result
 
     @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._ensure_signature_folder')
-    @patch('services.esignature_service._update_client_agreement_status')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_capture_signature_with_data_uri(self, mock_file, mock_update_status, mock_ensure_folder, mock_session_class):
-        """Test signature capture with data URI prefix."""
-        mock_ensure_folder.return_value = SIGNATURE_FOLDER
-
+    def test_get_session_expired(self, mock_session_local):
+        """Test getting expired session."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session_local.return_value = mock_session
 
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.status = "pending"
-        mock_request.document_type = "client_agreement"
-        mock_request.document_path = "/path/to/doc.pdf"
-        mock_session.query().filter().first.return_value = mock_request
+        mock_signing_session = MagicMock()
+        mock_signing_session.expires_at = datetime.utcnow() - timedelta(days=1)
 
-        # Data URI format signature
-        signature_base64 = base64.b64encode(b"PNG_DATA").decode()
-        signature_data = f"data:image/png;base64,{signature_base64}"
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
 
-        result = capture_signature(request_id=1, signature_data=signature_data)
-
-        assert result["success"] is True
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_capture_signature_request_not_found(self, mock_session_class):
-        """Test signature capture when request not found."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.return_value = None
-
-        result = capture_signature(request_id=999, signature_data="test")
+        result = get_session_by_uuid("test-uuid")
 
         assert result["success"] is False
-        assert "not found" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_capture_signature_already_signed(self, mock_session_class):
-        """Test signature capture fails for already signed document."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "signed"
-        mock_request.signed_document_path = "/path/to/signed.pdf"
-        mock_request.signed_at = datetime.utcnow()
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = capture_signature(request_id=1, signature_data="test")
-
-        assert result["success"] is False
-        assert "already been signed" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._ensure_signature_folder')
-    def test_capture_signature_invalid_base64(self, mock_ensure_folder, mock_session_class):
-        """Test signature capture with invalid base64 data."""
-        mock_ensure_folder.return_value = SIGNATURE_FOLDER
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = capture_signature(request_id=1, signature_data="invalid!!!base64")
-
-        assert result["success"] is False
-        assert "Invalid base64" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._ensure_signature_folder')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_capture_signature_database_error(self, mock_file, mock_ensure_folder, mock_session_class):
-        """Test signature capture handles database errors."""
-        mock_ensure_folder.return_value = SIGNATURE_FOLDER
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.status = "pending"
-        mock_request.document_type = "client_agreement"
-        mock_request.document_path = "/path/to/doc.pdf"
-        mock_session.query().filter().first.return_value = mock_request
-        mock_session.commit.side_effect = Exception("Database error")
-
-        signature_data = base64.b64encode(b"PNG_DATA").decode()
-
-        result = capture_signature(request_id=1, signature_data=signature_data)
-
-        assert result["success"] is False
-        assert "Database error" in result["error"]
-        mock_session.rollback.assert_called_once()
+        assert "expired" in result.get("error", "").lower() or result.get("expired") is True
 
 
 # =============================================================================
-# Tests for get_signature_status()
+# Tests for ESIGN Act Consent
 # =============================================================================
 
-class TestGetSignatureStatus:
-    """Test signature status retrieval."""
+class TestEsignConsent:
+    """Test ESIGN Act consent flow with 3 acknowledgments."""
 
     @patch('services.esignature_service.SessionLocal')
-    def test_get_status_success(self, mock_session_class):
-        """Test successful status retrieval."""
+    def test_submit_consent_success(self, mock_session_local):
+        """Test successful consent submission with all acknowledgments."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.provider = "in_app"
-        mock_request.status = "pending"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Service Agreement"
-        mock_request.document_path = "/path/to/doc.pdf"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.signing_link = "https://test.app/sign/token"
-        mock_request.signed_at = None
-        mock_request.signed_document_path = None
-        mock_request.created_at = datetime.utcnow()
-        mock_request.updated_at = datetime.utcnow()
-
-        mock_client = MagicMock()
-        mock_client.name = "Test Client"
-
-        mock_session.query().filter().first.side_effect = [mock_request, mock_client]
-
-        result = get_signature_status(request_id=1)
-
-        assert result["success"] is True
-        assert result["status"] == "pending"
-        assert result["details"]["client_name"] == "Test Client"
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_status_request_not_found(self, mock_session_class):
-        """Test status retrieval when request not found."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.return_value = None
-
-        result = get_signature_status(request_id=999)
-
-        assert result["success"] is False
-        assert "not found" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_status_expired(self, mock_session_class):
-        """Test status shows expired for past expiration."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.provider = "in_app"
-        mock_request.status = "pending"
-        mock_request.expires_at = datetime.utcnow() - timedelta(days=1)  # Expired
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Test Doc"
-        mock_request.document_path = None
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.signing_link = "https://test.app/sign/token"
-        mock_request.signed_at = None
-        mock_request.signed_document_path = None
-        mock_request.created_at = datetime.utcnow()
-        mock_request.updated_at = datetime.utcnow()
-
-        mock_client = MagicMock()
-        mock_client.name = "Test Client"
-
-        mock_session.query().filter().first.side_effect = [mock_request, mock_client]
-
-        result = get_signature_status(request_id=1)
-
-        assert result["success"] is True
-        assert result["status"] == "expired"
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_status_signed(self, mock_session_class):
-        """Test status retrieval for signed document."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        signed_at = datetime.utcnow() - timedelta(hours=1)
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.provider = "in_app"
-        mock_request.status = "signed"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Test Doc"
-        mock_request.document_path = "/path/to/doc.pdf"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.signing_link = "https://test.app/sign/token"
-        mock_request.signed_at = signed_at
-        mock_request.signed_document_path = "/path/to/signed.png"
-        mock_request.created_at = datetime.utcnow()
-        mock_request.updated_at = datetime.utcnow()
-
-        mock_client = MagicMock()
-        mock_client.name = "Test Client"
-
-        mock_session.query().filter().first.side_effect = [mock_request, mock_client]
-
-        result = get_signature_status(request_id=1)
-
-        assert result["success"] is True
-        assert result["status"] == "signed"
-        assert result["details"]["signed_at"] is not None
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_status_database_error(self, mock_session_class):
-        """Test status retrieval handles database errors."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.side_effect = Exception("Database error")
-
-        result = get_signature_status(request_id=1)
-
-        assert result["success"] is False
-        assert "Database error" in result["error"]
-
-
-# =============================================================================
-# Tests for get_pending_signatures()
-# =============================================================================
-
-class TestGetPendingSignatures:
-    """Test pending signatures retrieval."""
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_pending_signatures_success(self, mock_session_class):
-        """Test successful pending signatures retrieval."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Service Agreement"
-        mock_request.signer_name = "Test User"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signing_link = "https://test.app/sign/token"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_request.created_at = datetime.utcnow()
-
-        mock_session.query().filter().order_by().all.return_value = [mock_request]
-
-        result = get_pending_signatures(client_id=1)
-
-        assert result["success"] is True
-        assert result["pending_count"] == 1
-        assert len(result["pending_requests"]) == 1
-        assert result["pending_requests"][0]["is_expired"] is False
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_pending_signatures_includes_expired(self, mock_session_class):
-        """Test pending signatures includes expired ones."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Service Agreement"
-        mock_request.signer_name = "Test User"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signing_link = "https://test.app/sign/token"
-        mock_request.expires_at = datetime.utcnow() - timedelta(days=1)  # Expired
-        mock_request.created_at = datetime.utcnow()
-
-        mock_session.query().filter().order_by().all.return_value = [mock_request]
-
-        result = get_pending_signatures(client_id=1)
-
-        assert result["success"] is True
-        assert result["pending_requests"][0]["is_expired"] is True
-        assert result["pending_requests"][0]["status"] == "expired"
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_pending_signatures_empty(self, mock_session_class):
-        """Test pending signatures when none exist."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().order_by().all.return_value = []
-
-        result = get_pending_signatures(client_id=1)
-
-        assert result["success"] is True
-        assert result["pending_count"] == 0
-        assert result["pending_requests"] == []
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_pending_signatures_database_error(self, mock_session_class):
-        """Test pending signatures handles database errors."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().order_by().all.side_effect = Exception("Query failed")
-
-        result = get_pending_signatures(client_id=1)
-
-        assert result["success"] is False
-        assert "Query failed" in result["error"]
-
-
-# =============================================================================
-# Tests for send_signature_reminder()
-# =============================================================================
-
-class TestSendSignatureReminder:
-    """Test signature reminder sending."""
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_send_reminder_request_not_found(self, mock_session_class):
-        """Test reminder fails when request not found."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.return_value = None
-
-        result = send_signature_reminder(request_id=999)
-
-        assert result["success"] is False
-        assert "not found" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_send_reminder_already_signed(self, mock_session_class):
-        """Test reminder fails for already signed document."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "signed"
-        mock_request.signer_email = "test@example.com"
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = send_signature_reminder(request_id=1)
-
-        assert result["success"] is False
-        assert "already been signed" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service.generate_signing_link')
-    def test_send_reminder_success(self, mock_gen_link, mock_session_class):
-        """Test successful reminder sending."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.document_name = "Service Agreement"
-        mock_request.document_type = "client_agreement"
-        mock_request.signing_link = "https://test.app/sign/token"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_session.query().filter().first.return_value = mock_request
-
-        # Mock the email modules that are imported inside the function
-        mock_email_service = MagicMock()
-        mock_email_service.is_sendgrid_configured.return_value = True
-        mock_email_service.send_email.return_value = {"success": True}
-
-        mock_email_templates = MagicMock()
-        mock_email_templates.get_base_template.return_value = "<html>Template</html>"
-        mock_email_templates.PRIMARY_COLOR = "#000000"
-        mock_email_templates.SECONDARY_COLOR = "#111111"
-        mock_email_templates.DARK_COLOR = "#222222"
-
-        with patch.dict('sys.modules', {
-            'services.email_service': mock_email_service,
-            'services.email_templates': mock_email_templates
-        }):
-            result = send_signature_reminder(request_id=1)
-
-        assert result["success"] is True
-        assert result["email_sent"] is True
-        assert result["recipient"] == "test@example.com"
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service.generate_signing_link')
-    def test_send_reminder_email_not_configured(self, mock_gen_link, mock_session_class):
-        """Test reminder fails when email not configured."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_request.signer_email = "test@example.com"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_session.query().filter().first.return_value = mock_request
-
-        # Mock the email modules that are imported inside the function
-        mock_email_service = MagicMock()
-        mock_email_service.is_sendgrid_configured.return_value = False
-
-        mock_email_templates = MagicMock()
-        mock_email_templates.PRIMARY_COLOR = "#000000"
-        mock_email_templates.SECONDARY_COLOR = "#111111"
-        mock_email_templates.DARK_COLOR = "#222222"
-
-        with patch.dict('sys.modules', {
-            'services.email_service': mock_email_service,
-            'services.email_templates': mock_email_templates
-        }):
-            result = send_signature_reminder(request_id=1)
-
-        assert result["success"] is False
-        assert "not configured" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service.generate_signing_link')
-    def test_send_reminder_regenerates_expired_link(self, mock_gen_link, mock_session_class):
-        """Test reminder regenerates expired signing link."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_request.signer_email = "test@example.com"
-        mock_request.expires_at = datetime.utcnow() - timedelta(days=1)  # Expired
-        mock_session.query().filter().first.return_value = mock_request
-
-        mock_gen_link.return_value = {"success": True}
-
-        # Mock the email modules that are imported inside the function
-        mock_email_service = MagicMock()
-        mock_email_service.is_sendgrid_configured.return_value = False
-
-        mock_email_templates = MagicMock()
-        mock_email_templates.PRIMARY_COLOR = "#000000"
-        mock_email_templates.SECONDARY_COLOR = "#111111"
-        mock_email_templates.DARK_COLOR = "#222222"
-
-        # Will fail at email check, but we want to verify link regeneration was called
-        with patch.dict('sys.modules', {
-            'services.email_service': mock_email_service,
-            'services.email_templates': mock_email_templates
-        }):
-            result = send_signature_reminder(request_id=1)
-
-        mock_gen_link.assert_called_once_with(1)
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service.generate_signing_link')
-    def test_send_reminder_email_send_fails(self, mock_gen_link, mock_session_class):
-        """Test reminder handles email send failure."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.document_name = "Service Agreement"
-        mock_request.document_type = "client_agreement"
-        mock_request.signing_link = "https://test.app/sign/token"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_session.query().filter().first.return_value = mock_request
-
-        # Mock the email modules that are imported inside the function
-        mock_email_service = MagicMock()
-        mock_email_service.is_sendgrid_configured.return_value = True
-        mock_email_service.send_email.return_value = {"success": False, "error": "SMTP error"}
-
-        mock_email_templates = MagicMock()
-        mock_email_templates.get_base_template.return_value = "<html>Template</html>"
-        mock_email_templates.PRIMARY_COLOR = "#000000"
-        mock_email_templates.SECONDARY_COLOR = "#111111"
-        mock_email_templates.DARK_COLOR = "#222222"
-
-        with patch.dict('sys.modules', {
-            'services.email_service': mock_email_service,
-            'services.email_templates': mock_email_templates
-        }):
-            result = send_signature_reminder(request_id=1)
-
-        assert result["success"] is False
-        assert result["email_sent"] is False
-        assert "SMTP error" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_send_reminder_email_service_import_error(self, mock_session_class):
-        """Test reminder handles email service import failure."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.expires_at = datetime.utcnow() + timedelta(days=1)
-        mock_session.query().filter().first.return_value = mock_request
-
-        # Remove the email service module to trigger ImportError
-        original_modules = sys.modules.copy()
-        sys.modules['services.email_service'] = None
-
-        try:
-            # Force an ImportError by making the import fail
-            with patch.dict('sys.modules', {'services.email_service': None}):
-                # The function should handle this gracefully
-                result = send_signature_reminder(request_id=1)
-                # Either it handles the import error or succeeds with cached import
-                assert result is not None
-        finally:
-            sys.modules.update(original_modules)
-
-
-# =============================================================================
-# Tests for cancel_signature_request()
-# =============================================================================
-
-class TestCancelSignatureRequest:
-    """Test signature request cancellation."""
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_cancel_request_success(self, mock_session_class):
-        """Test successful request cancellation."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "pending"
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = cancel_signature_request(request_id=1)
-
-        assert result["success"] is True
-        assert mock_request.status == "cancelled"
-        mock_session.commit.assert_called_once()
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_cancel_request_not_found(self, mock_session_class):
-        """Test cancellation fails when request not found."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.return_value = None
-
-        result = cancel_signature_request(request_id=999)
-
-        assert result["success"] is False
-        assert "not found" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_cancel_request_already_signed(self, mock_session_class):
-        """Test cancellation fails for signed document."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.status = "signed"
-        mock_session.query().filter().first.return_value = mock_request
-
-        result = cancel_signature_request(request_id=1)
-
-        assert result["success"] is False
-        assert "Cannot cancel" in result["error"]
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_cancel_request_database_error(self, mock_session_class):
-        """Test cancellation handles database errors."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_request = MagicMock()
-        mock_request.status = "pending"
-        mock_session.query().filter().first.return_value = mock_request
-        mock_session.commit.side_effect = Exception("Commit failed")
-
-        result = cancel_signature_request(request_id=1)
-
-        assert result["success"] is False
-        assert "Commit failed" in result["error"]
-        mock_session.rollback.assert_called_once()
-
-
-# =============================================================================
-# Tests for get_client_signature_history()
-# =============================================================================
-
-class TestGetClientSignatureHistory:
-    """Test client signature history retrieval."""
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_history_success(self, mock_session_class):
-        """Test successful history retrieval."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_signed = MagicMock()
-        mock_signed.id = 1
-        mock_signed.document_type = "client_agreement"
-        mock_signed.document_name = "Service Agreement"
-        mock_signed.document_path = "/path/to/doc.pdf"
-        mock_signed.signer_name = "Test User"
-        mock_signed.signer_email = "test@example.com"
-        mock_signed.signing_link = "https://test.app/sign/token1"
-        mock_signed.status = "signed"
-        mock_signed.signed_at = datetime.utcnow() - timedelta(days=1)
-        mock_signed.signed_document_path = "/path/to/signed.png"
-        mock_signed.expires_at = datetime.utcnow() + timedelta(days=6)
-        mock_signed.created_at = datetime.utcnow() - timedelta(days=2)
-
-        mock_pending = MagicMock()
-        mock_pending.id = 2
-        mock_pending.document_type = "fee_agreement"
-        mock_pending.document_name = "Fee Agreement"
-        mock_pending.document_path = "/path/to/fee.pdf"
-        mock_pending.signer_name = "Test User"
-        mock_pending.signer_email = "test@example.com"
-        mock_pending.signing_link = "https://test.app/sign/token2"
-        mock_pending.status = "pending"
-        mock_pending.signed_at = None
-        mock_pending.signed_document_path = None
-        mock_pending.expires_at = datetime.utcnow() + timedelta(days=5)
-        mock_pending.created_at = datetime.utcnow() - timedelta(hours=2)
-
-        mock_session.query().filter().order_by().all.return_value = [mock_signed, mock_pending]
-
-        result = get_client_signature_history(client_id=1)
-
-        assert result["success"] is True
-        assert result["total_count"] == 2
-        assert result["signed_count"] == 1
-        assert result["pending_count"] == 1
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_history_expired_request(self, mock_session_class):
-        """Test history correctly marks expired requests."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        mock_expired = MagicMock()
-        mock_expired.id = 1
-        mock_expired.document_type = "client_agreement"
-        mock_expired.document_name = "Expired Agreement"
-        mock_expired.document_path = None
-        mock_expired.signer_name = "Test User"
-        mock_expired.signer_email = "test@example.com"
-        mock_expired.signing_link = "https://test.app/sign/token"
-        mock_expired.status = "pending"
-        mock_expired.signed_at = None
-        mock_expired.signed_document_path = None
-        mock_expired.expires_at = datetime.utcnow() - timedelta(days=1)  # Expired
-        mock_expired.created_at = datetime.utcnow() - timedelta(days=10)
-
-        mock_session.query().filter().order_by().all.return_value = [mock_expired]
-
-        result = get_client_signature_history(client_id=1)
-
-        assert result["success"] is True
-        assert result["requests"][0]["status"] == "expired"
-        assert result["pending_count"] == 0  # Expired doesn't count as pending
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_history_empty(self, mock_session_class):
-        """Test history for client with no requests."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().order_by().all.return_value = []
-
-        result = get_client_signature_history(client_id=1)
-
-        assert result["success"] is True
-        assert result["total_count"] == 0
-        assert result["signed_count"] == 0
-        assert result["pending_count"] == 0
-        assert result["requests"] == []
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_history_database_error(self, mock_session_class):
-        """Test history retrieval handles database errors."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().order_by().all.side_effect = Exception("Query failed")
-
-        result = get_client_signature_history(client_id=1)
-
-        assert result["success"] is False
-        assert "Query failed" in result["error"]
-
-
-# =============================================================================
-# Tests for _update_client_agreement_status()
-# =============================================================================
-
-class TestUpdateClientAgreementStatus:
-    """Test client agreement status update helper."""
-
-    def test_update_client_agreement_status_success(self):
-        """Test successful client agreement status update."""
-        mock_session = MagicMock()
-        mock_client = MagicMock()
-        mock_session.query().filter().first.return_value = mock_client
-
-        _update_client_agreement_status(mock_session, client_id=1, document_type="client_agreement")
-
-        assert mock_client.agreement_signed is True
-        assert mock_client.agreement_signed_at is not None
-        mock_session.commit.assert_called_once()
-
-    def test_update_client_agreement_status_non_agreement(self):
-        """Test no update for non-agreement document types."""
-        mock_session = MagicMock()
-
-        _update_client_agreement_status(mock_session, client_id=1, document_type="fee_agreement")
-
-        mock_session.query.assert_not_called()
-
-    def test_update_client_agreement_status_client_not_found(self):
-        """Test no update when client not found."""
-        mock_session = MagicMock()
-        mock_session.query().filter().first.return_value = None
-
-        # Should not raise an error
-        _update_client_agreement_status(mock_session, client_id=999, document_type="client_agreement")
-
-        mock_session.commit.assert_not_called()
-
-
-# =============================================================================
-# Tests for Edge Cases and Integration Scenarios
-# =============================================================================
-
-class TestEdgeCasesAndIntegration:
-    """Test edge cases and integration scenarios."""
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    def test_full_signature_workflow(self, mock_token, mock_base_url, mock_session_class):
-        """Test full signature workflow from creation to capture."""
-        mock_token.return_value = "workflow_token"
-        mock_base_url.return_value = "https://test.app"
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.refresh = MagicMock(side_effect=lambda x: setattr(x, 'id', 1))
-
-        # Create request
-        create_result = create_signature_request(
-            client_id=1,
-            document_type="client_agreement",
-            document_name="Test Agreement",
-            document_path=None,
-            signer_email="test@example.com",
-            signer_name="Test User"
-        )
-
-        assert create_result["success"] is True
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_concurrent_signature_requests(self, mock_session_class):
-        """Test multiple pending requests for same client."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-
-        # Create multiple mock requests
-        mock_requests = []
-        for i, doc_type in enumerate(DOCUMENT_TYPES.keys()):
-            req = MagicMock()
-            req.id = i + 1
-            req.document_type = doc_type
-            req.document_name = f"Test {doc_type}"
-            req.signer_name = "Test User"
-            req.signer_email = "test@example.com"
-            req.signing_link = f"https://test.app/sign/token{i}"
-            req.expires_at = datetime.utcnow() + timedelta(days=1)
-            req.created_at = datetime.utcnow()
-            mock_requests.append(req)
-
-        mock_session.query().filter().order_by().all.return_value = mock_requests
-
-        result = get_pending_signatures(client_id=1)
-
-        assert result["success"] is True
-        assert result["pending_count"] == len(DOCUMENT_TYPES)
-
-    @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    def test_special_characters_in_names(self, mock_token, mock_base_url, mock_session_class):
-        """Test handling of special characters in signer names."""
-        mock_token.return_value = "test_token"
-        mock_base_url.return_value = "https://test.app"
-
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.refresh = MagicMock(side_effect=lambda x: setattr(x, 'id', 1))
-
-        result = create_signature_request(
-            client_id=1,
-            document_type="client_agreement",
-            document_name="Agreement for Jose Garcia-Martinez",
-            document_path=None,
-            signer_email="jose@example.com",
-            signer_name="Jose Garcia-Martinez"
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.expires_at = datetime.utcnow() + timedelta(days=1)
+        mock_signing_session.client_id = 1
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+
+        result = submit_esign_consent(
+            session_uuid="test-uuid",
+            hardware_software_acknowledged=True,
+            paper_copy_right_acknowledged=True,
+            consent_withdrawal_acknowledged=True,
+            ip_address="127.0.0.1",
         )
 
         assert result["success"] is True
+        assert "consent_timestamp" in result
 
     @patch('services.esignature_service.SessionLocal')
-    @patch('services.esignature_service._get_base_url')
-    @patch('services.esignature_service._generate_token')
-    def test_unicode_in_document_name(self, mock_token, mock_base_url, mock_session_class):
-        """Test handling of unicode characters in document names."""
-        mock_token.return_value = "test_token"
-        mock_base_url.return_value = "https://test.app"
-
+    def test_submit_consent_missing_acknowledgment(self, mock_session_local):
+        """Test consent submission with missing acknowledgment."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.refresh = MagicMock(side_effect=lambda x: setattr(x, 'id', 1))
+        mock_session_local.return_value = mock_session
 
-        result = create_signature_request(
-            client_id=1,
-            document_type="client_agreement",
-            document_name="Acuerdo de Servicio",
-            document_path=None,
-            signer_email="test@example.com",
-            signer_name="Test User"
+        mock_signing_session = MagicMock()
+        mock_signing_session.expires_at = datetime.utcnow() + timedelta(days=1)
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+
+        # Missing one acknowledgment
+        result = submit_esign_consent(
+            session_uuid="test-uuid",
+            hardware_software_acknowledged=True,
+            paper_copy_right_acknowledged=False,  # Missing
+            consent_withdrawal_acknowledged=True,
         )
+
+        assert result["success"] is False
+        assert "acknowledgments" in result["error"].lower()
+
+    def test_get_esign_consent_disclosure(self):
+        """Test getting consent disclosure HTML."""
+        disclosure = get_esign_consent_disclosure()
+        assert disclosure is not None
+        assert "Hardware" in disclosure
+        assert "ESIGN Act" in disclosure
+
+
+# =============================================================================
+# Tests for Document Review & Signing
+# =============================================================================
+
+class TestDocumentReviewAndSigning:
+    """Test document review and signature capture."""
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_get_document_for_review_success(self, mock_session_local):
+        """Test getting document for review."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.esign_consent_given = True
+        mock_signing_session.id = 1
+        mock_signing_session.client_id = 1
+
+        mock_document = MagicMock()
+        mock_document.document_uuid = "doc-uuid"
+        mock_document.document_name = "Agreement"
+        mock_document.document_type = "client_agreement"
+        mock_document.document_html = "<p>Content</p>"
+        mock_document.is_croa_document = False
+        mock_document.status = "pending"
+        mock_document.document_presented_at = None
+
+        mock_session.query.return_value.filter.return_value.first.side_effect = [
+            mock_signing_session,
+            mock_document,
+        ]
+
+        result = get_document_for_review("session-uuid", "doc-uuid")
+
+        assert result["success"] is True
+        assert "document" in result
+        assert "intent_statement" in result
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_get_document_without_consent(self, mock_session_local):
+        """Test that document review requires consent first."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.esign_consent_given = False
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+
+        result = get_document_for_review("session-uuid", "doc-uuid")
+
+        assert result["success"] is False
+        assert "consent" in result["error"].lower()
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_record_review_progress(self, mock_session_local):
+        """Test recording scroll and duration progress."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.id = 1
+        mock_signing_session.client_id = 1
+
+        mock_document = MagicMock()
+        mock_document.scroll_percentage = 0
+        mock_document.review_duration_seconds = 0
+        mock_document.scrolled_to_bottom = False
+        mock_document.review_started_at = None
+
+        mock_session.query.return_value.filter.return_value.first.side_effect = [
+            mock_signing_session,
+            mock_document,
+        ]
+
+        result = record_document_review_progress(
+            session_uuid="session-uuid",
+            document_uuid="doc-uuid",
+            scroll_percentage=100,
+            review_duration_seconds=60,
+        )
+
+        assert result["success"] is True
+        assert result["scrolled_to_bottom"] is True
+
+    @patch('services.esignature_service.SessionLocal')
+    @patch('services.esignature_service._ensure_folders')
+    def test_sign_document_success(self, mock_folders, mock_session_local):
+        """Test successful document signing."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.esign_consent_given = True
+        mock_signing_session.id = 1
+        mock_signing_session.client_id = 1
+        mock_signing_session.signer_name = "John Doe"
+        mock_signing_session.signer_email = "john@example.com"
+
+        mock_document = MagicMock()
+        mock_document.document_uuid = "doc-uuid"
+        mock_document.document_html = "<p>Content</p>"
+        mock_document.status = "pending"
+        mock_document.is_croa_document = False
+        mock_document.id = 1
+        mock_document.client_id = 1
+
+        mock_session.query.return_value.filter.return_value.first.side_effect = [
+            mock_signing_session,
+            mock_document,
+        ]
+
+        result = sign_document(
+            session_uuid="session-uuid",
+            document_uuid="doc-uuid",
+            signature_type="typed",
+            signature_value="John Doe",
+            intent_confirmed=True,
+            typed_name="John Doe",
+            ip_address="127.0.0.1",
+        )
+
+        assert result["success"] is True
+        assert "certificate_number" in result
+        assert "document_hash" in result
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_sign_document_without_intent(self, mock_session_local):
+        """Test signing without intent confirmation fails."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.esign_consent_given = True
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+
+        result = sign_document(
+            session_uuid="session-uuid",
+            document_uuid="doc-uuid",
+            signature_type="typed",
+            signature_value="John Doe",
+            intent_confirmed=False,  # Not confirmed
+            typed_name="John Doe",
+        )
+
+        assert result["success"] is False
+        assert "intent" in result["error"].lower()
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_sign_document_name_mismatch(self, mock_session_local):
+        """Test signing with wrong typed name fails."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.esign_consent_given = True
+        mock_signing_session.signer_name = "John Doe"
+        mock_signing_session.id = 1
+
+        mock_document = MagicMock()
+        mock_document.status = "pending"
+        mock_document.is_croa_document = False
+
+        mock_session.query.return_value.filter.return_value.first.side_effect = [
+            mock_signing_session,
+            mock_document,
+        ]
+
+        result = sign_document(
+            session_uuid="session-uuid",
+            document_uuid="doc-uuid",
+            signature_type="typed",
+            signature_value="Jane Smith",  # Wrong name
+            intent_confirmed=True,
+            typed_name="Jane Smith",  # Doesn't match signer_name
+        )
+
+        assert result["success"] is False
+        assert "match" in result["error"].lower()
+
+
+# =============================================================================
+# Tests for Document Integrity Verification
+# =============================================================================
+
+class TestDocumentVerification:
+    """Test document integrity verification."""
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_verify_document_integrity_valid(self, mock_session_local):
+        """Test verifying document that hasn't been tampered with."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        content = "<p>Original content</p>"
+        original_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+        mock_document = MagicMock()
+        mock_document.document_uuid = "doc-uuid"
+        mock_document.status = "signed"
+        mock_document.document_html = content
+        mock_document.document_hash_sha256 = original_hash
+        mock_document.certificate_number = "BAG-20241224-ABCD1234"
+        mock_document.signature_timestamp = datetime.utcnow()
+        mock_document.signer_name = "John Doe"
+        mock_document.verify_integrity.return_value = True
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_document
+
+        result = verify_document_integrity("doc-uuid")
+
+        assert result["success"] is True
+        assert result["integrity_valid"] is True
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_verify_unsigned_document(self, mock_session_local):
+        """Test verifying unsigned document fails."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_document = MagicMock()
+        mock_document.status = "pending"  # Not signed
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_document
+
+        result = verify_document_integrity("doc-uuid")
+
+        assert result["success"] is False
+        assert "not been signed" in result["error"]
+
+
+# =============================================================================
+# Tests for Audit Trail
+# =============================================================================
+
+class TestAuditTrail:
+    """Test audit trail functionality."""
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_get_session_audit_trail(self, mock_session_local):
+        """Test getting complete audit trail for session."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.id = 1
+
+        mock_log1 = MagicMock()
+        mock_log1.to_dict.return_value = {"action": "session_initiated"}
+
+        mock_log2 = MagicMock()
+        mock_log2.to_dict.return_value = {"action": "esign_consent_given"}
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+        mock_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = [
+            mock_log1, mock_log2
+        ]
+
+        result = get_session_audit_trail("session-uuid")
+
+        assert result["success"] is True
+        assert len(result["audit_trail"]) == 2
+
+
+# =============================================================================
+# Tests for CROA Compliance
+# =============================================================================
+
+class TestCROACompliance:
+    """Test CROA compliance features."""
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_get_croa_compliance_status_no_tracker(self, mock_session_local):
+        """Test getting CROA status when no tracker exists."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+        mock_session.query.return_value.filter.return_value.first.return_value = None
+
+        result = get_croa_compliance_status(client_id=1)
+
+        assert result["success"] is True
+        assert result["has_tracker"] is False
+        assert result["work_can_begin"] is False
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_get_croa_compliance_status_with_tracker(self, mock_session_local):
+        """Test getting CROA status with existing tracker."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_tracker = MagicMock()
+        mock_tracker.rights_disclosure_signed = True
+        mock_tracker.rights_disclosure_signed_at = datetime.utcnow()
+        mock_tracker.contract_package_signed = True
+        mock_tracker.contract_package_signed_at = datetime.utcnow()
+        mock_tracker.cancellation_period_start = datetime.utcnow()
+        mock_tracker.cancellation_period_end = datetime.utcnow() + timedelta(days=3)
+        mock_tracker.cancellation_period_complete = False
+        mock_tracker.client_cancelled = False
+        mock_tracker.cancellation_waived = False
+        mock_tracker.work_can_begin = False
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_tracker
+
+        result = get_croa_compliance_status(client_id=1)
+
+        assert result["success"] is True
+        assert result["has_tracker"] is True
+        assert result["rights_disclosure_signed"] is True
+        assert result["contract_signed"] is True
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_cancel_service_during_croa_period(self, mock_session_local):
+        """Test cancelling service during 3-day period."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_tracker = MagicMock()
+        mock_tracker.cancellation_period_end = datetime.utcnow() + timedelta(days=2)
+        mock_tracker.client_cancelled = False
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_tracker
+
+        result = cancel_service_during_croa_period(
+            client_id=1,
+            reason="Changed my mind",
+        )
+
+        assert result["success"] is True
+        assert "cancelled_at" in result
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_cancel_after_period_ends(self, mock_session_local):
+        """Test that cancellation fails after period ends."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_tracker = MagicMock()
+        mock_tracker.cancellation_period_end = datetime.utcnow() - timedelta(days=1)  # Ended
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_tracker
+
+        result = cancel_service_during_croa_period(client_id=1)
+
+        assert result["success"] is False
+        assert "ended" in result["error"].lower()
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_waive_cancellation_period(self, mock_session_local):
+        """Test waiving cancellation period."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_tracker = MagicMock()
+        mock_tracker.client_cancelled = False
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_tracker
+
+        result = waive_cancellation_period(
+            client_id=1,
+            waiver_signature="John Doe",
+        )
+
+        assert result["success"] is True
+        assert result["work_can_begin"] is True
+
+
+# =============================================================================
+# Tests for Client History
+# =============================================================================
+
+class TestClientHistory:
+    """Test client signing history."""
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_get_client_signing_history(self, mock_session_local):
+        """Test getting client's signing history."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_doc = MagicMock()
+        mock_doc.document_uuid = "doc-uuid"
+        mock_doc.document_name = "Agreement"
+        mock_doc.status = "signed"
+        mock_doc.certificate_number = "BAG-20241224-ABCD"
+        mock_doc.signature_timestamp = datetime.utcnow()
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.session_uuid = "session-uuid"
+        mock_signing_session.status = "completed"
+        mock_signing_session.initiated_at = datetime.utcnow()
+        mock_signing_session.completed_at = datetime.utcnow()
+        mock_signing_session.documents = [mock_doc]
+
+        mock_session.query.return_value.filter.return_value.order_by.return_value.all.return_value = [
+            mock_signing_session
+        ]
+
+        result = get_client_signing_history(client_id=1)
+
+        assert result["success"] is True
+        assert result["total_sessions"] == 1
+        assert len(result["sessions"]) == 1
+
+    def test_list_document_types(self):
+        """Test listing supported document types."""
+        types = list_document_types()
+
+        assert isinstance(types, dict)
+        assert "client_agreement" in types
+        assert "rights_disclosure" in types
+
+
+# =============================================================================
+# Tests for Session Cancellation and Link Regeneration
+# =============================================================================
+
+class TestSessionManagementAdvanced:
+    """Test advanced session management features."""
+
+    @patch('services.esignature_service.SessionLocal')
+    def test_cancel_signing_session(self, mock_session_local):
+        """Test cancelling a pending session."""
+        mock_session = MagicMock()
+        mock_session_local.return_value = mock_session
+
+        mock_signing_session = MagicMock()
+        mock_signing_session.status = "pending"
+        mock_signing_session.client_id = 1
+        mock_signing_session.id = 1
+
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+
+        result = cancel_signing_session("session-uuid", reason="No longer needed")
 
         assert result["success"] is True
 
     @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_with_no_expires_at(self, mock_session_class):
-        """Test token verification when expires_at is None."""
+    def test_cannot_cancel_completed_session(self, mock_session_local):
+        """Test that completed sessions cannot be cancelled."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session_local.return_value = mock_session
 
-        mock_request = MagicMock()
-        mock_request.id = 1
-        mock_request.client_id = 10
-        mock_request.status = "pending"
-        mock_request.expires_at = None  # No expiration
-        mock_request.document_type = "client_agreement"
-        mock_request.document_name = "Test Doc"
-        mock_request.document_path = None
-        mock_request.signer_email = "test@example.com"
-        mock_request.signer_name = "Test User"
-        mock_request.created_at = datetime.utcnow()
+        mock_signing_session = MagicMock()
+        mock_signing_session.status = "completed"
 
-        mock_client = MagicMock()
-        mock_client.name = "Test Client"
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
 
-        mock_session.query().filter().first.side_effect = [mock_request, mock_client]
+        result = cancel_signing_session("session-uuid")
 
-        result = verify_signing_token("no_expire_token")
-
-        assert result["valid"] is True
+        assert result["success"] is False
+        assert "completed" in result["error"].lower()
 
     @patch('services.esignature_service.SessionLocal')
-    def test_signature_history_mixed_statuses(self, mock_session_class):
-        """Test history with mixed document statuses."""
+    def test_regenerate_signing_link(self, mock_session_local):
+        """Test regenerating expired signing link."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
+        mock_session_local.return_value = mock_session
 
-        statuses = ["signed", "pending", "cancelled", "signed", "pending"]
-        mock_requests = []
+        mock_signing_session = MagicMock()
+        mock_signing_session.status = "pending"
+        mock_signing_session.client_id = 1
+        mock_signing_session.id = 1
 
-        for i, status in enumerate(statuses):
-            req = MagicMock()
-            req.id = i + 1
-            req.document_type = "client_agreement"
-            req.document_name = f"Document {i + 1}"
-            req.document_path = None
-            req.signer_name = "Test User"
-            req.signer_email = "test@example.com"
-            req.signing_link = f"https://test.app/sign/token{i}"
-            req.status = status
-            req.signed_at = datetime.utcnow() if status == "signed" else None
-            req.signed_document_path = f"/path/sig{i}.png" if status == "signed" else None
-            req.expires_at = datetime.utcnow() + timedelta(days=1)
-            req.created_at = datetime.utcnow()
-            mock_requests.append(req)
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
 
-        mock_session.query().filter().order_by().all.return_value = mock_requests
-
-        result = get_client_signature_history(client_id=1)
+        result = regenerate_signing_link("old-session-uuid")
 
         assert result["success"] is True
-        assert result["total_count"] == 5
-        assert result["signed_count"] == 2
-        assert result["pending_count"] == 2  # 2 pending, cancelled doesn't count
+        assert "session_uuid" in result
+        assert "signing_link" in result
+        assert "expires_at" in result
 
 
 # =============================================================================
-# Tests for Session Cleanup
+# Tests for Complete Session Flow
 # =============================================================================
 
-class TestSessionCleanup:
-    """Test that database sessions are properly closed."""
+class TestCompleteSessionFlow:
+    """Test completing a signing session."""
 
     @patch('services.esignature_service.SessionLocal')
-    def test_create_request_closes_session(self, mock_session_class):
-        """Test session is closed after create_signature_request."""
+    def test_complete_session_all_signed(self, mock_session_local):
+        """Test completing session when all documents are signed."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.commit.side_effect = Exception("Error")
+        mock_session_local.return_value = mock_session
 
-        create_signature_request(
-            client_id=1,
-            document_type="client_agreement",
-            document_name="Test",
-            document_path=None,
-            signer_email="test@example.com",
-            signer_name="Test"
-        )
+        mock_signing_session = MagicMock()
+        mock_signing_session.id = 1
+        mock_signing_session.client_id = 1
+        mock_signing_session.initiated_at = datetime.utcnow()
+        mock_signing_session.documents = [MagicMock()]
+        mock_signing_session.return_url = "/portal/dashboard"
 
-        mock_session.close.assert_called_once()
+        # No unsigned documents
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+        mock_session.query.return_value.filter.return_value.all.return_value = []
+
+        result = complete_signing_session("session-uuid")
+
+        assert result["success"] is True
+        assert "completed_at" in result
+        assert result["return_url"] == "/portal/dashboard"
 
     @patch('services.esignature_service.SessionLocal')
-    def test_verify_token_closes_session(self, mock_session_class):
-        """Test session is closed after verify_signing_token."""
+    def test_complete_session_with_unsigned_docs(self, mock_session_local):
+        """Test that session cannot complete with unsigned documents."""
         mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.side_effect = Exception("Error")
+        mock_session_local.return_value = mock_session
 
-        verify_signing_token("test_token")
+        mock_signing_session = MagicMock()
+        mock_signing_session.id = 1
 
-        mock_session.close.assert_called_once()
+        mock_unsigned_doc = MagicMock()
+        mock_unsigned_doc.document_name = "Agreement"
 
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_status_closes_session(self, mock_session_class):
-        """Test session is closed after get_signature_status."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.side_effect = Exception("Error")
+        mock_session.query.return_value.filter.return_value.first.return_value = mock_signing_session
+        mock_session.query.return_value.filter.return_value.all.return_value = [mock_unsigned_doc]
 
-        get_signature_status(request_id=1)
+        result = complete_signing_session("session-uuid")
 
-        mock_session.close.assert_called_once()
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_cancel_request_closes_session(self, mock_session_class):
-        """Test session is closed after cancel_signature_request."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().first.side_effect = Exception("Error")
-
-        cancel_signature_request(request_id=1)
-
-        mock_session.close.assert_called_once()
-
-    @patch('services.esignature_service.SessionLocal')
-    def test_get_history_closes_session(self, mock_session_class):
-        """Test session is closed after get_client_signature_history."""
-        mock_session = MagicMock()
-        mock_session_class.return_value = mock_session
-        mock_session.query().filter().order_by().all.side_effect = Exception("Error")
-
-        get_client_signature_history(client_id=1)
-
-        mock_session.close.assert_called_once()
+        assert result["success"] is False
+        assert "unsigned_documents" in result

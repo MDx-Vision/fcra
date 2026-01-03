@@ -4320,6 +4320,310 @@ class OnboardingProgress(Base):
     client = relationship("Client", backref="onboarding_progress")
 
 
+# ============================================================
+# E-SIGNATURE COMPLIANCE MODELS - ESIGN Act, UETA, CROA
+# ============================================================
+
+# Audit action types for complete trail
+ESIGN_AUDIT_ACTIONS = {
+    'session_initiated': 'Signing session started',
+    'consent_page_viewed': 'Consent disclosure page viewed',
+    'esign_consent_given': 'Electronic signature consent submitted',
+    'documents_presented': 'Documents presented for signing',
+    'document_reviewed': 'Document review started',
+    'document_scrolled': 'Document scrolled (tracking progress)',
+    'signature_field_focused': 'Signature input field focused',
+    'signature_entered': 'Signature value entered',
+    'intent_confirmed': 'Intent to sign checkbox confirmed',
+    'document_signed': 'Document signed successfully',
+    'pdf_generated': 'Signed PDF document generated',
+    'session_completed': 'Signing session completed',
+    'documents_emailed': 'Signed documents emailed to client',
+    'session_cancelled': 'Signing session cancelled',
+    'session_expired': 'Signing session expired',
+    'link_regenerated': 'Signing link regenerated',
+}
+
+
+class SignatureSession(Base):
+    """
+    Session-based e-signature flow with ESIGN Act consent tracking.
+    Implements 4 legal requirements: Intent, Consent, Attribution, Record Retention.
+    """
+    __tablename__ = 'signature_sessions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_uuid = Column(String(64), unique=True, nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Session status
+    status = Column(String(50), default='pending', index=True)  # pending, consent_given, in_progress, completed, cancelled, expired
+
+    # ESIGN Act Consent (3 required acknowledgments)
+    esign_consent_given = Column(Boolean, default=False)
+    esign_consent_timestamp = Column(DateTime)
+    hardware_software_acknowledged = Column(Boolean, default=False)  # Understand tech requirements
+    paper_copy_right_acknowledged = Column(Boolean, default=False)  # Right to paper copies
+    consent_withdrawal_acknowledged = Column(Boolean, default=False)  # Right to withdraw consent
+    consent_disclosure_html = Column(Text)  # Store the exact disclosure shown
+
+    # Attribution (signer identity)
+    ip_address = Column(String(50))
+    user_agent = Column(Text)
+    device_fingerprint = Column(String(255))  # Browser fingerprint for verification
+
+    # Email verification
+    signer_email = Column(String(255))
+    signer_name = Column(String(255))
+    email_verified = Column(Boolean, default=False)
+
+    # Timestamps
+    initiated_at = Column(DateTime, default=datetime.utcnow)
+    consent_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    expires_at = Column(DateTime)
+
+    # Metadata
+    signing_link = Column(String(500))
+    return_url = Column(String(500))  # Where to redirect after completion
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="signature_sessions")
+    documents = relationship("SignedDocument", back_populates="session", cascade="all, delete-orphan")
+    audit_logs = relationship("SignatureAuditLog", back_populates="session", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'session_uuid': self.session_uuid,
+            'client_id': self.client_id,
+            'status': self.status,
+            'esign_consent_given': self.esign_consent_given,
+            'esign_consent_timestamp': self.esign_consent_timestamp.isoformat() if self.esign_consent_timestamp else None,
+            'hardware_software_acknowledged': self.hardware_software_acknowledged,
+            'paper_copy_right_acknowledged': self.paper_copy_right_acknowledged,
+            'consent_withdrawal_acknowledged': self.consent_withdrawal_acknowledged,
+            'ip_address': self.ip_address,
+            'signer_email': self.signer_email,
+            'signer_name': self.signer_name,
+            'initiated_at': self.initiated_at.isoformat() if self.initiated_at else None,
+            'consent_at': self.consent_at.isoformat() if self.consent_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'signing_link': self.signing_link,
+            'documents_count': len(self.documents) if self.documents else 0,
+        }
+
+
+class SignedDocument(Base):
+    """
+    Individual signed document with SHA-256 tamper-evidence and signature certificate.
+    """
+    __tablename__ = 'signed_documents'
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_uuid = Column(String(64), unique=True, nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey('signature_sessions.id'), nullable=False, index=True)
+    template_id = Column(Integer, ForeignKey('document_templates.id'), nullable=True, index=True)
+
+    # Document content
+    document_name = Column(String(255), nullable=False)
+    document_type = Column(String(100))  # client_agreement, limited_poa, etc.
+    document_html = Column(Text)  # Original HTML content
+    document_pdf_path = Column(String(500))  # Path to generated PDF
+
+    # Tamper-evidence (SHA-256 hashing)
+    document_hash_sha256 = Column(String(64))  # Hash of document_html at signing time
+    document_hash_algorithm = Column(String(20), default='SHA-256')
+
+    # Signature data
+    signature_type = Column(String(50), default='typed')  # typed, drawn, uploaded
+    signature_value = Column(Text)  # Typed name or base64 image
+    signature_image_path = Column(String(500))  # Path to saved signature image
+
+    # Intent confirmation (legal requirement)
+    intent_checkbox_checked = Column(Boolean, default=False)
+    intent_statement = Column(Text)  # The exact statement they agreed to
+
+    # Signer attribution
+    signer_name = Column(String(255))
+    signer_email = Column(String(255))
+    signer_ip = Column(String(50))
+    signer_user_agent = Column(Text)
+
+    # Review tracking
+    document_presented_at = Column(DateTime)
+    review_started_at = Column(DateTime)
+    review_duration_seconds = Column(Integer, default=0)
+    scrolled_to_bottom = Column(Boolean, default=False)
+    scroll_percentage = Column(Integer, default=0)
+
+    # Signature timestamp
+    signature_timestamp = Column(DateTime)
+
+    # Certificate
+    certificate_number = Column(String(50), unique=True, index=True)  # e.g., BAG-20241224-A3F8B2C1
+    certificate_pdf_path = Column(String(500))
+
+    # Status
+    status = Column(String(50), default='pending')  # pending, signed, voided, superseded
+
+    # CROA compliance
+    is_croa_document = Column(Boolean, default=False)
+    croa_signing_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="signed_documents")
+    session = relationship("SignatureSession", back_populates="documents")
+    template = relationship("DocumentTemplate", backref="signed_documents")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'document_uuid': self.document_uuid,
+            'client_id': self.client_id,
+            'session_id': self.session_id,
+            'document_name': self.document_name,
+            'document_type': self.document_type,
+            'document_hash_sha256': self.document_hash_sha256,
+            'signature_type': self.signature_type,
+            'intent_checkbox_checked': self.intent_checkbox_checked,
+            'signer_name': self.signer_name,
+            'signer_email': self.signer_email,
+            'review_duration_seconds': self.review_duration_seconds,
+            'scrolled_to_bottom': self.scrolled_to_bottom,
+            'signature_timestamp': self.signature_timestamp.isoformat() if self.signature_timestamp else None,
+            'certificate_number': self.certificate_number,
+            'status': self.status,
+            'is_croa_document': self.is_croa_document,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+    def verify_integrity(self):
+        """Verify document hasn't been tampered with by checking hash"""
+        import hashlib
+        if not self.document_html or not self.document_hash_sha256:
+            return None
+        current_hash = hashlib.sha256(self.document_html.encode('utf-8')).hexdigest()
+        return current_hash == self.document_hash_sha256
+
+
+class SignatureAuditLog(Base):
+    """
+    Complete audit trail for e-signature compliance.
+    Logs all 12+ action types for legal evidence.
+    """
+    __tablename__ = 'signature_audit_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey('signature_sessions.id'), nullable=True, index=True)
+    document_id = Column(Integer, ForeignKey('signed_documents.id'), nullable=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Action tracking
+    action = Column(String(50), nullable=False, index=True)  # From ESIGN_AUDIT_ACTIONS
+    action_display = Column(String(255))  # Human-readable description
+    action_details = Column(JSON)  # Additional context
+
+    # Attribution
+    ip_address = Column(String(50))
+    user_agent = Column(Text)
+    device_fingerprint = Column(String(255))
+
+    # Timestamp
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+
+    # Raw request data (sanitized, for evidence)
+    raw_request_data = Column(JSON)
+
+    # Relationships
+    session = relationship("SignatureSession", back_populates="audit_logs")
+    document = relationship("SignedDocument", backref="audit_logs")
+    client = relationship("Client", backref="signature_audit_logs")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'session_id': self.session_id,
+            'document_id': self.document_id,
+            'client_id': self.client_id,
+            'action': self.action,
+            'action_display': self.action_display,
+            'action_details': self.action_details,
+            'ip_address': self.ip_address,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+        }
+
+
+class CROAComplianceTracker(Base):
+    """
+    CROA-specific compliance tracking.
+    Enforces: Rights Disclosure first, 3-business-day cancellation period.
+    """
+    __tablename__ = 'croa_compliance_trackers'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, unique=True, index=True)
+    session_id = Column(Integer, ForeignKey('signature_sessions.id'), nullable=True, index=True)
+
+    # Rights Disclosure (MUST be signed first per CROA)
+    rights_disclosure_signed = Column(Boolean, default=False)
+    rights_disclosure_signed_at = Column(DateTime)
+    rights_disclosure_document_id = Column(Integer, ForeignKey('signed_documents.id'), nullable=True)
+
+    # Contract Package
+    contract_package_signed = Column(Boolean, default=False)
+    contract_package_signed_at = Column(DateTime)
+
+    # 3-Business-Day Cancellation Period
+    cancellation_period_start = Column(DateTime)  # When contract was signed
+    cancellation_period_end = Column(DateTime)  # 3 business days after (excludes weekends/holidays)
+    cancellation_period_complete = Column(Boolean, default=False)  # True after period expires
+
+    # Cancellation tracking
+    client_cancelled = Column(Boolean, default=False)
+    client_cancelled_at = Column(DateTime)
+    cancellation_reason = Column(Text)
+
+    # Waiver (if client chooses to proceed immediately)
+    cancellation_waived = Column(Boolean, default=False)
+    cancellation_waived_at = Column(DateTime)
+    waiver_document_id = Column(Integer, ForeignKey('signed_documents.id'), nullable=True)
+
+    # Work authorization
+    work_can_begin = Column(Boolean, default=False)  # True after cancellation period OR waiver
+    work_began_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="croa_compliance")
+    session = relationship("SignatureSession", backref="croa_compliance")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'rights_disclosure_signed': self.rights_disclosure_signed,
+            'rights_disclosure_signed_at': self.rights_disclosure_signed_at.isoformat() if self.rights_disclosure_signed_at else None,
+            'contract_package_signed': self.contract_package_signed,
+            'cancellation_period_start': self.cancellation_period_start.isoformat() if self.cancellation_period_start else None,
+            'cancellation_period_end': self.cancellation_period_end.isoformat() if self.cancellation_period_end else None,
+            'cancellation_period_complete': self.cancellation_period_complete,
+            'client_cancelled': self.client_cancelled,
+            'cancellation_waived': self.cancellation_waived,
+            'work_can_begin': self.work_can_begin,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -5185,6 +5489,100 @@ def init_db():
         ("white_label_tenants", "two_factor_method", "VARCHAR(20) DEFAULT 'totp'"),
         ("white_label_tenants", "two_factor_backup_codes", "JSONB"),
         ("white_label_tenants", "two_factor_verified_at", "TIMESTAMP"),
+        # E-Signature Compliance Tables (ESIGN Act, UETA, CROA)
+        ("signature_sessions", "id", "SERIAL PRIMARY KEY"),
+        ("signature_sessions", "session_uuid", "VARCHAR(64) UNIQUE NOT NULL"),
+        ("signature_sessions", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("signature_sessions", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("signature_sessions", "esign_consent_given", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "esign_consent_timestamp", "TIMESTAMP"),
+        ("signature_sessions", "hardware_software_acknowledged", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "paper_copy_right_acknowledged", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "consent_withdrawal_acknowledged", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "consent_disclosure_html", "TEXT"),
+        ("signature_sessions", "ip_address", "VARCHAR(50)"),
+        ("signature_sessions", "user_agent", "TEXT"),
+        ("signature_sessions", "device_fingerprint", "VARCHAR(255)"),
+        ("signature_sessions", "signer_email", "VARCHAR(255)"),
+        ("signature_sessions", "signer_name", "VARCHAR(255)"),
+        ("signature_sessions", "email_verified", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "initiated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signature_sessions", "consent_at", "TIMESTAMP"),
+        ("signature_sessions", "completed_at", "TIMESTAMP"),
+        ("signature_sessions", "expires_at", "TIMESTAMP"),
+        ("signature_sessions", "signing_link", "VARCHAR(500)"),
+        ("signature_sessions", "return_url", "VARCHAR(500)"),
+        ("signature_sessions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signature_sessions", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Signed Documents with SHA-256 tamper-evidence
+        ("signed_documents", "id", "SERIAL PRIMARY KEY"),
+        ("signed_documents", "document_uuid", "VARCHAR(64) UNIQUE NOT NULL"),
+        ("signed_documents", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("signed_documents", "session_id", "INTEGER REFERENCES signature_sessions(id) NOT NULL"),
+        ("signed_documents", "template_id", "INTEGER REFERENCES document_templates(id)"),
+        ("signed_documents", "document_name", "VARCHAR(255) NOT NULL"),
+        ("signed_documents", "document_type", "VARCHAR(100)"),
+        ("signed_documents", "document_html", "TEXT"),
+        ("signed_documents", "document_pdf_path", "VARCHAR(500)"),
+        ("signed_documents", "document_hash_sha256", "VARCHAR(64)"),
+        ("signed_documents", "document_hash_algorithm", "VARCHAR(20) DEFAULT 'SHA-256'"),
+        ("signed_documents", "signature_type", "VARCHAR(50) DEFAULT 'typed'"),
+        ("signed_documents", "signature_value", "TEXT"),
+        ("signed_documents", "signature_image_path", "VARCHAR(500)"),
+        ("signed_documents", "intent_checkbox_checked", "BOOLEAN DEFAULT FALSE"),
+        ("signed_documents", "intent_statement", "TEXT"),
+        ("signed_documents", "signer_name", "VARCHAR(255)"),
+        ("signed_documents", "signer_email", "VARCHAR(255)"),
+        ("signed_documents", "signer_ip", "VARCHAR(50)"),
+        ("signed_documents", "signer_user_agent", "TEXT"),
+        ("signed_documents", "document_presented_at", "TIMESTAMP"),
+        ("signed_documents", "review_started_at", "TIMESTAMP"),
+        ("signed_documents", "review_duration_seconds", "INTEGER DEFAULT 0"),
+        ("signed_documents", "scrolled_to_bottom", "BOOLEAN DEFAULT FALSE"),
+        ("signed_documents", "scroll_percentage", "INTEGER DEFAULT 0"),
+        ("signed_documents", "signature_timestamp", "TIMESTAMP"),
+        ("signed_documents", "certificate_number", "VARCHAR(50) UNIQUE"),
+        ("signed_documents", "certificate_pdf_path", "VARCHAR(500)"),
+        ("signed_documents", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("signed_documents", "is_croa_document", "BOOLEAN DEFAULT FALSE"),
+        ("signed_documents", "croa_signing_order", "INTEGER DEFAULT 0"),
+        ("signed_documents", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signed_documents", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Signature Audit Logs for complete trail
+        ("signature_audit_logs", "id", "SERIAL PRIMARY KEY"),
+        ("signature_audit_logs", "session_id", "INTEGER REFERENCES signature_sessions(id)"),
+        ("signature_audit_logs", "document_id", "INTEGER REFERENCES signed_documents(id)"),
+        ("signature_audit_logs", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("signature_audit_logs", "action", "VARCHAR(50) NOT NULL"),
+        ("signature_audit_logs", "action_display", "VARCHAR(255)"),
+        ("signature_audit_logs", "action_details", "JSONB"),
+        ("signature_audit_logs", "ip_address", "VARCHAR(50)"),
+        ("signature_audit_logs", "user_agent", "TEXT"),
+        ("signature_audit_logs", "device_fingerprint", "VARCHAR(255)"),
+        ("signature_audit_logs", "timestamp", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signature_audit_logs", "raw_request_data", "JSONB"),
+        # CROA Compliance Trackers
+        ("croa_compliance_trackers", "id", "SERIAL PRIMARY KEY"),
+        ("croa_compliance_trackers", "client_id", "INTEGER REFERENCES clients(id) UNIQUE NOT NULL"),
+        ("croa_compliance_trackers", "session_id", "INTEGER REFERENCES signature_sessions(id)"),
+        ("croa_compliance_trackers", "rights_disclosure_signed", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "rights_disclosure_signed_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "rights_disclosure_document_id", "INTEGER REFERENCES signed_documents(id)"),
+        ("croa_compliance_trackers", "contract_package_signed", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "contract_package_signed_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_period_start", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_period_end", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_period_complete", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "client_cancelled", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "client_cancelled_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_reason", "TEXT"),
+        ("croa_compliance_trackers", "cancellation_waived", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "cancellation_waived_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "waiver_document_id", "INTEGER REFERENCES signed_documents(id)"),
+        ("croa_compliance_trackers", "work_can_begin", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "work_began_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("croa_compliance_trackers", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

@@ -17781,6 +17781,390 @@ def api_get_signature_types():
 
 
 # ==============================================================================
+# E-SIGNATURE SESSION API - Full ESIGN Act, UETA, CROA Compliance
+# ==============================================================================
+
+
+@app.route("/api/esign/session/initiate", methods=["POST"])
+def api_esign_initiate_session():
+    """Initiate a new e-signature session with documents (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import initiate_signing_session
+
+        data = request.json or {}
+        client_id = data.get("client_id")
+        documents = data.get("documents", [])
+        signer_email = data.get("signer_email")
+        signer_name = data.get("signer_name")
+        return_url = data.get("return_url")
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+        if not documents:
+            return jsonify({"success": False, "error": "documents required"}), 400
+        if not signer_email or not signer_name:
+            return jsonify({"success": False, "error": "signer_email and signer_name required"}), 400
+
+        result = initiate_signing_session(
+            client_id=client_id,
+            documents=documents,
+            signer_email=signer_email,
+            signer_name=signer_name,
+            return_url=return_url,
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>", methods=["GET"])
+def api_esign_get_session(session_uuid):
+    """Get signing session details by UUID"""
+    try:
+        from services.esignature_service import get_session_by_uuid
+
+        result = get_session_by_uuid(session_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/consent", methods=["POST"])
+def api_esign_submit_consent(session_uuid):
+    """Submit ESIGN Act consent with 3 required acknowledgments"""
+    try:
+        from services.esignature_service import submit_esign_consent
+
+        data = request.json or {}
+
+        result = submit_esign_consent(
+            session_uuid=session_uuid,
+            hardware_software_acknowledged=data.get("hardware_software_acknowledged", False),
+            paper_copy_right_acknowledged=data.get("paper_copy_right_acknowledged", False),
+            consent_withdrawal_acknowledged=data.get("consent_withdrawal_acknowledged", False),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None,
+            device_fingerprint=data.get("device_fingerprint"),
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>", methods=["GET"])
+def api_esign_get_document(session_uuid, document_uuid):
+    """Get a document for review"""
+    try:
+        from services.esignature_service import get_document_for_review
+
+        result = get_document_for_review(session_uuid, document_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>/progress", methods=["POST"])
+def api_esign_record_progress(session_uuid, document_uuid):
+    """Record document review progress (scroll, duration)"""
+    try:
+        from services.esignature_service import record_document_review_progress
+
+        data = request.json or {}
+
+        result = record_document_review_progress(
+            session_uuid=session_uuid,
+            document_uuid=document_uuid,
+            scroll_percentage=data.get("scroll_percentage", 0),
+            review_duration_seconds=data.get("review_duration_seconds", 0),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>/sign", methods=["POST"])
+def api_esign_sign_document(session_uuid, document_uuid):
+    """Sign a document with full legal compliance"""
+    try:
+        from services.esignature_service import sign_document
+
+        data = request.json or {}
+
+        if not data.get("intent_confirmed"):
+            return jsonify({"success": False, "error": "Intent confirmation required"}), 400
+        if not data.get("typed_name"):
+            return jsonify({"success": False, "error": "Typed name required"}), 400
+
+        result = sign_document(
+            session_uuid=session_uuid,
+            document_uuid=document_uuid,
+            signature_type=data.get("signature_type", "typed"),
+            signature_value=data.get("signature_value", ""),
+            intent_confirmed=data.get("intent_confirmed", False),
+            typed_name=data.get("typed_name", ""),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None,
+            device_fingerprint=data.get("device_fingerprint"),
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/complete", methods=["POST"])
+def api_esign_complete_session(session_uuid):
+    """Complete a signing session after all documents are signed"""
+    try:
+        from services.esignature_service import complete_signing_session
+
+        result = complete_signing_session(
+            session_uuid=session_uuid,
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/cancel", methods=["POST"])
+def api_esign_cancel_session(session_uuid):
+    """Cancel a pending signing session"""
+    try:
+        from services.esignature_service import cancel_signing_session
+
+        data = request.json or {}
+
+        result = cancel_signing_session(
+            session_uuid=session_uuid,
+            reason=data.get("reason"),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/regenerate-link", methods=["POST"])
+def api_esign_regenerate_link(session_uuid):
+    """Regenerate signing link for an expired session"""
+    try:
+        from services.esignature_service import regenerate_signing_link
+
+        result = regenerate_signing_link(session_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/audit-trail", methods=["GET"])
+def api_esign_get_audit_trail(session_uuid):
+    """Get complete audit trail for a signing session (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import get_session_audit_trail
+
+        result = get_session_audit_trail(session_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/document/<document_uuid>/verify", methods=["GET"])
+def api_esign_verify_document(document_uuid):
+    """Verify document integrity (tamper-evidence check)"""
+    try:
+        from services.esignature_service import verify_document_integrity
+
+        result = verify_document_integrity(document_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/history", methods=["GET"])
+def api_esign_client_history(client_id):
+    """Get all signing sessions and documents for a client (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import get_client_signing_history
+
+        result = get_client_signing_history(client_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/croa-status", methods=["GET"])
+def api_esign_croa_status(client_id):
+    """Get CROA compliance status for a client (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import get_croa_compliance_status
+
+        result = get_croa_compliance_status(client_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/croa-cancel", methods=["POST"])
+def api_esign_croa_cancel(client_id):
+    """Cancel service during CROA 3-business-day cancellation period"""
+    try:
+        from services.esignature_service import cancel_service_during_croa_period
+
+        data = request.json or {}
+
+        result = cancel_service_during_croa_period(
+            client_id=client_id,
+            reason=data.get("reason"),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/croa-waive", methods=["POST"])
+def api_esign_croa_waive(client_id):
+    """Waive CROA cancellation period to begin work immediately"""
+    try:
+        from services.esignature_service import waive_cancellation_period
+
+        data = request.json or {}
+
+        if not data.get("waiver_signature"):
+            return jsonify({"success": False, "error": "waiver_signature required"}), 400
+
+        result = waive_cancellation_period(
+            client_id=client_id,
+            waiver_signature=data.get("waiver_signature"),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/consent-disclosure", methods=["GET"])
+def api_esign_consent_disclosure():
+    """Get the ESIGN Act consent disclosure HTML"""
+    try:
+        from services.esignature_service import get_esign_consent_disclosure
+
+        disclosure = get_esign_consent_disclosure()
+        return jsonify({"success": True, "disclosure_html": disclosure})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# E-Sign Page Route (for signing flow)
+@app.route("/esign/<session_uuid>")
+def esign_signing_page(session_uuid):
+    """Render the e-signature signing page"""
+    try:
+        from services.esignature_service import get_session_by_uuid
+
+        result = get_session_by_uuid(session_uuid)
+
+        if not result.get("success"):
+            return render_template("error.html",
+                error_title="Session Not Found",
+                error_message=result.get("error", "The signing session could not be found or has expired.")
+            ), 404
+
+        return render_template("esign/signing_page.html",
+            session=result.get("session"),
+            documents=result.get("documents"),
+            consent_disclosure=result.get("consent_disclosure"),
+            session_uuid=session_uuid,
+        )
+
+    except Exception as e:
+        return render_template("error.html",
+            error_title="Error",
+            error_message=str(e)
+        ), 500
+
+
+# ==============================================================================
 # METRO2 VIOLATION DETECTION API
 # ==============================================================================
 
