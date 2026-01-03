@@ -103,6 +103,13 @@
         </a>
         {% endif %}
 
+        {# Invoices - only for active clients #}
+        {% if has_full_access %}
+        <a href="{{ url_for('portal.portal_invoices') }}" class="nav-tab {% if active_tab == 'invoices' %}active{% endif %}" data-testid="nav-invoices">
+            <span class="nav-icon" aria-hidden="true">📄</span><span class="nav-label">Invoices</span>
+        </a>
+        {% endif %}
+
         {# Book Call - only for active clients #}
         {% if has_full_access %}
         <a href="{{ url_for('portal.booking') }}" class="nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="nav-booking">

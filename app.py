@@ -18165,6 +18165,472 @@ def esign_signing_page(session_uuid):
 
 
 # ==============================================================================
+# INVOICE API - Client Invoicing and Billing
+# ==============================================================================
+
+
+@app.route("/api/invoices", methods=["GET"])
+def api_list_invoices():
+    """List invoices with optional filters"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import list_invoices
+        from datetime import datetime
+
+        client_id = request.args.get("client_id", type=int)
+        status = request.args.get("status")
+        tenant_id = request.args.get("tenant_id", type=int)
+        from_date_str = request.args.get("from_date")
+        to_date_str = request.args.get("to_date")
+        limit = request.args.get("limit", 100, type=int)
+        offset = request.args.get("offset", 0, type=int)
+
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date() if from_date_str else None
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date() if to_date_str else None
+
+        result = list_invoices(
+            client_id=client_id,
+            status=status,
+            tenant_id=tenant_id,
+            from_date=from_date,
+            to_date=to_date,
+            limit=limit,
+            offset=offset,
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices", methods=["POST"])
+def api_create_invoice():
+    """Create a new invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import create_invoice
+        from datetime import datetime
+
+        data = request.json or {}
+        client_id = data.get("client_id")
+        items = data.get("items", [])
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+        if not items:
+            return jsonify({"success": False, "error": "items required"}), 400
+
+        # Parse dates
+        invoice_date = None
+        if data.get("invoice_date"):
+            invoice_date = datetime.strptime(data["invoice_date"], "%Y-%m-%d").date()
+
+        due_date = None
+        if data.get("due_date"):
+            due_date = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+
+        result = create_invoice(
+            client_id=client_id,
+            items=items,
+            invoice_date=invoice_date,
+            due_date=due_date,
+            title=data.get("title"),
+            notes=data.get("notes"),
+            internal_notes=data.get("internal_notes"),
+            tax_rate=data.get("tax_rate"),
+            company_name=data.get("company_name"),
+            company_address=data.get("company_address"),
+            company_phone=data.get("company_phone"),
+            company_email=data.get("company_email"),
+            company_logo_url=data.get("company_logo_url"),
+            tenant_id=data.get("tenant_id"),
+            created_by_id=session.get("staff_id"),
+            status=data.get("status", "draft"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>", methods=["GET"])
+def api_get_invoice(invoice_id):
+    """Get invoice by ID"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_invoice
+
+        include_payments = request.args.get("include_payments", "false").lower() == "true"
+        result = get_invoice(invoice_id, include_payments=include_payments)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>", methods=["PUT"])
+def api_update_invoice(invoice_id):
+    """Update invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import update_invoice
+        from datetime import datetime
+
+        data = request.json or {}
+
+        due_date = None
+        if data.get("due_date"):
+            due_date = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+
+        result = update_invoice(
+            invoice_id=invoice_id,
+            title=data.get("title"),
+            notes=data.get("notes"),
+            internal_notes=data.get("internal_notes"),
+            due_date=due_date,
+            tax_rate=data.get("tax_rate"),
+            status=data.get("status"),
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>", methods=["DELETE"])
+def api_delete_invoice(invoice_id):
+    """Delete a draft invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import delete_invoice
+
+        result = delete_invoice(invoice_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/items", methods=["POST"])
+def api_add_invoice_item(invoice_id):
+    """Add a line item to an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import add_item
+
+        data = request.json or {}
+
+        if not data.get("description"):
+            return jsonify({"success": False, "error": "description required"}), 400
+        if data.get("unit_price") is None:
+            return jsonify({"success": False, "error": "unit_price required"}), 400
+
+        result = add_item(
+            invoice_id=invoice_id,
+            description=data["description"],
+            unit_price=int(data["unit_price"]),
+            quantity=float(data.get("quantity", 1.0)),
+            item_type=data.get("item_type", "service"),
+            reference_type=data.get("reference_type"),
+            reference_id=data.get("reference_id"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/items/<int:item_id>", methods=["DELETE"])
+def api_remove_invoice_item(invoice_id, item_id):
+    """Remove a line item from an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import remove_item
+
+        result = remove_item(invoice_id, item_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/payments", methods=["POST"])
+def api_record_invoice_payment(invoice_id):
+    """Record a payment against an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import record_payment
+        from datetime import datetime
+
+        data = request.json or {}
+
+        if data.get("amount") is None:
+            return jsonify({"success": False, "error": "amount required"}), 400
+
+        paid_at = None
+        if data.get("paid_at"):
+            paid_at = datetime.fromisoformat(data["paid_at"].replace("Z", "+00:00"))
+
+        result = record_payment(
+            invoice_id=invoice_id,
+            amount=int(data["amount"]),
+            payment_method=data.get("payment_method", "other"),
+            stripe_payment_intent_id=data.get("stripe_payment_intent_id"),
+            stripe_charge_id=data.get("stripe_charge_id"),
+            transaction_id=data.get("transaction_id"),
+            notes=data.get("notes"),
+            recorded_by_id=session.get("staff_id"),
+            paid_at=paid_at,
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/void", methods=["POST"])
+def api_void_invoice(invoice_id):
+    """Void/cancel an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import void_invoice
+
+        data = request.json or {}
+        result = void_invoice(invoice_id, reason=data.get("reason"))
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/send", methods=["POST"])
+def api_send_invoice(invoice_id):
+    """Send invoice to client via email"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import send_invoice_email
+
+        result = send_invoice_email(invoice_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/pdf", methods=["POST"])
+def api_generate_invoice_pdf(invoice_id):
+    """Generate PDF for an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import generate_invoice_pdf
+
+        result = generate_invoice_pdf(invoice_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/pdf", methods=["GET"])
+def api_download_invoice_pdf(invoice_id):
+    """Download invoice PDF"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_invoice, INVOICE_PDF_DIR
+        import os
+
+        result = get_invoice(invoice_id)
+        if not result.get("success"):
+            return jsonify(result), 404
+
+        invoice = result["invoice"]
+        if not invoice.get("pdf_filename"):
+            return jsonify({"success": False, "error": "PDF not generated yet"}), 404
+
+        pdf_path = os.path.join(INVOICE_PDF_DIR, invoice["pdf_filename"])
+        if not os.path.exists(pdf_path):
+            return jsonify({"success": False, "error": "PDF file not found"}), 404
+
+        return send_file(pdf_path, as_attachment=True, download_name=invoice["pdf_filename"])
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/stats", methods=["GET"])
+def api_invoice_stats():
+    """Get invoice statistics"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_invoice_stats
+
+        client_id = request.args.get("client_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=int)
+
+        result = get_invoice_stats(client_id=client_id, tenant_id=tenant_id)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/check-overdue", methods=["POST"])
+def api_check_overdue_invoices():
+    """Check and update overdue invoices"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import check_overdue_invoices
+
+        result = check_overdue_invoices()
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/invoices", methods=["GET"])
+def api_client_invoices(client_id):
+    """Get all invoices for a client"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_client_invoices
+
+        result = get_client_invoices(client_id)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/invoices/create-for-round", methods=["POST"])
+def api_create_invoice_for_round(client_id):
+    """Create an invoice for a dispute round"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import create_invoice_for_round
+
+        data = request.json or {}
+
+        if data.get("round_number") is None:
+            return jsonify({"success": False, "error": "round_number required"}), 400
+        if data.get("amount") is None:
+            return jsonify({"success": False, "error": "amount required"}), 400
+
+        result = create_invoice_for_round(
+            client_id=client_id,
+            round_number=int(data["round_number"]),
+            amount=int(data["amount"]),
+            created_by_id=session.get("staff_id"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/invoices/create-for-analysis", methods=["POST"])
+def api_create_invoice_for_analysis(client_id):
+    """Create an invoice for credit analysis"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import create_invoice_for_analysis
+
+        data = request.json or {}
+
+        result = create_invoice_for_analysis(
+            client_id=client_id,
+            analysis_id=data.get("analysis_id", 0),
+            amount=int(data.get("amount", 19900)),
+            created_by_id=session.get("staff_id"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Invoice page route
+@app.route("/dashboard/invoices")
+def dashboard_invoices():
+    """Invoice management page"""
+    if not session.get("staff_id"):
+        return redirect("/staff/login")
+
+    return render_template("invoices.html")
+
+
+# ==============================================================================
 # METRO2 VIOLATION DETECTION API
 # ==============================================================================
 

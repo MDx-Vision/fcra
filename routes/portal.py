@@ -1337,3 +1337,101 @@ def api_croa_can_begin_services():
         return jsonify(result)
     finally:
         db.close()
+
+
+# ==============================================================================
+# INVOICE PORTAL ENDPOINTS
+# ==============================================================================
+
+
+@portal.route('/invoices')
+@portal_login_required
+@require_full_access
+def portal_invoices():
+    """Client invoice history page"""
+    return render_template('portal/invoices.html')
+
+
+@portal.route('/api/invoices', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_portal_invoices():
+    """Get client's invoices"""
+    from flask import jsonify
+    from services.invoice_service import get_client_invoices
+
+    result = get_client_invoices(get_client_id())
+    return jsonify(result)
+
+
+@portal.route('/api/invoices/<int:invoice_id>', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_portal_invoice_detail(invoice_id):
+    """Get invoice details"""
+    from flask import jsonify
+    from services.invoice_service import get_invoice
+    from database import get_db, Invoice
+
+    db = get_db()
+    try:
+        # Verify invoice belongs to this client
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.client_id == get_client_id()
+        ).first()
+
+        if not invoice:
+            return jsonify({'success': False, 'error': 'Invoice not found'}), 404
+
+        # Mark as viewed if sent
+        from services.invoice_service import mark_viewed
+        if invoice.status == 'sent':
+            mark_viewed(invoice_id)
+
+        result = get_invoice(invoice_id, include_payments=True)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@portal.route('/api/invoices/<int:invoice_id>/pdf', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_portal_invoice_pdf(invoice_id):
+    """Download invoice PDF"""
+    from flask import send_file, jsonify
+    from services.invoice_service import get_invoice, generate_invoice_pdf, INVOICE_PDF_DIR
+    from database import get_db, Invoice
+    import os
+
+    db = get_db()
+    try:
+        # Verify invoice belongs to this client
+        invoice = db.query(Invoice).filter(
+            Invoice.id == invoice_id,
+            Invoice.client_id == get_client_id()
+        ).first()
+
+        if not invoice:
+            return jsonify({'success': False, 'error': 'Invoice not found'}), 404
+
+        # Generate PDF if not exists
+        if not invoice.pdf_filename:
+            result = generate_invoice_pdf(invoice_id)
+            if not result.get('success'):
+                return jsonify(result), 500
+
+        result = get_invoice(invoice_id)
+        if not result.get('success'):
+            return jsonify(result), 404
+
+        inv = result['invoice']
+        pdf_path = os.path.join(INVOICE_PDF_DIR, inv['pdf_filename'])
+
+        if not os.path.exists(pdf_path):
+            return jsonify({'success': False, 'error': 'PDF not found'}), 404
+
+        return send_file(pdf_path, as_attachment=True, download_name=inv['pdf_filename'])
+    finally:
+        db.close()

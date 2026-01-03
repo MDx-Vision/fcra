@@ -4624,6 +4624,230 @@ class CROAComplianceTracker(Base):
         }
 
 
+# Invoice status constants
+INVOICE_STATUSES = {
+    'draft': 'Draft - Not yet sent',
+    'sent': 'Sent to client',
+    'viewed': 'Viewed by client',
+    'paid': 'Paid in full',
+    'partial': 'Partially paid',
+    'overdue': 'Payment overdue',
+    'cancelled': 'Cancelled',
+    'refunded': 'Refunded',
+}
+
+# Invoice item types
+INVOICE_ITEM_TYPES = {
+    'service': 'Service fee',
+    'analysis': 'Credit analysis',
+    'round': 'Dispute round',
+    'settlement': 'Settlement fee',
+    'prepay': 'Prepay package',
+    'subscription': 'Subscription',
+    'other': 'Other',
+    'discount': 'Discount',
+    'credit': 'Credit applied',
+}
+
+
+class Invoice(Base):
+    """Client invoices for services rendered"""
+    __tablename__ = 'invoices'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Unique invoice number (e.g., INV-2026-00001)
+    invoice_number = Column(String(50), unique=True, nullable=False, index=True)
+
+    # Client relationship
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Invoice details
+    title = Column(String(255))  # Optional title/description
+    notes = Column(Text)  # Notes to client
+    internal_notes = Column(Text)  # Staff-only notes
+
+    # Amounts (all in cents)
+    subtotal = Column(Integer, default=0)  # Sum of line items before tax
+    tax_rate = Column(Float, default=0.0)  # Tax rate (0.0 to 1.0)
+    tax_amount = Column(Integer, default=0)  # Calculated tax
+    discount_amount = Column(Integer, default=0)  # Total discounts
+    total = Column(Integer, default=0)  # Final total
+    amount_paid = Column(Integer, default=0)  # Amount paid so far
+    amount_due = Column(Integer, default=0)  # Remaining balance
+
+    # Status tracking
+    status = Column(String(30), default='draft', index=True)  # draft, sent, viewed, paid, partial, overdue, cancelled, refunded
+
+    # Dates
+    invoice_date = Column(Date, nullable=False)  # Date of invoice
+    due_date = Column(Date)  # Payment due date
+    sent_at = Column(DateTime)  # When invoice was sent
+    viewed_at = Column(DateTime)  # When client first viewed
+    paid_at = Column(DateTime)  # When fully paid
+
+    # Payment tracking
+    payment_method = Column(String(50))  # stripe, paypal, cash, check, etc.
+    stripe_payment_intent_id = Column(String(255))
+    stripe_invoice_id = Column(String(255))
+
+    # PDF storage
+    pdf_filename = Column(String(255))  # Stored PDF filename
+    pdf_generated_at = Column(DateTime)
+
+    # Email tracking
+    email_sent_count = Column(Integer, default=0)
+    last_reminder_sent_at = Column(DateTime)
+
+    # Billing details (snapshot at invoice time)
+    billing_name = Column(String(255))
+    billing_email = Column(String(255))
+    billing_address = Column(Text)  # Full address as text
+
+    # Company branding (for white label)
+    company_name = Column(String(255))
+    company_address = Column(Text)
+    company_phone = Column(String(50))
+    company_email = Column(String(255))
+    company_logo_url = Column(String(500))
+
+    # Tenant for white label
+    tenant_id = Column(Integer, ForeignKey('white_label_tenants.id'), nullable=True, index=True)
+
+    # Staff who created
+    created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="invoices")
+    items = relationship("InvoiceItem", backref="invoice", cascade="all, delete-orphan", order_by="InvoiceItem.sort_order")
+    payments = relationship("InvoicePayment", backref="invoice", cascade="all, delete-orphan", order_by="InvoicePayment.paid_at.desc()")
+
+    def to_dict(self, include_items=True, include_payments=False):
+        result = {
+            'id': self.id,
+            'invoice_number': self.invoice_number,
+            'client_id': self.client_id,
+            'title': self.title,
+            'notes': self.notes,
+            'subtotal': self.subtotal,
+            'tax_rate': self.tax_rate,
+            'tax_amount': self.tax_amount,
+            'discount_amount': self.discount_amount,
+            'total': self.total,
+            'amount_paid': self.amount_paid,
+            'amount_due': self.amount_due,
+            'status': self.status,
+            'status_display': INVOICE_STATUSES.get(self.status, self.status),
+            'invoice_date': self.invoice_date.isoformat() if self.invoice_date else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'viewed_at': self.viewed_at.isoformat() if self.viewed_at else None,
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None,
+            'payment_method': self.payment_method,
+            'pdf_filename': self.pdf_filename,
+            'billing_name': self.billing_name,
+            'billing_email': self.billing_email,
+            'billing_address': self.billing_address,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if include_items:
+            result['items'] = [item.to_dict() for item in self.items] if self.items else []
+        if include_payments:
+            result['payments'] = [p.to_dict() for p in self.payments] if self.payments else []
+        return result
+
+
+class InvoiceItem(Base):
+    """Line items on an invoice"""
+    __tablename__ = 'invoice_items'
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey('invoices.id', ondelete='CASCADE'), nullable=False, index=True)
+
+    # Item details
+    item_type = Column(String(30), default='service')  # service, analysis, round, settlement, prepay, subscription, other, discount, credit
+    description = Column(String(500), nullable=False)
+
+    # Pricing (all in cents)
+    quantity = Column(Float, default=1.0)
+    unit_price = Column(Integer, default=0)  # Price per unit in cents
+    amount = Column(Integer, default=0)  # Total for this line (quantity * unit_price)
+
+    # Optional reference to what this item is for
+    reference_type = Column(String(50))  # dispute_round, analysis, settlement, etc.
+    reference_id = Column(Integer)  # ID of the referenced record
+
+    # Display order
+    sort_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'invoice_id': self.invoice_id,
+            'item_type': self.item_type,
+            'item_type_display': INVOICE_ITEM_TYPES.get(self.item_type, self.item_type),
+            'description': self.description,
+            'quantity': self.quantity,
+            'unit_price': self.unit_price,
+            'amount': self.amount,
+            'reference_type': self.reference_type,
+            'reference_id': self.reference_id,
+            'sort_order': self.sort_order,
+        }
+
+
+class InvoicePayment(Base):
+    """Payment records for invoices (supports partial payments)"""
+    __tablename__ = 'invoice_payments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey('invoices.id', ondelete='CASCADE'), nullable=False, index=True)
+
+    # Payment details
+    amount = Column(Integer, nullable=False)  # Amount in cents
+    payment_method = Column(String(50))  # stripe, paypal, cash, check, etc.
+
+    # External references
+    stripe_payment_intent_id = Column(String(255))
+    stripe_charge_id = Column(String(255))
+    transaction_id = Column(String(255))  # Generic transaction ID
+
+    # Status
+    status = Column(String(30), default='completed')  # completed, pending, failed, refunded
+
+    # Timestamps
+    paid_at = Column(DateTime, default=datetime.utcnow)
+
+    # Notes
+    notes = Column(Text)
+
+    # Staff who recorded (for manual payments)
+    recorded_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'invoice_id': self.invoice_id,
+            'amount': self.amount,
+            'payment_method': self.payment_method,
+            'stripe_payment_intent_id': self.stripe_payment_intent_id,
+            'transaction_id': self.transaction_id,
+            'status': self.status,
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None,
+            'notes': self.notes,
+            'recorded_by_id': self.recorded_by_id,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -5583,6 +5807,70 @@ def init_db():
         ("croa_compliance_trackers", "work_began_at", "TIMESTAMP"),
         ("croa_compliance_trackers", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("croa_compliance_trackers", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Invoice tables
+        ("invoices", "id", "SERIAL PRIMARY KEY"),
+        ("invoices", "invoice_number", "VARCHAR(50) UNIQUE NOT NULL"),
+        ("invoices", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("invoices", "title", "VARCHAR(255)"),
+        ("invoices", "notes", "TEXT"),
+        ("invoices", "internal_notes", "TEXT"),
+        ("invoices", "subtotal", "INTEGER DEFAULT 0"),
+        ("invoices", "tax_rate", "FLOAT DEFAULT 0.0"),
+        ("invoices", "tax_amount", "INTEGER DEFAULT 0"),
+        ("invoices", "discount_amount", "INTEGER DEFAULT 0"),
+        ("invoices", "total", "INTEGER DEFAULT 0"),
+        ("invoices", "amount_paid", "INTEGER DEFAULT 0"),
+        ("invoices", "amount_due", "INTEGER DEFAULT 0"),
+        ("invoices", "status", "VARCHAR(30) DEFAULT 'draft'"),
+        ("invoices", "invoice_date", "DATE NOT NULL"),
+        ("invoices", "due_date", "DATE"),
+        ("invoices", "sent_at", "TIMESTAMP"),
+        ("invoices", "viewed_at", "TIMESTAMP"),
+        ("invoices", "paid_at", "TIMESTAMP"),
+        ("invoices", "payment_method", "VARCHAR(50)"),
+        ("invoices", "stripe_payment_intent_id", "VARCHAR(255)"),
+        ("invoices", "stripe_invoice_id", "VARCHAR(255)"),
+        ("invoices", "pdf_filename", "VARCHAR(255)"),
+        ("invoices", "pdf_generated_at", "TIMESTAMP"),
+        ("invoices", "email_sent_count", "INTEGER DEFAULT 0"),
+        ("invoices", "last_reminder_sent_at", "TIMESTAMP"),
+        ("invoices", "billing_name", "VARCHAR(255)"),
+        ("invoices", "billing_email", "VARCHAR(255)"),
+        ("invoices", "billing_address", "TEXT"),
+        ("invoices", "company_name", "VARCHAR(255)"),
+        ("invoices", "company_address", "TEXT"),
+        ("invoices", "company_phone", "VARCHAR(50)"),
+        ("invoices", "company_email", "VARCHAR(255)"),
+        ("invoices", "company_logo_url", "VARCHAR(500)"),
+        ("invoices", "tenant_id", "INTEGER REFERENCES white_label_tenants(id)"),
+        ("invoices", "created_by_id", "INTEGER REFERENCES staff(id)"),
+        ("invoices", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("invoices", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Invoice items
+        ("invoice_items", "id", "SERIAL PRIMARY KEY"),
+        ("invoice_items", "invoice_id", "INTEGER REFERENCES invoices(id) ON DELETE CASCADE NOT NULL"),
+        ("invoice_items", "item_type", "VARCHAR(30) DEFAULT 'service'"),
+        ("invoice_items", "description", "VARCHAR(500) NOT NULL"),
+        ("invoice_items", "quantity", "FLOAT DEFAULT 1.0"),
+        ("invoice_items", "unit_price", "INTEGER DEFAULT 0"),
+        ("invoice_items", "amount", "INTEGER DEFAULT 0"),
+        ("invoice_items", "reference_type", "VARCHAR(50)"),
+        ("invoice_items", "reference_id", "INTEGER"),
+        ("invoice_items", "sort_order", "INTEGER DEFAULT 0"),
+        ("invoice_items", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Invoice payments
+        ("invoice_payments", "id", "SERIAL PRIMARY KEY"),
+        ("invoice_payments", "invoice_id", "INTEGER REFERENCES invoices(id) ON DELETE CASCADE NOT NULL"),
+        ("invoice_payments", "amount", "INTEGER NOT NULL"),
+        ("invoice_payments", "payment_method", "VARCHAR(50)"),
+        ("invoice_payments", "stripe_payment_intent_id", "VARCHAR(255)"),
+        ("invoice_payments", "stripe_charge_id", "VARCHAR(255)"),
+        ("invoice_payments", "transaction_id", "VARCHAR(255)"),
+        ("invoice_payments", "status", "VARCHAR(30) DEFAULT 'completed'"),
+        ("invoice_payments", "paid_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("invoice_payments", "notes", "TEXT"),
+        ("invoice_payments", "recorded_by_id", "INTEGER REFERENCES staff(id)"),
+        ("invoice_payments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

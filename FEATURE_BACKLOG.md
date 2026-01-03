@@ -874,15 +874,28 @@ Monthly recurring billing with subscription tiers.
 
 ---
 
-### Priority 15: Invoice Generator
-**Status**: Backlog | **Effort**: Medium
+### ~~Priority 15: Invoice Generator~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
 
 Auto-generate professional client invoices.
-- [ ] Create `Invoice` model
-- [ ] Create `InvoiceService`
-- [ ] PDF invoice template
-- [ ] Invoice history in portal
-- [ ] Auto-email on generation
+- [x] Create `Invoice`, `InvoiceItem`, `InvoicePayment` models
+- [x] Create `InvoiceService` with full CRUD operations
+- [x] PDF invoice template (WeasyPrint)
+- [x] Invoice history in client portal
+- [x] Auto-email on generation
+- [x] Staff invoice management UI
+- [x] Partial payments support
+- [x] Convenience functions (round, analysis, settlement invoices)
+
+### Files Created/Modified
+- `database.py` - Added Invoice, InvoiceItem, InvoicePayment models
+- `services/invoice_service.py` - NEW (850+ lines, full service)
+- `app.py` - Added 18 invoice API endpoints
+- `templates/invoices.html` - Staff management UI
+- `templates/portal/invoices.html` - Client portal page
+- `routes/portal.py` - Portal invoice endpoints
+- `tests/test_invoice_service.py` - NEW (37 tests)
 
 ---
 
@@ -968,7 +981,8 @@ Track items deleted, score improvements.
 - **Priorities 1-12**: All complete!
 - **Priority 13**: Revenue Dashboard ✅ COMPLETE (2026-01-03)
 - **Priority 14**: Stripe Subscriptions ✅ COMPLETE (2026-01-03)
-- **Priority 15**: Invoice Generator - Next up
+- **Priority 15**: Invoice Generator ✅ COMPLETE (2026-01-03)
+- **Priority 16**: Document Viewer - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---
