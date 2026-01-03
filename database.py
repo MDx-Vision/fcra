@@ -4948,6 +4948,52 @@ class BatchJobItem(Base):
         }
 
 
+class StaffActivity(Base):
+    """Track staff activities for performance metrics"""
+    __tablename__ = 'staff_activities'
+
+    id = Column(Integer, primary_key=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+
+    # Activity type
+    activity_type = Column(String(50), nullable=False, index=True)
+    # Types: case_assigned, case_completed, document_reviewed, letter_sent,
+    #        response_processed, message_sent, call_completed, note_added,
+    #        status_changed, analysis_reviewed, dispute_filed
+
+    # Activity details
+    description = Column(String(500))
+    metadata = Column(JSON)  # Additional context (e.g., case_id, document_id)
+
+    # Response time tracking (for activities that track response)
+    request_received_at = Column(DateTime)  # When task/request came in
+    response_completed_at = Column(DateTime)  # When staff completed it
+    response_time_minutes = Column(Integer)  # Calculated response time
+
+    # Quality metrics
+    quality_score = Column(Integer)  # Optional 1-10 rating
+    was_escalated = Column(Boolean, default=False)
+    required_revision = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'staff_id': self.staff_id,
+            'client_id': self.client_id,
+            'activity_type': self.activity_type,
+            'description': self.description,
+            'metadata': self.metadata,
+            'response_time_minutes': self.response_time_minutes,
+            'quality_score': self.quality_score,
+            'was_escalated': self.was_escalated,
+            'required_revision': self.required_revision,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class PushSubscription(Base):
     """Web Push notification subscriptions for clients and staff"""
     __tablename__ = 'push_subscriptions'
@@ -6129,6 +6175,20 @@ def init_db():
         ("batch_job_items", "error_message", "TEXT"),
         ("batch_job_items", "retry_count", "INTEGER DEFAULT 0"),
         ("batch_job_items", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Staff Activities (P19 - Staff Performance)
+        ("staff_activities", "id", "SERIAL PRIMARY KEY"),
+        ("staff_activities", "staff_id", "INTEGER REFERENCES staff(id) NOT NULL"),
+        ("staff_activities", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("staff_activities", "activity_type", "VARCHAR(50) NOT NULL"),
+        ("staff_activities", "description", "VARCHAR(500)"),
+        ("staff_activities", "metadata", "JSONB"),
+        ("staff_activities", "request_received_at", "TIMESTAMP"),
+        ("staff_activities", "response_completed_at", "TIMESTAMP"),
+        ("staff_activities", "response_time_minutes", "INTEGER"),
+        ("staff_activities", "quality_score", "INTEGER"),
+        ("staff_activities", "was_escalated", "BOOLEAN DEFAULT FALSE"),
+        ("staff_activities", "required_revision", "BOOLEAN DEFAULT FALSE"),
+        ("staff_activities", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

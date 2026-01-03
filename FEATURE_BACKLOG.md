@@ -1027,14 +1027,71 @@ Process multiple clients at once.
 
 ---
 
-### Priority 19: Staff Performance
-**Status**: Backlog | **Effort**: Medium
+### ~~Priority 19: Staff Performance~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
 
 Track cases handled, response times per staff.
-- [ ] Cases per staff member
-- [ ] Response time tracking
-- [ ] Performance dashboard
-- [ ] Staff leaderboard
+- [x] Cases per staff member
+- [x] Response time tracking
+- [x] Performance dashboard
+- [x] Staff leaderboard
+
+#### What Was Implemented
+
+1. **Database Model** (`database.py`):
+   - [x] `StaffActivity` - Track all staff activities
+   - [x] Fields: activity_type, description, metadata, response_time_minutes
+   - [x] Quality tracking: quality_score, was_escalated, required_revision
+   - [x] Timestamps: request_received_at, response_completed_at
+   - [x] Migration entries
+
+2. **StaffPerformanceService** (`services/staff_performance_service.py` - 600+ lines):
+   - [x] 11 activity types with point values
+   - [x] `log_activity()` - Log staff activities with response time
+   - [x] `get_staff_metrics()` - Per-staff metrics (points, activities, avg response)
+   - [x] `get_team_metrics()` - Team overview and totals
+   - [x] `get_leaderboard()` - Rankings by points, activities, response_time, cases
+   - [x] `get_performance_trend()` - Activity trends over time
+   - [x] `get_recent_activities()` - Activity feed
+   - [x] `get_dashboard_summary()` - All metrics for dashboard
+
+3. **Activity Types with Points**:
+   - case_assigned (5), case_completed (20), document_reviewed (3)
+   - letter_sent (10), response_processed (8), message_sent (2)
+   - call_completed (5), note_added (1), status_changed (2)
+   - analysis_reviewed (15), dispute_filed (12)
+
+4. **API Endpoints** (`app.py` - 10 endpoints):
+   - [x] `GET /api/staff-performance/activity-types` - Available types
+   - [x] `POST /api/staff-performance/log` - Log activity
+   - [x] `GET /api/staff-performance/dashboard` - Dashboard summary
+   - [x] `GET /api/staff-performance/leaderboard` - Staff rankings
+   - [x] `GET /api/staff-performance/staff/<id>/metrics` - Individual metrics
+   - [x] `GET /api/staff-performance/staff/<id>/activities` - Activity history
+   - [x] `GET /api/staff-performance/team/metrics` - Team metrics
+   - [x] `GET /api/staff-performance/trend` - Performance trend
+   - [x] `GET /api/staff-performance/recent` - Recent activities
+   - [x] `GET /dashboard/staff-performance` - Dashboard page
+
+5. **Staff Performance Dashboard** (`templates/staff_performance.html`):
+   - [x] Stats cards: Points Today, Activities Today, Active Staff, Avg Response
+   - [x] Performance trend chart (Chart.js line chart)
+   - [x] Leaderboard with ranking badges (gold, silver, bronze)
+   - [x] Team overview table with all staff
+   - [x] Recent activity feed
+   - [x] Period selector (day/week/month/quarter/year)
+   - [x] Auto-refresh every 60 seconds
+
+6. **Sidebar Navigation**:
+   - [x] Added "Staff Performance" link under Analytics section
+
+#### Files Created/Modified
+- `database.py` - Added StaffActivity model + migrations
+- `services/staff_performance_service.py` - NEW (600+ lines)
+- `app.py` - Added 10 staff performance API endpoints
+- `templates/staff_performance.html` - NEW (dashboard page)
+- `templates/includes/dashboard_sidebar.html` - Added sidebar link
 
 ---
 
@@ -1079,7 +1136,8 @@ Track items deleted, score improvements.
 - **Priority 16**: Document Viewer ✅ COMPLETE (2026-01-03)
 - **Priority 17**: Push Notifications ✅ COMPLETE (2026-01-03)
 - **Priority 18**: Batch Processing ✅ COMPLETE (2026-01-03)
-- **Priority 19**: Staff Performance - Next up
+- **Priority 19**: Staff Performance ✅ COMPLETE (2026-01-03)
+- **Priority 20**: Client Success Metrics - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

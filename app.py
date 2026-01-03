@@ -37176,6 +37176,213 @@ def dashboard_batch_jobs():
     return render_template("batch_jobs.html")
 
 
+# ==============================================================================
+# STAFF PERFORMANCE API (P19)
+# ==============================================================================
+
+
+@app.route("/api/staff-performance/activity-types", methods=["GET"])
+@login_required
+def api_staff_performance_activity_types():
+    """Get available activity types"""
+    from services.staff_performance_service import ACTIVITY_TYPES
+    return jsonify({
+        "success": True,
+        "activity_types": ACTIVITY_TYPES,
+    })
+
+
+@app.route("/api/staff-performance/log", methods=["POST"])
+@login_required
+def api_staff_performance_log():
+    """Log a staff activity"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    data = request.json or {}
+    staff_id = data.get("staff_id") or session.get("staff_id")
+    activity_type = data.get("activity_type")
+    description = data.get("description")
+    client_id = data.get("client_id")
+    metadata = data.get("metadata")
+    quality_score = data.get("quality_score")
+
+    if not staff_id:
+        return jsonify({"success": False, "error": "staff_id is required"}), 400
+    if not activity_type:
+        return jsonify({"success": False, "error": "activity_type is required"}), 400
+
+    service = StaffPerformanceService()
+    success, message, activity = service.log_activity(
+        staff_id=staff_id,
+        activity_type=activity_type,
+        description=description,
+        client_id=client_id,
+        metadata=metadata,
+        quality_score=quality_score
+    )
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    return jsonify({
+        "success": True,
+        "message": message,
+        "activity": activity,
+    })
+
+
+@app.route("/api/staff-performance/dashboard", methods=["GET"])
+@login_required
+def api_staff_performance_dashboard():
+    """Get staff performance dashboard summary"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    service = StaffPerformanceService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify({
+        "success": True,
+        "dashboard": summary,
+    })
+
+
+@app.route("/api/staff-performance/leaderboard", methods=["GET"])
+@login_required
+def api_staff_performance_leaderboard():
+    """Get staff leaderboard"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    period = request.args.get("period", "month")
+    metric = request.args.get("metric", "points")
+    limit = int(request.args.get("limit", 10))
+
+    service = StaffPerformanceService()
+    leaderboard = service.get_leaderboard(period=period, metric=metric, limit=limit)
+
+    return jsonify({
+        "success": True,
+        "leaderboard": leaderboard,
+        "period": period,
+        "metric": metric,
+    })
+
+
+@app.route("/api/staff-performance/staff/<int:staff_id>/metrics", methods=["GET"])
+@login_required
+def api_staff_performance_metrics(staff_id):
+    """Get performance metrics for a specific staff member"""
+    from services.staff_performance_service import StaffPerformanceService
+    from datetime import datetime, timedelta
+
+    days = int(request.args.get("days", 30))
+    start_date = datetime.utcnow() - timedelta(days=days)
+    end_date = datetime.utcnow()
+
+    service = StaffPerformanceService()
+    metrics = service.get_staff_metrics(
+        staff_id=staff_id,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    return jsonify({
+        "success": True,
+        "metrics": metrics,
+    })
+
+
+@app.route("/api/staff-performance/staff/<int:staff_id>/activities", methods=["GET"])
+@login_required
+def api_staff_performance_activities(staff_id):
+    """Get recent activities for a staff member"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    limit = int(request.args.get("limit", 50))
+    offset = int(request.args.get("offset", 0))
+    activity_type = request.args.get("activity_type")
+
+    service = StaffPerformanceService()
+    activities = service.get_staff_activities(
+        staff_id=staff_id,
+        limit=limit,
+        offset=offset,
+        activity_type=activity_type
+    )
+
+    return jsonify({
+        "success": True,
+        "activities": activities,
+    })
+
+
+@app.route("/api/staff-performance/team/metrics", methods=["GET"])
+@login_required
+def api_staff_performance_team_metrics():
+    """Get aggregate metrics for all staff"""
+    from services.staff_performance_service import StaffPerformanceService
+    from datetime import datetime, timedelta
+
+    days = int(request.args.get("days", 30))
+    start_date = datetime.utcnow() - timedelta(days=days)
+    end_date = datetime.utcnow()
+
+    service = StaffPerformanceService()
+    metrics = service.get_team_metrics(
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    return jsonify({
+        "success": True,
+        "metrics": metrics,
+    })
+
+
+@app.route("/api/staff-performance/trend", methods=["GET"])
+@login_required
+def api_staff_performance_trend():
+    """Get performance trend over time"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    staff_id = request.args.get("staff_id")
+    days = int(request.args.get("days", 30))
+
+    service = StaffPerformanceService()
+    trend = service.get_performance_trend(
+        staff_id=int(staff_id) if staff_id else None,
+        days=days
+    )
+
+    return jsonify({
+        "success": True,
+        "trend": trend,
+    })
+
+
+@app.route("/api/staff-performance/recent", methods=["GET"])
+@login_required
+def api_staff_performance_recent():
+    """Get recent team activities"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    limit = int(request.args.get("limit", 20))
+
+    service = StaffPerformanceService()
+    activities = service.get_recent_team_activities(limit=limit)
+
+    return jsonify({
+        "success": True,
+        "activities": activities,
+    })
+
+
+@app.route("/dashboard/staff-performance", methods=["GET"])
+@login_required
+def dashboard_staff_performance():
+    """Staff performance dashboard page"""
+    return render_template("staff_performance.html")
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
