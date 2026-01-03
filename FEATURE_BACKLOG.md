@@ -618,76 +618,245 @@ Auth: App Password (requires 2FA enabled)
 
 ---
 
-## Upcoming Features
+## ~~Priority 11: CROA Document Signing Workflow~~ ✅ COMPLETE
 
-### Priority 11: CROA Document Signing Workflow
+**Completed: 2026-01-01**
 
-**Status**: Backlog
+### What Was Implemented
 
-**Description**: Integrate the full 7-document CROA signing workflow into the client portal onboarding process with proper sequential signing and compliance tracking.
+1. **CROAProgress Model** (`database.py`):
+   - [x] Tracks client progress through 7 CROA documents
+   - [x] Fields for each document's `signed_at` timestamp
+   - [x] Cancellation period tracking (starts_at, ends_at, waived, cancelled_at)
+   - [x] Overall progress: current_document, documents_completed, is_complete
 
-**Current State**:
-- ✅ 7 CROA HTML documents exist in `/docs/htm/`
-- ✅ `DocumentTemplate` model with CROA fields
-- ✅ `ESignatureRequest` model for signature tracking
-- ✅ `esignature_service.py` with token-based signing
-- ❌ Onboarding has single "agreement" checkbox (not full CROA flow)
-- ❌ No sequential document signing in portal
-- ❌ No cancellation period tracking
-- ❌ Documents not loaded into database yet
+2. **CROASigningService** (`services/croa_signing_service.py` - 650 lines):
+   - [x] 7 CROA documents defined with order, required status
+   - [x] Methods: `get_or_create_progress`, `get_progress_summary`, `get_document`
+   - [x] `get_current_document` - next document to sign
+   - [x] `sign_document` - signs with signature capture (drawn/typed)
+   - [x] `skip_optional_document` - skip HIPAA (optional)
+   - [x] `get_cancellation_status`, `cancel_service` - 3-day cancellation period
+   - [x] `waive_cancellation_period`, `can_begin_services`
+   - [x] `_calculate_cancellation_end` - 3 business days (excludes weekends)
+   - [x] Signature image saving to static/signatures/
 
-**CROA Compliance Requirements**:
-1. Rights Disclosure MUST be signed BEFORE any contract
-2. Client has 3 business days to cancel after signing contract
-3. No services can begin until cancellation period expires
-4. All documents must be signed in order
+3. **CROA API Endpoints** (`routes/portal.py`):
+   - [x] `GET /portal/agreements` - Signing page
+   - [x] `GET /portal/api/croa/progress` - Get signing progress
+   - [x] `GET /portal/api/croa/document/<code>` - Get document template
+   - [x] `GET /portal/api/croa/current-document` - Get next to sign
+   - [x] `POST /portal/api/croa/sign` - Sign a document
+   - [x] `POST /portal/api/croa/skip-optional` - Skip optional doc
+   - [x] `GET /portal/api/croa/cancellation-status` - Cancellation info
+   - [x] `POST /portal/api/croa/cancel` - Cancel during 3-day period
+   - [x] `GET /portal/api/croa/can-begin-services` - Check if ready
 
-**Implementation Plan**:
+4. **Agreements Page** (`templates/portal/agreements.html`):
+   - [x] 7-step progress indicator
+   - [x] Document viewer with scrollable content
+   - [x] Scroll-to-bottom requirement before signing
+   - [x] Signature capture: canvas (drawn) or typed name input
+   - [x] Sign button enabled after scroll + signature
+   - [x] Skip button for optional documents
+   - [x] Cancellation notice with countdown
+   - [x] Complete state with success message
 
-1. **Load Documents to Database**:
-   - Run `load_croa_documents.py` to populate DocumentTemplate table
-   - Verify all 7 documents load correctly
+5. **CROA Compliance Features**:
+   - [x] Rights Disclosure MUST be signed before any contract
+   - [x] 3 business day cancellation period (excludes weekends)
+   - [x] Sequential document signing enforced
+   - [x] IP address and user agent captured for audit
+   - [x] Signature images saved with timestamps
 
-2. **Update Onboarding Wizard**:
-   - Replace single "agreement" step with CROA document flow
-   - Show each document in sequence with scroll-to-bottom before sign
-   - Signature capture pad for each document
-   - Track `signed_at` timestamp for each document
+### Files Created/Modified
+- `services/croa_signing_service.py` (650 lines)
+- `templates/portal/agreements.html`
+- `tests/test_croa_signing_service.py` (55 tests)
+- `database.py` - Added CROAProgress model
+- `routes/portal.py` - Added 9 CROA API endpoints
+- `templates/portal/onboarding.html` - Updated agreement step
 
-3. **CROA Progress Tracking** (new model or extend OnboardingProgress):
-   - `rights_disclosure_signed_at`
-   - `lpoa_signed_at`
-   - `service_agreement_signed_at`
-   - `cancellation_notice_signed_at`
-   - `cancellation_period_ends_at` (3 business days after contract)
-   - `service_completion_signed_at`
-   - `hipaa_signed_at` (optional)
-   - `welcome_packet_signed_at`
+### Test Status
+- 55/55 CROA signing service tests passing
 
-4. **Cancellation Period Workflow**:
-   - Show "Cancellation period expires: [date]" in portal
-   - Block service start until cancellation period ends
-   - Client can cancel during period via button
-   - After period ends, show "Service Completion Authorization" step
+---
 
-5. **Portal UI Updates**:
-   - Document viewer with full text display
-   - Signature capture canvas
-   - Progress indicator (1/7, 2/7, etc.)
-   - Download signed documents link
+## ~~Priority 12: Two-Factor Authentication (2FA)~~ ✅ COMPLETE
 
-6. **Compliance Features**:
-   - Audit log of all signature events
-   - IP address capture with each signature
-   - Timestamp verification
-   - PDF generation of signed documents
+**Completed: 2026-01-03**
 
-**Database Changes**:
-- Populate `document_templates` table with CROA docs
-- Add CROA progress fields to OnboardingProgress or create CROAProgress model
-- Add `cancellation_period_ends_at` to Client model
+### What Was Implemented
 
-**Estimated Scope**: Medium (extend existing e-signature infrastructure)
+1. **TwoFactorService** (`services/two_factor_service.py` - 500+ lines):
+   - [x] TOTP generation and verification with pyotp
+   - [x] QR code generation for authenticator apps
+   - [x] 10 backup codes with secure hashing
+   - [x] Device trust management (30-day tokens)
+   - [x] Staff and Partner portal 2FA support
+
+2. **Database Changes** (`database.py`):
+   - [x] `two_factor_enabled` (Boolean) on Staff model
+   - [x] `two_factor_secret` (encrypted string) for TOTP
+   - [x] `two_factor_method` (totp/sms/email)
+   - [x] `two_factor_backup_codes` (JSON, hashed)
+   - [x] `two_factor_verified_at`, `two_factor_last_used` (DateTime)
+   - [x] `trusted_devices` (JSON) for device trust
+   - [x] Same fields added to WhiteLabelTenant for partner portal
+
+3. **API Endpoints** (`app.py`):
+   - [x] `GET /api/2fa/status` - Check 2FA status
+   - [x] `POST /api/2fa/setup` - Start setup (returns secret + QR)
+   - [x] `POST /api/2fa/verify` - Verify and enable 2FA
+   - [x] `POST /api/2fa/disable` - Disable 2FA
+   - [x] `POST /api/2fa/backup-codes` - Regenerate backup codes
+   - [x] `GET /api/2fa/devices` - List trusted devices
+   - [x] `POST /api/2fa/devices/revoke-all` - Revoke all devices
+
+4. **Login Flow** (`templates/staff_login.html`):
+   - [x] 2FA challenge on login when enabled
+   - [x] Backup code support
+   - [x] "Trust this device" option (30 days)
+   - [x] Device token cookie management
+
+5. **Settings UI** (`templates/settings.html`):
+   - [x] 2FA status display
+   - [x] Enable 2FA button + QR code setup
+   - [x] Backup codes display
+   - [x] Trusted devices count
+   - [x] Disable 2FA with code verification
+   - [x] Regenerate backup codes button
+   - [x] Revoke all devices button
+
+6. **Security Features**:
+   - [x] Encrypted TOTP secrets (Fernet)
+   - [x] SHA256 hashed backup codes
+   - [x] Device trust expiration (30 days)
+   - [x] Rate limiting on login (existing)
+
+### Files Created/Modified
+- `services/two_factor_service.py` (500+ lines) - NEW
+- `tests/test_two_factor_service.py` (63 tests) - NEW
+- `database.py` - Added 2FA fields + migrations
+- `app.py` - Added 7 2FA API endpoints, modified login
+- `templates/settings.html` - Added 2FA section
+- `templates/staff_login.html` - Added 2FA challenge flow
+- `requirements.txt` - Added pyotp, qrcode
+
+### Test Status
+- 63/63 2FA service tests passing
+
+---
+
+## Prioritized Backlog (P13-P20)
+
+### Priority 13: Revenue Dashboard
+**Status**: Backlog | **Effort**: Medium
+
+Track MRR, ARR, churn, LTV, CAC metrics with charts and trends.
+- [ ] Create `RevenueMetricsService`
+- [ ] Template: `revenue_dashboard.html`
+- [ ] Historical snapshots (daily)
+- [ ] CSV/Excel export
+
+---
+
+### Priority 14: Stripe Subscriptions
+**Status**: Backlog | **Effort**: High
+
+Monthly recurring billing with subscription tiers.
+- [ ] Plan tiers: Basic, Pro, Enterprise
+- [ ] Create `Subscription` model
+- [ ] Stripe Billing API integration
+- [ ] Subscription checkout flow
+- [ ] Webhook handlers (success/failure)
+
+---
+
+### Priority 15: Invoice Generator
+**Status**: Backlog | **Effort**: Medium
+
+Auto-generate professional client invoices.
+- [ ] Create `Invoice` model
+- [ ] Create `InvoiceService`
+- [ ] PDF invoice template
+- [ ] Invoice history in portal
+- [ ] Auto-email on generation
+
+---
+
+### Priority 16: Document Viewer
+**Status**: Backlog | **Effort**: Low-Medium
+
+In-browser PDF preview (no download needed).
+- [ ] PDF.js integration
+- [ ] Document preview modal
+- [ ] Zoom and page navigation
+- [ ] Add to portal documents page
+
+---
+
+### Priority 17: Push Notifications
+**Status**: Backlog | **Effort**: Medium
+
+Browser notifications for case updates.
+- [ ] Web Push API + VAPID keys
+- [ ] Create `PushSubscription` model
+- [ ] Create `PushNotificationService`
+- [ ] Integrate with workflow triggers
+
+---
+
+### Priority 18: Batch Processing
+**Status**: Backlog | **Effort**: Medium
+
+Process multiple clients at once.
+- [ ] Multi-select on client list
+- [ ] Batch action menu
+- [ ] Create `BatchProcessingService`
+- [ ] Progress indicator
+- [ ] Batch history log
+
+---
+
+### Priority 19: Staff Performance
+**Status**: Backlog | **Effort**: Medium
+
+Track cases handled, response times per staff.
+- [ ] Cases per staff member
+- [ ] Response time tracking
+- [ ] Performance dashboard
+- [ ] Staff leaderboard
+
+---
+
+### Priority 20: Client Success Metrics
+**Status**: Backlog | **Effort**: Medium
+
+Track items deleted, score improvements.
+- [ ] Before/after item counts
+- [ ] Score improvement tracking
+- [ ] Per-client success summary
+- [ ] Aggregate report
+
+---
+
+## Future Features (Not Yet Prioritized)
+
+- [x] ~~E-Sign Integration~~ - Already implemented (CROA Signing Service with signature capture)
+- [ ] Mobile App (PWA)
+- [ ] Auto-Pull Credit Reports
+- [ ] Letter Template Builder
+- [ ] AI Dispute Writer
+- [ ] Payment Plans
+- [ ] Voicemail Drops
+- [ ] Bureau Response Tracking
+- [ ] ROI Calculator
+
+### Pending Infrastructure
+
+- [ ] **Send Certified Mail** - Awaiting SFTP credentials
+- [ ] **Twilio A2P 10DLC** - Campaign pending carrier approval
 
 ---
 
@@ -695,5 +864,10 @@ Auth: App Password (requires 2FA enabled)
 
 - **Email**: Gmail SMTP (SendGrid removed)
 - **SMS**: Twilio (A2P campaign pending carrier approval)
-- All 8 priorities complete!
+- **Priorities 1-12**: All complete!
+- **Priority 13**: Revenue Dashboard - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
+
+---
+
+*Last updated: 2026-01-03*

@@ -1125,6 +1125,48 @@ def api_staff_login():
             )
             return jsonify({"success": False, "error": "Invalid credentials"}), 401
 
+        # Check if 2FA is enabled
+        if staff.two_factor_enabled:
+            two_fa_code = data.get("two_factor_code", "")
+            device_token = request.cookies.get("2fa_device_token")
+            trust_device = data.get("trust_device", False)
+
+            # Import 2FA service
+            from services.two_factor_service import get_two_factor_service
+            two_fa_service = get_two_factor_service(db)
+
+            # If no code provided, indicate 2FA is required
+            if not two_fa_code:
+                # Check if device is trusted
+                if device_token and two_fa_service.is_device_trusted(device_token, staff.trusted_devices or []):
+                    pass  # Device is trusted, proceed without code
+                else:
+                    return jsonify({
+                        "success": False,
+                        "requires_2fa": True,
+                        "error": "Two-factor authentication required",
+                        "staff_id": staff.id  # For 2FA challenge endpoint
+                    }), 200  # Return 200 so frontend can handle gracefully
+
+            # Verify 2FA code
+            if two_fa_code:
+                success, message, new_token = two_fa_service.verify_2fa_login(
+                    staff, two_fa_code, device_token,
+                    request.headers.get("User-Agent"),
+                    user_ip, trust_device
+                )
+                if not success:
+                    audit_service.log_login(
+                        user_id=staff.id,
+                        user_type="staff",
+                        success=False,
+                        ip=user_ip,
+                        email=email,
+                        name=staff.full_name,
+                        failure_reason="Invalid 2FA code",
+                    )
+                    return jsonify({"success": False, "error": message}), 401
+
         staff.last_login = datetime.utcnow()
         db.commit()
 
@@ -1144,18 +1186,246 @@ def api_staff_login():
             name=staff.full_name,
         )
 
-        return jsonify(
-            {
+        response_data = {
+            "success": True,
+            "staff": {
+                "id": staff.id,
+                "name": staff.full_name,
+                "email": staff.email,
+                "role": staff.role,
+            },
+            "force_password_change": staff.force_password_change,
+        }
+
+        response = jsonify(response_data)
+
+        # Set trusted device cookie if 2FA was used with trust option
+        if staff.two_factor_enabled and data.get("trust_device"):
+            from services.two_factor_service import get_two_factor_service
+            two_fa_service = get_two_factor_service(db)
+            trusted_devices = staff.trusted_devices or []
+            if trusted_devices:
+                latest_device = trusted_devices[-1]
+                if latest_device.get("token"):
+                    response.set_cookie(
+                        "2fa_device_token",
+                        latest_device["token"],
+                        max_age=30 * 24 * 60 * 60,  # 30 days
+                        httponly=True,
+                        secure=True,
+                        samesite="Lax"
+                    )
+
+        return response
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================================
+# Two-Factor Authentication (2FA) API Endpoints
+# =============================================================================
+
+@app.route("/api/2fa/status", methods=["GET"])
+@require_staff()
+def api_2fa_status():
+    """Get 2FA status for current staff member"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        status = service.get_2fa_status(staff)
+
+        return jsonify({"success": True, **status})
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/setup", methods=["POST"])
+@require_staff()
+def api_2fa_setup():
+    """Start 2FA setup - generates secret and QR code"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        if staff.two_factor_enabled:
+            return jsonify({"success": False, "error": "2FA is already enabled"}), 400
+
+        data = request.get_json() or {}
+        method = data.get("method", "totp")
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        setup_data = service.setup_2fa_for_staff(staff, method)
+
+        return jsonify({
+            "success": True,
+            "secret": setup_data["secret"],
+            "qr_code": setup_data["qr_code"],
+            "backup_codes": setup_data["backup_codes"],
+            "method": setup_data["method"]
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/verify", methods=["POST"])
+@require_staff()
+def api_2fa_verify():
+    """Verify TOTP code and enable 2FA"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        data = request.get_json() or {}
+        code = data.get("code", "")
+
+        if not code:
+            return jsonify({"success": False, "error": "Verification code required"}), 400
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        success, message = service.verify_and_enable_2fa(staff, code)
+
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"success": False, "error": message}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/disable", methods=["POST"])
+@require_staff()
+def api_2fa_disable():
+    """Disable 2FA (requires current code)"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        data = request.get_json() or {}
+        code = data.get("code", "")
+        use_backup = data.get("use_backup", False)
+
+        if not code:
+            return jsonify({"success": False, "error": "Verification code required"}), 400
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        success, message = service.disable_2fa(staff, code, use_backup)
+
+        if success:
+            # Clear device cookie
+            response = jsonify({"success": True, "message": message})
+            response.delete_cookie("2fa_device_token")
+            return response
+        else:
+            return jsonify({"success": False, "error": message}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/backup-codes", methods=["POST"])
+@require_staff()
+def api_2fa_regenerate_backup_codes():
+    """Regenerate backup codes (requires current TOTP code)"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        data = request.get_json() or {}
+        code = data.get("code", "")
+
+        if not code:
+            return jsonify({"success": False, "error": "Verification code required"}), 400
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        success, new_codes, message = service.regenerate_backup_codes(staff, code)
+
+        if success:
+            return jsonify({
                 "success": True,
-                "staff": {
-                    "id": staff.id,
-                    "name": staff.full_name,
-                    "email": staff.email,
-                    "role": staff.role,
-                },
-                "force_password_change": staff.force_password_change,
-            }
-        )
+                "backup_codes": new_codes,
+                "message": message
+            })
+        else:
+            return jsonify({"success": False, "error": message}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/devices", methods=["GET"])
+@require_staff()
+def api_2fa_list_devices():
+    """List trusted devices"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+
+        # Remove expired devices and return
+        devices = service.remove_expired_devices(staff.trusted_devices or [])
+
+        # Sanitize output (don't expose full token)
+        sanitized = []
+        for d in devices:
+            sanitized.append({
+                "token_prefix": d.get("token", "")[:8] + "...",
+                "user_agent": d.get("user_agent", "")[:100],
+                "ip_address": d.get("ip_address"),
+                "created_at": d.get("created_at"),
+                "expires_at": d.get("expires_at"),
+                "last_used": d.get("last_used")
+            })
+
+        return jsonify({"success": True, "devices": sanitized})
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/devices/revoke-all", methods=["POST"])
+@require_staff()
+def api_2fa_revoke_all_devices():
+    """Revoke all trusted devices"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        staff.trusted_devices = []
+        db.commit()
+
+        response = jsonify({"success": True, "message": "All devices revoked"})
+        response.delete_cookie("2fa_device_token")
+        return response
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
     finally:

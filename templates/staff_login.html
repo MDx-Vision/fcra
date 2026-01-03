@@ -245,19 +245,36 @@
                 <button type="submit" class="login-btn" id="changeBtn" data-testid="change-password-button">Change Password</button>
             </form>
             {% else %}
-            <form id="loginForm" method="POST" action="/staff/login" data-testid="login-form">
-                <div class="form-group">
+            <form id="loginForm" data-testid="login-form">
+                <div class="form-group" id="email-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="your@email.com" required autocomplete="email" value="{{ email or '' }}" data-testid="email-input">
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="password-group">
                     <label for="password">Password</label>
                     <div class="password-toggle">
                         <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password" data-testid="password-input">
                         <button type="button" class="toggle-btn" onclick="togglePassword('password')">👁</button>
                     </div>
                 </div>
+
+                <!-- 2FA Code Field (hidden by default) -->
+                <div class="form-group" id="2fa-group" style="display: none;">
+                    <label for="two_factor_code">Two-Factor Code</label>
+                    <input type="text" id="two_factor_code" name="two_factor_code" placeholder="Enter 6-digit code" maxlength="8" autocomplete="one-time-code" data-testid="2fa-input" style="text-align: center; letter-spacing: 4px; font-size: 20px;">
+                    <p style="font-size: 12px; color: #64748b; margin-top: 8px;">Enter the code from your authenticator app or a backup code</p>
+                </div>
+
+                <!-- Trust Device Checkbox (hidden by default) -->
+                <div class="form-group" id="trust-device-group" style="display: none;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: normal;">
+                        <input type="checkbox" id="trust_device" name="trust_device" style="width: 18px; height: 18px;">
+                        <span>Trust this device for 30 days</span>
+                    </label>
+                </div>
+
+                <div id="login-error" class="alert alert-error" style="display: none;" data-testid="login-error"></div>
 
                 <button type="submit" class="login-btn" id="loginBtn" data-testid="login-button">Sign In</button>
             </form>
@@ -275,10 +292,79 @@
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
-        document.getElementById('loginForm')?.addEventListener('submit', function(e) {
+        // Track if 2FA is required
+        let requires2FA = false;
+        let storedEmail = '';
+        let storedPassword = '';
+
+        document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
             const btn = document.getElementById('loginBtn');
+            const errorDiv = document.getElementById('login-error');
+
+            // Get form values
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const twoFactorCode = document.getElementById('two_factor_code')?.value || '';
+            const trustDevice = document.getElementById('trust_device')?.checked || false;
+
+            // Disable button
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Signing in...';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/staff/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: requires2FA ? storedEmail : email,
+                        password: requires2FA ? storedPassword : password,
+                        two_factor_code: twoFactorCode,
+                        trust_device: trustDevice
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Login successful - redirect to dashboard
+                    window.location.href = '/dashboard';
+                } else if (data.requires_2fa) {
+                    // 2FA required - show 2FA input
+                    requires2FA = true;
+                    storedEmail = email;
+                    storedPassword = password;
+
+                    // Hide email/password, show 2FA field
+                    document.getElementById('email-group').style.display = 'none';
+                    document.getElementById('password-group').style.display = 'none';
+                    document.getElementById('2fa-group').style.display = 'block';
+                    document.getElementById('trust-device-group').style.display = 'block';
+
+                    // Update button text
+                    btn.disabled = false;
+                    btn.innerHTML = 'Verify & Sign In';
+
+                    // Focus on 2FA input
+                    document.getElementById('two_factor_code').focus();
+
+                    // Update subtitle
+                    document.querySelector('.subtitle').textContent = 'Enter your two-factor authentication code';
+                } else {
+                    // Show error
+                    errorDiv.textContent = data.error || 'Login failed';
+                    errorDiv.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerHTML = requires2FA ? 'Verify & Sign In' : 'Sign In';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = 'An error occurred. Please try again.';
+                errorDiv.style.display = 'flex';
+                btn.disabled = false;
+                btn.innerHTML = requires2FA ? 'Verify & Sign In' : 'Sign In';
+            }
         });
 
         document.getElementById('changePasswordForm')?.addEventListener('submit', function(e) {
@@ -300,6 +386,12 @@
             const btn = document.getElementById('changeBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span>Updating...';
+        });
+
+        // Auto-format 2FA code input (allow backup codes with dashes)
+        document.getElementById('two_factor_code')?.addEventListener('input', function(e) {
+            // Allow digits, letters (for backup codes), and dashes
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
         });
     </script>
 </body>

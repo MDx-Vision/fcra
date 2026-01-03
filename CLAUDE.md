@@ -1,13 +1,13 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-02)
+## Current Status (2026-01-03)
 
 ### Test Status: 100% PASSING
-- **Unit tests**: 4,797 passing (60 test files, ~95s runtime)
+- **Unit tests**: 4,860+ passing (61 test files, ~100s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Full QA suite**: All tests pass
-- **Service coverage**: 60/60 services have dedicated test files (100%)
+- **Service coverage**: 61/61 services have dedicated test files (100%)
 
 ### Feature Phases
 - Phase 1: Core Platform ✅
@@ -35,8 +35,66 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 8**: ~~Drip Campaigns~~ ✅ COMPLETE
 - **Priority 9**: ~~Light/Dark Mode Toggle~~ ✅ COMPLETE
 - **Priority 10**: ~~White Label Partner Portal~~ ✅ COMPLETE
+- **Priority 11**: ~~CROA Document Signing Workflow~~ ✅ COMPLETE
+- **Priority 12**: ~~Two-Factor Authentication (2FA)~~ ✅ COMPLETE
 
-### Current Work (2026-01-02) - COMPLETE
+### Current Work (2026-01-03) - COMPLETE
+
+**Task**: Priority 12 - Two-Factor Authentication (2FA)
+
+**Status**: ✅ COMPLETE
+
+**What Was Implemented**:
+1. **TwoFactorService** (`services/two_factor_service.py` - 500+ lines):
+   - TOTP generation and verification with pyotp
+   - QR code generation for authenticator apps
+   - 10 backup codes with secure SHA256 hashing
+   - Device trust management (30-day tokens)
+   - Staff and Partner portal 2FA support
+
+2. **Database Changes** (`database.py`):
+   - Added 2FA fields to Staff: `two_factor_enabled`, `two_factor_secret`, `two_factor_method`, `two_factor_backup_codes`, `two_factor_verified_at`, `two_factor_last_used`, `trusted_devices`
+   - Same fields added to WhiteLabelTenant for partner portal
+   - Added migration entries for all columns
+
+3. **API Endpoints** (`app.py`):
+   - `GET /api/2fa/status` - Check 2FA status
+   - `POST /api/2fa/setup` - Start setup (returns secret + QR)
+   - `POST /api/2fa/verify` - Verify and enable 2FA
+   - `POST /api/2fa/disable` - Disable 2FA
+   - `POST /api/2fa/backup-codes` - Regenerate backup codes
+   - `GET /api/2fa/devices` - List trusted devices
+   - `POST /api/2fa/devices/revoke-all` - Revoke all devices
+
+4. **Login Flow** (`templates/staff_login.html`):
+   - 2FA challenge on login when enabled
+   - Backup code support
+   - "Trust this device" option (30 days)
+   - Device token cookie management
+
+5. **Settings UI** (`templates/settings.html`):
+   - 2FA status display and enable button
+   - QR code setup with manual key option
+   - Backup codes display
+   - Trusted devices management
+   - Disable 2FA with verification
+
+6. **Unit Tests** (`tests/test_two_factor_service.py` - 63 tests)
+
+**Files Created**:
+- `services/two_factor_service.py` (500+ lines)
+- `tests/test_two_factor_service.py` (63 tests)
+
+**Files Modified**:
+- `database.py` - Added 2FA fields + migrations
+- `app.py` - Added 7 2FA API endpoints, modified login
+- `templates/settings.html` - Added 2FA section
+- `templates/staff_login.html` - Added 2FA challenge flow
+- `requirements.txt` - Added pyotp, qrcode[pil]
+
+---
+
+### Previous Work (2026-01-02) - COMPLETED
 
 **Task**: Priority 10 - White Label Partner Portal
 

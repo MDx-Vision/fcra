@@ -630,7 +630,85 @@
                     </a>
                 </div>
             </div>
-            
+
+            <!-- Two-Factor Authentication Section -->
+            <div class="content-card" id="security-section">
+                <h2 class="section-title">🔐 Two-Factor Authentication (2FA)</h2>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Add an extra layer of security to your account with two-factor authentication.</p>
+
+                <div id="2fa-status-container">
+                    <div class="setting-row">
+                        <div>
+                            <div class="setting-label" id="2fa-status-label">Loading...</div>
+                            <div class="setting-description" id="2fa-status-desc">Checking 2FA status...</div>
+                        </div>
+                        <div id="2fa-action-buttons">
+                            <!-- Buttons will be inserted by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2FA Setup Modal -->
+                <div id="2fa-setup-section" style="display: none; margin-top: 20px; padding: 20px; background: #f8fafc; border-radius: 12px;">
+                    <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 15px;">Set Up Two-Factor Authentication</h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                        <div>
+                            <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">1. Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)</p>
+                            <div id="2fa-qr-code" style="background: white; padding: 20px; border-radius: 8px; display: inline-block;">
+                                <!-- QR code will be inserted here -->
+                            </div>
+                            <p style="font-size: 12px; color: #64748b; margin-top: 10px;">Or enter this code manually:</p>
+                            <code id="2fa-secret" style="background: #1a1a2e; color: #84cc16; padding: 8px 12px; border-radius: 4px; font-size: 14px; display: inline-block; margin-top: 5px;"></code>
+                        </div>
+                        <div>
+                            <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">2. Enter the 6-digit code from your app to verify:</p>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="2fa-verify-code" placeholder="000000" maxlength="6" style="padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 24px; width: 150px; text-align: center; letter-spacing: 8px;">
+                                <button type="button" id="2fa-verify-btn" class="btn btn-primary">Verify & Enable</button>
+                            </div>
+                            <p id="2fa-verify-error" style="color: #dc2626; font-size: 13px; margin-top: 10px; display: none;"></p>
+
+                            <div style="margin-top: 20px; padding: 15px; background: #fef3c7; border-radius: 8px; border: 1px solid #fcd34d;">
+                                <p style="font-size: 13px; color: #92400e; font-weight: 600;">⚠️ Save Your Backup Codes</p>
+                                <p style="font-size: 12px; color: #92400e; margin-top: 5px;">These codes can be used if you lose access to your authenticator app. Store them safely!</p>
+                                <div id="2fa-backup-codes" style="margin-top: 10px; font-family: monospace; font-size: 13px; background: white; padding: 10px; border-radius: 4px;">
+                                    <!-- Backup codes will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="2fa-cancel-setup" class="btn btn-secondary" style="margin-top: 15px;">Cancel Setup</button>
+                </div>
+
+                <!-- 2FA Enabled Info -->
+                <div id="2fa-enabled-section" style="display: none; margin-top: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div style="padding: 15px; background: #f0fdf4; border-radius: 8px; border: 1px solid #86efac;">
+                            <h4 style="font-size: 14px; font-weight: 600; color: #166534; margin-bottom: 10px;">📱 Backup Codes</h4>
+                            <p style="font-size: 13px; color: #15803d;"><span id="backup-codes-remaining">0</span> codes remaining</p>
+                            <button type="button" id="regenerate-backup-codes-btn" class="btn btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 13px;">Regenerate Codes</button>
+                        </div>
+                        <div style="padding: 15px; background: #f0f9ff; border-radius: 8px; border: 1px solid #7dd3fc;">
+                            <h4 style="font-size: 14px; font-weight: 600; color: #0369a1; margin-bottom: 10px;">💻 Trusted Devices</h4>
+                            <p style="font-size: 13px; color: #0284c7;"><span id="trusted-devices-count">0</span> devices trusted</p>
+                            <button type="button" id="revoke-all-devices-btn" class="btn btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 13px;">Revoke All</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: #fef2f2; border-radius: 8px; border: 1px solid #fecaca;">
+                        <h4 style="font-size: 14px; font-weight: 600; color: #991b1b; margin-bottom: 10px;">🚫 Disable 2FA</h4>
+                        <p style="font-size: 13px; color: #b91c1c; margin-bottom: 10px;">Enter your current 6-digit code to disable two-factor authentication.</p>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="2fa-disable-code" placeholder="000000" maxlength="6" style="padding: 10px; border: 1px solid #fecaca; border-radius: 6px; font-size: 16px; width: 120px; text-align: center;">
+                            <button type="button" id="2fa-disable-btn" class="btn" style="background: #dc2626; color: white;">Disable 2FA</button>
+                        </div>
+                        <p id="2fa-disable-error" style="color: #dc2626; font-size: 13px; margin-top: 10px; display: none;"></p>
+                    </div>
+                </div>
+            </div>
+
             <div style="height: 80px;"></div>
             
             <div class="save-bar">
@@ -683,6 +761,220 @@
                 toast.classList.add('show');
                 setTimeout(() => toast.classList.remove('show'), 3000);
             }
+        });
+
+        // =====================================================================
+        // Two-Factor Authentication (2FA) JavaScript
+        // =====================================================================
+
+        let twoFASetupData = null;
+
+        // Load 2FA status on page load
+        async function load2FAStatus() {
+            try {
+                const response = await fetch('/api/2fa/status');
+                const data = await response.json();
+
+                const statusLabel = document.getElementById('2fa-status-label');
+                const statusDesc = document.getElementById('2fa-status-desc');
+                const actionButtons = document.getElementById('2fa-action-buttons');
+                const enabledSection = document.getElementById('2fa-enabled-section');
+
+                if (data.enabled) {
+                    statusLabel.innerHTML = '✅ Two-Factor Authentication Enabled';
+                    statusLabel.style.color = '#166534';
+                    statusDesc.textContent = `Method: ${data.method.toUpperCase()} | Last used: ${data.last_used ? new Date(data.last_used).toLocaleDateString() : 'Never'}`;
+                    actionButtons.innerHTML = '';
+                    enabledSection.style.display = 'block';
+
+                    document.getElementById('backup-codes-remaining').textContent = data.backup_codes_remaining;
+                    document.getElementById('trusted-devices-count').textContent = data.trusted_devices_count;
+                } else {
+                    statusLabel.innerHTML = '❌ Two-Factor Authentication Disabled';
+                    statusLabel.style.color = '#991b1b';
+                    statusDesc.textContent = 'Your account is less secure without 2FA enabled.';
+                    actionButtons.innerHTML = '<button type="button" id="enable-2fa-btn" class="btn btn-primary" onclick="start2FASetup()">🔐 Enable 2FA</button>';
+                    enabledSection.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to load 2FA status:', error);
+                document.getElementById('2fa-status-label').textContent = 'Error loading status';
+            }
+        }
+
+        // Start 2FA setup
+        async function start2FASetup() {
+            try {
+                const response = await fetch('/api/2fa/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ method: 'totp' })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    twoFASetupData = data;
+
+                    // Show QR code
+                    document.getElementById('2fa-qr-code').innerHTML = `<img src="data:image/png;base64,${data.qr_code}" alt="QR Code" style="width: 200px; height: 200px;">`;
+                    document.getElementById('2fa-secret').textContent = data.secret;
+
+                    // Show backup codes
+                    document.getElementById('2fa-backup-codes').innerHTML = data.backup_codes.map(code => `<div style="padding: 4px 0;">${code}</div>`).join('');
+
+                    // Show setup section
+                    document.getElementById('2fa-setup-section').style.display = 'block';
+                    document.getElementById('2fa-action-buttons').innerHTML = '';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Failed to start 2FA setup:', error);
+                alert('Failed to start 2FA setup');
+            }
+        }
+
+        // Verify and enable 2FA
+        document.getElementById('2fa-verify-btn').addEventListener('click', async function() {
+            const code = document.getElementById('2fa-verify-code').value.trim();
+            const errorEl = document.getElementById('2fa-verify-error');
+
+            if (!code || code.length !== 6) {
+                errorEl.textContent = 'Please enter a 6-digit code';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/2fa/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('2fa-setup-section').style.display = 'none';
+                    load2FAStatus();
+                    showToast('Two-factor authentication enabled successfully!');
+                } else {
+                    errorEl.textContent = data.error || 'Invalid code';
+                    errorEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to verify 2FA:', error);
+                errorEl.textContent = 'Failed to verify code';
+                errorEl.style.display = 'block';
+            }
+        });
+
+        // Cancel 2FA setup
+        document.getElementById('2fa-cancel-setup').addEventListener('click', function() {
+            document.getElementById('2fa-setup-section').style.display = 'none';
+            load2FAStatus();
+        });
+
+        // Disable 2FA
+        document.getElementById('2fa-disable-btn').addEventListener('click', async function() {
+            const code = document.getElementById('2fa-disable-code').value.trim();
+            const errorEl = document.getElementById('2fa-disable-error');
+
+            if (!code) {
+                errorEl.textContent = 'Please enter your current code';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (!confirm('Are you sure you want to disable two-factor authentication? Your account will be less secure.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/2fa/disable', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    load2FAStatus();
+                    showToast('Two-factor authentication disabled');
+                } else {
+                    errorEl.textContent = data.error || 'Invalid code';
+                    errorEl.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to disable 2FA:', error);
+                errorEl.textContent = 'Failed to disable 2FA';
+                errorEl.style.display = 'block';
+            }
+        });
+
+        // Regenerate backup codes
+        document.getElementById('regenerate-backup-codes-btn').addEventListener('click', async function() {
+            const code = prompt('Enter your current 6-digit code to regenerate backup codes:');
+            if (!code) return;
+
+            try {
+                const response = await fetch('/api/2fa/backup-codes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show new backup codes in a modal/alert
+                    const codesHtml = data.backup_codes.join('\n');
+                    alert('New Backup Codes (save these!):\n\n' + codesHtml);
+                    load2FAStatus();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Failed to regenerate backup codes:', error);
+                alert('Failed to regenerate backup codes');
+            }
+        });
+
+        // Revoke all trusted devices
+        document.getElementById('revoke-all-devices-btn').addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to revoke all trusted devices? You will need to enter a 2FA code on your next login from any device.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/2fa/devices/revoke-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    load2FAStatus();
+                    showToast('All trusted devices revoked');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Failed to revoke devices:', error);
+                alert('Failed to revoke devices');
+            }
+        });
+
+        // Helper function to show toast
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.toggle('error', isError);
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Load 2FA status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            load2FAStatus();
         });
     </script>
 </body>

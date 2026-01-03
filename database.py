@@ -94,7 +94,16 @@ class Staff(Base):
     organization_id = Column(Integer, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
+    # Two-Factor Authentication (2FA)
+    two_factor_enabled = Column(Boolean, default=False)
+    two_factor_secret = Column(String(255))  # Encrypted TOTP secret
+    two_factor_method = Column(String(20), default='totp')  # totp, sms, email
+    two_factor_backup_codes = Column(JSON)  # Hashed backup codes
+    two_factor_verified_at = Column(DateTime)
+    two_factor_last_used = Column(DateTime)
+    trusted_devices = Column(JSON)  # List of trusted device tokens
+
     @property
     def full_name(self):
         if self.first_name and self.last_name:
@@ -2675,6 +2684,13 @@ class WhiteLabelTenant(Base):
     password_reset_token = Column(String(100), unique=True, index=True)
     password_reset_expires = Column(DateTime)
 
+    # Two-Factor Authentication (2FA) for partner portal
+    two_factor_enabled = Column(Boolean, default=False)
+    two_factor_secret = Column(String(255))  # Encrypted TOTP secret
+    two_factor_method = Column(String(20), default='totp')  # totp, sms, email
+    two_factor_backup_codes = Column(JSON)  # Hashed backup codes
+    two_factor_verified_at = Column(DateTime)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -5155,6 +5171,20 @@ def init_db():
         ("whatsapp_messages", "profile_name", "VARCHAR(255)"),
         ("whatsapp_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("whatsapp_messages", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Two-Factor Authentication (2FA) for Staff
+        ("staff", "two_factor_enabled", "BOOLEAN DEFAULT FALSE"),
+        ("staff", "two_factor_secret", "VARCHAR(255)"),
+        ("staff", "two_factor_method", "VARCHAR(20) DEFAULT 'totp'"),
+        ("staff", "two_factor_backup_codes", "JSONB"),
+        ("staff", "two_factor_verified_at", "TIMESTAMP"),
+        ("staff", "two_factor_last_used", "TIMESTAMP"),
+        ("staff", "trusted_devices", "JSONB"),
+        # Two-Factor Authentication (2FA) for Partner Portal
+        ("white_label_tenants", "two_factor_enabled", "BOOLEAN DEFAULT FALSE"),
+        ("white_label_tenants", "two_factor_secret", "VARCHAR(255)"),
+        ("white_label_tenants", "two_factor_method", "VARCHAR(20) DEFAULT 'totp'"),
+        ("white_label_tenants", "two_factor_backup_codes", "JSONB"),
+        ("white_label_tenants", "two_factor_verified_at", "TIMESTAMP"),
     ]
 
     conn = engine.connect()
