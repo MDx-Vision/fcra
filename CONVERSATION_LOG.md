@@ -45,6 +45,33 @@
   - CSV export functionality
   - Follow-up scheduling
 
+#### P25: Auto-Pull Credit Reports
+- Created `CreditPullLog` database model
+- Created `AutoPullService` (600+ lines)
+- Added 14 API endpoints for auto-pull
+- Created dashboard UI at `/dashboard/auto-pull`
+- Features:
+  - Supported services: IdentityIQ, MyScoreIQ, SmartCredit, Privacy Guard, Credit Karma
+  - Encrypted credential storage (AES-256)
+  - Pull frequencies: Manual, Daily, Weekly, Bi-Weekly, Monthly, With Letter Send
+  - Automatic scheduled pulls with cron endpoint
+  - Pull logging with status tracking
+  - Credential validation
+
+#### P26: Letter Template Builder
+- Created 3 database models: `LetterTemplate`, `LetterTemplateVersion`, `GeneratedLetter`
+- Created `LetterTemplateService` (900+ lines)
+- Added 20 API endpoints for letter templates
+- Created dashboard UI at `/dashboard/letter-templates`
+- Features:
+  - Template CRUD with versioning
+  - 8 template categories (Initial Dispute, MOV, Escalation, etc.)
+  - Variable substitution system (20+ placeholders)
+  - Live preview with sample data
+  - Letter generation from templates
+  - Version history and restore
+  - 6 default system templates
+
 #### Bug Fixes
 1. **SQLAlchemy Reserved Word Error**: Fixed `metadata` → `activity_metadata` in `StaffActivity` model
 2. **Login Password Reset**: Reset password for `test@example.com` to `testpass123`
@@ -83,7 +110,7 @@
 
 ---
 
-## Feature Status (P1-P23)
+## Feature Status (P1-P26)
 
 | Priority | Feature | Status | Date |
 |----------|---------|--------|------|
@@ -111,6 +138,8 @@
 | P22 | ROI Calculator | ✅ Complete | 2026-01-03 |
 | P23 | Payment Plans | ✅ Complete | 2026-01-03 |
 | P24 | Bureau Response Tracking | ✅ Complete | 2026-01-03 |
+| P25 | Auto-Pull Credit Reports | ✅ Complete | 2026-01-03 |
+| P26 | Letter Template Builder | ✅ Complete | 2026-01-03 |
 
 ---
 
@@ -197,10 +226,10 @@ db.close()
 ## Next Steps (Future Features)
 
 - [ ] Mobile App (PWA)
-- [ ] Auto-Pull Credit Reports
-- [ ] Letter Template Builder
 - [ ] Voicemail Drops
 - [x] ~~Bureau Response Tracking~~ ✅ COMPLETE (2026-01-03)
+- [x] ~~Auto-Pull Credit Reports~~ ✅ COMPLETE (2026-01-03)
+- [x] ~~Letter Template Builder~~ ✅ COMPLETE (2026-01-03)
 
 ### Pending Infrastructure
 - Send Certified Mail - Awaiting SFTP credentials

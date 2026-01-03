@@ -33677,6 +33677,310 @@ def api_view_credit_import_report_raw(credential_id):
 
 
 # ============================================================
+# AUTO-PULL CREDIT REPORTS API (P25)
+# ============================================================
+
+
+@app.route("/api/auto-pull/stats", methods=["GET"])
+@require_staff()
+def api_auto_pull_stats():
+    """Get auto-pull dashboard statistics"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    stats = service.get_pull_stats()
+
+    return jsonify({"success": True, **stats})
+
+
+@app.route("/api/auto-pull/services", methods=["GET"])
+@require_staff()
+def api_auto_pull_services():
+    """Get list of supported credit monitoring services"""
+    from services.auto_pull_service import AutoPullService
+
+    services = AutoPullService.get_supported_services()
+    frequencies = AutoPullService.get_frequencies()
+
+    return jsonify({
+        "success": True,
+        "services": services,
+        "frequencies": frequencies
+    })
+
+
+@app.route("/api/auto-pull/credentials", methods=["GET"])
+@require_staff()
+def api_auto_pull_credentials():
+    """Get all active credentials"""
+    from services.auto_pull_service import AutoPullService
+
+    client_id = request.args.get("client_id", type=int)
+    service_name = request.args.get("service")
+
+    service = AutoPullService()
+    credentials = service.get_credentials(
+        client_id=client_id,
+        service_name=service_name
+    )
+
+    return jsonify({"success": True, "credentials": credentials})
+
+
+@app.route("/api/auto-pull/credentials", methods=["POST"])
+@require_staff()
+def api_auto_pull_add_credential():
+    """Add new credential for auto-pull"""
+    from services.auto_pull_service import AutoPullService
+
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    required = ["client_id", "service_name", "username", "password"]
+    for field in required:
+        if not data.get(field):
+            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+
+    service = AutoPullService()
+    result = service.add_credential(
+        client_id=data["client_id"],
+        service_name=data["service_name"],
+        username=data["username"],
+        password=data["password"],
+        ssn_last4=data.get("ssn_last4"),
+        import_frequency=data.get("import_frequency", "manual")
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/credentials/<int:credential_id>", methods=["PUT"])
+@require_staff()
+def api_auto_pull_update_credential(credential_id):
+    """Update credential settings"""
+    from services.auto_pull_service import AutoPullService
+
+    data = request.json or {}
+
+    service = AutoPullService()
+    result = service.update_credential(
+        credential_id=credential_id,
+        username=data.get("username"),
+        password=data.get("password"),
+        import_frequency=data.get("import_frequency"),
+        is_active=data.get("is_active")
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/credentials/<int:credential_id>", methods=["DELETE"])
+@require_staff()
+def api_auto_pull_delete_credential(credential_id):
+    """Deactivate a credential"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    result = service.delete_credential(credential_id)
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/pull/<int:credential_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_initiate(credential_id):
+    """Initiate a manual pull for a credential"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    result = service.initiate_pull(
+        credential_id=credential_id,
+        pull_type="manual",
+        triggered_by=f"staff_{staff_id}"
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/pull-client/<int:client_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_client(client_id):
+    """Pull all active credentials for a client"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    credentials = service.get_credentials(client_id=client_id)
+
+    results = {
+        "total": len(credentials),
+        "success": 0,
+        "failed": 0,
+        "pulls": []
+    }
+
+    for cred in credentials:
+        result = service.initiate_pull(
+            credential_id=cred["id"],
+            pull_type="manual",
+            triggered_by=f"staff_{staff_id}"
+        )
+
+        if result.get("success"):
+            results["success"] += 1
+        else:
+            results["failed"] += 1
+
+        results["pulls"].append({
+            "credential_id": cred["id"],
+            "service": cred["service_name"],
+            "success": result.get("success", False),
+            "error": result.get("error")
+        })
+
+    return jsonify({"success": True, **results})
+
+
+@app.route("/api/auto-pull/run-scheduled", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_auto_pull_run_scheduled():
+    """Run all scheduled pulls that are due"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    result = service.run_scheduled_pulls(triggered_by=f"staff_{staff_id}")
+
+    return jsonify({"success": True, **result})
+
+
+@app.route("/api/auto-pull/due", methods=["GET"])
+@require_staff()
+def api_auto_pull_due():
+    """Get credentials due for scheduled pull"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    due = service.get_due_pulls()
+
+    return jsonify({"success": True, "due": due, "count": len(due)})
+
+
+@app.route("/api/auto-pull/logs", methods=["GET"])
+@require_staff()
+def api_auto_pull_logs():
+    """Get pull logs"""
+    from services.auto_pull_service import AutoPullService
+
+    client_id = request.args.get("client_id", type=int)
+    credential_id = request.args.get("credential_id", type=int)
+    status = request.args.get("status")
+    limit = request.args.get("limit", 50, type=int)
+
+    service = AutoPullService()
+    logs = service.get_pull_logs(
+        client_id=client_id,
+        credential_id=credential_id,
+        status=status,
+        limit=limit
+    )
+
+    return jsonify({"success": True, "logs": logs})
+
+
+@app.route("/api/auto-pull/validate/<int:credential_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_validate(credential_id):
+    """Validate credentials"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    result = service.validate_credentials(credential_id)
+
+    return jsonify(result)
+
+
+@app.route("/dashboard/auto-pull", methods=["GET"])
+@require_staff()
+def dashboard_auto_pull():
+    """Auto-pull credit reports dashboard"""
+    from services.auto_pull_service import AutoPullService, SUPPORTED_SERVICES
+
+    service = AutoPullService()
+    stats = service.get_pull_stats()
+    credentials = service.get_credentials()
+    due_for_pull = service.get_due_pulls()
+    logs = service.get_pull_logs(limit=50)
+
+    # Calculate service stats for dashboard breakdown
+    service_stats = {}
+    for key in SUPPORTED_SERVICES:
+        service_creds = [c for c in credentials if c.get('service_name') == key]
+        service_logs = [l for l in logs if l.get('service_name') == key]
+        success_logs = [l for l in service_logs if l.get('status') == 'success']
+        service_stats[key] = {
+            'credentials': len(service_creds),
+            'pulls': len(service_logs),
+            'success': int((len(success_logs) / len(service_logs) * 100)) if service_logs else 0
+        }
+
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(["lead", "cancelled"])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "auto_pull.html",
+            active_page="auto-pull",
+            stats=stats,
+            services=SUPPORTED_SERVICES,
+            service_stats=service_stats,
+            credentials=credentials,
+            logs=logs,
+            due_for_pull=due_for_pull,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
+@app.route("/api/cron/auto-pull", methods=["GET", "POST"])
+def api_cron_auto_pull():
+    """Cron endpoint for running scheduled pulls"""
+    from services.auto_pull_service import AutoPullService
+
+    # Verify cron secret
+    cron_secret = os.environ.get("CRON_SECRET", "")
+    provided_secret = request.headers.get("X-Cron-Secret") or request.args.get("secret")
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({"success": False, "error": "Invalid cron secret"}), 403
+
+    service = AutoPullService()
+    result = service.run_scheduled_pulls(triggered_by="cron")
+
+    return jsonify({"success": True, **result})
+
+
+# ============================================================
 # AUTOMATION API ROUTES
 # ============================================================
 
@@ -38667,6 +38971,426 @@ def dashboard_bureau_tracking():
             overdue=overdue,
             response_types=response_types,
             clients=clients
+        )
+    finally:
+        db.close()
+
+
+# =============================================================================
+# LETTER TEMPLATE BUILDER ENDPOINTS (P26)
+# =============================================================================
+
+@app.route("/api/letter-templates", methods=["GET"])
+@require_staff()
+def api_letter_templates_list():
+    """List letter templates with filtering"""
+    from services.letter_template_service import LetterTemplateService
+
+    category = request.args.get('category')
+    dispute_round = request.args.get('dispute_round', type=int)
+    target_type = request.args.get('target_type')
+    is_active = request.args.get('is_active', 'true').lower() == 'true'
+    search = request.args.get('search')
+    limit = request.args.get('limit', 100, type=int)
+    offset = request.args.get('offset', 0, type=int)
+
+    service = LetterTemplateService()
+    templates = service.list_templates(
+        category=category,
+        dispute_round=dispute_round,
+        target_type=target_type,
+        is_active=is_active,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+
+    return jsonify({
+        'success': True,
+        'templates': templates,
+        'count': len(templates),
+    })
+
+
+@app.route("/api/letter-templates", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_create():
+    """Create a new letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    required = ['name', 'code', 'category', 'content']
+    for field in required:
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+
+    service = LetterTemplateService()
+    result = service.create_template(
+        name=data['name'],
+        code=data['code'],
+        category=data['category'],
+        content=data['content'],
+        dispute_round=data.get('dispute_round'),
+        target_type=data.get('target_type', 'bureau'),
+        subject=data.get('subject'),
+        footer=data.get('footer'),
+        variables=data.get('variables'),
+        required_attachments=data.get('required_attachments'),
+        recommended_for=data.get('recommended_for'),
+        description=data.get('description'),
+        instructions=data.get('instructions'),
+        legal_basis=data.get('legal_basis'),
+        is_system=False,
+        created_by_staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_get(template_id):
+    """Get a single letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    template = service.get_template(template_id)
+
+    if not template:
+        return jsonify({'success': False, 'error': 'Template not found'}), 404
+
+    return jsonify({
+        'success': True,
+        'template': template,
+    })
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["PUT"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_update(template_id):
+    """Update a letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    service = LetterTemplateService()
+    result = service.update_template(
+        template_id=template_id,
+        updates=data,
+        change_summary=data.get('change_summary'),
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["DELETE"])
+@require_staff(roles=['admin'])
+def api_letter_templates_delete(template_id):
+    """Delete a letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.delete_template(template_id)
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/duplicate", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_duplicate(template_id):
+    """Duplicate an existing template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    if not data.get('new_name') or not data.get('new_code'):
+        return jsonify({'success': False, 'error': 'new_name and new_code are required'}), 400
+
+    service = LetterTemplateService()
+    result = service.duplicate_template(
+        template_id=template_id,
+        new_name=data['new_name'],
+        new_code=data['new_code'],
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/versions", methods=["GET"])
+@require_staff()
+def api_letter_templates_versions(template_id):
+    """Get version history for a template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    versions = service.get_template_versions(template_id)
+
+    return jsonify({
+        'success': True,
+        'versions': versions,
+        'count': len(versions),
+    })
+
+
+@app.route("/api/letter-templates/<int:template_id>/restore/<int:version_id>", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_restore(template_id, version_id):
+    """Restore a template to a previous version"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.restore_version(
+        template_id=template_id,
+        version_id=version_id,
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/render", methods=["POST"])
+@require_staff()
+def api_letter_templates_render(template_id):
+    """Render a template with variables"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    variables = data.get('variables', {}) if data else {}
+
+    service = LetterTemplateService()
+    result = service.render_template(template_id, variables)
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/generate", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_generate():
+    """Generate a letter from a template for a client"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    required = ['template_id', 'client_id', 'target_type', 'target_name']
+    for field in required:
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+
+    service = LetterTemplateService()
+    result = service.generate_letter(
+        template_id=data['template_id'],
+        client_id=data['client_id'],
+        target_type=data['target_type'],
+        target_name=data['target_name'],
+        custom_variables=data.get('custom_variables'),
+        staff_id=session.get('staff_id'),
+        case_id=data.get('case_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/generated", methods=["GET"])
+@require_staff()
+def api_letter_templates_generated_list():
+    """List generated letters"""
+    from services.letter_template_service import LetterTemplateService
+
+    client_id = request.args.get('client_id', type=int)
+    template_id = request.args.get('template_id', type=int)
+    status = request.args.get('status')
+    limit = request.args.get('limit', 50, type=int)
+    offset = request.args.get('offset', 0, type=int)
+
+    service = LetterTemplateService()
+    letters = service.list_generated_letters(
+        client_id=client_id,
+        template_id=template_id,
+        status=status,
+        limit=limit,
+        offset=offset,
+    )
+
+    return jsonify({
+        'success': True,
+        'letters': letters,
+        'count': len(letters),
+    })
+
+
+@app.route("/api/letter-templates/generated/<int:letter_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_generated_get(letter_id):
+    """Get a generated letter"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    letter = service.get_generated_letter(letter_id)
+
+    if not letter:
+        return jsonify({'success': False, 'error': 'Letter not found'}), 404
+
+    return jsonify({
+        'success': True,
+        'letter': letter,
+    })
+
+
+@app.route("/api/letter-templates/generated/<int:letter_id>/status", methods=["PUT"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_generated_status(letter_id):
+    """Update generated letter status"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data or not data.get('status'):
+        return jsonify({'success': False, 'error': 'Status is required'}), 400
+
+    service = LetterTemplateService()
+    result = service.update_letter_status(
+        letter_id=letter_id,
+        status=data['status'],
+        sent_method=data.get('sent_method'),
+        tracking_number=data.get('tracking_number'),
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/dashboard", methods=["GET"])
+@require_staff()
+def api_letter_templates_dashboard():
+    """Get dashboard summary for letter templates"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify({
+        'success': True,
+        **summary,
+    })
+
+
+@app.route("/api/letter-templates/categories", methods=["GET"])
+@require_staff()
+def api_letter_templates_categories():
+    """Get available template categories"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'categories': LetterTemplateService.get_categories(),
+    })
+
+
+@app.route("/api/letter-templates/target-types", methods=["GET"])
+@require_staff()
+def api_letter_templates_target_types():
+    """Get available target types"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'target_types': LetterTemplateService.get_target_types(),
+    })
+
+
+@app.route("/api/letter-templates/variables", methods=["GET"])
+@require_staff()
+def api_letter_templates_variables():
+    """Get common template variables"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'variables': LetterTemplateService.get_common_variables(),
+    })
+
+
+@app.route("/api/letter-templates/client-variables/<int:client_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_client_variables(client_id):
+    """Get variable values for a specific client"""
+    from services.letter_template_service import LetterTemplateService
+
+    bureau = request.args.get('bureau')
+
+    service = LetterTemplateService()
+    variables = service.get_client_variables(client_id, bureau)
+
+    return jsonify({
+        'success': True,
+        'variables': variables,
+    })
+
+
+@app.route("/api/letter-templates/seed", methods=["POST"])
+@require_staff(roles=['admin'])
+def api_letter_templates_seed():
+    """Seed default letter templates"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.seed_default_templates()
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/dashboard/letter-templates", methods=["GET"])
+@require_staff()
+def dashboard_letter_templates():
+    """Letter Template Builder dashboard page"""
+    from services.letter_template_service import LetterTemplateService, CATEGORIES, TARGET_TYPES
+
+    service = LetterTemplateService()
+    summary = service.get_dashboard_summary()
+    templates = service.list_templates(is_active=True)
+
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(['lead', 'cancelled'])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "letter_templates.html",
+            active_page='letter-templates',
+            stats=summary,
+            templates=templates,
+            categories=CATEGORIES,
+            target_types=TARGET_TYPES,
+            clients=clients,
         )
     finally:
         db.close()

@@ -1498,6 +1498,162 @@ Track dispute letters sent to credit bureaus and monitor their response status a
 
 ---
 
+## ~~Priority 25: Auto-Pull Credit Reports~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
+
+Automatically pull credit reports from credit monitoring services.
+
+### What Was Implemented
+
+1. **Database Model** (`database.py`):
+   - [x] `CreditPullLog` - Track each pull attempt with status and results
+   - [x] Pull type tracking (scheduled, manual, on_demand)
+   - [x] Status tracking (pending, in_progress, success, failed, timeout)
+   - [x] Report path and item counts
+   - [x] Duration and error tracking
+   - [x] Migration entries
+
+2. **AutoPullService** (`services/auto_pull_service.py` - 600+ lines):
+   - [x] Supported services: IdentityIQ, MyScoreIQ, SmartCredit, Privacy Guard, Credit Karma
+   - [x] `get_credentials()` - List client credentials
+   - [x] `add_credential()` - Add monitoring account (encrypted)
+   - [x] `update_credential()` - Update credentials
+   - [x] `delete_credential()` - Remove credential
+   - [x] `execute_pull()` - Pull credit report from service
+   - [x] `get_due_pulls()` - Get scheduled pulls that are due
+   - [x] `run_scheduled_pulls()` - Run all due scheduled pulls
+   - [x] `validate_credentials()` - Test credential validity
+   - [x] `get_pull_stats()` - Dashboard statistics
+   - [x] `get_pull_logs()` - Pull history with filtering
+
+3. **API Endpoints** (`app.py` - 14 endpoints):
+   - [x] `GET /api/auto-pull/stats` - Dashboard statistics
+   - [x] `GET /api/auto-pull/services` - Supported services
+   - [x] `GET /api/auto-pull/credentials` - List credentials
+   - [x] `POST /api/auto-pull/credentials` - Add credential
+   - [x] `PUT /api/auto-pull/credentials/<id>` - Update credential
+   - [x] `DELETE /api/auto-pull/credentials/<id>` - Delete credential
+   - [x] `POST /api/auto-pull/pull/<id>` - Pull for credential
+   - [x] `POST /api/auto-pull/pull-client/<id>` - Pull for client
+   - [x] `POST /api/auto-pull/run-scheduled` - Run scheduled pulls
+   - [x] `GET /api/auto-pull/due` - Get due pulls
+   - [x] `GET /api/auto-pull/logs` - Pull logs
+   - [x] `POST /api/auto-pull/validate/<id>` - Validate credentials
+   - [x] `GET /dashboard/auto-pull` - Dashboard page
+   - [x] `GET/POST /api/cron/auto-pull` - Cron endpoint
+
+4. **Dashboard UI** (`templates/auto_pull.html`):
+   - [x] Stats cards: Credentials, Pulls Today, Success Rate, Due for Pull, Failed
+   - [x] Service breakdown cards (per service)
+   - [x] Credentials table with filters and actions
+   - [x] Pull logs tab with status tracking
+   - [x] Add credential modal
+   - [x] Run scheduled pulls button
+   - [x] Due for pull sidebar
+   - [x] Supported services list
+   - [x] Quick actions panel
+
+5. **Sidebar Navigation**:
+   - [x] Added "Auto-Pull" link in Processing section
+
+6. **Features**:
+   - [x] Pull frequencies: Manual, Daily, Weekly, Bi-Weekly, Monthly, With Letter Send
+   - [x] Encrypted credential storage (AES-256)
+   - [x] Automatic pull scheduling
+   - [x] Pull logging with detailed status
+   - [x] Credential validation
+   - [x] Cron endpoint for automated scheduled pulls
+
+### Files Created/Modified
+- `database.py` - Added CreditPullLog model + migrations
+- `services/auto_pull_service.py` - NEW (600+ lines)
+- `app.py` - Added 14 auto-pull API endpoints
+- `templates/auto_pull.html` - NEW (dashboard page)
+- `templates/includes/dashboard_sidebar.html` - Added sidebar link
+
+---
+
+## ~~Priority 26: Letter Template Builder~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
+
+Create and manage customizable dispute letter templates.
+
+### What Was Implemented
+
+1. **Database Models** (`database.py`):
+   - [x] `LetterTemplate` - Store letter templates with categories, variables, versioning
+   - [x] `LetterTemplateVersion` - Track template version history
+   - [x] `GeneratedLetter` - Track letters generated from templates
+   - [x] Migration entries for all tables
+
+2. **LetterTemplateService** (`services/letter_template_service.py` - 900+ lines):
+   - [x] Template CRUD: create, update, delete, get, list, duplicate
+   - [x] Variable system with 20+ common placeholders
+   - [x] Template categories: Initial Dispute, MOV Demand, Escalation, Follow-Up, Pre-Litigation, Furnisher, Collector, General
+   - [x] Version history: create version, get versions, restore version
+   - [x] Template rendering with variable substitution
+   - [x] Client variable population from database
+   - [x] Letter generation from templates
+   - [x] Dashboard statistics
+   - [x] Default template seeding (6 built-in templates)
+
+3. **API Endpoints** (`app.py` - 20 endpoints):
+   - [x] `GET /api/letter-templates` - List templates with filtering
+   - [x] `POST /api/letter-templates` - Create template
+   - [x] `GET /api/letter-templates/<id>` - Get template
+   - [x] `PUT /api/letter-templates/<id>` - Update template
+   - [x] `DELETE /api/letter-templates/<id>` - Delete template
+   - [x] `POST /api/letter-templates/<id>/duplicate` - Duplicate template
+   - [x] `GET /api/letter-templates/<id>/versions` - Get version history
+   - [x] `POST /api/letter-templates/<id>/restore/<version_id>` - Restore version
+   - [x] `POST /api/letter-templates/<id>/render` - Render with variables
+   - [x] `POST /api/letter-templates/generate` - Generate letter for client
+   - [x] `GET /api/letter-templates/generated` - List generated letters
+   - [x] `GET /api/letter-templates/generated/<id>` - Get generated letter
+   - [x] `PUT /api/letter-templates/generated/<id>/status` - Update letter status
+   - [x] `GET /api/letter-templates/dashboard` - Dashboard stats
+   - [x] `GET /api/letter-templates/categories` - List categories
+   - [x] `GET /api/letter-templates/target-types` - List target types
+   - [x] `GET /api/letter-templates/variables` - Common variables
+   - [x] `GET /api/letter-templates/client-variables/<id>` - Client variable values
+   - [x] `POST /api/letter-templates/seed` - Seed default templates
+   - [x] `GET /dashboard/letter-templates` - Dashboard page
+
+4. **Dashboard UI** (`templates/letter_templates.html`):
+   - [x] Stats cards: Total, Active, Generated, Sent
+   - [x] Template grid with category/round/target filtering
+   - [x] Search functionality
+   - [x] Create/Edit modal with tabbed interface (Details, Content, Preview)
+   - [x] Variable insertion helper panel
+   - [x] Live preview with sample data
+   - [x] Generate letter modal
+   - [x] View template modal with duplicate/edit actions
+   - [x] Category sidebar with counts
+   - [x] Most used templates list
+   - [x] Common variables reference
+
+5. **Sidebar Navigation**:
+   - [x] Added "Letter Templates" link in Legal Tools section
+
+6. **Default Templates** (6 built-in):
+   - Initial Dispute - FCRA Section 611
+   - Method of Verification Demand
+   - CFPB Complaint Draft
+   - Pre-Litigation Demand
+   - Debt Validation Letter
+   - Furnisher Direct Dispute
+
+### Files Created/Modified
+- `database.py` - Added 3 models + migrations
+- `services/letter_template_service.py` - NEW (900+ lines)
+- `app.py` - Added 20 API endpoints
+- `templates/letter_templates.html` - NEW (dashboard page)
+- `templates/includes/dashboard_sidebar.html` - Added sidebar link
+
+---
+
 ## Future Features (Not Yet Prioritized)
 
 - [x] ~~E-Sign Integration~~ - Already implemented (CROA Signing Service with signature capture)
@@ -1505,9 +1661,9 @@ Track dispute letters sent to credit bureaus and monitor their response status a
 - [x] ~~ROI Calculator~~ - Implemented 2026-01-03
 - [x] ~~Payment Plans~~ - Implemented 2026-01-03
 - [x] ~~Bureau Response Tracking~~ - Implemented 2026-01-03
+- [x] ~~Auto-Pull Credit Reports~~ - Implemented 2026-01-03
+- [x] ~~Letter Template Builder~~ - Implemented 2026-01-03
 - [ ] Mobile App (PWA)
-- [ ] Auto-Pull Credit Reports
-- [ ] Letter Template Builder
 - [ ] Voicemail Drops
 
 ### Pending Infrastructure
@@ -1534,7 +1690,9 @@ Track dispute letters sent to credit bureaus and monitor their response status a
 - **Priority 22**: ROI Calculator ✅ COMPLETE (2026-01-03)
 - **Priority 23**: Payment Plans ✅ COMPLETE (2026-01-03)
 - **Priority 24**: Bureau Response Tracking ✅ COMPLETE (2026-01-03)
-- **All P1-P24 priorities complete!**
+- **Priority 25**: Auto-Pull Credit Reports ✅ COMPLETE (2026-01-03)
+- **Priority 26**: Letter Template Builder ✅ COMPLETE (2026-01-03)
+- **All P1-P26 priorities complete!**
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

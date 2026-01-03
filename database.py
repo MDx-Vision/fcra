@@ -2233,6 +2233,73 @@ class CreditMonitoringCredential(Base):
         }
 
 
+class CreditPullLog(Base):
+    """Log each credit report pull attempt"""
+    __tablename__ = 'credit_pull_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    credential_id = Column(Integer, ForeignKey('credit_monitoring_credentials.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    service_name = Column(String(100), nullable=False)
+
+    # Pull details
+    pull_type = Column(String(50), default='scheduled')  # scheduled, manual, on_demand
+    initiated_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Status
+    status = Column(String(50), default='pending')  # pending, in_progress, success, failed, timeout
+    error_message = Column(Text, nullable=True)
+    error_code = Column(String(50), nullable=True)
+
+    # Results
+    report_path = Column(Text, nullable=True)  # Path to downloaded report
+    report_type = Column(String(50), nullable=True)  # 3bureau, single, monitoring
+    bureaus_included = Column(JSON, nullable=True)  # ['Equifax', 'Experian', 'TransUnion']
+
+    # Parsing results
+    items_found = Column(Integer, default=0)
+    negative_items_found = Column(Integer, default=0)
+    accounts_found = Column(Integer, default=0)
+    inquiries_found = Column(Integer, default=0)
+
+    # Metadata
+    duration_seconds = Column(Float, nullable=True)
+    retry_count = Column(Integer, default=0)
+    triggered_by = Column(String(100), nullable=True)  # staff_id, cron, webhook
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    credential = relationship('CreditMonitoringCredential', backref='pull_logs')
+    client = relationship('Client', backref='credit_pull_logs')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'credential_id': self.credential_id,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'service_name': self.service_name,
+            'pull_type': self.pull_type,
+            'initiated_at': self.initiated_at.isoformat() if self.initiated_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'status': self.status,
+            'error_message': self.error_message,
+            'error_code': self.error_code,
+            'report_path': self.report_path,
+            'report_type': self.report_type,
+            'bureaus_included': self.bureaus_included,
+            'items_found': self.items_found,
+            'negative_items_found': self.negative_items_found,
+            'accounts_found': self.accounts_found,
+            'inquiries_found': self.inquiries_found,
+            'duration_seconds': self.duration_seconds,
+            'retry_count': self.retry_count,
+            'triggered_by': self.triggered_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class BillingPlan(Base):
     """Define subscription plans"""
     __tablename__ = 'billing_plans'
@@ -5595,6 +5662,180 @@ class BureauDisputeTracking(Base):
         }
 
 
+class LetterTemplate(Base):
+    """Store customizable dispute letter templates"""
+    __tablename__ = 'letter_templates'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    code = Column(String(100), unique=True, nullable=False, index=True)  # Unique identifier
+
+    # Categorization
+    category = Column(String(50), nullable=False)  # initial_dispute, mov_demand, escalation, follow_up, pre_litigation, etc.
+    dispute_round = Column(Integer)  # 1, 2, 3, 4 or NULL for all rounds
+    target_type = Column(String(50), default='bureau')  # bureau, furnisher, collector, all
+
+    # Content
+    subject = Column(String(500))  # For letters that need a subject line
+    content = Column(Text, nullable=False)  # Main letter content with placeholders
+    footer = Column(Text)  # Optional footer content
+
+    # Template settings
+    variables = Column(JSON)  # Available variables: [{name, description, default}]
+    required_attachments = Column(JSON)  # List of attachment codes required
+    recommended_for = Column(JSON)  # List of violation types or situations
+
+    # Metadata
+    description = Column(Text)  # What this template is for
+    instructions = Column(Text)  # Usage instructions for staff
+    legal_basis = Column(Text)  # FCRA citations, case law references
+
+    # Status and versioning
+    is_system = Column(Boolean, default=False)  # True = built-in, False = custom
+    is_active = Column(Boolean, default=True)
+    version = Column(Integer, default=1)
+    parent_id = Column(Integer, ForeignKey('letter_templates.id'))  # For derived templates
+
+    # Usage tracking
+    use_count = Column(Integer, default=0)
+    last_used_at = Column(DateTime)
+
+    # Audit
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'code': self.code,
+            'category': self.category,
+            'dispute_round': self.dispute_round,
+            'target_type': self.target_type,
+            'subject': self.subject,
+            'content': self.content,
+            'footer': self.footer,
+            'variables': self.variables,
+            'required_attachments': self.required_attachments,
+            'recommended_for': self.recommended_for,
+            'description': self.description,
+            'instructions': self.instructions,
+            'legal_basis': self.legal_basis,
+            'is_system': self.is_system,
+            'is_active': self.is_active,
+            'version': self.version,
+            'parent_id': self.parent_id,
+            'use_count': self.use_count,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class LetterTemplateVersion(Base):
+    """Track version history of letter templates"""
+    __tablename__ = 'letter_template_versions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey('letter_templates.id'), nullable=False, index=True)
+    version_number = Column(Integer, nullable=False)
+
+    # Snapshot of template at this version
+    name = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    footer = Column(Text)
+    variables = Column(JSON)
+
+    # Change info
+    change_summary = Column(Text)  # What changed in this version
+    changed_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    template = relationship('LetterTemplate', backref='versions')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'template_id': self.template_id,
+            'version_number': self.version_number,
+            'name': self.name,
+            'content': self.content,
+            'footer': self.footer,
+            'variables': self.variables,
+            'change_summary': self.change_summary,
+            'changed_by_staff_id': self.changed_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class GeneratedLetter(Base):
+    """Track letters generated from templates"""
+    __tablename__ = 'generated_letters'
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey('letter_templates.id'), index=True)
+    template_version = Column(Integer)
+
+    # Client and case info
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), index=True)
+    dispute_round = Column(Integer)
+
+    # Target info
+    target_type = Column(String(50))  # bureau, furnisher, collector
+    target_name = Column(String(200))  # Equifax, Capital One, etc.
+
+    # Generated content
+    subject = Column(String(500))
+    content = Column(Text, nullable=False)
+    variables_used = Column(JSON)  # Snapshot of variable values
+
+    # Delivery tracking
+    status = Column(String(50), default='draft')  # draft, ready, sent, delivered
+    sent_method = Column(String(50))  # certified_mail, regular_mail, email, fax
+    sent_date = Column(DateTime)
+    sent_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    tracking_number = Column(String(100))
+
+    # File reference
+    pdf_path = Column(Text)  # Path to generated PDF
+    file_size_bytes = Column(Integer)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    template = relationship('LetterTemplate', backref='generated_letters')
+    client = relationship('Client', backref='generated_letters')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'template_id': self.template_id,
+            'template_version': self.template_version,
+            'template_name': self.template.name if self.template else None,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'case_id': self.case_id,
+            'dispute_round': self.dispute_round,
+            'target_type': self.target_type,
+            'target_name': self.target_name,
+            'subject': self.subject,
+            'content': self.content,
+            'variables_used': self.variables_used,
+            'status': self.status,
+            'sent_method': self.sent_method,
+            'sent_date': self.sent_date.isoformat() if self.sent_date else None,
+            'sent_by_staff_id': self.sent_by_staff_id,
+            'tracking_number': self.tracking_number,
+            'pdf_path': self.pdf_path,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -5867,6 +6108,28 @@ def init_db():
         ("credit_monitoring_credentials", "next_scheduled_import", "TIMESTAMP"),
         ("credit_monitoring_credentials", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("credit_monitoring_credentials", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Credit Pull Logs - P25
+        ("credit_pull_logs", "id", "SERIAL PRIMARY KEY"),
+        ("credit_pull_logs", "credential_id", "INTEGER NOT NULL REFERENCES credit_monitoring_credentials(id)"),
+        ("credit_pull_logs", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("credit_pull_logs", "service_name", "VARCHAR(100) NOT NULL"),
+        ("credit_pull_logs", "pull_type", "VARCHAR(50) DEFAULT 'scheduled'"),
+        ("credit_pull_logs", "initiated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("credit_pull_logs", "completed_at", "TIMESTAMP"),
+        ("credit_pull_logs", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("credit_pull_logs", "error_message", "TEXT"),
+        ("credit_pull_logs", "error_code", "VARCHAR(50)"),
+        ("credit_pull_logs", "report_path", "TEXT"),
+        ("credit_pull_logs", "report_type", "VARCHAR(50)"),
+        ("credit_pull_logs", "bureaus_included", "JSONB"),
+        ("credit_pull_logs", "items_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "negative_items_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "accounts_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "inquiries_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "duration_seconds", "FLOAT"),
+        ("credit_pull_logs", "retry_count", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "triggered_by", "VARCHAR(100)"),
+        ("credit_pull_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("billing_plans", "id", "SERIAL PRIMARY KEY"),
         ("billing_plans", "name", "VARCHAR(100)"),
         ("billing_plans", "display_name", "VARCHAR(255)"),
@@ -6894,6 +7157,63 @@ def init_db():
         ("bureau_dispute_tracking", "notes", "TEXT"),
         ("bureau_dispute_tracking", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("bureau_dispute_tracking", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Letter Templates
+        ("letter_templates", "id", "SERIAL PRIMARY KEY"),
+        ("letter_templates", "name", "VARCHAR(200) NOT NULL"),
+        ("letter_templates", "code", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("letter_templates", "category", "VARCHAR(50) NOT NULL"),
+        ("letter_templates", "dispute_round", "INTEGER"),
+        ("letter_templates", "target_type", "VARCHAR(50) DEFAULT 'bureau'"),
+        ("letter_templates", "subject", "VARCHAR(500)"),
+        ("letter_templates", "content", "TEXT NOT NULL"),
+        ("letter_templates", "footer", "TEXT"),
+        ("letter_templates", "variables", "JSON"),
+        ("letter_templates", "required_attachments", "JSON"),
+        ("letter_templates", "recommended_for", "JSON"),
+        ("letter_templates", "description", "TEXT"),
+        ("letter_templates", "instructions", "TEXT"),
+        ("letter_templates", "legal_basis", "TEXT"),
+        ("letter_templates", "is_system", "BOOLEAN DEFAULT FALSE"),
+        ("letter_templates", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("letter_templates", "version", "INTEGER DEFAULT 1"),
+        ("letter_templates", "parent_id", "INTEGER REFERENCES letter_templates(id)"),
+        ("letter_templates", "use_count", "INTEGER DEFAULT 0"),
+        ("letter_templates", "last_used_at", "TIMESTAMP"),
+        ("letter_templates", "created_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("letter_templates", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("letter_templates", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Letter Template Versions
+        ("letter_template_versions", "id", "SERIAL PRIMARY KEY"),
+        ("letter_template_versions", "template_id", "INTEGER REFERENCES letter_templates(id) NOT NULL"),
+        ("letter_template_versions", "version_number", "INTEGER NOT NULL"),
+        ("letter_template_versions", "name", "VARCHAR(200) NOT NULL"),
+        ("letter_template_versions", "content", "TEXT NOT NULL"),
+        ("letter_template_versions", "footer", "TEXT"),
+        ("letter_template_versions", "variables", "JSON"),
+        ("letter_template_versions", "change_summary", "TEXT"),
+        ("letter_template_versions", "changed_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("letter_template_versions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Generated Letters
+        ("generated_letters", "id", "SERIAL PRIMARY KEY"),
+        ("generated_letters", "template_id", "INTEGER REFERENCES letter_templates(id)"),
+        ("generated_letters", "template_version", "INTEGER"),
+        ("generated_letters", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("generated_letters", "case_id", "INTEGER REFERENCES cases(id)"),
+        ("generated_letters", "dispute_round", "INTEGER"),
+        ("generated_letters", "target_type", "VARCHAR(50)"),
+        ("generated_letters", "target_name", "VARCHAR(200)"),
+        ("generated_letters", "subject", "VARCHAR(500)"),
+        ("generated_letters", "content", "TEXT NOT NULL"),
+        ("generated_letters", "variables_used", "JSON"),
+        ("generated_letters", "status", "VARCHAR(50) DEFAULT 'draft'"),
+        ("generated_letters", "sent_method", "VARCHAR(50)"),
+        ("generated_letters", "sent_date", "TIMESTAMP"),
+        ("generated_letters", "sent_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("generated_letters", "tracking_number", "VARCHAR(100)"),
+        ("generated_letters", "pdf_path", "TEXT"),
+        ("generated_letters", "file_size_bytes", "INTEGER"),
+        ("generated_letters", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("generated_letters", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()
