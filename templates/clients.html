@@ -588,23 +588,85 @@
             <div class="bulk-toolbar" id="bulkToolbar">
                 <input type="checkbox" id="selectAll" onclick="toggleSelectAll()" style="width: 16px; height: 16px;">
                 <span class="selected-count" id="selectedCount">0 selected</span>
-                <select id="bulkStatus">
-                    <option value="">Change Status...</option>
-                    <option value="signup">Signup</option>
-                    <option value="active">Active</option>
-                    <option value="paused">Paused</option>
-                    <option value="complete">Complete</option>
-                    <option value="cancelled">Cancelled</option>
+                <select id="bulkAction">
+                    <option value="">Select Action...</option>
+                    <optgroup label="Status">
+                        <option value="update_status:new">Set Status: New</option>
+                        <option value="update_status:active">Set Status: Active</option>
+                        <option value="update_status:paused">Set Status: Paused</option>
+                        <option value="update_status:complete">Set Status: Complete</option>
+                        <option value="update_status:cancelled">Set Status: Cancelled</option>
+                    </optgroup>
+                    <optgroup label="Dispute Round">
+                        <option value="update_dispute_round:1">Set Round: 1</option>
+                        <option value="update_dispute_round:2">Set Round: 2</option>
+                        <option value="update_dispute_round:3">Set Round: 3</option>
+                        <option value="update_dispute_round:4">Set Round: 4</option>
+                    </optgroup>
+                    <optgroup label="Communication">
+                        <option value="send_email">Send Email...</option>
+                        <option value="send_sms">Send SMS...</option>
+                    </optgroup>
+                    <optgroup label="Other">
+                        <option value="add_note">Add Note...</option>
+                        <option value="export">Export to CSV</option>
+                    </optgroup>
                 </select>
-                <select id="bulkType">
-                    <option value="">Change Type...</option>
-                    <option value="L">Lead</option>
-                    <option value="C">Client</option>
-                    <option value="I">Inactive</option>
-                    <option value="X">Cancelled</option>
-                </select>
-                <button class="btn-apply" onclick="applyBulkAction()">Apply</button>
+                <button class="btn-apply" onclick="executeBatchAction()">Apply</button>
                 <button class="btn-delete" onclick="bulkDelete()">Delete Selected</button>
+                <a href="/dashboard/batch-jobs" style="color: #94a3b8; font-size: 12px; margin-left: auto;">View History</a>
+            </div>
+
+            <!-- Batch Progress Modal -->
+            <div class="modal-overlay" id="batchProgressModal" style="display: none;">
+                <div class="modal" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 id="batchProgressTitle">Processing...</h3>
+                    </div>
+                    <div class="modal-body" style="padding: 30px;">
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span id="batchProgressText">0 of 0 items</span>
+                                <span id="batchProgressPercent">0%</span>
+                            </div>
+                            <div style="height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                                <div id="batchProgressBar" style="height: 100%; width: 0%; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                        <div id="batchProgressStats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                            <div style="padding: 10px; background: #f0fdf4; border-radius: 8px;">
+                                <div style="color: #166534; font-weight: 600;" id="batchSuccessCount">0</div>
+                                <div style="color: #15803d; font-size: 11px;">Succeeded</div>
+                            </div>
+                            <div style="padding: 10px; background: #fef2f2; border-radius: 8px;">
+                                <div style="color: #991b1b; font-weight: 600;" id="batchFailedCount">0</div>
+                                <div style="color: #dc2626; font-size: 11px;">Failed</div>
+                            </div>
+                        </div>
+                        <div id="batchProgressMessage" style="margin-top: 15px; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: #64748b; display: none;"></div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" id="batchCancelBtn" onclick="cancelBatchJob()">Cancel</button>
+                        <button class="btn btn-primary" id="batchCloseBtn" onclick="closeBatchProgress()" style="display: none;">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Input Modal (for email, sms, note) -->
+            <div class="modal-overlay" id="batchInputModal" style="display: none;">
+                <div class="modal" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 id="batchInputTitle">Enter Details</h3>
+                        <button class="modal-close" onclick="closeBatchInput()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div id="batchInputFields"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeBatchInput()">Cancel</button>
+                        <button class="btn btn-primary" onclick="submitBatchInput()">Apply to Selected</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Quick Filters -->
@@ -953,30 +1015,259 @@
             return Array.from(document.querySelectorAll('.client-checkbox:checked')).map(cb => parseInt(cb.value));
         }
 
-        async function applyBulkAction() {
+        // Batch processing state
+        let currentBatchJobId = null;
+        let batchProgressInterval = null;
+        let pendingBatchAction = null;
+
+        async function executeBatchAction() {
             const ids = getSelectedIds();
-            const status = document.getElementById('bulkStatus').value;
-            const type = document.getElementById('bulkType').value;
+            const actionValue = document.getElementById('bulkAction').value;
 
             if (!ids.length) return showToast('Select clients first', 'error');
-            if (!status && !type) return showToast('Select an action', 'error');
+            if (!actionValue) return showToast('Select an action', 'error');
+
+            // Parse action type and params
+            const [actionType, actionParam] = actionValue.split(':');
+
+            // Actions that need additional input
+            if (['send_email', 'send_sms', 'add_note'].includes(actionType)) {
+                pendingBatchAction = { actionType, ids };
+                showBatchInputModal(actionType);
+                return;
+            }
+
+            // Export action
+            if (actionType === 'export') {
+                exportSelectedClients(ids);
+                return;
+            }
+
+            // Build action params
+            let actionParams = {};
+            if (actionType === 'update_status') {
+                actionParams = { new_status: actionParam };
+            } else if (actionType === 'update_dispute_round') {
+                actionParams = { new_round: parseInt(actionParam) };
+            }
+
+            // Execute batch job
+            await runBatchJob(actionType, ids, actionParams);
+        }
+
+        function showBatchInputModal(actionType) {
+            const modal = document.getElementById('batchInputModal');
+            const title = document.getElementById('batchInputTitle');
+            const fields = document.getElementById('batchInputFields');
+
+            if (actionType === 'send_email') {
+                title.textContent = 'Send Email to Selected Clients';
+                fields.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Subject</label>
+                        <input type="text" id="batchEmailSubject" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;" placeholder="Email subject...">
+                    </div>
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Message</label>
+                        <textarea id="batchEmailBody" rows="6" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; resize: vertical;" placeholder="Email body... Use {client_name}, {first_name} for personalization"></textarea>
+                    </div>
+                `;
+            } else if (actionType === 'send_sms') {
+                title.textContent = 'Send SMS to Selected Clients';
+                fields.innerHTML = `
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Message (160 chars max)</label>
+                        <textarea id="batchSmsMessage" rows="3" maxlength="160" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; resize: vertical;" placeholder="SMS message... Use {client_name}, {first_name}"></textarea>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Only clients with SMS opt-in will receive messages</div>
+                    </div>
+                `;
+            } else if (actionType === 'add_note') {
+                title.textContent = 'Add Note to Selected Clients';
+                fields.innerHTML = `
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 5px;">Note</label>
+                        <textarea id="batchNote" rows="4" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; resize: vertical;" placeholder="Note to add to all selected clients..."></textarea>
+                    </div>
+                `;
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeBatchInput() {
+            document.getElementById('batchInputModal').style.display = 'none';
+            pendingBatchAction = null;
+        }
+
+        async function submitBatchInput() {
+            if (!pendingBatchAction) return;
+
+            const { actionType, ids } = pendingBatchAction;
+            let actionParams = {};
+
+            if (actionType === 'send_email') {
+                const subject = document.getElementById('batchEmailSubject').value;
+                const body = document.getElementById('batchEmailBody').value;
+                if (!subject || !body) return showToast('Subject and body are required', 'error');
+                actionParams = { subject, body };
+            } else if (actionType === 'send_sms') {
+                const message = document.getElementById('batchSmsMessage').value;
+                if (!message) return showToast('Message is required', 'error');
+                actionParams = { message };
+            } else if (actionType === 'add_note') {
+                const note = document.getElementById('batchNote').value;
+                if (!note) return showToast('Note is required', 'error');
+                actionParams = { note };
+            }
+
+            closeBatchInput();
+            await runBatchJob(actionType, ids, actionParams);
+        }
+
+        async function runBatchJob(actionType, clientIds, actionParams) {
+            // Show progress modal
+            const modal = document.getElementById('batchProgressModal');
+            document.getElementById('batchProgressTitle').textContent = 'Processing ' + clientIds.length + ' clients...';
+            document.getElementById('batchProgressBar').style.width = '0%';
+            document.getElementById('batchProgressText').textContent = '0 of ' + clientIds.length + ' items';
+            document.getElementById('batchProgressPercent').textContent = '0%';
+            document.getElementById('batchSuccessCount').textContent = '0';
+            document.getElementById('batchFailedCount').textContent = '0';
+            document.getElementById('batchProgressMessage').style.display = 'none';
+            document.getElementById('batchCancelBtn').style.display = 'inline-block';
+            document.getElementById('batchCloseBtn').style.display = 'none';
+            modal.style.display = 'flex';
 
             try {
-                const res = await fetch('/api/clients/bulk-update', {
+                // Create and execute batch job
+                const res = await fetch('/api/batch/jobs', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ client_ids: ids, status, client_type: type })
+                    body: JSON.stringify({
+                        name: getActionName(actionType),
+                        action_type: actionType,
+                        client_ids: clientIds,
+                        action_params: actionParams,
+                        execute_immediately: true
+                    })
                 });
+
                 const data = await res.json();
                 if (data.success) {
-                    showToast(data.message);
-                    setTimeout(() => location.reload(), 1000);
+                    currentBatchJobId = data.job.id;
+                    updateBatchProgress(data.job);
+
+                    // Job completed immediately (synchronous execution)
+                    if (data.job.status === 'completed') {
+                        showBatchComplete(data.job, data.message);
+                    }
                 } else {
-                    showToast(data.error, 'error');
+                    showBatchError(data.error);
                 }
             } catch (err) {
-                showToast('Error: ' + err.message, 'error');
+                showBatchError('Error: ' + err.message);
             }
+        }
+
+        function getActionName(actionType) {
+            const names = {
+                'update_status': 'Update Status',
+                'update_dispute_round': 'Update Dispute Round',
+                'send_email': 'Send Email',
+                'send_sms': 'Send SMS',
+                'add_note': 'Add Note',
+                'delete': 'Delete Clients'
+            };
+            return names[actionType] || actionType;
+        }
+
+        function updateBatchProgress(job) {
+            document.getElementById('batchProgressBar').style.width = job.progress_percent + '%';
+            document.getElementById('batchProgressText').textContent = job.items_processed + ' of ' + job.total_items + ' items';
+            document.getElementById('batchProgressPercent').textContent = Math.round(job.progress_percent) + '%';
+            document.getElementById('batchSuccessCount').textContent = job.items_succeeded;
+            document.getElementById('batchFailedCount').textContent = job.items_failed;
+        }
+
+        function showBatchComplete(job, message) {
+            document.getElementById('batchProgressTitle').textContent = 'Complete!';
+            document.getElementById('batchCancelBtn').style.display = 'none';
+            document.getElementById('batchCloseBtn').style.display = 'inline-block';
+
+            if (message) {
+                const msgEl = document.getElementById('batchProgressMessage');
+                msgEl.textContent = message;
+                msgEl.style.display = 'block';
+            }
+
+            // Stop polling if active
+            if (batchProgressInterval) {
+                clearInterval(batchProgressInterval);
+                batchProgressInterval = null;
+            }
+        }
+
+        function showBatchError(error) {
+            document.getElementById('batchProgressTitle').textContent = 'Error';
+            document.getElementById('batchProgressMessage').textContent = error;
+            document.getElementById('batchProgressMessage').style.display = 'block';
+            document.getElementById('batchCancelBtn').style.display = 'none';
+            document.getElementById('batchCloseBtn').style.display = 'inline-block';
+        }
+
+        async function cancelBatchJob() {
+            if (!currentBatchJobId) return;
+
+            try {
+                await fetch('/api/batch/jobs/' + currentBatchJobId + '/cancel', { method: 'POST' });
+                showToast('Batch job cancelled');
+                closeBatchProgress();
+            } catch (err) {
+                showToast('Error cancelling job', 'error');
+            }
+        }
+
+        function closeBatchProgress() {
+            document.getElementById('batchProgressModal').style.display = 'none';
+            currentBatchJobId = null;
+            if (batchProgressInterval) {
+                clearInterval(batchProgressInterval);
+                batchProgressInterval = null;
+            }
+            // Reload to show updated data
+            location.reload();
+        }
+
+        function exportSelectedClients(ids) {
+            // Build CSV from selected rows
+            const rows = [['ID', 'Name', 'Email', 'Phone', 'Status', 'Type']];
+            ids.forEach(id => {
+                const row = document.querySelector(`tr[data-client-id="${id}"]`);
+                if (row) {
+                    rows.push([
+                        id,
+                        row.dataset.name || '',
+                        row.dataset.email || '',
+                        row.dataset.phone || '',
+                        row.dataset.status || '',
+                        row.dataset.type || ''
+                    ]);
+                }
+            });
+
+            // Create and download CSV
+            const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'clients_export_' + new Date().toISOString().split('T')[0] + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('Exported ' + ids.length + ' clients');
         }
 
         async function bulkDelete() {
@@ -984,22 +1275,12 @@
             if (!ids.length) return showToast('Select clients first', 'error');
             if (!confirm(`Delete ${ids.length} clients? This cannot be undone.`)) return;
 
-            try {
-                const res = await fetch('/api/clients/bulk-delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ client_ids: ids })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showToast(data.message);
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast(data.error, 'error');
-                }
-            } catch (err) {
-                showToast('Error: ' + err.message, 'error');
-            }
+            await runBatchJob('delete', ids, { hard_delete: false });
+        }
+
+        // Legacy function for backwards compatibility
+        async function applyBulkAction() {
+            executeBatchAction();
         }
 
         // Quick filters

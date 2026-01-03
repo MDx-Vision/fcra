@@ -967,15 +967,63 @@ VAPID_SUBJECT=mailto:admin@example.com
 
 ---
 
-### Priority 18: Batch Processing
-**Status**: Backlog | **Effort**: Medium
+### ~~Priority 18: Batch Processing~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
 
 Process multiple clients at once.
-- [ ] Multi-select on client list
-- [ ] Batch action menu
-- [ ] Create `BatchProcessingService`
-- [ ] Progress indicator
-- [ ] Batch history log
+- [x] Multi-select on client list
+- [x] Batch action menu (status, round, email, SMS, notes, export, delete)
+- [x] Create `BatchProcessingService` (600+ lines)
+- [x] Progress indicator modal with real-time updates
+- [x] Batch history log page (`/dashboard/batch-jobs`)
+
+#### What Was Implemented
+
+1. **Database Models** (`database.py`):
+   - [x] `BatchJob` - Job metadata, progress tracking, timing, audit
+   - [x] `BatchJobItem` - Individual items with status, before/after state
+   - [x] Migration entries for both tables
+
+2. **BatchProcessingService** (`services/batch_processing_service.py` - 600+ lines):
+   - [x] 10 action types: update_status, update_dispute_round, send_email, send_sms, assign_staff, add_tag, remove_tag, add_note, export, delete
+   - [x] Job CRUD: create_job, get_job, list_jobs, cancel_job
+   - [x] Execution: execute_job, retry_failed_items
+   - [x] Progress tracking: get_job_progress
+   - [x] Stats & history: get_stats, get_job_history
+
+3. **API Endpoints** (`app.py` - 11 endpoints):
+   - [x] `GET /api/batch/action-types` - Available actions
+   - [x] `GET /api/batch/jobs` - List jobs
+   - [x] `POST /api/batch/jobs` - Create and execute job
+   - [x] `GET /api/batch/jobs/<id>` - Get job details
+   - [x] `GET /api/batch/jobs/<id>/progress` - Real-time progress
+   - [x] `POST /api/batch/jobs/<id>/execute` - Execute pending job
+   - [x] `POST /api/batch/jobs/<id>/cancel` - Cancel job
+   - [x] `POST /api/batch/jobs/<id>/retry` - Retry failed items
+   - [x] `GET /api/batch/stats` - Processing statistics
+   - [x] `GET /api/batch/history` - Job history
+   - [x] `GET /dashboard/batch-jobs` - History page
+
+4. **UI Enhancements** (`templates/clients.html`):
+   - [x] Enhanced bulk toolbar with action dropdown
+   - [x] Progress modal with bar, success/fail counts
+   - [x] Input modals for email, SMS, notes
+   - [x] CSV export functionality
+   - [x] Link to batch jobs history
+
+5. **Batch Jobs History Page** (`templates/batch_jobs.html`):
+   - [x] Stats cards (total, completed, items processed, success rate)
+   - [x] Jobs table with status, progress, actions
+   - [x] Retry failed items button
+   - [x] Auto-refresh every 30 seconds
+
+#### Files Created/Modified
+- `database.py` - Added BatchJob, BatchJobItem models + migrations
+- `services/batch_processing_service.py` - NEW (600+ lines)
+- `app.py` - Added 11 batch processing endpoints
+- `templates/clients.html` - Enhanced bulk toolbar + modals
+- `templates/batch_jobs.html` - NEW (history page)
 
 ---
 
@@ -1030,7 +1078,8 @@ Track items deleted, score improvements.
 - **Priority 15**: Invoice Generator ✅ COMPLETE (2026-01-03)
 - **Priority 16**: Document Viewer ✅ COMPLETE (2026-01-03)
 - **Priority 17**: Push Notifications ✅ COMPLETE (2026-01-03)
-- **Priority 18**: Batch Processing - Next up
+- **Priority 18**: Batch Processing ✅ COMPLETE (2026-01-03)
+- **Priority 19**: Staff Performance - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

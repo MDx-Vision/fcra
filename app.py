@@ -36946,6 +36946,236 @@ def api_request_document_via_whatsapp(client_id):
         db.close()
 
 
+# ==============================================================================
+# BATCH PROCESSING API (P18)
+# ==============================================================================
+
+
+@app.route("/api/batch/action-types", methods=["GET"])
+@login_required
+def api_batch_action_types():
+    """Get available batch action types"""
+    from services.batch_processing_service import BatchProcessingService
+    service = BatchProcessingService()
+    return jsonify({
+        "success": True,
+        "action_types": service.get_action_types(),
+        "status_options": service.get_status_options(),
+    })
+
+
+@app.route("/api/batch/jobs", methods=["GET"])
+@login_required
+def api_batch_list_jobs():
+    """List batch jobs with optional filtering"""
+    from services.batch_processing_service import BatchProcessingService
+
+    status = request.args.get("status")
+    action_type = request.args.get("action_type")
+    limit = int(request.args.get("limit", 50))
+    offset = int(request.args.get("offset", 0))
+
+    service = BatchProcessingService()
+    jobs = service.list_jobs(
+        status=status,
+        action_type=action_type,
+        limit=limit,
+        offset=offset
+    )
+
+    return jsonify({
+        "success": True,
+        "jobs": jobs,
+    })
+
+
+@app.route("/api/batch/jobs", methods=["POST"])
+@login_required
+def api_batch_create_job():
+    """Create a new batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    data = request.json or {}
+    name = data.get("name", "Batch Operation")
+    action_type = data.get("action_type")
+    client_ids = data.get("client_ids", [])
+    action_params = data.get("action_params", {})
+    execute_immediately = data.get("execute_immediately", True)
+
+    if not action_type:
+        return jsonify({"success": False, "error": "action_type is required"}), 400
+
+    if not client_ids:
+        return jsonify({"success": False, "error": "client_ids is required"}), 400
+
+    staff_id = session.get("staff_id", 1)
+
+    service = BatchProcessingService()
+    success, message, job = service.create_job(
+        name=name,
+        action_type=action_type,
+        client_ids=client_ids,
+        action_params=action_params,
+        staff_id=staff_id
+    )
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    # Execute immediately if requested
+    if execute_immediately and job:
+        exec_success, exec_message = service.execute_job(job["id"])
+        job = service.get_job(job_id=job["id"])
+        return jsonify({
+            "success": True,
+            "message": exec_message,
+            "job": job,
+        })
+
+    return jsonify({
+        "success": True,
+        "message": message,
+        "job": job,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>", methods=["GET"])
+@login_required
+def api_batch_get_job(job_id):
+    """Get a batch job by ID"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    job = service.get_job(job_id=job_id)
+
+    if not job:
+        return jsonify({"success": False, "error": "Job not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "job": job,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/progress", methods=["GET"])
+@login_required
+def api_batch_job_progress(job_id):
+    """Get real-time progress of a batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    progress = service.get_job_progress(job_id)
+
+    if not progress:
+        return jsonify({"success": False, "error": "Job not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "progress": progress,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/execute", methods=["POST"])
+@login_required
+def api_batch_execute_job(job_id):
+    """Execute a pending batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    success, message = service.execute_job(job_id)
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    job = service.get_job(job_id=job_id)
+    return jsonify({
+        "success": True,
+        "message": message,
+        "job": job,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/cancel", methods=["POST"])
+@login_required
+def api_batch_cancel_job(job_id):
+    """Cancel a batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    staff_id = session.get("staff_id", 1)
+
+    service = BatchProcessingService()
+    success, message = service.cancel_job(job_id, staff_id)
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    return jsonify({
+        "success": True,
+        "message": message,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/retry", methods=["POST"])
+@login_required
+def api_batch_retry_job(job_id):
+    """Retry failed items in a batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    success, message = service.retry_failed_items(job_id)
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    # Re-execute the job
+    exec_success, exec_message = service.execute_job(job_id)
+
+    return jsonify({
+        "success": True,
+        "message": f"{message}. {exec_message}",
+    })
+
+
+@app.route("/api/batch/stats", methods=["GET"])
+@login_required
+def api_batch_stats():
+    """Get batch processing statistics"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    stats = service.get_stats()
+
+    return jsonify({
+        "success": True,
+        "stats": stats,
+    })
+
+
+@app.route("/api/batch/history", methods=["GET"])
+@login_required
+def api_batch_history():
+    """Get batch job history"""
+    from services.batch_processing_service import BatchProcessingService
+
+    days = int(request.args.get("days", 30))
+    limit = int(request.args.get("limit", 100))
+
+    service = BatchProcessingService()
+    history = service.get_job_history(days=days, limit=limit)
+
+    return jsonify({
+        "success": True,
+        "history": history,
+    })
+
+
+@app.route("/dashboard/batch-jobs", methods=["GET"])
+@login_required
+def dashboard_batch_jobs():
+    """Batch jobs history page"""
+    return render_template("batch_jobs.html")
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

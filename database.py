@@ -4848,6 +4848,106 @@ class InvoicePayment(Base):
         }
 
 
+class BatchJob(Base):
+    """Batch processing jobs for bulk client operations"""
+    __tablename__ = 'batch_jobs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_uuid = Column(String(64), unique=True, nullable=False, index=True)
+
+    # Job metadata
+    name = Column(String(255), nullable=False)  # Human-readable name
+    action_type = Column(String(50), nullable=False)  # update_status, send_email, assign_staff, add_tag, delete, etc.
+    action_params = Column(JSON)  # Parameters for the action (e.g., new_status, email_template_id)
+
+    # Selection criteria (how clients were selected)
+    selection_type = Column(String(30), default='manual')  # manual, filter, all
+    selection_filter = Column(JSON)  # Filter criteria if selection_type='filter'
+    total_items = Column(Integer, default=0)
+
+    # Progress tracking
+    status = Column(String(30), default='pending')  # pending, running, completed, failed, cancelled
+    items_processed = Column(Integer, default=0)
+    items_succeeded = Column(Integer, default=0)
+    items_failed = Column(Integer, default=0)
+    progress_percent = Column(Float, default=0.0)
+
+    # Timing
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    estimated_completion = Column(DateTime)
+
+    # Error handling
+    error_message = Column(Text)
+    can_retry = Column(Boolean, default=True)
+
+    # Audit
+    created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    items = relationship("BatchJobItem", back_populates="batch_job", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'job_uuid': self.job_uuid,
+            'name': self.name,
+            'action_type': self.action_type,
+            'action_params': self.action_params,
+            'selection_type': self.selection_type,
+            'total_items': self.total_items,
+            'status': self.status,
+            'items_processed': self.items_processed,
+            'items_succeeded': self.items_succeeded,
+            'items_failed': self.items_failed,
+            'progress_percent': self.progress_percent,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'error_message': self.error_message,
+            'created_by_id': self.created_by_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class BatchJobItem(Base):
+    """Individual items (clients) within a batch job"""
+    __tablename__ = 'batch_job_items'
+
+    id = Column(Integer, primary_key=True, index=True)
+    batch_job_id = Column(Integer, ForeignKey('batch_jobs.id', ondelete='CASCADE'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Processing status
+    status = Column(String(30), default='pending')  # pending, processing, completed, failed, skipped
+    processed_at = Column(DateTime)
+
+    # Before/after state for rollback capability
+    before_state = Column(JSON)  # Snapshot of relevant fields before change
+    after_state = Column(JSON)  # Snapshot after change
+
+    # Error tracking
+    error_message = Column(Text)
+    retry_count = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    batch_job = relationship("BatchJob", back_populates="items")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'batch_job_id': self.batch_job_id,
+            'client_id': self.client_id,
+            'status': self.status,
+            'processed_at': self.processed_at.isoformat() if self.processed_at else None,
+            'error_message': self.error_message,
+            'retry_count': self.retry_count,
+        }
+
+
 class PushSubscription(Base):
     """Web Push notification subscriptions for clients and staff"""
     __tablename__ = 'push_subscriptions'
@@ -5996,6 +6096,39 @@ def init_db():
         ("push_notification_logs", "sent_at", "TIMESTAMP"),
         ("push_notification_logs", "error_message", "TEXT"),
         ("push_notification_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Batch Processing (P18)
+        ("batch_jobs", "id", "SERIAL PRIMARY KEY"),
+        ("batch_jobs", "job_uuid", "VARCHAR(64) UNIQUE NOT NULL"),
+        ("batch_jobs", "name", "VARCHAR(255) NOT NULL"),
+        ("batch_jobs", "action_type", "VARCHAR(50) NOT NULL"),
+        ("batch_jobs", "action_params", "JSONB"),
+        ("batch_jobs", "selection_type", "VARCHAR(30) DEFAULT 'manual'"),
+        ("batch_jobs", "selection_filter", "JSONB"),
+        ("batch_jobs", "total_items", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("batch_jobs", "items_processed", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "items_succeeded", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "items_failed", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "progress_percent", "FLOAT DEFAULT 0.0"),
+        ("batch_jobs", "started_at", "TIMESTAMP"),
+        ("batch_jobs", "completed_at", "TIMESTAMP"),
+        ("batch_jobs", "estimated_completion", "TIMESTAMP"),
+        ("batch_jobs", "error_message", "TEXT"),
+        ("batch_jobs", "can_retry", "BOOLEAN DEFAULT TRUE"),
+        ("batch_jobs", "created_by_id", "INTEGER REFERENCES staff(id) NOT NULL"),
+        ("batch_jobs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("batch_jobs", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Batch Job Items
+        ("batch_job_items", "id", "SERIAL PRIMARY KEY"),
+        ("batch_job_items", "batch_job_id", "INTEGER REFERENCES batch_jobs(id) ON DELETE CASCADE NOT NULL"),
+        ("batch_job_items", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("batch_job_items", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("batch_job_items", "processed_at", "TIMESTAMP"),
+        ("batch_job_items", "before_state", "JSONB"),
+        ("batch_job_items", "after_state", "JSONB"),
+        ("batch_job_items", "error_message", "TEXT"),
+        ("batch_job_items", "retry_count", "INTEGER DEFAULT 0"),
+        ("batch_job_items", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()
