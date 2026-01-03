@@ -130,10 +130,17 @@
         </a>
         {% endif %}
 
+        {# Status/Freeze Tracking - only for active clients #}
+        {% if has_full_access %}
+        <a href="{{ url_for('portal.status') }}" class="nav-tab {% if active_tab == 'status' %}active{% endif %}" data-testid="nav-status">
+            <span class="nav-icon" aria-hidden="true">❄️</span><span class="nav-label">Status</span>
+        </a>
+        {% endif %}
+
         {# Payment Plans - only for active clients #}
         {% if has_full_access %}
         <a href="{{ url_for('portal.portal_payment_plans') }}" class="nav-tab {% if active_tab == 'payment-plans' %}active{% endif %}" data-testid="nav-payment-plans">
-            <span class="nav-icon" aria-hidden="true">💳</span><span class="nav-label">Plans</span>
+            <span class="nav-icon" aria-hidden="true">📋</span><span class="nav-label">Plans</span>
         </a>
         {% endif %}
 
@@ -192,9 +199,12 @@
             <span>🚪</span><span>Exit</span>
         </a>
         {% else %}
-        {# Active clients get full mobile nav #}
+        {# Active clients get full mobile nav - primary actions only for mobile #}
         <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="mobile-nav-case">
             <span>📊</span><span>Case</span>
+        </a>
+        <a href="{{ url_for('portal.timeline') }}" class="mobile-nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="mobile-nav-timeline">
+            <span>📈</span><span>Journey</span>
         </a>
         <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="mobile-nav-documents">
             <span>📁</span><span>Docs</span>
@@ -202,11 +212,8 @@
         <a href="{{ url_for('portal.messages') }}" class="mobile-nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="mobile-nav-messages">
             <span>💬</span><span>Chat</span>
         </a>
-        <a href="{{ url_for('portal.booking') }}" class="mobile-nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="mobile-nav-booking">
-            <span>📞</span><span>Book</span>
-        </a>
-        <a href="{{ url_for('portal.subscription') }}" class="mobile-nav-tab {% if active_tab == 'subscription' %}active{% endif %}" data-testid="mobile-nav-subscription">
-            <span>💳</span><span>Billing</span>
+        <a href="{{ url_for('portal.status') }}" class="mobile-nav-tab {% if active_tab == 'status' %}active{% endif %}" data-testid="mobile-nav-status">
+            <span>❄️</span><span>Status</span>
         </a>
         <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>

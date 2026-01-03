@@ -7,13 +7,43 @@ A comprehensive credit repair management system built with Flask.
 
 ## Features
 
+### Core Platform
 - Client management and onboarding
 - Credit report analysis and dispute tracking
 - Document generation (letters, reports)
-- E-signature integration
+- E-signature integration (CROA compliance)
 - Attorney case management
 - Affiliate portal
-- White-label support
+- White-label partner portal
+
+### Client Portal (PWA)
+- Mobile-first responsive design
+- Installable on iOS/Android/Desktop
+- Live chat support
+- Document upload and tracking
+- Freeze status monitoring
+- Journey timeline
+- Booking system for calls
+
+### Automation
+- Workflow triggers and actions
+- Drip campaigns
+- Voicemail drops (multi-provider)
+- Email/SMS automation
+- Scheduled jobs
+
+### Business Intelligence
+- Revenue dashboard
+- Staff performance metrics
+- Lead scoring
+- ROI calculator
+- Bureau response tracking
+
+### Integrations
+- Gmail SMTP for email
+- Twilio for SMS/WhatsApp
+- Stripe for payments
+- Multiple credit monitoring services
 
 ## Requirements
 
@@ -104,6 +134,12 @@ Interactive API documentation is available at `/api/docs/` when the app is runni
 - **OpenAPI Spec**: `/api/docs/apispec.json`
 - **Static Spec**: `docs/openapi.yaml`
 
+## Test Status
+
+- **Unit Tests**: 5,300+ passing (60+ test files)
+- **Cypress E2E**: 88 specs passing
+- **Coverage**: All 60 services tested
+
 ## CI/CD
 
 All PRs run through:
@@ -112,6 +148,13 @@ All PRs run through:
 - Linting (flake8)
 - Security scanning (bandit, npm audit)
 - Code formatting checks (black, isort)
+
+## Documentation
+
+- `CLAUDE.md` - Development context and instructions
+- `ARCHITECTURE.md` - Tech stack and project structure
+- `FEATURE_BACKLOG.md` - Feature priorities and status
+- `CONVERSATION_LOG.md` - Development session history
 
 ## License
 
