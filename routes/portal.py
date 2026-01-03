@@ -1472,3 +1472,77 @@ def api_portal_invoice_pdf(invoice_id):
         return send_file(pdf_path, as_attachment=True, download_name=inv['pdf_filename'])
     finally:
         db.close()
+
+
+# ==============================================================================
+# PAYMENT PLANS PORTAL ENDPOINTS
+# ==============================================================================
+
+
+@portal.route('/payment-plans')
+@portal_login_required
+@require_full_access
+def portal_payment_plans():
+    """Client payment plans page"""
+    return render_template('portal/payment_plans.html')
+
+
+@portal.route('/api/payment-plans', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_portal_payment_plans():
+    """Get client's payment plans"""
+    from flask import jsonify
+    from services.payment_plan_service import PaymentPlanService
+
+    client_id = get_client_id()
+    service = PaymentPlanService()
+    plans = service.get_client_plans(client_id)
+
+    # Calculate summary stats
+    active_count = len([p for p in plans if p.get('status') == 'active'])
+    total_paid = sum(p.get('amount_paid', 0) for p in plans)
+    total_remaining = sum(p.get('amount_remaining', 0) for p in plans)
+
+    return jsonify({
+        'success': True,
+        'plans': plans,
+        'active_count': active_count,
+        'total_paid': total_paid,
+        'total_remaining': total_remaining
+    })
+
+
+@portal.route('/api/payment-plans/<int:plan_id>', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_portal_payment_plan_detail(plan_id):
+    """Get payment plan details"""
+    from flask import jsonify
+    from services.payment_plan_service import PaymentPlanService
+    from database import get_db, PaymentPlan
+
+    client_id = get_client_id()
+    db = get_db()
+    try:
+        # Verify plan belongs to this client
+        plan = db.query(PaymentPlan).filter(
+            PaymentPlan.id == plan_id,
+            PaymentPlan.client_id == client_id
+        ).first()
+
+        if not plan:
+            return jsonify({'success': False, 'error': 'Payment plan not found'}), 404
+
+        service = PaymentPlanService()
+        plan_data = service.get_plan(plan_id)
+
+        if not plan_data:
+            return jsonify({'success': False, 'error': 'Payment plan not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'plan': plan_data
+        })
+    finally:
+        db.close()

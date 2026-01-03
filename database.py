@@ -4964,7 +4964,7 @@ class StaffActivity(Base):
 
     # Activity details
     description = Column(String(500))
-    metadata = Column(JSON)  # Additional context (e.g., case_id, document_id)
+    activity_metadata = Column(JSON)  # Additional context (e.g., case_id, document_id)
 
     # Response time tracking (for activities that track response)
     request_received_at = Column(DateTime)  # When task/request came in
@@ -4985,7 +4985,7 @@ class StaffActivity(Base):
             'client_id': self.client_id,
             'activity_type': self.activity_type,
             'description': self.description,
-            'metadata': self.metadata,
+            'activity_metadata': self.activity_metadata,
             'response_time_minutes': self.response_time_minutes,
             'quality_score': self.quality_score,
             'was_escalated': self.was_escalated,
@@ -5293,6 +5293,193 @@ class ROICalculation(Base):
             'calculation_notes': self.calculation_notes,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class PaymentPlan(Base):
+    """Payment plans for installment payments"""
+    __tablename__ = 'payment_plans'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+
+    # Plan details
+    plan_name = Column(String(100))  # e.g., "Round 1 Payment Plan", "Full Service Plan"
+    plan_type = Column(String(50), default='custom')  # custom, round, prepay, settlement
+    total_amount = Column(Float, nullable=False)  # Total amount to be paid
+    down_payment = Column(Float, default=0)  # Initial down payment amount
+
+    # Installment configuration
+    num_installments = Column(Integer, default=3)  # Number of installments (excluding down payment)
+    installment_amount = Column(Float)  # Amount per installment
+    installment_frequency = Column(String(20), default='monthly')  # weekly, biweekly, monthly
+
+    # Schedule
+    start_date = Column(Date, nullable=False)  # When plan starts
+    next_payment_date = Column(Date)  # Next scheduled payment
+    end_date = Column(Date)  # Expected completion date
+
+    # Payment tracking
+    amount_paid = Column(Float, default=0)  # Total amount paid so far
+    amount_remaining = Column(Float)  # Remaining balance
+    installments_completed = Column(Integer, default=0)
+    installments_remaining = Column(Integer)
+
+    # Status
+    status = Column(String(30), default='active')  # pending, active, paused, completed, defaulted, cancelled
+    paused_at = Column(DateTime)
+    paused_reason = Column(String(255))
+    completed_at = Column(DateTime)
+    defaulted_at = Column(DateTime)
+    default_reason = Column(String(255))
+
+    # Payment method
+    payment_method = Column(String(50))  # stripe, manual, check, etc.
+    stripe_subscription_id = Column(String(255))  # If using Stripe subscriptions
+    auto_charge = Column(Boolean, default=False)  # Auto-charge saved payment method
+
+    # Grace period and late fees
+    grace_period_days = Column(Integer, default=5)
+    late_fee_amount = Column(Float, default=0)
+    late_fee_percent = Column(Float, default=0)  # Alternative: percentage-based late fee
+
+    # Notes
+    notes = Column(Text)
+    internal_notes = Column(Text)  # Staff-only notes
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'created_by_staff_id': self.created_by_staff_id,
+            'plan_name': self.plan_name,
+            'plan_type': self.plan_type,
+            'total_amount': self.total_amount,
+            'down_payment': self.down_payment,
+            'num_installments': self.num_installments,
+            'installment_amount': self.installment_amount,
+            'installment_frequency': self.installment_frequency,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'next_payment_date': self.next_payment_date.isoformat() if self.next_payment_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'amount_paid': self.amount_paid,
+            'amount_remaining': self.amount_remaining,
+            'installments_completed': self.installments_completed,
+            'installments_remaining': self.installments_remaining,
+            'status': self.status,
+            'payment_method': self.payment_method,
+            'auto_charge': self.auto_charge,
+            'grace_period_days': self.grace_period_days,
+            'late_fee_amount': self.late_fee_amount,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class PaymentPlanInstallment(Base):
+    """Individual installments within a payment plan"""
+    __tablename__ = 'payment_plan_installments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey('payment_plans.id'), nullable=False, index=True)
+
+    # Installment details
+    installment_number = Column(Integer, nullable=False)  # 0 = down payment, 1+ = installments
+    amount_due = Column(Float, nullable=False)
+    amount_paid = Column(Float, default=0)
+
+    # Schedule
+    due_date = Column(Date, nullable=False, index=True)
+    paid_date = Column(Date)
+
+    # Status
+    status = Column(String(30), default='pending')  # pending, paid, partial, late, waived, failed
+    is_late = Column(Boolean, default=False)
+    days_late = Column(Integer, default=0)
+    late_fee_applied = Column(Float, default=0)
+
+    # Payment reference
+    payment_id = Column(Integer, ForeignKey('payment_plan_payments.id'))
+    stripe_payment_intent_id = Column(String(255))
+
+    # Notes
+    notes = Column(String(500))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'plan_id': self.plan_id,
+            'installment_number': self.installment_number,
+            'amount_due': self.amount_due,
+            'amount_paid': self.amount_paid,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'paid_date': self.paid_date.isoformat() if self.paid_date else None,
+            'status': self.status,
+            'is_late': self.is_late,
+            'days_late': self.days_late,
+            'late_fee_applied': self.late_fee_applied,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class PaymentPlanPayment(Base):
+    """Payment records for payment plan installments"""
+    __tablename__ = 'payment_plan_payments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey('payment_plans.id'), nullable=False, index=True)
+    installment_id = Column(Integer, ForeignKey('payment_plan_installments.id'), index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Payment details
+    amount = Column(Float, nullable=False)
+    payment_date = Column(DateTime, default=datetime.utcnow)
+    payment_method = Column(String(50))  # stripe, check, cash, zelle, venmo, etc.
+
+    # Stripe details
+    stripe_payment_intent_id = Column(String(255), unique=True)
+    stripe_charge_id = Column(String(255))
+
+    # Manual payment details
+    reference_number = Column(String(100))  # Check number, transaction ID, etc.
+    received_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+
+    # Status
+    status = Column(String(30), default='completed')  # pending, completed, failed, refunded
+    failure_reason = Column(String(255))
+    refunded_at = Column(DateTime)
+    refund_amount = Column(Float)
+    refund_reason = Column(String(255))
+
+    # Notes
+    notes = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'plan_id': self.plan_id,
+            'installment_id': self.installment_id,
+            'client_id': self.client_id,
+            'amount': self.amount,
+            'payment_date': self.payment_date.isoformat() if self.payment_date else None,
+            'payment_method': self.payment_method,
+            'stripe_payment_intent_id': self.stripe_payment_intent_id,
+            'reference_number': self.reference_number,
+            'status': self.status,
+            'failure_reason': self.failure_reason,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
         }
 
 
@@ -6392,7 +6579,7 @@ def init_db():
         ("staff_activities", "client_id", "INTEGER REFERENCES clients(id)"),
         ("staff_activities", "activity_type", "VARCHAR(50) NOT NULL"),
         ("staff_activities", "description", "VARCHAR(500)"),
-        ("staff_activities", "metadata", "JSONB"),
+        ("staff_activities", "activity_metadata", "JSONB"),
         ("staff_activities", "request_received_at", "TIMESTAMP"),
         ("staff_activities", "response_completed_at", "TIMESTAMP"),
         ("staff_activities", "response_time_minutes", "INTEGER"),
@@ -6479,6 +6666,79 @@ def init_db():
         ("roi_calculations", "calculation_notes", "TEXT"),
         ("roi_calculations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("roi_calculations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Payment Plans (P23)
+        ("payment_plans", "id", "SERIAL PRIMARY KEY"),
+        ("payment_plans", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("payment_plans", "created_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("payment_plans", "plan_name", "VARCHAR(100)"),
+        ("payment_plans", "plan_type", "VARCHAR(50) DEFAULT 'custom'"),
+        ("payment_plans", "total_amount", "FLOAT NOT NULL"),
+        ("payment_plans", "down_payment", "FLOAT DEFAULT 0"),
+        ("payment_plans", "num_installments", "INTEGER DEFAULT 3"),
+        ("payment_plans", "installment_amount", "FLOAT"),
+        ("payment_plans", "installment_frequency", "VARCHAR(20) DEFAULT 'monthly'"),
+        ("payment_plans", "start_date", "DATE NOT NULL"),
+        ("payment_plans", "next_payment_date", "DATE"),
+        ("payment_plans", "end_date", "DATE"),
+        ("payment_plans", "amount_paid", "FLOAT DEFAULT 0"),
+        ("payment_plans", "amount_remaining", "FLOAT"),
+        ("payment_plans", "installments_completed", "INTEGER DEFAULT 0"),
+        ("payment_plans", "installments_remaining", "INTEGER"),
+        ("payment_plans", "status", "VARCHAR(30) DEFAULT 'active'"),
+        ("payment_plans", "paused_at", "TIMESTAMP"),
+        ("payment_plans", "paused_reason", "VARCHAR(255)"),
+        ("payment_plans", "completed_at", "TIMESTAMP"),
+        ("payment_plans", "defaulted_at", "TIMESTAMP"),
+        ("payment_plans", "default_reason", "VARCHAR(255)"),
+        ("payment_plans", "payment_method", "VARCHAR(50)"),
+        ("payment_plans", "stripe_subscription_id", "VARCHAR(255)"),
+        ("payment_plans", "auto_charge", "BOOLEAN DEFAULT FALSE"),
+        ("payment_plans", "grace_period_days", "INTEGER DEFAULT 5"),
+        ("payment_plans", "late_fee_amount", "FLOAT DEFAULT 0"),
+        ("payment_plans", "late_fee_percent", "FLOAT DEFAULT 0"),
+        ("payment_plans", "notes", "TEXT"),
+        ("payment_plans", "internal_notes", "TEXT"),
+        ("payment_plans", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("payment_plans", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Payment Plan Installments
+        ("payment_plan_installments", "id", "SERIAL PRIMARY KEY"),
+        ("payment_plan_installments", "plan_id", "INTEGER REFERENCES payment_plans(id) NOT NULL"),
+        ("payment_plan_installments", "installment_number", "INTEGER NOT NULL"),
+        ("payment_plan_installments", "amount_due", "FLOAT NOT NULL"),
+        ("payment_plan_installments", "amount_paid", "FLOAT DEFAULT 0"),
+        ("payment_plan_installments", "due_date", "DATE NOT NULL"),
+        ("payment_plan_installments", "paid_date", "DATE"),
+        ("payment_plan_installments", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("payment_plan_installments", "is_late", "BOOLEAN DEFAULT FALSE"),
+        ("payment_plan_installments", "days_late", "INTEGER DEFAULT 0"),
+        ("payment_plan_installments", "late_fee_applied", "FLOAT DEFAULT 0"),
+        ("payment_plan_installments", "payment_id", "INTEGER"),
+        ("payment_plan_installments", "stripe_payment_intent_id", "VARCHAR(255)"),
+        ("payment_plan_installments", "notes", "VARCHAR(500)"),
+        ("payment_plan_installments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("payment_plan_installments", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Payment Plan Payments
+        ("payment_plan_payments", "id", "SERIAL PRIMARY KEY"),
+        ("payment_plan_payments", "plan_id", "INTEGER REFERENCES payment_plans(id) NOT NULL"),
+        ("payment_plan_payments", "installment_id", "INTEGER"),
+        ("payment_plan_payments", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("payment_plan_payments", "amount", "FLOAT NOT NULL"),
+        ("payment_plan_payments", "payment_date", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("payment_plan_payments", "payment_method", "VARCHAR(50)"),
+        ("payment_plan_payments", "stripe_payment_intent_id", "VARCHAR(255) UNIQUE"),
+        ("payment_plan_payments", "stripe_charge_id", "VARCHAR(255)"),
+        ("payment_plan_payments", "reference_number", "VARCHAR(100)"),
+        ("payment_plan_payments", "received_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("payment_plan_payments", "status", "VARCHAR(30) DEFAULT 'completed'"),
+        ("payment_plan_payments", "failure_reason", "VARCHAR(255)"),
+        ("payment_plan_payments", "refunded_at", "TIMESTAMP"),
+        ("payment_plan_payments", "refund_amount", "FLOAT"),
+        ("payment_plan_payments", "refund_reason", "VARCHAR(255)"),
+        ("payment_plan_payments", "notes", "TEXT"),
+        ("payment_plan_payments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

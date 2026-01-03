@@ -1315,15 +1315,115 @@ Calculate potential settlement and recovery values based on violations, items, a
 
 ---
 
+## ~~Priority 23: Payment Plans~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
+
+Installment payment plans for clients with flexible scheduling and tracking.
+- [x] Create `PaymentPlan`, `PaymentPlanInstallment`, `PaymentPlanPayment` models
+- [x] Create `PaymentPlanService` with full plan management
+- [x] Staff management dashboard
+- [x] Client portal view
+- [x] Automatic installment generation
+- [x] Late fee tracking
+
+#### What Was Implemented
+
+1. **Database Models** (`database.py`):
+   - [x] `PaymentPlan` - Plan settings, totals, status, late fees
+   - [x] `PaymentPlanInstallment` - Individual installments with due dates
+   - [x] `PaymentPlanPayment` - Payment records with method and notes
+   - [x] Migration entries for all 3 tables
+
+2. **PaymentPlanService** (`services/payment_plan_service.py` - 600+ lines):
+   - [x] `create_plan()` - Create plan with auto-generated installments
+   - [x] `get_plan()` - Get plan with installments and payments
+   - [x] `get_client_plans()` - Get all plans for a client
+   - [x] `record_payment()` - Record payment and auto-apply to oldest unpaid
+   - [x] `pause_plan()` - Pause active plan
+   - [x] `resume_plan()` - Resume paused plan
+   - [x] `cancel_plan()` - Cancel plan with reason
+   - [x] `mark_defaulted()` - Mark plan as defaulted
+   - [x] `check_late_payments()` - Apply late fees (for scheduler)
+   - [x] `get_due_soon()` - Get installments due within N days
+   - [x] `get_overdue()` - Get overdue installments
+   - [x] `get_dashboard_summary()` - Dashboard statistics
+   - [x] `export_plans()` - CSV export
+
+3. **API Endpoints** (`app.py` - 17 endpoints):
+   - [x] `GET /api/payment-plans` - List plans (with filtering)
+   - [x] `POST /api/payment-plans` - Create new plan
+   - [x] `GET /api/payment-plans/<id>` - Get plan details
+   - [x] `PUT /api/payment-plans/<id>` - Update plan
+   - [x] `POST /api/payment-plans/<id>/payment` - Record payment
+   - [x] `POST /api/payment-plans/<id>/pause` - Pause plan
+   - [x] `POST /api/payment-plans/<id>/resume` - Resume plan
+   - [x] `POST /api/payment-plans/<id>/cancel` - Cancel plan
+   - [x] `POST /api/payment-plans/<id>/default` - Mark as defaulted
+   - [x] `GET /api/payment-plans/dashboard` - Dashboard summary
+   - [x] `GET /api/payment-plans/due-soon` - Due soon list
+   - [x] `GET /api/payment-plans/overdue` - Overdue list
+   - [x] `GET /api/payment-plans/export` - CSV export
+   - [x] `GET /dashboard/payment-plans` - Dashboard page
+
+4. **Portal API Endpoints** (`routes/portal.py` - 3 endpoints):
+   - [x] `GET /portal/payment-plans` - Portal page
+   - [x] `GET /portal/api/payment-plans` - Client's plans
+   - [x] `GET /portal/api/payment-plans/<id>` - Plan details
+
+5. **Staff Management UI** (`templates/payment_plans.html`):
+   - [x] Stats cards: Active Plans, Collected, Pending, Due Soon, Overdue
+   - [x] Create plan modal with installment preview
+   - [x] Plans table with status tabs (All, Active, Paused, Completed, Cancelled)
+   - [x] Record payment modal
+   - [x] Plan details modal with installment schedule
+   - [x] Pause/Resume/Cancel actions
+   - [x] Due soon and overdue sidebars
+   - [x] Quick stats panel
+   - [x] CSV export
+
+6. **Client Portal UI** (`templates/portal/payment_plans.html`):
+   - [x] Summary cards: Active Plans, Total Paid, Remaining Balance
+   - [x] Upcoming payment alert (with urgency badges)
+   - [x] Payment plans list with progress bars
+   - [x] Plan details modal with installment schedule
+   - [x] Payment history display
+
+7. **Navigation Updates**:
+   - [x] Staff sidebar: "Payment Plans" link in Analytics section
+   - [x] Client portal: "Plans" link in navigation
+
+8. **Features**:
+   - [x] Flexible frequency: Weekly, Bi-Weekly, Monthly
+   - [x] Plan types: Custom, Dispute Round, Prepay, Settlement
+   - [x] Down payment support
+   - [x] Late fee configuration with grace period
+   - [x] Automatic installment calculation
+   - [x] Auto-apply payments to oldest unpaid
+   - [x] Plan status: Active, Paused, Completed, Cancelled, Defaulted
+   - [x] Payment methods: Manual, Stripe, Check, Cash, Bank Transfer
+
+#### Files Created/Modified
+- `database.py` - Added 3 payment plan models + migrations
+- `services/payment_plan_service.py` - NEW (600+ lines)
+- `app.py` - Added 17 payment plan API endpoints
+- `templates/payment_plans.html` - NEW (staff dashboard)
+- `templates/portal/payment_plans.html` - NEW (client portal)
+- `routes/portal.py` - Added 3 portal endpoints
+- `templates/includes/dashboard_sidebar.html` - Added sidebar link
+- `templates/portal/base_portal.html` - Added portal nav link
+
+---
+
 ## Future Features (Not Yet Prioritized)
 
 - [x] ~~E-Sign Integration~~ - Already implemented (CROA Signing Service with signature capture)
 - [x] ~~AI Dispute Writer~~ - Implemented 2026-01-03
 - [x] ~~ROI Calculator~~ - Implemented 2026-01-03
+- [x] ~~Payment Plans~~ - Implemented 2026-01-03
 - [ ] Mobile App (PWA)
 - [ ] Auto-Pull Credit Reports
 - [ ] Letter Template Builder
-- [ ] Payment Plans
 - [ ] Voicemail Drops
 - [ ] Bureau Response Tracking
 
@@ -1349,7 +1449,8 @@ Calculate potential settlement and recovery values based on violations, items, a
 - **Priority 20**: Client Success Metrics ✅ COMPLETE (2026-01-03)
 - **Priority 21**: AI Dispute Writer ✅ COMPLETE (2026-01-03)
 - **Priority 22**: ROI Calculator ✅ COMPLETE (2026-01-03)
-- **All P1-P22 priorities complete!**
+- **Priority 23**: Payment Plans ✅ COMPLETE (2026-01-03)
+- **All P1-P23 priorities complete!**
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

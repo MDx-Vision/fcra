@@ -38003,6 +38003,321 @@ def dashboard_roi_calculator():
     return render_template("roi_calculator.html")
 
 
+# =============================================================================
+# PAYMENT PLANS ENDPOINTS
+# =============================================================================
+
+@app.route("/api/payment-plans", methods=["GET"])
+@login_required
+def api_payment_plans_list():
+    """List payment plans with filtering"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+
+        status = request.args.get('status')
+        client_id = request.args.get('client_id', type=int)
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        service = PaymentPlanService()
+        result = service.list_plans(
+            status=status,
+            client_id=client_id,
+            limit=limit,
+            offset=offset
+        )
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans", methods=["POST"])
+@login_required
+def api_payment_plans_create():
+    """Create a new payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        required = ['client_id', 'total_amount']
+        for field in required:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Missing {field}"}), 400
+
+        service = PaymentPlanService()
+        result = service.create_plan(
+            client_id=data['client_id'],
+            total_amount=data['total_amount'],
+            num_installments=data.get('num_installments', 3),
+            down_payment=data.get('down_payment', 0),
+            start_date=data.get('start_date'),
+            frequency=data.get('frequency', 'monthly'),
+            plan_name=data.get('plan_name'),
+            plan_type=data.get('plan_type', 'custom'),
+            payment_method=data.get('payment_method'),
+            auto_charge=data.get('auto_charge', False),
+            grace_period_days=data.get('grace_period_days', 5),
+            late_fee_amount=data.get('late_fee_amount', 0),
+            late_fee_percent=data.get('late_fee_percent', 0),
+            notes=data.get('notes'),
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>", methods=["GET"])
+@login_required
+def api_payment_plans_get(plan_id):
+    """Get a payment plan with installments"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.get_plan(plan_id)
+
+        if result:
+            return jsonify({"success": True, **result})
+        return jsonify({"success": False, "error": "Plan not found"}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>", methods=["PUT"])
+@login_required
+def api_payment_plans_update(plan_id):
+    """Update a payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.update_plan(plan_id, data)
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/payment", methods=["POST"])
+@login_required
+def api_payment_plans_record_payment(plan_id):
+    """Record a payment against a plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        if 'amount' not in data:
+            return jsonify({"success": False, "error": "Amount is required"}), 400
+
+        service = PaymentPlanService()
+        result = service.record_payment(
+            plan_id=plan_id,
+            amount=data['amount'],
+            payment_method=data.get('payment_method', 'manual'),
+            installment_id=data.get('installment_id'),
+            reference_number=data.get('reference_number'),
+            stripe_payment_intent_id=data.get('stripe_payment_intent_id'),
+            staff_id=session.get('staff_id'),
+            notes=data.get('notes')
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/pause", methods=["POST"])
+@login_required
+def api_payment_plans_pause(plan_id):
+    """Pause a payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.pause_plan(plan_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/resume", methods=["POST"])
+@login_required
+def api_payment_plans_resume(plan_id):
+    """Resume a paused payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.resume_plan(plan_id)
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/cancel", methods=["POST"])
+@login_required
+def api_payment_plans_cancel(plan_id):
+    """Cancel a payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.cancel_plan(plan_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/default", methods=["POST"])
+@login_required
+def api_payment_plans_default(plan_id):
+    """Mark a payment plan as defaulted"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.mark_defaulted(plan_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/installments/<int:installment_id>/waive", methods=["POST"])
+@login_required
+def api_payment_plans_waive_installment(installment_id):
+    """Waive an installment"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.waive_installment(installment_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/dashboard", methods=["GET"])
+@login_required
+def api_payment_plans_dashboard():
+    """Get payment plans dashboard summary"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        summary = service.get_dashboard_summary()
+
+        return jsonify({"success": True, **summary})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/due-soon", methods=["GET"])
+@login_required
+def api_payment_plans_due_soon():
+    """Get installments due soon"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        days = request.args.get('days', 7, type=int)
+
+        service = PaymentPlanService()
+        result = service.get_due_soon(days=days)
+
+        return jsonify({"success": True, "installments": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/overdue", methods=["GET"])
+@login_required
+def api_payment_plans_overdue():
+    """Get overdue installments"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.get_overdue()
+
+        return jsonify({"success": True, "installments": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/check-late", methods=["POST"])
+@login_required
+def api_payment_plans_check_late():
+    """Check for late payments and apply late fees"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.check_late_payments()
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/export", methods=["GET"])
+@login_required
+def api_payment_plans_export():
+    """Export payment plans as CSV"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        import csv
+        from io import StringIO
+
+        status = request.args.get('status')
+
+        service = PaymentPlanService()
+        data = service.export_plans(status=status)
+
+        if not data:
+            return jsonify({"success": False, "error": "No data to export"}), 404
+
+        # Create CSV
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = 'attachment; filename=payment_plans.csv'
+
+        return response
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/payment-plans", methods=["GET"])
+@login_required
+def api_client_payment_plans(client_id):
+    """Get payment plans for a specific client"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        plans = service.get_client_plans(client_id)
+
+        return jsonify({"success": True, "plans": plans})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/dashboard/payment-plans", methods=["GET"])
+@login_required
+def dashboard_payment_plans():
+    """Payment Plans management dashboard"""
+    return render_template("payment_plans.html")
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""

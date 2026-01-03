@@ -110,6 +110,13 @@
         </a>
         {% endif %}
 
+        {# Payment Plans - only for active clients #}
+        {% if has_full_access %}
+        <a href="{{ url_for('portal.portal_payment_plans') }}" class="nav-tab {% if active_tab == 'payment-plans' %}active{% endif %}" data-testid="nav-payment-plans">
+            <span class="nav-icon" aria-hidden="true">💳</span><span class="nav-label">Plans</span>
+        </a>
+        {% endif %}
+
         {# Book Call - only for active clients #}
         {% if has_full_access %}
         <a href="{{ url_for('portal.booking') }}" class="nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="nav-booking">
