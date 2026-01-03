@@ -226,6 +226,11 @@ def get_current_user():
     finally:
         db.close()
 
+@portal.route('/offline')
+def offline():
+    """Offline fallback page for PWA"""
+    return render_template('portal/offline.html')
+
 @portal.route('/dashboard')
 @portal.route('/')
 @portal_login_required

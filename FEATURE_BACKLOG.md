@@ -1654,6 +1654,77 @@ Create and manage customizable dispute letter templates.
 
 ---
 
+## ~~Priority 27: Mobile App (PWA)~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
+
+Progressive Web App for installable mobile experience with offline support.
+
+### What Was Implemented
+
+1. **Web App Manifest** (`static/manifest.json`):
+   - [x] App name: "Brightpath Ascend Group - Client Portal"
+   - [x] Standalone display mode
+   - [x] Theme colors for light/dark modes
+   - [x] 8 icon sizes (72px to 512px)
+   - [x] App shortcuts (Dashboard, Documents, Messages)
+   - [x] Screenshots for install UI
+
+2. **PWA Icons** (`static/images/pwa/`):
+   - [x] Generated icons: 72, 96, 128, 144, 152, 192, 384, 512px
+   - [x] Apple touch icon (180px)
+   - [x] Shortcut icons for quick actions
+   - [x] Notification and badge icons
+
+3. **Enhanced Service Worker** (`static/sw.js`):
+   - [x] Multiple caching strategies:
+     - Cache First for static assets
+     - Network First for API calls
+     - Stale While Revalidate for pages
+   - [x] Offline fallback page
+   - [x] Push notification handling
+   - [x] Background sync support
+   - [x] Cache versioning and cleanup
+
+4. **PWA JavaScript** (`static/js/pwa.js`):
+   - [x] Service worker registration
+   - [x] Install prompt capture and custom UI
+   - [x] "Add to Home Screen" banner
+   - [x] Update notification toast
+   - [x] Online/offline status indicators
+   - [x] 24-hour dismissal cooldown
+
+5. **Portal Template Updates** (`templates/portal/base_portal.html`):
+   - [x] PWA meta tags (theme-color, apple-mobile-web-app-*)
+   - [x] Manifest link
+   - [x] Apple touch icon links
+   - [x] MS tile configuration
+
+6. **Offline Page** (`templates/portal/offline.html`):
+   - [x] Branded offline experience
+   - [x] Auto-retry connection
+   - [x] Tips for offline usage
+   - [x] Light/dark mode support
+
+### Features
+
+- **Installable**: Users can add to home screen on iOS, Android, and desktop
+- **Offline Support**: Previously viewed pages cached for offline access
+- **Push Notifications**: Receive case updates even when app is closed
+- **Fast Loading**: Static assets cached for instant load
+- **Native Feel**: Standalone mode hides browser UI
+
+### Files Created/Modified
+- `static/manifest.json` - NEW (Web App Manifest)
+- `static/images/pwa/*` - NEW (14 icon files)
+- `static/sw.js` - Enhanced (caching strategies)
+- `static/js/pwa.js` - NEW (install prompt, updates)
+- `templates/portal/base_portal.html` - Added PWA meta tags
+- `templates/portal/offline.html` - NEW (offline page)
+- `routes/portal.py` - Added offline route
+
+---
+
 ## Future Features (Not Yet Prioritized)
 
 - [x] ~~E-Sign Integration~~ - Already implemented (CROA Signing Service with signature capture)
@@ -1663,7 +1734,7 @@ Create and manage customizable dispute letter templates.
 - [x] ~~Bureau Response Tracking~~ - Implemented 2026-01-03
 - [x] ~~Auto-Pull Credit Reports~~ - Implemented 2026-01-03
 - [x] ~~Letter Template Builder~~ - Implemented 2026-01-03
-- [ ] Mobile App (PWA)
+- [x] ~~Mobile App (PWA)~~ - Implemented 2026-01-03
 - [ ] Voicemail Drops
 
 ### Pending Infrastructure
@@ -1692,7 +1763,8 @@ Create and manage customizable dispute letter templates.
 - **Priority 24**: Bureau Response Tracking ✅ COMPLETE (2026-01-03)
 - **Priority 25**: Auto-Pull Credit Reports ✅ COMPLETE (2026-01-03)
 - **Priority 26**: Letter Template Builder ✅ COMPLETE (2026-01-03)
-- **All P1-P26 priorities complete!**
+- **Priority 27**: Mobile App (PWA) ✅ COMPLETE (2026-01-03)
+- **All P1-P27 priorities complete!**
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

@@ -2,8 +2,28 @@
 <html lang="en" data-portal="client">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>{% block title %}Client Portal{% endblock %} - Brightpath</title>
+
+    {# PWA Meta Tags #}
+    <meta name="description" content="Manage your credit repair journey with Brightpath Ascend Group">
+    <meta name="theme-color" content="#14b8a6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Brightpath">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Brightpath">
+    <meta name="msapplication-TileColor" content="#14b8a6">
+    <meta name="msapplication-TileImage" content="/static/images/pwa/icon-144x144.png">
+
+    {# PWA Manifest #}
+    <link rel="manifest" href="/static/manifest.json">
+
+    {# PWA Icons #}
+    <link rel="apple-touch-icon" href="/static/images/pwa/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/pwa/icon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/pwa/icon-72x72.png">
 
     {# Theme: Flash Prevention (must be before stylesheets) #}
     {% include 'includes/theme_head.html' %}
@@ -196,6 +216,7 @@
 
     <script src="{{ url_for('static', filename='js/portal-redesign.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-service.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
