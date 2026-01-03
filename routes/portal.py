@@ -580,6 +580,43 @@ def download_document(doc_id):
     finally:
         db.close()
 
+@portal.route('/documents/preview/<int:doc_id>')
+@portal_login_required
+def preview_document(doc_id):
+    """Preview a document inline (for document viewer)"""
+    from database import get_db, Client, ClientUpload
+    import mimetypes
+
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    db = get_db()
+    try:
+        doc = db.query(ClientUpload).get(doc_id)
+        client = db.query(Client).filter_by(id=get_client_id()).first()
+
+        if not client or not doc or doc.client_id != client.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+
+        if doc.file_path and os.path.exists(doc.file_path):
+            # Determine mimetype
+            mimetype, _ = mimetypes.guess_type(doc.file_path)
+            if not mimetype:
+                mimetype = 'application/octet-stream'
+
+            # Serve file inline (not as attachment)
+            return send_file(
+                doc.file_path,
+                mimetype=mimetype,
+                as_attachment=False,
+                download_name=doc.file_name or 'document'
+            )
+        else:
+            return jsonify({'error': 'File not found'}), 404
+    finally:
+        db.close()
+
 @portal.route('/learn')
 @portal_login_required
 @require_full_access

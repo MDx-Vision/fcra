@@ -899,14 +899,27 @@ Auto-generate professional client invoices.
 
 ---
 
-### Priority 16: Document Viewer
-**Status**: Backlog | **Effort**: Low-Medium
+### ~~Priority 16: Document Viewer~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
 
 In-browser PDF preview (no download needed).
-- [ ] PDF.js integration
-- [ ] Document preview modal
-- [ ] Zoom and page navigation
-- [ ] Add to portal documents page
+- [x] PDF.js integration (CDN)
+- [x] Document preview modal with dark overlay
+- [x] Zoom and page navigation controls
+- [x] Add to portal documents page
+- [x] Add to staff documents page
+- [x] Image preview support (JPG, PNG, GIF, etc.)
+- [x] Keyboard shortcuts (Escape, arrows, +/-)
+- [x] Download button in viewer
+- [x] Mobile responsive design
+- [x] Dark mode support
+
+### Files Created/Modified
+- `static/js/document-viewer.js` - NEW (Document viewer component)
+- `templates/portal/documents.html` - Added preview buttons + PDF.js
+- `templates/documents.html` - Added preview buttons + PDF.js
+- `routes/portal.py` - Added preview endpoint
 
 ---
 
@@ -982,7 +995,8 @@ Track items deleted, score improvements.
 - **Priority 13**: Revenue Dashboard ✅ COMPLETE (2026-01-03)
 - **Priority 14**: Stripe Subscriptions ✅ COMPLETE (2026-01-03)
 - **Priority 15**: Invoice Generator ✅ COMPLETE (2026-01-03)
-- **Priority 16**: Document Viewer - Next up
+- **Priority 16**: Document Viewer ✅ COMPLETE (2026-01-03)
+- **Priority 17**: Push Notifications - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

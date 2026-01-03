@@ -1,6 +1,11 @@
 {% extends "portal/base_portal.html" %}
 {% set active_tab = 'documents' %}
 {% block title %}Documents{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+{% endblock %}
+
 {% block content %}
 
 <!-- Header -->
@@ -37,7 +42,10 @@
                 <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">{{ doc.name }}</div>
                 <div style="font-size: 13px; color: #6b7280;">{{ doc.created_at.strftime('%B %d, %Y') if doc.created_at else 'N/A' }}</div>
             </div>
-            <a href="{{ url_for('portal.download_document', doc_id=doc.id) }}" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 500; color: #4b5563; cursor: pointer; text-decoration: none;">⬇️ Download</a>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button onclick="previewDocument('{{ url_for('portal.preview_document', doc_id=doc.id) }}', '{{ doc.file_name or doc.name }}', '{{ url_for('portal.download_document', doc_id=doc.id) }}')" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border: none; border-radius: 6px; font-size: 13px; font-weight: 500; color: white; cursor: pointer;">👁️ Preview</button>
+                <a href="{{ url_for('portal.download_document', doc_id=doc.id) }}" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 500; color: #4b5563; cursor: pointer; text-decoration: none;">⬇️ Download</a>
+            </div>
         </div>
         {% else %}
         <p style="text-align: center; color: #6b7280; padding: 32px;">No documents yet. Upload your first document below!</p>
@@ -347,4 +355,5 @@ document.querySelectorAll('.file-input-preview').forEach(input => {
 }
 </style>
 
+<script src="{{ url_for('static', filename='js/document-viewer.js') }}"></script>
 {% endblock %}
