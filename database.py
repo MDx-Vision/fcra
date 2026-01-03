@@ -4848,6 +4848,97 @@ class InvoicePayment(Base):
         }
 
 
+class PushSubscription(Base):
+    """Web Push notification subscriptions for clients and staff"""
+    __tablename__ = 'push_subscriptions'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # User identification - either client or staff (one must be set)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True, index=True)
+
+    # Push subscription details (from browser's PushSubscription object)
+    endpoint = Column(Text, nullable=False, unique=True)  # The push service URL
+    p256dh_key = Column(String(255), nullable=False)  # Public key for encryption
+    auth_key = Column(String(255), nullable=False)  # Auth secret
+
+    # Device/browser info
+    user_agent = Column(String(500))
+    device_name = Column(String(100))  # Friendly name like "Chrome on Windows"
+
+    # Notification preferences
+    notify_case_updates = Column(Boolean, default=True)  # Case status changes
+    notify_messages = Column(Boolean, default=True)  # New messages
+    notify_documents = Column(Boolean, default=True)  # Document uploads
+    notify_deadlines = Column(Boolean, default=True)  # Upcoming deadlines
+    notify_payments = Column(Boolean, default=True)  # Payment reminders
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    last_used_at = Column(DateTime)
+    failed_count = Column(Integer, default=0)  # Track delivery failures
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'staff_id': self.staff_id,
+            'endpoint': self.endpoint[:50] + '...' if self.endpoint and len(self.endpoint) > 50 else self.endpoint,
+            'device_name': self.device_name,
+            'notify_case_updates': self.notify_case_updates,
+            'notify_messages': self.notify_messages,
+            'notify_documents': self.notify_documents,
+            'notify_deadlines': self.notify_deadlines,
+            'notify_payments': self.notify_payments,
+            'is_active': self.is_active,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class PushNotificationLog(Base):
+    """Log of sent push notifications for tracking and debugging"""
+    __tablename__ = 'push_notification_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    subscription_id = Column(Integer, ForeignKey('push_subscriptions.id'), nullable=False, index=True)
+
+    # Notification content
+    title = Column(String(255), nullable=False)
+    body = Column(Text)
+    icon = Column(String(500))
+    url = Column(String(500))  # Click action URL
+    tag = Column(String(100))  # Notification tag for grouping
+    data = Column(JSON)  # Additional data payload
+
+    # Trigger info
+    trigger_type = Column(String(50))  # e.g., 'case_update', 'message', 'deadline'
+    trigger_id = Column(Integer)  # Related entity ID
+
+    # Delivery status
+    status = Column(String(30), default='pending')  # pending, sent, delivered, failed, expired
+    sent_at = Column(DateTime)
+    error_message = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'subscription_id': self.subscription_id,
+            'title': self.title,
+            'body': self.body,
+            'trigger_type': self.trigger_type,
+            'status': self.status,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'error_message': self.error_message,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -5871,6 +5962,40 @@ def init_db():
         ("invoice_payments", "notes", "TEXT"),
         ("invoice_payments", "recorded_by_id", "INTEGER REFERENCES staff(id)"),
         ("invoice_payments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Push Subscriptions (P17)
+        ("push_subscriptions", "id", "SERIAL PRIMARY KEY"),
+        ("push_subscriptions", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("push_subscriptions", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("push_subscriptions", "endpoint", "TEXT NOT NULL UNIQUE"),
+        ("push_subscriptions", "p256dh_key", "VARCHAR(255) NOT NULL"),
+        ("push_subscriptions", "auth_key", "VARCHAR(255) NOT NULL"),
+        ("push_subscriptions", "user_agent", "VARCHAR(500)"),
+        ("push_subscriptions", "device_name", "VARCHAR(100)"),
+        ("push_subscriptions", "notify_case_updates", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_messages", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_documents", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_deadlines", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_payments", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "last_used_at", "TIMESTAMP"),
+        ("push_subscriptions", "failed_count", "INTEGER DEFAULT 0"),
+        ("push_subscriptions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("push_subscriptions", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Push Notification Logs (P17)
+        ("push_notification_logs", "id", "SERIAL PRIMARY KEY"),
+        ("push_notification_logs", "subscription_id", "INTEGER REFERENCES push_subscriptions(id) NOT NULL"),
+        ("push_notification_logs", "title", "VARCHAR(255) NOT NULL"),
+        ("push_notification_logs", "body", "TEXT"),
+        ("push_notification_logs", "icon", "VARCHAR(500)"),
+        ("push_notification_logs", "url", "VARCHAR(500)"),
+        ("push_notification_logs", "tag", "VARCHAR(100)"),
+        ("push_notification_logs", "data", "JSONB"),
+        ("push_notification_logs", "trigger_type", "VARCHAR(50)"),
+        ("push_notification_logs", "trigger_id", "INTEGER"),
+        ("push_notification_logs", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("push_notification_logs", "sent_at", "TIMESTAMP"),
+        ("push_notification_logs", "error_message", "TEXT"),
+        ("push_notification_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

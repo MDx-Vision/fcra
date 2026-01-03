@@ -100,6 +100,11 @@ ACTION_TYPES = {
         "description": "Create document from template",
         "params": ["template_name", "document_type"],
     },
+    "send_push": {
+        "name": "Send Push Notification",
+        "description": "Send a browser push notification",
+        "params": ["notification_type", "title", "body", "url"],
+    },
 }
 
 DEFAULT_TRIGGERS = [
@@ -885,6 +890,10 @@ class WorkflowTriggersService:
                 result = WorkflowTriggersService._action_generate_document(
                     client_id, params, event_data
                 )
+            elif action_type == "send_push":
+                result = WorkflowTriggersService._action_send_push(
+                    session, client_id, params, event_data
+                )
             else:
                 result = {
                     "success": False,
@@ -1095,6 +1104,42 @@ class WorkflowTriggersService:
             )
 
             return {"success": True, "result": {"task_id": task.id}}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def _action_send_push(
+        session, client_id: int, params: Dict[str, Any], event_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Send push notification action"""
+        try:
+            from services.push_notification_service import send_to_client, is_push_configured
+
+            if not is_push_configured():
+                return {"success": False, "error": "Push notifications not configured", "skipped": True}
+
+            notification_type = params.get("notification_type", "case_update")
+            title = params.get("title")
+            body = params.get("body", "You have a new notification from Brightpath Ascend")
+            url = params.get("url")
+
+            result = send_to_client(
+                client_id=client_id,
+                notification_type=notification_type,
+                body=body,
+                url=url,
+                title=title,
+                trigger_id=event_data.get("trigger_id"),
+            )
+
+            return {
+                "success": result.get("success", False),
+                "result": {
+                    "sent_count": result.get("sent_count", 0),
+                    "failed_count": result.get("failed_count", 0),
+                },
+                "error": result.get("error"),
+            }
         except Exception as e:
             return {"success": False, "error": str(e)}
 

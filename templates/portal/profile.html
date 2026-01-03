@@ -202,6 +202,149 @@
     </div>
 </div>
 
+<!-- Push Notifications -->
+<div class="card animate-fade-in-up" data-delay="700" style="margin-bottom: 24px;" data-testid="push-notifications-section">
+    <div class="card-title">🔔 Browser Notifications</div>
+    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
+        Get instant notifications in your browser when there are updates to your case.
+    </p>
+
+    <div id="push-not-supported" style="display: none; padding: 16px; background: #fee2e2; border-radius: 8px; margin-bottom: 16px;">
+        <p style="font-size: 14px; color: #991b1b; margin: 0;">
+            Your browser doesn't support push notifications. Try using Chrome, Firefox, or Edge.
+        </p>
+    </div>
+
+    <div id="push-status" style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: #f9fafb; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #9ca3af;" id="push-status-indicator"></div>
+                <span style="font-size: 14px; color: #6b7280;" id="push-status-text">Checking...</span>
+            </div>
+            <button type="button" id="push-toggle-btn" onclick="PushNotifications.toggle()"
+                    data-push-toggle
+                    data-subscribed-text="Disable Notifications"
+                    data-unsubscribed-text="Enable Notifications"
+                    style="padding: 10px 20px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                Enable Notifications
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Preferences (shown when subscribed) -->
+    <div id="push-preferences" data-push-preferences style="display: none;">
+        <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Notification Preferences</h4>
+        <div style="display: grid; gap: 12px;">
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-case-updates" checked onchange="updatePushPreference('notify_case_updates', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Case Updates</div>
+                    <div style="font-size: 12px; color: #6b7280;">Status changes and progress updates</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-messages" checked onchange="updatePushPreference('notify_messages', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">New Messages</div>
+                    <div style="font-size: 12px; color: #6b7280;">When you receive a message from our team</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-documents" checked onchange="updatePushPreference('notify_documents', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Document Updates</div>
+                    <div style="font-size: 12px; color: #6b7280;">New documents available for download</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-deadlines" checked onchange="updatePushPreference('notify_deadlines', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Deadline Reminders</div>
+                    <div style="font-size: 12px; color: #6b7280;">Important dates and upcoming deadlines</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-payments" checked onchange="updatePushPreference('notify_payments', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Payment Reminders</div>
+                    <div style="font-size: 12px; color: #6b7280;">Upcoming payments and invoice updates</div>
+                </div>
+            </label>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+<script>
+// Push notification UI updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for PushNotifications to initialize
+    setTimeout(function() {
+        updatePushUI();
+    }, 500);
+});
+
+function updatePushUI() {
+    const indicator = document.getElementById('push-status-indicator');
+    const text = document.getElementById('push-status-text');
+    const toggleBtn = document.getElementById('push-toggle-btn');
+    const prefsPanel = document.getElementById('push-preferences');
+    const notSupported = document.getElementById('push-not-supported');
+
+    if (!PushNotifications.isSupported) {
+        notSupported.style.display = 'block';
+        toggleBtn.style.display = 'none';
+        text.textContent = 'Not supported';
+        return;
+    }
+
+    if (PushNotifications.isSubscribed) {
+        indicator.style.background = '#10b981';
+        text.textContent = 'Notifications enabled';
+        toggleBtn.textContent = 'Disable Notifications';
+        toggleBtn.style.background = '#ef4444';
+        prefsPanel.style.display = 'block';
+        loadPushPreferences();
+    } else {
+        indicator.style.background = '#9ca3af';
+        text.textContent = 'Notifications disabled';
+        toggleBtn.textContent = 'Enable Notifications';
+        toggleBtn.style.background = '#0d9488';
+        prefsPanel.style.display = 'none';
+    }
+}
+
+async function loadPushPreferences() {
+    const subs = await PushNotifications.getSubscriptionInfo();
+    if (subs.length > 0) {
+        const sub = subs[0];
+        document.getElementById('pref-case-updates').checked = sub.notify_case_updates !== false;
+        document.getElementById('pref-messages').checked = sub.notify_messages !== false;
+        document.getElementById('pref-documents').checked = sub.notify_documents !== false;
+        document.getElementById('pref-deadlines').checked = sub.notify_deadlines !== false;
+        document.getElementById('pref-payments').checked = sub.notify_payments !== false;
+    }
+}
+
+async function updatePushPreference(pref, value) {
+    const prefs = {};
+    prefs[pref] = value;
+    await PushNotifications.updatePreferences(prefs);
+}
+
+// Override PushNotifications updateUI to include our custom updates
+const originalUpdateUI = PushNotifications.updateUI.bind(PushNotifications);
+PushNotifications.updateUI = function() {
+    originalUpdateUI();
+    updatePushUI();
+};
+</script>
+
 <script>
 // WhatsApp verification functions
 function loadWhatsAppStatus() {

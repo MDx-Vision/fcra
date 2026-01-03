@@ -923,14 +923,47 @@ In-browser PDF preview (no download needed).
 
 ---
 
-### Priority 17: Push Notifications
-**Status**: Backlog | **Effort**: Medium
+### ~~Priority 17: Push Notifications~~ ✅ COMPLETE
+
+**Completed: 2026-01-03**
 
 Browser notifications for case updates.
-- [ ] Web Push API + VAPID keys
-- [ ] Create `PushSubscription` model
-- [ ] Create `PushNotificationService`
-- [ ] Integrate with workflow triggers
+- [x] Web Push API + VAPID key generation
+- [x] Create `PushSubscription` model
+- [x] Create `PushNotificationLog` model
+- [x] Create `PushNotificationService` (650+ lines)
+- [x] Service worker for receiving notifications
+- [x] Client-side subscription management
+- [x] Integrate with workflow triggers
+- [x] Portal profile page notification settings
+- [x] Notification preferences (case, messages, documents, deadlines, payments)
+- [x] Convenience functions for common notification types
+
+### Files Created/Modified
+- `database.py` - Added PushSubscription, PushNotificationLog models
+- `services/push_notification_service.py` - NEW (650+ lines)
+- `services/workflow_triggers_service.py` - Added send_push action
+- `static/sw.js` - NEW (Service worker)
+- `static/js/push-notifications.js` - NEW (Client library)
+- `templates/portal/profile.html` - Added notification settings UI
+- `app.py` - Added 8 push notification API endpoints
+
+### API Endpoints
+- GET /api/push/vapid-public-key
+- POST /api/push/subscribe
+- POST /api/push/unsubscribe
+- GET /api/push/subscriptions
+- PUT /api/push/subscriptions/<id>/preferences
+- POST /api/push/test
+- POST /api/push/send-to-client/<id>
+- GET /api/push/logs
+
+### Environment Variables Required
+```
+VAPID_PUBLIC_KEY=<base64-key>
+VAPID_PRIVATE_KEY=<base64-key>
+VAPID_SUBJECT=mailto:admin@example.com
+```
 
 ---
 
@@ -996,7 +1029,8 @@ Track items deleted, score improvements.
 - **Priority 14**: Stripe Subscriptions ✅ COMPLETE (2026-01-03)
 - **Priority 15**: Invoice Generator ✅ COMPLETE (2026-01-03)
 - **Priority 16**: Document Viewer ✅ COMPLETE (2026-01-03)
-- **Priority 17**: Push Notifications - Next up
+- **Priority 17**: Push Notifications ✅ COMPLETE (2026-01-03)
+- **Priority 18**: Batch Processing - Next up
 - See `FEATURE_IMPLEMENTATION_CHECKLIST.md` for future feature roadmap
 
 ---

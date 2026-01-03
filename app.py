@@ -18631,6 +18631,184 @@ def dashboard_invoices():
 
 
 # ==============================================================================
+# PUSH NOTIFICATIONS API (P17)
+# ==============================================================================
+
+
+@app.route("/api/push/vapid-public-key", methods=["GET"])
+def api_push_vapid_public_key():
+    """Get VAPID public key for push subscription"""
+    from services.push_notification_service import get_vapid_keys, is_push_configured
+
+    if not is_push_configured():
+        return jsonify({"success": False, "error": "Push notifications not configured"}), 503
+
+    keys = get_vapid_keys()
+    return jsonify({
+        "success": True,
+        "publicKey": keys["public_key"],
+    })
+
+
+@app.route("/api/push/subscribe", methods=["POST"])
+def api_push_subscribe():
+    """Subscribe to push notifications"""
+    from services.push_notification_service import subscribe
+
+    data = request.json or {}
+
+    endpoint = data.get("endpoint")
+    keys = data.get("keys", {})
+    p256dh = keys.get("p256dh")
+    auth = keys.get("auth")
+
+    if not endpoint or not p256dh or not auth:
+        return jsonify({"success": False, "error": "Invalid subscription data"}), 400
+
+    # Determine if client or staff
+    client_id = None
+    staff_id = None
+
+    if session.get("client_id"):
+        client_id = session.get("client_id")
+    elif session.get("staff_id"):
+        staff_id = session.get("staff_id")
+    else:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    result = subscribe(
+        endpoint=endpoint,
+        p256dh_key=p256dh,
+        auth_key=auth,
+        client_id=client_id,
+        staff_id=staff_id,
+        user_agent=request.headers.get("User-Agent"),
+        device_name=data.get("device_name"),
+    )
+
+    if result.get("success"):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/push/unsubscribe", methods=["POST"])
+def api_push_unsubscribe():
+    """Unsubscribe from push notifications"""
+    from services.push_notification_service import unsubscribe
+
+    data = request.json or {}
+    endpoint = data.get("endpoint")
+
+    if not endpoint:
+        return jsonify({"success": False, "error": "endpoint required"}), 400
+
+    result = unsubscribe(endpoint)
+    return jsonify(result)
+
+
+@app.route("/api/push/subscriptions", methods=["GET"])
+def api_push_subscriptions():
+    """Get user's push subscriptions"""
+    from services.push_notification_service import get_subscriptions
+
+    client_id = session.get("client_id")
+    staff_id = session.get("staff_id")
+
+    if not client_id and not staff_id:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    subscriptions = get_subscriptions(client_id=client_id, staff_id=staff_id)
+
+    return jsonify({
+        "success": True,
+        "subscriptions": subscriptions,
+    })
+
+
+@app.route("/api/push/subscriptions/<int:subscription_id>/preferences", methods=["PUT"])
+def api_push_update_preferences(subscription_id):
+    """Update notification preferences for a subscription"""
+    from services.push_notification_service import update_preferences
+
+    data = request.json or {}
+
+    result = update_preferences(subscription_id, data)
+    return jsonify(result)
+
+
+@app.route("/api/push/test", methods=["POST"])
+def api_push_test():
+    """Send a test push notification (staff only)"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    from services.push_notification_service import send_to_staff
+
+    result = send_to_staff(
+        staff_id=session.get("staff_id"),
+        notification_type="case_update",
+        body="This is a test notification from Brightpath Ascend",
+        url="/dashboard",
+        title="Test Notification",
+    )
+
+    return jsonify(result)
+
+
+@app.route("/api/push/send-to-client/<int:client_id>", methods=["POST"])
+def api_push_send_to_client(client_id):
+    """Send a push notification to a client (staff only)"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    from services.push_notification_service import send_to_client
+
+    data = request.json or {}
+
+    notification_type = data.get("type", "case_update")
+    body = data.get("body", "")
+    title = data.get("title")
+    url = data.get("url")
+
+    if not body:
+        return jsonify({"success": False, "error": "body required"}), 400
+
+    result = send_to_client(
+        client_id=client_id,
+        notification_type=notification_type,
+        body=body,
+        title=title,
+        url=url,
+    )
+
+    return jsonify(result)
+
+
+@app.route("/api/push/logs", methods=["GET"])
+def api_push_logs():
+    """Get push notification logs (staff only)"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    from services.push_notification_service import get_notification_logs
+
+    client_id = request.args.get("client_id", type=int)
+    status = request.args.get("status")
+    limit = request.args.get("limit", 50, type=int)
+
+    logs = get_notification_logs(
+        client_id=client_id,
+        status=status,
+        limit=limit,
+    )
+
+    return jsonify({
+        "success": True,
+        "logs": logs,
+    })
+
+
+# ==============================================================================
 # METRO2 VIOLATION DETECTION API
 # ==============================================================================
 
