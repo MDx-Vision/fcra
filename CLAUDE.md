@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-03)
+## Current Status (2026-01-04)
 
 ### Test Status: 100% PASSING
 - **Unit tests**: 5,300 passing (82 test files, ~137s runtime)
@@ -40,7 +40,29 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 - **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
 
-### Current Work (2026-01-03) - COMPLETE
+### Current Work (2026-01-04)
+
+**Task**: Maintenance & Documentation
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Documentation Cleanup**:
+   - Archived 53 temporary/development docs to `docs/archive/`
+   - Kept core docs (CLAUDE.md, ARCHITECTURE.md, FEATURE_BACKLOG.md, etc.)
+
+2. **Partner Portal Enhancements**:
+   - Added email templates: password reset, team invitations
+   - Fixed subscription/webhook service error handling
+
+3. **Client-Facing SOPs Located**:
+   - `CLIENT_PORTAL_SOP.md` - Complete 6-stage client journey guide (535 lines)
+   - `Client_Signup_SOP.docx` - Word document versions
+   - Staff SOPs at `/dashboard/sops`
+
+---
+
+### Previous Work (2026-01-03) - COMPLETE
 
 **Task**: Priority 28 - Voicemail Drops
 

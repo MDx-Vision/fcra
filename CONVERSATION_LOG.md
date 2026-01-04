@@ -2,7 +2,34 @@
 
 > This file tracks our development sessions and key decisions for continuity.
 >
-> **Last Updated**: 2026-01-03
+> **Last Updated**: 2026-01-04
+
+---
+
+## Session: 2026-01-04
+
+### Tasks Completed
+
+#### Documentation & Maintenance
+- Committed pending changes (86 files)
+- Archived 53 temporary/development docs to `docs/archive/`
+- Added partner portal email templates (password reset, team invitations)
+- Fixed subscription/webhook service error handling
+
+#### Client-Facing SOPs Located
+| File | Description |
+|------|-------------|
+| `CLIENT_PORTAL_SOP.md` | Complete 6-stage client journey guide (535 lines) |
+| `Client_Signup_SOP.docx` | Word document versions |
+| Staff SOPs | `/dashboard/sops` |
+
+**CLIENT_PORTAL_SOP.md** covers:
+1. **Getting Started** - Account creation & login
+2. **Onboarding** - ID docs, agreements, payment
+3. **Active Portal** - Dashboard, documents, messaging
+4. **Responsibilities** - Uploading bureau responses (CRITICAL!)
+5. **Profile & Settings** - Freeze status, billing
+6. **Dispute Rounds** - R1-R4 explanation
 
 ---
 
