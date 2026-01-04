@@ -40,7 +40,41 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 - **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
 
-### Current Work (2026-01-04)
+### Current Work (2026-01-04) - Session: "SOP HTML + Credit Import Wiring"
+
+**Task**: Client Portal SOP HTML Page + Credit Import Integration
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Client Portal SOP HTML Page** (`/portal/guide`):
+   - Created `templates/portal/client_guide.html` - Full HTML version of CLIENT_PORTAL_SOP.md
+   - All 20 screenshots embedded with captions
+   - Responsive design with journey overview, table of contents
+   - Added route in `app.py` at line 8291 (before catch-all `/portal/<token>`)
+
+2. **Screenshot #1 Fixed**:
+   - Retook full-page screenshot of `/get-started` signup form
+   - Now shows header, logo, full form, trust badges
+
+3. **Credit Import Wired to Signup Form**:
+   - Connected `/api/leads/capture` endpoint to `CreditImportAutomation` service
+   - Now actually pulls credit reports using Playwright browser automation
+   - Supports: IdentityIQ, MyScoreIQ, SmartCredit, MyFreeScoreNow, PrivacyGuard
+   - Returns real scores (TransUnion, Experian, Equifax) in preview
+
+4. **Bug Fix**:
+   - Fixed `automation.close()` → `automation._close_browser()`
+   - Credit import was succeeding but crashing on cleanup
+
+**Files Created/Modified**:
+- `templates/portal/client_guide.html` - NEW (HTML SOP with 20 screenshots)
+- `app.py` - Added `/portal/guide` route, wired credit import to signup
+- `static/images/sop/01-signup-form.png` - Replaced with full-page screenshot
+
+---
+
+### Previous Work (2026-01-04) - COMPLETE
 
 **Task**: Maintenance & Documentation
 

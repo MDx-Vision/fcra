@@ -6,7 +6,46 @@
 
 ---
 
-## Session: 2026-01-04
+## Session: 2026-01-04 (Evening) - "SOP HTML + Credit Import Wiring"
+
+### Tasks Completed
+
+#### 1. Client Portal SOP HTML Page
+- Created `/portal/guide` route with full HTML SOP
+- File: `templates/portal/client_guide.html`
+- Features:
+  - All 20 screenshots embedded with captions
+  - 6-stage journey with visual progress indicators
+  - Table of contents with anchor links
+  - Responsive design (mobile/tablet/desktop)
+  - Back-to-top floating button
+
+#### 2. Screenshot #1 Fixed
+- Retook `/get-started` signup form screenshot
+- Now shows: logo, header, full form, trust badges, footer
+
+#### 3. Credit Import Wired to Signup Form
+- Connected `/api/leads/capture` to `CreditImportAutomation` service
+- Actually pulls credit reports via Playwright browser automation
+- Supported services: IdentityIQ, MyScoreIQ, SmartCredit, MyFreeScoreNow, PrivacyGuard
+- Returns real scores in preview (TransUnion, Experian, Equifax)
+- Takes ~60 seconds (browser automation)
+
+#### 4. Bug Fix
+- Fixed `automation.close()` → `automation._close_browser()`
+- Credit import was succeeding but crashing on cleanup
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `templates/portal/client_guide.html` | NEW - HTML SOP page |
+| `app.py` | Added `/portal/guide` route, wired credit import |
+| `static/images/sop/01-signup-form.png` | Replaced with full-page screenshot |
+| `routes/portal.py` | Removed duplicate guide route |
+
+---
+
+## Session: 2026-01-04 (Morning)
 
 ### Tasks Completed
 

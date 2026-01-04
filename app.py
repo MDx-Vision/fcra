@@ -8288,6 +8288,12 @@ def portal_redirect():
     return redirect(url_for("portal_login"))
 
 
+@app.route("/portal/guide")
+def client_portal_guide():
+    """Client Portal SOP/Guide - public page with all screenshots"""
+    return render_template('portal/client_guide.html')
+
+
 @app.route("/portal/<token>")
 def client_portal(token):
     """Client-facing portal access via magic link - authenticate and redirect to new portal"""
@@ -35502,23 +35508,88 @@ def api_leads_capture():
 
         # Try to pull credit report if credentials provided
         preview_data = None
-        if monitoring_service and monitoring_service not in ['none', '']:
-            try:
-                # Attempt to import report using credit_import service
-                from services.credit_import import credit_import_service
+        monitoring_username = data.get('monitoring_username', '').strip()
+        monitoring_password = data.get('monitoring_password', '').strip()
+        ssn_last_four = data.get('ssn_last_four', '').strip()
 
-                # This would trigger the actual report pull
-                # For now, return mock preview data
-                preview_data = {
-                    'bureau': 'TransUnion',
-                    'score': '---',  # Would be actual score after pull
-                    'negative_items': '--',
-                    'total_accounts': '--'
+        if monitoring_service and monitoring_service not in ['none', ''] and monitoring_username and monitoring_password:
+            try:
+                import asyncio
+                from services.credit_import_automation import CreditImportAutomation
+
+                # Map service names to the format expected by automation
+                service_map = {
+                    'identityiq': 'IdentityIQ.com',
+                    'myscoreiq': 'MyScoreIQ.com',
+                    'smartcredit': 'SmartCredit.com',
+                    'myfreescorenow': 'MyFreeScoreNow.com',
+                    'privacyguard': 'PrivacyGuard.com',
                 }
+                service_key = service_map.get(monitoring_service.lower().replace('.com', '').replace(' ', ''), monitoring_service)
+
+                # Run the async import
+                async def do_import():
+                    automation = CreditImportAutomation()
+                    try:
+                        result = await automation.import_report(
+                            service_name=service_key,
+                            username=monitoring_username,
+                            password=monitoring_password,
+                            ssn_last4=ssn_last_four or '',
+                            client_id=client.id,
+                            client_name=client.name
+                        )
+                        return result
+                    finally:
+                        await automation._close_browser()
+
+                # Run async function
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    import_result = loop.run_until_complete(do_import())
+                finally:
+                    loop.close()
+
+                if import_result and import_result.get('success'):
+                    scores = import_result.get('scores', {})
+                    preview_data = {
+                        'bureau': 'TransUnion',
+                        'score': scores.get('transunion', scores.get('tu', '---')),
+                        'negative_items': import_result.get('negative_count', '--'),
+                        'total_accounts': import_result.get('account_count', '--'),
+                        'equifax_score': scores.get('equifax', scores.get('eq', '---')),
+                        'experian_score': scores.get('experian', scores.get('ex', '---')),
+                        'report_path': import_result.get('report_path')
+                    }
+
+                    # Update client with report info
+                    if import_result.get('report_path'):
+                        client.last_report_path = import_result.get('report_path')
+                        client.last_report_date = datetime.utcnow()
+                        db.commit()
+                else:
+                    # Import failed - return placeholder with error note
+                    preview_data = {
+                        'bureau': 'TransUnion',
+                        'score': '---',
+                        'negative_items': '--',
+                        'total_accounts': '--',
+                        'error': import_result.get('error', 'Could not pull report')
+                    }
 
             except Exception as e:
                 print(f"Credit import error: {e}")
-                # Continue without preview data
+                import traceback
+                traceback.print_exc()
+                # Return placeholder on error
+                preview_data = {
+                    'bureau': 'TransUnion',
+                    'score': '---',
+                    'negative_items': '--',
+                    'total_accounts': '--',
+                    'error': str(e)
+                }
 
         return jsonify({
             "success": True,
