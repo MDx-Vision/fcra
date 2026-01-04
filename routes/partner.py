@@ -135,7 +135,14 @@ def forgot_password():
                 tenant.password_reset_expires = datetime.utcnow() + timedelta(hours=24)
                 db.commit()
 
-                # TODO: Send password reset email
+                # Send password reset email
+                from services.email_service import send_partner_password_reset_email
+                reset_url = url_for('partner.reset_password', token=token, _external=True)
+                send_partner_password_reset_email(
+                    email=tenant.admin_email,
+                    reset_url=reset_url,
+                    tenant_name=tenant.company_name
+                )
                 flash('If an account exists with that email, a password reset link has been sent', 'success')
             else:
                 # Don't reveal if email exists
@@ -572,7 +579,16 @@ def invite_team_member():
         db.add(tenant_user)
         db.commit()
 
-        # TODO: Send invitation email
+        # Send invitation email
+        from services.email_service import send_partner_team_invitation_email
+        login_url = url_for('partner.login', _external=True)
+        tenant = db.query(WhiteLabelTenant).filter_by(id=tenant_id).first()
+        send_partner_team_invitation_email(
+            email=email,
+            login_url=login_url,
+            tenant_name=tenant.company_name if tenant else "Partner Portal",
+            role=role
+        )
 
         return jsonify({'success': True, 'message': 'Team member invited successfully'})
     except Exception as e:

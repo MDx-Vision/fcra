@@ -20,7 +20,7 @@ from services.notarize_service import (
     NotarizeService,
     get_notarize_service,
     is_notarize_configured,
-    test_notarize_connection,
+    test_notarize_connection as check_notarize_connection,  # Renamed to avoid pytest collection
     PRODUCTION_BASE_URL,
     SANDBOX_BASE_URL,
     SERVICE_NAME,
@@ -969,7 +969,7 @@ class TestFactoryFunctions:
         mock_session_class.return_value = mock_session
         mock_session.query().filter_by().first.return_value = MagicMock(id=1)
 
-        result = test_notarize_connection()
+        result = check_notarize_connection()
         assert result is True
 
 

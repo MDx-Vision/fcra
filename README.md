@@ -136,9 +136,10 @@ Interactive API documentation is available at `/api/docs/` when the app is runni
 
 ## Test Status
 
-- **Unit Tests**: 5,300+ passing (60+ test files)
-- **Cypress E2E**: 88 specs passing
-- **Coverage**: All 60 services tested
+- **Unit Tests**: 5,341 passing (82 test files)
+- **Cypress E2E**: 88 specs passing (100%)
+- **Exhaustive Tests**: 51 files (46 dashboard + 5 portal)
+- **Service Coverage**: 66/66 services tested (100%)
 
 ## CI/CD
 
@@ -151,10 +152,23 @@ All PRs run through:
 
 ## Documentation
 
+### Core Docs
 - `CLAUDE.md` - Development context and instructions
 - `ARCHITECTURE.md` - Tech stack and project structure
-- `FEATURE_BACKLOG.md` - Feature priorities and status
-- `CONVERSATION_LOG.md` - Development session history
+- `FEATURE_BACKLOG.md` - Feature priorities and status (P1-P28 complete)
+- `README.md` - This file
+
+### Guides
+- `ADMIN_USER_GUIDE.md` - Staff dashboard usage guide
+- `CLIENT_PORTAL_SOP.md` - Client portal step-by-step guide
+- `CLIENT_ONBOARDING_GUIDE.md` - Client onboarding walkthrough
+- `API_REFERENCE.md` - REST API documentation
+- `CONTRIBUTING.md` - Contribution guidelines
+
+### References
+- `TEST_CREDENTIALS.md` - Test login credentials
+- `PRICING_STRUCTURE.md` - Pricing and payment flow
+- `SENDCERTIFIED_SETUP.md` - Certified mail setup
 
 ## License
 

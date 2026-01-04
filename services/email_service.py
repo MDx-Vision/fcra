@@ -273,3 +273,273 @@ def get_sendgrid_api_key():
 def get_sendgrid_client():
     """Legacy function - raises error (no longer used)."""
     raise NotImplementedError("SendGrid has been replaced with Gmail SMTP. Use send_email() directly.")
+
+
+# =============================================================================
+# Partner Portal Emails
+# =============================================================================
+
+def send_partner_password_reset_email(email: str, reset_url: str, tenant_name: str = None):
+    """
+    Send password reset email to partner portal admin.
+
+    Args:
+        email: Recipient email address
+        reset_url: Password reset URL with token
+        tenant_name: Optional tenant/company name for personalization
+    """
+    company_name = tenant_name or "Your Company"
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #22c55e;">
+            <h1 style="color: #1e293b; margin: 0;">Password Reset Request</h1>
+        </div>
+
+        <div style="padding: 30px 0;">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                Hello,
+            </p>
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                We received a request to reset your password for the <strong>{company_name}</strong> partner portal.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_url}"
+                   style="background-color: #22c55e; color: white; padding: 14px 28px; text-decoration: none;
+                          border-radius: 6px; font-weight: bold; display: inline-block;">
+                    Reset Password
+                </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+                This link will expire in 24 hours. If you didn't request this reset,
+                you can safely ignore this email.
+            </p>
+
+            <p style="color: #64748b; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="{reset_url}" style="color: #22c55e; word-break: break-all;">{reset_url}</a>
+            </p>
+        </div>
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 12px;">
+                Brightpath Ascend Group Partner Portal
+            </p>
+        </div>
+    </div>
+    """
+
+    return send_email(
+        to_email=email,
+        subject="Password Reset Request - Partner Portal",
+        html_content=html_content
+    )
+
+
+def send_partner_team_invitation_email(email: str, login_url: str, tenant_name: str, inviter_name: str = None, role: str = None):
+    """
+    Send team invitation email to new partner portal team member.
+
+    Args:
+        email: Recipient email address
+        login_url: Partner portal login URL
+        tenant_name: Company/tenant name
+        inviter_name: Name of person who sent the invitation
+        role: Role being assigned (e.g., 'admin', 'member')
+    """
+    role_display = role.replace('_', ' ').title() if role else "Team Member"
+    inviter_text = f"by {inviter_name}" if inviter_name else ""
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #22c55e;">
+            <h1 style="color: #1e293b; margin: 0;">You're Invited!</h1>
+        </div>
+
+        <div style="padding: 30px 0;">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                Hello,
+            </p>
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                You've been invited {inviter_text} to join <strong>{tenant_name}</strong>
+                on the Brightpath Ascend Group partner portal as a <strong>{role_display}</strong>.
+            </p>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h3 style="color: #1e293b; margin-top: 0;">What you can do:</h3>
+                <ul style="color: #475569; line-height: 1.8;">
+                    <li>View and manage your referred clients</li>
+                    <li>Track commissions and payouts</li>
+                    <li>Access analytics and reporting</li>
+                    <li>Customize your branding settings</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{login_url}"
+                   style="background-color: #22c55e; color: white; padding: 14px 28px; text-decoration: none;
+                          border-radius: 6px; font-weight: bold; display: inline-block;">
+                    Access Partner Portal
+                </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+                A temporary password has been set for your account. Please use the "Forgot Password"
+                feature on the login page to set your own password.
+            </p>
+        </div>
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 12px;">
+                Brightpath Ascend Group Partner Portal
+            </p>
+        </div>
+    </div>
+    """
+
+    return send_email(
+        to_email=email,
+        subject=f"You've been invited to join {tenant_name} - Partner Portal",
+        html_content=html_content
+    )
+
+
+# =============================================================================
+# Payment Notification Emails
+# =============================================================================
+
+def send_payment_failed_email(client_email: str, client_name: str, error_message: str = None, portal_url: str = None):
+    """
+    Send notification when a payment fails.
+
+    Args:
+        client_email: Client's email address
+        client_name: Client's name for personalization
+        error_message: Optional error details
+        portal_url: URL to client portal for updating payment
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+    error_text = f"<p style='color: #dc2626; font-size: 14px;'>Error: {error_message}</p>" if error_message else ""
+    portal_link = portal_url or "https://portal.brightpathascendgroup.com"
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #dc2626;">
+            <h1 style="color: #1e293b; margin: 0;">Payment Issue</h1>
+        </div>
+
+        <div style="padding: 30px 0;">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                Hi {first_name},
+            </p>
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                We were unable to process your recent payment. This may be due to
+                insufficient funds, an expired card, or other issues with your payment method.
+            </p>
+
+            {error_text}
+
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h3 style="color: #b91c1c; margin-top: 0;">What to do next:</h3>
+                <ol style="color: #7f1d1d; line-height: 1.8;">
+                    <li>Log in to your client portal</li>
+                    <li>Go to your account settings</li>
+                    <li>Update your payment method</li>
+                    <li>Retry the payment</li>
+                </ol>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{portal_link}"
+                   style="background-color: #22c55e; color: white; padding: 14px 28px; text-decoration: none;
+                          border-radius: 6px; font-weight: bold; display: inline-block;">
+                    Update Payment Method
+                </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+                If you need assistance, please contact our support team.
+            </p>
+        </div>
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 12px;">
+                Brightpath Ascend Group<br>
+                <a href="mailto:support@brightpathascendgroup.com" style="color: #22c55e;">support@brightpathascendgroup.com</a>
+            </p>
+        </div>
+    </div>
+    """
+
+    return send_email(
+        to_email=client_email,
+        subject="Action Required: Payment Issue - Brightpath Ascend Group",
+        html_content=html_content
+    )
+
+
+def send_subscription_past_due_email(client_email: str, client_name: str, amount_due: float = None, portal_url: str = None):
+    """
+    Send dunning email for past-due subscription.
+
+    Args:
+        client_email: Client's email address
+        client_name: Client's name for personalization
+        amount_due: Amount that is past due
+        portal_url: URL to billing portal
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+    amount_text = f"${amount_due:.2f}" if amount_due else "your outstanding balance"
+    portal_link = portal_url or "https://portal.brightpathascendgroup.com/subscription"
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #f59e0b;">
+            <h1 style="color: #1e293b; margin: 0;">Subscription Past Due</h1>
+        </div>
+
+        <div style="padding: 30px 0;">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                Hi {first_name},
+            </p>
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                Your subscription payment of <strong>{amount_text}</strong> is past due.
+                Please update your payment information to continue receiving our services.
+            </p>
+
+            <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <p style="color: #92400e; margin: 0; font-weight: bold;">
+                    ⚠️ Your account access may be limited until payment is received.
+                </p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{portal_link}"
+                   style="background-color: #22c55e; color: white; padding: 14px 28px; text-decoration: none;
+                          border-radius: 6px; font-weight: bold; display: inline-block;">
+                    Update Payment
+                </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+                If you've already made a payment, please disregard this email.
+                If you have questions, contact our billing team.
+            </p>
+        </div>
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 12px;">
+                Brightpath Ascend Group<br>
+                <a href="mailto:billing@brightpathascendgroup.com" style="color: #22c55e;">billing@brightpathascendgroup.com</a>
+            </p>
+        </div>
+    </div>
+    """
+
+    return send_email(
+        to_email=client_email,
+        subject="Action Required: Subscription Past Due - Brightpath Ascend Group",
+        html_content=html_content
+    )
