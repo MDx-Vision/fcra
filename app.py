@@ -6531,13 +6531,16 @@ def api_revenue_export():
         import csv
         from io import StringIO
 
-        # Parse date filters
+        # Parse date filters with validation
         start_date = None
         end_date = None
-        if request.args.get("start"):
-            start_date = datetime.fromisoformat(request.args.get("start"))
-        if request.args.get("end"):
-            end_date = datetime.fromisoformat(request.args.get("end"))
+        try:
+            if request.args.get("start"):
+                start_date = datetime.fromisoformat(request.args.get("start"))
+            if request.args.get("end"):
+                end_date = datetime.fromisoformat(request.args.get("end"))
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)"}), 400
 
         service = get_revenue_metrics_service(db)
         data = service.export_revenue_data(start_date, end_date)
