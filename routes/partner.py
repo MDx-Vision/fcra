@@ -23,6 +23,11 @@ def get_db():
     return SessionLocal()
 
 
+def get_tenant_client_ids(db, tenant_id):
+    """Get list of client IDs for a tenant - optimized query"""
+    return [tc.client_id for tc in db.query(TenantClient.client_id).filter_by(tenant_id=tenant_id).all()]
+
+
 def partner_login_required(f):
     """Decorator to require partner login"""
     @wraps(f)
@@ -381,7 +386,7 @@ def clients():
         tenant = db.query(WhiteLabelTenant).filter_by(id=session['partner_id']).first()
 
         # Get client IDs for this tenant
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant.id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant.id)
 
         # Get all clients
         clients_list = []
@@ -417,7 +422,7 @@ def get_clients():
         tenant_id = session['partner_id']
 
         # Get client IDs for this tenant
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant_id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant_id)
 
         if not tenant_client_ids:
             return jsonify({'clients': []})
@@ -456,7 +461,7 @@ def export_clients():
         tenant_id = session['partner_id']
 
         # Get client IDs for this tenant
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant_id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant_id)
 
         clients = []
         if tenant_client_ids:
@@ -638,7 +643,7 @@ def analytics():
         tenant = db.query(WhiteLabelTenant).filter_by(id=session['partner_id']).first()
 
         # Get client IDs
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant.id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant.id)
 
         # Calculate stats
         stats = {
@@ -710,7 +715,7 @@ def get_analytics_summary():
         tenant_id = session['partner_id']
 
         # Get client IDs
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant_id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant_id)
 
         stats = {
             'total_clients': len(tenant_client_ids),

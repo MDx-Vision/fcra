@@ -83,6 +83,12 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - New test functions: ~400+
 - Integration test coverage: NEW
 
+4. **Code Quality Fixes**:
+   - `app.py`: Added datetime validation with try/except in revenue export
+   - `routes/partner.py`: Optimized N+1 query (6 queries → 1 GROUP BY query)
+   - `routes/partner.py`: Created `get_tenant_client_ids()` helper to reduce duplication
+   - Added SQLAlchemy `func` and `extract` imports for optimized queries
+
 ---
 
 ### Previous Work (2026-01-04) - Session: "SOP HTML + Credit Import Wiring"
