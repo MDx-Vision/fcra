@@ -6531,13 +6531,16 @@ def api_revenue_export():
         import csv
         from io import StringIO
 
-        # Parse date filters
+        # Parse date filters with validation
         start_date = None
         end_date = None
-        if request.args.get("start"):
-            start_date = datetime.fromisoformat(request.args.get("start"))
-        if request.args.get("end"):
-            end_date = datetime.fromisoformat(request.args.get("end"))
+        try:
+            if request.args.get("start"):
+                start_date = datetime.fromisoformat(request.args.get("start"))
+            if request.args.get("end"):
+                end_date = datetime.fromisoformat(request.args.get("end"))
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)"}), 400
 
         service = get_revenue_metrics_service(db)
         data = service.export_revenue_data(start_date, end_date)
@@ -8286,6 +8289,12 @@ def portal_redirect():
     if query_string:
         return redirect(f"/portal/login?{query_string}")
     return redirect(url_for("portal_login"))
+
+
+@app.route("/portal/guide")
+def client_portal_guide():
+    """Client Portal SOP/Guide - public page with all screenshots"""
+    return render_template('portal/client_guide.html')
 
 
 @app.route("/portal/<token>")
@@ -12801,6 +12810,162 @@ def api_download_freeze_letters(batch_id):
                 return send_file(batch.generated_pdf_path, as_attachment=True)
             return jsonify({"success": False, "error": "PDF not found"}), 404
     except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================================
+# PII CORRECTION LETTERS API
+# ============================================================================
+
+
+@app.route("/api/pii-correction/generate", methods=["POST"])
+def api_generate_pii_correction():
+    """
+    Generate PII correction letters for the Big 3 CRAs.
+
+    Request body:
+    {
+        "client_id": 123,
+        "bureaus": ["Equifax", "Experian", "TransUnion"],  // optional, defaults to all 3
+        "incorrect_pii": {
+            "names": ["JOHN DOE JR", "J DOE"],
+            "addresses": ["123 OLD ST, OLDTOWN, CA 90000"],
+            "phones": ["555-123-4567"],
+            "employers": ["OLD COMPANY INC"]
+        },
+        "correct_pii": {  // optional, uses client data if not provided
+            "name": "John Doe",
+            "address": "456 New St, Newtown, CA 90001",
+            "phone": "555-987-6543",
+            "employer": "Current Company LLC"
+        },
+        "case_number": "PII-20260103-1234"  // optional
+    }
+    """
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get("client_id")
+        bureaus = data.get("bureaus")
+        incorrect_pii = data.get("incorrect_pii", {})
+        correct_pii = data.get("correct_pii")
+        case_number = data.get("case_number")
+
+        if not client_id:
+            return jsonify({"success": False, "error": "Client ID is required"}), 400
+
+        if not incorrect_pii:
+            return jsonify({"success": False, "error": "incorrect_pii is required - specify what PII to correct"}), 400
+
+        # Validate at least one incorrect item
+        has_items = any(
+            incorrect_pii.get(key)
+            for key in ["names", "addresses", "phones", "employers", "ssn_variations"]
+        )
+        if not has_items:
+            return jsonify({
+                "success": False,
+                "error": "incorrect_pii must contain at least one item (names, addresses, phones, employers, or ssn_variations)"
+            }), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        from services.pii_correction_service import generate_pii_correction_letters
+
+        result = generate_pii_correction_letters(
+            client_id=client_id,
+            incorrect_pii=incorrect_pii,
+            correct_pii=correct_pii,
+            bureaus=bureaus,
+            case_number=case_number,
+        )
+
+        if result.get("success"):
+            return jsonify({
+                "success": True,
+                "batch_id": result.get("batch_id"),
+                "pdf_path": result.get("pdf_path"),
+                "docx_path": result.get("docx_path"),
+                "bureaus_included": result.get("bureaus_included"),
+                "total_letters": result.get("total_letters"),
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/pii-correction/download/<path:file_path>")
+def api_download_pii_correction(file_path):
+    """Download PII correction letters PDF or DOCX"""
+    try:
+        # Security: ensure path is within expected directory
+        if not file_path.startswith("static/client_uploads/"):
+            file_path = f"static/client_uploads/{file_path}"
+
+        if not os.path.exists(file_path):
+            return jsonify({"success": False, "error": "File not found"}), 404
+
+        return send_file(file_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/pii-correction", methods=["POST"])
+def api_client_pii_correction(client_id):
+    """
+    Generate PII correction letters for a specific client.
+    Convenience endpoint that takes client_id from URL.
+    """
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        data = request.json or {}
+        incorrect_pii = data.get("incorrect_pii", {})
+        correct_pii = data.get("correct_pii")
+        bureaus = data.get("bureaus")
+        case_number = data.get("case_number")
+
+        if not incorrect_pii:
+            return jsonify({"success": False, "error": "incorrect_pii is required"}), 400
+
+        from services.pii_correction_service import generate_pii_correction_letters
+
+        result = generate_pii_correction_letters(
+            client_id=client_id,
+            incorrect_pii=incorrect_pii,
+            correct_pii=correct_pii,
+            bureaus=bureaus,
+            case_number=case_number,
+        )
+
+        if result.get("success"):
+            return jsonify({
+                "success": True,
+                "batch_id": result.get("batch_id"),
+                "pdf_path": result.get("pdf_path"),
+                "docx_path": result.get("docx_path"),
+                "bureaus_included": result.get("bureaus_included"),
+                "total_letters": result.get("total_letters"),
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
@@ -33677,6 +33842,310 @@ def api_view_credit_import_report_raw(credential_id):
 
 
 # ============================================================
+# AUTO-PULL CREDIT REPORTS API (P25)
+# ============================================================
+
+
+@app.route("/api/auto-pull/stats", methods=["GET"])
+@require_staff()
+def api_auto_pull_stats():
+    """Get auto-pull dashboard statistics"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    stats = service.get_pull_stats()
+
+    return jsonify({"success": True, **stats})
+
+
+@app.route("/api/auto-pull/services", methods=["GET"])
+@require_staff()
+def api_auto_pull_services():
+    """Get list of supported credit monitoring services"""
+    from services.auto_pull_service import AutoPullService
+
+    services = AutoPullService.get_supported_services()
+    frequencies = AutoPullService.get_frequencies()
+
+    return jsonify({
+        "success": True,
+        "services": services,
+        "frequencies": frequencies
+    })
+
+
+@app.route("/api/auto-pull/credentials", methods=["GET"])
+@require_staff()
+def api_auto_pull_credentials():
+    """Get all active credentials"""
+    from services.auto_pull_service import AutoPullService
+
+    client_id = request.args.get("client_id", type=int)
+    service_name = request.args.get("service")
+
+    service = AutoPullService()
+    credentials = service.get_credentials(
+        client_id=client_id,
+        service_name=service_name
+    )
+
+    return jsonify({"success": True, "credentials": credentials})
+
+
+@app.route("/api/auto-pull/credentials", methods=["POST"])
+@require_staff()
+def api_auto_pull_add_credential():
+    """Add new credential for auto-pull"""
+    from services.auto_pull_service import AutoPullService
+
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    required = ["client_id", "service_name", "username", "password"]
+    for field in required:
+        if not data.get(field):
+            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+
+    service = AutoPullService()
+    result = service.add_credential(
+        client_id=data["client_id"],
+        service_name=data["service_name"],
+        username=data["username"],
+        password=data["password"],
+        ssn_last4=data.get("ssn_last4"),
+        import_frequency=data.get("import_frequency", "manual")
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/credentials/<int:credential_id>", methods=["PUT"])
+@require_staff()
+def api_auto_pull_update_credential(credential_id):
+    """Update credential settings"""
+    from services.auto_pull_service import AutoPullService
+
+    data = request.json or {}
+
+    service = AutoPullService()
+    result = service.update_credential(
+        credential_id=credential_id,
+        username=data.get("username"),
+        password=data.get("password"),
+        import_frequency=data.get("import_frequency"),
+        is_active=data.get("is_active")
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/credentials/<int:credential_id>", methods=["DELETE"])
+@require_staff()
+def api_auto_pull_delete_credential(credential_id):
+    """Deactivate a credential"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    result = service.delete_credential(credential_id)
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/pull/<int:credential_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_initiate(credential_id):
+    """Initiate a manual pull for a credential"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    result = service.initiate_pull(
+        credential_id=credential_id,
+        pull_type="manual",
+        triggered_by=f"staff_{staff_id}"
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/pull-client/<int:client_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_client(client_id):
+    """Pull all active credentials for a client"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    credentials = service.get_credentials(client_id=client_id)
+
+    results = {
+        "total": len(credentials),
+        "success": 0,
+        "failed": 0,
+        "pulls": []
+    }
+
+    for cred in credentials:
+        result = service.initiate_pull(
+            credential_id=cred["id"],
+            pull_type="manual",
+            triggered_by=f"staff_{staff_id}"
+        )
+
+        if result.get("success"):
+            results["success"] += 1
+        else:
+            results["failed"] += 1
+
+        results["pulls"].append({
+            "credential_id": cred["id"],
+            "service": cred["service_name"],
+            "success": result.get("success", False),
+            "error": result.get("error")
+        })
+
+    return jsonify({"success": True, **results})
+
+
+@app.route("/api/auto-pull/run-scheduled", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_auto_pull_run_scheduled():
+    """Run all scheduled pulls that are due"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    result = service.run_scheduled_pulls(triggered_by=f"staff_{staff_id}")
+
+    return jsonify({"success": True, **result})
+
+
+@app.route("/api/auto-pull/due", methods=["GET"])
+@require_staff()
+def api_auto_pull_due():
+    """Get credentials due for scheduled pull"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    due = service.get_due_pulls()
+
+    return jsonify({"success": True, "due": due, "count": len(due)})
+
+
+@app.route("/api/auto-pull/logs", methods=["GET"])
+@require_staff()
+def api_auto_pull_logs():
+    """Get pull logs"""
+    from services.auto_pull_service import AutoPullService
+
+    client_id = request.args.get("client_id", type=int)
+    credential_id = request.args.get("credential_id", type=int)
+    status = request.args.get("status")
+    limit = request.args.get("limit", 50, type=int)
+
+    service = AutoPullService()
+    logs = service.get_pull_logs(
+        client_id=client_id,
+        credential_id=credential_id,
+        status=status,
+        limit=limit
+    )
+
+    return jsonify({"success": True, "logs": logs})
+
+
+@app.route("/api/auto-pull/validate/<int:credential_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_validate(credential_id):
+    """Validate credentials"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    result = service.validate_credentials(credential_id)
+
+    return jsonify(result)
+
+
+@app.route("/dashboard/auto-pull", methods=["GET"])
+@require_staff()
+def dashboard_auto_pull():
+    """Auto-pull credit reports dashboard"""
+    from services.auto_pull_service import AutoPullService, SUPPORTED_SERVICES
+
+    service = AutoPullService()
+    stats = service.get_pull_stats()
+    credentials = service.get_credentials()
+    due_for_pull = service.get_due_pulls()
+    logs = service.get_pull_logs(limit=50)
+
+    # Calculate service stats for dashboard breakdown
+    service_stats = {}
+    for key in SUPPORTED_SERVICES:
+        service_creds = [c for c in credentials if c.get('service_name') == key]
+        service_logs = [l for l in logs if l.get('service_name') == key]
+        success_logs = [l for l in service_logs if l.get('status') == 'success']
+        service_stats[key] = {
+            'credentials': len(service_creds),
+            'pulls': len(service_logs),
+            'success': int((len(success_logs) / len(service_logs) * 100)) if service_logs else 0
+        }
+
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(["lead", "cancelled"])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "auto_pull.html",
+            active_page="auto-pull",
+            stats=stats,
+            services=SUPPORTED_SERVICES,
+            service_stats=service_stats,
+            credentials=credentials,
+            logs=logs,
+            due_for_pull=due_for_pull,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
+@app.route("/api/cron/auto-pull", methods=["GET", "POST"])
+def api_cron_auto_pull():
+    """Cron endpoint for running scheduled pulls"""
+    from services.auto_pull_service import AutoPullService
+
+    # Verify cron secret
+    cron_secret = os.environ.get("CRON_SECRET", "")
+    provided_secret = request.headers.get("X-Cron-Secret") or request.args.get("secret")
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({"success": False, "error": "Invalid cron secret"}), 403
+
+    service = AutoPullService()
+    result = service.run_scheduled_pulls(triggered_by="cron")
+
+    return jsonify({"success": True, **result})
+
+
+# ============================================================
 # AUTOMATION API ROUTES
 # ============================================================
 
@@ -35042,23 +35511,88 @@ def api_leads_capture():
 
         # Try to pull credit report if credentials provided
         preview_data = None
-        if monitoring_service and monitoring_service not in ['none', '']:
-            try:
-                # Attempt to import report using credit_import service
-                from services.credit_import import credit_import_service
+        monitoring_username = data.get('monitoring_username', '').strip()
+        monitoring_password = data.get('monitoring_password', '').strip()
+        ssn_last_four = data.get('ssn_last_four', '').strip()
 
-                # This would trigger the actual report pull
-                # For now, return mock preview data
-                preview_data = {
-                    'bureau': 'TransUnion',
-                    'score': '---',  # Would be actual score after pull
-                    'negative_items': '--',
-                    'total_accounts': '--'
+        if monitoring_service and monitoring_service not in ['none', ''] and monitoring_username and monitoring_password:
+            try:
+                import asyncio
+                from services.credit_import_automation import CreditImportAutomation
+
+                # Map service names to the format expected by automation
+                service_map = {
+                    'identityiq': 'IdentityIQ.com',
+                    'myscoreiq': 'MyScoreIQ.com',
+                    'smartcredit': 'SmartCredit.com',
+                    'myfreescorenow': 'MyFreeScoreNow.com',
+                    'privacyguard': 'PrivacyGuard.com',
                 }
+                service_key = service_map.get(monitoring_service.lower().replace('.com', '').replace(' ', ''), monitoring_service)
+
+                # Run the async import
+                async def do_import():
+                    automation = CreditImportAutomation()
+                    try:
+                        result = await automation.import_report(
+                            service_name=service_key,
+                            username=monitoring_username,
+                            password=monitoring_password,
+                            ssn_last4=ssn_last_four or '',
+                            client_id=client.id,
+                            client_name=client.name
+                        )
+                        return result
+                    finally:
+                        await automation._close_browser()
+
+                # Run async function
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    import_result = loop.run_until_complete(do_import())
+                finally:
+                    loop.close()
+
+                if import_result and import_result.get('success'):
+                    scores = import_result.get('scores', {})
+                    preview_data = {
+                        'bureau': 'TransUnion',
+                        'score': scores.get('transunion', scores.get('tu', '---')),
+                        'negative_items': import_result.get('negative_count', '--'),
+                        'total_accounts': import_result.get('account_count', '--'),
+                        'equifax_score': scores.get('equifax', scores.get('eq', '---')),
+                        'experian_score': scores.get('experian', scores.get('ex', '---')),
+                        'report_path': import_result.get('report_path')
+                    }
+
+                    # Update client with report info
+                    if import_result.get('report_path'):
+                        client.last_report_path = import_result.get('report_path')
+                        client.last_report_date = datetime.utcnow()
+                        db.commit()
+                else:
+                    # Import failed - return placeholder with error note
+                    preview_data = {
+                        'bureau': 'TransUnion',
+                        'score': '---',
+                        'negative_items': '--',
+                        'total_accounts': '--',
+                        'error': import_result.get('error', 'Could not pull report')
+                    }
 
             except Exception as e:
                 print(f"Credit import error: {e}")
-                # Continue without preview data
+                import traceback
+                traceback.print_exc()
+                # Return placeholder on error
+                preview_data = {
+                    'bureau': 'TransUnion',
+                    'score': '---',
+                    'negative_items': '--',
+                    'total_accounts': '--',
+                    'error': str(e)
+                }
 
         return jsonify({
             "success": True,
@@ -38316,6 +38850,1258 @@ def api_client_payment_plans(client_id):
 def dashboard_payment_plans():
     """Payment Plans management dashboard"""
     return render_template("payment_plans.html")
+
+
+# ==============================================================================
+# BUREAU RESPONSE TRACKING ENDPOINTS (P24)
+# ==============================================================================
+
+
+@app.route("/api/bureau-tracking/dashboard", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_dashboard():
+    """Get bureau response tracking dashboard summary"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify(summary)
+
+
+@app.route("/api/bureau-tracking", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_list():
+    """List all bureau dispute tracking records"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    bureau = request.args.get('bureau')
+    status = request.args.get('status')
+    client_id = request.args.get('client_id', type=int)
+
+    if client_id:
+        disputes = service.get_client_disputes(client_id, bureau=bureau, status=status)
+    else:
+        disputes = service.get_all_pending(bureau=bureau)
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_create():
+    """Track a new dispute sent to a bureau"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    # Parse sent_date
+    sent_date_str = data.get('sent_date')
+    if sent_date_str:
+        sent_date = datetime.strptime(sent_date_str, '%Y-%m-%d').date()
+    else:
+        sent_date = datetime.now().date()
+
+    result = service.track_dispute_sent(
+        client_id=data.get('client_id'),
+        bureau=data.get('bureau'),
+        sent_date=sent_date,
+        dispute_round=data.get('dispute_round', 1),
+        item_ids=data.get('item_ids'),
+        sent_method=data.get('sent_method', 'certified_mail'),
+        tracking_number=data.get('tracking_number'),
+        letter_id=data.get('letter_id'),
+        certified_mail_id=data.get('certified_mail_id'),
+        case_id=data.get('case_id'),
+        is_complex=data.get('is_complex', False),
+        sent_by_staff_id=session.get('staff_id'),
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_get(tracking_id):
+    """Get a specific tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    tracking = service.get_tracking(tracking_id)
+
+    if tracking:
+        return jsonify({"success": True, "tracking": tracking})
+    return jsonify({"success": False, "error": "Tracking record not found"}), 404
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/delivery", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_confirm_delivery(tracking_id):
+    """Confirm delivery of dispute letter"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    delivery_date = None
+    if data.get('delivery_date'):
+        delivery_date = datetime.strptime(data['delivery_date'], '%Y-%m-%d').date()
+
+    result = service.confirm_delivery(
+        tracking_id=tracking_id,
+        delivery_date=delivery_date,
+        recalculate_deadline=data.get('recalculate_deadline', True)
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/response", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_record_response(tracking_id):
+    """Record a response received from bureau"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    response_date_str = data.get('response_date')
+    if response_date_str:
+        response_date = datetime.strptime(response_date_str, '%Y-%m-%d').date()
+    else:
+        response_date = datetime.now().date()
+
+    result = service.record_response(
+        tracking_id=tracking_id,
+        response_date=response_date,
+        response_type=data.get('response_type'),
+        items_deleted=data.get('items_deleted', 0),
+        items_updated=data.get('items_updated', 0),
+        items_verified=data.get('items_verified', 0),
+        items_investigating=data.get('items_investigating', 0),
+        response_document_id=data.get('response_document_id'),
+        follow_up_required=data.get('follow_up_required', False),
+        follow_up_type=data.get('follow_up_type'),
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/link-response", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_link_response(tracking_id):
+    """Link a CRA response document to tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    result = service.link_cra_response(
+        tracking_id=tracking_id,
+        cra_response_id=data.get('cra_response_id')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/close", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_close(tracking_id):
+    """Close a tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    result = service.close_dispute(
+        tracking_id=tracking_id,
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/follow-up", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_complete_followup(tracking_id):
+    """Mark follow-up as completed"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    result = service.complete_follow_up(
+        tracking_id=tracking_id,
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/check-overdue", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_check_overdue():
+    """Check for overdue disputes and update status"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    result = service.check_overdue_disputes()
+
+    return jsonify(result)
+
+
+@app.route("/api/bureau-tracking/due-soon", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_due_soon():
+    """Get disputes due within N days"""
+    from services.bureau_response_service import BureauResponseService
+
+    days = request.args.get('days', 7, type=int)
+    service = BureauResponseService()
+    disputes = service.get_due_soon(days=days)
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking/overdue", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_overdue():
+    """Get all overdue disputes"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    disputes = service.get_overdue()
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking/bureau-breakdown", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_breakdown():
+    """Get breakdown by bureau"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    breakdown = service.get_bureau_breakdown()
+
+    return jsonify({"success": True, "breakdown": breakdown})
+
+
+@app.route("/api/bureau-tracking/export", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_export():
+    """Export tracking data as CSV"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+    import csv
+    import io
+
+    service = BureauResponseService()
+
+    client_id = request.args.get('client_id', type=int)
+    status = request.args.get('status')
+    bureau = request.args.get('bureau')
+
+    data = service.export_data(
+        client_id=client_id,
+        status=status,
+        bureau=bureau
+    )
+
+    # Create CSV
+    output = io.StringIO()
+    if data:
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = f"attachment; filename=bureau_tracking_{datetime.now().strftime('%Y%m%d')}.csv"
+    response.headers["Content-Type"] = "text/csv"
+
+    return response
+
+
+@app.route("/api/clients/<int:client_id>/bureau-tracking", methods=["GET"])
+@require_staff()
+def api_client_bureau_tracking(client_id):
+    """Get bureau tracking for a specific client"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    bureau = request.args.get('bureau')
+    dispute_round = request.args.get('round', type=int)
+
+    disputes = service.get_client_disputes(
+        client_id=client_id,
+        bureau=bureau,
+        dispute_round=dispute_round
+    )
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/dashboard/bureau-tracking", methods=["GET"])
+@require_staff()
+def dashboard_bureau_tracking():
+    """Bureau Response Tracking dashboard"""
+    from services.bureau_response_service import BureauResponseService
+
+    db = get_db()
+    try:
+        # Get dashboard summary stats
+        stats = BureauResponseService.get_dashboard_summary(db)
+
+        # Get bureau breakdown
+        bureau_stats = BureauResponseService.get_bureau_breakdown(db)
+
+        # Get all pending disputes for the table
+        disputes = BureauResponseService.get_pending(db)
+
+        # Get due soon (within 7 days)
+        due_soon = BureauResponseService.get_due_soon(db, days=7)
+
+        # Get overdue disputes
+        overdue = BureauResponseService.get_overdue(db)
+
+        # Get response type breakdown
+        response_types = BureauResponseService.get_response_type_breakdown(db)
+
+        # Get client list for the tracking modal
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(['lead', 'cancelled'])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "bureau_tracking.html",
+            active_page='bureau-tracking',
+            stats=stats,
+            bureau_stats=bureau_stats,
+            disputes=disputes,
+            due_soon=due_soon,
+            overdue=overdue,
+            response_types=response_types,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
+# =============================================================================
+# LETTER TEMPLATE BUILDER ENDPOINTS (P26)
+# =============================================================================
+
+@app.route("/api/letter-templates", methods=["GET"])
+@require_staff()
+def api_letter_templates_list():
+    """List letter templates with filtering"""
+    from services.letter_template_service import LetterTemplateService
+
+    category = request.args.get('category')
+    dispute_round = request.args.get('dispute_round', type=int)
+    target_type = request.args.get('target_type')
+    is_active = request.args.get('is_active', 'true').lower() == 'true'
+    search = request.args.get('search')
+    limit = request.args.get('limit', 100, type=int)
+    offset = request.args.get('offset', 0, type=int)
+
+    service = LetterTemplateService()
+    templates = service.list_templates(
+        category=category,
+        dispute_round=dispute_round,
+        target_type=target_type,
+        is_active=is_active,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+
+    return jsonify({
+        'success': True,
+        'templates': templates,
+        'count': len(templates),
+    })
+
+
+@app.route("/api/letter-templates", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_create():
+    """Create a new letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    required = ['name', 'code', 'category', 'content']
+    for field in required:
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+
+    service = LetterTemplateService()
+    result = service.create_template(
+        name=data['name'],
+        code=data['code'],
+        category=data['category'],
+        content=data['content'],
+        dispute_round=data.get('dispute_round'),
+        target_type=data.get('target_type', 'bureau'),
+        subject=data.get('subject'),
+        footer=data.get('footer'),
+        variables=data.get('variables'),
+        required_attachments=data.get('required_attachments'),
+        recommended_for=data.get('recommended_for'),
+        description=data.get('description'),
+        instructions=data.get('instructions'),
+        legal_basis=data.get('legal_basis'),
+        is_system=False,
+        created_by_staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_get(template_id):
+    """Get a single letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    template = service.get_template(template_id)
+
+    if not template:
+        return jsonify({'success': False, 'error': 'Template not found'}), 404
+
+    return jsonify({
+        'success': True,
+        'template': template,
+    })
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["PUT"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_update(template_id):
+    """Update a letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    service = LetterTemplateService()
+    result = service.update_template(
+        template_id=template_id,
+        updates=data,
+        change_summary=data.get('change_summary'),
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["DELETE"])
+@require_staff(roles=['admin'])
+def api_letter_templates_delete(template_id):
+    """Delete a letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.delete_template(template_id)
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/duplicate", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_duplicate(template_id):
+    """Duplicate an existing template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    if not data.get('new_name') or not data.get('new_code'):
+        return jsonify({'success': False, 'error': 'new_name and new_code are required'}), 400
+
+    service = LetterTemplateService()
+    result = service.duplicate_template(
+        template_id=template_id,
+        new_name=data['new_name'],
+        new_code=data['new_code'],
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/versions", methods=["GET"])
+@require_staff()
+def api_letter_templates_versions(template_id):
+    """Get version history for a template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    versions = service.get_template_versions(template_id)
+
+    return jsonify({
+        'success': True,
+        'versions': versions,
+        'count': len(versions),
+    })
+
+
+@app.route("/api/letter-templates/<int:template_id>/restore/<int:version_id>", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_restore(template_id, version_id):
+    """Restore a template to a previous version"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.restore_version(
+        template_id=template_id,
+        version_id=version_id,
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/render", methods=["POST"])
+@require_staff()
+def api_letter_templates_render(template_id):
+    """Render a template with variables"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    variables = data.get('variables', {}) if data else {}
+
+    service = LetterTemplateService()
+    result = service.render_template(template_id, variables)
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/generate", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_generate():
+    """Generate a letter from a template for a client"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    required = ['template_id', 'client_id', 'target_type', 'target_name']
+    for field in required:
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+
+    service = LetterTemplateService()
+    result = service.generate_letter(
+        template_id=data['template_id'],
+        client_id=data['client_id'],
+        target_type=data['target_type'],
+        target_name=data['target_name'],
+        custom_variables=data.get('custom_variables'),
+        staff_id=session.get('staff_id'),
+        case_id=data.get('case_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/generated", methods=["GET"])
+@require_staff()
+def api_letter_templates_generated_list():
+    """List generated letters"""
+    from services.letter_template_service import LetterTemplateService
+
+    client_id = request.args.get('client_id', type=int)
+    template_id = request.args.get('template_id', type=int)
+    status = request.args.get('status')
+    limit = request.args.get('limit', 50, type=int)
+    offset = request.args.get('offset', 0, type=int)
+
+    service = LetterTemplateService()
+    letters = service.list_generated_letters(
+        client_id=client_id,
+        template_id=template_id,
+        status=status,
+        limit=limit,
+        offset=offset,
+    )
+
+    return jsonify({
+        'success': True,
+        'letters': letters,
+        'count': len(letters),
+    })
+
+
+@app.route("/api/letter-templates/generated/<int:letter_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_generated_get(letter_id):
+    """Get a generated letter"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    letter = service.get_generated_letter(letter_id)
+
+    if not letter:
+        return jsonify({'success': False, 'error': 'Letter not found'}), 404
+
+    return jsonify({
+        'success': True,
+        'letter': letter,
+    })
+
+
+@app.route("/api/letter-templates/generated/<int:letter_id>/status", methods=["PUT"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_generated_status(letter_id):
+    """Update generated letter status"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data or not data.get('status'):
+        return jsonify({'success': False, 'error': 'Status is required'}), 400
+
+    service = LetterTemplateService()
+    result = service.update_letter_status(
+        letter_id=letter_id,
+        status=data['status'],
+        sent_method=data.get('sent_method'),
+        tracking_number=data.get('tracking_number'),
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/dashboard", methods=["GET"])
+@require_staff()
+def api_letter_templates_dashboard():
+    """Get dashboard summary for letter templates"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify({
+        'success': True,
+        **summary,
+    })
+
+
+@app.route("/api/letter-templates/categories", methods=["GET"])
+@require_staff()
+def api_letter_templates_categories():
+    """Get available template categories"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'categories': LetterTemplateService.get_categories(),
+    })
+
+
+@app.route("/api/letter-templates/target-types", methods=["GET"])
+@require_staff()
+def api_letter_templates_target_types():
+    """Get available target types"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'target_types': LetterTemplateService.get_target_types(),
+    })
+
+
+@app.route("/api/letter-templates/variables", methods=["GET"])
+@require_staff()
+def api_letter_templates_variables():
+    """Get common template variables"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'variables': LetterTemplateService.get_common_variables(),
+    })
+
+
+@app.route("/api/letter-templates/client-variables/<int:client_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_client_variables(client_id):
+    """Get variable values for a specific client"""
+    from services.letter_template_service import LetterTemplateService
+
+    bureau = request.args.get('bureau')
+
+    service = LetterTemplateService()
+    variables = service.get_client_variables(client_id, bureau)
+
+    return jsonify({
+        'success': True,
+        'variables': variables,
+    })
+
+
+@app.route("/api/letter-templates/seed", methods=["POST"])
+@require_staff(roles=['admin'])
+def api_letter_templates_seed():
+    """Seed default letter templates"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.seed_default_templates()
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/dashboard/letter-templates", methods=["GET"])
+@require_staff()
+def dashboard_letter_templates():
+    """Letter Template Builder dashboard page"""
+    from services.letter_template_service import LetterTemplateService, CATEGORIES, TARGET_TYPES
+
+    service = LetterTemplateService()
+    summary = service.get_dashboard_summary()
+    templates = service.list_templates(is_active=True)
+
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(['lead', 'cancelled'])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "letter_templates.html",
+            active_page='letter-templates',
+            stats=summary,
+            templates=templates,
+            categories=CATEGORIES,
+            target_types=TARGET_TYPES,
+            clients=clients,
+        )
+    finally:
+        db.close()
+
+
+# ==================== VOICEMAIL DROP ENDPOINTS ====================
+
+@app.route("/api/voicemail/recordings", methods=["GET"])
+@require_staff()
+def api_voicemail_recordings_list():
+    """List all voicemail recordings"""
+    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+
+    service = get_voicemail_drop_service()
+    try:
+        category = request.args.get('category')
+        active_only = request.args.get('active', 'true').lower() == 'true'
+
+        recordings = service.get_recordings(category=category, active_only=active_only)
+        return jsonify({
+            'success': True,
+            'recordings': [r.to_dict() for r in recordings],
+            'categories': VOICEMAIL_CATEGORIES
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings", methods=["POST"])
+@require_staff()
+def api_voicemail_recordings_create():
+    """Create a new voicemail recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+    import os
+    from werkzeug.utils import secure_filename
+
+    # Check for file upload
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+    # Validate file type
+    allowed_extensions = {'mp3', 'wav', 'm4a'}
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in allowed_extensions:
+        return jsonify({'success': False, 'error': f'Invalid file type. Allowed: {", ".join(allowed_extensions)}'}), 400
+
+    # Save file
+    filename = secure_filename(file.filename)
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    filename = f"{timestamp}_{filename}"
+
+    upload_dir = os.path.join('static', 'voicemail')
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, filename)
+    file.save(file_path)
+
+    # Get file size
+    file_size = os.path.getsize(file_path)
+
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.create_recording(
+            name=request.form.get('name', filename),
+            description=request.form.get('description'),
+            category=request.form.get('category', 'custom'),
+            file_path=f'/static/voicemail/{filename}',
+            file_name=filename,
+            file_size_bytes=file_size,
+            duration_seconds=int(request.form.get('duration', 0)) or None,
+            format=ext,
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        }), 201
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_recording_get(recording_id):
+    """Get a specific recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.get_recording(recording_id)
+        if not recording:
+            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["PUT"])
+@require_staff()
+def api_voicemail_recording_update(recording_id):
+    """Update a recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json() or {}
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.update_recording(
+            recording_id,
+            name=data.get('name'),
+            description=data.get('description'),
+            category=data.get('category'),
+            is_active=data.get('is_active')
+        )
+
+        if not recording:
+            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["DELETE"])
+@require_staff()
+def api_voicemail_recording_delete(recording_id):
+    """Delete (deactivate) a recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.delete_recording(recording_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops", methods=["GET"])
+@require_staff()
+def api_voicemail_drops_list():
+    """List voicemail drops with filters"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        drops = service.get_drops(
+            client_id=request.args.get('client_id', type=int),
+            recording_id=request.args.get('recording_id', type=int),
+            status=request.args.get('status'),
+            provider=request.args.get('provider'),
+            limit=request.args.get('limit', 100, type=int),
+            offset=request.args.get('offset', 0, type=int)
+        )
+
+        return jsonify({
+            'success': True,
+            'drops': [d.to_dict() for d in drops]
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops", methods=["POST"])
+@require_staff()
+def api_voicemail_drops_send():
+    """Send a voicemail drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+
+    if not data.get('recording_id') or not data.get('client_id'):
+        return jsonify({'success': False, 'error': 'recording_id and client_id required'}), 400
+
+    # Parse scheduled time if provided
+    scheduled_at = None
+    if data.get('scheduled_at'):
+        try:
+            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.send_drop(
+            recording_id=data['recording_id'],
+            client_id=data['client_id'],
+            phone_number=data.get('phone_number'),
+            trigger_type=data.get('trigger_type', 'manual'),
+            trigger_event=data.get('trigger_event'),
+            scheduled_at=scheduled_at,
+            staff_id=session.get('staff_id'),
+            provider=data.get('provider')
+        )
+
+        status = 201 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_drop_get(drop_id):
+    """Get a specific drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        drop = service.get_drop(drop_id)
+        if not drop:
+            return jsonify({'success': False, 'error': 'Drop not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'drop': drop.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>/retry", methods=["POST"])
+@require_staff()
+def api_voicemail_drop_retry(drop_id):
+    """Retry a failed drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.retry_drop(drop_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>/cancel", methods=["POST"])
+@require_staff()
+def api_voicemail_drop_cancel(drop_id):
+    """Cancel a pending drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.cancel_drop(drop_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/clients/<int:client_id>/history", methods=["GET"])
+@require_staff()
+def api_voicemail_client_history(client_id):
+    """Get voicemail drop history for a client"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        history = service.get_client_drop_history(
+            client_id,
+            limit=request.args.get('limit', 20, type=int)
+        )
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns", methods=["GET"])
+@require_staff()
+def api_voicemail_campaigns_list():
+    """List all campaigns"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        campaigns = service.get_campaigns(
+            status=request.args.get('status')
+        )
+        return jsonify({
+            'success': True,
+            'campaigns': [c.to_dict() for c in campaigns]
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns", methods=["POST"])
+@require_staff()
+def api_voicemail_campaigns_create():
+    """Create a new campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+
+    if not data.get('name') or not data.get('recording_id'):
+        return jsonify({'success': False, 'error': 'name and recording_id required'}), 400
+
+    # Parse scheduled time if provided
+    scheduled_at = None
+    if data.get('scheduled_at'):
+        try:
+            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        campaign = service.create_campaign(
+            name=data['name'],
+            recording_id=data['recording_id'],
+            description=data.get('description'),
+            target_type=data.get('target_type', 'manual'),
+            target_filters=data.get('target_filters'),
+            scheduled_at=scheduled_at,
+            send_window_start=data.get('send_window_start'),
+            send_window_end=data.get('send_window_end'),
+            send_days=data.get('send_days'),
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify({
+            'success': True,
+            'campaign': campaign.to_dict()
+        }), 201
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_campaign_get(campaign_id):
+    """Get a specific campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        campaign = service.get_campaign(campaign_id)
+        if not campaign:
+            return jsonify({'success': False, 'error': 'Campaign not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'campaign': campaign.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/targets", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_add_targets(campaign_id):
+    """Add targets to a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data or not data.get('client_ids'):
+        return jsonify({'success': False, 'error': 'client_ids array required'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.add_targets_to_campaign(campaign_id, data['client_ids'])
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/start", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_start(campaign_id):
+    """Start a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.start_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/pause", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_pause(campaign_id):
+    """Pause a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.pause_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/cancel", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_cancel(campaign_id):
+    """Cancel a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.cancel_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/stats", methods=["GET"])
+@require_staff()
+def api_voicemail_stats():
+    """Get voicemail drop statistics"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        stats = service.get_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/dashboard/voicemail", methods=["GET"])
+@require_staff()
+def dashboard_voicemail():
+    """Voicemail Drops dashboard page"""
+    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+
+    service = get_voicemail_drop_service()
+    try:
+        stats = service.get_stats()
+        recordings = service.get_recordings(active_only=True, limit=50)
+        recent_drops = service.get_drops(limit=20)
+        campaigns = service.get_campaigns(limit=10)
+
+        db = get_db()
+        try:
+            clients = db.query(Client).filter(
+                Client.phone.isnot(None),
+                Client.dispute_status.notin_(['lead', 'cancelled'])
+            ).order_by(Client.name).all()
+
+            return render_template(
+                "voicemail_drops.html",
+                active_page='voicemail',
+                stats=stats,
+                recordings=recordings,
+                recent_drops=recent_drops,
+                campaigns=campaigns,
+                categories=VOICEMAIL_CATEGORIES,
+                clients=clients,
+            )
+        finally:
+            db.close()
+    finally:
+        service.db.close()
 
 
 @app.errorhandler(404)

@@ -20,20 +20,71 @@
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="quick-actions">
-    <a href="{{ url_for('portal.documents') }}" class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
-        <div style="font-size: 32px; margin-bottom: 12px;">📤</div>
-        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Upload Document</div>
-    </a>
-    <a href="{{ url_for('portal.dashboard') }}" class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
-        <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
-        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">View Case</div>
-    </a>
-    <a href="{{ url_for('portal.learn') }}" class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
-        <div style="font-size: 32px; margin-bottom: 12px;">📖</div>
-        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Learn FCRA</div>
-    </a>
+<!-- Billing & Account Section - Consolidated from nav -->
+<div class="card animate-fade-in-up" data-delay="100" style="margin-bottom: 24px;" data-testid="billing-section">
+    <div class="card-title">💳 Billing & Account</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" class="two-col-responsive">
+        <a href="{{ url_for('portal.portal_invoices') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📄</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Invoices</div>
+                <div style="font-size: 12px; color: #6b7280;">View billing history</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.portal_payment_plans') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📋</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Payment Plans</div>
+                <div style="font-size: 12px; color: #6b7280;">Manage your payments</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.subscription') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">💳</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Subscription</div>
+                <div style="font-size: 12px; color: #6b7280;">Manage subscription</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.status') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">❄️</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Freeze Status</div>
+                <div style="font-size: 12px; color: #6b7280;">Bureau freeze tracking</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.booking') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📞</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Book a Call</div>
+                <div style="font-size: 12px; color: #6b7280;">Schedule appointment</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.learn') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📖</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Learn FCRA</div>
+                <div style="font-size: 12px; color: #6b7280;">Education resources</div>
+            </div>
+        </a>
+    </div>
+    <!-- Logout Button -->
+    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+        <a href="{{ url_for('portal_logout') }}" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #fee2e2; color: #991b1b; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+            🚪 Sign Out
+        </a>
+    </div>
 </div>
 
 <!-- Personal Info -->
@@ -58,19 +109,6 @@
         </div>
     </div>
     <p style="font-size: 13px; color: #9ca3af; margin: 20px 0 0 0;">Need to update your contact information? Contact us and we'll help.</p>
-</div>
-
-<!-- Detailed Status Link -->
-<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px; background: #f9fafb; border: 1px solid #e5e7eb;" data-testid="status-link">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-        <div>
-            <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 4px 0;">📋 Detailed Bureau Status</h4>
-            <p style="font-size: 14px; color: #6b7280; margin: 0;">View and update individual account statuses across all bureaus.</p>
-        </div>
-        <a href="{{ url_for('portal.status') }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 600; color: #1e3a5f; cursor: pointer; text-decoration: none;">
-            View Status →
-        </a>
-    </div>
 </div>
 
 <!-- Contact -->

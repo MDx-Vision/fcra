@@ -223,9 +223,14 @@ class StripeWebhooksService:
         self._log_timeline(client.id, 'payment_failed', 'Payment Failed',
                           f'Your payment could not be processed: {error_message}')
 
-        # TODO: Send email notification about failed payment
-        # from services.email_service import send_payment_failed_email
-        # send_payment_failed_email(client, error_message)
+        # Send email notification about failed payment
+        from services.email_service import send_payment_failed_email
+        if client.email:
+            send_payment_failed_email(
+                client_email=client.email,
+                client_name=client.name or "Client",
+                error_message=error_message
+            )
 
         return {
             'client_id': client_id,

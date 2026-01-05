@@ -2,8 +2,28 @@
 <html lang="en" data-portal="client">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Client Portal{% endblock %} - Brightpath</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>{% block title %}Client Portal{% endblock %} - Brightpath Ascend Group</title>
+
+    {# PWA Meta Tags #}
+    <meta name="description" content="Manage your credit repair journey with Brightpath Ascend Group">
+    <meta name="theme-color" content="#14b8a6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Brightpath">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Brightpath">
+    <meta name="msapplication-TileColor" content="#14b8a6">
+    <meta name="msapplication-TileImage" content="/static/images/pwa/icon-144x144.png">
+
+    {# PWA Manifest #}
+    <link rel="manifest" href="/static/manifest.json">
+
+    {# PWA Icons #}
+    <link rel="apple-touch-icon" href="/static/images/pwa/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/pwa/icon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/pwa/icon-72x72.png">
 
     {# Theme: Flash Prevention (must be before stylesheets) #}
     {% include 'includes/theme_head.html' %}
@@ -43,9 +63,9 @@
 
     <header class="header" role="banner" data-testid="portal-header">
         <div class="logo" data-testid="portal-logo">
-            <img src="/static/images/logo.png" alt="Brightpath Ascend" style="height: 40px; margin-right: 10px; background: transparent;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend Group" style="height: 40px; margin-right: 10px; background: transparent;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
             <div class="logo-icon" style="display: none;">⚖️</div>
-            <span class="logo-text">Brightpath</span>
+            <span class="logo-text">Brightpath Ascend</span>
         </div>
         <div class="user-info" data-testid="user-info">
             {# Theme Toggle Button #}
@@ -61,85 +81,40 @@
     {% set is_onboarding = client_stage in ['onboarding', 'pending_payment', 'payment_failed'] %}
 
     <nav class="nav-tabs" role="navigation" aria-label="Main navigation" data-testid="portal-nav">
-        {# Setup/Onboarding - always visible during onboarding phase #}
-        {% if is_onboarding or has_full_access %}
+        {% if is_onboarding %}
+        {# ============ ONBOARDING NAV (3 items) ============ #}
         <a href="{{ url_for('portal.onboarding') }}" class="nav-tab {% if active_tab == 'onboarding' %}active{% endif %}" data-testid="nav-onboarding">
             <span class="nav-icon" aria-hidden="true">🚀</span><span class="nav-label">Setup</span>
         </a>
-        {% endif %}
-
-        {# Agreements - visible during onboarding phase #}
-        {% if is_onboarding %}
         <a href="{{ url_for('portal.croa_agreements') }}" class="nav-tab {% if active_tab == 'agreements' %}active{% endif %}" data-testid="nav-agreements">
             <span class="nav-icon" aria-hidden="true">📝</span><span class="nav-label">Agreements</span>
         </a>
-        {% endif %}
-
-        {# Case Dashboard - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="nav-case">
-            <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
-        </a>
-        {% endif %}
-
-        {# Journey/Timeline - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.timeline') }}" class="nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="nav-timeline">
-            <span class="nav-icon" aria-hidden="true">📈</span><span class="nav-label">Journey</span>
-        </a>
-        {% endif %}
-
-        {# Documents - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
-            <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
-        </a>
-        {% endif %}
-
-        {# Messages - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.messages') }}" class="nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="nav-messages">
-            <span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Messages</span>
-        </a>
-        {% endif %}
-
-        {# Invoices - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.portal_invoices') }}" class="nav-tab {% if active_tab == 'invoices' %}active{% endif %}" data-testid="nav-invoices">
-            <span class="nav-icon" aria-hidden="true">📄</span><span class="nav-label">Invoices</span>
-        </a>
-        {% endif %}
-
-        {# Payment Plans - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.portal_payment_plans') }}" class="nav-tab {% if active_tab == 'payment-plans' %}active{% endif %}" data-testid="nav-payment-plans">
-            <span class="nav-icon" aria-hidden="true">💳</span><span class="nav-label">Plans</span>
-        </a>
-        {% endif %}
-
-        {# Book Call - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.booking') }}" class="nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="nav-booking">
-            <span class="nav-icon" aria-hidden="true">📞</span><span class="nav-label">Book Call</span>
-        </a>
-        {% endif %}
-
-        {# Subscription - only for active clients #}
-        {% if has_full_access %}
-        <a href="{{ url_for('portal.subscription') }}" class="nav-tab {% if active_tab == 'subscription' %}active{% endif %}" data-testid="nav-subscription">
-            <span class="nav-icon" aria-hidden="true">💳</span><span class="nav-label">Subscription</span>
-        </a>
-        {% endif %}
-
-        {# Profile - always visible during onboarding and active #}
         <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="nav-profile">
             <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
         </a>
-
-        {# Logout - always visible #}
-        <a href="{{ url_for('portal_logout') }}" class="nav-tab" data-testid="nav-logout">
-            <span class="nav-icon" aria-hidden="true">🚪</span><span class="nav-label">Logout</span>
+        {% else %}
+        {# ============ ACTIVE CLIENT NAV (6 items) ============ #}
+        {# 1. Case - Main dashboard #}
+        <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="nav-case">
+            <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
         </a>
+        {# 2. Documents - Upload & view files #}
+        <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
+            <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
+        </a>
+        {# 3. Communication - Messages + Book Call combined #}
+        <a href="{{ url_for('portal.communication') }}" class="nav-tab {% if active_tab == 'communication' or active_tab == 'messages' or active_tab == 'booking' %}active{% endif %}" data-testid="nav-communication">
+            <span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Contact</span>
+        </a>
+        {# 4. Journey - Progress timeline #}
+        <a href="{{ url_for('portal.timeline') }}" class="nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="nav-timeline">
+            <span class="nav-icon" aria-hidden="true">📈</span><span class="nav-label">Journey</span>
+        </a>
+        {# 6. Profile - Settings & Billing (contains Invoices, Plans, Subscription, Status) #}
+        <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="nav-profile">
+            <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
+        </a>
+        {% endif %}
     </nav>
 
     <main class="main-content" id="main-content" role="main">
@@ -156,9 +131,8 @@
     </main>
 
     <nav class="mobile-nav" data-testid="mobile-nav">
-        {# Mobile nav also respects stage-based access #}
         {% if is_onboarding %}
-        {# Onboarding mobile nav: Setup and Profile only #}
+        {# Onboarding mobile nav: 3 items #}
         <a href="{{ url_for('portal.onboarding') }}" class="mobile-nav-tab {% if active_tab == 'onboarding' %}active{% endif %}" data-testid="mobile-nav-onboarding">
             <span>🚀</span><span>Setup</span>
         </a>
@@ -168,27 +142,21 @@
         <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>
         </a>
-        <a href="{{ url_for('portal_logout') }}" class="mobile-nav-tab" data-testid="mobile-nav-logout">
-            <span>🚪</span><span>Exit</span>
-        </a>
         {% else %}
-        {# Active clients get full mobile nav #}
+        {# Active clients mobile nav: 5 items #}
         <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="mobile-nav-case">
             <span>📊</span><span>Case</span>
         </a>
         <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="mobile-nav-documents">
             <span>📁</span><span>Docs</span>
         </a>
-        <a href="{{ url_for('portal.messages') }}" class="mobile-nav-tab {% if active_tab == 'messages' %}active{% endif %}" data-testid="mobile-nav-messages">
-            <span>💬</span><span>Chat</span>
+        <a href="{{ url_for('portal.communication') }}" class="mobile-nav-tab {% if active_tab == 'communication' or active_tab == 'messages' or active_tab == 'booking' %}active{% endif %}" data-testid="mobile-nav-communication">
+            <span>💬</span><span>Contact</span>
         </a>
-        <a href="{{ url_for('portal.booking') }}" class="mobile-nav-tab {% if active_tab == 'booking' %}active{% endif %}" data-testid="mobile-nav-booking">
-            <span>📞</span><span>Book</span>
+        <a href="{{ url_for('portal.timeline') }}" class="mobile-nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="mobile-nav-timeline">
+            <span>📈</span><span>Journey</span>
         </a>
-        <a href="{{ url_for('portal.subscription') }}" class="mobile-nav-tab {% if active_tab == 'subscription' %}active{% endif %}" data-testid="mobile-nav-subscription">
-            <span>💳</span><span>Billing</span>
-        </a>
-        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
+        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>
         </a>
         {% endif %}
@@ -196,6 +164,7 @@
 
     <script src="{{ url_for('static', filename='js/portal-redesign.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-service.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

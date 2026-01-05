@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-03T03:24:57.825096",
+  "timestamp": "2026-01-04T00:17:14.771723",
   "browsers_tested": 3,
   "browsers_passed": 0,
   "browsers_failed": 3,
@@ -20,7 +20,7 @@
         "/dashboard/settlements: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
         "Form test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
         "CSS test: Page.goto: net::ERR_CONNECTION_REFUSED at http://l",
-        "No buttons found"
+        "Button test: Page.query_selector_all: Execution context was des"
       ]
     },
     "firefox": {

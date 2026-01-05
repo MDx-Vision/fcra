@@ -748,7 +748,14 @@ class SubscriptionService:
         db_subscription.status = 'past_due'
         self.db.commit()
 
-        # TODO: Trigger dunning email/SMS
+        # Send dunning email
+        client = self.db.query(Client).filter(Client.id == db_subscription.client_id).first()
+        if client and client.email:
+            from services.email_service import send_subscription_past_due_email
+            send_subscription_past_due_email(
+                client_email=client.email,
+                client_name=client.name or "Client"
+            )
 
         return {'handled': True, 'subscription_id': subscription_id, 'status': 'past_due'}
 

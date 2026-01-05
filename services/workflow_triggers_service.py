@@ -105,6 +105,11 @@ ACTION_TYPES = {
         "description": "Send a browser push notification",
         "params": ["notification_type", "title", "body", "url"],
     },
+    "send_voicemail": {
+        "name": "Send Voicemail Drop",
+        "description": "Send a ringless voicemail to client",
+        "params": ["recording_id", "recording_name"],
+    },
 }
 
 DEFAULT_TRIGGERS = [
@@ -894,6 +899,10 @@ class WorkflowTriggersService:
                 result = WorkflowTriggersService._action_send_push(
                     session, client_id, params, event_data
                 )
+            elif action_type == "send_voicemail":
+                result = WorkflowTriggersService._action_send_voicemail(
+                    session, client_id, params, event_data
+                )
             else:
                 result = {
                     "success": False,
@@ -1140,6 +1149,45 @@ class WorkflowTriggersService:
                 },
                 "error": result.get("error"),
             }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def _action_send_voicemail(
+        session, client_id: int, params: Dict[str, Any], event_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Send voicemail drop action"""
+        try:
+            from services.voicemail_drop_service import get_voicemail_drop_service
+
+            recording_id = params.get("recording_id")
+            if not recording_id:
+                return {"success": False, "error": "No recording_id specified"}
+
+            client = session.query(Client).filter(Client.id == client_id).first()
+            if not client or not client.phone:
+                return {"success": False, "error": "Client phone not found"}
+
+            service = get_voicemail_drop_service()
+            try:
+                result = service.send_drop(
+                    recording_id=int(recording_id),
+                    client_id=client_id,
+                    trigger_type="workflow",
+                    trigger_event=event_data.get("event_type", "workflow_trigger")
+                )
+
+                return {
+                    "success": result.get("success", False),
+                    "result": {
+                        "drop_id": result.get("drop_id"),
+                        "status": result.get("status"),
+                    },
+                    "error": result.get("error"),
+                }
+            finally:
+                service.db.close()
+
         except Exception as e:
             return {"success": False, "error": str(e)}
 

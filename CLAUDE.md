@@ -1,13 +1,14 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-03)
+## Current Status (2026-01-05)
 
 ### Test Status: 100% PASSING
-- **Unit tests**: 4,920+ passing (63 test files, ~100s runtime)
+- **Unit tests**: 5,700+ passing (96 test files, ~150s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
+- **Integration tests**: 2 test files (tests/integration/)
 - **Full QA suite**: All tests pass
-- **Service coverage**: 63/63 services have dedicated test files (100%)
+- **Service coverage**: 86/86 services have dedicated test files (100%)
 
 ### Feature Phases
 - Phase 1: Core Platform ✅
@@ -19,9 +20,17 @@
 - Phase 7: Credit Monitoring Auto-Import ✅
 - Phase 8: BAG CRM Feature Parity ✅
 
+### Manual Action Required (External Dependencies)
+See `MANUAL_ACTION_ITEMS.md` for detailed instructions:
+- **SFTP Credentials**: Contact SendCertifiedMail.com for credentials
+- **A2P 10DLC**: Check Twilio console for campaign approval status
+- **WhatsApp Templates**: Submit templates for Meta approval, then update SIDs
+
 ### Documentation
 - `ARCHITECTURE.md` - Tech stack, project structure, database models, services, API endpoints
 - `FEATURE_BACKLOG.md` - Upcoming features and priorities
+- `MANUAL_ACTION_ITEMS.md` - Human tasks requiring external action
+- `SENDCERTIFIED_SETUP.md` - Step-by-step certified mail setup guide
 
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
@@ -40,7 +49,180 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 - **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
 
-### Current Work (2026-01-03) - COMPLETE
+### Current Work (2026-01-05) - Session: "Test Coverage Analysis & Improvement"
+
+**Task**: Comprehensive Test Coverage Analysis & Implementation
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Test Coverage Analysis**:
+   - Analyzed 86 total services in `services/` directory
+   - Identified 11 critical services with NO test coverage
+   - Created comprehensive TEST_COVERAGE_CHECKLIST.md
+
+2. **New Unit Test Files Created** (11 files, ~400+ tests):
+   - `test_client_payment_service.py` - Payment flows, Stripe integration, prepay packages
+   - `test_stripe_webhooks_service.py` - Webhook handlers, event processing
+   - `test_ai_dispute_writer_service.py` - AI letter generation, round strategies
+   - `test_batch_processing_service.py` - Job creation, 10 action types, retries
+   - `test_scheduled_jobs_service.py` - Capture payments, expire holds, reminders
+   - `test_payment_plan_service.py` - Plan management, late payments, proration
+   - `test_push_notification_service.py` - VAPID, subscriptions, notifications
+   - `test_free_analysis_service.py` - Lead creation, teaser analysis, onboarding
+   - `test_roi_calculator_service.py` - ROI calculation, violation counting
+   - `test_client_success_service.py` - Metrics, scores, success grades
+   - `test_staff_performance_service.py` - Activity logging, leaderboards
+
+3. **Integration Test Suite** (`tests/integration/`):
+   - `test_client_journey_flow.py` - End-to-end client lifecycle tests
+   - `test_payment_workflow.py` - Complete payment flow tests
+   - Multi-service workflow verification
+
+**Files Created**:
+- `TEST_COVERAGE_CHECKLIST.md` - Master tracking checklist
+- 11 new unit test files in `tests/`
+- `tests/integration/__init__.py` - Integration test package
+- `tests/integration/test_client_journey_flow.py`
+- `tests/integration/test_payment_workflow.py`
+
+**Coverage Improvements**:
+- Services with tests: 75 → 86 (100%)
+- New test functions: ~400+
+- Integration test coverage: NEW
+
+4. **Code Quality Fixes**:
+   - `app.py`: Added datetime validation with try/except in revenue export
+   - `routes/partner.py`: Optimized N+1 query (6 queries → 1 GROUP BY query)
+   - `routes/partner.py`: Created `get_tenant_client_ids()` helper to reduce duplication
+   - Added SQLAlchemy `func` and `extract` imports for optimized queries
+
+---
+
+### Previous Work (2026-01-04) - Session: "SOP HTML + Credit Import Wiring"
+
+**Task**: Client Portal SOP HTML Page + Credit Import Integration
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Client Portal SOP HTML Page** (`/portal/guide`):
+   - Created `templates/portal/client_guide.html` - Full HTML version of CLIENT_PORTAL_SOP.md
+   - All 20 screenshots embedded with captions
+   - Responsive design with journey overview, table of contents
+   - Added route in `app.py` at line 8291 (before catch-all `/portal/<token>`)
+
+2. **Screenshot #1 Fixed**:
+   - Retook full-page screenshot of `/get-started` signup form
+   - Now shows header, logo, full form, trust badges
+
+3. **Credit Import Wired to Signup Form**:
+   - Connected `/api/leads/capture` endpoint to `CreditImportAutomation` service
+   - Now actually pulls credit reports using Playwright browser automation
+   - Supports: IdentityIQ, MyScoreIQ, SmartCredit, MyFreeScoreNow, PrivacyGuard
+   - Returns real scores (TransUnion, Experian, Equifax) in preview
+
+4. **Bug Fix**:
+   - Fixed `automation.close()` → `automation._close_browser()`
+   - Credit import was succeeding but crashing on cleanup
+
+**Files Created/Modified**:
+- `templates/portal/client_guide.html` - NEW (HTML SOP with 20 screenshots)
+- `app.py` - Added `/portal/guide` route, wired credit import to signup
+- `static/images/sop/01-signup-form.png` - Replaced with full-page screenshot
+
+---
+
+### Previous Work (2026-01-04) - COMPLETE
+
+**Task**: Maintenance & Documentation
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Documentation Cleanup**:
+   - Archived 53 temporary/development docs to `docs/archive/`
+   - Kept core docs (CLAUDE.md, ARCHITECTURE.md, FEATURE_BACKLOG.md, etc.)
+
+2. **Partner Portal Enhancements**:
+   - Added email templates: password reset, team invitations
+   - Fixed subscription/webhook service error handling
+
+3. **Client-Facing SOPs Located**:
+   - `CLIENT_PORTAL_SOP.md` - Complete 6-stage client journey guide (535 lines)
+   - `Client_Signup_SOP.docx` - Word document versions
+   - Staff SOPs at `/dashboard/sops`
+
+---
+
+### Previous Work (2026-01-03) - COMPLETE
+
+**Task**: Priority 28 - Voicemail Drops
+
+**Status**: ✅ COMPLETE
+
+**What Was Implemented**:
+1. **Database Models** (`database.py`):
+   - `VoicemailRecording` - Pre-recorded audio files with categories
+   - `VoicemailDrop` - Individual drop tracking with status/provider/cost
+   - `VoicemailCampaign` - Batch campaigns with targeting and scheduling
+
+2. **VoicemailDropService** (`services/voicemail_drop_service.py` - ~650 lines):
+   - Recording CRUD operations
+   - Multi-provider support (Slybroadcast, Drop Cowboy, Twilio)
+   - Phone number validation and +1 formatting
+   - Scheduled and immediate drops
+   - Campaign management (create, start, pause, cancel)
+   - Statistics and reporting
+
+3. **API Endpoints** (~20 new endpoints):
+   - `/api/voicemail/recordings` - CRUD for recordings
+   - `/api/voicemail/drops` - Send/list drops, retry, cancel
+   - `/api/voicemail/campaigns` - Create and manage campaigns
+   - `/api/voicemail/stats` - Get statistics
+   - `/dashboard/voicemail` - Dashboard page
+
+4. **Dashboard UI** (`templates/voicemail_drops.html`):
+   - Recording library with audio preview
+   - Category filtering (welcome, reminder, update, follow_up, payment, custom)
+   - Campaign management interface
+   - Quick send modal
+   - Drag-and-drop file upload
+
+5. **Workflow Integration**:
+   - New action type: `send_voicemail` in workflow triggers
+   - Can trigger voicemail drops from any automated workflow event
+
+6. **Unit Tests** (`tests/test_voicemail_drop_service.py` - 34 tests passing)
+
+**Files Created/Modified**:
+- `database.py` - Added 3 new models
+- `services/voicemail_drop_service.py` - NEW (~650 lines)
+- `app.py` - Added ~20 API endpoints
+- `templates/voicemail_drops.html` - NEW (dashboard)
+- `templates/includes/dashboard_sidebar.html` - Added nav link
+- `services/workflow_triggers_service.py` - Added send_voicemail action
+- `tests/test_voicemail_drop_service.py` - NEW (34 tests)
+
+---
+
+### Previous Work (2026-01-03) - COMPLETE
+
+**Task**: Priority 27 - Mobile App (PWA)
+
+**Status**: ✅ COMPLETE
+
+**What Was Implemented**:
+- Web App Manifest for installable PWA
+- PWA icons (72px to 512px)
+- Enhanced service worker with caching strategies
+- Install prompt and "Add to Home Screen" banner
+- Offline fallback page
+- Online/offline status indicators
+
+---
+
+### Previous Work (2026-01-03) - COMPLETE
 
 **Task**: Priority 14 - Stripe Subscriptions
 

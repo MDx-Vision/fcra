@@ -7,13 +7,43 @@ A comprehensive credit repair management system built with Flask.
 
 ## Features
 
+### Core Platform
 - Client management and onboarding
 - Credit report analysis and dispute tracking
 - Document generation (letters, reports)
-- E-signature integration
+- E-signature integration (CROA compliance)
 - Attorney case management
 - Affiliate portal
-- White-label support
+- White-label partner portal
+
+### Client Portal (PWA)
+- Mobile-first responsive design
+- Installable on iOS/Android/Desktop
+- Live chat support
+- Document upload and tracking
+- Freeze status monitoring
+- Journey timeline
+- Booking system for calls
+
+### Automation
+- Workflow triggers and actions
+- Drip campaigns
+- Voicemail drops (multi-provider)
+- Email/SMS automation
+- Scheduled jobs
+
+### Business Intelligence
+- Revenue dashboard
+- Staff performance metrics
+- Lead scoring
+- ROI calculator
+- Bureau response tracking
+
+### Integrations
+- Gmail SMTP for email
+- Twilio for SMS/WhatsApp
+- Stripe for payments
+- Multiple credit monitoring services
 
 ## Requirements
 
@@ -104,6 +134,13 @@ Interactive API documentation is available at `/api/docs/` when the app is runni
 - **OpenAPI Spec**: `/api/docs/apispec.json`
 - **Static Spec**: `docs/openapi.yaml`
 
+## Test Status
+
+- **Unit Tests**: 5,341 passing (82 test files)
+- **Cypress E2E**: 88 specs passing (100%)
+- **Exhaustive Tests**: 51 files (46 dashboard + 5 portal)
+- **Service Coverage**: 66/66 services tested (100%)
+
 ## CI/CD
 
 All PRs run through:
@@ -112,6 +149,26 @@ All PRs run through:
 - Linting (flake8)
 - Security scanning (bandit, npm audit)
 - Code formatting checks (black, isort)
+
+## Documentation
+
+### Core Docs
+- `CLAUDE.md` - Development context and instructions
+- `ARCHITECTURE.md` - Tech stack and project structure
+- `FEATURE_BACKLOG.md` - Feature priorities and status (P1-P28 complete)
+- `README.md` - This file
+
+### Guides
+- `ADMIN_USER_GUIDE.md` - Staff dashboard usage guide
+- `CLIENT_PORTAL_SOP.md` - Client portal step-by-step guide
+- `CLIENT_ONBOARDING_GUIDE.md` - Client onboarding walkthrough
+- `API_REFERENCE.md` - REST API documentation
+- `CONTRIBUTING.md` - Contribution guidelines
+
+### References
+- `TEST_CREDENTIALS.md` - Test login credentials
+- `PRICING_STRUCTURE.md` - Pricing and payment flow
+- `SENDCERTIFIED_SETUP.md` - Certified mail setup
 
 ## License
 

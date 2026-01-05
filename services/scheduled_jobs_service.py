@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 from database import SessionLocal, Client, CROAProgress
+from services.email_service import send_payment_reminder_email, send_payment_failed_email
 
 logger = logging.getLogger(__name__)
 
@@ -214,19 +215,24 @@ class ScheduledJobsService:
             for client in upcoming_clients:
                 try:
                     # Send reminder email
-                    # TODO: Integrate with email service
-                    # from services.email_service import send_payment_reminder
-                    # send_payment_reminder(client)
+                    client_name = f"{client.first_name or ''} {client.last_name or ''}".strip() or "Client"
+                    send_payment_reminder_email(
+                        client_email=client.email,
+                        client_name=client_name,
+                        amount_due=client.round_1_amount_due or 298.00,
+                        due_date="tomorrow"
+                    )
 
                     results['sent'] += 1
                     results['details'].append({
                         'client_id': client.id,
                         'email': client.email,
                         'type': 'upcoming_payment',
-                        'status': 'queued'
+                        'status': 'sent'
                     })
 
                 except Exception as e:
+                    logger.error(f"Failed to send payment reminder to {client.email}: {e}")
                     results['details'].append({
                         'client_id': client.id,
                         'email': client.email,
@@ -243,17 +249,22 @@ class ScheduledJobsService:
             for client in failed_clients:
                 try:
                     # Send retry payment email
-                    # TODO: Integrate with email service
+                    client_name = f"{client.first_name or ''} {client.last_name or ''}".strip() or "Client"
+                    send_payment_failed_email(
+                        client_email=client.email,
+                        client_name=client_name
+                    )
 
                     results['sent'] += 1
                     results['details'].append({
                         'client_id': client.id,
                         'email': client.email,
                         'type': 'payment_failed',
-                        'status': 'queued'
+                        'status': 'sent'
                     })
 
                 except Exception as e:
+                    logger.error(f"Failed to send payment failed email to {client.email}: {e}")
                     results['details'].append({
                         'client_id': client.id,
                         'email': client.email,

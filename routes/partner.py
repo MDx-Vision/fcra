@@ -12,6 +12,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
+from sqlalchemy import func, extract
 from database import SessionLocal, WhiteLabelTenant, TenantUser, TenantClient, Client, Staff
 
 partner_bp = Blueprint('partner', __name__, url_prefix='/partner')
@@ -20,6 +21,11 @@ partner_bp = Blueprint('partner', __name__, url_prefix='/partner')
 def get_db():
     """Get database session"""
     return SessionLocal()
+
+
+def get_tenant_client_ids(db, tenant_id):
+    """Get list of client IDs for a tenant - optimized query"""
+    return [tc.client_id for tc in db.query(TenantClient.client_id).filter_by(tenant_id=tenant_id).all()]
 
 
 def partner_login_required(f):
@@ -135,7 +141,14 @@ def forgot_password():
                 tenant.password_reset_expires = datetime.utcnow() + timedelta(hours=24)
                 db.commit()
 
-                # TODO: Send password reset email
+                # Send password reset email
+                from services.email_service import send_partner_password_reset_email
+                reset_url = url_for('partner.reset_password', token=token, _external=True)
+                send_partner_password_reset_email(
+                    email=tenant.admin_email,
+                    reset_url=reset_url,
+                    tenant_name=tenant.company_name
+                )
                 flash('If an account exists with that email, a password reset link has been sent', 'success')
             else:
                 # Don't reveal if email exists
@@ -373,7 +386,7 @@ def clients():
         tenant = db.query(WhiteLabelTenant).filter_by(id=session['partner_id']).first()
 
         # Get client IDs for this tenant
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant.id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant.id)
 
         # Get all clients
         clients_list = []
@@ -409,7 +422,7 @@ def get_clients():
         tenant_id = session['partner_id']
 
         # Get client IDs for this tenant
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant_id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant_id)
 
         if not tenant_client_ids:
             return jsonify({'clients': []})
@@ -448,7 +461,7 @@ def export_clients():
         tenant_id = session['partner_id']
 
         # Get client IDs for this tenant
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant_id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant_id)
 
         clients = []
         if tenant_client_ids:
@@ -572,7 +585,16 @@ def invite_team_member():
         db.add(tenant_user)
         db.commit()
 
-        # TODO: Send invitation email
+        # Send invitation email
+        from services.email_service import send_partner_team_invitation_email
+        login_url = url_for('partner.login', _external=True)
+        tenant = db.query(WhiteLabelTenant).filter_by(id=tenant_id).first()
+        send_partner_team_invitation_email(
+            email=email,
+            login_url=login_url,
+            tenant_name=tenant.company_name if tenant else "Partner Portal",
+            role=role
+        )
 
         return jsonify({'success': True, 'message': 'Team member invited successfully'})
     except Exception as e:
@@ -621,7 +643,7 @@ def analytics():
         tenant = db.query(WhiteLabelTenant).filter_by(id=session['partner_id']).first()
 
         # Get client IDs
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant.id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant.id)
 
         # Calculate stats
         stats = {
@@ -636,24 +658,42 @@ def analytics():
             stats['active_clients'] = sum(1 for c in clients if c.status in ['active', 'in_progress'])
             stats['completed_cases'] = sum(1 for c in clients if c.status == 'complete')
 
-        # Monthly client acquisition (last 6 months)
+        # Monthly client acquisition (last 6 months) - optimized single query
         monthly_data = []
+        six_months_ago = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(days=150)
+
+        # Build month labels for last 6 months
+        month_labels = {}
         for i in range(6):
-            month_start = datetime.utcnow().replace(day=1) - timedelta(days=30*i)
-            month_start = month_start.replace(hour=0, minute=0, second=0, microsecond=0)
-            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
+            month_date = datetime.utcnow().replace(day=1) - timedelta(days=30*i)
+            month_key = (month_date.year, month_date.month)
+            month_labels[month_key] = month_date.strftime('%b %Y')
 
-            count = 0
-            if tenant_client_ids:
-                count = db.query(Client).filter(
-                    Client.id.in_(tenant_client_ids),
-                    Client.created_at >= month_start,
-                    Client.created_at <= month_end
-                ).count()
+        # Single GROUP BY query instead of 6 separate queries
+        monthly_counts = {}
+        if tenant_client_ids:
+            results = db.query(
+                extract('year', Client.created_at).label('year'),
+                extract('month', Client.created_at).label('month'),
+                func.count(Client.id).label('count')
+            ).filter(
+                Client.id.in_(tenant_client_ids),
+                Client.created_at >= six_months_ago
+            ).group_by(
+                extract('year', Client.created_at),
+                extract('month', Client.created_at)
+            ).all()
 
-            monthly_data.insert(0, {
-                'month': month_start.strftime('%b %Y'),
-                'count': count
+            for row in results:
+                monthly_counts[(int(row.year), int(row.month))] = row.count
+
+        # Build response with counts (default 0 for months with no data)
+        for i in range(5, -1, -1):  # Reverse order for chronological
+            month_date = datetime.utcnow().replace(day=1) - timedelta(days=30*i)
+            month_key = (month_date.year, month_date.month)
+            monthly_data.append({
+                'month': month_date.strftime('%b %Y'),
+                'count': monthly_counts.get(month_key, 0)
             })
 
         return render_template(
@@ -675,7 +715,7 @@ def get_analytics_summary():
         tenant_id = session['partner_id']
 
         # Get client IDs
-        tenant_client_ids = [tc.client_id for tc in db.query(TenantClient).filter_by(tenant_id=tenant_id).all()]
+        tenant_client_ids = get_tenant_client_ids(db, tenant_id)
 
         stats = {
             'total_clients': len(tenant_client_ids),
