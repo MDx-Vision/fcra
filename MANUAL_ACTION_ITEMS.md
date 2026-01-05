@@ -23,26 +23,42 @@
 
 **Status**: ⏳ Awaiting Credentials
 **Blocking**: Automated certified mail sending
+**Detailed Guide**: See `SENDCERTIFIED_SETUP.md` for step-by-step instructions
+
+### Current Progress
+
+| Step | Status | Notes |
+|------|--------|-------|
+| IP Whitelisted | ✅ Done | Claudia confirmed |
+| Mailing Profile Created | ⏳ **YOU** | Do in portal |
+| Test Work Order Submitted | ⏳ **YOU** | Do in portal |
+| SFTP Credentials Received | ⏳ Waiting | Claudia sends after test |
+| SFTP Configured & Tested | ⏳ Waiting | Claude configures |
 
 ### What You Need To Do
 
-1. **Contact SendCertifiedMail.com**
-   - Request SFTP credentials for your account
-   - They will provide: hostname, username, password/key, port
+1. **Log into SendCertified Portal**
 
-2. **Add to Environment Variables**
-   ```bash
-   # Add to .env file
-   SENDCERTIFIED_SFTP_HOST=sftp.sendcertifiedmail.com
-   SENDCERTIFIED_SFTP_USER=your_username
-   SENDCERTIFIED_SFTP_PASSWORD=your_password
-   SENDCERTIFIED_SFTP_PORT=22
-   ```
+2. **Create Mailing Profile** (Return Address)
+   - Red Navigation Bar → Management → Mailing Profiles → Add New
+   - Enter test client info and save
+   - Note the ID number
 
-3. **Test Connection**
-   - Go to `/dashboard/va-approval`
-   - Click "Test SFTP Connection"
-   - Verify green status indicator
+3. **Submit Test Work Order**
+   - Red Navigation Bar → Address Letters → Submit Custom Work Order
+   - Select: "Test/Proof data only"
+   - Select: "Full service print and mail"
+   - Upload: `/static/test_files/sendcertified_address_list.csv`
+   - Upload: `/static/test_files/sample_dispute_letter.pdf`
+   - Submit
+
+4. **Wait for Claudia Wood** (SendCertified Support)
+   - She will review your test submission
+   - She will send SFTP credentials
+
+5. **Share Credentials with Claude**
+   - Once you receive: host, username, password, port
+   - Claude will add to `.env` and test connection
 
 ### Files Ready (No Code Changes Needed)
 - `services/sendcertified_service.py` - Mail generation

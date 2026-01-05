@@ -30,6 +30,7 @@ See `MANUAL_ACTION_ITEMS.md` for detailed instructions:
 - `ARCHITECTURE.md` - Tech stack, project structure, database models, services, API endpoints
 - `FEATURE_BACKLOG.md` - Upcoming features and priorities
 - `MANUAL_ACTION_ITEMS.md` - Human tasks requiring external action
+- `SENDCERTIFIED_SETUP.md` - Step-by-step certified mail setup guide
 
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
