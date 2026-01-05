@@ -480,6 +480,75 @@ def send_payment_failed_email(client_email: str, client_name: str, error_message
     )
 
 
+def send_payment_reminder_email(client_email: str, client_name: str, amount_due: float = None, due_date: str = None, portal_url: str = None):
+    """
+    Send reminder for upcoming payment.
+
+    Args:
+        client_email: Client's email address
+        client_name: Client's name for personalization
+        amount_due: Amount due
+        due_date: When payment is due
+        portal_url: URL to client portal
+    """
+    first_name = client_name.split()[0] if client_name else "there"
+    amount_text = f"${amount_due:.2f}" if amount_due else "your scheduled payment"
+    due_text = f" on {due_date}" if due_date else " soon"
+    portal_link = portal_url or "https://portal.brightpathascendgroup.com"
+
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 2px solid #22c55e;">
+            <h1 style="color: #1e293b; margin: 0;">Payment Reminder</h1>
+        </div>
+
+        <div style="padding: 30px 0;">
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                Hi {first_name},
+            </p>
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                This is a friendly reminder that {amount_text} is due{due_text}.
+            </p>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+                <p style="color: #166534; font-size: 14px; margin: 0;">Amount Due</p>
+                <p style="color: #15803d; font-size: 28px; font-weight: bold; margin: 10px 0;">{amount_text}</p>
+                <p style="color: #166534; font-size: 14px; margin: 0;">Due{due_text}</p>
+            </div>
+
+            <p style="color: #334155; font-size: 16px; line-height: 1.6;">
+                To ensure uninterrupted service, please make sure your payment method is up to date.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{portal_link}"
+                   style="background-color: #22c55e; color: white; padding: 14px 28px; text-decoration: none;
+                          border-radius: 6px; font-weight: bold; display: inline-block;">
+                    View Account
+                </a>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; line-height: 1.5;">
+                If you have any questions about your account, please don't hesitate to reach out.
+            </p>
+        </div>
+
+        <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <p style="color: #94a3b8; font-size: 12px;">
+                Brightpath Ascend Group<br>
+                <a href="mailto:support@brightpathascendgroup.com" style="color: #22c55e;">support@brightpathascendgroup.com</a>
+            </p>
+        </div>
+    </div>
+    """
+
+    return send_email(
+        to_email=client_email,
+        subject="Payment Reminder - Brightpath Ascend Group",
+        html_content=html_content
+    )
+
+
 def send_subscription_past_due_email(client_email: str, client_name: str, amount_due: float = None, portal_url: str = None):
     """
     Send dunning email for past-due subscription.
