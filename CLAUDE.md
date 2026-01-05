@@ -3,12 +3,12 @@
 ## Current Status (2026-01-05)
 
 ### Test Status: 100% PASSING
-- **Unit tests**: 5,700+ passing (95 test files, ~150s runtime)
+- **Unit tests**: 5,700+ passing (96 test files, ~150s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Integration tests**: 2 test files (tests/integration/)
 - **Full QA suite**: All tests pass
-- **Service coverage**: 77/77 services have dedicated test files (100%)
+- **Service coverage**: 86/86 services have dedicated test files (100%)
 
 ### Feature Phases
 - Phase 1: Core Platform ✅
@@ -20,9 +20,16 @@
 - Phase 7: Credit Monitoring Auto-Import ✅
 - Phase 8: BAG CRM Feature Parity ✅
 
+### Manual Action Required (External Dependencies)
+See `MANUAL_ACTION_ITEMS.md` for detailed instructions:
+- **SFTP Credentials**: Contact SendCertifiedMail.com for credentials
+- **A2P 10DLC**: Check Twilio console for campaign approval status
+- **WhatsApp Templates**: Submit templates for Meta approval, then update SIDs
+
 ### Documentation
 - `ARCHITECTURE.md` - Tech stack, project structure, database models, services, API endpoints
 - `FEATURE_BACKLOG.md` - Upcoming features and priorities
+- `MANUAL_ACTION_ITEMS.md` - Human tasks requiring external action
 
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
