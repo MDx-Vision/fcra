@@ -4,7 +4,7 @@
 Maintain and enhance the Brightpath Ascend FCRA Litigation Platform - a comprehensive credit repair and dispute management system with client portal, staff dashboard, and partner portal.
 
 ## Current Phase
-Phase 6: Maintenance & Enhancement
+Phase 7: Quick Wins Bundle (QW-1, QW-2, QW-3)
 
 ## Phases
 
@@ -72,6 +72,12 @@ Phase 6: Maintenance & Enhancement
 - [ ] Configure domain & SSL
 - [ ] Deploy and verify
 - **Status:** pending
+
+### Phase 7: Quick Wins Bundle
+- [ ] QW-1: Bulk Email/SMS Campaigns
+- [ ] QW-2: Client Testimonial Collection
+- [ ] QW-3: Progress Badges/Gamification
+- **Status:** in_progress
 
 ## Key Questions
 1. When will SFTP credentials be received from SendCertifiedMail.com?

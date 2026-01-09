@@ -6032,6 +6032,234 @@ class VoicemailCampaign(Base):
         }
 
 
+class BulkCampaign(Base):
+    """One-time bulk email/SMS campaigns to multiple clients"""
+    __tablename__ = 'bulk_campaigns'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+
+    # Campaign type
+    channel = Column(String(20), nullable=False)  # email, sms, both
+
+    # Content
+    email_template_id = Column(Integer, ForeignKey('email_templates.id'), index=True)
+    sms_template_id = Column(Integer, ForeignKey('sms_templates.id'), index=True)
+    email_subject = Column(String(500))  # Custom subject (overrides template)
+    email_content = Column(Text)  # Custom content (overrides template)
+    sms_content = Column(Text)  # Custom SMS content (overrides template)
+
+    # Targeting
+    target_type = Column(String(50), default='manual')  # manual, all_clients, status_filter, tag_filter
+    target_filters = Column(JSON)  # {"status": ["active"], "tags": [1,2], "date_range": {...}}
+
+    # Schedule
+    status = Column(String(50), default='draft')  # draft, scheduled, sending, completed, cancelled
+    scheduled_at = Column(DateTime)  # When to send (null = send immediately)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+
+    # Stats
+    total_recipients = Column(Integer, default=0)
+    sent_count = Column(Integer, default=0)
+    delivered_count = Column(Integer, default=0)
+    failed_count = Column(Integer, default=0)
+    opened_count = Column(Integer, default=0)
+    clicked_count = Column(Integer, default=0)
+
+    # Metadata
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'), index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    recipients = relationship('BulkCampaignRecipient', back_populates='campaign', lazy='dynamic')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'channel': self.channel,
+            'email_template_id': self.email_template_id,
+            'sms_template_id': self.sms_template_id,
+            'email_subject': self.email_subject,
+            'target_type': self.target_type,
+            'target_filters': self.target_filters,
+            'status': self.status,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'total_recipients': self.total_recipients,
+            'sent_count': self.sent_count,
+            'delivered_count': self.delivered_count,
+            'failed_count': self.failed_count,
+            'opened_count': self.opened_count,
+            'clicked_count': self.clicked_count,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class BulkCampaignRecipient(Base):
+    """Track individual recipients in a bulk campaign"""
+    __tablename__ = 'bulk_campaign_recipients'
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey('bulk_campaigns.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Delivery status per channel
+    email_status = Column(String(50))  # pending, sent, delivered, opened, clicked, bounced, failed
+    sms_status = Column(String(50))  # pending, sent, delivered, failed
+
+    # Tracking
+    email_sent_at = Column(DateTime)
+    email_opened_at = Column(DateTime)
+    email_clicked_at = Column(DateTime)
+    sms_sent_at = Column(DateTime)
+    sms_delivered_at = Column(DateTime)
+
+    # Error tracking
+    email_error = Column(Text)
+    sms_error = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    campaign = relationship('BulkCampaign', back_populates='recipients')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'campaign_id': self.campaign_id,
+            'client_id': self.client_id,
+            'email_status': self.email_status,
+            'sms_status': self.sms_status,
+            'email_sent_at': self.email_sent_at.isoformat() if self.email_sent_at else None,
+            'email_opened_at': self.email_opened_at.isoformat() if self.email_opened_at else None,
+            'sms_sent_at': self.sms_sent_at.isoformat() if self.sms_sent_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ClientTestimonial(Base):
+    """Client testimonials and reviews"""
+    __tablename__ = 'client_testimonials'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Content
+    rating = Column(Integer)  # 1-5 stars
+    testimonial_text = Column(Text)
+    video_url = Column(String(500))  # YouTube/Vimeo link
+
+    # Success metrics (at time of testimonial)
+    items_deleted = Column(Integer, default=0)
+    score_improvement = Column(Integer, default=0)
+
+    # Approval workflow
+    status = Column(String(50), default='pending')  # pending, approved, rejected, featured
+    approved_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    approved_at = Column(DateTime)
+
+    # Display settings
+    display_name = Column(String(100))  # How to show their name (e.g., "John D.")
+    show_on_website = Column(Boolean, default=False)
+    show_in_portal = Column(Boolean, default=True)
+
+    # Request tracking
+    request_sent_at = Column(DateTime)
+    request_token = Column(String(100), unique=True, index=True)
+    submitted_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'rating': self.rating,
+            'testimonial_text': self.testimonial_text,
+            'video_url': self.video_url,
+            'items_deleted': self.items_deleted,
+            'score_improvement': self.score_improvement,
+            'status': self.status,
+            'display_name': self.display_name,
+            'show_on_website': self.show_on_website,
+            'show_in_portal': self.show_in_portal,
+            'submitted_at': self.submitted_at.isoformat() if self.submitted_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ClientBadge(Base):
+    """Badges earned by clients for achievements"""
+    __tablename__ = 'client_badges'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    badge_type = Column(String(50), nullable=False)  # See BADGE_TYPES below
+
+    # When earned
+    earned_at = Column(DateTime, default=datetime.utcnow)
+
+    # Achievement data
+    achievement_value = Column(Integer)  # e.g., items deleted count, score improvement
+
+    # Notification tracking
+    notified = Column(Boolean, default=False)
+    notified_at = Column(DateTime)
+
+# Badge types:
+# first_login, documents_complete, agreements_signed, first_deletion,
+# five_deletions, ten_deletions, twenty_deletions, fifty_deletions,
+# score_up_25, score_up_50, score_up_100, round_1_complete, round_2_complete,
+# round_3_complete, case_complete, referred_friend, left_review
+
+
+class BadgeDefinition(Base):
+    """Define available badges and their criteria"""
+    __tablename__ = 'badge_definitions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    badge_type = Column(String(50), nullable=False, unique=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    icon = Column(String(50))  # emoji or icon class
+    color = Column(String(20))  # badge color
+
+    # Criteria
+    trigger_type = Column(String(50))  # event, threshold, manual
+    trigger_event = Column(String(50))  # e.g., document_uploaded, deletion_confirmed
+    trigger_threshold = Column(Integer)  # e.g., 5 for "five_deletions"
+
+    # Display
+    is_active = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'badge_type': self.badge_type,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'color': self.color,
+            'trigger_type': self.trigger_type,
+            'trigger_event': self.trigger_event,
+            'trigger_threshold': self.trigger_threshold,
+            'is_active': self.is_active,
+            'sort_order': self.sort_order,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
