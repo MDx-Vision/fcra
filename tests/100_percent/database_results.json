@@ -1,7 +1,8 @@
 {
-  "timestamp": "2026-01-04T00:17:16.533506",
-  "checks_passed": 0,
+  "timestamp": "2026-01-05T14:40:17.043806",
+  "checks_passed": 6,
   "issues_found": [
-    "Database connection error: connection to server at \"localhost\" (::1), port 5432 failed: Connection refused\n\tIs the server running on that host and accepting TCP/IP connections?\nconnection to server at \"localhost\" (127.0.0.1), port 5432 failed: Connection refused\n\tIs the server running on that host and accepting TCP/IP connections?\n"
+    "Duplicate emails found: [('newclient@test.com', 17), ('thefiltah@gmail.com', 2)]",
+    "Clients with null first_name: 18"
   ]
 }
