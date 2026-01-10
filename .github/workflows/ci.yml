@@ -53,7 +53,7 @@ jobs:
           SECRET_KEY: test-secret-key
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage.xml
@@ -171,7 +171,7 @@ jobs:
           PORT: "5001"
 
       - name: Upload screenshots on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: cypress-screenshots
@@ -179,7 +179,7 @@ jobs:
           retention-days: 7
 
       - name: Upload videos on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: cypress-videos
