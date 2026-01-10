@@ -10,7 +10,7 @@ sqlalchemy
 psycopg2-binary
 
 # AI
-anthropic==0.74.1
+anthropic==0.75.0
 
 # PDF Generation & Parsing
 fpdf2
