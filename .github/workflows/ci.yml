@@ -31,7 +31,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -53,11 +53,20 @@ jobs:
           SECRET_KEY: test-secret-key
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-report
           path: coverage.xml
           retention-days: 30
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Check coverage threshold
         run: |
@@ -112,7 +121,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -162,7 +171,7 @@ jobs:
           PORT: "5001"
 
       - name: Upload screenshots on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: cypress-screenshots
@@ -170,7 +179,7 @@ jobs:
           retention-days: 7
 
       - name: Upload videos on failure
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: failure()
         with:
           name: cypress-videos
@@ -182,7 +191,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -201,7 +210,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -243,7 +252,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -274,3 +283,41 @@ jobs:
             echo "⚠️ Some imports need sorting. Run: \`isort app.py services/ --profile black\`" >> $GITHUB_STEP_SUMMARY
           fi
           isort --check-only app.py services/ --profile black
+
+  type-check:
+    name: Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install mypy
+          pip install -r requirements.txt
+
+      - name: Run mypy
+        run: |
+          echo "## Type Check (mypy)" >> $GITHUB_STEP_SUMMARY
+          ERROR_COUNT=$(mypy app.py services/ --ignore-missing-imports 2>&1 | grep -c "error:" || echo "0")
+          echo "Found **$ERROR_COUNT** type errors" >> $GITHUB_STEP_SUMMARY
+          if [ "$ERROR_COUNT" -eq "0" ]; then
+            echo "✅ No type errors found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Type errors found (non-blocking)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<details><summary>View errors (first 50)</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            mypy app.py services/ --ignore-missing-imports 2>&1 | head -50 >> $GITHUB_STEP_SUMMARY || true
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
+          # Non-blocking for now
+          mypy app.py services/ --ignore-missing-imports || true

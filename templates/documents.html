@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document Center - Brightpath Ascend FCRA Platform</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     {% include 'includes/dashboard_sidebar_styles.html' %}
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -553,9 +554,10 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="/{{ upload.file_path }}" target="_blank" class="action-btn">View</a>
+                            <button class="action-btn primary" onclick="previewDocument('/{{ upload.file_path }}', '{{ upload.file_name }}', '/{{ upload.file_path }}')">Preview</button>
+                            <a href="/{{ upload.file_path }}" download class="action-btn">Download</a>
                             {% if not upload.reviewed %}
-                            <button class="action-btn primary" onclick="markReviewed({{ upload.id }})">Review</button>
+                            <button class="action-btn" onclick="markReviewed({{ upload.id }})" style="background: #dcfce7; border-color: #86efac; color: #166534;">Review</button>
                             {% endif %}
                             <button class="action-btn danger" onclick="deleteUpload({{ upload.id }})">Delete</button>
                         </td>
@@ -1064,5 +1066,6 @@
             dropzone.style.display = 'block';
         }
     </script>
+    <script src="/static/js/document-viewer.js"></script>
 </body>
 </html>

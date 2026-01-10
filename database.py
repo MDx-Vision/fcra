@@ -1,5 +1,6 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Boolean, Float, ForeignKey, event, JSON, text
+from typing import Any
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Date, Time, Boolean, Float, ForeignKey, event, JSON, text, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -41,7 +42,7 @@ def set_timeouts(dbapi_conn, connection_record):
     cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+Base: Any = declarative_base()
 
 STAFF_ROLES = {
     'admin': {
@@ -93,7 +94,16 @@ class Staff(Base):
     organization_id = Column(Integer, nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
+    # Two-Factor Authentication (2FA)
+    two_factor_enabled = Column(Boolean, default=False)
+    two_factor_secret = Column(String(255))  # Encrypted TOTP secret
+    two_factor_method = Column(String(20), default='totp')  # totp, sms, email
+    two_factor_backup_codes = Column(JSON)  # Hashed backup codes
+    two_factor_verified_at = Column(DateTime)
+    two_factor_last_used = Column(DateTime)
+    trusted_devices = Column(JSON)  # List of trusted device tokens
+
     @property
     def full_name(self):
         if self.first_name and self.last_name:
@@ -202,8 +212,46 @@ class Client(Base):
     starred = Column(Boolean, default=False)  # Star/favorite toggle
     phone_verified = Column(Boolean, default=False)  # Phone verified checkbox
     portal_posted = Column(Boolean, default=False)  # Portal posted status
+
+    # Communication preferences
+    sms_opt_in = Column(Boolean, default=False)  # Client opted in for SMS notifications
+    email_opt_in = Column(Boolean, default=True)  # Client opted in for email notifications (default on)
+
+    # WhatsApp preferences
+    whatsapp_opt_in = Column(Boolean, default=False)  # Client opted in for WhatsApp notifications
+    whatsapp_number = Column(String(20))  # WhatsApp number (may differ from phone)
+    whatsapp_verified = Column(Boolean, default=False)  # Number verified via code
+    whatsapp_verified_at = Column(DateTime)  # When verification completed
+    whatsapp_verification_code = Column(String(6))  # Current verification code
+    whatsapp_verification_expires = Column(DateTime)  # Code expiration
+
+    # Lead scoring
+    lead_score = Column(Integer, default=0)  # 0-100 priority score based on credit report analysis
+    lead_score_factors = Column(JSON)  # Breakdown of scoring factors
+    lead_scored_at = Column(DateTime)  # When the score was last calculated
+
     assigned_to = Column(Integer, ForeignKey('staff.id'), nullable=True)  # Assigned staff member
     employer_company = Column(String(255))  # Employer/company name for client
+
+    # Client Journey Stage Tracking
+    # Stages: lead, analysis_paid, onboarding, pending_payment, active, payment_failed, cancelled
+    client_stage = Column(String(30), default='lead', index=True)
+
+    # Free/Paid Analysis Tracking
+    free_analysis_token = Column(String(64), unique=True, index=True)  # Token for /analysis/<token> page
+    analysis_payment_id = Column(String(100))  # Stripe PaymentIntent ID for $199 analysis
+    analysis_paid_at = Column(DateTime)  # When they paid for full analysis
+    analysis_credit_applied = Column(Boolean, default=False)  # True when $199 credited to Round 1
+
+    # Round Payment Tracking
+    round_1_amount_due = Column(Integer)  # Amount due for Round 1 in cents (49700 - 19900 = 29800)
+    current_round_payment_id = Column(String(100))  # Stripe PaymentIntent for current round
+    last_round_paid_at = Column(DateTime)  # When the last round was paid
+    total_paid = Column(Integer, default=0)  # Total amount paid in cents
+
+    # Prepay Package Tracking
+    prepay_package = Column(String(50))  # starter, standard, complete, unlimited
+    prepay_rounds_remaining = Column(Integer)  # Rounds remaining if prepaid
 
     organization_id = Column(Integer, nullable=True, index=True)
     
@@ -803,7 +851,12 @@ class Affiliate(Base):
     commission_rate_2 = Column(Float, default=0.05)
     
     status = Column(String(50), default='pending')
-    
+
+    # Authentication for affiliate portal
+    password_hash = Column(String(255))
+    last_login = Column(DateTime)
+    login_count = Column(Integer, default=0)
+
     payout_method = Column(String(50))
     payout_details = Column(JSON)
     
@@ -842,6 +895,39 @@ class Commission(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     affiliate = relationship("Affiliate", backref="commissions")
+
+
+class AffiliatePayout(Base):
+    """Track affiliate payout history"""
+    __tablename__ = 'affiliate_payouts'
+
+    id = Column(Integer, primary_key=True, index=True)
+    affiliate_id = Column(Integer, ForeignKey('affiliates.id'), nullable=False)
+
+    # Payout details
+    amount = Column(Float, nullable=False)
+    payout_method = Column(String(50))  # paypal, bank_transfer, check, venmo
+    payout_reference = Column(String(255))  # Transaction ID, check number, etc.
+
+    # Status
+    status = Column(String(50), default='pending')  # pending, processing, completed, failed
+
+    # Period covered
+    period_start = Column(DateTime)
+    period_end = Column(DateTime)
+
+    # Commission IDs included in this payout
+    commission_ids = Column(JSON)  # List of commission IDs
+
+    notes = Column(Text)
+    processed_by_id = Column(Integer, ForeignKey('staff.id'))
+    processed_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    affiliate = relationship("Affiliate", backref="payouts")
+    processed_by = relationship("Staff")
 
 
 class SignupDraft(Base):
@@ -978,6 +1064,34 @@ class ClientUpload(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class TimelineEvent(Base):
+    """Track client journey events for visual timeline display"""
+    __tablename__ = 'timeline_events'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Event details
+    event_type = Column(String(50), nullable=False, index=True)  # signup, document_uploaded, analysis_complete, dispute_sent, response_received, etc.
+    event_category = Column(String(50), default='general')  # onboarding, documents, disputes, responses, status
+    title = Column(String(200), nullable=False)  # Human-readable title
+    description = Column(Text)  # Optional detailed description
+    icon = Column(String(50))  # Font Awesome icon class
+
+    # Related entities
+    related_type = Column(String(50))  # dispute_letter, client_upload, analysis, cra_response, etc.
+    related_id = Column(Integer)  # ID of the related entity
+
+    # Metadata
+    metadata_json = Column(JSON)  # Extra event data (bureau, round, etc.)
+    is_milestone = Column(Boolean, default=False)  # Major events shown prominently
+    is_visible = Column(Boolean, default=True)  # Can hide system events
+
+    # Timestamps
+    event_date = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class SignupSettings(Base):
     """Store configurable signup settings as key-value pairs"""
     __tablename__ = 'signup_settings'
@@ -991,7 +1105,7 @@ class SignupSettings(Base):
 class SMSLog(Base):
     """Log all SMS send attempts for tracking and debugging"""
     __tablename__ = 'sms_logs'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     client_id = Column(Integer, ForeignKey('clients.id'), nullable=True)
     phone_number = Column(String(20))
@@ -1001,8 +1115,51 @@ class SMSLog(Base):
     twilio_sid = Column(String(50))
     sent_at = Column(DateTime, default=datetime.utcnow)
     error_message = Column(Text, nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class WhatsAppMessage(Base):
+    """Log all WhatsApp messages (inbound and outbound) for document intake and notifications"""
+    __tablename__ = 'whatsapp_messages'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+
+    # Message identifiers
+    twilio_sid = Column(String(50), unique=True, index=True)
+    direction = Column(String(10), nullable=False)  # 'inbound' or 'outbound'
+
+    # Content
+    from_number = Column(String(25))  # whatsapp:+1234567890
+    to_number = Column(String(25))
+    body = Column(Text)
+
+    # Media attachments (for document intake)
+    has_media = Column(Boolean, default=False)
+    media_count = Column(Integer, default=0)
+    media_url = Column(String(500))  # Primary media URL
+    media_type = Column(String(100))  # image/jpeg, application/pdf, etc.
+    media_processed = Column(Boolean, default=False)
+
+    # Linking to uploads (when media is processed)
+    upload_id = Column(Integer, ForeignKey('client_uploads.id'), nullable=True)
+
+    # Template info (for outbound messages)
+    template_sid = Column(String(50))  # Twilio Content Template SID
+    template_name = Column(String(100))  # e.g., 'document_request', 'status_update'
+    template_variables = Column(JSON)  # Variables sent with template
+
+    # Status tracking
+    status = Column(String(20), default='sent')  # sent, delivered, read, failed
+    error_code = Column(String(20))
+    error_message = Column(Text)
+
+    # Metadata
+    profile_name = Column(String(255))  # WhatsApp profile name of sender
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class EmailLog(Base):
@@ -1023,17 +1180,167 @@ class EmailLog(Base):
 
 
 class EmailTemplate(Base):
-    """Store custom email templates created with Unlayer visual editor"""
+    """Store email templates for client communications"""
     __tablename__ = 'email_templates'
-    
+
     id = Column(Integer, primary_key=True, index=True)
-    template_type = Column(String(50), nullable=False, unique=True)
+    template_type = Column(String(50), nullable=False, unique=True)  # e.g., 'welcome', 'dispute_sent'
+    name = Column(String(200), nullable=False)  # Human-readable name
+    category = Column(String(50), default='general')  # welcome, updates, reminders, notifications, etc.
+    description = Column(Text)  # What this template is for
     subject = Column(String(500), nullable=False)
     html_content = Column(Text)
-    design_json = Column(Text)
-    is_custom = Column(Boolean, default=False)
+    plain_text_content = Column(Text)  # Plain text version for fallback
+    design_json = Column(Text)  # For visual editor (Unlayer)
+    variables = Column(JSON)  # Supported variables: [{name, description, example}]
+    is_custom = Column(Boolean, default=False)  # True if user-created, False if system default
+    is_active = Column(Boolean, default=True)  # Can be disabled without deleting
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class SMSTemplate(Base):
+    """Store SMS templates for client communications"""
+    __tablename__ = 'sms_templates'
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_type = Column(String(50), nullable=False, unique=True)  # e.g., 'welcome', 'dispute_sent'
+    name = Column(String(200), nullable=False)  # Human-readable name
+    category = Column(String(50), default='general')  # welcome, updates, reminders, notifications, etc.
+    description = Column(Text)  # What this template is for
+    message = Column(Text, nullable=False)  # The SMS message content
+    variables = Column(JSON)  # Supported variables: [{name, description, example}]
+    is_custom = Column(Boolean, default=False)  # True if user-created, False if system default
+    is_active = Column(Boolean, default=True)  # Can be disabled without deleting
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class DripCampaign(Base):
+    """Automated email sequences for client follow-ups"""
+    __tablename__ = 'drip_campaigns'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+
+    # Trigger conditions
+    trigger_type = Column(String(50), nullable=False)  # signup, status_change, manual, tag_added
+    trigger_value = Column(String(100))  # e.g., status value, tag name
+
+    # Campaign settings
+    is_active = Column(Boolean, default=True)
+    send_window_start = Column(Integer, default=9)  # Hour to start sending (9 AM)
+    send_window_end = Column(Integer, default=17)  # Hour to stop sending (5 PM)
+    send_on_weekends = Column(Boolean, default=False)
+
+    # Stats
+    total_enrolled = Column(Integer, default=0)
+    total_completed = Column(Integer, default=0)
+
+    created_by_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    steps = relationship("DripStep", back_populates="campaign", cascade="all, delete-orphan", order_by="DripStep.step_order")
+    enrollments = relationship("DripEnrollment", back_populates="campaign", cascade="all, delete-orphan")
+
+
+class DripStep(Base):
+    """Individual step in a drip campaign"""
+    __tablename__ = 'drip_steps'
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey('drip_campaigns.id', ondelete='CASCADE'), nullable=False)
+
+    step_order = Column(Integer, nullable=False)  # 1, 2, 3, etc.
+    name = Column(String(200))  # Optional step name
+
+    # Timing
+    delay_days = Column(Integer, default=1)  # Days after previous step (or enrollment)
+    delay_hours = Column(Integer, default=0)  # Additional hours
+
+    # Email content
+    email_template_id = Column(Integer, ForeignKey('email_templates.id'))  # Use existing template
+    subject = Column(String(500))  # Override subject if not using template
+    html_content = Column(Text)  # Override content if not using template
+
+    # Conditions
+    condition_type = Column(String(50))  # none, if_opened, if_not_opened, if_clicked
+    condition_value = Column(String(100))  # For if_clicked, the link to check
+
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    campaign = relationship("DripCampaign", back_populates="steps")
+    email_template = relationship("EmailTemplate")
+
+
+class DripEnrollment(Base):
+    """Track client enrollment in drip campaigns"""
+    __tablename__ = 'drip_enrollments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey('drip_campaigns.id', ondelete='CASCADE'), nullable=False)
+    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+
+    # Current progress
+    current_step = Column(Integer, default=0)  # 0 = not started, 1 = first step sent, etc.
+    status = Column(String(20), default='active')  # active, paused, completed, cancelled
+
+    # Timing
+    enrolled_at = Column(DateTime, default=datetime.utcnow)
+    next_send_at = Column(DateTime)  # When to send next step
+    last_sent_at = Column(DateTime)  # When last step was sent
+    completed_at = Column(DateTime)
+
+    # Tracking
+    emails_sent = Column(Integer, default=0)
+    emails_opened = Column(Integer, default=0)
+    emails_clicked = Column(Integer, default=0)
+
+    # Metadata
+    paused_reason = Column(String(200))
+    cancelled_reason = Column(String(200))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    campaign = relationship("DripCampaign", back_populates="enrollments")
+    client = relationship("Client")
+
+    # Unique constraint - one enrollment per client per campaign
+    __table_args__ = (
+        UniqueConstraint('campaign_id', 'client_id', name='uq_drip_enrollment_campaign_client'),
+    )
+
+
+class DripEmailLog(Base):
+    """Log of emails sent through drip campaigns"""
+    __tablename__ = 'drip_email_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    enrollment_id = Column(Integer, ForeignKey('drip_enrollments.id', ondelete='CASCADE'), nullable=False)
+    step_id = Column(Integer, ForeignKey('drip_steps.id', ondelete='SET NULL'))
+
+    subject = Column(String(500))
+    sent_at = Column(DateTime, default=datetime.utcnow)
+
+    # Tracking
+    opened_at = Column(DateTime)
+    clicked_at = Column(DateTime)
+    click_url = Column(String(500))
+
+    # Delivery status
+    status = Column(String(20), default='sent')  # sent, delivered, opened, clicked, bounced, failed
+    error_message = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class CaseDeadline(Base):
@@ -1421,6 +1728,41 @@ class ClientDocumentSignature(Base):
     signed_document_path = Column(String(500))  # Path to signed PDF
 
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CROAProgress(Base):
+    """Track client progress through CROA document signing workflow"""
+    __tablename__ = 'croa_progress'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, unique=True, index=True)
+
+    # Document signing timestamps (in order)
+    rights_disclosure_signed_at = Column(DateTime)  # CROA_01 - MUST sign first
+    lpoa_signed_at = Column(DateTime)  # CROA_02 - Limited Power of Attorney
+    service_agreement_signed_at = Column(DateTime)  # CROA_03 - Main contract
+    cancellation_notice_signed_at = Column(DateTime)  # CROA_04 - Right to cancel
+    service_completion_signed_at = Column(DateTime)  # CROA_05 - Auth to begin work
+    hipaa_signed_at = Column(DateTime)  # CROA_06 - Health info (optional)
+    welcome_packet_signed_at = Column(DateTime)  # CROA_07 - Welcome info
+
+    # Cancellation period tracking
+    cancellation_period_starts_at = Column(DateTime)  # When contract was signed
+    cancellation_period_ends_at = Column(DateTime)  # 3 business days after contract
+    cancellation_waived = Column(Boolean, default=False)  # If client waived waiting period
+    cancelled_at = Column(DateTime)  # If client cancelled during period
+
+    # Overall progress
+    current_document = Column(String(50), default='CROA_01_RIGHTS_DISCLOSURE')
+    documents_completed = Column(Integer, default=0)
+    total_documents = Column(Integer, default=7)
+    is_complete = Column(Boolean, default=False)
+    completed_at = Column(DateTime)
+
+    # Metadata
+    last_activity_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class CaseTriage(Base):
@@ -1891,6 +2233,73 @@ class CreditMonitoringCredential(Base):
         }
 
 
+class CreditPullLog(Base):
+    """Log each credit report pull attempt"""
+    __tablename__ = 'credit_pull_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    credential_id = Column(Integer, ForeignKey('credit_monitoring_credentials.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    service_name = Column(String(100), nullable=False)
+
+    # Pull details
+    pull_type = Column(String(50), default='scheduled')  # scheduled, manual, on_demand
+    initiated_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Status
+    status = Column(String(50), default='pending')  # pending, in_progress, success, failed, timeout
+    error_message = Column(Text, nullable=True)
+    error_code = Column(String(50), nullable=True)
+
+    # Results
+    report_path = Column(Text, nullable=True)  # Path to downloaded report
+    report_type = Column(String(50), nullable=True)  # 3bureau, single, monitoring
+    bureaus_included = Column(JSON, nullable=True)  # ['Equifax', 'Experian', 'TransUnion']
+
+    # Parsing results
+    items_found = Column(Integer, default=0)
+    negative_items_found = Column(Integer, default=0)
+    accounts_found = Column(Integer, default=0)
+    inquiries_found = Column(Integer, default=0)
+
+    # Metadata
+    duration_seconds = Column(Float, nullable=True)
+    retry_count = Column(Integer, default=0)
+    triggered_by = Column(String(100), nullable=True)  # staff_id, cron, webhook
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    credential = relationship('CreditMonitoringCredential', backref='pull_logs')
+    client = relationship('Client', backref='credit_pull_logs')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'credential_id': self.credential_id,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'service_name': self.service_name,
+            'pull_type': self.pull_type,
+            'initiated_at': self.initiated_at.isoformat() if self.initiated_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'status': self.status,
+            'error_message': self.error_message,
+            'error_code': self.error_code,
+            'report_path': self.report_path,
+            'report_type': self.report_type,
+            'bureaus_included': self.bureaus_included,
+            'items_found': self.items_found,
+            'negative_items_found': self.negative_items_found,
+            'accounts_found': self.accounts_found,
+            'inquiries_found': self.inquiries_found,
+            'duration_seconds': self.duration_seconds,
+            'retry_count': self.retry_count,
+            'triggered_by': self.triggered_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
 class BillingPlan(Base):
     """Define subscription plans"""
     __tablename__ = 'billing_plans'
@@ -2334,10 +2743,24 @@ class WhiteLabelTenant(Base):
     
     api_key = Column(String(100), unique=True, index=True)
     webhook_url = Column(String(500))
-    
+
+    # Partner portal authentication
+    admin_email = Column(String(255), unique=True, index=True)
+    admin_password_hash = Column(String(255))
+    last_login = Column(DateTime)
+    password_reset_token = Column(String(100), unique=True, index=True)
+    password_reset_expires = Column(DateTime)
+
+    # Two-Factor Authentication (2FA) for partner portal
+    two_factor_enabled = Column(Boolean, default=False)
+    two_factor_secret = Column(String(255))  # Encrypted TOTP secret
+    two_factor_method = Column(String(20), default='totp')  # totp, sms, email
+    two_factor_backup_codes = Column(JSON)  # Hashed backup codes
+    two_factor_verified_at = Column(DateTime)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     users = relationship("TenantUser", back_populates="tenant", cascade="all, delete-orphan")
     clients = relationship("TenantClient", back_populates="tenant", cascade="all, delete-orphan")
     
@@ -2368,6 +2791,8 @@ class WhiteLabelTenant(Base):
             'features_enabled': self.features_enabled or {},
             'api_key': self.api_key,
             'webhook_url': self.webhook_url,
+            'admin_email': self.admin_email,
+            'last_login': self.last_login.isoformat() if self.last_login else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -3831,6 +4256,2010 @@ class TradelineStatus(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class BookingSlot(Base):
+    """Available time slots for Q&A calls - created by staff"""
+    __tablename__ = 'booking_slots'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Slot timing
+    slot_date = Column(Date, nullable=False, index=True)
+    slot_time = Column(Time, nullable=False)  # Start time
+    duration_minutes = Column(Integer, default=15)  # Fixed 15-min slots
+
+    # Availability
+    is_available = Column(Boolean, default=True)  # Staff can disable slots
+    is_booked = Column(Boolean, default=False)
+
+    # Staff who created/owns this slot
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    booking = relationship("Booking", back_populates="slot", uselist=False)
+
+
+class Booking(Base):
+    """Client bookings for Q&A calls"""
+    __tablename__ = 'bookings'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Link to slot and client
+    slot_id = Column(Integer, ForeignKey('booking_slots.id'), nullable=False, unique=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Booking details
+    booking_type = Column(String(50), default='qa_call')  # qa_call, consultation, etc.
+    notes = Column(Text, nullable=True)  # Client's questions/notes
+
+    # Status tracking
+    status = Column(String(20), default='confirmed')  # confirmed, cancelled, completed, no_show
+
+    # Confirmation tracking
+    confirmation_sent = Column(Boolean, default=False)
+    confirmation_sent_at = Column(DateTime, nullable=True)
+    reminder_sent = Column(Boolean, default=False)
+    reminder_sent_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    booked_at = Column(DateTime, default=datetime.utcnow)
+    cancelled_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    slot = relationship("BookingSlot", back_populates="booking")
+    client = relationship("Client", backref="bookings")
+
+
+class ClientMessage(Base):
+    """Messages between clients and staff for live support"""
+    __tablename__ = 'client_messages'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Conversation participants
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True, index=True)  # Null for client messages
+
+    # Message content
+    message = Column(Text, nullable=False)
+    sender_type = Column(String(20), nullable=False)  # 'client' or 'staff'
+
+    # Status tracking
+    is_read = Column(Boolean, default=False)
+    read_at = Column(DateTime, nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="messages")
+    staff = relationship("Staff", backref="client_messages")
+
+
+class OnboardingProgress(Base):
+    """Track client onboarding wizard progress"""
+    __tablename__ = 'onboarding_progress'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, unique=True, index=True)
+
+    # Step completion status
+    personal_info_completed = Column(Boolean, default=False)
+    personal_info_completed_at = Column(DateTime, nullable=True)
+
+    id_documents_completed = Column(Boolean, default=False)
+    id_documents_completed_at = Column(DateTime, nullable=True)
+
+    ssn_card_completed = Column(Boolean, default=False)
+    ssn_card_completed_at = Column(DateTime, nullable=True)
+
+    proof_of_address_completed = Column(Boolean, default=False)
+    proof_of_address_completed_at = Column(DateTime, nullable=True)
+
+    credit_monitoring_completed = Column(Boolean, default=False)
+    credit_monitoring_completed_at = Column(DateTime, nullable=True)
+
+    agreement_completed = Column(Boolean, default=False)
+    agreement_completed_at = Column(DateTime, nullable=True)
+
+    payment_completed = Column(Boolean, default=False)
+    payment_completed_at = Column(DateTime, nullable=True)
+
+    # Overall progress
+    current_step = Column(String(50), default='personal_info')
+    completion_percentage = Column(Integer, default=0)
+    is_complete = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    client = relationship("Client", backref="onboarding_progress")
+
+
+# ============================================================
+# E-SIGNATURE COMPLIANCE MODELS - ESIGN Act, UETA, CROA
+# ============================================================
+
+# Audit action types for complete trail
+ESIGN_AUDIT_ACTIONS = {
+    'session_initiated': 'Signing session started',
+    'consent_page_viewed': 'Consent disclosure page viewed',
+    'esign_consent_given': 'Electronic signature consent submitted',
+    'documents_presented': 'Documents presented for signing',
+    'document_reviewed': 'Document review started',
+    'document_scrolled': 'Document scrolled (tracking progress)',
+    'signature_field_focused': 'Signature input field focused',
+    'signature_entered': 'Signature value entered',
+    'intent_confirmed': 'Intent to sign checkbox confirmed',
+    'document_signed': 'Document signed successfully',
+    'pdf_generated': 'Signed PDF document generated',
+    'session_completed': 'Signing session completed',
+    'documents_emailed': 'Signed documents emailed to client',
+    'session_cancelled': 'Signing session cancelled',
+    'session_expired': 'Signing session expired',
+    'link_regenerated': 'Signing link regenerated',
+}
+
+
+class SignatureSession(Base):
+    """
+    Session-based e-signature flow with ESIGN Act consent tracking.
+    Implements 4 legal requirements: Intent, Consent, Attribution, Record Retention.
+    """
+    __tablename__ = 'signature_sessions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_uuid = Column(String(64), unique=True, nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Session status
+    status = Column(String(50), default='pending', index=True)  # pending, consent_given, in_progress, completed, cancelled, expired
+
+    # ESIGN Act Consent (3 required acknowledgments)
+    esign_consent_given = Column(Boolean, default=False)
+    esign_consent_timestamp = Column(DateTime)
+    hardware_software_acknowledged = Column(Boolean, default=False)  # Understand tech requirements
+    paper_copy_right_acknowledged = Column(Boolean, default=False)  # Right to paper copies
+    consent_withdrawal_acknowledged = Column(Boolean, default=False)  # Right to withdraw consent
+    consent_disclosure_html = Column(Text)  # Store the exact disclosure shown
+
+    # Attribution (signer identity)
+    ip_address = Column(String(50))
+    user_agent = Column(Text)
+    device_fingerprint = Column(String(255))  # Browser fingerprint for verification
+
+    # Email verification
+    signer_email = Column(String(255))
+    signer_name = Column(String(255))
+    email_verified = Column(Boolean, default=False)
+
+    # Timestamps
+    initiated_at = Column(DateTime, default=datetime.utcnow)
+    consent_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    expires_at = Column(DateTime)
+
+    # Metadata
+    signing_link = Column(String(500))
+    return_url = Column(String(500))  # Where to redirect after completion
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="signature_sessions")
+    documents = relationship("SignedDocument", back_populates="session", cascade="all, delete-orphan")
+    audit_logs = relationship("SignatureAuditLog", back_populates="session", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'session_uuid': self.session_uuid,
+            'client_id': self.client_id,
+            'status': self.status,
+            'esign_consent_given': self.esign_consent_given,
+            'esign_consent_timestamp': self.esign_consent_timestamp.isoformat() if self.esign_consent_timestamp else None,
+            'hardware_software_acknowledged': self.hardware_software_acknowledged,
+            'paper_copy_right_acknowledged': self.paper_copy_right_acknowledged,
+            'consent_withdrawal_acknowledged': self.consent_withdrawal_acknowledged,
+            'ip_address': self.ip_address,
+            'signer_email': self.signer_email,
+            'signer_name': self.signer_name,
+            'initiated_at': self.initiated_at.isoformat() if self.initiated_at else None,
+            'consent_at': self.consent_at.isoformat() if self.consent_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'signing_link': self.signing_link,
+            'documents_count': len(self.documents) if self.documents else 0,
+        }
+
+
+class SignedDocument(Base):
+    """
+    Individual signed document with SHA-256 tamper-evidence and signature certificate.
+    """
+    __tablename__ = 'signed_documents'
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_uuid = Column(String(64), unique=True, nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey('signature_sessions.id'), nullable=False, index=True)
+    template_id = Column(Integer, ForeignKey('document_templates.id'), nullable=True, index=True)
+
+    # Document content
+    document_name = Column(String(255), nullable=False)
+    document_type = Column(String(100))  # client_agreement, limited_poa, etc.
+    document_html = Column(Text)  # Original HTML content
+    document_pdf_path = Column(String(500))  # Path to generated PDF
+
+    # Tamper-evidence (SHA-256 hashing)
+    document_hash_sha256 = Column(String(64))  # Hash of document_html at signing time
+    document_hash_algorithm = Column(String(20), default='SHA-256')
+
+    # Signature data
+    signature_type = Column(String(50), default='typed')  # typed, drawn, uploaded
+    signature_value = Column(Text)  # Typed name or base64 image
+    signature_image_path = Column(String(500))  # Path to saved signature image
+
+    # Intent confirmation (legal requirement)
+    intent_checkbox_checked = Column(Boolean, default=False)
+    intent_statement = Column(Text)  # The exact statement they agreed to
+
+    # Signer attribution
+    signer_name = Column(String(255))
+    signer_email = Column(String(255))
+    signer_ip = Column(String(50))
+    signer_user_agent = Column(Text)
+
+    # Review tracking
+    document_presented_at = Column(DateTime)
+    review_started_at = Column(DateTime)
+    review_duration_seconds = Column(Integer, default=0)
+    scrolled_to_bottom = Column(Boolean, default=False)
+    scroll_percentage = Column(Integer, default=0)
+
+    # Signature timestamp
+    signature_timestamp = Column(DateTime)
+
+    # Certificate
+    certificate_number = Column(String(50), unique=True, index=True)  # e.g., BAG-20241224-A3F8B2C1
+    certificate_pdf_path = Column(String(500))
+
+    # Status
+    status = Column(String(50), default='pending')  # pending, signed, voided, superseded
+
+    # CROA compliance
+    is_croa_document = Column(Boolean, default=False)
+    croa_signing_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="signed_documents")
+    session = relationship("SignatureSession", back_populates="documents")
+    template = relationship("DocumentTemplate", backref="signed_documents")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'document_uuid': self.document_uuid,
+            'client_id': self.client_id,
+            'session_id': self.session_id,
+            'document_name': self.document_name,
+            'document_type': self.document_type,
+            'document_hash_sha256': self.document_hash_sha256,
+            'signature_type': self.signature_type,
+            'intent_checkbox_checked': self.intent_checkbox_checked,
+            'signer_name': self.signer_name,
+            'signer_email': self.signer_email,
+            'review_duration_seconds': self.review_duration_seconds,
+            'scrolled_to_bottom': self.scrolled_to_bottom,
+            'signature_timestamp': self.signature_timestamp.isoformat() if self.signature_timestamp else None,
+            'certificate_number': self.certificate_number,
+            'status': self.status,
+            'is_croa_document': self.is_croa_document,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+    def verify_integrity(self):
+        """Verify document hasn't been tampered with by checking hash"""
+        import hashlib
+        if not self.document_html or not self.document_hash_sha256:
+            return None
+        current_hash = hashlib.sha256(self.document_html.encode('utf-8')).hexdigest()
+        return current_hash == self.document_hash_sha256
+
+
+class SignatureAuditLog(Base):
+    """
+    Complete audit trail for e-signature compliance.
+    Logs all 12+ action types for legal evidence.
+    """
+    __tablename__ = 'signature_audit_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey('signature_sessions.id'), nullable=True, index=True)
+    document_id = Column(Integer, ForeignKey('signed_documents.id'), nullable=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Action tracking
+    action = Column(String(50), nullable=False, index=True)  # From ESIGN_AUDIT_ACTIONS
+    action_display = Column(String(255))  # Human-readable description
+    action_details = Column(JSON)  # Additional context
+
+    # Attribution
+    ip_address = Column(String(50))
+    user_agent = Column(Text)
+    device_fingerprint = Column(String(255))
+
+    # Timestamp
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+
+    # Raw request data (sanitized, for evidence)
+    raw_request_data = Column(JSON)
+
+    # Relationships
+    session = relationship("SignatureSession", back_populates="audit_logs")
+    document = relationship("SignedDocument", backref="audit_logs")
+    client = relationship("Client", backref="signature_audit_logs")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'session_id': self.session_id,
+            'document_id': self.document_id,
+            'client_id': self.client_id,
+            'action': self.action,
+            'action_display': self.action_display,
+            'action_details': self.action_details,
+            'ip_address': self.ip_address,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+        }
+
+
+class CROAComplianceTracker(Base):
+    """
+    CROA-specific compliance tracking.
+    Enforces: Rights Disclosure first, 3-business-day cancellation period.
+    """
+    __tablename__ = 'croa_compliance_trackers'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, unique=True, index=True)
+    session_id = Column(Integer, ForeignKey('signature_sessions.id'), nullable=True, index=True)
+
+    # Rights Disclosure (MUST be signed first per CROA)
+    rights_disclosure_signed = Column(Boolean, default=False)
+    rights_disclosure_signed_at = Column(DateTime)
+    rights_disclosure_document_id = Column(Integer, ForeignKey('signed_documents.id'), nullable=True)
+
+    # Contract Package
+    contract_package_signed = Column(Boolean, default=False)
+    contract_package_signed_at = Column(DateTime)
+
+    # 3-Business-Day Cancellation Period
+    cancellation_period_start = Column(DateTime)  # When contract was signed
+    cancellation_period_end = Column(DateTime)  # 3 business days after (excludes weekends/holidays)
+    cancellation_period_complete = Column(Boolean, default=False)  # True after period expires
+
+    # Cancellation tracking
+    client_cancelled = Column(Boolean, default=False)
+    client_cancelled_at = Column(DateTime)
+    cancellation_reason = Column(Text)
+
+    # Waiver (if client chooses to proceed immediately)
+    cancellation_waived = Column(Boolean, default=False)
+    cancellation_waived_at = Column(DateTime)
+    waiver_document_id = Column(Integer, ForeignKey('signed_documents.id'), nullable=True)
+
+    # Work authorization
+    work_can_begin = Column(Boolean, default=False)  # True after cancellation period OR waiver
+    work_began_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="croa_compliance")
+    session = relationship("SignatureSession", backref="croa_compliance")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'rights_disclosure_signed': self.rights_disclosure_signed,
+            'rights_disclosure_signed_at': self.rights_disclosure_signed_at.isoformat() if self.rights_disclosure_signed_at else None,
+            'contract_package_signed': self.contract_package_signed,
+            'cancellation_period_start': self.cancellation_period_start.isoformat() if self.cancellation_period_start else None,
+            'cancellation_period_end': self.cancellation_period_end.isoformat() if self.cancellation_period_end else None,
+            'cancellation_period_complete': self.cancellation_period_complete,
+            'client_cancelled': self.client_cancelled,
+            'cancellation_waived': self.cancellation_waived,
+            'work_can_begin': self.work_can_begin,
+        }
+
+
+# Invoice status constants
+INVOICE_STATUSES = {
+    'draft': 'Draft - Not yet sent',
+    'sent': 'Sent to client',
+    'viewed': 'Viewed by client',
+    'paid': 'Paid in full',
+    'partial': 'Partially paid',
+    'overdue': 'Payment overdue',
+    'cancelled': 'Cancelled',
+    'refunded': 'Refunded',
+}
+
+# Invoice item types
+INVOICE_ITEM_TYPES = {
+    'service': 'Service fee',
+    'analysis': 'Credit analysis',
+    'round': 'Dispute round',
+    'settlement': 'Settlement fee',
+    'prepay': 'Prepay package',
+    'subscription': 'Subscription',
+    'other': 'Other',
+    'discount': 'Discount',
+    'credit': 'Credit applied',
+}
+
+
+class Invoice(Base):
+    """Client invoices for services rendered"""
+    __tablename__ = 'invoices'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Unique invoice number (e.g., INV-2026-00001)
+    invoice_number = Column(String(50), unique=True, nullable=False, index=True)
+
+    # Client relationship
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Invoice details
+    title = Column(String(255))  # Optional title/description
+    notes = Column(Text)  # Notes to client
+    internal_notes = Column(Text)  # Staff-only notes
+
+    # Amounts (all in cents)
+    subtotal = Column(Integer, default=0)  # Sum of line items before tax
+    tax_rate = Column(Float, default=0.0)  # Tax rate (0.0 to 1.0)
+    tax_amount = Column(Integer, default=0)  # Calculated tax
+    discount_amount = Column(Integer, default=0)  # Total discounts
+    total = Column(Integer, default=0)  # Final total
+    amount_paid = Column(Integer, default=0)  # Amount paid so far
+    amount_due = Column(Integer, default=0)  # Remaining balance
+
+    # Status tracking
+    status = Column(String(30), default='draft', index=True)  # draft, sent, viewed, paid, partial, overdue, cancelled, refunded
+
+    # Dates
+    invoice_date = Column(Date, nullable=False)  # Date of invoice
+    due_date = Column(Date)  # Payment due date
+    sent_at = Column(DateTime)  # When invoice was sent
+    viewed_at = Column(DateTime)  # When client first viewed
+    paid_at = Column(DateTime)  # When fully paid
+
+    # Payment tracking
+    payment_method = Column(String(50))  # stripe, paypal, cash, check, etc.
+    stripe_payment_intent_id = Column(String(255))
+    stripe_invoice_id = Column(String(255))
+
+    # PDF storage
+    pdf_filename = Column(String(255))  # Stored PDF filename
+    pdf_generated_at = Column(DateTime)
+
+    # Email tracking
+    email_sent_count = Column(Integer, default=0)
+    last_reminder_sent_at = Column(DateTime)
+
+    # Billing details (snapshot at invoice time)
+    billing_name = Column(String(255))
+    billing_email = Column(String(255))
+    billing_address = Column(Text)  # Full address as text
+
+    # Company branding (for white label)
+    company_name = Column(String(255))
+    company_address = Column(Text)
+    company_phone = Column(String(50))
+    company_email = Column(String(255))
+    company_logo_url = Column(String(500))
+
+    # Tenant for white label
+    tenant_id = Column(Integer, ForeignKey('white_label_tenants.id'), nullable=True, index=True)
+
+    # Staff who created
+    created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="invoices")
+    items = relationship("InvoiceItem", backref="invoice", cascade="all, delete-orphan", order_by="InvoiceItem.sort_order")
+    payments = relationship("InvoicePayment", backref="invoice", cascade="all, delete-orphan", order_by="InvoicePayment.paid_at.desc()")
+
+    def to_dict(self, include_items=True, include_payments=False):
+        result = {
+            'id': self.id,
+            'invoice_number': self.invoice_number,
+            'client_id': self.client_id,
+            'title': self.title,
+            'notes': self.notes,
+            'subtotal': self.subtotal,
+            'tax_rate': self.tax_rate,
+            'tax_amount': self.tax_amount,
+            'discount_amount': self.discount_amount,
+            'total': self.total,
+            'amount_paid': self.amount_paid,
+            'amount_due': self.amount_due,
+            'status': self.status,
+            'status_display': INVOICE_STATUSES.get(self.status, self.status),
+            'invoice_date': self.invoice_date.isoformat() if self.invoice_date else None,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'viewed_at': self.viewed_at.isoformat() if self.viewed_at else None,
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None,
+            'payment_method': self.payment_method,
+            'pdf_filename': self.pdf_filename,
+            'billing_name': self.billing_name,
+            'billing_email': self.billing_email,
+            'billing_address': self.billing_address,
+            'company_name': self.company_name,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if include_items:
+            result['items'] = [item.to_dict() for item in self.items] if self.items else []
+        if include_payments:
+            result['payments'] = [p.to_dict() for p in self.payments] if self.payments else []
+        return result
+
+
+class InvoiceItem(Base):
+    """Line items on an invoice"""
+    __tablename__ = 'invoice_items'
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey('invoices.id', ondelete='CASCADE'), nullable=False, index=True)
+
+    # Item details
+    item_type = Column(String(30), default='service')  # service, analysis, round, settlement, prepay, subscription, other, discount, credit
+    description = Column(String(500), nullable=False)
+
+    # Pricing (all in cents)
+    quantity = Column(Float, default=1.0)
+    unit_price = Column(Integer, default=0)  # Price per unit in cents
+    amount = Column(Integer, default=0)  # Total for this line (quantity * unit_price)
+
+    # Optional reference to what this item is for
+    reference_type = Column(String(50))  # dispute_round, analysis, settlement, etc.
+    reference_id = Column(Integer)  # ID of the referenced record
+
+    # Display order
+    sort_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'invoice_id': self.invoice_id,
+            'item_type': self.item_type,
+            'item_type_display': INVOICE_ITEM_TYPES.get(self.item_type, self.item_type),
+            'description': self.description,
+            'quantity': self.quantity,
+            'unit_price': self.unit_price,
+            'amount': self.amount,
+            'reference_type': self.reference_type,
+            'reference_id': self.reference_id,
+            'sort_order': self.sort_order,
+        }
+
+
+class InvoicePayment(Base):
+    """Payment records for invoices (supports partial payments)"""
+    __tablename__ = 'invoice_payments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey('invoices.id', ondelete='CASCADE'), nullable=False, index=True)
+
+    # Payment details
+    amount = Column(Integer, nullable=False)  # Amount in cents
+    payment_method = Column(String(50))  # stripe, paypal, cash, check, etc.
+
+    # External references
+    stripe_payment_intent_id = Column(String(255))
+    stripe_charge_id = Column(String(255))
+    transaction_id = Column(String(255))  # Generic transaction ID
+
+    # Status
+    status = Column(String(30), default='completed')  # completed, pending, failed, refunded
+
+    # Timestamps
+    paid_at = Column(DateTime, default=datetime.utcnow)
+
+    # Notes
+    notes = Column(Text)
+
+    # Staff who recorded (for manual payments)
+    recorded_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'invoice_id': self.invoice_id,
+            'amount': self.amount,
+            'payment_method': self.payment_method,
+            'stripe_payment_intent_id': self.stripe_payment_intent_id,
+            'transaction_id': self.transaction_id,
+            'status': self.status,
+            'paid_at': self.paid_at.isoformat() if self.paid_at else None,
+            'notes': self.notes,
+            'recorded_by_id': self.recorded_by_id,
+        }
+
+
+class BatchJob(Base):
+    """Batch processing jobs for bulk client operations"""
+    __tablename__ = 'batch_jobs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_uuid = Column(String(64), unique=True, nullable=False, index=True)
+
+    # Job metadata
+    name = Column(String(255), nullable=False)  # Human-readable name
+    action_type = Column(String(50), nullable=False)  # update_status, send_email, assign_staff, add_tag, delete, etc.
+    action_params = Column(JSON)  # Parameters for the action (e.g., new_status, email_template_id)
+
+    # Selection criteria (how clients were selected)
+    selection_type = Column(String(30), default='manual')  # manual, filter, all
+    selection_filter = Column(JSON)  # Filter criteria if selection_type='filter'
+    total_items = Column(Integer, default=0)
+
+    # Progress tracking
+    status = Column(String(30), default='pending')  # pending, running, completed, failed, cancelled
+    items_processed = Column(Integer, default=0)
+    items_succeeded = Column(Integer, default=0)
+    items_failed = Column(Integer, default=0)
+    progress_percent = Column(Float, default=0.0)
+
+    # Timing
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    estimated_completion = Column(DateTime)
+
+    # Error handling
+    error_message = Column(Text)
+    can_retry = Column(Boolean, default=True)
+
+    # Audit
+    created_by_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    items = relationship("BatchJobItem", back_populates="batch_job", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'job_uuid': self.job_uuid,
+            'name': self.name,
+            'action_type': self.action_type,
+            'action_params': self.action_params,
+            'selection_type': self.selection_type,
+            'total_items': self.total_items,
+            'status': self.status,
+            'items_processed': self.items_processed,
+            'items_succeeded': self.items_succeeded,
+            'items_failed': self.items_failed,
+            'progress_percent': self.progress_percent,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'error_message': self.error_message,
+            'created_by_id': self.created_by_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class BatchJobItem(Base):
+    """Individual items (clients) within a batch job"""
+    __tablename__ = 'batch_job_items'
+
+    id = Column(Integer, primary_key=True, index=True)
+    batch_job_id = Column(Integer, ForeignKey('batch_jobs.id', ondelete='CASCADE'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Processing status
+    status = Column(String(30), default='pending')  # pending, processing, completed, failed, skipped
+    processed_at = Column(DateTime)
+
+    # Before/after state for rollback capability
+    before_state = Column(JSON)  # Snapshot of relevant fields before change
+    after_state = Column(JSON)  # Snapshot after change
+
+    # Error tracking
+    error_message = Column(Text)
+    retry_count = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    batch_job = relationship("BatchJob", back_populates="items")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'batch_job_id': self.batch_job_id,
+            'client_id': self.client_id,
+            'status': self.status,
+            'processed_at': self.processed_at.isoformat() if self.processed_at else None,
+            'error_message': self.error_message,
+            'retry_count': self.retry_count,
+        }
+
+
+class StaffActivity(Base):
+    """Track staff activities for performance metrics"""
+    __tablename__ = 'staff_activities'
+
+    id = Column(Integer, primary_key=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+
+    # Activity type
+    activity_type = Column(String(50), nullable=False, index=True)
+    # Types: case_assigned, case_completed, document_reviewed, letter_sent,
+    #        response_processed, message_sent, call_completed, note_added,
+    #        status_changed, analysis_reviewed, dispute_filed
+
+    # Activity details
+    description = Column(String(500))
+    activity_metadata = Column(JSON)  # Additional context (e.g., case_id, document_id)
+
+    # Response time tracking (for activities that track response)
+    request_received_at = Column(DateTime)  # When task/request came in
+    response_completed_at = Column(DateTime)  # When staff completed it
+    response_time_minutes = Column(Integer)  # Calculated response time
+
+    # Quality metrics
+    quality_score = Column(Integer)  # Optional 1-10 rating
+    was_escalated = Column(Boolean, default=False)
+    required_revision = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'staff_id': self.staff_id,
+            'client_id': self.client_id,
+            'activity_type': self.activity_type,
+            'description': self.description,
+            'activity_metadata': self.activity_metadata,
+            'response_time_minutes': self.response_time_minutes,
+            'quality_score': self.quality_score,
+            'was_escalated': self.was_escalated,
+            'required_revision': self.required_revision,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ClientSuccessMetric(Base):
+    """Track client success metrics - items deleted, score improvements"""
+    __tablename__ = 'client_success_metrics'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Snapshot date (when metrics were calculated)
+    snapshot_date = Column(Date, nullable=False, index=True)
+    snapshot_type = Column(String(30), default='periodic')  # periodic, round_complete, manual
+
+    # Initial state (from first analysis)
+    initial_negative_items = Column(Integer, default=0)
+    initial_equifax_score = Column(Integer)
+    initial_experian_score = Column(Integer)
+    initial_transunion_score = Column(Integer)
+    initial_avg_score = Column(Integer)
+
+    # Current state
+    current_negative_items = Column(Integer, default=0)
+    current_equifax_score = Column(Integer)
+    current_experian_score = Column(Integer)
+    current_transunion_score = Column(Integer)
+    current_avg_score = Column(Integer)
+
+    # Items breakdown by type
+    items_deleted = Column(Integer, default=0)
+    items_verified = Column(Integer, default=0)
+    items_updated = Column(Integer, default=0)
+    items_in_progress = Column(Integer, default=0)
+
+    # Items by bureau
+    equifax_items_deleted = Column(Integer, default=0)
+    experian_items_deleted = Column(Integer, default=0)
+    transunion_items_deleted = Column(Integer, default=0)
+
+    # Score improvements
+    equifax_score_change = Column(Integer, default=0)
+    experian_score_change = Column(Integer, default=0)
+    transunion_score_change = Column(Integer, default=0)
+    avg_score_change = Column(Integer, default=0)
+
+    # Success metrics
+    deletion_rate = Column(Float, default=0)  # items_deleted / initial_negative_items
+    dispute_rounds_completed = Column(Integer, default=0)
+    days_in_program = Column(Integer, default=0)
+    estimated_value_recovered = Column(Float, default=0)  # Based on violations
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    case_complete = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'snapshot_date': self.snapshot_date.isoformat() if self.snapshot_date else None,
+            'snapshot_type': self.snapshot_type,
+            'initial_negative_items': self.initial_negative_items,
+            'initial_equifax_score': self.initial_equifax_score,
+            'initial_experian_score': self.initial_experian_score,
+            'initial_transunion_score': self.initial_transunion_score,
+            'initial_avg_score': self.initial_avg_score,
+            'current_negative_items': self.current_negative_items,
+            'current_equifax_score': self.current_equifax_score,
+            'current_experian_score': self.current_experian_score,
+            'current_transunion_score': self.current_transunion_score,
+            'current_avg_score': self.current_avg_score,
+            'items_deleted': self.items_deleted,
+            'items_verified': self.items_verified,
+            'items_updated': self.items_updated,
+            'items_in_progress': self.items_in_progress,
+            'equifax_items_deleted': self.equifax_items_deleted,
+            'experian_items_deleted': self.experian_items_deleted,
+            'transunion_items_deleted': self.transunion_items_deleted,
+            'equifax_score_change': self.equifax_score_change,
+            'experian_score_change': self.experian_score_change,
+            'transunion_score_change': self.transunion_score_change,
+            'avg_score_change': self.avg_score_change,
+            'deletion_rate': self.deletion_rate,
+            'dispute_rounds_completed': self.dispute_rounds_completed,
+            'days_in_program': self.days_in_program,
+            'estimated_value_recovered': self.estimated_value_recovered,
+            'is_active': self.is_active,
+            'case_complete': self.case_complete,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class PushSubscription(Base):
+    """Web Push notification subscriptions for clients and staff"""
+    __tablename__ = 'push_subscriptions'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # User identification - either client or staff (one must be set)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True, index=True)
+
+    # Push subscription details (from browser's PushSubscription object)
+    endpoint = Column(Text, nullable=False, unique=True)  # The push service URL
+    p256dh_key = Column(String(255), nullable=False)  # Public key for encryption
+    auth_key = Column(String(255), nullable=False)  # Auth secret
+
+    # Device/browser info
+    user_agent = Column(String(500))
+    device_name = Column(String(100))  # Friendly name like "Chrome on Windows"
+
+    # Notification preferences
+    notify_case_updates = Column(Boolean, default=True)  # Case status changes
+    notify_messages = Column(Boolean, default=True)  # New messages
+    notify_documents = Column(Boolean, default=True)  # Document uploads
+    notify_deadlines = Column(Boolean, default=True)  # Upcoming deadlines
+    notify_payments = Column(Boolean, default=True)  # Payment reminders
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    last_used_at = Column(DateTime)
+    failed_count = Column(Integer, default=0)  # Track delivery failures
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'staff_id': self.staff_id,
+            'endpoint': self.endpoint[:50] + '...' if self.endpoint and len(self.endpoint) > 50 else self.endpoint,
+            'device_name': self.device_name,
+            'notify_case_updates': self.notify_case_updates,
+            'notify_messages': self.notify_messages,
+            'notify_documents': self.notify_documents,
+            'notify_deadlines': self.notify_deadlines,
+            'notify_payments': self.notify_payments,
+            'is_active': self.is_active,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class PushNotificationLog(Base):
+    """Log of sent push notifications for tracking and debugging"""
+    __tablename__ = 'push_notification_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+    subscription_id = Column(Integer, ForeignKey('push_subscriptions.id'), nullable=False, index=True)
+
+    # Notification content
+    title = Column(String(255), nullable=False)
+    body = Column(Text)
+    icon = Column(String(500))
+    url = Column(String(500))  # Click action URL
+    tag = Column(String(100))  # Notification tag for grouping
+    data = Column(JSON)  # Additional data payload
+
+    # Trigger info
+    trigger_type = Column(String(50))  # e.g., 'case_update', 'message', 'deadline'
+    trigger_id = Column(Integer)  # Related entity ID
+
+    # Delivery status
+    status = Column(String(30), default='pending')  # pending, sent, delivered, failed, expired
+    sent_at = Column(DateTime)
+    error_message = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'subscription_id': self.subscription_id,
+            'title': self.title,
+            'body': self.body,
+            'trigger_type': self.trigger_type,
+            'status': self.status,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'error_message': self.error_message,
+        }
+
+
+class ROICalculation(Base):
+    """ROI calculations for potential settlement/recovery value"""
+    __tablename__ = 'roi_calculations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Calculation date
+    calculated_at = Column(DateTime, default=datetime.utcnow, index=True)
+    calculated_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    calculation_type = Column(String(30), default='automatic')  # automatic, manual, updated
+
+    # Violation counts by type
+    fcra_violations_count = Column(Integer, default=0)
+    fdcpa_violations_count = Column(Integer, default=0)
+    tcpa_violations_count = Column(Integer, default=0)
+    fcba_violations_count = Column(Integer, default=0)
+    other_violations_count = Column(Integer, default=0)
+    total_violations = Column(Integer, default=0)
+
+    # Violation severity breakdown
+    willful_violations = Column(Integer, default=0)
+    negligent_violations = Column(Integer, default=0)
+
+    # Statutory damages estimates (FCRA)
+    statutory_damages_min = Column(Float, default=0)  # $100 per willful
+    statutory_damages_max = Column(Float, default=0)  # $1,000 per willful
+    punitive_damages_potential = Column(Float, default=0)
+
+    # Actual damages potential
+    credit_denial_damages = Column(Float, default=0)
+    higher_interest_damages = Column(Float, default=0)
+    emotional_distress_damages = Column(Float, default=0)
+    time_lost_damages = Column(Float, default=0)
+    other_actual_damages = Column(Float, default=0)
+    total_actual_damages = Column(Float, default=0)
+
+    # Attorney fees estimate
+    estimated_attorney_fees = Column(Float, default=0)
+
+    # Items breakdown
+    total_negative_items = Column(Integer, default=0)
+    disputable_items = Column(Integer, default=0)
+    high_value_items = Column(Integer, default=0)  # Collections > $1k, charge-offs, etc.
+    estimated_deletion_rate = Column(Float, default=0)  # Based on historical data
+
+    # Settlement estimates
+    conservative_estimate = Column(Float, default=0)  # Low-end settlement
+    moderate_estimate = Column(Float, default=0)  # Mid-range settlement
+    aggressive_estimate = Column(Float, default=0)  # High-end/litigation
+    most_likely_estimate = Column(Float, default=0)  # Weighted average
+
+    # Litigation potential score (0-100)
+    litigation_score = Column(Integer, default=0)
+    litigation_recommended = Column(Boolean, default=False)
+    litigation_notes = Column(Text)
+
+    # Score improvement value
+    estimated_score_improvement = Column(Integer, default=0)
+    credit_value_improvement = Column(Float, default=0)  # Estimated savings from better rates
+
+    # Summary
+    total_estimated_value = Column(Float, default=0)  # Combined recovery value
+    confidence_level = Column(String(20), default='medium')  # low, medium, high
+
+    # Calculation inputs (for audit)
+    calculation_inputs = Column(JSON)  # Store inputs used for calculation
+    calculation_notes = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'calculated_at': self.calculated_at.isoformat() if self.calculated_at else None,
+            'calculated_by_staff_id': self.calculated_by_staff_id,
+            'calculation_type': self.calculation_type,
+            'fcra_violations_count': self.fcra_violations_count,
+            'fdcpa_violations_count': self.fdcpa_violations_count,
+            'tcpa_violations_count': self.tcpa_violations_count,
+            'fcba_violations_count': self.fcba_violations_count,
+            'other_violations_count': self.other_violations_count,
+            'total_violations': self.total_violations,
+            'willful_violations': self.willful_violations,
+            'negligent_violations': self.negligent_violations,
+            'statutory_damages_min': self.statutory_damages_min,
+            'statutory_damages_max': self.statutory_damages_max,
+            'punitive_damages_potential': self.punitive_damages_potential,
+            'credit_denial_damages': self.credit_denial_damages,
+            'higher_interest_damages': self.higher_interest_damages,
+            'emotional_distress_damages': self.emotional_distress_damages,
+            'time_lost_damages': self.time_lost_damages,
+            'other_actual_damages': self.other_actual_damages,
+            'total_actual_damages': self.total_actual_damages,
+            'estimated_attorney_fees': self.estimated_attorney_fees,
+            'total_negative_items': self.total_negative_items,
+            'disputable_items': self.disputable_items,
+            'high_value_items': self.high_value_items,
+            'estimated_deletion_rate': self.estimated_deletion_rate,
+            'conservative_estimate': self.conservative_estimate,
+            'moderate_estimate': self.moderate_estimate,
+            'aggressive_estimate': self.aggressive_estimate,
+            'most_likely_estimate': self.most_likely_estimate,
+            'litigation_score': self.litigation_score,
+            'litigation_recommended': self.litigation_recommended,
+            'litigation_notes': self.litigation_notes,
+            'estimated_score_improvement': self.estimated_score_improvement,
+            'credit_value_improvement': self.credit_value_improvement,
+            'total_estimated_value': self.total_estimated_value,
+            'confidence_level': self.confidence_level,
+            'calculation_notes': self.calculation_notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class PaymentPlan(Base):
+    """Payment plans for installment payments"""
+    __tablename__ = 'payment_plans'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+
+    # Plan details
+    plan_name = Column(String(100))  # e.g., "Round 1 Payment Plan", "Full Service Plan"
+    plan_type = Column(String(50), default='custom')  # custom, round, prepay, settlement
+    total_amount = Column(Float, nullable=False)  # Total amount to be paid
+    down_payment = Column(Float, default=0)  # Initial down payment amount
+
+    # Installment configuration
+    num_installments = Column(Integer, default=3)  # Number of installments (excluding down payment)
+    installment_amount = Column(Float)  # Amount per installment
+    installment_frequency = Column(String(20), default='monthly')  # weekly, biweekly, monthly
+
+    # Schedule
+    start_date = Column(Date, nullable=False)  # When plan starts
+    next_payment_date = Column(Date)  # Next scheduled payment
+    end_date = Column(Date)  # Expected completion date
+
+    # Payment tracking
+    amount_paid = Column(Float, default=0)  # Total amount paid so far
+    amount_remaining = Column(Float)  # Remaining balance
+    installments_completed = Column(Integer, default=0)
+    installments_remaining = Column(Integer)
+
+    # Status
+    status = Column(String(30), default='active')  # pending, active, paused, completed, defaulted, cancelled
+    paused_at = Column(DateTime)
+    paused_reason = Column(String(255))
+    completed_at = Column(DateTime)
+    defaulted_at = Column(DateTime)
+    default_reason = Column(String(255))
+
+    # Payment method
+    payment_method = Column(String(50))  # stripe, manual, check, etc.
+    stripe_subscription_id = Column(String(255))  # If using Stripe subscriptions
+    auto_charge = Column(Boolean, default=False)  # Auto-charge saved payment method
+
+    # Grace period and late fees
+    grace_period_days = Column(Integer, default=5)
+    late_fee_amount = Column(Float, default=0)
+    late_fee_percent = Column(Float, default=0)  # Alternative: percentage-based late fee
+
+    # Notes
+    notes = Column(Text)
+    internal_notes = Column(Text)  # Staff-only notes
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'created_by_staff_id': self.created_by_staff_id,
+            'plan_name': self.plan_name,
+            'plan_type': self.plan_type,
+            'total_amount': self.total_amount,
+            'down_payment': self.down_payment,
+            'num_installments': self.num_installments,
+            'installment_amount': self.installment_amount,
+            'installment_frequency': self.installment_frequency,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'next_payment_date': self.next_payment_date.isoformat() if self.next_payment_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'amount_paid': self.amount_paid,
+            'amount_remaining': self.amount_remaining,
+            'installments_completed': self.installments_completed,
+            'installments_remaining': self.installments_remaining,
+            'status': self.status,
+            'payment_method': self.payment_method,
+            'auto_charge': self.auto_charge,
+            'grace_period_days': self.grace_period_days,
+            'late_fee_amount': self.late_fee_amount,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class PaymentPlanInstallment(Base):
+    """Individual installments within a payment plan"""
+    __tablename__ = 'payment_plan_installments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey('payment_plans.id'), nullable=False, index=True)
+
+    # Installment details
+    installment_number = Column(Integer, nullable=False)  # 0 = down payment, 1+ = installments
+    amount_due = Column(Float, nullable=False)
+    amount_paid = Column(Float, default=0)
+
+    # Schedule
+    due_date = Column(Date, nullable=False, index=True)
+    paid_date = Column(Date)
+
+    # Status
+    status = Column(String(30), default='pending')  # pending, paid, partial, late, waived, failed
+    is_late = Column(Boolean, default=False)
+    days_late = Column(Integer, default=0)
+    late_fee_applied = Column(Float, default=0)
+
+    # Payment reference
+    payment_id = Column(Integer, ForeignKey('payment_plan_payments.id'))
+    stripe_payment_intent_id = Column(String(255))
+
+    # Notes
+    notes = Column(String(500))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'plan_id': self.plan_id,
+            'installment_number': self.installment_number,
+            'amount_due': self.amount_due,
+            'amount_paid': self.amount_paid,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'paid_date': self.paid_date.isoformat() if self.paid_date else None,
+            'status': self.status,
+            'is_late': self.is_late,
+            'days_late': self.days_late,
+            'late_fee_applied': self.late_fee_applied,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class PaymentPlanPayment(Base):
+    """Payment records for payment plan installments"""
+    __tablename__ = 'payment_plan_payments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey('payment_plans.id'), nullable=False, index=True)
+    installment_id = Column(Integer, ForeignKey('payment_plan_installments.id'), index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Payment details
+    amount = Column(Float, nullable=False)
+    payment_date = Column(DateTime, default=datetime.utcnow)
+    payment_method = Column(String(50))  # stripe, check, cash, zelle, venmo, etc.
+
+    # Stripe details
+    stripe_payment_intent_id = Column(String(255), unique=True)
+    stripe_charge_id = Column(String(255))
+
+    # Manual payment details
+    reference_number = Column(String(100))  # Check number, transaction ID, etc.
+    received_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+
+    # Status
+    status = Column(String(30), default='completed')  # pending, completed, failed, refunded
+    failure_reason = Column(String(255))
+    refunded_at = Column(DateTime)
+    refund_amount = Column(Float)
+    refund_reason = Column(String(255))
+
+    # Notes
+    notes = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'plan_id': self.plan_id,
+            'installment_id': self.installment_id,
+            'client_id': self.client_id,
+            'amount': self.amount,
+            'payment_date': self.payment_date.isoformat() if self.payment_date else None,
+            'payment_method': self.payment_method,
+            'stripe_payment_intent_id': self.stripe_payment_intent_id,
+            'reference_number': self.reference_number,
+            'status': self.status,
+            'failure_reason': self.failure_reason,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class BureauDisputeTracking(Base):
+    """Track disputes sent to bureaus and their response status"""
+    __tablename__ = 'bureau_dispute_tracking'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), index=True)
+
+    # Bureau info
+    bureau = Column(String(50), nullable=False)  # Equifax, Experian, TransUnion
+    dispute_round = Column(Integer, default=1)
+
+    # Dispute batch info
+    batch_id = Column(String(100), index=True)  # Groups items sent together
+    letter_id = Column(Integer, ForeignKey('dispute_letters.id'))
+    certified_mail_id = Column(Integer, ForeignKey('certified_mail_orders.id'))
+
+    # Items in this dispute
+    item_count = Column(Integer, default=0)
+    item_ids = Column(JSON)  # List of dispute_item IDs included
+
+    # Sending details
+    sent_method = Column(String(50))  # certified_mail, regular_mail, online, fax
+    sent_date = Column(Date, nullable=False)
+    sent_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    tracking_number = Column(String(100))
+    delivery_confirmed = Column(Boolean, default=False)
+    delivery_date = Column(Date)
+
+    # Response deadline (typically 30 days from receipt, 45 for complex)
+    expected_response_date = Column(Date)
+    response_deadline_days = Column(Integer, default=30)
+    is_complex_dispute = Column(Boolean, default=False)  # Extended to 45 days
+
+    # Response tracking
+    response_received = Column(Boolean, default=False)
+    response_date = Column(Date)
+    response_type = Column(String(50))  # verified, deleted, updated, mixed, frivolous, no_response
+    response_document_id = Column(Integer, ForeignKey('cra_responses.id'))
+
+    # Results summary
+    items_deleted = Column(Integer, default=0)
+    items_updated = Column(Integer, default=0)
+    items_verified = Column(Integer, default=0)
+    items_investigating = Column(Integer, default=0)
+
+    # Status tracking
+    status = Column(String(30), default='sent')  # sent, delivered, awaiting_response, response_received, overdue, closed
+    is_overdue = Column(Boolean, default=False)
+    days_overdue = Column(Integer, default=0)
+
+    # Follow-up actions
+    follow_up_required = Column(Boolean, default=False)
+    follow_up_type = Column(String(50))  # none, escalate, refile, attorney_review
+    follow_up_date = Column(Date)
+    follow_up_completed = Column(Boolean, default=False)
+    follow_up_notes = Column(Text)
+
+    # Notifications
+    reminder_sent = Column(Boolean, default=False)
+    reminder_sent_at = Column(DateTime)
+    overdue_alert_sent = Column(Boolean, default=False)
+    overdue_alert_sent_at = Column(DateTime)
+
+    # Notes
+    notes = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        from datetime import date as date_type
+        today = date_type.today()
+        days_since_sent = (today - self.sent_date).days if self.sent_date else 0
+        days_until_deadline = (self.expected_response_date - today).days if self.expected_response_date else 0
+
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'case_id': self.case_id,
+            'bureau': self.bureau,
+            'dispute_round': self.dispute_round,
+            'batch_id': self.batch_id,
+            'letter_id': self.letter_id,
+            'item_count': self.item_count,
+            'sent_method': self.sent_method,
+            'sent_date': self.sent_date.isoformat() if self.sent_date else None,
+            'tracking_number': self.tracking_number,
+            'delivery_confirmed': self.delivery_confirmed,
+            'delivery_date': self.delivery_date.isoformat() if self.delivery_date else None,
+            'expected_response_date': self.expected_response_date.isoformat() if self.expected_response_date else None,
+            'response_deadline_days': self.response_deadline_days,
+            'response_received': self.response_received,
+            'response_date': self.response_date.isoformat() if self.response_date else None,
+            'response_type': self.response_type,
+            'items_deleted': self.items_deleted,
+            'items_updated': self.items_updated,
+            'items_verified': self.items_verified,
+            'items_investigating': self.items_investigating,
+            'status': self.status,
+            'is_overdue': self.is_overdue,
+            'days_overdue': self.days_overdue,
+            'days_since_sent': days_since_sent,
+            'days_until_deadline': days_until_deadline,
+            'follow_up_required': self.follow_up_required,
+            'follow_up_type': self.follow_up_type,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class LetterTemplate(Base):
+    """Store customizable dispute letter templates"""
+    __tablename__ = 'letter_templates'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    code = Column(String(100), unique=True, nullable=False, index=True)  # Unique identifier
+
+    # Categorization
+    category = Column(String(50), nullable=False)  # initial_dispute, mov_demand, escalation, follow_up, pre_litigation, etc.
+    dispute_round = Column(Integer)  # 1, 2, 3, 4 or NULL for all rounds
+    target_type = Column(String(50), default='bureau')  # bureau, furnisher, collector, all
+
+    # Content
+    subject = Column(String(500))  # For letters that need a subject line
+    content = Column(Text, nullable=False)  # Main letter content with placeholders
+    footer = Column(Text)  # Optional footer content
+
+    # Template settings
+    variables = Column(JSON)  # Available variables: [{name, description, default}]
+    required_attachments = Column(JSON)  # List of attachment codes required
+    recommended_for = Column(JSON)  # List of violation types or situations
+
+    # Metadata
+    description = Column(Text)  # What this template is for
+    instructions = Column(Text)  # Usage instructions for staff
+    legal_basis = Column(Text)  # FCRA citations, case law references
+
+    # Status and versioning
+    is_system = Column(Boolean, default=False)  # True = built-in, False = custom
+    is_active = Column(Boolean, default=True)
+    version = Column(Integer, default=1)
+    parent_id = Column(Integer, ForeignKey('letter_templates.id'))  # For derived templates
+
+    # Usage tracking
+    use_count = Column(Integer, default=0)
+    last_used_at = Column(DateTime)
+
+    # Audit
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'code': self.code,
+            'category': self.category,
+            'dispute_round': self.dispute_round,
+            'target_type': self.target_type,
+            'subject': self.subject,
+            'content': self.content,
+            'footer': self.footer,
+            'variables': self.variables,
+            'required_attachments': self.required_attachments,
+            'recommended_for': self.recommended_for,
+            'description': self.description,
+            'instructions': self.instructions,
+            'legal_basis': self.legal_basis,
+            'is_system': self.is_system,
+            'is_active': self.is_active,
+            'version': self.version,
+            'parent_id': self.parent_id,
+            'use_count': self.use_count,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class LetterTemplateVersion(Base):
+    """Track version history of letter templates"""
+    __tablename__ = 'letter_template_versions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey('letter_templates.id'), nullable=False, index=True)
+    version_number = Column(Integer, nullable=False)
+
+    # Snapshot of template at this version
+    name = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    footer = Column(Text)
+    variables = Column(JSON)
+
+    # Change info
+    change_summary = Column(Text)  # What changed in this version
+    changed_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    template = relationship('LetterTemplate', backref='versions')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'template_id': self.template_id,
+            'version_number': self.version_number,
+            'name': self.name,
+            'content': self.content,
+            'footer': self.footer,
+            'variables': self.variables,
+            'change_summary': self.change_summary,
+            'changed_by_staff_id': self.changed_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class GeneratedLetter(Base):
+    """Track letters generated from templates"""
+    __tablename__ = 'generated_letters'
+
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey('letter_templates.id'), index=True)
+    template_version = Column(Integer)
+
+    # Client and case info
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    case_id = Column(Integer, ForeignKey('cases.id'), index=True)
+    dispute_round = Column(Integer)
+
+    # Target info
+    target_type = Column(String(50))  # bureau, furnisher, collector
+    target_name = Column(String(200))  # Equifax, Capital One, etc.
+
+    # Generated content
+    subject = Column(String(500))
+    content = Column(Text, nullable=False)
+    variables_used = Column(JSON)  # Snapshot of variable values
+
+    # Delivery tracking
+    status = Column(String(50), default='draft')  # draft, ready, sent, delivered
+    sent_method = Column(String(50))  # certified_mail, regular_mail, email, fax
+    sent_date = Column(DateTime)
+    sent_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    tracking_number = Column(String(100))
+
+    # File reference
+    pdf_path = Column(Text)  # Path to generated PDF
+    file_size_bytes = Column(Integer)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    template = relationship('LetterTemplate', backref='generated_letters')
+    client = relationship('Client', backref='generated_letters')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'template_id': self.template_id,
+            'template_version': self.template_version,
+            'template_name': self.template.name if self.template else None,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'case_id': self.case_id,
+            'dispute_round': self.dispute_round,
+            'target_type': self.target_type,
+            'target_name': self.target_name,
+            'subject': self.subject,
+            'content': self.content,
+            'variables_used': self.variables_used,
+            'status': self.status,
+            'sent_method': self.sent_method,
+            'sent_date': self.sent_date.isoformat() if self.sent_date else None,
+            'sent_by_staff_id': self.sent_by_staff_id,
+            'tracking_number': self.tracking_number,
+            'pdf_path': self.pdf_path,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class VoicemailRecording(Base):
+    """Pre-recorded voicemail messages for ringless voicemail drops"""
+    __tablename__ = 'voicemail_recordings'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    category = Column(String(50), default='general')  # welcome, reminder, update, follow_up, custom
+
+    # Audio file
+    file_path = Column(Text, nullable=False)
+    file_name = Column(String(255))
+    file_size_bytes = Column(Integer)
+    duration_seconds = Column(Integer)
+    format = Column(String(20), default='mp3')  # mp3, wav
+
+    # Settings
+    is_active = Column(Boolean, default=True)
+    is_system = Column(Boolean, default=False)  # System templates can't be deleted
+
+    # Usage tracking
+    use_count = Column(Integer, default=0)
+    last_used_at = Column(DateTime)
+
+    # Audit
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    created_by = relationship('Staff', backref='voicemail_recordings')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'category': self.category,
+            'file_path': self.file_path,
+            'file_name': self.file_name,
+            'file_size_bytes': self.file_size_bytes,
+            'duration_seconds': self.duration_seconds,
+            'format': self.format,
+            'is_active': self.is_active,
+            'is_system': self.is_system,
+            'use_count': self.use_count,
+            'last_used_at': self.last_used_at.isoformat() if self.last_used_at else None,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class VoicemailDrop(Base):
+    """Track voicemail drop attempts and status"""
+    __tablename__ = 'voicemail_drops'
+
+    id = Column(Integer, primary_key=True, index=True)
+    recording_id = Column(Integer, ForeignKey('voicemail_recordings.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Phone number used
+    phone_number = Column(String(20), nullable=False)
+    phone_type = Column(String(20))  # mobile, landline, voip
+
+    # Trigger info
+    trigger_type = Column(String(50))  # manual, scheduled, workflow, campaign
+    trigger_event = Column(String(100))  # The event that triggered this drop
+    campaign_id = Column(Integer)  # If part of a campaign
+
+    # Status tracking
+    status = Column(String(50), default='pending')  # pending, queued, sent, delivered, failed, cancelled
+    provider = Column(String(50))  # slybroadcast, dropcowboy, twilio
+    provider_id = Column(String(100))  # External ID from provider
+    provider_response = Column(JSON)  # Full response from provider
+
+    # Timing
+    scheduled_at = Column(DateTime)  # When to send (for scheduled drops)
+    queued_at = Column(DateTime)  # When sent to provider queue
+    sent_at = Column(DateTime)  # When actually sent by provider
+    delivered_at = Column(DateTime)  # When delivered to voicemail
+
+    # Error tracking
+    error_code = Column(String(50))
+    error_message = Column(Text)
+    retry_count = Column(Integer, default=0)
+    max_retries = Column(Integer, default=3)
+
+    # Cost tracking
+    cost_cents = Column(Integer)  # Cost in cents
+
+    # Audit
+    initiated_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    recording = relationship('VoicemailRecording', backref='drops')
+    client = relationship('Client', backref='voicemail_drops')
+    initiated_by = relationship('Staff', backref='voicemail_drops')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'recording_id': self.recording_id,
+            'recording_name': self.recording.name if self.recording else None,
+            'client_id': self.client_id,
+            'client_name': self.client.name if self.client else None,
+            'phone_number': self.phone_number,
+            'phone_type': self.phone_type,
+            'trigger_type': self.trigger_type,
+            'trigger_event': self.trigger_event,
+            'campaign_id': self.campaign_id,
+            'status': self.status,
+            'provider': self.provider,
+            'provider_id': self.provider_id,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'queued_at': self.queued_at.isoformat() if self.queued_at else None,
+            'sent_at': self.sent_at.isoformat() if self.sent_at else None,
+            'delivered_at': self.delivered_at.isoformat() if self.delivered_at else None,
+            'error_code': self.error_code,
+            'error_message': self.error_message,
+            'retry_count': self.retry_count,
+            'cost_cents': self.cost_cents,
+            'initiated_by_staff_id': self.initiated_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class VoicemailCampaign(Base):
+    """Voicemail drop campaigns for batch sending"""
+    __tablename__ = 'voicemail_campaigns'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    recording_id = Column(Integer, ForeignKey('voicemail_recordings.id'), nullable=False, index=True)
+
+    # Target settings
+    target_type = Column(String(50), default='manual')  # manual, all_clients, status_filter, tag_filter
+    target_filters = Column(JSON)  # Filter criteria for auto-targeting
+    target_count = Column(Integer, default=0)  # Number of clients targeted
+
+    # Schedule settings
+    status = Column(String(50), default='draft')  # draft, scheduled, in_progress, completed, cancelled, paused
+    scheduled_at = Column(DateTime)  # When to start sending
+    send_window_start = Column(String(10))  # e.g., "09:00" - Only send during these hours
+    send_window_end = Column(String(10))  # e.g., "17:00"
+    send_days = Column(JSON)  # e.g., ["monday", "tuesday", ...] - Days to send
+
+    # Progress tracking
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+    total_drops = Column(Integer, default=0)
+    sent_count = Column(Integer, default=0)
+    delivered_count = Column(Integer, default=0)
+    failed_count = Column(Integer, default=0)
+
+    # Cost tracking
+    total_cost_cents = Column(Integer, default=0)
+
+    # Audit
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    recording = relationship('VoicemailRecording', backref='campaigns')
+    created_by = relationship('Staff', backref='voicemail_campaigns')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'recording_id': self.recording_id,
+            'recording_name': self.recording.name if self.recording else None,
+            'target_type': self.target_type,
+            'target_filters': self.target_filters,
+            'target_count': self.target_count,
+            'status': self.status,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'send_window_start': self.send_window_start,
+            'send_window_end': self.send_window_end,
+            'send_days': self.send_days,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'total_drops': self.total_drops,
+            'sent_count': self.sent_count,
+            'delivered_count': self.delivered_count,
+            'failed_count': self.failed_count,
+            'total_cost_cents': self.total_cost_cents,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class BulkCampaign(Base):
+    """One-time bulk email/SMS campaigns to multiple clients"""
+    __tablename__ = 'bulk_campaigns'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+
+    # Campaign type
+    channel = Column(String(20), nullable=False)  # email, sms, both
+
+    # Content
+    email_template_id = Column(Integer, ForeignKey('email_templates.id'), index=True)
+    sms_template_id = Column(Integer, ForeignKey('sms_templates.id'), index=True)
+    email_subject = Column(String(500))  # Custom subject (overrides template)
+    email_content = Column(Text)  # Custom content (overrides template)
+    sms_content = Column(Text)  # Custom SMS content (overrides template)
+
+    # Targeting
+    target_type = Column(String(50), default='manual')  # manual, all_clients, status_filter, tag_filter
+    target_filters = Column(JSON)  # {"status": ["active"], "tags": [1,2], "date_range": {...}}
+
+    # Schedule
+    status = Column(String(50), default='draft')  # draft, scheduled, sending, completed, cancelled
+    scheduled_at = Column(DateTime)  # When to send (null = send immediately)
+    started_at = Column(DateTime)
+    completed_at = Column(DateTime)
+
+    # Stats
+    total_recipients = Column(Integer, default=0)
+    sent_count = Column(Integer, default=0)
+    delivered_count = Column(Integer, default=0)
+    failed_count = Column(Integer, default=0)
+    opened_count = Column(Integer, default=0)
+    clicked_count = Column(Integer, default=0)
+
+    # Metadata
+    created_by_staff_id = Column(Integer, ForeignKey('staff.id'), index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    recipients = relationship('BulkCampaignRecipient', back_populates='campaign', lazy='dynamic')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'channel': self.channel,
+            'email_template_id': self.email_template_id,
+            'sms_template_id': self.sms_template_id,
+            'email_subject': self.email_subject,
+            'target_type': self.target_type,
+            'target_filters': self.target_filters,
+            'status': self.status,
+            'scheduled_at': self.scheduled_at.isoformat() if self.scheduled_at else None,
+            'started_at': self.started_at.isoformat() if self.started_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+            'total_recipients': self.total_recipients,
+            'sent_count': self.sent_count,
+            'delivered_count': self.delivered_count,
+            'failed_count': self.failed_count,
+            'opened_count': self.opened_count,
+            'clicked_count': self.clicked_count,
+            'created_by_staff_id': self.created_by_staff_id,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class BulkCampaignRecipient(Base):
+    """Track individual recipients in a bulk campaign"""
+    __tablename__ = 'bulk_campaign_recipients'
+
+    id = Column(Integer, primary_key=True, index=True)
+    campaign_id = Column(Integer, ForeignKey('bulk_campaigns.id'), nullable=False, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Delivery status per channel
+    email_status = Column(String(50))  # pending, sent, delivered, opened, clicked, bounced, failed
+    sms_status = Column(String(50))  # pending, sent, delivered, failed
+
+    # Tracking
+    email_sent_at = Column(DateTime)
+    email_opened_at = Column(DateTime)
+    email_clicked_at = Column(DateTime)
+    sms_sent_at = Column(DateTime)
+    sms_delivered_at = Column(DateTime)
+
+    # Error tracking
+    email_error = Column(Text)
+    sms_error = Column(Text)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    campaign = relationship('BulkCampaign', back_populates='recipients')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'campaign_id': self.campaign_id,
+            'client_id': self.client_id,
+            'email_status': self.email_status,
+            'sms_status': self.sms_status,
+            'email_sent_at': self.email_sent_at.isoformat() if self.email_sent_at else None,
+            'email_opened_at': self.email_opened_at.isoformat() if self.email_opened_at else None,
+            'sms_sent_at': self.sms_sent_at.isoformat() if self.sms_sent_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ClientTestimonial(Base):
+    """Client testimonials and reviews"""
+    __tablename__ = 'client_testimonials'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Content
+    rating = Column(Integer)  # 1-5 stars
+    testimonial_text = Column(Text)
+    video_url = Column(String(500))  # YouTube/Vimeo link
+
+    # Success metrics (at time of testimonial)
+    items_deleted = Column(Integer, default=0)
+    score_improvement = Column(Integer, default=0)
+
+    # Approval workflow
+    status = Column(String(50), default='pending')  # pending, approved, rejected, featured
+    approved_by_staff_id = Column(Integer, ForeignKey('staff.id'))
+    approved_at = Column(DateTime)
+
+    # Display settings
+    display_name = Column(String(100))  # How to show their name (e.g., "John D.")
+    show_on_website = Column(Boolean, default=False)
+    show_in_portal = Column(Boolean, default=True)
+
+    # Request tracking
+    request_sent_at = Column(DateTime)
+    request_token = Column(String(100), unique=True, index=True)
+    submitted_at = Column(DateTime)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'rating': self.rating,
+            'testimonial_text': self.testimonial_text,
+            'video_url': self.video_url,
+            'items_deleted': self.items_deleted,
+            'score_improvement': self.score_improvement,
+            'status': self.status,
+            'display_name': self.display_name,
+            'show_on_website': self.show_on_website,
+            'show_in_portal': self.show_in_portal,
+            'submitted_at': self.submitted_at.isoformat() if self.submitted_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class ClientBadge(Base):
+    """Badges earned by clients for achievements"""
+    __tablename__ = 'client_badges'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+    badge_type = Column(String(50), nullable=False)  # See BADGE_TYPES below
+
+    # When earned
+    earned_at = Column(DateTime, default=datetime.utcnow)
+
+    # Achievement data
+    achievement_value = Column(Integer)  # e.g., items deleted count, score improvement
+
+    # Notification tracking
+    notified = Column(Boolean, default=False)
+    notified_at = Column(DateTime)
+
+# Badge types:
+# first_login, documents_complete, agreements_signed, first_deletion,
+# five_deletions, ten_deletions, twenty_deletions, fifty_deletions,
+# score_up_25, score_up_50, score_up_100, round_1_complete, round_2_complete,
+# round_3_complete, case_complete, referred_friend, left_review
+
+
+class BadgeDefinition(Base):
+    """Define available badges and their criteria"""
+    __tablename__ = 'badge_definitions'
+
+    id = Column(Integer, primary_key=True, index=True)
+    badge_type = Column(String(50), nullable=False, unique=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    icon = Column(String(50))  # emoji or icon class
+    color = Column(String(20))  # badge color
+
+    # Criteria
+    trigger_type = Column(String(50))  # event, threshold, manual
+    trigger_event = Column(String(50))  # e.g., document_uploaded, deletion_confirmed
+    trigger_threshold = Column(Integer)  # e.g., 5 for "five_deletions"
+
+    # Display
+    is_active = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'badge_type': self.badge_type,
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'color': self.color,
+            'trigger_type': self.trigger_type,
+            'trigger_event': self.trigger_event,
+            'trigger_threshold': self.trigger_threshold,
+            'is_active': self.is_active,
+            'sort_order': self.sort_order,
+        }
+
+
 def init_db():
     """Initialize database tables and run schema migrations"""
     Base.metadata.create_all(bind=engine)
@@ -3938,6 +6367,24 @@ def init_db():
         ("commissions", "payout_id", "INTEGER"),
         ("commissions", "notes", "TEXT"),
         ("commissions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("affiliate_payouts", "id", "SERIAL PRIMARY KEY"),
+        ("affiliate_payouts", "affiliate_id", "INTEGER NOT NULL REFERENCES affiliates(id)"),
+        ("affiliate_payouts", "amount", "FLOAT NOT NULL"),
+        ("affiliate_payouts", "payout_method", "VARCHAR(50)"),
+        ("affiliate_payouts", "payout_reference", "VARCHAR(255)"),
+        ("affiliate_payouts", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("affiliate_payouts", "period_start", "TIMESTAMP"),
+        ("affiliate_payouts", "period_end", "TIMESTAMP"),
+        ("affiliate_payouts", "commission_ids", "JSON"),
+        ("affiliate_payouts", "notes", "TEXT"),
+        ("affiliate_payouts", "processed_by_id", "INTEGER REFERENCES staff(id)"),
+        ("affiliate_payouts", "processed_at", "TIMESTAMP"),
+        ("affiliate_payouts", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("affiliate_payouts", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Affiliate portal authentication columns
+        ("affiliates", "password_hash", "VARCHAR(255)"),
+        ("affiliates", "last_login", "TIMESTAMP"),
+        ("affiliates", "login_count", "INTEGER DEFAULT 0"),
         ("case_triage", "id", "SERIAL PRIMARY KEY"),
         ("case_triage", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
         ("case_triage", "analysis_id", "INTEGER REFERENCES analyses(id)"),
@@ -4085,6 +6532,28 @@ def init_db():
         ("credit_monitoring_credentials", "next_scheduled_import", "TIMESTAMP"),
         ("credit_monitoring_credentials", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("credit_monitoring_credentials", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Credit Pull Logs - P25
+        ("credit_pull_logs", "id", "SERIAL PRIMARY KEY"),
+        ("credit_pull_logs", "credential_id", "INTEGER NOT NULL REFERENCES credit_monitoring_credentials(id)"),
+        ("credit_pull_logs", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("credit_pull_logs", "service_name", "VARCHAR(100) NOT NULL"),
+        ("credit_pull_logs", "pull_type", "VARCHAR(50) DEFAULT 'scheduled'"),
+        ("credit_pull_logs", "initiated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("credit_pull_logs", "completed_at", "TIMESTAMP"),
+        ("credit_pull_logs", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("credit_pull_logs", "error_message", "TEXT"),
+        ("credit_pull_logs", "error_code", "VARCHAR(50)"),
+        ("credit_pull_logs", "report_path", "TEXT"),
+        ("credit_pull_logs", "report_type", "VARCHAR(50)"),
+        ("credit_pull_logs", "bureaus_included", "JSONB"),
+        ("credit_pull_logs", "items_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "negative_items_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "accounts_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "inquiries_found", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "duration_seconds", "FLOAT"),
+        ("credit_pull_logs", "retry_count", "INTEGER DEFAULT 0"),
+        ("credit_pull_logs", "triggered_by", "VARCHAR(100)"),
+        ("credit_pull_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("billing_plans", "id", "SERIAL PRIMARY KEY"),
         ("billing_plans", "name", "VARCHAR(100)"),
         ("billing_plans", "display_name", "VARCHAR(255)"),
@@ -4473,6 +6942,20 @@ def init_db():
         ("letter_queue", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         # Phase 8: BAG CRM Feature Parity - Tags and Quick Links
         ("clients", "employer_company", "VARCHAR(255)"),
+        # Communication preferences for automation
+        ("clients", "sms_opt_in", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "email_opt_in", "BOOLEAN DEFAULT TRUE"),
+        # WhatsApp integration
+        ("clients", "whatsapp_opt_in", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "whatsapp_number", "VARCHAR(20)"),
+        ("clients", "whatsapp_verified", "BOOLEAN DEFAULT FALSE"),
+        ("clients", "whatsapp_verified_at", "TIMESTAMP"),
+        ("clients", "whatsapp_verification_code", "VARCHAR(6)"),
+        ("clients", "whatsapp_verification_expires", "TIMESTAMP"),
+        # Lead scoring
+        ("clients", "lead_score", "INTEGER DEFAULT 0"),
+        ("clients", "lead_score_factors", "JSONB"),
+        ("clients", "lead_scored_at", "TIMESTAMP"),
         ("client_tags", "id", "SERIAL PRIMARY KEY"),
         ("client_tags", "name", "VARCHAR(100) UNIQUE NOT NULL"),
         ("client_tags", "color", "VARCHAR(7) DEFAULT '#6366f1'"),
@@ -4512,8 +6995,651 @@ def init_db():
         ("client_document_signatures", "signed_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("client_document_signatures", "signed_document_path", "VARCHAR(500)"),
         ("client_document_signatures", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Booking system for Q&A calls
+        ("booking_slots", "id", "SERIAL PRIMARY KEY"),
+        ("booking_slots", "slot_date", "DATE NOT NULL"),
+        ("booking_slots", "slot_time", "TIME NOT NULL"),
+        ("booking_slots", "duration_minutes", "INTEGER DEFAULT 15"),
+        ("booking_slots", "is_available", "BOOLEAN DEFAULT TRUE"),
+        ("booking_slots", "is_booked", "BOOLEAN DEFAULT FALSE"),
+        ("booking_slots", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("booking_slots", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("booking_slots", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bookings", "id", "SERIAL PRIMARY KEY"),
+        ("bookings", "slot_id", "INTEGER NOT NULL REFERENCES booking_slots(id) UNIQUE"),
+        ("bookings", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("bookings", "booking_type", "VARCHAR(50) DEFAULT 'qa_call'"),
+        ("bookings", "notes", "TEXT"),
+        ("bookings", "status", "VARCHAR(20) DEFAULT 'confirmed'"),
+        ("bookings", "confirmation_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bookings", "confirmation_sent_at", "TIMESTAMP"),
+        ("bookings", "reminder_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bookings", "reminder_sent_at", "TIMESTAMP"),
+        ("bookings", "booked_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bookings", "cancelled_at", "TIMESTAMP"),
+        ("bookings", "completed_at", "TIMESTAMP"),
+        ("bookings", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bookings", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Client Messages (Live Support)
+        ("client_messages", "id", "SERIAL PRIMARY KEY"),
+        ("client_messages", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("client_messages", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("client_messages", "message", "TEXT NOT NULL"),
+        ("client_messages", "sender_type", "VARCHAR(20) NOT NULL"),
+        ("client_messages", "is_read", "BOOLEAN DEFAULT FALSE"),
+        ("client_messages", "read_at", "TIMESTAMP"),
+        ("client_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_messages", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Email Templates Library
+        ("email_templates", "id", "SERIAL PRIMARY KEY"),
+        ("email_templates", "template_type", "VARCHAR(50) UNIQUE NOT NULL"),
+        ("email_templates", "name", "VARCHAR(200) NOT NULL"),
+        ("email_templates", "category", "VARCHAR(50) DEFAULT 'general'"),
+        ("email_templates", "description", "TEXT"),
+        ("email_templates", "subject", "VARCHAR(500) NOT NULL"),
+        ("email_templates", "html_content", "TEXT"),
+        ("email_templates", "plain_text_content", "TEXT"),
+        ("email_templates", "design_json", "TEXT"),
+        ("email_templates", "variables", "JSONB"),
+        ("email_templates", "is_custom", "BOOLEAN DEFAULT FALSE"),
+        ("email_templates", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("email_templates", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("email_templates", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Campaigns
+        ("drip_campaigns", "id", "SERIAL PRIMARY KEY"),
+        ("drip_campaigns", "name", "VARCHAR(200) NOT NULL"),
+        ("drip_campaigns", "description", "TEXT"),
+        ("drip_campaigns", "trigger_type", "VARCHAR(50) NOT NULL"),
+        ("drip_campaigns", "trigger_value", "VARCHAR(100)"),
+        ("drip_campaigns", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("drip_campaigns", "send_window_start", "INTEGER DEFAULT 9"),
+        ("drip_campaigns", "send_window_end", "INTEGER DEFAULT 17"),
+        ("drip_campaigns", "send_on_weekends", "BOOLEAN DEFAULT FALSE"),
+        ("drip_campaigns", "total_enrolled", "INTEGER DEFAULT 0"),
+        ("drip_campaigns", "total_completed", "INTEGER DEFAULT 0"),
+        ("drip_campaigns", "created_by_id", "INTEGER REFERENCES staff(id)"),
+        ("drip_campaigns", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_campaigns", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Steps
+        ("drip_steps", "id", "SERIAL PRIMARY KEY"),
+        ("drip_steps", "campaign_id", "INTEGER NOT NULL REFERENCES drip_campaigns(id) ON DELETE CASCADE"),
+        ("drip_steps", "step_order", "INTEGER NOT NULL"),
+        ("drip_steps", "name", "VARCHAR(200)"),
+        ("drip_steps", "delay_days", "INTEGER DEFAULT 1"),
+        ("drip_steps", "delay_hours", "INTEGER DEFAULT 0"),
+        ("drip_steps", "email_template_id", "INTEGER REFERENCES email_templates(id)"),
+        ("drip_steps", "subject", "VARCHAR(500)"),
+        ("drip_steps", "html_content", "TEXT"),
+        ("drip_steps", "condition_type", "VARCHAR(50)"),
+        ("drip_steps", "condition_value", "VARCHAR(100)"),
+        ("drip_steps", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("drip_steps", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_steps", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Enrollments
+        ("drip_enrollments", "id", "SERIAL PRIMARY KEY"),
+        ("drip_enrollments", "campaign_id", "INTEGER NOT NULL REFERENCES drip_campaigns(id) ON DELETE CASCADE"),
+        ("drip_enrollments", "client_id", "INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE"),
+        ("drip_enrollments", "current_step", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "status", "VARCHAR(20) DEFAULT 'active'"),
+        ("drip_enrollments", "enrolled_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_enrollments", "next_send_at", "TIMESTAMP"),
+        ("drip_enrollments", "last_sent_at", "TIMESTAMP"),
+        ("drip_enrollments", "completed_at", "TIMESTAMP"),
+        ("drip_enrollments", "emails_sent", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "emails_opened", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "emails_clicked", "INTEGER DEFAULT 0"),
+        ("drip_enrollments", "paused_reason", "VARCHAR(200)"),
+        ("drip_enrollments", "cancelled_reason", "VARCHAR(200)"),
+        ("drip_enrollments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_enrollments", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Drip Email Logs
+        ("drip_email_logs", "id", "SERIAL PRIMARY KEY"),
+        ("drip_email_logs", "enrollment_id", "INTEGER NOT NULL REFERENCES drip_enrollments(id) ON DELETE CASCADE"),
+        ("drip_email_logs", "step_id", "INTEGER REFERENCES drip_steps(id) ON DELETE SET NULL"),
+        ("drip_email_logs", "subject", "VARCHAR(500)"),
+        ("drip_email_logs", "sent_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("drip_email_logs", "opened_at", "TIMESTAMP"),
+        ("drip_email_logs", "clicked_at", "TIMESTAMP"),
+        ("drip_email_logs", "click_url", "VARCHAR(500)"),
+        ("drip_email_logs", "status", "VARCHAR(20) DEFAULT 'sent'"),
+        ("drip_email_logs", "error_message", "TEXT"),
+        ("drip_email_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Partner portal authentication for WhiteLabelTenant
+        ("white_label_tenants", "admin_email", "VARCHAR(255) UNIQUE"),
+        ("white_label_tenants", "admin_password_hash", "VARCHAR(255)"),
+        ("white_label_tenants", "last_login", "TIMESTAMP"),
+        ("white_label_tenants", "password_reset_token", "VARCHAR(100) UNIQUE"),
+        ("white_label_tenants", "password_reset_expires", "TIMESTAMP"),
+        # WhatsApp message logging for document intake and notifications
+        ("whatsapp_messages", "id", "SERIAL PRIMARY KEY"),
+        ("whatsapp_messages", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("whatsapp_messages", "twilio_sid", "VARCHAR(50) UNIQUE"),
+        ("whatsapp_messages", "direction", "VARCHAR(10) NOT NULL"),
+        ("whatsapp_messages", "from_number", "VARCHAR(25)"),
+        ("whatsapp_messages", "to_number", "VARCHAR(25)"),
+        ("whatsapp_messages", "body", "TEXT"),
+        ("whatsapp_messages", "has_media", "BOOLEAN DEFAULT FALSE"),
+        ("whatsapp_messages", "media_count", "INTEGER DEFAULT 0"),
+        ("whatsapp_messages", "media_url", "VARCHAR(500)"),
+        ("whatsapp_messages", "media_type", "VARCHAR(100)"),
+        ("whatsapp_messages", "media_processed", "BOOLEAN DEFAULT FALSE"),
+        ("whatsapp_messages", "upload_id", "INTEGER REFERENCES client_uploads(id)"),
+        ("whatsapp_messages", "template_sid", "VARCHAR(50)"),
+        ("whatsapp_messages", "template_name", "VARCHAR(100)"),
+        ("whatsapp_messages", "template_variables", "JSONB"),
+        ("whatsapp_messages", "status", "VARCHAR(20) DEFAULT 'sent'"),
+        ("whatsapp_messages", "error_code", "VARCHAR(20)"),
+        ("whatsapp_messages", "error_message", "TEXT"),
+        ("whatsapp_messages", "profile_name", "VARCHAR(255)"),
+        ("whatsapp_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("whatsapp_messages", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Two-Factor Authentication (2FA) for Staff
+        ("staff", "two_factor_enabled", "BOOLEAN DEFAULT FALSE"),
+        ("staff", "two_factor_secret", "VARCHAR(255)"),
+        ("staff", "two_factor_method", "VARCHAR(20) DEFAULT 'totp'"),
+        ("staff", "two_factor_backup_codes", "JSONB"),
+        ("staff", "two_factor_verified_at", "TIMESTAMP"),
+        ("staff", "two_factor_last_used", "TIMESTAMP"),
+        ("staff", "trusted_devices", "JSONB"),
+        # Two-Factor Authentication (2FA) for Partner Portal
+        ("white_label_tenants", "two_factor_enabled", "BOOLEAN DEFAULT FALSE"),
+        ("white_label_tenants", "two_factor_secret", "VARCHAR(255)"),
+        ("white_label_tenants", "two_factor_method", "VARCHAR(20) DEFAULT 'totp'"),
+        ("white_label_tenants", "two_factor_backup_codes", "JSONB"),
+        ("white_label_tenants", "two_factor_verified_at", "TIMESTAMP"),
+        # E-Signature Compliance Tables (ESIGN Act, UETA, CROA)
+        ("signature_sessions", "id", "SERIAL PRIMARY KEY"),
+        ("signature_sessions", "session_uuid", "VARCHAR(64) UNIQUE NOT NULL"),
+        ("signature_sessions", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("signature_sessions", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("signature_sessions", "esign_consent_given", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "esign_consent_timestamp", "TIMESTAMP"),
+        ("signature_sessions", "hardware_software_acknowledged", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "paper_copy_right_acknowledged", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "consent_withdrawal_acknowledged", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "consent_disclosure_html", "TEXT"),
+        ("signature_sessions", "ip_address", "VARCHAR(50)"),
+        ("signature_sessions", "user_agent", "TEXT"),
+        ("signature_sessions", "device_fingerprint", "VARCHAR(255)"),
+        ("signature_sessions", "signer_email", "VARCHAR(255)"),
+        ("signature_sessions", "signer_name", "VARCHAR(255)"),
+        ("signature_sessions", "email_verified", "BOOLEAN DEFAULT FALSE"),
+        ("signature_sessions", "initiated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signature_sessions", "consent_at", "TIMESTAMP"),
+        ("signature_sessions", "completed_at", "TIMESTAMP"),
+        ("signature_sessions", "expires_at", "TIMESTAMP"),
+        ("signature_sessions", "signing_link", "VARCHAR(500)"),
+        ("signature_sessions", "return_url", "VARCHAR(500)"),
+        ("signature_sessions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signature_sessions", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Signed Documents with SHA-256 tamper-evidence
+        ("signed_documents", "id", "SERIAL PRIMARY KEY"),
+        ("signed_documents", "document_uuid", "VARCHAR(64) UNIQUE NOT NULL"),
+        ("signed_documents", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("signed_documents", "session_id", "INTEGER REFERENCES signature_sessions(id) NOT NULL"),
+        ("signed_documents", "template_id", "INTEGER REFERENCES document_templates(id)"),
+        ("signed_documents", "document_name", "VARCHAR(255) NOT NULL"),
+        ("signed_documents", "document_type", "VARCHAR(100)"),
+        ("signed_documents", "document_html", "TEXT"),
+        ("signed_documents", "document_pdf_path", "VARCHAR(500)"),
+        ("signed_documents", "document_hash_sha256", "VARCHAR(64)"),
+        ("signed_documents", "document_hash_algorithm", "VARCHAR(20) DEFAULT 'SHA-256'"),
+        ("signed_documents", "signature_type", "VARCHAR(50) DEFAULT 'typed'"),
+        ("signed_documents", "signature_value", "TEXT"),
+        ("signed_documents", "signature_image_path", "VARCHAR(500)"),
+        ("signed_documents", "intent_checkbox_checked", "BOOLEAN DEFAULT FALSE"),
+        ("signed_documents", "intent_statement", "TEXT"),
+        ("signed_documents", "signer_name", "VARCHAR(255)"),
+        ("signed_documents", "signer_email", "VARCHAR(255)"),
+        ("signed_documents", "signer_ip", "VARCHAR(50)"),
+        ("signed_documents", "signer_user_agent", "TEXT"),
+        ("signed_documents", "document_presented_at", "TIMESTAMP"),
+        ("signed_documents", "review_started_at", "TIMESTAMP"),
+        ("signed_documents", "review_duration_seconds", "INTEGER DEFAULT 0"),
+        ("signed_documents", "scrolled_to_bottom", "BOOLEAN DEFAULT FALSE"),
+        ("signed_documents", "scroll_percentage", "INTEGER DEFAULT 0"),
+        ("signed_documents", "signature_timestamp", "TIMESTAMP"),
+        ("signed_documents", "certificate_number", "VARCHAR(50) UNIQUE"),
+        ("signed_documents", "certificate_pdf_path", "VARCHAR(500)"),
+        ("signed_documents", "status", "VARCHAR(50) DEFAULT 'pending'"),
+        ("signed_documents", "is_croa_document", "BOOLEAN DEFAULT FALSE"),
+        ("signed_documents", "croa_signing_order", "INTEGER DEFAULT 0"),
+        ("signed_documents", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signed_documents", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Signature Audit Logs for complete trail
+        ("signature_audit_logs", "id", "SERIAL PRIMARY KEY"),
+        ("signature_audit_logs", "session_id", "INTEGER REFERENCES signature_sessions(id)"),
+        ("signature_audit_logs", "document_id", "INTEGER REFERENCES signed_documents(id)"),
+        ("signature_audit_logs", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("signature_audit_logs", "action", "VARCHAR(50) NOT NULL"),
+        ("signature_audit_logs", "action_display", "VARCHAR(255)"),
+        ("signature_audit_logs", "action_details", "JSONB"),
+        ("signature_audit_logs", "ip_address", "VARCHAR(50)"),
+        ("signature_audit_logs", "user_agent", "TEXT"),
+        ("signature_audit_logs", "device_fingerprint", "VARCHAR(255)"),
+        ("signature_audit_logs", "timestamp", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("signature_audit_logs", "raw_request_data", "JSONB"),
+        # CROA Compliance Trackers
+        ("croa_compliance_trackers", "id", "SERIAL PRIMARY KEY"),
+        ("croa_compliance_trackers", "client_id", "INTEGER REFERENCES clients(id) UNIQUE NOT NULL"),
+        ("croa_compliance_trackers", "session_id", "INTEGER REFERENCES signature_sessions(id)"),
+        ("croa_compliance_trackers", "rights_disclosure_signed", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "rights_disclosure_signed_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "rights_disclosure_document_id", "INTEGER REFERENCES signed_documents(id)"),
+        ("croa_compliance_trackers", "contract_package_signed", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "contract_package_signed_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_period_start", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_period_end", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_period_complete", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "client_cancelled", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "client_cancelled_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "cancellation_reason", "TEXT"),
+        ("croa_compliance_trackers", "cancellation_waived", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "cancellation_waived_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "waiver_document_id", "INTEGER REFERENCES signed_documents(id)"),
+        ("croa_compliance_trackers", "work_can_begin", "BOOLEAN DEFAULT FALSE"),
+        ("croa_compliance_trackers", "work_began_at", "TIMESTAMP"),
+        ("croa_compliance_trackers", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("croa_compliance_trackers", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Invoice tables
+        ("invoices", "id", "SERIAL PRIMARY KEY"),
+        ("invoices", "invoice_number", "VARCHAR(50) UNIQUE NOT NULL"),
+        ("invoices", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("invoices", "title", "VARCHAR(255)"),
+        ("invoices", "notes", "TEXT"),
+        ("invoices", "internal_notes", "TEXT"),
+        ("invoices", "subtotal", "INTEGER DEFAULT 0"),
+        ("invoices", "tax_rate", "FLOAT DEFAULT 0.0"),
+        ("invoices", "tax_amount", "INTEGER DEFAULT 0"),
+        ("invoices", "discount_amount", "INTEGER DEFAULT 0"),
+        ("invoices", "total", "INTEGER DEFAULT 0"),
+        ("invoices", "amount_paid", "INTEGER DEFAULT 0"),
+        ("invoices", "amount_due", "INTEGER DEFAULT 0"),
+        ("invoices", "status", "VARCHAR(30) DEFAULT 'draft'"),
+        ("invoices", "invoice_date", "DATE NOT NULL"),
+        ("invoices", "due_date", "DATE"),
+        ("invoices", "sent_at", "TIMESTAMP"),
+        ("invoices", "viewed_at", "TIMESTAMP"),
+        ("invoices", "paid_at", "TIMESTAMP"),
+        ("invoices", "payment_method", "VARCHAR(50)"),
+        ("invoices", "stripe_payment_intent_id", "VARCHAR(255)"),
+        ("invoices", "stripe_invoice_id", "VARCHAR(255)"),
+        ("invoices", "pdf_filename", "VARCHAR(255)"),
+        ("invoices", "pdf_generated_at", "TIMESTAMP"),
+        ("invoices", "email_sent_count", "INTEGER DEFAULT 0"),
+        ("invoices", "last_reminder_sent_at", "TIMESTAMP"),
+        ("invoices", "billing_name", "VARCHAR(255)"),
+        ("invoices", "billing_email", "VARCHAR(255)"),
+        ("invoices", "billing_address", "TEXT"),
+        ("invoices", "company_name", "VARCHAR(255)"),
+        ("invoices", "company_address", "TEXT"),
+        ("invoices", "company_phone", "VARCHAR(50)"),
+        ("invoices", "company_email", "VARCHAR(255)"),
+        ("invoices", "company_logo_url", "VARCHAR(500)"),
+        ("invoices", "tenant_id", "INTEGER REFERENCES white_label_tenants(id)"),
+        ("invoices", "created_by_id", "INTEGER REFERENCES staff(id)"),
+        ("invoices", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("invoices", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Invoice items
+        ("invoice_items", "id", "SERIAL PRIMARY KEY"),
+        ("invoice_items", "invoice_id", "INTEGER REFERENCES invoices(id) ON DELETE CASCADE NOT NULL"),
+        ("invoice_items", "item_type", "VARCHAR(30) DEFAULT 'service'"),
+        ("invoice_items", "description", "VARCHAR(500) NOT NULL"),
+        ("invoice_items", "quantity", "FLOAT DEFAULT 1.0"),
+        ("invoice_items", "unit_price", "INTEGER DEFAULT 0"),
+        ("invoice_items", "amount", "INTEGER DEFAULT 0"),
+        ("invoice_items", "reference_type", "VARCHAR(50)"),
+        ("invoice_items", "reference_id", "INTEGER"),
+        ("invoice_items", "sort_order", "INTEGER DEFAULT 0"),
+        ("invoice_items", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Invoice payments
+        ("invoice_payments", "id", "SERIAL PRIMARY KEY"),
+        ("invoice_payments", "invoice_id", "INTEGER REFERENCES invoices(id) ON DELETE CASCADE NOT NULL"),
+        ("invoice_payments", "amount", "INTEGER NOT NULL"),
+        ("invoice_payments", "payment_method", "VARCHAR(50)"),
+        ("invoice_payments", "stripe_payment_intent_id", "VARCHAR(255)"),
+        ("invoice_payments", "stripe_charge_id", "VARCHAR(255)"),
+        ("invoice_payments", "transaction_id", "VARCHAR(255)"),
+        ("invoice_payments", "status", "VARCHAR(30) DEFAULT 'completed'"),
+        ("invoice_payments", "paid_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("invoice_payments", "notes", "TEXT"),
+        ("invoice_payments", "recorded_by_id", "INTEGER REFERENCES staff(id)"),
+        ("invoice_payments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Push Subscriptions (P17)
+        ("push_subscriptions", "id", "SERIAL PRIMARY KEY"),
+        ("push_subscriptions", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("push_subscriptions", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("push_subscriptions", "endpoint", "TEXT NOT NULL UNIQUE"),
+        ("push_subscriptions", "p256dh_key", "VARCHAR(255) NOT NULL"),
+        ("push_subscriptions", "auth_key", "VARCHAR(255) NOT NULL"),
+        ("push_subscriptions", "user_agent", "VARCHAR(500)"),
+        ("push_subscriptions", "device_name", "VARCHAR(100)"),
+        ("push_subscriptions", "notify_case_updates", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_messages", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_documents", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_deadlines", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "notify_payments", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("push_subscriptions", "last_used_at", "TIMESTAMP"),
+        ("push_subscriptions", "failed_count", "INTEGER DEFAULT 0"),
+        ("push_subscriptions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("push_subscriptions", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Push Notification Logs (P17)
+        ("push_notification_logs", "id", "SERIAL PRIMARY KEY"),
+        ("push_notification_logs", "subscription_id", "INTEGER REFERENCES push_subscriptions(id) NOT NULL"),
+        ("push_notification_logs", "title", "VARCHAR(255) NOT NULL"),
+        ("push_notification_logs", "body", "TEXT"),
+        ("push_notification_logs", "icon", "VARCHAR(500)"),
+        ("push_notification_logs", "url", "VARCHAR(500)"),
+        ("push_notification_logs", "tag", "VARCHAR(100)"),
+        ("push_notification_logs", "data", "JSONB"),
+        ("push_notification_logs", "trigger_type", "VARCHAR(50)"),
+        ("push_notification_logs", "trigger_id", "INTEGER"),
+        ("push_notification_logs", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("push_notification_logs", "sent_at", "TIMESTAMP"),
+        ("push_notification_logs", "error_message", "TEXT"),
+        ("push_notification_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Batch Processing (P18)
+        ("batch_jobs", "id", "SERIAL PRIMARY KEY"),
+        ("batch_jobs", "job_uuid", "VARCHAR(64) UNIQUE NOT NULL"),
+        ("batch_jobs", "name", "VARCHAR(255) NOT NULL"),
+        ("batch_jobs", "action_type", "VARCHAR(50) NOT NULL"),
+        ("batch_jobs", "action_params", "JSONB"),
+        ("batch_jobs", "selection_type", "VARCHAR(30) DEFAULT 'manual'"),
+        ("batch_jobs", "selection_filter", "JSONB"),
+        ("batch_jobs", "total_items", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("batch_jobs", "items_processed", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "items_succeeded", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "items_failed", "INTEGER DEFAULT 0"),
+        ("batch_jobs", "progress_percent", "FLOAT DEFAULT 0.0"),
+        ("batch_jobs", "started_at", "TIMESTAMP"),
+        ("batch_jobs", "completed_at", "TIMESTAMP"),
+        ("batch_jobs", "estimated_completion", "TIMESTAMP"),
+        ("batch_jobs", "error_message", "TEXT"),
+        ("batch_jobs", "can_retry", "BOOLEAN DEFAULT TRUE"),
+        ("batch_jobs", "created_by_id", "INTEGER REFERENCES staff(id) NOT NULL"),
+        ("batch_jobs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("batch_jobs", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Batch Job Items
+        ("batch_job_items", "id", "SERIAL PRIMARY KEY"),
+        ("batch_job_items", "batch_job_id", "INTEGER REFERENCES batch_jobs(id) ON DELETE CASCADE NOT NULL"),
+        ("batch_job_items", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("batch_job_items", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("batch_job_items", "processed_at", "TIMESTAMP"),
+        ("batch_job_items", "before_state", "JSONB"),
+        ("batch_job_items", "after_state", "JSONB"),
+        ("batch_job_items", "error_message", "TEXT"),
+        ("batch_job_items", "retry_count", "INTEGER DEFAULT 0"),
+        ("batch_job_items", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Staff Activities (P19 - Staff Performance)
+        ("staff_activities", "id", "SERIAL PRIMARY KEY"),
+        ("staff_activities", "staff_id", "INTEGER REFERENCES staff(id) NOT NULL"),
+        ("staff_activities", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("staff_activities", "activity_type", "VARCHAR(50) NOT NULL"),
+        ("staff_activities", "description", "VARCHAR(500)"),
+        ("staff_activities", "activity_metadata", "JSONB"),
+        ("staff_activities", "request_received_at", "TIMESTAMP"),
+        ("staff_activities", "response_completed_at", "TIMESTAMP"),
+        ("staff_activities", "response_time_minutes", "INTEGER"),
+        ("staff_activities", "quality_score", "INTEGER"),
+        ("staff_activities", "was_escalated", "BOOLEAN DEFAULT FALSE"),
+        ("staff_activities", "required_revision", "BOOLEAN DEFAULT FALSE"),
+        ("staff_activities", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Client Success Metrics
+        ("client_success_metrics", "id", "SERIAL PRIMARY KEY"),
+        ("client_success_metrics", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("client_success_metrics", "snapshot_date", "DATE NOT NULL"),
+        ("client_success_metrics", "snapshot_type", "VARCHAR(30) DEFAULT 'periodic'"),
+        ("client_success_metrics", "initial_negative_items", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "initial_equifax_score", "INTEGER"),
+        ("client_success_metrics", "initial_experian_score", "INTEGER"),
+        ("client_success_metrics", "initial_transunion_score", "INTEGER"),
+        ("client_success_metrics", "initial_avg_score", "INTEGER"),
+        ("client_success_metrics", "current_negative_items", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "current_equifax_score", "INTEGER"),
+        ("client_success_metrics", "current_experian_score", "INTEGER"),
+        ("client_success_metrics", "current_transunion_score", "INTEGER"),
+        ("client_success_metrics", "current_avg_score", "INTEGER"),
+        ("client_success_metrics", "items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "items_verified", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "items_updated", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "items_in_progress", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "equifax_items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "experian_items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "transunion_items_deleted", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "equifax_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "experian_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "transunion_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "avg_score_change", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "deletion_rate", "FLOAT DEFAULT 0"),
+        ("client_success_metrics", "dispute_rounds_completed", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "days_in_program", "INTEGER DEFAULT 0"),
+        ("client_success_metrics", "estimated_value_recovered", "FLOAT DEFAULT 0"),
+        ("client_success_metrics", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("client_success_metrics", "case_complete", "BOOLEAN DEFAULT FALSE"),
+        ("client_success_metrics", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("client_success_metrics", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # ROI Calculations
+        ("roi_calculations", "id", "SERIAL PRIMARY KEY"),
+        ("roi_calculations", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("roi_calculations", "calculated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("roi_calculations", "calculated_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("roi_calculations", "calculation_type", "VARCHAR(30) DEFAULT 'automatic'"),
+        ("roi_calculations", "fcra_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "fdcpa_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "tcpa_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "fcba_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "other_violations_count", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "total_violations", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "willful_violations", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "negligent_violations", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "statutory_damages_min", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "statutory_damages_max", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "punitive_damages_potential", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "credit_denial_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "higher_interest_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "emotional_distress_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "time_lost_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "other_actual_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "total_actual_damages", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "estimated_attorney_fees", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "total_negative_items", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "disputable_items", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "high_value_items", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "estimated_deletion_rate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "conservative_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "moderate_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "aggressive_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "most_likely_estimate", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "litigation_score", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "litigation_recommended", "BOOLEAN DEFAULT FALSE"),
+        ("roi_calculations", "litigation_notes", "TEXT"),
+        ("roi_calculations", "estimated_score_improvement", "INTEGER DEFAULT 0"),
+        ("roi_calculations", "credit_value_improvement", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "total_estimated_value", "FLOAT DEFAULT 0"),
+        ("roi_calculations", "confidence_level", "VARCHAR(20) DEFAULT 'medium'"),
+        ("roi_calculations", "calculation_inputs", "JSONB"),
+        ("roi_calculations", "calculation_notes", "TEXT"),
+        ("roi_calculations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("roi_calculations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Payment Plans (P23)
+        ("payment_plans", "id", "SERIAL PRIMARY KEY"),
+        ("payment_plans", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("payment_plans", "created_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("payment_plans", "plan_name", "VARCHAR(100)"),
+        ("payment_plans", "plan_type", "VARCHAR(50) DEFAULT 'custom'"),
+        ("payment_plans", "total_amount", "FLOAT NOT NULL"),
+        ("payment_plans", "down_payment", "FLOAT DEFAULT 0"),
+        ("payment_plans", "num_installments", "INTEGER DEFAULT 3"),
+        ("payment_plans", "installment_amount", "FLOAT"),
+        ("payment_plans", "installment_frequency", "VARCHAR(20) DEFAULT 'monthly'"),
+        ("payment_plans", "start_date", "DATE NOT NULL"),
+        ("payment_plans", "next_payment_date", "DATE"),
+        ("payment_plans", "end_date", "DATE"),
+        ("payment_plans", "amount_paid", "FLOAT DEFAULT 0"),
+        ("payment_plans", "amount_remaining", "FLOAT"),
+        ("payment_plans", "installments_completed", "INTEGER DEFAULT 0"),
+        ("payment_plans", "installments_remaining", "INTEGER"),
+        ("payment_plans", "status", "VARCHAR(30) DEFAULT 'active'"),
+        ("payment_plans", "paused_at", "TIMESTAMP"),
+        ("payment_plans", "paused_reason", "VARCHAR(255)"),
+        ("payment_plans", "completed_at", "TIMESTAMP"),
+        ("payment_plans", "defaulted_at", "TIMESTAMP"),
+        ("payment_plans", "default_reason", "VARCHAR(255)"),
+        ("payment_plans", "payment_method", "VARCHAR(50)"),
+        ("payment_plans", "stripe_subscription_id", "VARCHAR(255)"),
+        ("payment_plans", "auto_charge", "BOOLEAN DEFAULT FALSE"),
+        ("payment_plans", "grace_period_days", "INTEGER DEFAULT 5"),
+        ("payment_plans", "late_fee_amount", "FLOAT DEFAULT 0"),
+        ("payment_plans", "late_fee_percent", "FLOAT DEFAULT 0"),
+        ("payment_plans", "notes", "TEXT"),
+        ("payment_plans", "internal_notes", "TEXT"),
+        ("payment_plans", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("payment_plans", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Payment Plan Installments
+        ("payment_plan_installments", "id", "SERIAL PRIMARY KEY"),
+        ("payment_plan_installments", "plan_id", "INTEGER REFERENCES payment_plans(id) NOT NULL"),
+        ("payment_plan_installments", "installment_number", "INTEGER NOT NULL"),
+        ("payment_plan_installments", "amount_due", "FLOAT NOT NULL"),
+        ("payment_plan_installments", "amount_paid", "FLOAT DEFAULT 0"),
+        ("payment_plan_installments", "due_date", "DATE NOT NULL"),
+        ("payment_plan_installments", "paid_date", "DATE"),
+        ("payment_plan_installments", "status", "VARCHAR(30) DEFAULT 'pending'"),
+        ("payment_plan_installments", "is_late", "BOOLEAN DEFAULT FALSE"),
+        ("payment_plan_installments", "days_late", "INTEGER DEFAULT 0"),
+        ("payment_plan_installments", "late_fee_applied", "FLOAT DEFAULT 0"),
+        ("payment_plan_installments", "payment_id", "INTEGER"),
+        ("payment_plan_installments", "stripe_payment_intent_id", "VARCHAR(255)"),
+        ("payment_plan_installments", "notes", "VARCHAR(500)"),
+        ("payment_plan_installments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("payment_plan_installments", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+
+        # Payment Plan Payments
+        ("payment_plan_payments", "id", "SERIAL PRIMARY KEY"),
+        ("payment_plan_payments", "plan_id", "INTEGER REFERENCES payment_plans(id) NOT NULL"),
+        ("payment_plan_payments", "installment_id", "INTEGER"),
+        ("payment_plan_payments", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("payment_plan_payments", "amount", "FLOAT NOT NULL"),
+        ("payment_plan_payments", "payment_date", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("payment_plan_payments", "payment_method", "VARCHAR(50)"),
+        ("payment_plan_payments", "stripe_payment_intent_id", "VARCHAR(255) UNIQUE"),
+        ("payment_plan_payments", "stripe_charge_id", "VARCHAR(255)"),
+        ("payment_plan_payments", "reference_number", "VARCHAR(100)"),
+        ("payment_plan_payments", "received_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("payment_plan_payments", "status", "VARCHAR(30) DEFAULT 'completed'"),
+        ("payment_plan_payments", "failure_reason", "VARCHAR(255)"),
+        ("payment_plan_payments", "refunded_at", "TIMESTAMP"),
+        ("payment_plan_payments", "refund_amount", "FLOAT"),
+        ("payment_plan_payments", "refund_reason", "VARCHAR(255)"),
+        ("payment_plan_payments", "notes", "TEXT"),
+        ("payment_plan_payments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # P24: Bureau Response Tracking
+        ("bureau_dispute_tracking", "id", "SERIAL PRIMARY KEY"),
+        ("bureau_dispute_tracking", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("bureau_dispute_tracking", "case_id", "INTEGER REFERENCES cases(id)"),
+        ("bureau_dispute_tracking", "bureau", "VARCHAR(50) NOT NULL"),
+        ("bureau_dispute_tracking", "dispute_round", "INTEGER DEFAULT 1"),
+        ("bureau_dispute_tracking", "batch_id", "VARCHAR(100)"),
+        ("bureau_dispute_tracking", "letter_id", "INTEGER REFERENCES dispute_letters(id)"),
+        ("bureau_dispute_tracking", "certified_mail_id", "INTEGER REFERENCES certified_mail_orders(id)"),
+        ("bureau_dispute_tracking", "item_count", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "item_ids", "JSON"),
+        ("bureau_dispute_tracking", "sent_method", "VARCHAR(50)"),
+        ("bureau_dispute_tracking", "sent_date", "DATE NOT NULL"),
+        ("bureau_dispute_tracking", "sent_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("bureau_dispute_tracking", "tracking_number", "VARCHAR(100)"),
+        ("bureau_dispute_tracking", "delivery_confirmed", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "delivery_date", "DATE"),
+        ("bureau_dispute_tracking", "expected_response_date", "DATE"),
+        ("bureau_dispute_tracking", "response_deadline_days", "INTEGER DEFAULT 30"),
+        ("bureau_dispute_tracking", "is_complex_dispute", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "response_received", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "response_date", "DATE"),
+        ("bureau_dispute_tracking", "response_type", "VARCHAR(50)"),
+        ("bureau_dispute_tracking", "response_document_id", "INTEGER REFERENCES cra_responses(id)"),
+        ("bureau_dispute_tracking", "items_deleted", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "items_updated", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "items_verified", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "items_investigating", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "status", "VARCHAR(30) DEFAULT 'sent'"),
+        ("bureau_dispute_tracking", "is_overdue", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "days_overdue", "INTEGER DEFAULT 0"),
+        ("bureau_dispute_tracking", "follow_up_required", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "follow_up_type", "VARCHAR(50)"),
+        ("bureau_dispute_tracking", "follow_up_date", "DATE"),
+        ("bureau_dispute_tracking", "follow_up_completed", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "follow_up_notes", "TEXT"),
+        ("bureau_dispute_tracking", "reminder_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "reminder_sent_at", "TIMESTAMP"),
+        ("bureau_dispute_tracking", "overdue_alert_sent", "BOOLEAN DEFAULT FALSE"),
+        ("bureau_dispute_tracking", "overdue_alert_sent_at", "TIMESTAMP"),
+        ("bureau_dispute_tracking", "notes", "TEXT"),
+        ("bureau_dispute_tracking", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("bureau_dispute_tracking", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Letter Templates
+        ("letter_templates", "id", "SERIAL PRIMARY KEY"),
+        ("letter_templates", "name", "VARCHAR(200) NOT NULL"),
+        ("letter_templates", "code", "VARCHAR(100) UNIQUE NOT NULL"),
+        ("letter_templates", "category", "VARCHAR(50) NOT NULL"),
+        ("letter_templates", "dispute_round", "INTEGER"),
+        ("letter_templates", "target_type", "VARCHAR(50) DEFAULT 'bureau'"),
+        ("letter_templates", "subject", "VARCHAR(500)"),
+        ("letter_templates", "content", "TEXT NOT NULL"),
+        ("letter_templates", "footer", "TEXT"),
+        ("letter_templates", "variables", "JSON"),
+        ("letter_templates", "required_attachments", "JSON"),
+        ("letter_templates", "recommended_for", "JSON"),
+        ("letter_templates", "description", "TEXT"),
+        ("letter_templates", "instructions", "TEXT"),
+        ("letter_templates", "legal_basis", "TEXT"),
+        ("letter_templates", "is_system", "BOOLEAN DEFAULT FALSE"),
+        ("letter_templates", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("letter_templates", "version", "INTEGER DEFAULT 1"),
+        ("letter_templates", "parent_id", "INTEGER REFERENCES letter_templates(id)"),
+        ("letter_templates", "use_count", "INTEGER DEFAULT 0"),
+        ("letter_templates", "last_used_at", "TIMESTAMP"),
+        ("letter_templates", "created_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("letter_templates", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("letter_templates", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Letter Template Versions
+        ("letter_template_versions", "id", "SERIAL PRIMARY KEY"),
+        ("letter_template_versions", "template_id", "INTEGER REFERENCES letter_templates(id) NOT NULL"),
+        ("letter_template_versions", "version_number", "INTEGER NOT NULL"),
+        ("letter_template_versions", "name", "VARCHAR(200) NOT NULL"),
+        ("letter_template_versions", "content", "TEXT NOT NULL"),
+        ("letter_template_versions", "footer", "TEXT"),
+        ("letter_template_versions", "variables", "JSON"),
+        ("letter_template_versions", "change_summary", "TEXT"),
+        ("letter_template_versions", "changed_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("letter_template_versions", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Generated Letters
+        ("generated_letters", "id", "SERIAL PRIMARY KEY"),
+        ("generated_letters", "template_id", "INTEGER REFERENCES letter_templates(id)"),
+        ("generated_letters", "template_version", "INTEGER"),
+        ("generated_letters", "client_id", "INTEGER REFERENCES clients(id) NOT NULL"),
+        ("generated_letters", "case_id", "INTEGER REFERENCES cases(id)"),
+        ("generated_letters", "dispute_round", "INTEGER"),
+        ("generated_letters", "target_type", "VARCHAR(50)"),
+        ("generated_letters", "target_name", "VARCHAR(200)"),
+        ("generated_letters", "subject", "VARCHAR(500)"),
+        ("generated_letters", "content", "TEXT NOT NULL"),
+        ("generated_letters", "variables_used", "JSON"),
+        ("generated_letters", "status", "VARCHAR(50) DEFAULT 'draft'"),
+        ("generated_letters", "sent_method", "VARCHAR(50)"),
+        ("generated_letters", "sent_date", "TIMESTAMP"),
+        ("generated_letters", "sent_by_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("generated_letters", "tracking_number", "VARCHAR(100)"),
+        ("generated_letters", "pdf_path", "TEXT"),
+        ("generated_letters", "file_size_bytes", "INTEGER"),
+        ("generated_letters", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("generated_letters", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
-    
+
     conn = engine.connect()
     try:
         for table, column, column_type in migrate_columns:

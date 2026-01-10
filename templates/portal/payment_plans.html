@@ -1,0 +1,366 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Payment Plans - Client Portal{% endblock %}
+
+{% block portal_content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1" data-testid="page-title">Payment Plans</h1>
+            <p class="text-muted mb-0">View and manage your payment plans</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4" data-testid="summary-cards">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-credit-card text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Active Plans</div>
+                            <div class="h4 mb-0" id="activePlans" data-testid="active-plans">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-check-circle text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Total Paid</div>
+                            <div class="h4 mb-0" id="totalPaid" data-testid="total-paid">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-10 rounded-3 p-3 me-3">
+                            <i class="bi bi-clock text-warning fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-muted small">Remaining Balance</div>
+                            <div class="h4 mb-0" id="remainingBalance" data-testid="remaining-balance">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Payment Alert -->
+    <div id="upcomingPaymentAlert" class="alert alert-info d-none mb-4" data-testid="upcoming-alert">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-info-circle fs-4 me-3"></i>
+            <div>
+                <strong>Next Payment Due:</strong>
+                <span id="nextPaymentInfo">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Plans List -->
+    <div class="card border-0 shadow-sm mb-4" data-testid="plans-card">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Your Payment Plans</h5>
+        </div>
+        <div class="card-body p-0">
+            <div id="plansContainer">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="text-muted mt-2 mb-0">Loading payment plans...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan Detail Modal -->
+<div class="modal fade" id="planDetailModal" tabindex="-1" data-testid="plan-modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Payment Plan Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="planDetailContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadPaymentPlans();
+});
+
+async function loadPaymentPlans() {
+    try {
+        const response = await fetch('/portal/api/payment-plans');
+        const data = await response.json();
+
+        if (data.success) {
+            renderSummary(data);
+            renderPlans(data.plans || []);
+            checkUpcomingPayments(data.plans || []);
+        } else {
+            showError('Failed to load payment plans');
+        }
+    } catch (error) {
+        console.error('Error loading payment plans:', error);
+        showError('Failed to load payment plans');
+    }
+}
+
+function renderSummary(data) {
+    document.getElementById('activePlans').textContent = data.active_count || 0;
+    document.getElementById('totalPaid').textContent = formatCurrency(data.total_paid || 0);
+    document.getElementById('remainingBalance').textContent = formatCurrency(data.total_remaining || 0);
+}
+
+function renderPlans(plans) {
+    const container = document.getElementById('plansContainer');
+
+    if (plans.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5" data-testid="empty-state">
+                <i class="bi bi-credit-card text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3 text-muted">No Payment Plans</h5>
+                <p class="text-muted">You don't have any payment plans yet.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = plans.map(plan => `
+        <div class="border-bottom p-4" data-testid="plan-item">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <h6 class="mb-1">${plan.plan_name || plan.plan_type}</h6>
+                    <small class="text-muted">${capitalizeFirst(plan.plan_type)} Plan</small>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-muted small">Total</div>
+                    <div class="fw-bold">${formatCurrency(plan.total_amount)}</div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-muted small">Paid</div>
+                    <div class="fw-bold text-success">${formatCurrency(plan.amount_paid)}</div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-muted small">Status</div>
+                    <span class="badge ${getStatusBadgeClass(plan.status)}">${capitalizeFirst(plan.status)}</span>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-outline-primary btn-sm" onclick="viewPlanDetails(${plan.id})" data-testid="view-details-btn">
+                        View Details
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-3">
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: ${plan.progress_percent || 0}%"></div>
+                </div>
+                <small class="text-muted mt-1 d-block">
+                    ${plan.installments_paid || 0} of ${plan.num_installments} payments completed
+                </small>
+            </div>
+
+            <!-- Next Payment Info -->
+            ${plan.status === 'active' && plan.next_due_date ? `
+                <div class="mt-3 p-2 bg-light rounded">
+                    <small class="text-muted">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Next payment: <strong>${formatCurrency(plan.installment_amount)}</strong> due on <strong>${formatDate(plan.next_due_date)}</strong>
+                    </small>
+                </div>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+function checkUpcomingPayments(plans) {
+    const activePlans = plans.filter(p => p.status === 'active' && p.next_due_date);
+    if (activePlans.length === 0) return;
+
+    // Find the soonest payment
+    const soonest = activePlans.reduce((a, b) =>
+        new Date(a.next_due_date) < new Date(b.next_due_date) ? a : b
+    );
+
+    const dueDate = new Date(soonest.next_due_date);
+    const today = new Date();
+    const daysUntil = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+    if (daysUntil <= 7) {
+        const alert = document.getElementById('upcomingPaymentAlert');
+        const info = document.getElementById('nextPaymentInfo');
+
+        info.innerHTML = `${formatCurrency(soonest.installment_amount)} due ${formatDate(soonest.next_due_date)} ${daysUntil <= 0 ? '<span class="badge bg-danger ms-2">Overdue</span>' : daysUntil <= 3 ? '<span class="badge bg-warning ms-2">Due Soon</span>' : ''}`;
+        alert.classList.remove('d-none');
+
+        if (daysUntil <= 0) {
+            alert.classList.remove('alert-info');
+            alert.classList.add('alert-danger');
+        } else if (daysUntil <= 3) {
+            alert.classList.remove('alert-info');
+            alert.classList.add('alert-warning');
+        }
+    }
+}
+
+async function viewPlanDetails(planId) {
+    const modal = new bootstrap.Modal(document.getElementById('planDetailModal'));
+    const content = document.getElementById('planDetailContent');
+
+    content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+    `;
+    modal.show();
+
+    try {
+        const response = await fetch(`/portal/api/payment-plans/${planId}`);
+        const data = await response.json();
+
+        if (data.success) {
+            const plan = data.plan;
+            content.innerHTML = `
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Plan Details</h6>
+                        <table class="table table-sm">
+                            <tr><td class="text-muted">Plan Name</td><td>${plan.plan_name || '-'}</td></tr>
+                            <tr><td class="text-muted">Type</td><td>${capitalizeFirst(plan.plan_type)}</td></tr>
+                            <tr><td class="text-muted">Status</td><td><span class="badge ${getStatusBadgeClass(plan.status)}">${capitalizeFirst(plan.status)}</span></td></tr>
+                            <tr><td class="text-muted">Frequency</td><td>${capitalizeFirst(plan.frequency)}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Payment Summary</h6>
+                        <table class="table table-sm">
+                            <tr><td class="text-muted">Total Amount</td><td class="fw-bold">${formatCurrency(plan.total_amount)}</td></tr>
+                            <tr><td class="text-muted">Down Payment</td><td>${formatCurrency(plan.down_payment)}</td></tr>
+                            <tr><td class="text-muted">Amount Paid</td><td class="text-success">${formatCurrency(plan.amount_paid)}</td></tr>
+                            <tr><td class="text-muted">Remaining</td><td class="text-warning">${formatCurrency(plan.amount_remaining)}</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <h6 class="text-muted mb-3">Installment Schedule</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Paid Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(plan.installments || []).map((inst, i) => `
+                                <tr class="${inst.status === 'paid' ? 'table-success' : inst.is_overdue ? 'table-danger' : ''}">
+                                    <td>${i + 1}</td>
+                                    <td>${formatDate(inst.due_date)}</td>
+                                    <td>${formatCurrency(inst.amount_due)}</td>
+                                    <td>
+                                        ${inst.status === 'paid' ? '<i class="bi bi-check-circle-fill text-success"></i> Paid' :
+                                          inst.is_overdue ? '<i class="bi bi-exclamation-circle-fill text-danger"></i> Overdue' :
+                                          '<i class="bi bi-clock text-warning"></i> Pending'}
+                                    </td>
+                                    <td>${inst.paid_at ? formatDate(inst.paid_at) : '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                ${plan.payments && plan.payments.length > 0 ? `
+                    <h6 class="text-muted mb-3 mt-4">Payment History</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${plan.payments.map(pmt => `
+                                    <tr>
+                                        <td>${formatDate(pmt.paid_at)}</td>
+                                        <td class="text-success">${formatCurrency(pmt.amount)}</td>
+                                        <td>${capitalizeFirst(pmt.payment_method)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : ''}
+            `;
+        } else {
+            content.innerHTML = '<div class="alert alert-danger">Failed to load plan details</div>';
+        }
+    } catch (error) {
+        console.error('Error loading plan details:', error);
+        content.innerHTML = '<div class="alert alert-danger">Failed to load plan details</div>';
+    }
+}
+
+function showError(message) {
+    document.getElementById('plansContainer').innerHTML = `
+        <div class="text-center py-5">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+            <p class="text-danger mt-3">${message}</p>
+            <button class="btn btn-primary" onclick="loadPaymentPlans()">Retry</button>
+        </div>
+    `;
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function capitalizeFirst(str) {
+    return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+}
+
+function getStatusBadgeClass(status) {
+    switch (status) {
+        case 'active': return 'bg-success';
+        case 'completed': return 'bg-primary';
+        case 'paused': return 'bg-warning text-dark';
+        case 'cancelled': return 'bg-secondary';
+        case 'defaulted': return 'bg-danger';
+        default: return 'bg-secondary';
+    }
+}
+</script>
+{% endblock %}

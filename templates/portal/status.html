@@ -4,20 +4,20 @@
 {% block content %}
 
 <!-- Back Link -->
-<div style="margin-bottom: 24px;">
+<div style="margin-bottom: 24px;" data-testid="back-link">
     <a href="{{ url_for('portal.dashboard') }}" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #0d9488; text-decoration: none;">
         ← Back to Case Overview
     </a>
 </div>
 
 <!-- Header -->
-<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;">
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;" data-testid="page-header">
     <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; margin: 0 0 8px 0;">Detailed Bureau Status</h2>
     <p style="font-size: 15px; opacity: 0.8; margin: 0;">Track individual account statuses across all three credit bureaus.</p>
 </div>
 
 <!-- Summary Stats -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="summary-stats">
     <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; border-left: 4px solid #0d9488;">
         <div style="font-size: 14px; color: #6b7280; margin-bottom: 8px;">Equifax</div>
         <div style="font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 600; color: #0d9488;">{{ accounts|selectattr('bureau', 'equalto', 'Equifax')|list|length }} Items</div>
@@ -33,7 +33,7 @@
 </div>
 
 <!-- Equifax Section -->
-<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;" data-testid="equifax-section">
     <div class="card-title" style="color: #0d9488;">
         <span style="width: 12px; height: 12px; background: #0d9488; border-radius: 50%; display: inline-block;"></span>
         Equifax Accounts
@@ -58,7 +58,7 @@
 </div>
 
 <!-- Experian Section -->
-<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;" data-testid="experian-section">
     <div class="card-title" style="color: #2563eb;">
         <span style="width: 12px; height: 12px; background: #2563eb; border-radius: 50%; display: inline-block;"></span>
         Experian Accounts
@@ -83,7 +83,7 @@
 </div>
 
 <!-- TransUnion Section -->
-<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;" data-testid="transunion-section">
     <div class="card-title" style="color: #dc2626;">
         <span style="width: 12px; height: 12px; background: #dc2626; border-radius: 50%; display: inline-block;"></span>
         TransUnion Accounts
@@ -108,7 +108,7 @@
 </div>
 
 <!-- Legend -->
-<div class="card animate-fade-in-up" data-delay="700" style="background: #f9fafb; margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="700" style="background: #f9fafb; margin-bottom: 24px;" data-testid="legend">
     <div class="card-title">📋 Status Legend</div>
     <div style="display: flex; flex-wrap: wrap; gap: 20px;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -132,70 +132,253 @@
 
 <!-- Secondary Bureaus Freeze Section -->
 {% if secondary_bureaus %}
-<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;">
-    <div class="card-title" style="color: #8b5cf6;">
-        <span style="width: 12px; height: 12px; background: #8b5cf6; border-radius: 50%; display: inline-block;"></span>
-        Secondary Bureaus Freeze
+{% set ns = namespace(frozen=0, pending=0) %}
+{% for b in secondary_bureaus %}
+    {% if b.status and b.status.upper() == 'FROZEN' %}
+        {% set ns.frozen = ns.frozen + 1 %}
+    {% elif b.status and b.status.upper() == 'PENDING' %}
+        {% set ns.pending = ns.pending + 1 %}
+    {% endif %}
+{% endfor %}
+{% set frozen_count = ns.frozen %}
+{% set pending_count = ns.pending %}
+{% set total_count = secondary_bureaus|length %}
+
+<!-- Priority Action Card - What's Next -->
+<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px; background: linear-gradient(135deg, {% if overdue_bureaus|length > 0 %}#fef2f2, #fee2e2{% else %}#fef3c7, #fde68a{% endif %}); border: 2px solid {% if overdue_bureaus|length > 0 %}#f87171{% else %}#f59e0b{% endif %};" data-testid="priority-action-card">
+    <div style="display: flex; align-items: flex-start; gap: 16px;">
+        <div style="width: 48px; height: 48px; background: {% if overdue_bureaus|length > 0 %}#ef4444{% else %}#f59e0b{% endif %}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span style="font-size: 24px;">{% if overdue_bureaus|length > 0 %}⚠️{% else %}📬{% endif %}</span>
+        </div>
+        <div style="flex: 1;">
+            <h3 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: {% if overdue_bureaus|length > 0 %}#991b1b{% else %}#92400e{% endif %};">
+                {% if overdue_bureaus|length > 0 %}
+                Action Needed - {{ overdue_bureaus|length }} Overdue Response{{ 's' if overdue_bureaus|length > 1 else '' }}
+                {% else %}
+                What to Watch For in Your Mail
+                {% endif %}
+            </h3>
+            {% if pending_count > 0 %}
+
+            {% if overdue_bureaus|length > 0 %}
+            <!-- Overdue alert -->
+            <div style="background: white; border: 2px solid #fca5a5; border-radius: 10px; padding: 12px 16px; margin-bottom: 12px;">
+                <p style="margin: 0 0 8px 0; font-size: 14px; color: #991b1b; font-weight: 600;">
+                    These bureaus should have responded by now:
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                    {% for name in overdue_bureaus %}
+                    <span style="padding: 4px 10px; background: #fef2f2; border-radius: 16px; font-size: 12px; font-weight: 600; color: #dc2626; border: 1px solid #fca5a5;">
+                        {{ name }}
+                    </span>
+                    {% endfor %}
+                </div>
+                <p style="margin: 8px 0 0 0; font-size: 12px; color: #991b1b;">
+                    Contact us if you need help following up with these bureaus.
+                </p>
+            </div>
+            {% endif %}
+
+            <p style="margin: 0 0 12px 0; font-size: 14px; color: {% if overdue_bureaus|length > 0 %}#991b1b{% else %}#78350f{% endif %}; line-height: 1.5;">
+                You're waiting on <strong>{{ pending_count }} letter{{ 's' if pending_count > 1 else '' }}</strong> from:
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                {% set shown = namespace(count=0) %}
+                {% for bureau in secondary_bureaus if bureau.status and bureau.status.upper() == 'PENDING' and shown.count < 4 %}
+                {% set shown.count = shown.count + 1 %}
+                {% set is_overdue = bureau.bureau_name in overdue_bureaus %}
+                <span style="padding: 6px 12px; background: white; border-radius: 20px; font-size: 13px; font-weight: 600; color: {% if is_overdue %}#dc2626{% else %}#92400e{% endif %}; border: 1px solid {% if is_overdue %}#fca5a5{% else %}#fbbf24{% endif %};">
+                    {{ bureau.bureau_name }}{% if is_overdue %} ⚠️{% endif %}
+                </span>
+                {% endfor %}
+                {% if pending_count > 4 %}
+                <span style="padding: 6px 12px; background: rgba(255,255,255,0.5); border-radius: 20px; font-size: 13px; color: #92400e;">
+                    +{{ pending_count - 4 }} more
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Expected arrival timeline -->
+            {% if expected_by_date %}
+            <div style="margin-top: 16px; padding: 12px 16px; background: white; border-radius: 10px; border: 1px solid {% if overdue_bureaus|length > 0 %}#fca5a5{% else %}#fde68a{% endif %};">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span style="font-size: 16px;">📅</span>
+                    <span style="font-size: 14px; font-weight: 600; color: {% if overdue_bureaus|length > 0 %}#991b1b{% else %}#92400e{% endif %};">
+                        {% if overdue_bureaus|length > 0 %}
+                        Was expected by: {{ expected_by_date }}
+                        {% else %}
+                        Expected by: {{ expected_by_date }}
+                        {% endif %}
+                    </span>
+                </div>
+                <p style="margin: 0; font-size: 12px; color: {% if overdue_bureaus|length > 0 %}#991b1b{% else %}#78350f{% endif %};">
+                    {% if overdue_bureaus|length > 0 %}
+                    Some responses are overdue. This is normal - bureaus sometimes take longer. We'll help you follow up.
+                    {% else %}
+                    Most bureaus respond within {{ response_days }} days. If you haven't received a letter by then, we'll help you follow up.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+
+            <p style="margin: 12px 0 0 0; font-size: 13px; color: #78350f;">
+                When you receive a letter, update the status below and click Submit.
+            </p>
+            {% else %}
+            <p style="margin: 0; font-size: 14px; color: #166534;">
+                All secondary bureaus have been processed. No action needed.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Progress Summary Card -->
+<div class="card animate-fade-in-up" data-delay="850" style="margin-bottom: 24px;" data-testid="secondary-bureaus-progress">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div class="card-title" style="color: #8b5cf6; margin: 0;">
+            <span style="width: 12px; height: 12px; background: #8b5cf6; border-radius: 50%; display: inline-block;"></span>
+            Secondary Bureaus Freeze
+        </div>
+        <div style="font-size: 24px; font-weight: 700; color: {% if frozen_count == total_count %}#059669{% else %}#8b5cf6{% endif %};">
+            {{ frozen_count }}/{{ total_count }}
+        </div>
     </div>
 
-    <!-- Instruction Alert -->
-    <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; border-radius: 0 8px 8px 0; margin-bottom: 20px;">
-        <p style="font-size: 13px; color: #991b1b; margin: 0; line-height: 1.6;">When you receive a response from a Secondary Bureau that they have <strong>FROZEN</strong> their report, please let us know by changing the Status to FROZEN as appropriate and then clicking the SUBMIT button. If they respond that they did <strong>NOT FREEZE</strong> the report, please change to NOT FROZEN instead and click the SUBMIT button. Thank you.</p>
+    <!-- Progress Bar -->
+    <div style="background: #e5e7eb; border-radius: 10px; height: 12px; overflow: hidden; margin-bottom: 8px;">
+        <div style="background: linear-gradient(90deg, #8b5cf6 0%, #059669 100%); height: 100%; width: {{ (frozen_count / total_count * 100)|round if total_count > 0 else 0 }}%; transition: width 0.5s ease; border-radius: 10px;"></div>
     </div>
+    <div style="display: flex; justify-content: space-between; font-size: 12px; color: #6b7280;">
+        <span>{{ frozen_count }} Frozen</span>
+        <span>{{ pending_count }} Pending</span>
+    </div>
+</div>
+
+<!-- Bureau List Card -->
+<div class="card animate-fade-in-up" data-delay="900" style="margin-bottom: 24px;" data-testid="secondary-bureaus-section">
 
     <form action="{{ url_for('portal.update_secondary_status') }}" method="POST">
 
-        <!-- Table Header -->
-        <div class="bureau-grid bureau-header" style="display: grid; grid-template-columns: 80px 60px 120px 1fr 50px 160px; gap: 10px; align-items: center; background: #1e3a5f; color: white; padding: 14px 16px; border-radius: 8px 8px 0 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-            <span>Follow Up</span>
-            <span>Type</span>
-            <span>Status</span>
-            <span>Secondary Bureau</span>
-            <span style="text-align: center;">📎</span>
-            <span>Comments</span>
-        </div>
-
-        <!-- Bureau Rows -->
-        <div style="background: #f3f4f6; border-radius: 0 0 8px 8px; overflow: hidden;">
-            {% for bureau in secondary_bureaus %}
-            <div class="bureau-grid bureau-row" style="display: grid; grid-template-columns: 80px 60px 120px 1fr 50px 160px; gap: 10px; align-items: center; padding: 12px 16px; background: white; border-bottom: 1px solid #e5e7eb;">
-                <!-- Follow Up Date -->
-                <span style="font-size: 12px; color: #9ca3af;">{{ bureau.follow_up_date.strftime('%m/%d') if bureau.follow_up_date else 'n/a' }}</span>
-
-                <!-- Type (always Freeze) -->
-                <span style="font-size: 12px; color: #6b7280;">Freeze</span>
-
-                <!-- Status Dropdown -->
-                <select name="status_{{ bureau.id }}" class="status-select" style="padding: 6px 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; font-weight: 600; width: 100%; background: white;">
-                    <option value="PENDING" {% if bureau.status == 'PENDING' or bureau.status == 'pending' %}selected{% endif %}>PENDING</option>
-                    <option value="FROZEN" {% if bureau.status == 'FROZEN' or bureau.status == 'frozen' %}selected{% endif %}>FROZEN</option>
-                    <option value="NOT FROZEN" {% if bureau.status == 'NOT FROZEN' or bureau.status == 'not_frozen' %}selected{% endif %}>NOT FROZEN</option>
-                </select>
-
-                <!-- Bureau Name -->
-                <span style="font-weight: 500; color: #1e3a5f; font-size: 14px;">{{ bureau.bureau_name }}</span>
-
-                <!-- Paperclip Upload -->
-                <div style="text-align: center;">
-                    {% if (bureau_uploads|default({})).get(bureau.bureau_name) %}
-                    <a href="{{ url_for('portal.download_freeze_confirmation', bureau_id=bureau.id) }}" title="Download confirmation" style="font-size: 18px; text-decoration: none;">✅</a>
-                    {% else %}
-                    <label style="cursor: pointer; font-size: 18px; color: #9ca3af;" title="Upload confirmation">
-                        📎
-                        <input type="file" name="confirmation_file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="uploadFreezeConfirmation(this, {{ bureau.id }})">
-                    </label>
-                    {% endif %}
-                </div>
-
-                <!-- Comments Input -->
-                <input type="text" name="comment_{{ bureau.id }}" value="{{ bureau.comments|default('') }}" placeholder="Add comment" style="padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px; width: 100%;">
+        <!-- Needs Action Section (Pending) -->
+        {% if pending_count > 0 %}
+        <div style="margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <span style="width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                <span style="font-size: 14px; font-weight: 600; color: #92400e;">Awaiting Response ({{ pending_count }})</span>
             </div>
-            {% endfor %}
+            <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; overflow: hidden;">
+                {% for bureau in secondary_bureaus if bureau.status and bureau.status.upper() == 'PENDING' %}
+                <div style="display: grid; grid-template-columns: 1fr 120px 50px 140px; gap: 12px; align-items: center; padding: 14px 16px; background: white; border-bottom: 1px solid #fef3c7;">
+                    <!-- Bureau Name -->
+                    <div>
+                        <span style="font-weight: 600; color: #1e3a5f; font-size: 14px;">{{ bureau.bureau_name }}</span>
+                    </div>
+
+                    <!-- Status Dropdown -->
+                    <select name="status_{{ bureau.id }}" style="padding: 8px 10px; border: 2px solid #fbbf24; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fffbeb; color: #92400e;">
+                        <option value="PENDING" selected>PENDING</option>
+                        <option value="FROZEN">FROZEN</option>
+                        <option value="NOT FROZEN">NOT FROZEN</option>
+                    </select>
+
+                    <!-- Upload -->
+                    <div style="text-align: center;">
+                        {% if (bureau_uploads|default({})).get(bureau.bureau_name) %}
+                        <a href="{{ url_for('portal.download_freeze_confirmation', bureau_id=bureau.id) }}" title="Download" style="font-size: 20px;">✅</a>
+                        {% else %}
+                        <label style="cursor: pointer; font-size: 20px; color: #d97706;" title="Upload confirmation">
+                            📎
+                            <input type="file" name="confirmation_file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="uploadFreezeConfirmation(this, {{ bureau.id }})">
+                        </label>
+                        {% endif %}
+                    </div>
+
+                    <!-- Comments -->
+                    <input type="text" name="comment_{{ bureau.id }}" value="{{ bureau.comments|default('') }}" placeholder="Notes..." style="padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px;">
+                </div>
+                {% endfor %}
+            </div>
         </div>
+        {% endif %}
+
+        {% set other_count = total_count - frozen_count - pending_count %}
+        {% if other_count > 0 %}
+        <div style="margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <span style="width: 8px; height: 8px; background: #dc2626; border-radius: 50%;"></span>
+                <span style="font-size: 14px; font-weight: 600; color: #991b1b;">Not Frozen ({{ other_count }})</span>
+            </div>
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; overflow: hidden;">
+                {% for bureau in secondary_bureaus if bureau.status and bureau.status.upper() not in ['PENDING', 'FROZEN'] %}
+                <div style="display: grid; grid-template-columns: 1fr 120px 50px 140px; gap: 12px; align-items: center; padding: 14px 16px; background: white; border-bottom: 1px solid #fee2e2;">
+                    <span style="font-weight: 600; color: #1e3a5f; font-size: 14px;">{{ bureau.bureau_name }}</span>
+                    <select name="status_{{ bureau.id }}" style="padding: 8px 10px; border: 2px solid #fca5a5; border-radius: 8px; font-size: 13px; font-weight: 600; background: #fef2f2; color: #991b1b;">
+                        <option value="PENDING">PENDING</option>
+                        <option value="FROZEN">FROZEN</option>
+                        <option value="NOT FROZEN" selected>NOT FROZEN</option>
+                    </select>
+                    <div style="text-align: center;">
+                        {% if (bureau_uploads|default({})).get(bureau.bureau_name) %}
+                        <a href="{{ url_for('portal.download_freeze_confirmation', bureau_id=bureau.id) }}" style="font-size: 20px;">✅</a>
+                        {% else %}
+                        <label style="cursor: pointer; font-size: 20px; color: #9ca3af;">
+                            📎
+                            <input type="file" name="confirmation_file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="uploadFreezeConfirmation(this, {{ bureau.id }})">
+                        </label>
+                        {% endif %}
+                    </div>
+                    <input type="text" name="comment_{{ bureau.id }}" value="{{ bureau.comments|default('') }}" placeholder="Notes..." style="padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px;">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Completed Section (Frozen) - Collapsed by default if many -->
+        {% if frozen_count > 0 %}
+        <div style="margin-bottom: 16px;">
+            <details {% if frozen_count <= 3 %}open{% endif %}>
+                <summary style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer; list-style: none;">
+                    <span style="width: 8px; height: 8px; background: #059669; border-radius: 50%;"></span>
+                    <span style="font-size: 14px; font-weight: 600; color: #166534;">Completed - Frozen ({{ frozen_count }})</span>
+                    <span style="font-size: 12px; color: #6b7280; margin-left: auto;">Click to expand</span>
+                </summary>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; overflow: hidden;">
+                    {% for bureau in secondary_bureaus if bureau.status and bureau.status.upper() == 'FROZEN' %}
+                    <div style="display: grid; grid-template-columns: 1fr 120px 50px 140px; gap: 12px; align-items: center; padding: 14px 16px; background: rgba(255,255,255,0.7); border-bottom: 1px solid #dcfce7;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="color: #059669; font-size: 16px;">✓</span>
+                            <span style="font-weight: 500; color: #166534; font-size: 14px;">{{ bureau.bureau_name }}</span>
+                        </div>
+                        <select name="status_{{ bureau.id }}" style="padding: 8px 10px; border: 1px solid #bbf7d0; border-radius: 8px; font-size: 13px; font-weight: 600; background: #f0fdf4; color: #166534;">
+                            <option value="PENDING">PENDING</option>
+                            <option value="FROZEN" selected>FROZEN</option>
+                            <option value="NOT FROZEN">NOT FROZEN</option>
+                        </select>
+                        <div style="text-align: center;">
+                            {% if (bureau_uploads|default({})).get(bureau.bureau_name) %}
+                            <a href="{{ url_for('portal.download_freeze_confirmation', bureau_id=bureau.id) }}" style="font-size: 20px;">✅</a>
+                            {% else %}
+                            <label style="cursor: pointer; font-size: 20px; color: #9ca3af;">
+                                📎
+                                <input type="file" name="confirmation_file" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" onchange="uploadFreezeConfirmation(this, {{ bureau.id }})">
+                            </label>
+                            {% endif %}
+                        </div>
+                        <input type="text" name="comment_{{ bureau.id }}" value="{{ bureau.comments|default('') }}" placeholder="Notes..." style="padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px;">
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+        </div>
+        {% endif %}
 
         <!-- Submit Button -->
         <div style="text-align: center; margin-top: 24px;">
-            <button type="submit" class="submit-btn">Submit changes</button>
+            <button type="submit" class="submit-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; padding: 14px 32px; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);">
+                Save Changes
+            </button>
         </div>
     </form>
 
@@ -220,6 +403,14 @@
         }
     }
     </script>
+
+    <style>
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    details summary::-webkit-details-marker { display: none; }
+    </style>
 </div>
 {% endif %}
 

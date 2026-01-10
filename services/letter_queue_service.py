@@ -25,7 +25,7 @@ Letter Types:
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy.orm import Session
 
@@ -152,7 +152,7 @@ def check_cra_response_triggers(db: Session, cra_response_id: int) -> List[Dict]
     """
     from database import Client, CRAResponse, DisputeItem
 
-    results = []
+    results: List[Dict[str, Any]] = []
 
     response = db.query(CRAResponse).filter_by(id=cra_response_id).first()
     if not response:
@@ -175,14 +175,14 @@ def check_cra_response_triggers(db: Session, cra_response_id: int) -> List[Dict]
         for item in dispute_items:
             result = queue_letter(
                 db=db,
-                client_id=response.client_id,
+                client_id=int(response.client_id),  # type: ignore[arg-type]
                 letter_type="mov_request",
                 trigger_type="cra_verified",
                 trigger_description=f'{response.bureau} verified {item.creditor_name or "item"} after dispute. Request Method of Verification under §611(a)(6)(B)(iii).',
-                dispute_item_id=item.id,
-                target_bureau=response.bureau,
-                target_creditor=item.creditor_name,
-                target_account=item.account_id,
+                dispute_item_id=int(item.id) if item.id else None,  # type: ignore[arg-type]
+                target_bureau=str(response.bureau) if response.bureau else None,
+                target_creditor=str(item.creditor_name) if item.creditor_name else None,
+                target_account=str(item.account_id) if item.account_id else None,
                 letter_data={
                     "client_name": client_name,
                     "bureau": response.bureau,
@@ -200,22 +200,23 @@ def check_cra_response_triggers(db: Session, cra_response_id: int) -> List[Dict]
             if result.get("success"):
                 results.append(result)
 
+    structured_items_list = response.structured_items if response.structured_items else []
     if response.response_type == "reinserted" or (
-        response.structured_items
+        structured_items_list
         and any(
             item.get("reinserted")
-            for item in response.structured_items
+            for item in structured_items_list
             if isinstance(item, dict)
         )
     ):
 
         result = queue_letter(
             db=db,
-            client_id=response.client_id,
+            client_id=int(response.client_id),  # type: ignore[arg-type]
             letter_type="reinsertion_challenge",
             trigger_type="item_reinserted",
             trigger_description=f"Item reinserted by {response.bureau} without proper §611(a)(5)(B) notice. This is a separate FCRA violation.",
-            target_bureau=response.bureau,
+            target_bureau=str(response.bureau) if response.bureau else None,
             letter_data={
                 "client_name": client_name,
                 "bureau": response.bureau,
@@ -243,7 +244,7 @@ def check_no_response_triggers(db: Session, days_threshold: int = 35) -> List[Di
     """
     from database import Client, CRAResponse, DisputeItem
 
-    results = []
+    results: List[Dict[str, Any]] = []
     cutoff_date = datetime.utcnow() - timedelta(days=days_threshold)
 
     pending_items = (
@@ -276,14 +277,14 @@ def check_no_response_triggers(db: Session, days_threshold: int = 35) -> List[Di
 
             result = queue_letter(
                 db=db,
-                client_id=item.client_id,
+                client_id=int(item.client_id),  # type: ignore[arg-type]
                 letter_type="section_623_direct",
                 trigger_type="no_cra_response_35_days",
                 trigger_description=f"No response from {item.bureau} after {days_waiting} days. FCRA §611 requires response within 30 days. Escalate to direct furnisher dispute under §623.",
-                dispute_item_id=item.id,
-                target_bureau=item.bureau,
-                target_creditor=item.creditor_name,
-                target_account=item.account_id,
+                dispute_item_id=int(item.id) if item.id else None,  # type: ignore[arg-type]
+                target_bureau=str(item.bureau) if item.bureau else None,
+                target_creditor=str(item.creditor_name) if item.creditor_name else None,
+                target_account=str(item.account_id) if item.account_id else None,
                 letter_data={
                     "client_name": client_name,
                     "bureau": item.bureau,
@@ -310,7 +311,7 @@ def check_item_type_triggers(db: Session, dispute_item_id: int) -> List[Dict]:
     """
     from database import Client, DisputeItem
 
-    results = []
+    results: List[Dict[str, Any]] = []
 
     item = db.query(DisputeItem).filter_by(id=dispute_item_id).first()
     if not item:
@@ -322,13 +323,13 @@ def check_item_type_triggers(db: Session, dispute_item_id: int) -> List[Dict]:
     if item.item_type == "collection":
         result = queue_letter(
             db=db,
-            client_id=item.client_id,
+            client_id=int(item.client_id),  # type: ignore[arg-type]
             letter_type="fdcpa_validation",
             trigger_type="collection_disputed",
             trigger_description=f'Collection account from {item.creditor_name or "collector"} disputed. Send FDCPA §1692g validation demand within 30 days of first contact.',
-            dispute_item_id=item.id,
-            target_creditor=item.creditor_name,
-            target_account=item.account_id,
+            dispute_item_id=int(item.id) if item.id else None,  # type: ignore[arg-type]
+            target_creditor=str(item.creditor_name) if item.creditor_name else None,
+            target_account=str(item.account_id) if item.account_id else None,
             letter_data={
                 "client_name": client_name,
                 "creditor": item.creditor_name,
@@ -360,13 +361,13 @@ def check_item_type_triggers(db: Session, dispute_item_id: int) -> List[Dict]:
     ):
         result = queue_letter(
             db=db,
-            client_id=item.client_id,
+            client_id=int(item.client_id),  # type: ignore[arg-type]
             letter_type="respa_qwr",
             trigger_type="mortgage_late",
             trigger_description=f"Mortgage late payment disputed on {item.creditor_name}. Send RESPA Qualified Written Request under 12 U.S.C. §2605(e).",
-            dispute_item_id=item.id,
-            target_creditor=item.creditor_name,
-            target_account=item.account_id,
+            dispute_item_id=int(item.id) if item.id else None,  # type: ignore[arg-type]
+            target_creditor=str(item.creditor_name) if item.creditor_name else None,
+            target_account=str(item.account_id) if item.account_id else None,
             letter_data={
                 "client_name": client_name,
                 "creditor": item.creditor_name,
@@ -394,7 +395,7 @@ def check_escalation_triggers(
     """
     from database import Client, DisputeItem
 
-    results = []
+    results: List[Dict[str, Any]] = []
 
     item = db.query(DisputeItem).filter_by(id=dispute_item_id).first()
     if not item:
@@ -406,14 +407,14 @@ def check_escalation_triggers(
     if new_stage == "section_623" and not item.furnisher_dispute_sent:
         result = queue_letter(
             db=db,
-            client_id=item.client_id,
+            client_id=int(item.client_id),  # type: ignore[arg-type]
             letter_type="section_623_direct",
             trigger_type="escalation_stage_change",
             trigger_description=f'Dispute escalated to §623. Send direct dispute to furnisher {item.creditor_name or "creditor"} bypassing the CRA.',
-            dispute_item_id=item.id,
-            target_creditor=item.creditor_name,
-            target_account=item.account_id,
-            target_bureau=item.bureau,
+            dispute_item_id=int(item.id) if item.id else None,  # type: ignore[arg-type]
+            target_creditor=str(item.creditor_name) if item.creditor_name else None,
+            target_account=str(item.account_id) if item.account_id else None,
+            target_bureau=str(item.bureau) if item.bureau else None,
             letter_data={
                 "client_name": client_name,
                 "creditor": item.creditor_name,
@@ -452,9 +453,9 @@ def get_pending_queue(
     priority_order = {"urgent": 0, "high": 1, "normal": 2, "low": 3}
     entries = query.order_by(LetterQueue.trigger_date.desc()).limit(limit).all()
 
-    entries = sorted(entries, key=lambda x: priority_order.get(x.priority, 2))
+    entries = sorted(entries, key=lambda x: priority_order.get(str(x.priority), 2))
 
-    results = []
+    results: List[Dict[str, Any]] = []
     for entry in entries:
         client = db.query(Client).filter_by(id=entry.client_id).first()
         dispute_item = (
@@ -471,11 +472,11 @@ def get_pending_queue(
                 "dispute_item_id": entry.dispute_item_id,
                 "letter_type": entry.letter_type,
                 "letter_type_display": LETTER_TYPE_DISPLAY.get(
-                    entry.letter_type, entry.letter_type
+                    str(entry.letter_type), str(entry.letter_type)
                 ),
                 "trigger_type": entry.trigger_type,
                 "trigger_display": TRIGGER_DISPLAY.get(
-                    entry.trigger_type, entry.trigger_type
+                    str(entry.trigger_type), str(entry.trigger_type)
                 ),
                 "trigger_description": entry.trigger_description,
                 "trigger_date": (
@@ -580,11 +581,11 @@ def approve_queue_entry(
     if entry.status != "pending":
         return {"success": False, "error": f"Entry already {entry.status}"}
 
-    entry.status = "approved"
-    entry.reviewed_by_staff_id = staff_id
-    entry.reviewed_at = datetime.utcnow()
-    entry.action_notes = notes
-    entry.updated_at = datetime.utcnow()
+    entry.status = "approved"  # type: ignore[assignment]
+    entry.reviewed_by_staff_id = staff_id  # type: ignore[assignment]
+    entry.reviewed_at = datetime.utcnow()  # type: ignore[assignment]
+    entry.action_notes = notes  # type: ignore[assignment]
+    entry.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
     db.commit()
 
@@ -594,7 +595,7 @@ def approve_queue_entry(
         "status": "approved",
         "letter_type": entry.letter_type,
         "letter_type_display": LETTER_TYPE_DISPLAY.get(
-            entry.letter_type, entry.letter_type
+            str(entry.letter_type), str(entry.letter_type)
         ),
     }
 
@@ -612,11 +613,11 @@ def dismiss_queue_entry(db: Session, queue_id: int, staff_id: int, reason: str) 
     if entry.status != "pending":
         return {"success": False, "error": f"Entry already {entry.status}"}
 
-    entry.status = "dismissed"
-    entry.reviewed_by_staff_id = staff_id
-    entry.reviewed_at = datetime.utcnow()
-    entry.action_notes = reason
-    entry.updated_at = datetime.utcnow()
+    entry.status = "dismissed"  # type: ignore[assignment]
+    entry.reviewed_by_staff_id = staff_id  # type: ignore[assignment]
+    entry.reviewed_at = datetime.utcnow()  # type: ignore[assignment]
+    entry.action_notes = reason  # type: ignore[assignment]
+    entry.updated_at = datetime.utcnow()  # type: ignore[assignment]
 
     db.commit()
 
@@ -651,13 +652,13 @@ def run_all_triggers(db: Session) -> Dict:
     """
     Run all trigger checks - typically called by scheduler
     """
-    results = {"no_response_checks": [], "total_queued": 0, "errors": []}
+    results: Dict[str, Any] = {"no_response_checks": [], "total_queued": 0, "errors": []}
 
     try:
         no_response_results = check_no_response_triggers(db)
         results["no_response_checks"] = no_response_results
-        results["total_queued"] += len(no_response_results)
+        results["total_queued"] = int(results["total_queued"]) + len(no_response_results)
     except Exception as e:
-        results["errors"].append(f"No response check error: {str(e)}")
+        cast(List[str], results["errors"]).append(f"No response check error: {str(e)}")
 
     return results

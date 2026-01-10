@@ -1,0 +1,422 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'communication' %}
+{% block title %}Communication{% endblock %}
+{% block content %}
+
+<!-- Hero Section -->
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 32px 24px; margin-bottom: 24px; border: none;" data-testid="communication-hero">
+    <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; margin: 0 0 8px 0;">Communication</h2>
+    <p style="font-size: 14px; opacity: 0.8; margin: 0;">Chat with us or schedule a call</p>
+</div>
+
+<!-- Tab Navigation -->
+<div style="display: flex; gap: 0; margin-bottom: 24px; background: #f3f4f6; border-radius: 12px; padding: 4px;" data-testid="comm-tabs">
+    <button id="tab-messages" onclick="switchTab('messages')" class="comm-tab active" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; background: white; color: #0d9488; font-weight: 600; cursor: pointer; font-size: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        💬 Messages
+    </button>
+    <button id="tab-booking" onclick="switchTab('booking')" class="comm-tab" style="flex: 1; padding: 12px 20px; border: none; border-radius: 10px; background: transparent; color: #6b7280; font-weight: 600; cursor: pointer; font-size: 15px;">
+        📞 Book a Call
+    </button>
+</div>
+
+<!-- Messages Section -->
+<div id="section-messages" data-testid="messages-section">
+    <!-- Chat Container -->
+    <div class="card animate-fade-in-up" style="display: flex; flex-direction: column; height: calc(100vh - 420px); min-height: 350px;" data-testid="chat-container">
+        <!-- Messages List -->
+        <div id="messages-list" style="flex: 1; overflow-y: auto; padding: 24px;" data-testid="messages-list">
+            <div style="text-align: center; padding: 48px; color: #6b7280;">
+                Loading messages...
+            </div>
+        </div>
+
+        <!-- Message Input -->
+        <div style="border-top: 1px solid #e5e7eb; padding: 16px 24px;" data-testid="message-input">
+            <form id="message-form" style="display: flex; gap: 12px;">
+                <textarea id="message-text" placeholder="Type your message..." rows="2"
+                    style="flex: 1; border: 1px solid #d1d5db; border-radius: 12px; padding: 12px 16px; font-size: 14px; resize: none; font-family: inherit;"
+                    onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }"></textarea>
+                <button type="submit" style="padding: 12px 24px; background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; align-self: flex-end;">
+                    Send
+                </button>
+            </form>
+            <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">Press Enter to send, Shift+Enter for new line</p>
+        </div>
+    </div>
+
+    <!-- Support Info -->
+    <div style="margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;" class="stats-grid-responsive" data-testid="support-info">
+        <div style="background: #f0fdfa; border-radius: 10px; padding: 16px; text-align: center;">
+            <div style="font-size: 20px; font-weight: 700; color: #0d9488; margin-bottom: 4px;">24h</div>
+            <div style="font-size: 12px; color: #0f766e;">Response Time</div>
+        </div>
+        <div style="background: #f0fdfa; border-radius: 10px; padding: 16px; text-align: center;">
+            <div style="font-size: 20px; font-weight: 700; color: #0d9488; margin-bottom: 4px;">M-F</div>
+            <div style="font-size: 12px; color: #0f766e;">9am - 5pm EST</div>
+        </div>
+        <div style="background: #f0fdfa; border-radius: 10px; padding: 16px; text-align: center;">
+            <div style="font-size: 20px; font-weight: 700; color: #0d9488; margin-bottom: 4px;">100%</div>
+            <div style="font-size: 12px; color: #0f766e;">Secure</div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Section (hidden by default) -->
+<div id="section-booking" style="display: none;" data-testid="booking-section">
+    <!-- My Bookings Section -->
+    <div class="card animate-fade-in-up" style="margin-bottom: 24px;" data-testid="my-bookings">
+        <div class="card-title">Your Scheduled Calls</div>
+        <div id="my-bookings-list">
+            <div style="text-align: center; padding: 24px; color: #6b7280;">
+                Loading your bookings...
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Slots Section -->
+    <div class="card animate-fade-in-up" data-testid="available-slots">
+        <div class="card-title">Available Time Slots</div>
+        <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Select a time that works for you. All calls are 15 minutes.</p>
+
+        <!-- Date Filter -->
+        <div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;" data-testid="date-filter">
+            <button class="date-filter-btn active" data-days="7" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #e5e7eb; background: #0d9488; color: white; cursor: pointer; font-weight: 500; font-size: 13px;">
+                Next 7 Days
+            </button>
+            <button class="date-filter-btn" data-days="14" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #e5e7eb; background: white; cursor: pointer; font-weight: 500; font-size: 13px;">
+                Next 14 Days
+            </button>
+            <button class="date-filter-btn" data-days="30" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #e5e7eb; background: white; cursor: pointer; font-weight: 500; font-size: 13px;">
+                Next 30 Days
+            </button>
+        </div>
+
+        <!-- Slots Grid -->
+        <div id="slots-container" data-testid="slots-container">
+            <div style="text-align: center; padding: 32px; color: #6b7280;">
+                Loading slots...
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Confirmation Modal -->
+<div id="booking-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" data-testid="booking-modal">
+    <div style="background: white; border-radius: 16px; padding: 32px; max-width: 400px; width: 90%; margin: 24px;">
+        <h3 style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Confirm Booking</h3>
+        <div style="background: #f0fdfa; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+            <div style="font-size: 12px; color: #0f766e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Date & Time</div>
+            <div id="modal-datetime" style="font-size: 18px; font-weight: 600; color: #1e3a5f;"></div>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 8px;">Notes (optional)</label>
+            <textarea id="booking-notes" rows="2" placeholder="Any specific questions?" style="width: 100%; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; font-size: 14px; resize: vertical;"></textarea>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="closeBookingModal()" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; background: white; cursor: pointer; font-weight: 500;">Cancel</button>
+            <button onclick="confirmBooking()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #0d9488; color: white; cursor: pointer; font-weight: 600;">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div id="cancel-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;" data-testid="cancel-modal">
+    <div style="background: white; border-radius: 16px; padding: 32px; max-width: 400px; width: 90%; margin: 24px;">
+        <h3 style="font-size: 20px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Cancel Booking?</h3>
+        <div style="background: #fef2f2; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <div id="cancel-datetime" style="font-size: 16px; font-weight: 600; color: #991b1b;"></div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="closeCancelModal()" style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #d1d5db; background: white; cursor: pointer; font-weight: 500;">Keep</button>
+            <button onclick="confirmCancel()" style="flex: 1; padding: 12px; border-radius: 8px; border: none; background: #dc2626; color: white; cursor: pointer; font-weight: 600;">Cancel Booking</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Tab switching
+function switchTab(tab) {
+    const msgTab = document.getElementById('tab-messages');
+    const bookTab = document.getElementById('tab-booking');
+    const msgSection = document.getElementById('section-messages');
+    const bookSection = document.getElementById('section-booking');
+
+    if (tab === 'messages') {
+        msgTab.style.background = 'white';
+        msgTab.style.color = '#0d9488';
+        msgTab.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        bookTab.style.background = 'transparent';
+        bookTab.style.color = '#6b7280';
+        bookTab.style.boxShadow = 'none';
+        msgSection.style.display = 'block';
+        bookSection.style.display = 'none';
+    } else {
+        bookTab.style.background = 'white';
+        bookTab.style.color = '#0d9488';
+        bookTab.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+        msgTab.style.background = 'transparent';
+        msgTab.style.color = '#6b7280';
+        msgTab.style.boxShadow = 'none';
+        msgSection.style.display = 'none';
+        bookSection.style.display = 'block';
+        loadMyBookings();
+        loadAvailableSlots(7);
+    }
+}
+
+// Messages functionality
+let pollInterval = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadMessages();
+    pollInterval = setInterval(loadMessages, 30000);
+
+    document.getElementById('message-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendMessage();
+    });
+
+    // Date filter buttons
+    document.querySelectorAll('.date-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.date-filter-btn').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = 'white';
+                b.style.color = '#374151';
+            });
+            this.classList.add('active');
+            this.style.background = '#0d9488';
+            this.style.color = 'white';
+            loadAvailableSlots(parseInt(this.dataset.days));
+        });
+    });
+});
+
+function loadMessages() {
+    fetch('/api/portal/messages')
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('messages-list');
+            const messages = data.messages || [];
+
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 48px; color: #6b7280;">
+                        <div style="font-size: 36px; margin-bottom: 12px;">💬</div>
+                        <p style="font-size: 14px;">Send us a message and we'll respond as soon as possible.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map(m => {
+                const isClient = m.sender_type === 'client';
+                const date = new Date(m.created_at);
+                const timeStr = date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+                return `
+                    <div style="display: flex; justify-content: ${isClient ? 'flex-end' : 'flex-start'}; margin-bottom: 16px;">
+                        <div style="max-width: 70%; padding: 12px 16px; border-radius: 16px; background: ${isClient ? 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)' : '#f3f4f6'}; color: ${isClient ? 'white' : '#1e3a5f'};">
+                            ${!isClient && m.staff_name ? `<div style="font-size: 11px; font-weight: 600; opacity: 0.8; margin-bottom: 4px;">Brightpath Team</div>` : ''}
+                            <div style="font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${escapeHtml(m.message)}</div>
+                            <div style="font-size: 11px; opacity: 0.7; margin-top: 6px; text-align: ${isClient ? 'right' : 'left'};">${timeStr}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.scrollTop = container.scrollHeight;
+        })
+        .catch(err => console.error('Error loading messages:', err));
+}
+
+function sendMessage() {
+    const textarea = document.getElementById('message-text');
+    const message = textarea.value.trim();
+    if (!message) return;
+
+    textarea.disabled = true;
+
+    fetch('/api/portal/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
+    })
+    .then(r => r.json())
+    .then(data => {
+        textarea.disabled = false;
+        if (data.success) {
+            textarea.value = '';
+            loadMessages();
+        } else {
+            alert(data.error || 'Error sending message');
+        }
+    })
+    .catch(err => {
+        textarea.disabled = false;
+        alert('Error sending message. Please try again.');
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Booking functionality
+let selectedSlotId = null;
+let cancelBookingId = null;
+
+function loadMyBookings() {
+    fetch('/api/portal/bookings')
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('my-bookings-list');
+            if (!data.bookings || data.bookings.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #6b7280;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📅</div>
+                        <p style="font-size: 14px;">No upcoming calls. Select a time below.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.bookings.map(booking => {
+                const date = new Date(booking.slot_date + 'T' + booking.slot_time);
+                const dateStr = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 8px;">
+                        <div>
+                            <div style="font-weight: 600; color: #1e3a5f; font-size: 14px;">${dateStr} at ${timeStr}</div>
+                            <div style="color: #6b7280; font-size: 12px;">15 min call</div>
+                        </div>
+                        <button onclick="openCancelModal(${booking.id}, '${dateStr}', '${timeStr}')" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; cursor: pointer; font-size: 12px;">Cancel</button>
+                    </div>
+                `;
+            }).join('');
+        })
+        .catch(err => console.error('Error loading bookings:', err));
+}
+
+function loadAvailableSlots(days) {
+    fetch(`/api/portal/booking-slots?days=${days}`)
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('slots-container');
+            if (!data.slots || data.slots.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 32px; color: #6b7280;">
+                        <p>No available slots. Please check back later.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const slotsByDate = {};
+            data.slots.forEach(slot => {
+                if (!slotsByDate[slot.slot_date]) slotsByDate[slot.slot_date] = [];
+                slotsByDate[slot.slot_date].push(slot);
+            });
+
+            container.innerHTML = Object.entries(slotsByDate).map(([date, slots]) => {
+                const dateObj = new Date(date + 'T00:00:00');
+                const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+                return `
+                    <div style="margin-bottom: 16px;">
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">${dateStr}</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            ${slots.map(slot => {
+                                const time = new Date('1970-01-01T' + slot.slot_time);
+                                const timeStr = time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                                return `<button onclick="openBookingModal(${slot.id}, '${dateStr}', '${timeStr}')" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #0d9488; background: white; color: #0d9488; cursor: pointer; font-size: 13px; font-weight: 500;">${timeStr}</button>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        })
+        .catch(err => console.error('Error loading slots:', err));
+}
+
+function openBookingModal(slotId, dateStr, timeStr) {
+    selectedSlotId = slotId;
+    document.getElementById('modal-datetime').textContent = `${dateStr} at ${timeStr}`;
+    document.getElementById('booking-notes').value = '';
+    document.getElementById('booking-modal').style.display = 'flex';
+}
+
+function closeBookingModal() {
+    document.getElementById('booking-modal').style.display = 'none';
+    selectedSlotId = null;
+}
+
+function confirmBooking() {
+    if (!selectedSlotId) return;
+    const notes = document.getElementById('booking-notes').value;
+
+    fetch('/api/portal/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot_id: selectedSlotId, notes: notes, booking_type: 'qa_call' })
+    })
+    .then(r => r.json())
+    .then(data => {
+        closeBookingModal();
+        if (data.success) {
+            alert('Booking confirmed!');
+            loadMyBookings();
+            const activeDays = document.querySelector('.date-filter-btn.active').dataset.days;
+            loadAvailableSlots(parseInt(activeDays));
+        } else {
+            alert(data.error || 'Error creating booking.');
+        }
+    })
+    .catch(err => alert('Error creating booking.'));
+}
+
+function openCancelModal(bookingId, dateStr, timeStr) {
+    cancelBookingId = bookingId;
+    document.getElementById('cancel-datetime').textContent = `${dateStr} at ${timeStr}`;
+    document.getElementById('cancel-modal').style.display = 'flex';
+}
+
+function closeCancelModal() {
+    document.getElementById('cancel-modal').style.display = 'none';
+    cancelBookingId = null;
+}
+
+function confirmCancel() {
+    if (!cancelBookingId) return;
+
+    fetch(`/api/portal/bookings/${cancelBookingId}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+        closeCancelModal();
+        if (data.success) {
+            alert('Booking cancelled.');
+            loadMyBookings();
+            const activeDays = document.querySelector('.date-filter-btn.active').dataset.days;
+            loadAvailableSlots(parseInt(activeDays));
+        } else {
+            alert(data.error || 'Error cancelling booking.');
+        }
+    })
+    .catch(err => alert('Error cancelling booking.'));
+}
+
+// Close modals on outside click
+document.getElementById('booking-modal').addEventListener('click', function(e) { if (e.target === this) closeBookingModal(); });
+document.getElementById('cancel-modal').addEventListener('click', function(e) { if (e.target === this) closeCancelModal(); });
+
+// Cleanup
+window.addEventListener('beforeunload', function() { if (pollInterval) clearInterval(pollInterval); });
+</script>
+{% endblock %}

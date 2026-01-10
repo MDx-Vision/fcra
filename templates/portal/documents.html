@@ -1,18 +1,23 @@
 {% extends "portal/base_portal.html" %}
 {% set active_tab = 'documents' %}
 {% block title %}Documents{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+{% endblock %}
+
 {% block content %}
 
 <!-- Header -->
-<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;" data-testid="page-header">
     <div class="animate-fade-in">
-        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Documents</h2>
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;" data-testid="page-title">Documents</h2>
         <p style="font-size: 15px; color: #6b7280; margin: 0;">Upload bureau responses and download your case materials.</p>
     </div>
 </div>
 
 <!-- Alert -->
-<div class="card animate-fade-in-up" data-delay="200" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="200" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; margin-bottom: 24px;" data-testid="alert-card">
     <div style="display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
         <div style="font-size: 24px;">⚡</div>
         <div style="flex: 1; min-width: 200px;">
@@ -23,8 +28,8 @@
 </div>
 
 <!-- Documents List -->
-<div class="card animate-fade-in-up" data-delay="300" style="margin-bottom: 24px;">
-    <div class="card-title">📁 Your Case Documents</div>
+<div class="card animate-fade-in-up" data-delay="300" style="margin-bottom: 24px;" data-testid="documents-list">
+    <div class="card-title" data-testid="documents-title">📁 Your Case Documents</div>
     <p style="color: #6b7280; margin-bottom: 20px;">Download your dispute letters, analysis reports, and uploaded documents.</p>
 
     <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -37,7 +42,10 @@
                 <div style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin-bottom: 2px;">{{ doc.name }}</div>
                 <div style="font-size: 13px; color: #6b7280;">{{ doc.created_at.strftime('%B %d, %Y') if doc.created_at else 'N/A' }}</div>
             </div>
-            <a href="{{ url_for('portal.download_document', doc_id=doc.id) }}" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 500; color: #4b5563; cursor: pointer; text-decoration: none;">⬇️ Download</a>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button onclick="previewDocument('{{ url_for('portal.preview_document', doc_id=doc.id) }}', '{{ doc.file_name or doc.name }}', '{{ url_for('portal.download_document', doc_id=doc.id) }}')" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); border: none; border-radius: 6px; font-size: 13px; font-weight: 500; color: white; cursor: pointer;">👁️ Preview</button>
+                <a href="{{ url_for('portal.download_document', doc_id=doc.id) }}" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 500; color: #4b5563; cursor: pointer; text-decoration: none;">⬇️ Download</a>
+            </div>
         </div>
         {% else %}
         <p style="text-align: center; color: #6b7280; padding: 32px;">No documents yet. Upload your first document below!</p>
@@ -46,14 +54,14 @@
 </div>
 
 <!-- Upload Section -->
-<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
-    <div class="card-title">📤 Upload Documents</div>
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;" data-testid="upload-section">
+    <div class="card-title" data-testid="upload-title">📤 Upload Documents</div>
     <p style="color: #6b7280; margin-bottom: 24px;">Select document type and upload files related to your case.</p>
 
-    <form action="{{ url_for('portal.upload_document') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ url_for('portal.upload_document') }}" method="POST" enctype="multipart/form-data" data-testid="upload-form">
         
         <!-- Document Types -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;" class="stats-grid-responsive">
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="doc-type-options">
             <label style="display: flex; flex-direction: column; align-items: center; padding: 20px 16px; background: rgba(13, 148, 136, 0.05); border: 2px solid #0d9488; border-radius: 12px; cursor: pointer;">
                 <input type="radio" name="doc_type" value="cra_response" checked style="display: none;">
                 <span style="font-size: 28px; margin-bottom: 8px;">📩</span>
@@ -92,8 +100,134 @@
             </label>
         </div>
 
-        <!-- Drop Zone -->
-        <div style="border: 2px dashed #d1d5db; border-radius: 16px; padding: 48px 24px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.2s ease;">
+        <!-- CRA Response Details (shown when CRA Response is selected) -->
+        <div id="cra-details" style="margin-bottom: 24px; padding: 20px; background: rgba(13, 148, 136, 0.05); border-radius: 12px; border: 1px solid rgba(13, 148, 136, 0.2);" data-testid="cra-details">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">📬 CRA Response Details</h4>
+
+            <!-- Bureau Checkboxes -->
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 10px;">Which bureau sent this response?</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
+                        <input type="checkbox" name="bureau_equifax" value="1" style="width: 18px; height: 18px; accent-color: #0d9488;">
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">Equifax</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
+                        <input type="checkbox" name="bureau_experian" value="1" style="width: 18px; height: 18px; accent-color: #0d9488;">
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">Experian</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
+                        <input type="checkbox" name="bureau_transunion" value="1" style="width: 18px; height: 18px; accent-color: #0d9488;">
+                        <span style="font-size: 14px; font-weight: 500; color: #1e3a5f;">TransUnion</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Round Selection -->
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 10px;">Which round is this response for?</label>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                    <label style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="response_round" value="1" style="accent-color: #0d9488;">
+                        <span style="font-size: 13px; font-weight: 500; color: #1e3a5f;">Round 1</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="response_round" value="2" style="accent-color: #0d9488;">
+                        <span style="font-size: 13px; font-weight: 500; color: #1e3a5f;">Round 2</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="response_round" value="3" style="accent-color: #0d9488;">
+                        <span style="font-size: 13px; font-weight: 500; color: #1e3a5f;">Round 3</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="response_round" value="4" style="accent-color: #0d9488;">
+                        <span style="font-size: 13px; font-weight: 500; color: #1e3a5f;">Round 4</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;">
+                        <input type="radio" name="response_round" value="unknown" checked style="accent-color: #0d9488;">
+                        <span style="font-size: 13px; font-weight: 500; color: #1e3a5f;">Not Sure</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ID/Proof Details (shown when ID/Proof is selected) -->
+        <div id="id-proof-details" style="display: none; margin-bottom: 24px; padding: 20px; background: rgba(139, 92, 246, 0.05); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.2);" data-testid="id-proof-details">
+            <h4 style="font-size: 15px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">🪪 Identity Verification Documents</h4>
+            <p style="font-size: 13px; color: #6b7280; margin: 0 0 20px 0;">Upload clear photos or scans of your identification documents. Back sides are optional but helpful.</p>
+
+            <!-- Driver's License -->
+            <div style="margin-bottom: 20px; padding: 16px; background: white; border-radius: 10px; border: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <span style="font-size: 20px;">🚗</span>
+                    <span style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Driver's License / State ID</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" class="id-upload-grid">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 6px;">Front Side <span style="color: #dc2626;">*</span></label>
+                        <label style="display: flex; flex-direction: column; align-items: center; padding: 16px; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer; background: #f9fafb; transition: all 0.2s ease;" class="file-upload-label">
+                            <span style="font-size: 24px; margin-bottom: 4px;">📷</span>
+                            <span style="font-size: 12px; color: #6b7280;" class="file-label-text">Click to upload</span>
+                            <input type="file" name="dl_front" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" class="file-input-preview">
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 6px;">Back Side <span style="color: #9ca3af;">(optional)</span></label>
+                        <label style="display: flex; flex-direction: column; align-items: center; padding: 16px; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer; background: #f9fafb; transition: all 0.2s ease;" class="file-upload-label">
+                            <span style="font-size: 24px; margin-bottom: 4px;">📷</span>
+                            <span style="font-size: 12px; color: #6b7280;" class="file-label-text">Click to upload</span>
+                            <input type="file" name="dl_back" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" class="file-input-preview">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Security Card -->
+            <div style="margin-bottom: 20px; padding: 16px; background: white; border-radius: 10px; border: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <span style="font-size: 20px;">🔐</span>
+                    <span style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Social Security Card</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;" class="id-upload-grid">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 6px;">Front Side <span style="color: #dc2626;">*</span></label>
+                        <label style="display: flex; flex-direction: column; align-items: center; padding: 16px; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer; background: #f9fafb; transition: all 0.2s ease;" class="file-upload-label">
+                            <span style="font-size: 24px; margin-bottom: 4px;">📷</span>
+                            <span style="font-size: 12px; color: #6b7280;" class="file-label-text">Click to upload</span>
+                            <input type="file" name="ssn_front" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" class="file-input-preview">
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 6px;">Back Side <span style="color: #9ca3af;">(optional)</span></label>
+                        <label style="display: flex; flex-direction: column; align-items: center; padding: 16px; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer; background: #f9fafb; transition: all 0.2s ease;" class="file-upload-label">
+                            <span style="font-size: 24px; margin-bottom: 4px;">📷</span>
+                            <span style="font-size: 12px; color: #6b7280;" class="file-label-text">Click to upload</span>
+                            <input type="file" name="ssn_back" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" class="file-input-preview">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utility Bill -->
+            <div style="padding: 16px; background: white; border-radius: 10px; border: 1px solid #e5e7eb;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                    <span style="font-size: 20px;">📄</span>
+                    <span style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Utility Bill</span>
+                    <span style="font-size: 11px; color: #6b7280; background: #f3f4f6; padding: 2px 8px; border-radius: 4px;">First page only</span>
+                </div>
+                <div style="max-width: 50%;" class="utility-upload-container">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 6px;">Proof of Address <span style="color: #dc2626;">*</span></label>
+                    <label style="display: flex; flex-direction: column; align-items: center; padding: 16px; border: 2px dashed #d1d5db; border-radius: 8px; cursor: pointer; background: #f9fafb; transition: all 0.2s ease;" class="file-upload-label">
+                        <span style="font-size: 24px; margin-bottom: 4px;">📷</span>
+                        <span style="font-size: 12px; color: #6b7280;" class="file-label-text">Click to upload</span>
+                        <input type="file" name="utility_bill" accept=".pdf,.jpg,.jpeg,.png" style="display: none;" class="file-input-preview">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drop Zone (for other document types) -->
+        <div id="standard-drop-zone" style="border: 2px dashed #d1d5db; border-radius: 16px; padding: 48px 24px; text-align: center; background: #f9fafb; cursor: pointer; transition: all 0.2s ease;" data-testid="drop-zone">
             <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
             <p style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">
                 <label for="document" style="color: #0d9488; text-decoration: underline; cursor: pointer;">Click to upload</label> or drag and drop
@@ -116,14 +250,32 @@
 </div>
 
 <!-- Mobile Scanner -->
-<div class="card animate-fade-in-up" data-delay="500" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-align: center; padding: 32px; border: none;">
+<div class="card animate-fade-in-up" data-delay="500" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-align: center; padding: 32px; border: none;" data-testid="mobile-scanner">
     <div style="font-size: 48px; margin-bottom: 16px;">📱</div>
     <h4 style="font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: white; margin: 0 0 12px 0;">Scan with Your Phone</h4>
     <p style="font-size: 15px; color: #9ca3af; margin: 0 0 24px 0; line-height: 1.5;">Use your phone's camera to scan documents instantly. Perfect for CRA responses and collection letters.</p>
 </div>
 
 <script>
-// Handle document type selection styling
+// Handle document type selection styling and section visibility
+const craDetails = document.getElementById('cra-details');
+const idProofDetails = document.getElementById('id-proof-details');
+const standardDropZone = document.getElementById('standard-drop-zone');
+
+function updateSectionVisibility() {
+    const selectedType = document.querySelector('input[name="doc_type"]:checked');
+    const docType = selectedType ? selectedType.value : '';
+
+    // CRA Response section
+    craDetails.style.display = (docType === 'cra_response') ? 'block' : 'none';
+
+    // ID/Proof section
+    idProofDetails.style.display = (docType === 'id_proof') ? 'block' : 'none';
+
+    // Standard drop zone - hide for ID/Proof (uses its own upload fields)
+    standardDropZone.style.display = (docType === 'id_proof') ? 'none' : 'block';
+}
+
 document.querySelectorAll('input[name="doc_type"]').forEach(radio => {
     radio.addEventListener('change', function() {
         document.querySelectorAll('input[name="doc_type"]').forEach(r => {
@@ -134,16 +286,74 @@ document.querySelectorAll('input[name="doc_type"]').forEach(radio => {
             this.parentElement.style.background = 'rgba(13, 148, 136, 0.05)';
             this.parentElement.style.borderColor = '#0d9488';
         }
+        updateSectionVisibility();
     });
 });
 
-// File input display
+// Initialize visibility on page load
+updateSectionVisibility();
+
+// Highlight checked bureau checkboxes
+document.querySelectorAll('input[name^="bureau_"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            this.parentElement.style.background = 'rgba(13, 148, 136, 0.1)';
+            this.parentElement.style.borderColor = '#0d9488';
+        } else {
+            this.parentElement.style.background = 'white';
+            this.parentElement.style.borderColor = '#e5e7eb';
+        }
+    });
+});
+
+// Highlight selected round
+document.querySelectorAll('input[name="response_round"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('input[name="response_round"]').forEach(r => {
+            r.parentElement.style.background = 'white';
+            r.parentElement.style.borderColor = '#e5e7eb';
+        });
+        if (this.checked) {
+            this.parentElement.style.background = 'rgba(13, 148, 136, 0.1)';
+            this.parentElement.style.borderColor = '#0d9488';
+        }
+    });
+});
+
+// File input display for standard drop zone
 document.getElementById('document').addEventListener('change', function() {
     const fileName = this.files[0]?.name;
     if (fileName) {
         this.parentElement.querySelector('p:first-of-type').innerHTML = '<span style="color: #059669;">✓ ' + fileName + '</span>';
     }
 });
+
+// File input preview for ID proof uploads
+document.querySelectorAll('.file-input-preview').forEach(input => {
+    input.addEventListener('change', function() {
+        const fileName = this.files[0]?.name;
+        const label = this.closest('.file-upload-label');
+        const textSpan = label.querySelector('.file-label-text');
+        if (fileName) {
+            textSpan.innerHTML = '<span style="color: #059669;">✓ ' + fileName.substring(0, 15) + (fileName.length > 15 ? '...' : '') + '</span>';
+            label.style.borderColor = '#059669';
+            label.style.background = 'rgba(5, 150, 105, 0.05)';
+        }
+    });
+});
 </script>
 
+<style>
+/* Responsive styles for ID upload grid */
+@media (max-width: 640px) {
+    .id-upload-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .utility-upload-container {
+        max-width: 100% !important;
+    }
+}
+</style>
+
+<script src="{{ url_for('static', filename='js/document-viewer.js') }}"></script>
 {% endblock %}

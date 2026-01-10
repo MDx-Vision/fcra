@@ -1,0 +1,99 @@
+{#
+    Theme Toggle Button Component
+
+    Include this in your header/nav to add a theme toggle button.
+
+    Usage:
+        {% include 'includes/theme_toggle.html' %}
+
+    Optional context variables:
+        - theme_toggle_class: Additional CSS classes for the button
+        - theme_toggle_style: Additional inline styles
+#}
+
+<button
+    type="button"
+    data-theme-toggle
+    class="theme-toggle-btn {{ theme_toggle_class|default('') }}"
+    aria-label="Toggle theme"
+    title="Toggle theme"
+    {% if theme_toggle_style %}style="{{ theme_toggle_style }}"{% endif %}
+>
+    <span class="theme-icon">
+        <!-- Icon will be set by JavaScript -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+    </span>
+</button>
+
+<style>
+/* Theme toggle button base styles */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: var(--theme-bg-tertiary, rgba(0, 0, 0, 0.05));
+    color: var(--theme-text-secondary, #6b7280);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--theme-accent-bg, rgba(13, 148, 136, 0.1));
+    color: var(--theme-accent, #0d9488);
+    transform: scale(1.05);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.theme-toggle-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--theme-input-focus-ring, rgba(13, 148, 136, 0.2));
+}
+
+.theme-toggle-btn .theme-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle-btn:hover .theme-icon {
+    transform: rotate(15deg);
+}
+
+/* Dark mode specific styles */
+[data-theme="dark"] .theme-toggle-btn {
+    background: var(--theme-bg-tertiary, rgba(255, 255, 255, 0.1));
+    color: var(--theme-text-secondary, #94a3b8);
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+    background: var(--theme-accent-bg, rgba(20, 184, 166, 0.15));
+    color: var(--theme-accent, #14b8a6);
+}
+
+/* Compact variant for sidebar */
+.theme-toggle-btn.compact {
+    width: 32px;
+    height: 32px;
+}
+
+.theme-toggle-btn.compact .theme-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Emoji variant (simpler) */
+.theme-toggle-btn.emoji {
+    font-size: 18px;
+}
+</style>

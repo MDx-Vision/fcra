@@ -101,7 +101,7 @@ class LRMImportService:
         """
         db = get_db()
 
-        stats = {
+        stats: Dict[str, Any] = {
             "total": 0,
             "imported": 0,
             "skipped": 0,
@@ -293,7 +293,7 @@ class LRMImportService:
         required_fields = ["email"]
         recommended_fields = ["first_name", "last_name", "phone", "type"]
 
-        validation = {
+        validation: Dict[str, Any] = {
             "valid": False,
             "row_count": 0,
             "has_required_fields": False,

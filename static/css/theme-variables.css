@@ -1,0 +1,297 @@
+/**
+ * Theme Variables - Light/Dark Mode Support
+ *
+ * This file defines semantic CSS variables that change based on the theme.
+ * Use these variables instead of hardcoded colors for theme-aware styling.
+ *
+ * Usage: var(--theme-bg-primary), var(--theme-text-primary), etc.
+ */
+
+:root {
+    /* ============================================
+       BASE COLOR PALETTE (Reference Only)
+       ============================================ */
+
+    /* Grays */
+    --color-gray-50: #f9fafb;
+    --color-gray-100: #f3f4f6;
+    --color-gray-200: #e5e7eb;
+    --color-gray-300: #d1d5db;
+    --color-gray-400: #9ca3af;
+    --color-gray-500: #6b7280;
+    --color-gray-600: #4b5563;
+    --color-gray-700: #374151;
+    --color-gray-800: #1f2937;
+    --color-gray-900: #111827;
+
+    /* Navy (Dark backgrounds) */
+    --color-navy-900: #0a2540;
+    --color-navy-800: #0f172a;
+    --color-navy-700: #1e293b;
+    --color-navy-600: #334155;
+    --color-navy-500: #475569;
+
+    /* Teal (Client Portal accent) */
+    --color-teal-400: #2dd4bf;
+    --color-teal-500: #14b8a6;
+    --color-teal-600: #0d9488;
+    --color-teal-700: #0f766e;
+
+    /* Green (Staff/Affiliate accent) */
+    --color-green-400: #4ade80;
+    --color-green-500: #22c55e;
+    --color-green-600: #16a34a;
+    --color-green-700: #15803d;
+
+    /* Status Colors */
+    --color-red-500: #ef4444;
+    --color-red-600: #dc2626;
+    --color-yellow-500: #eab308;
+    --color-yellow-600: #d97706;
+    --color-blue-500: #3b82f6;
+    --color-blue-600: #2563eb;
+
+    /* ============================================
+       SEMANTIC THEME VARIABLES - LIGHT MODE
+       ============================================ */
+
+    /* Backgrounds */
+    --theme-bg-primary: #ffffff;
+    --theme-bg-secondary: #f9fafb;
+    --theme-bg-tertiary: #f3f4f6;
+    --theme-bg-elevated: #ffffff;
+    --theme-bg-inverse: #0f172a;
+
+    /* Sidebar (Staff Dashboard) */
+    --theme-sidebar-bg: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    --theme-sidebar-text: #e2e8f0;
+    --theme-sidebar-text-muted: #94a3b8;
+    --theme-sidebar-border: rgba(255, 255, 255, 0.1);
+    --theme-sidebar-hover: rgba(255, 255, 255, 0.05);
+
+    /* Text */
+    --theme-text-primary: #111827;
+    --theme-text-secondary: #4b5563;
+    --theme-text-muted: #6b7280;
+    --theme-text-placeholder: #9ca3af;
+    --theme-text-inverse: #f9fafb;
+
+    /* Borders */
+    --theme-border-primary: #e5e7eb;
+    --theme-border-secondary: #f3f4f6;
+    --theme-border-focus: #0d9488;
+
+    /* Accents (Portal-specific, can be overridden) */
+    --theme-accent: #0d9488;
+    --theme-accent-light: #14b8a6;
+    --theme-accent-dark: #0f766e;
+    --theme-accent-bg: rgba(13, 148, 136, 0.1);
+
+    /* Status */
+    --theme-success: #22c55e;
+    --theme-success-bg: rgba(34, 197, 94, 0.1);
+    --theme-warning: #eab308;
+    --theme-warning-bg: rgba(234, 179, 8, 0.1);
+    --theme-danger: #ef4444;
+    --theme-danger-bg: rgba(239, 68, 68, 0.1);
+    --theme-info: #3b82f6;
+    --theme-info-bg: rgba(59, 130, 246, 0.1);
+
+    /* Shadows */
+    --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --theme-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* Gradients */
+    --theme-gradient-hero: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%);
+    --theme-gradient-accent: linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%);
+    --theme-gradient-card: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+
+    /* Cards */
+    --theme-card-bg: #ffffff;
+    --theme-card-border: #e5e7eb;
+    --theme-card-shadow: var(--theme-shadow-md);
+
+    /* Forms */
+    --theme-input-bg: #ffffff;
+    --theme-input-border: #d1d5db;
+    --theme-input-text: #111827;
+    --theme-input-placeholder: #9ca3af;
+    --theme-input-focus-ring: rgba(13, 148, 136, 0.2);
+
+    /* Tables */
+    --theme-table-header-bg: #f9fafb;
+    --theme-table-row-hover: #f3f4f6;
+    --theme-table-border: #e5e7eb;
+
+    /* Overlays */
+    --theme-overlay: rgba(0, 0, 0, 0.5);
+    --theme-modal-bg: #ffffff;
+}
+
+/* ============================================
+   DARK MODE OVERRIDES
+   ============================================ */
+
+[data-theme="dark"] {
+    /* Backgrounds */
+    --theme-bg-primary: #0f172a;
+    --theme-bg-secondary: #1e293b;
+    --theme-bg-tertiary: #334155;
+    --theme-bg-elevated: #1e293b;
+    --theme-bg-inverse: #f9fafb;
+
+    /* Sidebar - stays dark in dark mode too */
+    --theme-sidebar-bg: linear-gradient(180deg, #0a0a14 0%, #0d1321 100%);
+    --theme-sidebar-text: #e2e8f0;
+    --theme-sidebar-text-muted: #94a3b8;
+    --theme-sidebar-border: rgba(255, 255, 255, 0.05);
+    --theme-sidebar-hover: rgba(255, 255, 255, 0.08);
+
+    /* Text */
+    --theme-text-primary: #f1f5f9;
+    --theme-text-secondary: #cbd5e1;
+    --theme-text-muted: #94a3b8;
+    --theme-text-placeholder: #64748b;
+    --theme-text-inverse: #0f172a;
+
+    /* Borders */
+    --theme-border-primary: rgba(255, 255, 255, 0.1);
+    --theme-border-secondary: rgba(255, 255, 255, 0.05);
+    --theme-border-focus: #14b8a6;
+
+    /* Accents - slightly brighter in dark mode */
+    --theme-accent: #14b8a6;
+    --theme-accent-light: #2dd4bf;
+    --theme-accent-dark: #0d9488;
+    --theme-accent-bg: rgba(20, 184, 166, 0.15);
+
+    /* Status - slightly brighter backgrounds */
+    --theme-success: #4ade80;
+    --theme-success-bg: rgba(74, 222, 128, 0.15);
+    --theme-warning: #fbbf24;
+    --theme-warning-bg: rgba(251, 191, 36, 0.15);
+    --theme-danger: #f87171;
+    --theme-danger-bg: rgba(248, 113, 113, 0.15);
+    --theme-info: #60a5fa;
+    --theme-info-bg: rgba(96, 165, 250, 0.15);
+
+    /* Shadows - more pronounced in dark mode */
+    --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --theme-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --theme-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    --theme-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+
+    /* Gradients */
+    --theme-gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --theme-gradient-accent: linear-gradient(135deg, var(--theme-accent) 0%, var(--theme-accent-dark) 100%);
+    --theme-gradient-card: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+
+    /* Cards */
+    --theme-card-bg: #1e293b;
+    --theme-card-border: rgba(255, 255, 255, 0.1);
+    --theme-card-shadow: var(--theme-shadow-md);
+
+    /* Forms */
+    --theme-input-bg: #0f172a;
+    --theme-input-border: #475569;
+    --theme-input-text: #f1f5f9;
+    --theme-input-placeholder: #64748b;
+    --theme-input-focus-ring: rgba(20, 184, 166, 0.3);
+
+    /* Tables */
+    --theme-table-header-bg: #1e293b;
+    --theme-table-row-hover: #334155;
+    --theme-table-border: rgba(255, 255, 255, 0.1);
+
+    /* Overlays */
+    --theme-overlay: rgba(0, 0, 0, 0.7);
+    --theme-modal-bg: #1e293b;
+}
+
+/* ============================================
+   PORTAL-SPECIFIC ACCENT OVERRIDES
+   ============================================ */
+
+/* Client Portal - Teal accent */
+.portal-client,
+[data-portal="client"] {
+    --theme-accent: #0d9488;
+    --theme-accent-light: #14b8a6;
+    --theme-accent-dark: #0f766e;
+}
+
+[data-theme="dark"] .portal-client,
+[data-theme="dark"][data-portal="client"] {
+    --theme-accent: #14b8a6;
+    --theme-accent-light: #2dd4bf;
+    --theme-accent-dark: #0d9488;
+}
+
+/* Staff Dashboard - Green accent */
+.portal-staff,
+[data-portal="staff"] {
+    --theme-accent: #22c55e;
+    --theme-accent-light: #4ade80;
+    --theme-accent-dark: #16a34a;
+}
+
+[data-theme="dark"] .portal-staff,
+[data-theme="dark"][data-portal="staff"] {
+    --theme-accent: #4ade80;
+    --theme-accent-light: #86efac;
+    --theme-accent-dark: #22c55e;
+}
+
+/* Affiliate Portal - Green accent */
+.portal-affiliate,
+[data-portal="affiliate"] {
+    --theme-accent: #22c55e;
+    --theme-accent-light: #4ade80;
+    --theme-accent-dark: #16a34a;
+}
+
+[data-theme="dark"] .portal-affiliate,
+[data-theme="dark"][data-portal="affiliate"] {
+    --theme-accent: #4ade80;
+    --theme-accent-light: #86efac;
+    --theme-accent-dark: #22c55e;
+}
+
+/* ============================================
+   UTILITY CLASSES FOR THEME-AWARE STYLING
+   ============================================ */
+
+/* Backgrounds */
+.bg-theme-primary { background-color: var(--theme-bg-primary); }
+.bg-theme-secondary { background-color: var(--theme-bg-secondary); }
+.bg-theme-tertiary { background-color: var(--theme-bg-tertiary); }
+.bg-theme-elevated { background-color: var(--theme-bg-elevated); }
+.bg-theme-card { background-color: var(--theme-card-bg); }
+
+/* Text */
+.text-theme-primary { color: var(--theme-text-primary); }
+.text-theme-secondary { color: var(--theme-text-secondary); }
+.text-theme-muted { color: var(--theme-text-muted); }
+.text-theme-accent { color: var(--theme-accent); }
+
+/* Borders */
+.border-theme-primary { border-color: var(--theme-border-primary); }
+.border-theme-secondary { border-color: var(--theme-border-secondary); }
+
+/* Cards */
+.card-theme {
+    background-color: var(--theme-card-bg);
+    border: 1px solid var(--theme-card-border);
+    box-shadow: var(--theme-card-shadow);
+}
+
+/* Transitions for smooth theme switching */
+.theme-transition,
+.theme-transition * {
+    transition: background-color 0.2s ease,
+                color 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease !important;
+}

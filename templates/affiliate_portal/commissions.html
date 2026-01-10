@@ -1,0 +1,120 @@
+{% extends "affiliate_portal/base.html" %}
+{% set active_page = 'commissions' %}
+
+{% block title %}Commissions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title" data-testid="page-title">Commission History</h1>
+    <p class="page-subtitle">Track all your earned commissions</p>
+</div>
+
+<!-- Summary Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);" data-testid="commission-stats">
+    <div class="stat-card">
+        <div class="stat-label">Total Earned</div>
+        <div class="stat-value">${{ "%.2f"|format(total_earned) }}</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">${{ "%.2f"|format(pending) }}</div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-label">Paid</div>
+        <div class="stat-value">${{ "%.2f"|format(paid) }}</div>
+    </div>
+</div>
+
+<!-- Commissions Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Commissions</h3>
+        <select id="status-filter" onchange="filterCommissions()" style="padding: 8px 16px; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #e2e8f0;">
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="paid">Paid</option>
+        </select>
+    </div>
+    <table data-testid="commissions-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Level</th>
+                <th>Trigger Amount</th>
+                <th>Rate</th>
+                <th>Commission</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="commissions-body">
+            {% for c in commissions %}
+            <tr data-status="{{ c.status }}">
+                <td>{{ c.created_at.strftime('%b %d, %Y') if c.created_at else '-' }}</td>
+                <td>{{ (c.trigger_type or 'referral')|replace('_', ' ')|title }}</td>
+                <td>
+                    {% if c.level == 1 %}
+                    <span class="badge badge-success">L1 - Direct</span>
+                    {% else %}
+                    <span class="badge badge-info">L2 - Sub-Affiliate</span>
+                    {% endif %}
+                </td>
+                <td>${{ "%.2f"|format(c.trigger_amount or 0) }}</td>
+                <td>{{ "%.0f"|format((c.commission_rate or 0) * 100) }}%</td>
+                <td class="money">${{ "%.2f"|format(c.commission_amount or 0) }}</td>
+                <td>
+                    <span class="badge badge-{{ 'success' if c.status == 'paid' else 'warning' if c.status == 'pending' else 'info' }}">
+                        {{ c.status or 'pending' }}
+                    </span>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center; color: #64748b; padding: 60px;">
+                    No commissions yet. Start referring clients to earn!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Commission Explanation -->
+<div class="card" style="margin-top: 20px;">
+    <h3 class="card-title" style="margin-bottom: 16px;">How Commissions Work</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div>
+            <h4 style="color: #22c55e; margin-bottom: 8px;">Level 1 (Direct Referrals)</h4>
+            <p style="color: #94a3b8; font-size: 14px;">
+                Earn commission on clients you directly refer using your affiliate link.
+                Commission is calculated as a percentage of the trigger amount (signup fee, payments, etc.)
+            </p>
+        </div>
+        <div>
+            <h4 style="color: #3b82f6; margin-bottom: 8px;">Level 2 (Sub-Affiliate Referrals)</h4>
+            <p style="color: #94a3b8; font-size: 14px;">
+                If you recruit other affiliates, you earn a smaller percentage on their referrals too!
+                This is passive income from your affiliate network.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterCommissions() {
+    const status = document.getElementById('status-filter').value;
+    const rows = document.querySelectorAll('#commissions-body tr');
+
+    rows.forEach(row => {
+        if (!status || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

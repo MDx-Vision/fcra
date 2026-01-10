@@ -1,6 +1,10 @@
 """
-Twilio SMS Service for Replit Integration
+Twilio SMS & WhatsApp Service for Replit Integration
 Uses environment variables for Twilio credentials
+
+Supports:
+- SMS via Twilio (A2P 10DLC compliant)
+- WhatsApp via Twilio WhatsApp Business API
 """
 
 import os
@@ -13,11 +17,12 @@ _twilio_client = None
 def get_twilio_credentials():
     """
     Get Twilio credentials from environment variables.
-    Returns dict with account_sid, auth_token, phone_number.
+    Returns dict with account_sid, auth_token, phone_number, messaging_service_sid.
     """
     account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
     auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
     phone_number = os.environ.get("TWILIO_PHONE_NUMBER")
+    messaging_service_sid = os.environ.get("TWILIO_MESSAGING_SERVICE_SID")
 
     if not account_sid or not auth_token:
         raise ValueError(
@@ -28,6 +33,7 @@ def get_twilio_credentials():
         "account_sid": account_sid,
         "auth_token": auth_token,
         "phone_number": phone_number,
+        "messaging_service_sid": messaging_service_sid,
     }
 
 
@@ -48,6 +54,11 @@ def get_twilio_client():
 def get_twilio_phone_number():
     """Get the configured Twilio phone number for sending SMS."""
     return os.environ.get("TWILIO_PHONE_NUMBER")
+
+
+def get_messaging_service_sid():
+    """Get the configured Twilio Messaging Service SID for A2P 10DLC compliance."""
+    return os.environ.get("TWILIO_MESSAGING_SERVICE_SID")
 
 
 def format_phone_number(phone):
@@ -80,6 +91,7 @@ def send_sms(to_number, message, from_number=None):
         to_number: Recipient phone number (any format, will be normalized)
         message: Message body (max 1600 characters for long SMS)
         from_number: Optional sender number (defaults to configured Twilio number)
+                    Ignored if TWILIO_MESSAGING_SERVICE_SID is configured (uses A2P 10DLC)
 
     Returns:
         dict with 'success', 'message_sid', 'error' keys
@@ -95,17 +107,31 @@ def send_sms(to_number, message, from_number=None):
 
         client = get_twilio_client()
 
-        if from_number is None:
-            from_number = get_twilio_phone_number()
+        # Prefer Messaging Service for A2P 10DLC compliance
+        messaging_service_sid = get_messaging_service_sid()
 
-        if not from_number:
-            return {
-                "success": False,
-                "message_sid": None,
-                "error": "No Twilio phone number configured",
-            }
+        if messaging_service_sid:
+            # Use Messaging Service (A2P 10DLC compliant)
+            sms = client.messages.create(
+                body=message,
+                messaging_service_sid=messaging_service_sid,
+                to=formatted_to
+            )
+            sender = f"MessagingService:{messaging_service_sid}"
+        else:
+            # Fall back to direct phone number
+            if from_number is None:
+                from_number = get_twilio_phone_number()
 
-        sms = client.messages.create(body=message, from_=from_number, to=formatted_to)
+            if not from_number:
+                return {
+                    "success": False,
+                    "message_sid": None,
+                    "error": "No Twilio phone number or Messaging Service configured",
+                }
+
+            sms = client.messages.create(body=message, from_=from_number, to=formatted_to)
+            sender = from_number
 
         return {
             "success": True,
@@ -113,7 +139,7 @@ def send_sms(to_number, message, from_number=None):
             "error": None,
             "status": sms.status,
             "to": formatted_to,
-            "from": from_number,
+            "from": sender,
         }
 
     except Exception as e:
@@ -199,3 +225,232 @@ def is_twilio_configured():
         )
     except Exception:
         return False
+
+
+# =============================================================================
+# WhatsApp Functions (via Twilio WhatsApp Business API)
+# =============================================================================
+
+def get_whatsapp_number():
+    """
+    Get the configured Twilio WhatsApp number.
+    Must be a WhatsApp-enabled Twilio number in format: whatsapp:+1234567890
+    """
+    number = os.environ.get("TWILIO_WHATSAPP_NUMBER")
+    if number and not number.startswith("whatsapp:"):
+        number = f"whatsapp:{number}"
+    return number
+
+
+def format_whatsapp_number(phone):
+    """
+    Format phone number for WhatsApp (whatsapp:+E.164 format).
+    """
+    formatted = format_phone_number(phone)
+    if formatted:
+        return f"whatsapp:{formatted}"
+    return None
+
+
+def send_whatsapp(to_number, message, from_number=None):
+    """
+    Send a WhatsApp message via Twilio.
+
+    Args:
+        to_number: Recipient phone number (any format, will be normalized)
+        message: Message body
+        from_number: Optional WhatsApp sender number (defaults to configured number)
+
+    Returns:
+        dict with 'success', 'message_sid', 'error' keys
+
+    Note: For template messages (required for business-initiated conversations),
+    use send_whatsapp_template() instead.
+    """
+    try:
+        formatted_to = format_whatsapp_number(to_number)
+        if not formatted_to:
+            return {
+                "success": False,
+                "message_sid": None,
+                "error": f"Invalid phone number format: {to_number}",
+            }
+
+        if from_number is None:
+            from_number = get_whatsapp_number()
+
+        if not from_number:
+            return {
+                "success": False,
+                "message_sid": None,
+                "error": "No WhatsApp number configured. Set TWILIO_WHATSAPP_NUMBER.",
+            }
+
+        # Ensure from_number has whatsapp: prefix
+        if not from_number.startswith("whatsapp:"):
+            from_number = f"whatsapp:{from_number}"
+
+        client = get_twilio_client()
+
+        msg = client.messages.create(
+            body=message,
+            from_=from_number,
+            to=formatted_to
+        )
+
+        return {
+            "success": True,
+            "message_sid": msg.sid,
+            "error": None,
+            "status": msg.status,
+            "to": formatted_to,
+            "from": from_number,
+            "channel": "whatsapp",
+        }
+
+    except Exception as e:
+        return {"success": False, "message_sid": None, "error": str(e)}
+
+
+def send_whatsapp_template(to_number, template_sid, template_variables=None, from_number=None):
+    """
+    Send a WhatsApp template message (for business-initiated conversations).
+
+    Args:
+        to_number: Recipient phone number
+        template_sid: Twilio Content Template SID (e.g., HXxxxxx)
+        template_variables: Dict of variables to substitute in template
+        from_number: Optional WhatsApp sender number
+
+    Returns:
+        dict with 'success', 'message_sid', 'error' keys
+
+    Note: Templates must be pre-approved by WhatsApp/Meta.
+    """
+    try:
+        formatted_to = format_whatsapp_number(to_number)
+        if not formatted_to:
+            return {
+                "success": False,
+                "message_sid": None,
+                "error": f"Invalid phone number format: {to_number}",
+            }
+
+        if from_number is None:
+            from_number = get_whatsapp_number()
+
+        if not from_number:
+            return {
+                "success": False,
+                "message_sid": None,
+                "error": "No WhatsApp number configured.",
+            }
+
+        if not from_number.startswith("whatsapp:"):
+            from_number = f"whatsapp:{from_number}"
+
+        client = get_twilio_client()
+
+        # Build content variables if provided
+        content_variables = {}
+        if template_variables:
+            for i, (key, value) in enumerate(template_variables.items(), 1):
+                content_variables[str(i)] = str(value)
+
+        msg = client.messages.create(
+            content_sid=template_sid,
+            content_variables=content_variables if content_variables else None,
+            from_=from_number,
+            to=formatted_to
+        )
+
+        return {
+            "success": True,
+            "message_sid": msg.sid,
+            "error": None,
+            "status": msg.status,
+            "to": formatted_to,
+            "from": from_number,
+            "channel": "whatsapp",
+            "template_sid": template_sid,
+        }
+
+    except Exception as e:
+        return {"success": False, "message_sid": None, "error": str(e)}
+
+
+def send_bulk_whatsapp(recipients, message):
+    """
+    Send WhatsApp message to multiple recipients.
+
+    Args:
+        recipients: List of phone numbers
+        message: Message body
+
+    Returns:
+        dict with 'total', 'sent', 'failed', 'results' keys
+    """
+    results = []
+    sent_count = 0
+    failed_count = 0
+
+    for phone in recipients:
+        result = send_whatsapp(phone, message)
+        results.append({
+            "phone": phone,
+            "success": result["success"],
+            "message_sid": result.get("message_sid"),
+            "error": result.get("error"),
+        })
+
+        if result["success"]:
+            sent_count += 1
+        else:
+            failed_count += 1
+
+    return {
+        "total": len(recipients),
+        "sent": sent_count,
+        "failed": failed_count,
+        "results": results,
+        "channel": "whatsapp",
+    }
+
+
+def is_whatsapp_configured():
+    """
+    Check if WhatsApp is configured.
+    Returns True if configured, False otherwise.
+    """
+    try:
+        creds = get_twilio_credentials()
+        whatsapp_number = get_whatsapp_number()
+        return bool(
+            creds.get("account_sid")
+            and creds.get("auth_token")
+            and whatsapp_number
+        )
+    except Exception:
+        return False
+
+
+def send_message(to_number, message, channel="sms", template_sid=None, template_variables=None):
+    """
+    Universal message sender - routes to SMS or WhatsApp based on channel.
+
+    Args:
+        to_number: Recipient phone number
+        message: Message body (ignored if template_sid provided for WhatsApp)
+        channel: "sms" or "whatsapp"
+        template_sid: For WhatsApp templates only
+        template_variables: For WhatsApp templates only
+
+    Returns:
+        dict with 'success', 'message_sid', 'channel', 'error' keys
+    """
+    if channel == "whatsapp":
+        if template_sid:
+            return send_whatsapp_template(to_number, template_sid, template_variables)
+        return send_whatsapp(to_number, message)
+    else:
+        return send_sms(to_number, message)

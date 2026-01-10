@@ -3,6 +3,7 @@ import os
 import re
 import time
 import zipfile
+from typing import Any
 
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.attributes import flag_modified
@@ -65,6 +66,7 @@ from anthropic import Anthropic
 
 from prompt_loader import get_prompt_loader
 
+client: Anthropic | None = None
 try:
     client = Anthropic(api_key=ANTHROPIC_API_KEY)
     if "invalid" in ANTHROPIC_API_KEY.lower():
@@ -73,8 +75,7 @@ try:
         print("✅ Anthropic API client initialized")
 except Exception as e:
     print(f"❌ Failed to initialize Anthropic client: {e}")
-    # Still create a dummy client to prevent crashes
-    client = None
+    # client remains None to prevent crashes
 import json
 import os
 import secrets
@@ -82,6 +83,8 @@ import uuid
 from datetime import datetime, timedelta
 from functools import wraps
 
+# Initialize Sentry for error tracking (if configured)
+import sentry_sdk
 from flask import (
     Flask,
     g,
@@ -95,6 +98,8 @@ from flask import (
     url_for,
 )
 from flask_cors import CORS
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -252,6 +257,24 @@ from services.workflow_triggers_service import (
     WorkflowTriggersService,
 )
 
+SENTRY_DSN = os.environ.get("SENTRY_DSN")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            FlaskIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=0.1,  # 10% of requests for performance monitoring
+        profiles_sample_rate=0.1,  # 10% for profiling
+        environment=os.environ.get("ENVIRONMENT", "development"),
+        release=os.environ.get("APP_VERSION", "1.0.0"),
+        send_default_pii=False,  # Don't send personally identifiable info
+    )
+    app_logger.info("Sentry error tracking initialized")
+else:
+    app_logger.info("Sentry not configured (set SENTRY_DSN to enable)")
+
 app = Flask(__name__)
 
 # Initialize request/response logging
@@ -273,9 +296,49 @@ app.secret_key = config.SECRET_KEY
 
 # Register blueprints
 from routes.portal import portal
+from routes.affiliate_portal import affiliate_portal
+from routes.partner import partner_bp
 
 app.register_blueprint(portal)
 print("✅ Portal blueprint registered")
+
+app.register_blueprint(affiliate_portal)
+print("✅ Affiliate portal blueprint registered")
+
+app.register_blueprint(partner_bp)
+print("✅ Partner portal blueprint registered")
+
+# Initialize Swagger/OpenAPI documentation
+from flasgger import Swagger
+
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec",
+            "route": "/api/docs/apispec.json",
+            "rule_filter": lambda rule: rule.rule.startswith("/api")
+            or rule.rule.startswith("/health"),
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/api/docs/static",
+    "swagger_ui": True,
+    "specs_route": "/api/docs/",
+}
+
+swagger_template = {
+    "openapi": "3.0.3",
+    "info": {
+        "title": "FCRA Credit Repair Platform API",
+        "description": "API documentation for the FCRA Credit Repair Management Platform",
+        "version": "1.0.0",
+    },
+    "servers": [{"url": "/", "description": "Current server"}],
+}
+
+swagger = Swagger(app, config=swagger_config, template=swagger_template)
+app_logger.info("Swagger API documentation initialized at /api/docs/")
 
 # CI/CD Authentication Bypass (ONLY activates with CI=true AND not in production)
 if config.IS_CI and not config.IS_PRODUCTION:
@@ -348,6 +411,9 @@ CORS(
 # Allow large credit report uploads (up to 20MB)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024
 
+# Track app start time for uptime reporting
+app.config["START_TIME"] = datetime.now()
+
 # Initialize performance monitoring middleware
 request_timing_middleware(app)
 print("✅ Performance monitoring middleware initialized")
@@ -361,7 +427,7 @@ app.register_blueprint(staff_portal_blueprint)
 print("✅ Staff portal blueprint registered")
 
 # Simple in-memory rate limiting for login attempts
-login_attempts = {}  # {email: {'count': int, 'last_attempt': datetime}}
+login_attempts: dict[str, dict[str, int | datetime]] = {}  # {email: {'count': int, 'last_attempt': datetime}}
 
 # Store received credit reports
 credit_reports = []
@@ -643,8 +709,8 @@ def require_api_key(scopes=None):
     return decorator
 
 
-_whitelabel_config_cache = {}
-_whitelabel_cache_timestamps = {}
+_whitelabel_config_cache: dict[str, Any] = {}
+_whitelabel_cache_timestamps: dict[str, datetime] = {}
 _WHITELABEL_CACHE_TTL = 300
 
 
@@ -834,6 +900,12 @@ def inject_tenant_branding():
     }
 
 
+@app.route("/auth")
+def auth_redirect():
+    """Redirect to staff login page"""
+    return redirect(url_for("staff_login"))
+
+
 @app.route("/staff/login", methods=["GET", "POST"])
 @limiter.limit(RATE_LIMITS["login"])  # Prevent brute force attacks
 def staff_login():
@@ -918,7 +990,7 @@ def staff_login():
             if staff.force_password_change:
                 return render_template("staff_login.html", force_change=True)
 
-            return redirect("/staff/")
+            return redirect("/dashboard")
 
         except Exception as e:
             print(f"Login error: {e}")
@@ -929,7 +1001,7 @@ def staff_login():
             db.close()
 
     if "staff_id" in session:
-        return redirect("/staff/")
+        return redirect("/dashboard")
 
     return render_template("staff_login.html")
 
@@ -963,7 +1035,7 @@ def staff_change_password():
             staff.force_password_change = False
             staff.updated_at = datetime.utcnow()
             db.commit()
-            return redirect("/staff/")
+            return redirect("/dashboard")
     except Exception as e:
         print(f"Password change error: {e}")
         return render_template(
@@ -1053,6 +1125,48 @@ def api_staff_login():
             )
             return jsonify({"success": False, "error": "Invalid credentials"}), 401
 
+        # Check if 2FA is enabled
+        if staff.two_factor_enabled:
+            two_fa_code = data.get("two_factor_code", "")
+            device_token = request.cookies.get("2fa_device_token")
+            trust_device = data.get("trust_device", False)
+
+            # Import 2FA service
+            from services.two_factor_service import get_two_factor_service
+            two_fa_service = get_two_factor_service(db)
+
+            # If no code provided, indicate 2FA is required
+            if not two_fa_code:
+                # Check if device is trusted
+                if device_token and two_fa_service.is_device_trusted(device_token, staff.trusted_devices or []):
+                    pass  # Device is trusted, proceed without code
+                else:
+                    return jsonify({
+                        "success": False,
+                        "requires_2fa": True,
+                        "error": "Two-factor authentication required",
+                        "staff_id": staff.id  # For 2FA challenge endpoint
+                    }), 200  # Return 200 so frontend can handle gracefully
+
+            # Verify 2FA code
+            if two_fa_code:
+                success, message, new_token = two_fa_service.verify_2fa_login(
+                    staff, two_fa_code, device_token,
+                    request.headers.get("User-Agent"),
+                    user_ip, trust_device
+                )
+                if not success:
+                    audit_service.log_login(
+                        user_id=staff.id,
+                        user_type="staff",
+                        success=False,
+                        ip=user_ip,
+                        email=email,
+                        name=staff.full_name,
+                        failure_reason="Invalid 2FA code",
+                    )
+                    return jsonify({"success": False, "error": message}), 401
+
         staff.last_login = datetime.utcnow()
         db.commit()
 
@@ -1072,18 +1186,246 @@ def api_staff_login():
             name=staff.full_name,
         )
 
-        return jsonify(
-            {
+        response_data = {
+            "success": True,
+            "staff": {
+                "id": staff.id,
+                "name": staff.full_name,
+                "email": staff.email,
+                "role": staff.role,
+            },
+            "force_password_change": staff.force_password_change,
+        }
+
+        response = jsonify(response_data)
+
+        # Set trusted device cookie if 2FA was used with trust option
+        if staff.two_factor_enabled and data.get("trust_device"):
+            from services.two_factor_service import get_two_factor_service
+            two_fa_service = get_two_factor_service(db)
+            trusted_devices = staff.trusted_devices or []
+            if trusted_devices:
+                latest_device = trusted_devices[-1]
+                if latest_device.get("token"):
+                    response.set_cookie(
+                        "2fa_device_token",
+                        latest_device["token"],
+                        max_age=30 * 24 * 60 * 60,  # 30 days
+                        httponly=True,
+                        secure=True,
+                        samesite="Lax"
+                    )
+
+        return response
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================================
+# Two-Factor Authentication (2FA) API Endpoints
+# =============================================================================
+
+@app.route("/api/2fa/status", methods=["GET"])
+@require_staff()
+def api_2fa_status():
+    """Get 2FA status for current staff member"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        status = service.get_2fa_status(staff)
+
+        return jsonify({"success": True, **status})
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/setup", methods=["POST"])
+@require_staff()
+def api_2fa_setup():
+    """Start 2FA setup - generates secret and QR code"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        if staff.two_factor_enabled:
+            return jsonify({"success": False, "error": "2FA is already enabled"}), 400
+
+        data = request.get_json() or {}
+        method = data.get("method", "totp")
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        setup_data = service.setup_2fa_for_staff(staff, method)
+
+        return jsonify({
+            "success": True,
+            "secret": setup_data["secret"],
+            "qr_code": setup_data["qr_code"],
+            "backup_codes": setup_data["backup_codes"],
+            "method": setup_data["method"]
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/verify", methods=["POST"])
+@require_staff()
+def api_2fa_verify():
+    """Verify TOTP code and enable 2FA"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        data = request.get_json() or {}
+        code = data.get("code", "")
+
+        if not code:
+            return jsonify({"success": False, "error": "Verification code required"}), 400
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        success, message = service.verify_and_enable_2fa(staff, code)
+
+        if success:
+            return jsonify({"success": True, "message": message})
+        else:
+            return jsonify({"success": False, "error": message}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/disable", methods=["POST"])
+@require_staff()
+def api_2fa_disable():
+    """Disable 2FA (requires current code)"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        data = request.get_json() or {}
+        code = data.get("code", "")
+        use_backup = data.get("use_backup", False)
+
+        if not code:
+            return jsonify({"success": False, "error": "Verification code required"}), 400
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        success, message = service.disable_2fa(staff, code, use_backup)
+
+        if success:
+            # Clear device cookie
+            response = jsonify({"success": True, "message": message})
+            response.delete_cookie("2fa_device_token")
+            return response
+        else:
+            return jsonify({"success": False, "error": message}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/backup-codes", methods=["POST"])
+@require_staff()
+def api_2fa_regenerate_backup_codes():
+    """Regenerate backup codes (requires current TOTP code)"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        data = request.get_json() or {}
+        code = data.get("code", "")
+
+        if not code:
+            return jsonify({"success": False, "error": "Verification code required"}), 400
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+        success, new_codes, message = service.regenerate_backup_codes(staff, code)
+
+        if success:
+            return jsonify({
                 "success": True,
-                "staff": {
-                    "id": staff.id,
-                    "name": staff.full_name,
-                    "email": staff.email,
-                    "role": staff.role,
-                },
-                "force_password_change": staff.force_password_change,
-            }
-        )
+                "backup_codes": new_codes,
+                "message": message
+            })
+        else:
+            return jsonify({"success": False, "error": message}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/devices", methods=["GET"])
+@require_staff()
+def api_2fa_list_devices():
+    """List trusted devices"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        from services.two_factor_service import get_two_factor_service
+        service = get_two_factor_service(db)
+
+        # Remove expired devices and return
+        devices = service.remove_expired_devices(staff.trusted_devices or [])
+
+        # Sanitize output (don't expose full token)
+        sanitized = []
+        for d in devices:
+            sanitized.append({
+                "token_prefix": d.get("token", "")[:8] + "...",
+                "user_agent": d.get("user_agent", "")[:100],
+                "ip_address": d.get("ip_address"),
+                "created_at": d.get("created_at"),
+                "expires_at": d.get("expires_at"),
+                "last_used": d.get("last_used")
+            })
+
+        return jsonify({"success": True, "devices": sanitized})
+    finally:
+        db.close()
+
+
+@app.route("/api/2fa/devices/revoke-all", methods=["POST"])
+@require_staff()
+def api_2fa_revoke_all_devices():
+    """Revoke all trusted devices"""
+    db = get_db()
+    try:
+        staff = db.query(Staff).filter_by(id=session.get("staff_id")).first()
+        if not staff:
+            return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+        staff.trusted_devices = []
+        db.commit()
+
+        response = jsonify({"success": True, "message": "All devices revoked"})
+        response.delete_cookie("2fa_device_token")
+        return response
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
@@ -1093,8 +1435,27 @@ def api_staff_login():
 @app.route("/dashboard/staff")
 @require_staff(roles=["admin"])
 def dashboard_staff():
-    """Redirect to new staff portal admin with team section"""
-    return redirect(url_for("staff_portal.admin", section="team"))
+    """Staff management page in old dashboard style"""
+    db = get_db()
+    try:
+        staff_members = db.query(Staff).order_by(Staff.created_at.desc()).all()
+
+        # Calculate stats
+        stats = {
+            "total": len(staff_members),
+            "admins": sum(1 for s in staff_members if s.role == "admin"),
+            "attorneys": sum(1 for s in staff_members if s.role == "attorney"),
+            "paralegals": sum(1 for s in staff_members if s.role == "paralegal"),
+        }
+
+        return render_template(
+            "staff_management.html",
+            staff_members=staff_members,
+            stats=stats,
+            active_page="staff"
+        )
+    finally:
+        db.close()
 
 
 @app.route("/api/staff/add", methods=["POST"])
@@ -1300,42 +1661,135 @@ a:hover{background:#5b21b6}h1{color:#1f2937}</style></head>
 
 @app.route("/health")
 def health_check():
-    """Basic health check - returns 200 if app is running."""
+    """
+    Application health check
+    Returns application health status with memory and CPU metrics
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Application is healthy
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: healthy
+                timestamp:
+                  type: string
+                version:
+                  type: string
+                uptime_seconds:
+                  type: number
+                memory:
+                  type: object
+                cpu_percent:
+                  type: number
+    """
+    import os
+
+    import psutil
+
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+
     return jsonify(
         {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "version": "1.0.0",
+            "version": os.environ.get("APP_VERSION", "1.0.0"),
+            "uptime_seconds": (
+                datetime.now() - app.config.get("START_TIME", datetime.now())
+            ).total_seconds(),
+            "memory": {
+                "rss_mb": round(memory_info.rss / 1024 / 1024, 2),
+                "vms_mb": round(memory_info.vms / 1024 / 1024, 2),
+            },
+            "cpu_percent": process.cpu_percent(),
         }
     )
 
 
 @app.route("/ready")
 def readiness_check():
-    """Readiness check - verifies database connectivity."""
+    """
+    Readiness check
+    Verifies database and cache connectivity for load balancer routing
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: All dependencies are ready
+      503:
+        description: One or more dependencies are not ready
+    """
+    checks = {
+        "database": {"status": "unknown", "latency_ms": None},
+    }
+    all_ready = True
+
+    # Database check
     try:
+        import time
+
+        start = time.time()
         db = get_db()
         db.execute("SELECT 1")
         db.close()
-        return jsonify(
-            {
-                "status": "ready",
-                "database": "connected",
-                "timestamp": datetime.now().isoformat(),
-            }
-        )
+        latency = (time.time() - start) * 1000
+        checks["database"] = {"status": "connected", "latency_ms": round(latency, 2)}
     except Exception as e:
-        return (
-            jsonify(
-                {
-                    "status": "not_ready",
-                    "database": "disconnected",
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat(),
-                }
-            ),
-            503,
-        )
+        checks["database"] = {"status": "disconnected", "error": str(e)}
+        all_ready = False
+
+    # Cache check (if available)
+    try:
+        from services.performance_service import app_cache
+
+        cache_stats = app_cache.get_stats()
+        checks["cache"] = {
+            "status": "available",
+            "entries": cache_stats.get("total_entries", 0),
+            "hit_rate": cache_stats.get("hit_rate", 0),
+        }
+    except Exception:
+        checks["cache"] = {"status": "not_configured"}
+
+    status_code = 200 if all_ready else 503
+    return (
+        jsonify(
+            {
+                "status": "ready" if all_ready else "not_ready",
+                "timestamp": datetime.now().isoformat(),
+                "checks": checks,
+            }
+        ),
+        status_code,
+    )
+
+
+@app.route("/health/live")
+def liveness_check():
+    """
+    Liveness probe
+    Minimal check for Kubernetes/container orchestration
+    ---
+    tags:
+      - Health
+    responses:
+      200:
+        description: Application is alive
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: OK
+    """
+    return "OK", 200
 
 
 # =============================================================================
@@ -1648,9 +2102,9 @@ SECTION_MARKERS = {
 }
 
 
-def split_report_into_sections(text: str) -> dict:
+def split_report_into_sections(text: str) -> dict[str, str]:
     """Split cleaned report text into logical sections based on common headings"""
-    sections = {k: [] for k in SECTION_MARKERS.keys()}
+    sections: dict[str, list[str]] = {k: [] for k in SECTION_MARKERS.keys()}
     current_key = None
 
     if not text:
@@ -1684,7 +2138,7 @@ def split_report_into_sections(text: str) -> dict:
     return finalized
 
 
-def merge_standing(standings: list) -> dict:
+def merge_standing(standings: list[Any]) -> dict[str, Any]:
     """Merge multiple standing blocks (OR booleans, SUM counts, concatenate strings)"""
     if not standings:
         return {
@@ -1699,90 +2153,91 @@ def merge_standing(standings: list) -> dict:
             "adverse_action_notices_count": 0,
         }
 
-    merged = {
-        "has_concrete_harm": False,
-        "concrete_harm_type": [],
-        "harm_details": [],
-        "has_dissemination": False,
-        "dissemination_details": [],
-        "has_causation": False,
-        "causation_details": [],
-        "denial_letters_count": 0,
-        "adverse_action_notices_count": 0,
-    }
+    has_concrete_harm = False
+    concrete_harm_type: list[str] = []
+    harm_details: list[str] = []
+    has_dissemination = False
+    dissemination_details: list[str] = []
+    has_causation = False
+    causation_details: list[str] = []
+    denial_letters_count = 0
+    adverse_action_notices_count = 0
 
     for s in standings:
         if not s:
             continue
-        merged["has_concrete_harm"] = merged["has_concrete_harm"] or s.get(
+        has_concrete_harm = has_concrete_harm or s.get(
             "has_concrete_harm", False
         )
-        merged["has_dissemination"] = merged["has_dissemination"] or s.get(
+        has_dissemination = has_dissemination or s.get(
             "has_dissemination", False
         )
-        merged["has_causation"] = merged["has_causation"] or s.get(
+        has_causation = has_causation or s.get(
             "has_causation", False
         )
         if s.get("concrete_harm_type"):
-            merged["concrete_harm_type"].append(str(s.get("concrete_harm_type")))
+            concrete_harm_type.append(str(s.get("concrete_harm_type")))
         if s.get("harm_details"):
-            merged["harm_details"].append(str(s.get("harm_details")))
+            harm_details.append(str(s.get("harm_details")))
         if s.get("dissemination_details"):
-            merged["dissemination_details"].append(str(s.get("dissemination_details")))
+            dissemination_details.append(str(s.get("dissemination_details")))
         if s.get("causation_details"):
-            merged["causation_details"].append(str(s.get("causation_details")))
-        merged["denial_letters_count"] += int(s.get("denial_letters_count", 0) or 0)
-        merged["adverse_action_notices_count"] += int(
+            causation_details.append(str(s.get("causation_details")))
+        denial_letters_count += int(s.get("denial_letters_count", 0) or 0)
+        adverse_action_notices_count += int(
             s.get("adverse_action_notices_count", 0) or 0
         )
 
     return {
-        "has_concrete_harm": merged["has_concrete_harm"],
-        "concrete_harm_type": " | ".join(merged["concrete_harm_type"]),
-        "harm_details": "\n\n".join(merged["harm_details"]),
-        "has_dissemination": merged["has_dissemination"],
-        "dissemination_details": "\n\n".join(merged["dissemination_details"]),
-        "has_causation": merged["has_causation"],
-        "causation_details": "\n\n".join(merged["causation_details"]),
-        "denial_letters_count": merged["denial_letters_count"],
-        "adverse_action_notices_count": merged["adverse_action_notices_count"],
+        "has_concrete_harm": has_concrete_harm,
+        "concrete_harm_type": " | ".join(concrete_harm_type),
+        "harm_details": "\n\n".join(harm_details),
+        "has_dissemination": has_dissemination,
+        "dissemination_details": "\n\n".join(dissemination_details),
+        "has_causation": has_causation,
+        "causation_details": "\n\n".join(causation_details),
+        "denial_letters_count": denial_letters_count,
+        "adverse_action_notices_count": adverse_action_notices_count,
     }
 
 
-def merge_actual_damages(damages_list: list) -> dict:
+def merge_actual_damages(damages_list: list[Any]) -> dict[str, Any]:
     """Merge multiple actual_damages blocks by summing numeric fields"""
-    merged = {
-        "credit_denials_amount": 0,
-        "higher_interest_amount": 0,
-        "credit_monitoring_amount": 0,
-        "time_stress_amount": 0,
-        "other_actual_amount": 0,
-        "notes": "",
-    }
-    notes = []
+    credit_denials_amount: float = 0
+    higher_interest_amount: float = 0
+    credit_monitoring_amount: float = 0
+    time_stress_amount: float = 0
+    other_actual_amount: float = 0
+    notes: list[str] = []
     for d in damages_list:
         if not d:
             continue
-        merged["credit_denials_amount"] += float(d.get("credit_denials_amount", 0) or 0)
-        merged["higher_interest_amount"] += float(
+        credit_denials_amount += float(d.get("credit_denials_amount", 0) or 0)
+        higher_interest_amount += float(
             d.get("higher_interest_amount", 0) or 0
         )
-        merged["credit_monitoring_amount"] += float(
+        credit_monitoring_amount += float(
             d.get("credit_monitoring_amount", 0) or 0
         )
-        merged["time_stress_amount"] += float(d.get("time_stress_amount", 0) or 0)
-        merged["other_actual_amount"] += float(d.get("other_actual_amount", 0) or 0)
+        time_stress_amount += float(d.get("time_stress_amount", 0) or 0)
+        other_actual_amount += float(d.get("other_actual_amount", 0) or 0)
         if d.get("notes"):
             notes.append(str(d["notes"]))
-    merged["notes"] = "\n\n".join(notes)
-    return merged
+    return {
+        "credit_denials_amount": credit_denials_amount,
+        "higher_interest_amount": higher_interest_amount,
+        "credit_monitoring_amount": credit_monitoring_amount,
+        "time_stress_amount": time_stress_amount,
+        "other_actual_amount": other_actual_amount,
+        "notes": "\n\n".join(notes),
+    }
 
 
-def merge_litigation_data(section_results: list) -> dict:
+def merge_litigation_data(section_results: list[Any]) -> dict[str, Any]:
     """Merge litigation_data from multiple sections into one"""
-    all_violations = []
-    standings = []
-    damages_blocks = []
+    all_violations: list[Any] = []
+    standings: list[Any] = []
+    damages_blocks: list[Any] = []
     for r in section_results:
         if not r:
             continue
@@ -5322,6 +5777,12 @@ def dashboard():
         db.close()
 
 
+@app.route("/analysis")
+def analysis_redirect():
+    """Redirect to analyses dashboard"""
+    return redirect(url_for("analyses_page"))
+
+
 @app.route("/dashboard/analyses")
 @require_staff()
 def analyses_page():
@@ -5740,7 +6201,56 @@ def dashboard_analytics():
 @require_staff(roles=["admin", "attorney"])
 def dashboard_predictive():
     """Predictive Analytics Dashboard - renders analytics template with predictive section"""
-    return render_template("predictive_analytics.html")
+    # Default empty data for all template variables
+    default_data = {
+        "revenue_forecast": {"success": False, "forecasts": []},
+        "caseload_forecast": {"success": False, "forecasts": []},
+        "growth_opportunities": [],
+        "workload_distribution": {"success": False, "distribution": []},
+        "revenue_trends": {"success": False, "trends": []},
+        "top_clients": {"success": False, "top_clients": []},
+        "leaderboard": {"success": False, "staff": []},
+        "summary": {"success": False, "totals": {}},
+    }
+
+    try:
+        # Get predictive analytics data
+        revenue_forecast = predictive_analytics_service.forecast_revenue(months_ahead=3)
+        caseload_forecast = predictive_analytics_service.forecast_caseload(months_ahead=3)
+
+        # Get growth opportunities for top clients
+        db = get_db()
+        clients = db.query(Client).order_by(Client.created_at.desc()).limit(10).all()
+        growth_opportunities = []
+        for client in clients:
+            opp = predictive_analytics_service.identify_growth_opportunities(client.id)
+            if opp.get("success"):
+                growth_opportunities.append({"client": client, **opp})
+
+        # Get workload distribution
+        workload_distribution = attorney_analytics_service.get_workload_distribution()
+
+        # Get leaderboard data
+        leaderboard = attorney_analytics_service.get_leaderboard()
+
+        db.close()
+
+        return render_template(
+            "predictive_analytics.html",
+            revenue_forecast=revenue_forecast,
+            caseload_forecast=caseload_forecast,
+            growth_opportunities=growth_opportunities,
+            workload_distribution=workload_distribution,
+            revenue_trends={"success": True, "trends": []},
+            top_clients={"success": True, "top_clients": []},
+            leaderboard=leaderboard,
+            summary={"success": True, "totals": {}},
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        # Return template with empty/default data on error
+        return render_template("predictive_analytics.html", **default_data)
 
 
 @app.route("/api/analytics/revenue-forecast")
@@ -5894,6 +6404,499 @@ def api_revenue_trends():
         return jsonify(result)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =============================================================================
+# Revenue Dashboard (Priority 13)
+# =============================================================================
+
+@app.route("/dashboard/revenue")
+@require_staff(roles=["admin", "attorney"])
+def dashboard_revenue():
+    """Revenue Dashboard - MRR, LTV, Churn, and Financial Metrics"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+
+        # Get dashboard summary
+        summary = service.get_dashboard_summary()
+        chart_data = service.get_revenue_chart_data('month', 12)
+        top_affiliates = service.get_top_affiliates(5)
+        payment_methods = service.get_revenue_by_payment_method()
+        plans = service.get_revenue_by_plan()
+
+        return render_template(
+            "revenue_dashboard.html",
+            summary=summary,
+            chart_data=chart_data,
+            top_affiliates=top_affiliates,
+            payment_methods=payment_methods,
+            plans=plans,
+            active_page="revenue"
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return render_template(
+            "revenue_dashboard.html",
+            summary={},
+            chart_data={'labels': [], 'datasets': {'revenue': [], 'clients': []}},
+            top_affiliates=[],
+            payment_methods={},
+            plans={},
+            active_page="revenue",
+            error=str(e)
+        )
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/summary")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_summary():
+    """API: Get revenue dashboard summary"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+        summary = service.get_dashboard_summary()
+        return jsonify({"success": True, **summary})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/by-period")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_by_period():
+    """API: Get revenue by time period"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        period = request.args.get("period", "month")
+        limit = request.args.get("limit", 12, type=int)
+
+        service = get_revenue_metrics_service(db)
+        data = service.get_revenue_by_period(period, limit)
+        return jsonify({"success": True, "data": data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/mrr")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_mrr():
+    """API: Get MRR/ARR metrics"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+        mrr = service.get_mrr()
+        mrr_growth = service.get_mrr_growth(6)
+        return jsonify({"success": True, "mrr": mrr, "growth": mrr_growth})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/churn")
+@require_staff(roles=["admin", "attorney"])
+def api_revenue_churn():
+    """API: Get churn and retention metrics"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        service = get_revenue_metrics_service(db)
+        churn = service.get_churn_rate(30)
+        cohorts = service.get_client_retention_cohorts(6)
+        return jsonify({"success": True, "churn": churn, "cohorts": cohorts})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/revenue/export")
+@require_staff(roles=["admin"])
+def api_revenue_export():
+    """API: Export revenue data as CSV"""
+    db = get_db()
+    try:
+        from services.revenue_metrics_service import get_revenue_metrics_service
+        import csv
+        from io import StringIO
+
+        # Parse date filters with validation
+        start_date = None
+        end_date = None
+        try:
+            if request.args.get("start"):
+                start_date = datetime.fromisoformat(request.args.get("start"))
+            if request.args.get("end"):
+                end_date = datetime.fromisoformat(request.args.get("end"))
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use ISO format (YYYY-MM-DD)"}), 400
+
+        service = get_revenue_metrics_service(db)
+        data = service.export_revenue_data(start_date, end_date)
+
+        # Create CSV
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=[
+            'client_id', 'name', 'email', 'plan', 'amount_dollars',
+            'status', 'method', 'payment_date', 'signup_date'
+        ])
+        writer.writeheader()
+        for row in data:
+            writer.writerow({
+                'client_id': row['client_id'],
+                'name': row['name'],
+                'email': row['email'],
+                'plan': row['plan'],
+                'amount_dollars': row['amount_dollars'],
+                'status': row['status'],
+                'method': row['method'],
+                'payment_date': row['payment_date'],
+                'signup_date': row['signup_date']
+            })
+
+        # Return as downloadable CSV
+        from flask import Response
+        output.seek(0)
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=revenue_export.csv'}
+        )
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================================
+# SUBSCRIPTION MANAGEMENT ENDPOINTS
+# =============================================================================
+
+@app.route("/api/subscriptions/plans")
+def api_subscription_plans():
+    """API: Get available subscription plans"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        plans = service.get_plans(active_only=True)
+        return jsonify({"success": True, "plans": plans})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/subscriptions/sync-plans", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_sync_subscription_plans():
+    """API: Sync subscription plans to Stripe (admin only)"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        results = service.sync_plans_to_stripe()
+        return jsonify({"success": True, "results": results})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription")
+@require_staff()
+def api_get_client_subscription(client_id):
+    """API: Get client's subscription details"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        subscription = service.get_subscription(client_id)
+        return jsonify({"success": True, "subscription": subscription})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/checkout", methods=["POST"])
+@require_staff()
+def api_create_subscription_checkout(client_id):
+    """API: Create a Stripe checkout session for subscription"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        plan_name = data.get("plan_name", "basic")
+
+        # Build URLs
+        base_url = request.host_url.rstrip('/')
+        success_url = data.get("success_url") or f"{base_url}/dashboard/clients/{client_id}?subscription=success"
+        cancel_url = data.get("cancel_url") or f"{base_url}/dashboard/clients/{client_id}?subscription=cancelled"
+
+        service = get_subscription_service(db)
+        result = service.create_checkout_session(
+            client_id=client_id,
+            plan_name=plan_name,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/create", methods=["POST"])
+@require_staff()
+def api_create_subscription(client_id):
+    """API: Create subscription directly with saved payment method"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        plan_name = data.get("plan_name", "basic")
+        payment_method_id = data.get("payment_method_id")
+
+        service = get_subscription_service(db)
+        result = service.create_subscription(
+            client_id=client_id,
+            plan_name=plan_name,
+            payment_method_id=payment_method_id
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/cancel", methods=["POST"])
+@require_staff()
+def api_cancel_subscription(client_id):
+    """API: Cancel client's subscription"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        at_period_end = data.get("at_period_end", True)
+        reason = data.get("reason")
+
+        service = get_subscription_service(db)
+        result = service.cancel_subscription(
+            client_id=client_id,
+            at_period_end=at_period_end,
+            reason=reason
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/reactivate", methods=["POST"])
+@require_staff()
+def api_reactivate_subscription(client_id):
+    """API: Reactivate a subscription scheduled for cancellation"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        result = service.reactivate_subscription(client_id)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/change-plan", methods=["POST"])
+@require_staff()
+def api_change_subscription_plan(client_id):
+    """API: Upgrade or downgrade subscription plan"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        new_plan_name = data.get("plan_name")
+
+        if not new_plan_name:
+            return jsonify({"success": False, "error": "plan_name is required"}), 400
+
+        service = get_subscription_service(db)
+        result = service.change_plan(client_id, new_plan_name)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/subscription/billing-portal", methods=["POST"])
+@require_staff()
+def api_create_billing_portal(client_id):
+    """API: Create Stripe billing portal session"""
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        base_url = request.host_url.rstrip('/')
+        return_url = data.get("return_url") or f"{base_url}/dashboard/clients/{client_id}"
+
+        service = get_subscription_service(db)
+        result = service.create_billing_portal_session(client_id, return_url)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/webhooks/stripe/subscriptions", methods=["POST"])
+def api_stripe_subscription_webhook():
+    """API: Handle Stripe subscription webhooks"""
+    db = get_db()
+    try:
+        import stripe
+        from services.subscription_service import get_subscription_service
+        from services.stripe_client import get_webhook_secret
+
+        payload = request.get_data()
+        sig_header = request.headers.get("Stripe-Signature")
+        webhook_secret = get_webhook_secret()
+
+        # Verify webhook signature
+        if webhook_secret:
+            try:
+                event = stripe.Webhook.construct_event(
+                    payload, sig_header, webhook_secret
+                )
+            except stripe.error.SignatureVerificationError:
+                return jsonify({"error": "Invalid signature"}), 400
+        else:
+            import json
+            event_data = json.loads(payload)
+            event = stripe.Event.construct_from(event_data, stripe.api_key)
+
+        # Handle the event
+        service = get_subscription_service(db)
+        result = service.handle_webhook_event(event)
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        db.close()
+
+
+# Portal endpoints for client self-service
+@app.route("/portal/api/subscription")
+def portal_api_get_subscription():
+    """Portal API: Get current client's subscription"""
+    client = get_portal_client()
+    if not client:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        service = get_subscription_service(db)
+        subscription = service.get_subscription(client.id)
+        return jsonify({"success": True, "subscription": subscription})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/portal/api/subscription/checkout", methods=["POST"])
+def portal_api_subscription_checkout():
+    """Portal API: Create checkout session for client"""
+    client = get_portal_client()
+    if not client:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        data = request.json or {}
+        plan_name = data.get("plan_name", "basic")
+
+        base_url = request.host_url.rstrip('/')
+        success_url = f"{base_url}/portal/subscription?status=success"
+        cancel_url = f"{base_url}/portal/subscription?status=cancelled"
+
+        service = get_subscription_service(db)
+        result = service.create_checkout_session(
+            client_id=client.id,
+            plan_name=plan_name,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/portal/api/subscription/billing-portal", methods=["POST"])
+def portal_api_billing_portal():
+    """Portal API: Create billing portal session for client"""
+    client = get_portal_client()
+    if not client:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        from services.subscription_service import get_subscription_service
+        base_url = request.host_url.rstrip('/')
+        return_url = f"{base_url}/portal/subscription"
+
+        service = get_subscription_service(db)
+        result = service.create_billing_portal_session(client.id, return_url)
+        return jsonify({"success": True, **result})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
 
 
 @app.route("/api/intake", methods=["POST"])
@@ -6057,6 +7060,8 @@ def dashboard_clients():
                         client.current_dispute_step if client else "intake"
                     ),
                     "phone": client.phone if client else None,
+                    # Lead scoring
+                    "lead_score": client.lead_score if client else None,
                 }
             )
 
@@ -6396,6 +7401,20 @@ def api_get_settings():
         db.close()
 
 
+@app.route("/dashboard/messages")
+@require_staff(roles=["admin", "staff"])
+def dashboard_messages():
+    """Redirect to SMS settings page (messaging)"""
+    return redirect(url_for("dashboard_sms_settings"))
+
+
+@app.route("/dashboard/sms")
+@require_staff(roles=["admin", "staff"])
+def dashboard_sms():
+    """Redirect to SMS settings page"""
+    return redirect(url_for("dashboard_sms_settings"))
+
+
 @app.route("/dashboard/settings/sms")
 @require_staff(roles=["admin"])
 def dashboard_sms_settings():
@@ -6619,6 +7638,13 @@ def api_get_sms_logs():
 # ============================================================
 # EMAIL AUTOMATION ROUTES
 # ============================================================
+
+
+@app.route("/dashboard/email")
+@require_staff(roles=["admin", "staff"])
+def dashboard_email():
+    """Redirect to email settings page"""
+    return redirect(url_for("dashboard_email_settings"))
 
 
 @app.route("/dashboard/settings/email")
@@ -7258,7 +8284,17 @@ def portal_redirect():
     """Redirect /portal to portal dashboard or login"""
     if "client_id" in session:
         return redirect(url_for("portal.dashboard"))
+    # Preserve query parameters (like ?token=xxx for password reset)
+    query_string = request.query_string.decode()
+    if query_string:
+        return redirect(f"/portal/login?{query_string}")
     return redirect(url_for("portal_login"))
+
+
+@app.route("/portal/guide")
+def client_portal_guide():
+    """Client Portal SOP/Guide - public page with all screenshots"""
+    return render_template('portal/client_guide.html')
 
 
 @app.route("/portal/<token>")
@@ -7358,7 +8394,9 @@ def portal_login():
     if request.method == "GET":
         if "client_id" in session:
             return redirect("/portal/dashboard")
-        return render_template("portal_login.html")
+        # Pass reset token if present in query params
+        reset_token = request.args.get("token", "")
+        return render_template("portal_login.html", reset_token=reset_token)
 
     db = get_db()
     try:
@@ -8839,6 +9877,12 @@ def signup_success():
         db.close()
 
 
+@app.route("/welcome")
+def welcome_redirect():
+    """Redirect to signup welcome page"""
+    return redirect(url_for("signup_welcome", **request.args))
+
+
 @app.route("/signup/welcome")
 def signup_welcome():
     """Welcome page after successful signup - standalone page"""
@@ -9048,12 +10092,29 @@ def api_cra_response_upload():
         db.add(cra_response)
 
         client = db.query(Client).filter_by(id=int(client_id)).first()
+        old_status = None
         if client:
+            old_status = client.dispute_status
             client.last_bureau_response_at = datetime.utcnow()
             if response_type in ["verified", "investigating"]:
                 client.dispute_status = "waiting_response"
             elif response_type == "deleted":
                 client.dispute_status = "active"
+
+            # Fire status_changed trigger if status actually changed
+            if old_status != client.dispute_status:
+                try:
+                    WorkflowTriggersService.evaluate_triggers(
+                        "status_changed",
+                        {
+                            "client_id": client.id,
+                            "client_name": client.name,
+                            "old_status": old_status,
+                            "new_status": client.dispute_status,
+                        },
+                    )
+                except Exception as trigger_error:
+                    print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
 
         if response_type == "deleted" or items_deleted > 0:
             dispute_items = (
@@ -11754,6 +12815,162 @@ def api_download_freeze_letters(batch_id):
         db.close()
 
 
+# ============================================================================
+# PII CORRECTION LETTERS API
+# ============================================================================
+
+
+@app.route("/api/pii-correction/generate", methods=["POST"])
+def api_generate_pii_correction():
+    """
+    Generate PII correction letters for the Big 3 CRAs.
+
+    Request body:
+    {
+        "client_id": 123,
+        "bureaus": ["Equifax", "Experian", "TransUnion"],  // optional, defaults to all 3
+        "incorrect_pii": {
+            "names": ["JOHN DOE JR", "J DOE"],
+            "addresses": ["123 OLD ST, OLDTOWN, CA 90000"],
+            "phones": ["555-123-4567"],
+            "employers": ["OLD COMPANY INC"]
+        },
+        "correct_pii": {  // optional, uses client data if not provided
+            "name": "John Doe",
+            "address": "456 New St, Newtown, CA 90001",
+            "phone": "555-987-6543",
+            "employer": "Current Company LLC"
+        },
+        "case_number": "PII-20260103-1234"  // optional
+    }
+    """
+    db = get_db()
+    try:
+        data = request.json
+        client_id = data.get("client_id")
+        bureaus = data.get("bureaus")
+        incorrect_pii = data.get("incorrect_pii", {})
+        correct_pii = data.get("correct_pii")
+        case_number = data.get("case_number")
+
+        if not client_id:
+            return jsonify({"success": False, "error": "Client ID is required"}), 400
+
+        if not incorrect_pii:
+            return jsonify({"success": False, "error": "incorrect_pii is required - specify what PII to correct"}), 400
+
+        # Validate at least one incorrect item
+        has_items = any(
+            incorrect_pii.get(key)
+            for key in ["names", "addresses", "phones", "employers", "ssn_variations"]
+        )
+        if not has_items:
+            return jsonify({
+                "success": False,
+                "error": "incorrect_pii must contain at least one item (names, addresses, phones, employers, or ssn_variations)"
+            }), 400
+
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        from services.pii_correction_service import generate_pii_correction_letters
+
+        result = generate_pii_correction_letters(
+            client_id=client_id,
+            incorrect_pii=incorrect_pii,
+            correct_pii=correct_pii,
+            bureaus=bureaus,
+            case_number=case_number,
+        )
+
+        if result.get("success"):
+            return jsonify({
+                "success": True,
+                "batch_id": result.get("batch_id"),
+                "pdf_path": result.get("pdf_path"),
+                "docx_path": result.get("docx_path"),
+                "bureaus_included": result.get("bureaus_included"),
+                "total_letters": result.get("total_letters"),
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/pii-correction/download/<path:file_path>")
+def api_download_pii_correction(file_path):
+    """Download PII correction letters PDF or DOCX"""
+    try:
+        # Security: ensure path is within expected directory
+        if not file_path.startswith("static/client_uploads/"):
+            file_path = f"static/client_uploads/{file_path}"
+
+        if not os.path.exists(file_path):
+            return jsonify({"success": False, "error": "File not found"}), 404
+
+        return send_file(file_path, as_attachment=True)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/pii-correction", methods=["POST"])
+def api_client_pii_correction(client_id):
+    """
+    Generate PII correction letters for a specific client.
+    Convenience endpoint that takes client_id from URL.
+    """
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        data = request.json or {}
+        incorrect_pii = data.get("incorrect_pii", {})
+        correct_pii = data.get("correct_pii")
+        bureaus = data.get("bureaus")
+        case_number = data.get("case_number")
+
+        if not incorrect_pii:
+            return jsonify({"success": False, "error": "incorrect_pii is required"}), 400
+
+        from services.pii_correction_service import generate_pii_correction_letters
+
+        result = generate_pii_correction_letters(
+            client_id=client_id,
+            incorrect_pii=incorrect_pii,
+            correct_pii=correct_pii,
+            bureaus=bureaus,
+            case_number=case_number,
+        )
+
+        if result.get("success"):
+            return jsonify({
+                "success": True,
+                "batch_id": result.get("batch_id"),
+                "pdf_path": result.get("pdf_path"),
+                "docx_path": result.get("docx_path"),
+                "bureaus_included": result.get("bureaus_included"),
+                "total_letters": result.get("total_letters"),
+            })
+        else:
+            return jsonify({"success": False, "error": result.get("error", "Unknown error")}), 400
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route("/api/action-plan/generate/<int:client_id>", methods=["POST"])
 def api_generate_action_plan(client_id):
     """Generate a branded Action Plan PDF for a client"""
@@ -13526,6 +14743,69 @@ def api_remove_client_tag(client_id, tag_id):
 
 
 # ============================================================
+# LEAD SCORING ENDPOINTS
+# ============================================================
+
+
+@app.route("/api/clients/<int:client_id>/score", methods=["GET"])
+@require_staff()
+def api_get_client_score(client_id):
+    """Get lead score for a client"""
+    from services.lead_scoring_service import LeadScoringService
+
+    result = LeadScoringService.calculate_score(client_id)
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404
+
+
+@app.route("/api/clients/<int:client_id>/score", methods=["POST"])
+@require_staff()
+def api_update_client_score(client_id):
+    """Calculate and save lead score for a client"""
+    from services.lead_scoring_service import LeadScoringService
+
+    result = LeadScoringService.update_client_score(client_id)
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 500
+
+
+@app.route("/api/leads/score-all", methods=["POST"])
+@require_staff()
+def api_score_all_leads():
+    """Rescore all clients in the database"""
+    from services.lead_scoring_service import LeadScoringService
+
+    data = request.get_json() or {}
+    limit = data.get("limit")  # Optional limit for batch processing
+
+    result = LeadScoringService.score_all_clients(limit=limit)
+    return jsonify(result)
+
+
+@app.route("/api/leads/top", methods=["GET"])
+@require_staff()
+def api_get_top_leads():
+    """Get top leads by score"""
+    from services.lead_scoring_service import LeadScoringService
+
+    limit = request.args.get("limit", 10, type=int)
+    leads = LeadScoringService.get_top_leads(limit=limit)
+    return jsonify({"success": True, "leads": leads})
+
+
+@app.route("/api/leads/distribution", methods=["GET"])
+@require_staff()
+def api_get_lead_distribution():
+    """Get distribution of lead scores"""
+    from services.lead_scoring_service import LeadScoringService
+
+    distribution = LeadScoringService.get_score_distribution()
+    return jsonify({"success": True, "distribution": distribution})
+
+
+# ============================================================
 # PHASE 8: QUICK LINKS ENDPOINTS
 # ============================================================
 
@@ -13634,6 +14914,761 @@ def api_delete_quick_link(slot_number):
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
+
+
+# ============================================================
+# EMAIL TEMPLATES LIBRARY
+# ============================================================
+
+from services.email_template_service import (
+    EmailTemplateService,
+    seed_default_templates,
+    TEMPLATE_CATEGORIES,
+    COMMON_VARIABLES,
+)
+
+
+@app.route("/api/email-templates/library", methods=["GET"])
+@require_staff()
+def api_list_email_templates_library():
+    """List all email templates with optional filtering"""
+    category = request.args.get("category")
+    is_active = request.args.get("is_active")
+    is_custom = request.args.get("is_custom")
+    search = request.args.get("search")
+
+    # Convert string params to bool
+    if is_active is not None:
+        is_active = is_active.lower() == "true"
+    if is_custom is not None:
+        is_custom = is_custom.lower() == "true"
+
+    templates = EmailTemplateService.list_templates(
+        category=category,
+        is_active=is_active,
+        is_custom=is_custom,
+        search=search,
+    )
+
+    return jsonify({
+        "success": True,
+        "templates": templates,
+        "categories": TEMPLATE_CATEGORIES,
+    })
+
+
+@app.route("/api/email-templates/stats", methods=["GET"])
+@require_staff()
+def api_email_template_stats():
+    """Get email template statistics"""
+    stats = EmailTemplateService.get_template_stats()
+    return jsonify({"success": True, "stats": stats})
+
+
+@app.route("/api/email-templates/categories", methods=["GET"])
+@require_staff()
+def api_email_template_categories():
+    """Get available template categories"""
+    return jsonify({
+        "success": True,
+        "categories": TEMPLATE_CATEGORIES,
+    })
+
+
+@app.route("/api/email-templates/variables", methods=["GET"])
+@require_staff()
+def api_email_template_variables():
+    """Get common template variables"""
+    return jsonify({
+        "success": True,
+        "variables": COMMON_VARIABLES,
+    })
+
+
+@app.route("/api/email-templates/library/<int:template_id>", methods=["GET"])
+@require_staff()
+def api_get_email_template_by_id(template_id):
+    """Get a specific email template by ID"""
+    template = EmailTemplateService.get_template(template_id=template_id)
+
+    if not template:
+        return jsonify({"success": False, "error": "Template not found"}), 404
+
+    return jsonify({"success": True, "template": template})
+
+
+@app.route("/api/email-templates/library", methods=["POST"])
+@require_staff()
+def api_create_email_template_library():
+    """Create a new email template"""
+    data = request.json
+
+    required = ["template_type", "name", "subject", "html_content"]
+    for field in required:
+        if not data.get(field):
+            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+
+    result = EmailTemplateService.create_template(
+        template_type=data["template_type"],
+        name=data["name"],
+        subject=data["subject"],
+        html_content=data["html_content"],
+        category=data.get("category", "general"),
+        description=data.get("description"),
+        plain_text_content=data.get("plain_text_content"),
+        variables=data.get("variables", []),
+        is_custom=True,
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>", methods=["PUT"])
+@require_staff()
+def api_update_email_template_library(template_id):
+    """Update an email template"""
+    data = request.json
+
+    result = EmailTemplateService.update_template(
+        template_id=template_id,
+        name=data.get("name"),
+        subject=data.get("subject"),
+        html_content=data.get("html_content"),
+        category=data.get("category"),
+        description=data.get("description"),
+        plain_text_content=data.get("plain_text_content"),
+        variables=data.get("variables"),
+        is_active=data.get("is_active"),
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_email_template_library(template_id):
+    """Delete an email template"""
+    result = EmailTemplateService.delete_template(template_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>/duplicate", methods=["POST"])
+@require_staff()
+def api_duplicate_email_template_library(template_id):
+    """Duplicate an email template"""
+    data = request.json or {}
+
+    result = EmailTemplateService.duplicate_template(
+        template_id=template_id,
+        new_name=data.get("name"),
+        new_type=data.get("template_type"),
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/library/<int:template_id>/render", methods=["POST"])
+@require_staff()
+def api_render_email_template_library(template_id):
+    """Render an email template with variable substitution"""
+    data = request.json or {}
+    variables = data.get("variables", {})
+
+    result = EmailTemplateService.render_template(
+        template_id=template_id,
+        variables=variables,
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/email-templates/seed", methods=["POST"])
+@require_staff()
+def api_seed_email_templates():
+    """Seed default system templates"""
+    result = seed_default_templates()
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 500
+
+
+@app.route("/dashboard/email-templates")
+@require_staff()
+def email_templates_page():
+    """Email templates management page"""
+    return render_template("email_templates.html")
+
+
+# ============================================================
+# DRIP CAMPAIGNS - Automated Email Sequences
+# ============================================================
+
+from services.drip_campaign_service import DripCampaignService
+
+
+@app.route("/api/drip-campaigns/trigger-types", methods=["GET"])
+@require_staff()
+def api_get_drip_trigger_types():
+    """Get all available trigger types"""
+    return jsonify({
+        "success": True,
+        "trigger_types": DripCampaignService.get_trigger_types()
+    })
+
+
+@app.route("/api/drip-campaigns/enrollment-statuses", methods=["GET"])
+@require_staff()
+def api_get_enrollment_statuses():
+    """Get all enrollment status options"""
+    return jsonify({
+        "success": True,
+        "statuses": DripCampaignService.get_enrollment_statuses()
+    })
+
+
+@app.route("/api/drip-campaigns", methods=["GET"])
+@require_staff()
+def api_list_drip_campaigns():
+    """List all drip campaigns with optional filtering"""
+    is_active = request.args.get("is_active")
+    trigger_type = request.args.get("trigger_type")
+
+    # Convert string to boolean
+    if is_active is not None:
+        is_active = is_active.lower() == "true"
+
+    campaigns = DripCampaignService.list_campaigns(
+        is_active=is_active,
+        trigger_type=trigger_type
+    )
+    return jsonify({"success": True, "campaigns": campaigns})
+
+
+@app.route("/api/drip-campaigns", methods=["POST"])
+@require_staff()
+def api_create_drip_campaign():
+    """Create a new drip campaign"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    name = data.get("name")
+    trigger_type = data.get("trigger_type")
+
+    if not name or not trigger_type:
+        return jsonify({"success": False, "error": "Name and trigger_type are required"}), 400
+
+    # Get current staff ID
+    staff_id = session.get("staff_id")
+
+    result = DripCampaignService.create_campaign(
+        name=name,
+        trigger_type=trigger_type,
+        trigger_value=data.get("trigger_value"),
+        description=data.get("description"),
+        send_window_start=data.get("send_window_start", 9),
+        send_window_end=data.get("send_window_end", 17),
+        send_on_weekends=data.get("send_on_weekends", False),
+        created_by_id=staff_id,
+        steps=data.get("steps")
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>", methods=["GET"])
+@require_staff()
+def api_get_drip_campaign(campaign_id):
+    """Get a drip campaign by ID"""
+    include_steps = request.args.get("include_steps", "true").lower() == "true"
+    campaign = DripCampaignService.get_campaign(campaign_id, include_steps=include_steps)
+
+    if campaign:
+        return jsonify({"success": True, "campaign": campaign})
+    return jsonify({"success": False, "error": "Campaign not found"}), 404
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>", methods=["PUT"])
+@require_staff()
+def api_update_drip_campaign(campaign_id):
+    """Update a drip campaign"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    result = DripCampaignService.update_campaign(campaign_id, **data)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_drip_campaign(campaign_id):
+    """Delete a drip campaign"""
+    result = DripCampaignService.delete_campaign(campaign_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/stats", methods=["GET"])
+@require_staff()
+def api_get_drip_campaign_stats(campaign_id):
+    """Get statistics for a drip campaign"""
+    result = DripCampaignService.get_campaign_stats(campaign_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404
+
+
+# ============== DRIP CAMPAIGN STEPS ==============
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/steps", methods=["POST"])
+@require_staff()
+def api_add_drip_step(campaign_id):
+    """Add a step to a drip campaign"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    template_id = data.get("template_id")
+    delay_days = data.get("delay_days")
+
+    if template_id is None or delay_days is None:
+        return jsonify({"success": False, "error": "template_id and delay_days are required"}), 400
+
+    result = DripCampaignService.add_step(
+        campaign_id=campaign_id,
+        template_id=template_id,
+        delay_days=delay_days,
+        delay_hours=data.get("delay_hours", 0),
+        subject_override=data.get("subject_override"),
+        step_order=data.get("step_order")
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/steps/<int:step_id>", methods=["PUT"])
+@require_staff()
+def api_update_drip_step(step_id):
+    """Update a drip campaign step"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    result = DripCampaignService.update_step(step_id, **data)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/steps/<int:step_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_drip_step(step_id):
+    """Delete a drip campaign step"""
+    result = DripCampaignService.delete_step(step_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/steps/reorder", methods=["POST"])
+@require_staff()
+def api_reorder_drip_steps(campaign_id):
+    """Reorder steps in a drip campaign"""
+    data = request.get_json()
+    if not data or "step_ids" not in data:
+        return jsonify({"success": False, "error": "step_ids array required"}), 400
+
+    result = DripCampaignService.reorder_steps(campaign_id, data["step_ids"])
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+# ============== DRIP ENROLLMENTS ==============
+
+@app.route("/api/drip-campaigns/enrollments", methods=["GET"])
+@require_staff()
+def api_list_drip_enrollments():
+    """List drip campaign enrollments with optional filtering"""
+    campaign_id = request.args.get("campaign_id", type=int)
+    client_id = request.args.get("client_id", type=int)
+    status = request.args.get("status")
+
+    result = DripCampaignService.list_enrollments(
+        campaign_id=campaign_id,
+        client_id=client_id,
+        status=status
+    )
+    return jsonify(result)
+
+
+@app.route("/api/drip-campaigns/<int:campaign_id>/enroll/<int:client_id>", methods=["POST"])
+@require_staff()
+def api_enroll_client_in_campaign(campaign_id, client_id):
+    """Enroll a client in a drip campaign"""
+    data = request.get_json() or {}
+
+    result = DripCampaignService.enroll_client(
+        campaign_id=campaign_id,
+        client_id=client_id,
+        trigger_source=data.get("trigger_source", "manual"),
+        skip_if_enrolled=data.get("skip_if_enrolled", True)
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>", methods=["GET"])
+@require_staff()
+def api_get_drip_enrollment(enrollment_id):
+    """Get a specific enrollment"""
+    enrollment = DripCampaignService.get_enrollment(enrollment_id)
+
+    if enrollment:
+        return jsonify({"success": True, "enrollment": enrollment})
+    return jsonify({"success": False, "error": "Enrollment not found"}), 404
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/pause", methods=["POST"])
+@require_staff()
+def api_pause_drip_enrollment(enrollment_id):
+    """Pause an enrollment"""
+    data = request.get_json() or {}
+    result = DripCampaignService.pause_enrollment(enrollment_id, reason=data.get("reason"))
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/resume", methods=["POST"])
+@require_staff()
+def api_resume_drip_enrollment(enrollment_id):
+    """Resume a paused enrollment"""
+    result = DripCampaignService.resume_enrollment(enrollment_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/drip-campaigns/enrollments/<int:enrollment_id>/cancel", methods=["POST"])
+@require_staff()
+def api_cancel_drip_enrollment(enrollment_id):
+    """Cancel an enrollment"""
+    data = request.get_json() or {}
+    result = DripCampaignService.cancel_enrollment(enrollment_id, reason=data.get("reason"))
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+# ============== DRIP PROCESSING ==============
+
+@app.route("/api/drip-campaigns/process", methods=["POST"])
+@require_staff()
+def api_process_drip_emails():
+    """Manually trigger drip email processing (admin use)"""
+    result = DripCampaignService.process_due_emails()
+    return jsonify(result)
+
+
+@app.route("/dashboard/drip-campaigns")
+@require_staff()
+def drip_campaigns_page():
+    """Drip campaigns management page"""
+    return render_template("drip_campaigns.html")
+
+
+# ============================================================
+# SMS TEMPLATES - Client SMS Communications
+# ============================================================
+
+from services.sms_template_service import (
+    SMSTemplateService,
+    SMS_CATEGORIES,
+    SMS_VARIABLES,
+    seed_default_sms_templates,
+)
+
+
+@app.route("/api/sms-templates", methods=["GET"])
+@require_staff()
+def api_list_sms_templates():
+    """List all SMS templates with optional filtering"""
+    category = request.args.get("category")
+    is_active = request.args.get("is_active")
+    is_custom = request.args.get("is_custom")
+    search = request.args.get("search")
+
+    # Convert string params to bool
+    if is_active is not None:
+        is_active = is_active.lower() == "true"
+    if is_custom is not None:
+        is_custom = is_custom.lower() == "true"
+
+    templates = SMSTemplateService.list_templates(
+        category=category,
+        is_active=is_active,
+        is_custom=is_custom,
+        search=search,
+    )
+
+    return jsonify({
+        "success": True,
+        "templates": templates,
+        "categories": SMS_CATEGORIES,
+    })
+
+
+@app.route("/api/sms-templates/stats", methods=["GET"])
+@require_staff()
+def api_sms_template_stats():
+    """Get SMS template statistics"""
+    stats = SMSTemplateService.get_template_stats()
+    return jsonify({"success": True, "stats": stats})
+
+
+@app.route("/api/sms-templates/categories", methods=["GET"])
+@require_staff()
+def api_sms_template_categories():
+    """Get available SMS template categories"""
+    return jsonify({
+        "success": True,
+        "categories": SMS_CATEGORIES,
+    })
+
+
+@app.route("/api/sms-templates/variables", methods=["GET"])
+@require_staff()
+def api_sms_template_variables():
+    """Get common SMS template variables"""
+    return jsonify({
+        "success": True,
+        "variables": SMS_VARIABLES,
+    })
+
+
+@app.route("/api/sms-templates/<int:template_id>", methods=["GET"])
+@require_staff()
+def api_get_sms_template(template_id):
+    """Get a specific SMS template by ID"""
+    template = SMSTemplateService.get_template(template_id=template_id)
+
+    if not template:
+        return jsonify({"success": False, "error": "Template not found"}), 404
+
+    return jsonify({"success": True, "template": template})
+
+
+@app.route("/api/sms-templates", methods=["POST"])
+@require_staff()
+def api_create_sms_template():
+    """Create a new SMS template"""
+    data = request.json
+
+    required = ["template_type", "name", "message"]
+    for field in required:
+        if not data.get(field):
+            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+
+    result = SMSTemplateService.create_template(
+        template_type=data["template_type"],
+        name=data["name"],
+        message=data["message"],
+        category=data.get("category", "general"),
+        description=data.get("description"),
+        variables=data.get("variables", []),
+        is_custom=True,
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>", methods=["PUT"])
+@require_staff()
+def api_update_sms_template(template_id):
+    """Update an SMS template"""
+    data = request.json
+
+    result = SMSTemplateService.update_template(
+        template_id=template_id,
+        name=data.get("name"),
+        message=data.get("message"),
+        category=data.get("category"),
+        description=data.get("description"),
+        variables=data.get("variables"),
+        is_active=data.get("is_active"),
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_sms_template(template_id):
+    """Delete an SMS template"""
+    result = SMSTemplateService.delete_template(template_id)
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>/duplicate", methods=["POST"])
+@require_staff()
+def api_duplicate_sms_template(template_id):
+    """Duplicate an SMS template"""
+    data = request.json or {}
+
+    result = SMSTemplateService.duplicate_template(
+        template_id=template_id,
+        new_name=data.get("name"),
+        new_type=data.get("template_type"),
+    )
+
+    if result["success"]:
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/<int:template_id>/render", methods=["POST"])
+@require_staff()
+def api_render_sms_template(template_id):
+    """Render an SMS template with variable substitution"""
+    data = request.json or {}
+    variables = data.get("variables", {})
+
+    result = SMSTemplateService.render_template(
+        template_id=template_id,
+        variables=variables,
+    )
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/sms-templates/seed", methods=["POST"])
+@require_staff()
+def api_seed_sms_templates():
+    """Seed default SMS templates"""
+    result = seed_default_sms_templates()
+
+    if result["success"]:
+        return jsonify(result)
+    return jsonify(result), 500
+
+
+@app.route("/api/sms-templates/send", methods=["POST"])
+@require_staff()
+def api_send_sms_from_template():
+    """Send an SMS using a template"""
+    data = request.json
+
+    if not data.get("template_id") and not data.get("template_type"):
+        return jsonify({"success": False, "error": "Must provide template_id or template_type"}), 400
+    if not data.get("client_id") and not data.get("phone"):
+        return jsonify({"success": False, "error": "Must provide client_id or phone number"}), 400
+
+    # Get client info if client_id provided
+    phone = data.get("phone")
+    client_name = data.get("client_name", "")
+    first_name = data.get("first_name", "")
+
+    if data.get("client_id"):
+        session = SessionLocal()
+        try:
+            client = session.query(Client).filter(Client.id == data["client_id"]).first()
+            if client:
+                phone = phone or client.phone
+                client_name = client_name or client.name
+                first_name = first_name or (client.name.split()[0] if client.name else "")
+        finally:
+            session.close()
+
+    if not phone:
+        return jsonify({"success": False, "error": "No phone number available"}), 400
+
+    # Render the template
+    variables = data.get("variables", {})
+    variables.setdefault("client_name", client_name)
+    variables.setdefault("first_name", first_name)
+    variables.setdefault("phone", phone)
+
+    result = SMSTemplateService.render_template(
+        template_id=data.get("template_id"),
+        template_type=data.get("template_type"),
+        variables=variables,
+    )
+
+    if not result["success"]:
+        return jsonify(result), 400
+
+    # Send the SMS
+    try:
+        from services.sms_service import send_sms
+        sms_result = send_sms(phone, result["message"])
+
+        if sms_result.get("success"):
+            return jsonify({
+                "success": True,
+                "message": "SMS sent successfully",
+                "sms_sid": sms_result.get("sid"),
+                "char_count": result["char_count"],
+                "segments": result["segments"],
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": sms_result.get("error", "Failed to send SMS"),
+            }), 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"SMS service error: {str(e)}",
+        }), 500
+
+
+@app.route("/dashboard/sms-templates")
+@require_staff()
+def sms_templates_page():
+    """SMS templates management page"""
+    return render_template("sms_templates.html")
 
 
 # ============================================================
@@ -15268,12 +17303,33 @@ def api_send_certified_mail():
             dispute_round,
         )
 
+        if not result.get("success"):
+            return jsonify({"success": False, "error": result.get("error", "Failed to send letter")}), 400
+
+        # Fire dispute_sent trigger for automation
+        if bureau and dispute_round:
+            try:
+                client = db.query(Client).filter(Client.id == client_id).first()
+                if client:
+                    WorkflowTriggersService.evaluate_triggers(
+                        "dispute_sent",
+                        {
+                            "client_id": client_id,
+                            "client_name": client.name,
+                            "bureau": bureau,
+                            "round_number": dispute_round,
+                            "tracking_number": result.get("tracking_number"),
+                        },
+                    )
+            except Exception as trigger_error:
+                print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
+
         return jsonify(
             {
                 "success": True,
                 "order_id": result["order_id"],
                 "tracking_number": result["tracking_number"],
-                "cost": result["cost"],
+                "cost": result.get("estimated_cost"),
                 "mock_mode": not is_certified_mail_configured(),
                 "message": "Certified mail order created",
             }
@@ -15890,6 +17946,1034 @@ def api_get_signature_types():
 
 
 # ==============================================================================
+# E-SIGNATURE SESSION API - Full ESIGN Act, UETA, CROA Compliance
+# ==============================================================================
+
+
+@app.route("/api/esign/session/initiate", methods=["POST"])
+def api_esign_initiate_session():
+    """Initiate a new e-signature session with documents (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import initiate_signing_session
+
+        data = request.json or {}
+        client_id = data.get("client_id")
+        documents = data.get("documents", [])
+        signer_email = data.get("signer_email")
+        signer_name = data.get("signer_name")
+        return_url = data.get("return_url")
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+        if not documents:
+            return jsonify({"success": False, "error": "documents required"}), 400
+        if not signer_email or not signer_name:
+            return jsonify({"success": False, "error": "signer_email and signer_name required"}), 400
+
+        result = initiate_signing_session(
+            client_id=client_id,
+            documents=documents,
+            signer_email=signer_email,
+            signer_name=signer_name,
+            return_url=return_url,
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>", methods=["GET"])
+def api_esign_get_session(session_uuid):
+    """Get signing session details by UUID"""
+    try:
+        from services.esignature_service import get_session_by_uuid
+
+        result = get_session_by_uuid(session_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404 if "not found" in result.get("error", "").lower() else 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/consent", methods=["POST"])
+def api_esign_submit_consent(session_uuid):
+    """Submit ESIGN Act consent with 3 required acknowledgments"""
+    try:
+        from services.esignature_service import submit_esign_consent
+
+        data = request.json or {}
+
+        result = submit_esign_consent(
+            session_uuid=session_uuid,
+            hardware_software_acknowledged=data.get("hardware_software_acknowledged", False),
+            paper_copy_right_acknowledged=data.get("paper_copy_right_acknowledged", False),
+            consent_withdrawal_acknowledged=data.get("consent_withdrawal_acknowledged", False),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None,
+            device_fingerprint=data.get("device_fingerprint"),
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>", methods=["GET"])
+def api_esign_get_document(session_uuid, document_uuid):
+    """Get a document for review"""
+    try:
+        from services.esignature_service import get_document_for_review
+
+        result = get_document_for_review(session_uuid, document_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>/progress", methods=["POST"])
+def api_esign_record_progress(session_uuid, document_uuid):
+    """Record document review progress (scroll, duration)"""
+    try:
+        from services.esignature_service import record_document_review_progress
+
+        data = request.json or {}
+
+        result = record_document_review_progress(
+            session_uuid=session_uuid,
+            document_uuid=document_uuid,
+            scroll_percentage=data.get("scroll_percentage", 0),
+            review_duration_seconds=data.get("review_duration_seconds", 0),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/document/<document_uuid>/sign", methods=["POST"])
+def api_esign_sign_document(session_uuid, document_uuid):
+    """Sign a document with full legal compliance"""
+    try:
+        from services.esignature_service import sign_document
+
+        data = request.json or {}
+
+        if not data.get("intent_confirmed"):
+            return jsonify({"success": False, "error": "Intent confirmation required"}), 400
+        if not data.get("typed_name"):
+            return jsonify({"success": False, "error": "Typed name required"}), 400
+
+        result = sign_document(
+            session_uuid=session_uuid,
+            document_uuid=document_uuid,
+            signature_type=data.get("signature_type", "typed"),
+            signature_value=data.get("signature_value", ""),
+            intent_confirmed=data.get("intent_confirmed", False),
+            typed_name=data.get("typed_name", ""),
+            ip_address=request.remote_addr,
+            user_agent=request.user_agent.string if request.user_agent else None,
+            device_fingerprint=data.get("device_fingerprint"),
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/complete", methods=["POST"])
+def api_esign_complete_session(session_uuid):
+    """Complete a signing session after all documents are signed"""
+    try:
+        from services.esignature_service import complete_signing_session
+
+        result = complete_signing_session(
+            session_uuid=session_uuid,
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/cancel", methods=["POST"])
+def api_esign_cancel_session(session_uuid):
+    """Cancel a pending signing session"""
+    try:
+        from services.esignature_service import cancel_signing_session
+
+        data = request.json or {}
+
+        result = cancel_signing_session(
+            session_uuid=session_uuid,
+            reason=data.get("reason"),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/regenerate-link", methods=["POST"])
+def api_esign_regenerate_link(session_uuid):
+    """Regenerate signing link for an expired session"""
+    try:
+        from services.esignature_service import regenerate_signing_link
+
+        result = regenerate_signing_link(session_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/session/<session_uuid>/audit-trail", methods=["GET"])
+def api_esign_get_audit_trail(session_uuid):
+    """Get complete audit trail for a signing session (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import get_session_audit_trail
+
+        result = get_session_audit_trail(session_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/document/<document_uuid>/verify", methods=["GET"])
+def api_esign_verify_document(document_uuid):
+    """Verify document integrity (tamper-evidence check)"""
+    try:
+        from services.esignature_service import verify_document_integrity
+
+        result = verify_document_integrity(document_uuid)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/history", methods=["GET"])
+def api_esign_client_history(client_id):
+    """Get all signing sessions and documents for a client (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import get_client_signing_history
+
+        result = get_client_signing_history(client_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/croa-status", methods=["GET"])
+def api_esign_croa_status(client_id):
+    """Get CROA compliance status for a client (staff only)"""
+    # Staff authentication check
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.esignature_service import get_croa_compliance_status
+
+        result = get_croa_compliance_status(client_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/croa-cancel", methods=["POST"])
+def api_esign_croa_cancel(client_id):
+    """Cancel service during CROA 3-business-day cancellation period"""
+    try:
+        from services.esignature_service import cancel_service_during_croa_period
+
+        data = request.json or {}
+
+        result = cancel_service_during_croa_period(
+            client_id=client_id,
+            reason=data.get("reason"),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/client/<int:client_id>/croa-waive", methods=["POST"])
+def api_esign_croa_waive(client_id):
+    """Waive CROA cancellation period to begin work immediately"""
+    try:
+        from services.esignature_service import waive_cancellation_period
+
+        data = request.json or {}
+
+        if not data.get("waiver_signature"):
+            return jsonify({"success": False, "error": "waiver_signature required"}), 400
+
+        result = waive_cancellation_period(
+            client_id=client_id,
+            waiver_signature=data.get("waiver_signature"),
+            ip_address=request.remote_addr,
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/esign/consent-disclosure", methods=["GET"])
+def api_esign_consent_disclosure():
+    """Get the ESIGN Act consent disclosure HTML"""
+    try:
+        from services.esignature_service import get_esign_consent_disclosure
+
+        disclosure = get_esign_consent_disclosure()
+        return jsonify({"success": True, "disclosure_html": disclosure})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# E-Sign Page Route (for signing flow)
+@app.route("/esign/<session_uuid>")
+def esign_signing_page(session_uuid):
+    """Render the e-signature signing page"""
+    try:
+        from services.esignature_service import get_session_by_uuid
+
+        result = get_session_by_uuid(session_uuid)
+
+        if not result.get("success"):
+            return render_template("error.html",
+                error_title="Session Not Found",
+                error_message=result.get("error", "The signing session could not be found or has expired.")
+            ), 404
+
+        return render_template("esign/signing_page.html",
+            session=result.get("session"),
+            documents=result.get("documents"),
+            consent_disclosure=result.get("consent_disclosure"),
+            session_uuid=session_uuid,
+        )
+
+    except Exception as e:
+        return render_template("error.html",
+            error_title="Error",
+            error_message=str(e)
+        ), 500
+
+
+# ==============================================================================
+# INVOICE API - Client Invoicing and Billing
+# ==============================================================================
+
+
+@app.route("/api/invoices", methods=["GET"])
+def api_list_invoices():
+    """List invoices with optional filters"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import list_invoices
+        from datetime import datetime
+
+        client_id = request.args.get("client_id", type=int)
+        status = request.args.get("status")
+        tenant_id = request.args.get("tenant_id", type=int)
+        from_date_str = request.args.get("from_date")
+        to_date_str = request.args.get("to_date")
+        limit = request.args.get("limit", 100, type=int)
+        offset = request.args.get("offset", 0, type=int)
+
+        from_date = datetime.strptime(from_date_str, "%Y-%m-%d").date() if from_date_str else None
+        to_date = datetime.strptime(to_date_str, "%Y-%m-%d").date() if to_date_str else None
+
+        result = list_invoices(
+            client_id=client_id,
+            status=status,
+            tenant_id=tenant_id,
+            from_date=from_date,
+            to_date=to_date,
+            limit=limit,
+            offset=offset,
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices", methods=["POST"])
+def api_create_invoice():
+    """Create a new invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import create_invoice
+        from datetime import datetime
+
+        data = request.json or {}
+        client_id = data.get("client_id")
+        items = data.get("items", [])
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+        if not items:
+            return jsonify({"success": False, "error": "items required"}), 400
+
+        # Parse dates
+        invoice_date = None
+        if data.get("invoice_date"):
+            invoice_date = datetime.strptime(data["invoice_date"], "%Y-%m-%d").date()
+
+        due_date = None
+        if data.get("due_date"):
+            due_date = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+
+        result = create_invoice(
+            client_id=client_id,
+            items=items,
+            invoice_date=invoice_date,
+            due_date=due_date,
+            title=data.get("title"),
+            notes=data.get("notes"),
+            internal_notes=data.get("internal_notes"),
+            tax_rate=data.get("tax_rate"),
+            company_name=data.get("company_name"),
+            company_address=data.get("company_address"),
+            company_phone=data.get("company_phone"),
+            company_email=data.get("company_email"),
+            company_logo_url=data.get("company_logo_url"),
+            tenant_id=data.get("tenant_id"),
+            created_by_id=session.get("staff_id"),
+            status=data.get("status", "draft"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>", methods=["GET"])
+def api_get_invoice(invoice_id):
+    """Get invoice by ID"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_invoice
+
+        include_payments = request.args.get("include_payments", "false").lower() == "true"
+        result = get_invoice(invoice_id, include_payments=include_payments)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 404
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>", methods=["PUT"])
+def api_update_invoice(invoice_id):
+    """Update invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import update_invoice
+        from datetime import datetime
+
+        data = request.json or {}
+
+        due_date = None
+        if data.get("due_date"):
+            due_date = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+
+        result = update_invoice(
+            invoice_id=invoice_id,
+            title=data.get("title"),
+            notes=data.get("notes"),
+            internal_notes=data.get("internal_notes"),
+            due_date=due_date,
+            tax_rate=data.get("tax_rate"),
+            status=data.get("status"),
+        )
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>", methods=["DELETE"])
+def api_delete_invoice(invoice_id):
+    """Delete a draft invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import delete_invoice
+
+        result = delete_invoice(invoice_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/items", methods=["POST"])
+def api_add_invoice_item(invoice_id):
+    """Add a line item to an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import add_item
+
+        data = request.json or {}
+
+        if not data.get("description"):
+            return jsonify({"success": False, "error": "description required"}), 400
+        if data.get("unit_price") is None:
+            return jsonify({"success": False, "error": "unit_price required"}), 400
+
+        result = add_item(
+            invoice_id=invoice_id,
+            description=data["description"],
+            unit_price=int(data["unit_price"]),
+            quantity=float(data.get("quantity", 1.0)),
+            item_type=data.get("item_type", "service"),
+            reference_type=data.get("reference_type"),
+            reference_id=data.get("reference_id"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/items/<int:item_id>", methods=["DELETE"])
+def api_remove_invoice_item(invoice_id, item_id):
+    """Remove a line item from an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import remove_item
+
+        result = remove_item(invoice_id, item_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/payments", methods=["POST"])
+def api_record_invoice_payment(invoice_id):
+    """Record a payment against an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import record_payment
+        from datetime import datetime
+
+        data = request.json or {}
+
+        if data.get("amount") is None:
+            return jsonify({"success": False, "error": "amount required"}), 400
+
+        paid_at = None
+        if data.get("paid_at"):
+            paid_at = datetime.fromisoformat(data["paid_at"].replace("Z", "+00:00"))
+
+        result = record_payment(
+            invoice_id=invoice_id,
+            amount=int(data["amount"]),
+            payment_method=data.get("payment_method", "other"),
+            stripe_payment_intent_id=data.get("stripe_payment_intent_id"),
+            stripe_charge_id=data.get("stripe_charge_id"),
+            transaction_id=data.get("transaction_id"),
+            notes=data.get("notes"),
+            recorded_by_id=session.get("staff_id"),
+            paid_at=paid_at,
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/void", methods=["POST"])
+def api_void_invoice(invoice_id):
+    """Void/cancel an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import void_invoice
+
+        data = request.json or {}
+        result = void_invoice(invoice_id, reason=data.get("reason"))
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/send", methods=["POST"])
+def api_send_invoice(invoice_id):
+    """Send invoice to client via email"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import send_invoice_email
+
+        result = send_invoice_email(invoice_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/pdf", methods=["POST"])
+def api_generate_invoice_pdf(invoice_id):
+    """Generate PDF for an invoice"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import generate_invoice_pdf
+
+        result = generate_invoice_pdf(invoice_id)
+
+        if result.get("success"):
+            return jsonify(result)
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/<int:invoice_id>/pdf", methods=["GET"])
+def api_download_invoice_pdf(invoice_id):
+    """Download invoice PDF"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_invoice, INVOICE_PDF_DIR
+        import os
+
+        result = get_invoice(invoice_id)
+        if not result.get("success"):
+            return jsonify(result), 404
+
+        invoice = result["invoice"]
+        if not invoice.get("pdf_filename"):
+            return jsonify({"success": False, "error": "PDF not generated yet"}), 404
+
+        pdf_path = os.path.join(INVOICE_PDF_DIR, invoice["pdf_filename"])
+        if not os.path.exists(pdf_path):
+            return jsonify({"success": False, "error": "PDF file not found"}), 404
+
+        return send_file(pdf_path, as_attachment=True, download_name=invoice["pdf_filename"])
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/stats", methods=["GET"])
+def api_invoice_stats():
+    """Get invoice statistics"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_invoice_stats
+
+        client_id = request.args.get("client_id", type=int)
+        tenant_id = request.args.get("tenant_id", type=int)
+
+        result = get_invoice_stats(client_id=client_id, tenant_id=tenant_id)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/invoices/check-overdue", methods=["POST"])
+def api_check_overdue_invoices():
+    """Check and update overdue invoices"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import check_overdue_invoices
+
+        result = check_overdue_invoices()
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/invoices", methods=["GET"])
+def api_client_invoices(client_id):
+    """Get all invoices for a client"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import get_client_invoices
+
+        result = get_client_invoices(client_id)
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/invoices/create-for-round", methods=["POST"])
+def api_create_invoice_for_round(client_id):
+    """Create an invoice for a dispute round"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import create_invoice_for_round
+
+        data = request.json or {}
+
+        if data.get("round_number") is None:
+            return jsonify({"success": False, "error": "round_number required"}), 400
+        if data.get("amount") is None:
+            return jsonify({"success": False, "error": "amount required"}), 400
+
+        result = create_invoice_for_round(
+            client_id=client_id,
+            round_number=int(data["round_number"]),
+            amount=int(data["amount"]),
+            created_by_id=session.get("staff_id"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/invoices/create-for-analysis", methods=["POST"])
+def api_create_invoice_for_analysis(client_id):
+    """Create an invoice for credit analysis"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    try:
+        from services.invoice_service import create_invoice_for_analysis
+
+        data = request.json or {}
+
+        result = create_invoice_for_analysis(
+            client_id=client_id,
+            analysis_id=data.get("analysis_id", 0),
+            amount=int(data.get("amount", 19900)),
+            created_by_id=session.get("staff_id"),
+        )
+
+        if result.get("success"):
+            return jsonify(result), 201
+        return jsonify(result), 400
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Invoice page route
+@app.route("/dashboard/invoices")
+def dashboard_invoices():
+    """Invoice management page"""
+    if not session.get("staff_id"):
+        return redirect("/staff/login")
+
+    return render_template("invoices.html")
+
+
+# ==============================================================================
+# PUSH NOTIFICATIONS API (P17)
+# ==============================================================================
+
+
+@app.route("/api/push/vapid-public-key", methods=["GET"])
+def api_push_vapid_public_key():
+    """Get VAPID public key for push subscription"""
+    from services.push_notification_service import get_vapid_keys, is_push_configured
+
+    if not is_push_configured():
+        return jsonify({"success": False, "error": "Push notifications not configured"}), 503
+
+    keys = get_vapid_keys()
+    return jsonify({
+        "success": True,
+        "publicKey": keys["public_key"],
+    })
+
+
+@app.route("/api/push/subscribe", methods=["POST"])
+def api_push_subscribe():
+    """Subscribe to push notifications"""
+    from services.push_notification_service import subscribe
+
+    data = request.json or {}
+
+    endpoint = data.get("endpoint")
+    keys = data.get("keys", {})
+    p256dh = keys.get("p256dh")
+    auth = keys.get("auth")
+
+    if not endpoint or not p256dh or not auth:
+        return jsonify({"success": False, "error": "Invalid subscription data"}), 400
+
+    # Determine if client or staff
+    client_id = None
+    staff_id = None
+
+    if session.get("client_id"):
+        client_id = session.get("client_id")
+    elif session.get("staff_id"):
+        staff_id = session.get("staff_id")
+    else:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    result = subscribe(
+        endpoint=endpoint,
+        p256dh_key=p256dh,
+        auth_key=auth,
+        client_id=client_id,
+        staff_id=staff_id,
+        user_agent=request.headers.get("User-Agent"),
+        device_name=data.get("device_name"),
+    )
+
+    if result.get("success"):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/push/unsubscribe", methods=["POST"])
+def api_push_unsubscribe():
+    """Unsubscribe from push notifications"""
+    from services.push_notification_service import unsubscribe
+
+    data = request.json or {}
+    endpoint = data.get("endpoint")
+
+    if not endpoint:
+        return jsonify({"success": False, "error": "endpoint required"}), 400
+
+    result = unsubscribe(endpoint)
+    return jsonify(result)
+
+
+@app.route("/api/push/subscriptions", methods=["GET"])
+def api_push_subscriptions():
+    """Get user's push subscriptions"""
+    from services.push_notification_service import get_subscriptions
+
+    client_id = session.get("client_id")
+    staff_id = session.get("staff_id")
+
+    if not client_id and not staff_id:
+        return jsonify({"success": False, "error": "Authentication required"}), 401
+
+    subscriptions = get_subscriptions(client_id=client_id, staff_id=staff_id)
+
+    return jsonify({
+        "success": True,
+        "subscriptions": subscriptions,
+    })
+
+
+@app.route("/api/push/subscriptions/<int:subscription_id>/preferences", methods=["PUT"])
+def api_push_update_preferences(subscription_id):
+    """Update notification preferences for a subscription"""
+    from services.push_notification_service import update_preferences
+
+    data = request.json or {}
+
+    result = update_preferences(subscription_id, data)
+    return jsonify(result)
+
+
+@app.route("/api/push/test", methods=["POST"])
+def api_push_test():
+    """Send a test push notification (staff only)"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    from services.push_notification_service import send_to_staff
+
+    result = send_to_staff(
+        staff_id=session.get("staff_id"),
+        notification_type="case_update",
+        body="This is a test notification from Brightpath Ascend",
+        url="/dashboard",
+        title="Test Notification",
+    )
+
+    return jsonify(result)
+
+
+@app.route("/api/push/send-to-client/<int:client_id>", methods=["POST"])
+def api_push_send_to_client(client_id):
+    """Send a push notification to a client (staff only)"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    from services.push_notification_service import send_to_client
+
+    data = request.json or {}
+
+    notification_type = data.get("type", "case_update")
+    body = data.get("body", "")
+    title = data.get("title")
+    url = data.get("url")
+
+    if not body:
+        return jsonify({"success": False, "error": "body required"}), 400
+
+    result = send_to_client(
+        client_id=client_id,
+        notification_type=notification_type,
+        body=body,
+        title=title,
+        url=url,
+    )
+
+    return jsonify(result)
+
+
+@app.route("/api/push/logs", methods=["GET"])
+def api_push_logs():
+    """Get push notification logs (staff only)"""
+    if not session.get("staff_id"):
+        return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+    from services.push_notification_service import get_notification_logs
+
+    client_id = request.args.get("client_id", type=int)
+    status = request.args.get("status")
+    limit = request.args.get("limit", 50, type=int)
+
+    logs = get_notification_logs(
+        client_id=client_id,
+        status=status,
+        limit=limit,
+    )
+
+    return jsonify({
+        "success": True,
+        "logs": logs,
+    })
+
+
+# ==============================================================================
 # METRO2 VIOLATION DETECTION API
 # ==============================================================================
 
@@ -16414,6 +19498,20 @@ def credit_tracker_client(client_id):
 def calendar_dashboard():
     """Calendar view showing all case deadlines"""
     return render_template("calendar.html")
+
+
+@app.route("/dashboard/booking-management")
+@require_staff()
+def booking_management():
+    """Staff page to manage Q&A call bookings and time slots"""
+    return render_template("booking_management.html")
+
+
+@app.route("/dashboard/messaging")
+@require_staff()
+def messaging_dashboard():
+    """Staff page to respond to client messages"""
+    return render_template("messaging.html")
 
 
 @app.route("/api/calendar/events")
@@ -20228,13 +23326,10 @@ def dashboard_cfpb_detail(complaint_id):
 
 
 @app.route("/dashboard/affiliates")
-@require_staff(roles=["admin"])
+@require_staff()
 def dashboard_affiliates():
-    """Affiliate management dashboard"""
-    stats = affiliate_service.get_dashboard_stats()
-    affiliates = affiliate_service.get_all_affiliates()
-
-    return render_template("affiliates.html", stats=stats, affiliates=affiliates)
+    """Affiliate Dashboard - Track referrals, commissions, and payouts"""
+    return render_template("affiliate_dashboard.html")
 
 
 @app.route("/dashboard/affiliate/<int:affiliate_id>")
@@ -23483,7 +26578,7 @@ def instant_preview_page():
     return render_template("instant_preview.html")
 
 
-PREVIEW_RATE_LIMIT = {}  # Simple IP-based rate limit: {ip: (count, first_request_time)}
+PREVIEW_RATE_LIMIT: dict[str, tuple[int, float]] = {}  # Simple IP-based rate limit: {ip: (count, first_request_time)}
 PREVIEW_RATE_MAX = 10  # Max 10 requests per 10 minutes per IP
 PREVIEW_RATE_WINDOW = 600  # 10 minutes
 
@@ -23720,6 +26815,13 @@ CREDIT REPORT TO ANALYZE:
 # ============================================================================
 # POWER FEATURES: AI SETTLEMENT DEMAND LETTER GENERATOR
 # ============================================================================
+
+
+@app.route("/dashboard/generator")
+@require_staff()
+def dashboard_generator():
+    """Redirect to demand generator page"""
+    return redirect(url_for("demand_generator_page"))
 
 
 @app.route("/dashboard/demand-generator")
@@ -30740,6 +33842,310 @@ def api_view_credit_import_report_raw(credential_id):
 
 
 # ============================================================
+# AUTO-PULL CREDIT REPORTS API (P25)
+# ============================================================
+
+
+@app.route("/api/auto-pull/stats", methods=["GET"])
+@require_staff()
+def api_auto_pull_stats():
+    """Get auto-pull dashboard statistics"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    stats = service.get_pull_stats()
+
+    return jsonify({"success": True, **stats})
+
+
+@app.route("/api/auto-pull/services", methods=["GET"])
+@require_staff()
+def api_auto_pull_services():
+    """Get list of supported credit monitoring services"""
+    from services.auto_pull_service import AutoPullService
+
+    services = AutoPullService.get_supported_services()
+    frequencies = AutoPullService.get_frequencies()
+
+    return jsonify({
+        "success": True,
+        "services": services,
+        "frequencies": frequencies
+    })
+
+
+@app.route("/api/auto-pull/credentials", methods=["GET"])
+@require_staff()
+def api_auto_pull_credentials():
+    """Get all active credentials"""
+    from services.auto_pull_service import AutoPullService
+
+    client_id = request.args.get("client_id", type=int)
+    service_name = request.args.get("service")
+
+    service = AutoPullService()
+    credentials = service.get_credentials(
+        client_id=client_id,
+        service_name=service_name
+    )
+
+    return jsonify({"success": True, "credentials": credentials})
+
+
+@app.route("/api/auto-pull/credentials", methods=["POST"])
+@require_staff()
+def api_auto_pull_add_credential():
+    """Add new credential for auto-pull"""
+    from services.auto_pull_service import AutoPullService
+
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    required = ["client_id", "service_name", "username", "password"]
+    for field in required:
+        if not data.get(field):
+            return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+
+    service = AutoPullService()
+    result = service.add_credential(
+        client_id=data["client_id"],
+        service_name=data["service_name"],
+        username=data["username"],
+        password=data["password"],
+        ssn_last4=data.get("ssn_last4"),
+        import_frequency=data.get("import_frequency", "manual")
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/credentials/<int:credential_id>", methods=["PUT"])
+@require_staff()
+def api_auto_pull_update_credential(credential_id):
+    """Update credential settings"""
+    from services.auto_pull_service import AutoPullService
+
+    data = request.json or {}
+
+    service = AutoPullService()
+    result = service.update_credential(
+        credential_id=credential_id,
+        username=data.get("username"),
+        password=data.get("password"),
+        import_frequency=data.get("import_frequency"),
+        is_active=data.get("is_active")
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/credentials/<int:credential_id>", methods=["DELETE"])
+@require_staff()
+def api_auto_pull_delete_credential(credential_id):
+    """Deactivate a credential"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    result = service.delete_credential(credential_id)
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/pull/<int:credential_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_initiate(credential_id):
+    """Initiate a manual pull for a credential"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    result = service.initiate_pull(
+        credential_id=credential_id,
+        pull_type="manual",
+        triggered_by=f"staff_{staff_id}"
+    )
+
+    if result.get("success"):
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+
+@app.route("/api/auto-pull/pull-client/<int:client_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_client(client_id):
+    """Pull all active credentials for a client"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    credentials = service.get_credentials(client_id=client_id)
+
+    results = {
+        "total": len(credentials),
+        "success": 0,
+        "failed": 0,
+        "pulls": []
+    }
+
+    for cred in credentials:
+        result = service.initiate_pull(
+            credential_id=cred["id"],
+            pull_type="manual",
+            triggered_by=f"staff_{staff_id}"
+        )
+
+        if result.get("success"):
+            results["success"] += 1
+        else:
+            results["failed"] += 1
+
+        results["pulls"].append({
+            "credential_id": cred["id"],
+            "service": cred["service_name"],
+            "success": result.get("success", False),
+            "error": result.get("error")
+        })
+
+    return jsonify({"success": True, **results})
+
+
+@app.route("/api/auto-pull/run-scheduled", methods=["POST"])
+@require_staff(roles=["admin"])
+def api_auto_pull_run_scheduled():
+    """Run all scheduled pulls that are due"""
+    from services.auto_pull_service import AutoPullService
+
+    staff_id = session.get("staff_id", "unknown")
+
+    service = AutoPullService()
+    result = service.run_scheduled_pulls(triggered_by=f"staff_{staff_id}")
+
+    return jsonify({"success": True, **result})
+
+
+@app.route("/api/auto-pull/due", methods=["GET"])
+@require_staff()
+def api_auto_pull_due():
+    """Get credentials due for scheduled pull"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    due = service.get_due_pulls()
+
+    return jsonify({"success": True, "due": due, "count": len(due)})
+
+
+@app.route("/api/auto-pull/logs", methods=["GET"])
+@require_staff()
+def api_auto_pull_logs():
+    """Get pull logs"""
+    from services.auto_pull_service import AutoPullService
+
+    client_id = request.args.get("client_id", type=int)
+    credential_id = request.args.get("credential_id", type=int)
+    status = request.args.get("status")
+    limit = request.args.get("limit", 50, type=int)
+
+    service = AutoPullService()
+    logs = service.get_pull_logs(
+        client_id=client_id,
+        credential_id=credential_id,
+        status=status,
+        limit=limit
+    )
+
+    return jsonify({"success": True, "logs": logs})
+
+
+@app.route("/api/auto-pull/validate/<int:credential_id>", methods=["POST"])
+@require_staff()
+def api_auto_pull_validate(credential_id):
+    """Validate credentials"""
+    from services.auto_pull_service import AutoPullService
+
+    service = AutoPullService()
+    result = service.validate_credentials(credential_id)
+
+    return jsonify(result)
+
+
+@app.route("/dashboard/auto-pull", methods=["GET"])
+@require_staff()
+def dashboard_auto_pull():
+    """Auto-pull credit reports dashboard"""
+    from services.auto_pull_service import AutoPullService, SUPPORTED_SERVICES
+
+    service = AutoPullService()
+    stats = service.get_pull_stats()
+    credentials = service.get_credentials()
+    due_for_pull = service.get_due_pulls()
+    logs = service.get_pull_logs(limit=50)
+
+    # Calculate service stats for dashboard breakdown
+    service_stats = {}
+    for key in SUPPORTED_SERVICES:
+        service_creds = [c for c in credentials if c.get('service_name') == key]
+        service_logs = [l for l in logs if l.get('service_name') == key]
+        success_logs = [l for l in service_logs if l.get('status') == 'success']
+        service_stats[key] = {
+            'credentials': len(service_creds),
+            'pulls': len(service_logs),
+            'success': int((len(success_logs) / len(service_logs) * 100)) if service_logs else 0
+        }
+
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(["lead", "cancelled"])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "auto_pull.html",
+            active_page="auto-pull",
+            stats=stats,
+            services=SUPPORTED_SERVICES,
+            service_stats=service_stats,
+            credentials=credentials,
+            logs=logs,
+            due_for_pull=due_for_pull,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
+@app.route("/api/cron/auto-pull", methods=["GET", "POST"])
+def api_cron_auto_pull():
+    """Cron endpoint for running scheduled pulls"""
+    from services.auto_pull_service import AutoPullService
+
+    # Verify cron secret
+    cron_secret = os.environ.get("CRON_SECRET", "")
+    provided_secret = request.headers.get("X-Cron-Secret") or request.args.get("secret")
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({"success": False, "error": "Invalid cron secret"}), 403
+
+    service = AutoPullService()
+    result = service.run_scheduled_pulls(triggered_by="cron")
+
+    return jsonify({"success": True, **result})
+
+
+# ============================================================
 # AUTOMATION API ROUTES
 # ============================================================
 
@@ -31264,11 +34670,27 @@ def api_client_manager_set_round():
             return jsonify({"success": False, "error": "Client not found"}), 404
 
         old_round = client.current_dispute_round or 0
+        old_status = client.dispute_status
         client.current_dispute_round = new_round
         client.dispute_status = "active" if new_round > 0 else "new"
         client.round_started_at = datetime.utcnow() if new_round > 0 else None
 
         db.commit()
+
+        # Fire status_changed trigger if status changed
+        if old_status != client.dispute_status:
+            try:
+                WorkflowTriggersService.evaluate_triggers(
+                    "status_changed",
+                    {
+                        "client_id": client.id,
+                        "client_name": client.name,
+                        "old_status": old_status,
+                        "new_status": client.dispute_status,
+                    },
+                )
+            except Exception as trigger_error:
+                print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
 
         return jsonify(
             {
@@ -31303,11 +34725,13 @@ def api_client_manager_bulk_set_round():
         updated = []
         errors = []
 
+        status_changes = []  # Track status changes for triggers
         for client_id in client_ids:
             try:
                 client = db.query(Client).filter_by(id=client_id).first()
                 if client:
                     old_round = client.current_dispute_round or 0
+                    old_status = client.dispute_status
                     client.current_dispute_round = new_round
                     client.dispute_status = "active" if new_round > 0 else "new"
                     client.round_started_at = (
@@ -31316,12 +34740,27 @@ def api_client_manager_bulk_set_round():
                     updated.append(
                         {"id": client_id, "name": client.name, "old_round": old_round}
                     )
+                    # Track for trigger firing after commit
+                    if old_status != client.dispute_status:
+                        status_changes.append({
+                            "client_id": client.id,
+                            "client_name": client.name,
+                            "old_status": old_status,
+                            "new_status": client.dispute_status,
+                        })
                 else:
                     errors.append({"id": client_id, "error": "Client not found"})
             except Exception as e:
                 errors.append({"id": client_id, "error": str(e)})
 
         db.commit()
+
+        # Fire status_changed triggers after commit
+        for change in status_changes:
+            try:
+                WorkflowTriggersService.evaluate_triggers("status_changed", change)
+            except Exception as trigger_error:
+                print(f"⚠️  Workflow trigger error (non-fatal): {trigger_error}")
 
         return jsonify(
             {
@@ -31370,10 +34809,10 @@ def api_client_manager_run_analysis():
                 jsonify(
                     {
                         "success": False,
-                        "error": "No credit report found for this client",
+                        "error": "No credit report found for this client. Please import a credit report first.",
                     }
                 ),
-                404,
+                400,
             )
 
         if not credit_report.report_html:
@@ -31427,6 +34866,15 @@ def api_client_manager_run_analysis():
             )
             analysis.stage = 1
             db.commit()
+
+            # Update lead score after analysis
+            try:
+                from services.lead_scoring_service import score_client
+                score_result = score_client(client_id)
+                if score_result.get("success"):
+                    print(f"✅ Lead score updated: {client.name} = {score_result.get('score')} ({score_result.get('priority')})")
+            except Exception as score_error:
+                print(f"⚠️ Lead scoring failed: {score_error}")
 
             return jsonify(
                 {
@@ -31922,6 +35370,4738 @@ def api_client_manager_download_file(file_path):
         return jsonify({"success": False, "error": "File not found"}), 404
 
     return send_file(full_path, as_attachment=True)
+
+
+# ============================================================
+# LEAD CAPTURE ROUTES (Public Landing Pages)
+# ============================================================
+
+
+@app.route("/get-started")
+def get_started():
+    """Lead capture landing page for prospective clients"""
+    # Check for whitelabel branding
+    whitelabel_branding = None
+    try:
+        db = get_db()
+        if request.host:
+            from services.whitelabel import get_white_label_service
+            wl_service = get_white_label_service(db)
+            tenant = wl_service.get_tenant_by_domain(request.host)
+            if tenant:
+                whitelabel_branding = wl_service.get_branding_for_tenant(tenant.id)
+        db.close()
+    except Exception:
+        pass
+
+    # Get calendly URL from config if set
+    calendly_url = getattr(config, 'CALENDLY_URL', '')
+
+    return render_template(
+        "get_started.html",
+        whitelabel_branding=whitelabel_branding,
+        calendly_url=calendly_url
+    )
+
+
+@app.route("/affiliate/signup")
+def affiliate_signup():
+    """Affiliate signup redirect - sends to credit monitoring affiliate link"""
+    # Default affiliate links (can be configured per tenant)
+    affiliate_links = {
+        'identityiq': 'https://www.identityiq.com/sc-enrollment.aspx?offercode=431291KD',
+        'myscoreiq': 'https://www.myscoreiq.com/',
+        'smartcredit': 'https://www.smartcredit.com/'
+    }
+
+    # Default to IdentityIQ (highest commission usually)
+    default_link = affiliate_links.get('identityiq', 'https://www.identityiq.com/')
+
+    return redirect(default_link)
+
+
+@app.route("/api/leads/capture", methods=["POST"])
+def api_leads_capture():
+    """Capture a lead from the get-started form and optionally pull their credit report"""
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+
+        # Validate required fields
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+        email = data.get('email', '').strip()
+
+        if not first_name or not last_name:
+            return jsonify({
+                "success": False,
+                "error": "First and last name are required"
+            }), 400
+
+        if not email:
+            return jsonify({
+                "success": False,
+                "error": "Email address is required"
+            }), 400
+
+        # Check if client already exists
+        existing = db.query(Client).filter_by(email=email).first()
+
+        if existing:
+            # Update existing client info
+            client = existing
+            client.first_name = first_name
+            client.last_name = last_name
+            client.name = f"{first_name} {last_name}"
+        else:
+            # Create new client as a lead
+            client = Client(
+                name=f"{first_name} {last_name}",
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=data.get('phone', '').strip() or None,
+                address_street=data.get('address', '').strip() or None,
+                address_city=data.get('city', '').strip() or None,
+                address_state=data.get('state', '').strip() or None,
+                address_zip=data.get('zip', '').strip() or None,
+                dispute_status='lead',  # Mark as lead, not active client
+                current_dispute_round=0,
+                sms_opt_in=data.get('sms_opt_in', False),
+                email_opt_in=data.get('email_opt_in', True)
+            )
+            db.add(client)
+
+        # Store credit monitoring info if provided
+        monitoring_service = data.get('monitoring_service', '').strip()
+        if monitoring_service and monitoring_service not in ['none', '']:
+            client.credit_monitoring_service = monitoring_service
+
+            monitoring_username = data.get('monitoring_username', '').strip()
+            monitoring_password = data.get('monitoring_password', '').strip()
+            ssn_last_four = data.get('ssn_last_four', '').strip()
+
+            if monitoring_username:
+                client.credit_monitoring_username = monitoring_username
+
+            if monitoring_password:
+                # Encrypt password before storing
+                try:
+                    from services.encryption import encryption_service
+                    encrypted = encryption_service.encrypt(monitoring_password)
+                    client.credit_monitoring_password_encrypted = encrypted
+                except Exception:
+                    # Store as-is if encryption fails (dev mode)
+                    client.credit_monitoring_password_encrypted = monitoring_password
+
+            # Store SSN last 4 for identity verification
+            if ssn_last_four and len(ssn_last_four) == 4 and ssn_last_four.isdigit():
+                client.ssn_last_four = ssn_last_four
+
+        # Generate free analysis token if not exists
+        if not client.free_analysis_token:
+            client.free_analysis_token = secrets.token_urlsafe(32)
+
+        # Set client stage
+        if not client.client_stage or client.client_stage == 'lead':
+            client.client_stage = 'lead'
+
+        db.commit()
+        db.refresh(client)
+
+        # Try to pull credit report if credentials provided
+        preview_data = None
+        monitoring_username = data.get('monitoring_username', '').strip()
+        monitoring_password = data.get('monitoring_password', '').strip()
+        ssn_last_four = data.get('ssn_last_four', '').strip()
+
+        if monitoring_service and monitoring_service not in ['none', ''] and monitoring_username and monitoring_password:
+            try:
+                import asyncio
+                from services.credit_import_automation import CreditImportAutomation
+
+                # Map service names to the format expected by automation
+                service_map = {
+                    'identityiq': 'IdentityIQ.com',
+                    'myscoreiq': 'MyScoreIQ.com',
+                    'smartcredit': 'SmartCredit.com',
+                    'myfreescorenow': 'MyFreeScoreNow.com',
+                    'privacyguard': 'PrivacyGuard.com',
+                }
+                service_key = service_map.get(monitoring_service.lower().replace('.com', '').replace(' ', ''), monitoring_service)
+
+                # Run the async import
+                async def do_import():
+                    automation = CreditImportAutomation()
+                    try:
+                        result = await automation.import_report(
+                            service_name=service_key,
+                            username=monitoring_username,
+                            password=monitoring_password,
+                            ssn_last4=ssn_last_four or '',
+                            client_id=client.id,
+                            client_name=client.name
+                        )
+                        return result
+                    finally:
+                        await automation._close_browser()
+
+                # Run async function
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    import_result = loop.run_until_complete(do_import())
+                finally:
+                    loop.close()
+
+                if import_result and import_result.get('success'):
+                    scores = import_result.get('scores', {})
+                    preview_data = {
+                        'bureau': 'TransUnion',
+                        'score': scores.get('transunion', scores.get('tu', '---')),
+                        'negative_items': import_result.get('negative_count', '--'),
+                        'total_accounts': import_result.get('account_count', '--'),
+                        'equifax_score': scores.get('equifax', scores.get('eq', '---')),
+                        'experian_score': scores.get('experian', scores.get('ex', '---')),
+                        'report_path': import_result.get('report_path')
+                    }
+
+                    # Update client with report info
+                    if import_result.get('report_path'):
+                        client.last_report_path = import_result.get('report_path')
+                        client.last_report_date = datetime.utcnow()
+                        db.commit()
+                else:
+                    # Import failed - return placeholder with error note
+                    preview_data = {
+                        'bureau': 'TransUnion',
+                        'score': '---',
+                        'negative_items': '--',
+                        'total_accounts': '--',
+                        'error': import_result.get('error', 'Could not pull report')
+                    }
+
+            except Exception as e:
+                print(f"Credit import error: {e}")
+                import traceback
+                traceback.print_exc()
+                # Return placeholder on error
+                preview_data = {
+                    'bureau': 'TransUnion',
+                    'score': '---',
+                    'negative_items': '--',
+                    'total_accounts': '--',
+                    'error': str(e)
+                }
+
+        return jsonify({
+            "success": True,
+            "message": "Thank you! We've received your information.",
+            "client_id": client.id,
+            "analysis_token": client.free_analysis_token,
+            "analysis_url": f"/analysis/{client.free_analysis_token}",
+            "preview": preview_data
+        })
+
+    except Exception as e:
+        db.rollback()
+        print(f"Lead capture error: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An error occurred. Please try again."
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route("/upload-report")
+def upload_report():
+    """Simple report upload page - minimal form for quick lead capture"""
+    return render_template("upload_report.html")
+
+
+@app.route("/api/leads/upload-report", methods=["POST"])
+def api_leads_upload_report():
+    """Handle simple report upload from leads - minimal info required"""
+    db = get_db()
+    try:
+        from werkzeug.utils import secure_filename
+        from services.workflow_triggers_service import trigger_event
+
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        file = request.files.get('report')
+
+        # Validate required fields
+        if not name:
+            return jsonify({"success": False, "error": "Name is required"}), 400
+        if not email:
+            return jsonify({"success": False, "error": "Email is required"}), 400
+        if not file or not file.filename:
+            return jsonify({"success": False, "error": "Please upload a credit report"}), 400
+
+        # Validate file type
+        allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png'}
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in allowed_extensions:
+            return jsonify({"success": False, "error": "File must be PDF, JPG, or PNG"}), 400
+
+        # Split name into first/last
+        name_parts = name.split(' ', 1)
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        # Check if client already exists
+        existing = db.query(Client).filter_by(email=email).first()
+
+        if existing:
+            client = existing
+            # Update name if not already set
+            if not client.first_name:
+                client.first_name = first_name
+            if not client.last_name:
+                client.last_name = last_name
+            if not client.name:
+                client.name = name
+        else:
+            # Create new client as a lead
+            client = Client(
+                name=name,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                dispute_status='report_uploaded',
+                current_dispute_round=0,
+                email_opt_in=True
+            )
+            db.add(client)
+            db.flush()  # Get client ID
+
+        # Save the uploaded file
+        filename = secure_filename(file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        final_filename = f"report_{timestamp}_{filename}"
+
+        upload_dir = os.path.join('static', 'client_uploads', str(client.id), 'reports')
+        os.makedirs(upload_dir, exist_ok=True)
+        file_path = os.path.join(upload_dir, final_filename)
+        file.save(file_path)
+
+        # Create upload record
+        try:
+            upload = ClientUpload(
+                client_id=client.id,
+                document_type='credit_report',
+                file_name=filename,
+                file_path=file_path,
+                file_size=os.path.getsize(file_path),
+                category='credit_report',
+                notes='Uploaded via simple upload form'
+            )
+            db.add(upload)
+        except Exception as e:
+            print(f"Upload record error: {e}")
+
+        db.commit()
+
+        # Send confirmation email
+        try:
+            from services.email_service import send_email
+            send_email(
+                to_email=email,
+                subject="We've Received Your Credit Report - Brightpath Ascend",
+                html_content=f"""
+                <h2>Thank you, {first_name}!</h2>
+                <p>We've received your credit report and our team will analyze it shortly.</p>
+                <p>You can expect to hear from us within 24 hours with your free credit analysis.</p>
+                <p>In the meantime, feel free to:</p>
+                <ul>
+                    <li><a href="https://brightpathascend.com/get-started">Complete your profile</a> for faster processing</li>
+                    <li>Reply to this email with any questions</li>
+                </ul>
+                <p>Best regards,<br>The Brightpath Ascend Team</p>
+                """
+            )
+        except Exception as e:
+            print(f"Confirmation email error: {e}")
+
+        # Trigger workflow event for staff notification
+        try:
+            trigger_event('document_uploaded', {
+                'client_id': client.id,
+                'document_type': 'credit_report',
+                'file_name': filename,
+                'source': 'simple_upload_form'
+            })
+        except Exception as e:
+            print(f"Trigger error: {e}")
+
+        return jsonify({
+            "success": True,
+            "message": "Report uploaded successfully",
+            "client_id": client.id
+        })
+
+    except Exception as e:
+        db.rollback()
+        print(f"Report upload error: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An error occurred. Please try again."
+        }), 500
+    finally:
+        db.close()
+
+
+# =============================================================================
+# FREE ANALYSIS FLOW - Teaser → Purchase → Full Analysis
+# =============================================================================
+
+@app.route("/analysis/<token>")
+def view_free_analysis(token):
+    """View the free teaser analysis page (no login required)"""
+    from services.free_analysis_service import get_free_analysis_service
+
+    db = get_db()
+    try:
+        service = get_free_analysis_service(db)
+        result = service.get_teaser_analysis(token)
+
+        if not result.get('success'):
+            return render_template(
+                "error.html",
+                error="Analysis not found",
+                message="This analysis link is invalid or has expired."
+            ), 404
+
+        return render_template(
+            "free_analysis.html",
+            token=token,
+            client_name=result.get('client_name', 'there'),
+            client_stage=result.get('client_stage', 'lead'),
+            analysis_paid=result.get('analysis_paid', False),
+            teaser=result.get('teaser', {})
+        )
+    finally:
+        db.close()
+
+
+@app.route("/analysis/<token>/purchase", methods=["GET", "POST"])
+def purchase_full_analysis(token):
+    """Purchase the full $199 analysis"""
+    db = get_db()
+    try:
+        # Find client by token
+        client = db.query(Client).filter(
+            Client.free_analysis_token == token
+        ).first()
+
+        if not client:
+            return render_template(
+                "error.html",
+                error="Analysis not found",
+                message="This analysis link is invalid or has expired."
+            ), 404
+
+        # Check if already paid
+        if client.client_stage in ['analysis_paid', 'onboarding', 'pending_payment', 'active']:
+            return redirect(f"/analysis/{token}")
+
+        if request.method == "GET":
+            # Show payment page
+            return render_template(
+                "analysis_purchase.html",
+                token=token,
+                client_name=client.first_name or client.name.split()[0],
+                price=199,
+                stripe_publishable_key=getattr(config, 'STRIPE_PUBLISHABLE_KEY', '')
+            )
+
+        # POST - Process payment
+        from services.stripe_client import stripe_client
+
+        try:
+            # Create Stripe payment intent for $199
+            payment_intent = stripe_client.create_payment_intent(
+                amount=19900,  # $199 in cents
+                customer_email=client.email,
+                metadata={
+                    'client_id': client.id,
+                    'type': 'full_analysis',
+                    'token': token
+                }
+            )
+
+            return jsonify({
+                "success": True,
+                "client_secret": payment_intent.client_secret
+            })
+
+        except Exception as e:
+            print(f"Stripe error: {e}")
+            return jsonify({
+                "success": False,
+                "error": "Payment processing failed. Please try again."
+            }), 500
+
+    finally:
+        db.close()
+
+
+@app.route("/api/analysis/confirm-payment", methods=["POST"])
+def confirm_analysis_payment():
+    """Confirm payment and unlock full analysis"""
+    from services.free_analysis_service import get_free_analysis_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        token = data.get('token')
+        payment_intent_id = data.get('payment_intent_id')
+
+        if not token or not payment_intent_id:
+            return jsonify({
+                "success": False,
+                "error": "Missing payment information"
+            }), 400
+
+        # Find client
+        client = db.query(Client).filter(
+            Client.free_analysis_token == token
+        ).first()
+
+        if not client:
+            return jsonify({
+                "success": False,
+                "error": "Client not found"
+            }), 404
+
+        # Mark analysis as paid
+        service = get_free_analysis_service(db)
+        result = service.mark_analysis_paid(client.id, payment_intent_id)
+
+        if result.get('success'):
+            return jsonify({
+                "success": True,
+                "message": "Payment confirmed! Your full analysis is now available.",
+                "redirect_url": f"/analysis/{token}"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Failed to confirm payment')
+            }), 500
+
+    except Exception as e:
+        print(f"Payment confirmation error: {e}")
+        return jsonify({
+            "success": False,
+            "error": "An error occurred confirming payment"
+        }), 500
+    finally:
+        db.close()
+
+
+@app.route("/analysis/<token>/proceed", methods=["POST"])
+def proceed_to_program(token):
+    """Move from analysis_paid to onboarding (ready to start program)"""
+    from services.free_analysis_service import get_free_analysis_service
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(
+            Client.free_analysis_token == token
+        ).first()
+
+        if not client:
+            return jsonify({
+                "success": False,
+                "error": "Client not found"
+            }), 404
+
+        if client.client_stage != 'analysis_paid':
+            return jsonify({
+                "success": False,
+                "error": "Please purchase the full analysis first"
+            }), 400
+
+        service = get_free_analysis_service(db)
+        result = service.proceed_to_onboarding(client.id)
+
+        if result.get('success'):
+            # Generate portal password reset link if no password set
+            if not client.portal_password_hash:
+                client.password_reset_token = secrets.token_urlsafe(32)
+                client.password_reset_expires = datetime.utcnow() + timedelta(days=7)
+                db.commit()
+
+                return jsonify({
+                    "success": True,
+                    "message": "Welcome to the program!",
+                    "redirect_url": f"/portal/login?token={client.password_reset_token}"
+                })
+
+            return jsonify({
+                "success": True,
+                "message": "Welcome to the program!",
+                "redirect_url": "/portal/onboarding"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "error": result.get('error', 'Failed to proceed')
+            }), 500
+
+    finally:
+        db.close()
+
+
+# =============================================================================
+# ROUND PAYMENT SYSTEM - Charge per round when letters are sent
+# =============================================================================
+
+@app.route("/api/clients/<int:client_id>/payment/round", methods=["POST"])
+@require_staff()
+def api_create_round_payment(client_id):
+    """
+    Create a payment intent for a dispute round.
+    Staff calls this before sending letters.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        round_number = data.get('round_number')
+
+        service = get_client_payment_service(db)
+        result = service.create_round_payment_intent(client_id, round_number)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/round/confirm", methods=["POST"])
+@require_staff()
+def api_confirm_round_payment(client_id):
+    """
+    Confirm a round payment was successful.
+    Enables letter sending for that round.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        payment_intent_id = data.get('payment_intent_id')
+        round_number = data.get('round_number')
+
+        if not payment_intent_id or not round_number:
+            return jsonify({
+                "success": False,
+                "error": "Missing payment_intent_id or round_number"
+            }), 400
+
+        service = get_client_payment_service(db)
+        result = service.confirm_round_payment(client_id, payment_intent_id, round_number)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/charge-round", methods=["POST"])
+@require_staff()
+def api_charge_for_round(client_id):
+    """
+    Charge a client for a round using saved payment method.
+    Called by staff when ready to send letters.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        round_number = data.get('round_number')
+        payment_method_id = data.get('payment_method_id')
+
+        if not round_number:
+            return jsonify({
+                "success": False,
+                "error": "Round number required"
+            }), 400
+
+        service = get_client_payment_service(db)
+        result = service.charge_for_round(client_id, round_number, payment_method_id)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            status_code = 400 if result.get('requires_payment') else 500
+            return jsonify(result), status_code
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/summary", methods=["GET"])
+@require_staff()
+def api_get_payment_summary(client_id):
+    """Get payment summary for a client."""
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        service = get_client_payment_service(db)
+        result = service.get_payment_summary(client_id)
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/payment/prepay", methods=["POST"])
+@require_staff()
+def api_create_prepay_checkout(client_id):
+    """
+    Create a checkout session for a prepay package.
+    """
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        package_key = data.get('package')
+        financed = data.get('financed', False)
+        success_url = data.get('success_url')
+        cancel_url = data.get('cancel_url')
+
+        if not package_key:
+            return jsonify({
+                "success": False,
+                "error": "Package required"
+            }), 400
+
+        service = get_client_payment_service(db)
+        result = service.create_prepay_checkout(
+            client_id, package_key, financed, success_url, cancel_url
+        )
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+    finally:
+        db.close()
+
+
+@app.route("/api/settlement-fee/calculate", methods=["POST"])
+@require_staff()
+def api_calculate_settlement_fee():
+    """Calculate the settlement fee for a given amount."""
+    from services.client_payment_service import get_client_payment_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        settlement_amount = data.get('settlement_amount')
+
+        if not settlement_amount:
+            return jsonify({
+                "success": False,
+                "error": "Settlement amount required"
+            }), 400
+
+        # Convert to cents if provided in dollars
+        if isinstance(settlement_amount, float) or settlement_amount < 1000:
+            settlement_amount = int(settlement_amount * 100)
+
+        service = get_client_payment_service(db)
+        result = service.calculate_settlement_fee(settlement_amount)
+        result['success'] = True
+
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+# =============================================================================
+# SCHEDULED JOBS - Auto-capture, reminders, etc.
+# =============================================================================
+
+@app.route("/api/jobs/capture-due-payments", methods=["POST"])
+@require_staff()
+def api_run_capture_due_payments():
+    """
+    Run the capture_due_payments job.
+    Activates clients whose 3-day cancellation period has ended.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.capture_due_payments()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/expire-stale-holds", methods=["POST"])
+@require_staff()
+def api_run_expire_stale_holds():
+    """
+    Run the expire_stale_holds job.
+    Cancels clients stuck in onboarding for too long.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        data = request.get_json() or {}
+        days_old = data.get('days_old', 7)
+
+        service = get_scheduled_jobs_service(db)
+        result = service.expire_stale_holds(days_old)
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/send-reminders", methods=["POST"])
+@require_staff()
+def api_run_send_reminders():
+    """
+    Run the send_payment_reminders job.
+    Sends emails for upcoming and failed payments.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.send_payment_reminders()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/pending-activations", methods=["GET"])
+@require_staff()
+def api_get_pending_activations():
+    """
+    Get clients ready for activation (cancellation period ended).
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.get_pending_activations()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/jobs/run-all", methods=["POST"])
+@require_staff()
+def api_run_all_jobs():
+    """
+    Run all scheduled jobs at once.
+    Useful for manual trigger from staff dashboard.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.run_all_jobs()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+# =============================================================================
+# STRIPE WEBHOOKS - Payment event handlers
+# =============================================================================
+
+@app.route("/api/webhooks/stripe", methods=["POST"])
+def stripe_webhook_handler():
+    """
+    Handle Stripe webhook events for Client Journey workflow.
+
+    Events handled:
+    - payment_intent.succeeded
+    - payment_intent.payment_failed
+    - charge.refunded
+    - checkout.session.completed
+    """
+    from services.stripe_webhooks_service import get_stripe_webhooks_service
+
+    payload = request.get_data()
+    sig_header = request.headers.get('Stripe-Signature')
+
+    db = get_db()
+    try:
+        # Verify webhook signature (if configured)
+        try:
+            from services.stripe_client import verify_webhook_signature, get_webhook_secret
+            webhook_secret = get_webhook_secret()
+            if webhook_secret:
+                event = verify_webhook_signature(payload, sig_header, webhook_secret)
+            else:
+                # No webhook secret - parse without verification (dev mode)
+                import json
+                event = json.loads(payload)
+        except Exception as e:
+            print(f"Webhook signature verification failed: {e}")
+            # In development, still process the event
+            import json
+            event = json.loads(payload)
+
+        # Process the event
+        service = get_stripe_webhooks_service(db)
+        result = service.handle_event(event)
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        return jsonify({'error': str(e)}), 400
+    finally:
+        db.close()
+
+
+# =============================================================================
+# CRON ENDPOINT - For external schedulers (Replit, Railway, etc.)
+# =============================================================================
+
+@app.route("/api/cron/hourly", methods=["POST", "GET"])
+def cron_hourly():
+    """
+    Hourly cron endpoint for external schedulers.
+    Runs: capture_due_payments
+
+    Secured by CRON_SECRET environment variable.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    # Verify cron secret
+    cron_secret = os.environ.get('CRON_SECRET')
+    provided_secret = request.headers.get('X-Cron-Secret') or request.args.get('secret')
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        result = service.capture_due_payments()
+        return jsonify(result)
+    finally:
+        db.close()
+
+
+@app.route("/api/cron/daily", methods=["POST", "GET"])
+def cron_daily():
+    """
+    Daily cron endpoint for external schedulers.
+    Runs: expire_stale_holds, send_payment_reminders
+
+    Secured by CRON_SECRET environment variable.
+    """
+    from services.scheduled_jobs_service import get_scheduled_jobs_service
+
+    # Verify cron secret
+    cron_secret = os.environ.get('CRON_SECRET')
+    provided_secret = request.headers.get('X-Cron-Secret') or request.args.get('secret')
+
+    if cron_secret and provided_secret != cron_secret:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    db = get_db()
+    try:
+        service = get_scheduled_jobs_service(db)
+        results = {
+            'expire_stale_holds': service.expire_stale_holds(),
+            'send_payment_reminders': service.send_payment_reminders()
+        }
+        return jsonify({
+            'success': True,
+            'run_at': datetime.utcnow().isoformat(),
+            'jobs': results
+        })
+    finally:
+        db.close()
+
+
+# =============================================================================
+# BOOKING SYSTEM - Q&A Call Scheduling
+# =============================================================================
+
+@app.route('/api/booking-slots', methods=['GET'])
+@require_staff()
+def api_get_booking_slots():
+    """Get all booking slots (staff view)"""
+    db = get_db()
+    try:
+        from database import BookingSlot, Booking, Client
+        from datetime import date, timedelta
+
+        # Parse filters
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        show_booked = request.args.get('show_booked', 'true').lower() == 'true'
+
+        query = db.query(BookingSlot)
+
+        # Default to next 30 days if no date range specified
+        if not start_date:
+            start_date = date.today()
+        else:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+
+        if not end_date:
+            end_date = start_date + timedelta(days=30)
+        else:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        query = query.filter(
+            BookingSlot.slot_date >= start_date,
+            BookingSlot.slot_date <= end_date
+        )
+
+        if not show_booked:
+            query = query.filter(BookingSlot.is_booked == False)
+
+        slots = query.order_by(BookingSlot.slot_date, BookingSlot.slot_time).all()
+
+        result = []
+        for slot in slots:
+            slot_data = {
+                'id': slot.id,
+                'date': slot.slot_date.isoformat(),
+                'time': slot.slot_time.strftime('%H:%M'),
+                'duration': slot.duration_minutes,
+                'is_available': slot.is_available,
+                'is_booked': slot.is_booked,
+                'booking': None
+            }
+
+            if slot.is_booked and slot.booking:
+                client = db.query(Client).filter(Client.id == slot.booking.client_id).first()
+                slot_data['booking'] = {
+                    'id': slot.booking.id,
+                    'client_id': slot.booking.client_id,
+                    'client_name': client.name if client else 'Unknown',
+                    'client_email': client.email if client else '',
+                    'notes': slot.booking.notes,
+                    'status': slot.booking.status
+                }
+
+            result.append(slot_data)
+
+        return jsonify({'success': True, 'slots': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/booking-slots', methods=['POST'])
+@require_staff()
+def api_create_booking_slots():
+    """Create booking slots (bulk create by staff)"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+        from datetime import time, timedelta
+
+        data = request.get_json()
+
+        # Support single slot or bulk creation
+        if 'slots' in data:
+            # Bulk create: list of {date, time} objects
+            slots_data = data['slots']
+        elif 'start_date' in data and 'end_date' in data:
+            # Generate slots for date range
+            start_date = datetime.strptime(data['start_date'], '%Y-%m-%d').date()
+            end_date = datetime.strptime(data['end_date'], '%Y-%m-%d').date()
+            start_time = datetime.strptime(data.get('start_time', '09:00'), '%H:%M').time()
+            end_time = datetime.strptime(data.get('end_time', '17:00'), '%H:%M').time()
+            days_of_week = data.get('days_of_week', [0, 1, 2, 3, 4])  # Mon-Fri default
+
+            slots_data = []
+            current_date = start_date
+            while current_date <= end_date:
+                if current_date.weekday() in days_of_week:
+                    current_time = datetime.combine(current_date, start_time)
+                    end_datetime = datetime.combine(current_date, end_time)
+
+                    while current_time < end_datetime:
+                        slots_data.append({
+                            'date': current_date.isoformat(),
+                            'time': current_time.strftime('%H:%M')
+                        })
+                        current_time += timedelta(minutes=15)
+
+                current_date += timedelta(days=1)
+        else:
+            # Single slot
+            slots_data = [{
+                'date': data['date'],
+                'time': data['time']
+            }]
+
+        created_count = 0
+        staff_id = session.get('staff_id')
+
+        for slot_data in slots_data:
+            slot_date = datetime.strptime(slot_data['date'], '%Y-%m-%d').date()
+            slot_time = datetime.strptime(slot_data['time'], '%H:%M').time()
+
+            # Check for existing slot at same date/time
+            existing = db.query(BookingSlot).filter(
+                BookingSlot.slot_date == slot_date,
+                BookingSlot.slot_time == slot_time
+            ).first()
+
+            if not existing:
+                slot = BookingSlot(
+                    slot_date=slot_date,
+                    slot_time=slot_time,
+                    duration_minutes=15,
+                    is_available=True,
+                    is_booked=False,
+                    staff_id=staff_id
+                )
+                db.add(slot)
+                created_count += 1
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Created {created_count} booking slots',
+            'created_count': created_count
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/booking-slots/<int:slot_id>', methods=['PUT'])
+@require_staff()
+def api_update_booking_slot(slot_id):
+    """Update a booking slot (toggle availability)"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+
+        slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
+        if not slot:
+            return jsonify({'success': False, 'error': 'Slot not found'}), 404
+
+        data = request.get_json()
+
+        if 'is_available' in data:
+            slot.is_available = data['is_available']
+
+        slot.updated_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Slot updated',
+            'slot': {
+                'id': slot.id,
+                'is_available': slot.is_available,
+                'is_booked': slot.is_booked
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/booking-slots/<int:slot_id>', methods=['DELETE'])
+@require_staff()
+def api_delete_booking_slot(slot_id):
+    """Delete a booking slot (only if not booked)"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+
+        slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
+        if not slot:
+            return jsonify({'success': False, 'error': 'Slot not found'}), 404
+
+        if slot.is_booked:
+            return jsonify({'success': False, 'error': 'Cannot delete booked slot'}), 400
+
+        db.delete(slot)
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Slot deleted'})
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/bookings', methods=['GET'])
+@require_staff()
+def api_get_bookings():
+    """Get all bookings (staff view)"""
+    db = get_db()
+    try:
+        from database import Booking, BookingSlot, Client
+
+        status_filter = request.args.get('status')
+
+        query = db.query(Booking).join(BookingSlot)
+
+        if status_filter:
+            query = query.filter(Booking.status == status_filter)
+
+        bookings = query.order_by(BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc()).all()
+
+        result = []
+        for booking in bookings:
+            client = db.query(Client).filter(Client.id == booking.client_id).first()
+            result.append({
+                'id': booking.id,
+                'slot': {
+                    'id': booking.slot.id,
+                    'date': booking.slot.slot_date.isoformat(),
+                    'time': booking.slot.slot_time.strftime('%H:%M'),
+                    'duration': booking.slot.duration_minutes
+                },
+                'client': {
+                    'id': client.id if client else None,
+                    'name': client.name if client else 'Unknown',
+                    'email': client.email if client else '',
+                    'phone': client.phone or client.mobile if client else ''
+                },
+                'booking_type': booking.booking_type,
+                'notes': booking.notes,
+                'status': booking.status,
+                'booked_at': booking.booked_at.isoformat() if booking.booked_at else None,
+                'confirmation_sent': booking.confirmation_sent
+            })
+
+        return jsonify({'success': True, 'bookings': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/bookings/<int:booking_id>/status', methods=['PUT'])
+@require_staff()
+def api_update_booking_status(booking_id):
+    """Update booking status (complete, no_show, etc.)"""
+    db = get_db()
+    try:
+        from database import Booking
+
+        booking = db.query(Booking).filter(Booking.id == booking_id).first()
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+
+        data = request.get_json()
+        new_status = data.get('status')
+
+        if new_status not in ['confirmed', 'cancelled', 'completed', 'no_show']:
+            return jsonify({'success': False, 'error': 'Invalid status'}), 400
+
+        booking.status = new_status
+
+        if new_status == 'completed':
+            booking.completed_at = datetime.utcnow()
+        elif new_status == 'cancelled':
+            booking.cancelled_at = datetime.utcnow()
+            # Free up the slot
+            booking.slot.is_booked = False
+
+        booking.updated_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Booking marked as {new_status}',
+            'status': new_status
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# Portal Booking Endpoints (for clients)
+
+@app.route('/api/portal/booking-slots', methods=['GET'])
+def api_portal_get_available_slots():
+    """Get available booking slots for clients to book"""
+    db = get_db()
+    try:
+        from database import BookingSlot
+        from datetime import date, timedelta
+
+        # Only show slots in the next 14 days
+        start_date = date.today()
+        end_date = start_date + timedelta(days=14)
+
+        slots = db.query(BookingSlot).filter(
+            BookingSlot.slot_date >= start_date,
+            BookingSlot.slot_date <= end_date,
+            BookingSlot.is_available == True,
+            BookingSlot.is_booked == False
+        ).order_by(BookingSlot.slot_date, BookingSlot.slot_time).all()
+
+        # Group by date for easier UI display
+        slots_by_date = {}
+        for slot in slots:
+            date_str = slot.slot_date.isoformat()
+            if date_str not in slots_by_date:
+                slots_by_date[date_str] = {
+                    'date': date_str,
+                    'day_name': slot.slot_date.strftime('%A'),
+                    'slots': []
+                }
+            slots_by_date[date_str]['slots'].append({
+                'id': slot.id,
+                'time': slot.slot_time.strftime('%H:%M'),
+                'time_display': slot.slot_time.strftime('%I:%M %p'),
+                'duration': slot.duration_minutes
+            })
+
+        return jsonify({
+            'success': True,
+            'dates': list(slots_by_date.values())
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/bookings', methods=['POST'])
+def api_portal_create_booking():
+    """Create a booking (client books a slot)"""
+    db = get_db()
+    try:
+        from database import BookingSlot, Booking, Client
+        from services.email_service import send_email
+
+        # Get client from session
+        client_id = session.get('portal_client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in to book'}), 401
+
+        data = request.get_json()
+        slot_id = data.get('slot_id')
+        notes = data.get('notes', '').strip()
+
+        if not slot_id:
+            return jsonify({'success': False, 'error': 'Please select a time slot'}), 400
+
+        # Check slot is available
+        slot = db.query(BookingSlot).filter(BookingSlot.id == slot_id).first()
+        if not slot:
+            return jsonify({'success': False, 'error': 'Time slot not found'}), 404
+
+        if not slot.is_available or slot.is_booked:
+            return jsonify({'success': False, 'error': 'This time slot is no longer available'}), 400
+
+        # Create booking
+        booking = Booking(
+            slot_id=slot_id,
+            client_id=client_id,
+            booking_type='qa_call',
+            notes=notes,
+            status='confirmed',
+            booked_at=datetime.utcnow()
+        )
+        db.add(booking)
+
+        # Mark slot as booked
+        slot.is_booked = True
+
+        db.commit()
+        db.refresh(booking)
+
+        # Get client info for confirmation email
+        client = db.query(Client).filter(Client.id == client_id).first()
+
+        # Send confirmation email
+        if client and client.email:
+            try:
+                html_content = f"""
+                <h2>Booking Confirmed!</h2>
+                <p>Hi {client.name},</p>
+                <p>Your Q&A call has been scheduled:</p>
+                <ul>
+                    <li><strong>Date:</strong> {slot.slot_date.strftime('%A, %B %d, %Y')}</li>
+                    <li><strong>Time:</strong> {slot.slot_time.strftime('%I:%M %p')}</li>
+                    <li><strong>Duration:</strong> 15 minutes</li>
+                </ul>
+                <p>We'll call you at the phone number on file. Please have any questions ready!</p>
+                <p>If you need to reschedule, please log into your portal.</p>
+                <p>Thank you,<br>Brightpath Ascend Team</p>
+                """
+                result = send_email(
+                    to_email=client.email,
+                    subject="Q&A Call Confirmed - Brightpath Ascend",
+                    html_content=html_content
+                )
+                if result.get('success'):
+                    booking.confirmation_sent = True
+                    booking.confirmation_sent_at = datetime.utcnow()
+                    db.commit()
+            except Exception as e:
+                print(f"Failed to send confirmation email: {e}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Your Q&A call has been scheduled!',
+            'booking': {
+                'id': booking.id,
+                'date': slot.slot_date.isoformat(),
+                'time': slot.slot_time.strftime('%I:%M %p'),
+                'duration': slot.duration_minutes
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/bookings', methods=['GET'])
+def api_portal_get_my_bookings():
+    """Get client's own bookings"""
+    db = get_db()
+    try:
+        from database import Booking, BookingSlot
+
+        client_id = session.get('portal_client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        bookings = db.query(Booking).join(BookingSlot).filter(
+            Booking.client_id == client_id,
+            Booking.status.in_(['confirmed', 'completed'])
+        ).order_by(BookingSlot.slot_date.desc(), BookingSlot.slot_time.desc()).all()
+
+        result = []
+        for booking in bookings:
+            result.append({
+                'id': booking.id,
+                'date': booking.slot.slot_date.isoformat(),
+                'date_display': booking.slot.slot_date.strftime('%A, %B %d, %Y'),
+                'time': booking.slot.slot_time.strftime('%I:%M %p'),
+                'duration': booking.slot.duration_minutes,
+                'status': booking.status,
+                'notes': booking.notes
+            })
+
+        return jsonify({'success': True, 'bookings': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/bookings/<int:booking_id>', methods=['DELETE'])
+def api_portal_cancel_booking(booking_id):
+    """Cancel a booking (client cancels their own booking)"""
+    db = get_db()
+    try:
+        from database import Booking
+
+        client_id = session.get('portal_client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        booking = db.query(Booking).filter(
+            Booking.id == booking_id,
+            Booking.client_id == client_id
+        ).first()
+
+        if not booking:
+            return jsonify({'success': False, 'error': 'Booking not found'}), 404
+
+        if booking.status != 'confirmed':
+            return jsonify({'success': False, 'error': 'Cannot cancel this booking'}), 400
+
+        # Cancel booking and free up slot
+        booking.status = 'cancelled'
+        booking.cancelled_at = datetime.utcnow()
+        booking.slot.is_booked = False
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Booking cancelled successfully'
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================
+# CLIENT PORTAL MESSAGING (LIVE SUPPORT)
+# =============================================================
+
+
+@app.route('/api/portal/messages', methods=['GET'])
+def api_portal_get_messages():
+    """Get all messages for the current client"""
+    db = get_db()
+    try:
+        from database import ClientMessage, Staff
+
+        client_id = session.get('portal_client_id') or session.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        messages = db.query(ClientMessage).filter(
+            ClientMessage.client_id == client_id
+        ).order_by(ClientMessage.created_at.asc()).all()
+
+        # Mark unread staff messages as read
+        for msg in messages:
+            if msg.sender_type == 'staff' and not msg.is_read:
+                msg.is_read = True
+                msg.read_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'messages': [{
+                'id': m.id,
+                'message': m.message,
+                'sender_type': m.sender_type,
+                'is_read': m.is_read,
+                'created_at': m.created_at.isoformat() if m.created_at else None,
+                'staff_name': (db.query(Staff).get(m.staff_id).full_name if m.staff_id else None)
+            } for m in messages]
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/messages', methods=['POST'])
+def api_portal_send_message():
+    """Send a message from the client"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        client_id = session.get('portal_client_id') or session.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        data = request.get_json() or {}
+        message_text = data.get('message', '').strip()
+
+        if not message_text:
+            return jsonify({'success': False, 'error': 'Message is required'}), 400
+
+        if len(message_text) > 5000:
+            return jsonify({'success': False, 'error': 'Message too long (max 5000 characters)'}), 400
+
+        message = ClientMessage(
+            client_id=client_id,
+            message=message_text,
+            sender_type='client',
+            is_read=False
+        )
+        db.add(message)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'message': message.message,
+                'sender_type': message.sender_type,
+                'created_at': message.created_at.isoformat() if message.created_at else None
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/portal/messages/unread-count', methods=['GET'])
+def api_portal_unread_count():
+    """Get count of unread messages for the client"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        client_id = session.get('portal_client_id') or session.get('client_id')
+        if not client_id:
+            return jsonify({'success': False, 'error': 'Please log in'}), 401
+
+        count = db.query(ClientMessage).filter(
+            ClientMessage.client_id == client_id,
+            ClientMessage.sender_type == 'staff',
+            ClientMessage.is_read == False
+        ).count()
+
+        return jsonify({'success': True, 'unread_count': count})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================
+# STAFF MESSAGING ENDPOINTS
+# =============================================================
+
+
+@app.route('/api/messages/clients', methods=['GET'])
+@require_staff()
+def api_get_messaging_clients():
+    """Get all clients with messages (for staff view)"""
+    db = get_db()
+    try:
+        from database import ClientMessage, Client
+
+        # Get distinct clients with messages
+        subq = db.query(ClientMessage.client_id).distinct()
+        clients_with_messages = db.query(Client).filter(
+            Client.id.in_(subq)
+        ).all()
+
+        result = []
+        for client in clients_with_messages:
+            # Get latest message and unread count
+            latest = db.query(ClientMessage).filter(
+                ClientMessage.client_id == client.id
+            ).order_by(ClientMessage.created_at.desc()).first()
+
+            unread = db.query(ClientMessage).filter(
+                ClientMessage.client_id == client.id,
+                ClientMessage.sender_type == 'client',
+                ClientMessage.is_read == False
+            ).count()
+
+            result.append({
+                'client_id': client.id,
+                'client_name': client.name,
+                'client_email': client.email,
+                'latest_message': latest.message[:100] if latest else None,
+                'latest_at': latest.created_at.isoformat() if latest and latest.created_at else None,
+                'unread_count': unread
+            })
+
+        # Sort by latest message, unread first
+        result.sort(key=lambda x: (-(x['unread_count'] or 0), x['latest_at'] or ''), reverse=False)
+
+        return jsonify({'success': True, 'clients': result})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/messages/client/<int:client_id>', methods=['GET'])
+@require_staff()
+def api_get_client_messages(client_id):
+    """Get all messages for a specific client"""
+    db = get_db()
+    try:
+        from database import ClientMessage, Staff
+
+        messages = db.query(ClientMessage).filter(
+            ClientMessage.client_id == client_id
+        ).order_by(ClientMessage.created_at.asc()).all()
+
+        # Mark unread client messages as read
+        for msg in messages:
+            if msg.sender_type == 'client' and not msg.is_read:
+                msg.is_read = True
+                msg.read_at = datetime.utcnow()
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'messages': [{
+                'id': m.id,
+                'message': m.message,
+                'sender_type': m.sender_type,
+                'is_read': m.is_read,
+                'created_at': m.created_at.isoformat() if m.created_at else None,
+                'staff_name': (db.query(Staff).get(m.staff_id).full_name if m.staff_id else None)
+            } for m in messages]
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/messages/client/<int:client_id>', methods=['POST'])
+@require_staff()
+def api_send_client_message(client_id):
+    """Send a message to a client (from staff)"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        staff_id = session.get('staff_id')
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+        data = request.get_json() or {}
+        message_text = data.get('message', '').strip()
+
+        if not message_text:
+            return jsonify({'success': False, 'error': 'Message is required'}), 400
+
+        message = ClientMessage(
+            client_id=client_id,
+            staff_id=staff_id,
+            message=message_text,
+            sender_type='staff',
+            is_read=False
+        )
+        db.add(message)
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'message': message.message,
+                'sender_type': message.sender_type,
+                'created_at': message.created_at.isoformat() if message.created_at else None
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/messages/unread-total', methods=['GET'])
+@require_staff()
+def api_get_total_unread():
+    """Get total unread messages from all clients"""
+    db = get_db()
+    try:
+        from database import ClientMessage
+
+        count = db.query(ClientMessage).filter(
+            ClientMessage.sender_type == 'client',
+            ClientMessage.is_read == False
+        ).count()
+
+        return jsonify({'success': True, 'unread_count': count})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# =============================================================================
+# WHATSAPP WEBHOOKS - Twilio WhatsApp message handlers
+# =============================================================================
+
+@app.route("/api/webhooks/whatsapp", methods=["POST"])
+def whatsapp_webhook():
+    """
+    Handle incoming WhatsApp messages from Twilio.
+
+    This endpoint receives:
+    - Inbound messages from clients (text, images, documents)
+    - Status updates for outbound messages
+
+    Features:
+    - Document intake: Clients can send photos of IDs, credit reports, etc.
+    - Keyword commands: STATUS, HELP
+    - Auto-replies within 24hr window
+    """
+    from twilio.request_validator import RequestValidator
+
+    db = get_db()
+    try:
+        # Get Twilio signature for validation
+        signature = request.headers.get('X-Twilio-Signature', '')
+
+        # Validate Twilio signature (if auth token is configured)
+        twilio_auth_token = os.environ.get('TWILIO_AUTH_TOKEN', '')
+        if twilio_auth_token:
+            validator = RequestValidator(twilio_auth_token)
+            # Build the full URL including query params
+            url = request.url
+            params = request.form.to_dict()
+
+            if not validator.validate(url, params, signature):
+                print(f"WhatsApp webhook: Invalid Twilio signature")
+                return "Invalid signature", 403
+
+        # Parse the incoming message data
+        from_number = request.form.get('From', '')  # whatsapp:+1234567890
+        to_number = request.form.get('To', '')
+        body = request.form.get('Body', '')
+        message_sid = request.form.get('MessageSid', '')
+        num_media = int(request.form.get('NumMedia', 0))
+        profile_name = request.form.get('ProfileName', '')
+
+        # Status callback fields (for outbound message updates)
+        message_status = request.form.get('MessageStatus', '')
+        error_code = request.form.get('ErrorCode', '')
+        error_message = request.form.get('ErrorMessage', '')
+
+        # Import the webhook service
+        from services.whatsapp_webhook_service import get_whatsapp_webhook_service
+
+        service = get_whatsapp_webhook_service(db)
+
+        # Handle status callbacks for outbound messages
+        if message_status and not from_number.startswith('whatsapp:'):
+            result = service.handle_status_callback(
+                message_sid=message_sid,
+                status=message_status,
+                error_code=error_code,
+                error_message=error_message
+            )
+            return '', 200
+
+        # Handle incoming message
+        media_urls = []
+        media_types = []
+        for i in range(num_media):
+            media_url = request.form.get(f'MediaUrl{i}', '')
+            media_type = request.form.get(f'MediaContentType{i}', '')
+            if media_url:
+                media_urls.append(media_url)
+                media_types.append(media_type)
+
+        result = service.process_incoming(
+            from_number=from_number,
+            to_number=to_number,
+            body=body,
+            message_sid=message_sid,
+            profile_name=profile_name,
+            media_urls=media_urls,
+            media_types=media_types
+        )
+
+        # Return TwiML response if provided
+        twiml_response = result.get('twiml', '')
+        if twiml_response:
+            return twiml_response, 200, {'Content-Type': 'application/xml'}
+
+        return '', 200
+
+    except Exception as e:
+        print(f"WhatsApp webhook error: {e}")
+        import traceback
+        traceback.print_exc()
+        return '', 200  # Always return 200 to Twilio to prevent retries
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/request-verification", methods=["POST"])
+def portal_whatsapp_request_verification():
+    """
+    Request WhatsApp verification code.
+    Client provides their WhatsApp number and receives a verification code.
+    """
+    from flask import session
+    import random
+    from datetime import datetime, timedelta
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    whatsapp_number = data.get('whatsapp_number', '').strip()
+
+    if not whatsapp_number:
+        return jsonify({'success': False, 'error': 'WhatsApp number is required'}), 400
+
+    db = get_db()
+    try:
+        from database import Client
+        from services.sms_service import format_whatsapp_number, send_whatsapp
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Generate 6-digit verification code
+        verification_code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+
+        # Store code and expiration (10 minutes)
+        client.whatsapp_number = whatsapp_number
+        client.whatsapp_verification_code = verification_code
+        client.whatsapp_verification_expires = datetime.utcnow() + timedelta(minutes=10)
+        client.whatsapp_verified = False
+        db.commit()
+
+        # Send verification code via WhatsApp
+        # Note: This uses the 24hr reply window or requires an approved template
+        message = f"Your verification code is: {verification_code}\n\nEnter this code in your portal to enable WhatsApp notifications."
+
+        result = send_whatsapp(
+            to_number=whatsapp_number,
+            message=message
+        )
+
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': 'Verification code sent to your WhatsApp'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Failed to send verification code')
+            }), 500
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/verify", methods=["POST"])
+def portal_whatsapp_verify():
+    """
+    Verify WhatsApp number with code.
+    """
+    from flask import session
+    from datetime import datetime
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    code = data.get('code', '').strip()
+
+    if not code:
+        return jsonify({'success': False, 'error': 'Verification code is required'}), 400
+
+    db = get_db()
+    try:
+        from database import Client
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        # Check if code matches and hasn't expired
+        if not client.whatsapp_verification_code:
+            return jsonify({'success': False, 'error': 'No verification pending'}), 400
+
+        if client.whatsapp_verification_expires and client.whatsapp_verification_expires < datetime.utcnow():
+            return jsonify({'success': False, 'error': 'Verification code expired'}), 400
+
+        if client.whatsapp_verification_code != code:
+            return jsonify({'success': False, 'error': 'Invalid verification code'}), 400
+
+        # Mark as verified
+        client.whatsapp_verified = True
+        client.whatsapp_verified_at = datetime.utcnow()
+        client.whatsapp_opt_in = True
+        client.whatsapp_verification_code = None  # Clear code
+        client.whatsapp_verification_expires = None
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'WhatsApp verified successfully'
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/status", methods=["GET"])
+def portal_whatsapp_status():
+    """
+    Get client's WhatsApp verification status.
+    """
+    from flask import session
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    db = get_db()
+    try:
+        from database import Client
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'whatsapp_opt_in': client.whatsapp_opt_in or False,
+            'whatsapp_number': client.whatsapp_number,
+            'whatsapp_verified': client.whatsapp_verified or False
+        })
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/portal/whatsapp/opt-out", methods=["POST"])
+def portal_whatsapp_opt_out():
+    """
+    Opt out of WhatsApp notifications.
+    """
+    from flask import session
+
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+    db = get_db()
+    try:
+        from database import Client
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        client.whatsapp_opt_in = False
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Opted out of WhatsApp notifications'
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# Staff endpoint to request document via WhatsApp
+@app.route("/api/clients/<int:client_id>/whatsapp/request-document", methods=["POST"])
+@require_staff()
+def api_request_document_via_whatsapp(client_id):
+    """
+    Staff can request a specific document from a client via WhatsApp.
+    """
+    data = request.get_json() or {}
+    document_type = data.get('document_type', '')
+    custom_message = data.get('custom_message', '')
+
+    if not document_type:
+        return jsonify({'success': False, 'error': 'Document type is required'}), 400
+
+    db = get_db()
+    try:
+        from database import Client
+        from services.whatsapp_automation import trigger_whatsapp_document_request
+
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        if not client.whatsapp_verified:
+            return jsonify({'success': False, 'error': 'Client has not verified WhatsApp'}), 400
+
+        result = trigger_whatsapp_document_request(
+            db=db,
+            client_id=client_id,
+            document_type=document_type,
+            custom_message=custom_message
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+# ==============================================================================
+# BATCH PROCESSING API (P18)
+# ==============================================================================
+
+
+@app.route("/api/batch/action-types", methods=["GET"])
+@require_staff()
+def api_batch_action_types():
+    """Get available batch action types"""
+    from services.batch_processing_service import BatchProcessingService
+    service = BatchProcessingService()
+    return jsonify({
+        "success": True,
+        "action_types": service.get_action_types(),
+        "status_options": service.get_status_options(),
+    })
+
+
+@app.route("/api/batch/jobs", methods=["GET"])
+@require_staff()
+def api_batch_list_jobs():
+    """List batch jobs with optional filtering"""
+    from services.batch_processing_service import BatchProcessingService
+
+    status = request.args.get("status")
+    action_type = request.args.get("action_type")
+    limit = int(request.args.get("limit", 50))
+    offset = int(request.args.get("offset", 0))
+
+    service = BatchProcessingService()
+    jobs = service.list_jobs(
+        status=status,
+        action_type=action_type,
+        limit=limit,
+        offset=offset
+    )
+
+    return jsonify({
+        "success": True,
+        "jobs": jobs,
+    })
+
+
+@app.route("/api/batch/jobs", methods=["POST"])
+@require_staff()
+def api_batch_create_job():
+    """Create a new batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    data = request.json or {}
+    name = data.get("name", "Batch Operation")
+    action_type = data.get("action_type")
+    client_ids = data.get("client_ids", [])
+    action_params = data.get("action_params", {})
+    execute_immediately = data.get("execute_immediately", True)
+
+    if not action_type:
+        return jsonify({"success": False, "error": "action_type is required"}), 400
+
+    if not client_ids:
+        return jsonify({"success": False, "error": "client_ids is required"}), 400
+
+    staff_id = session.get("staff_id", 1)
+
+    service = BatchProcessingService()
+    success, message, job = service.create_job(
+        name=name,
+        action_type=action_type,
+        client_ids=client_ids,
+        action_params=action_params,
+        staff_id=staff_id
+    )
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    # Execute immediately if requested
+    if execute_immediately and job:
+        exec_success, exec_message = service.execute_job(job["id"])
+        job = service.get_job(job_id=job["id"])
+        return jsonify({
+            "success": True,
+            "message": exec_message,
+            "job": job,
+        })
+
+    return jsonify({
+        "success": True,
+        "message": message,
+        "job": job,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>", methods=["GET"])
+@require_staff()
+def api_batch_get_job(job_id):
+    """Get a batch job by ID"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    job = service.get_job(job_id=job_id)
+
+    if not job:
+        return jsonify({"success": False, "error": "Job not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "job": job,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/progress", methods=["GET"])
+@require_staff()
+def api_batch_job_progress(job_id):
+    """Get real-time progress of a batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    progress = service.get_job_progress(job_id)
+
+    if not progress:
+        return jsonify({"success": False, "error": "Job not found"}), 404
+
+    return jsonify({
+        "success": True,
+        "progress": progress,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/execute", methods=["POST"])
+@require_staff()
+def api_batch_execute_job(job_id):
+    """Execute a pending batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    success, message = service.execute_job(job_id)
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    job = service.get_job(job_id=job_id)
+    return jsonify({
+        "success": True,
+        "message": message,
+        "job": job,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/cancel", methods=["POST"])
+@require_staff()
+def api_batch_cancel_job(job_id):
+    """Cancel a batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    staff_id = session.get("staff_id", 1)
+
+    service = BatchProcessingService()
+    success, message = service.cancel_job(job_id, staff_id)
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    return jsonify({
+        "success": True,
+        "message": message,
+    })
+
+
+@app.route("/api/batch/jobs/<int:job_id>/retry", methods=["POST"])
+@require_staff()
+def api_batch_retry_job(job_id):
+    """Retry failed items in a batch job"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    success, message = service.retry_failed_items(job_id)
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    # Re-execute the job
+    exec_success, exec_message = service.execute_job(job_id)
+
+    return jsonify({
+        "success": True,
+        "message": f"{message}. {exec_message}",
+    })
+
+
+@app.route("/api/batch/stats", methods=["GET"])
+@require_staff()
+def api_batch_stats():
+    """Get batch processing statistics"""
+    from services.batch_processing_service import BatchProcessingService
+
+    service = BatchProcessingService()
+    stats = service.get_stats()
+
+    return jsonify({
+        "success": True,
+        "stats": stats,
+    })
+
+
+@app.route("/api/batch/history", methods=["GET"])
+@require_staff()
+def api_batch_history():
+    """Get batch job history"""
+    from services.batch_processing_service import BatchProcessingService
+
+    days = int(request.args.get("days", 30))
+    limit = int(request.args.get("limit", 100))
+
+    service = BatchProcessingService()
+    history = service.get_job_history(days=days, limit=limit)
+
+    return jsonify({
+        "success": True,
+        "history": history,
+    })
+
+
+@app.route("/dashboard/batch-jobs", methods=["GET"])
+@require_staff()
+def dashboard_batch_jobs():
+    """Batch jobs history page"""
+    return render_template("batch_jobs.html")
+
+
+# ==============================================================================
+# STAFF PERFORMANCE API (P19)
+# ==============================================================================
+
+
+@app.route("/api/staff-performance/activity-types", methods=["GET"])
+@require_staff()
+def api_staff_performance_activity_types():
+    """Get available activity types"""
+    from services.staff_performance_service import ACTIVITY_TYPES
+    return jsonify({
+        "success": True,
+        "activity_types": ACTIVITY_TYPES,
+    })
+
+
+@app.route("/api/staff-performance/log", methods=["POST"])
+@require_staff()
+def api_staff_performance_log():
+    """Log a staff activity"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    data = request.json or {}
+    staff_id = data.get("staff_id") or session.get("staff_id")
+    activity_type = data.get("activity_type")
+    description = data.get("description")
+    client_id = data.get("client_id")
+    metadata = data.get("metadata")
+    quality_score = data.get("quality_score")
+
+    if not staff_id:
+        return jsonify({"success": False, "error": "staff_id is required"}), 400
+    if not activity_type:
+        return jsonify({"success": False, "error": "activity_type is required"}), 400
+
+    service = StaffPerformanceService()
+    success, message, activity = service.log_activity(
+        staff_id=staff_id,
+        activity_type=activity_type,
+        description=description,
+        client_id=client_id,
+        metadata=metadata,
+        quality_score=quality_score
+    )
+
+    if not success:
+        return jsonify({"success": False, "error": message}), 400
+
+    return jsonify({
+        "success": True,
+        "message": message,
+        "activity": activity,
+    })
+
+
+@app.route("/api/staff-performance/dashboard", methods=["GET"])
+@require_staff()
+def api_staff_performance_dashboard():
+    """Get staff performance dashboard summary"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    service = StaffPerformanceService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify({
+        "success": True,
+        "dashboard": summary,
+    })
+
+
+@app.route("/api/staff-performance/leaderboard", methods=["GET"])
+@require_staff()
+def api_staff_performance_leaderboard():
+    """Get staff leaderboard"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    period = request.args.get("period", "month")
+    metric = request.args.get("metric", "points")
+    limit = int(request.args.get("limit", 10))
+
+    service = StaffPerformanceService()
+    leaderboard = service.get_leaderboard(period=period, metric=metric, limit=limit)
+
+    return jsonify({
+        "success": True,
+        "leaderboard": leaderboard,
+        "period": period,
+        "metric": metric,
+    })
+
+
+@app.route("/api/staff-performance/staff/<int:staff_id>/metrics", methods=["GET"])
+@require_staff()
+def api_staff_performance_metrics(staff_id):
+    """Get performance metrics for a specific staff member"""
+    from services.staff_performance_service import StaffPerformanceService
+    from datetime import datetime, timedelta
+
+    days = int(request.args.get("days", 30))
+    start_date = datetime.utcnow() - timedelta(days=days)
+    end_date = datetime.utcnow()
+
+    service = StaffPerformanceService()
+    metrics = service.get_staff_metrics(
+        staff_id=staff_id,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    return jsonify({
+        "success": True,
+        "metrics": metrics,
+    })
+
+
+@app.route("/api/staff-performance/staff/<int:staff_id>/activities", methods=["GET"])
+@require_staff()
+def api_staff_performance_activities(staff_id):
+    """Get recent activities for a staff member"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    limit = int(request.args.get("limit", 50))
+    offset = int(request.args.get("offset", 0))
+    activity_type = request.args.get("activity_type")
+
+    service = StaffPerformanceService()
+    activities = service.get_staff_activities(
+        staff_id=staff_id,
+        limit=limit,
+        offset=offset,
+        activity_type=activity_type
+    )
+
+    return jsonify({
+        "success": True,
+        "activities": activities,
+    })
+
+
+@app.route("/api/staff-performance/team/metrics", methods=["GET"])
+@require_staff()
+def api_staff_performance_team_metrics():
+    """Get aggregate metrics for all staff"""
+    from services.staff_performance_service import StaffPerformanceService
+    from datetime import datetime, timedelta
+
+    days = int(request.args.get("days", 30))
+    start_date = datetime.utcnow() - timedelta(days=days)
+    end_date = datetime.utcnow()
+
+    service = StaffPerformanceService()
+    metrics = service.get_team_metrics(
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    return jsonify({
+        "success": True,
+        "metrics": metrics,
+    })
+
+
+@app.route("/api/staff-performance/trend", methods=["GET"])
+@require_staff()
+def api_staff_performance_trend():
+    """Get performance trend over time"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    staff_id = request.args.get("staff_id")
+    days = int(request.args.get("days", 30))
+
+    service = StaffPerformanceService()
+    trend = service.get_performance_trend(
+        staff_id=int(staff_id) if staff_id else None,
+        days=days
+    )
+
+    return jsonify({
+        "success": True,
+        "trend": trend,
+    })
+
+
+@app.route("/api/staff-performance/recent", methods=["GET"])
+@require_staff()
+def api_staff_performance_recent():
+    """Get recent team activities"""
+    from services.staff_performance_service import StaffPerformanceService
+
+    limit = int(request.args.get("limit", 20))
+
+    service = StaffPerformanceService()
+    activities = service.get_recent_team_activities(limit=limit)
+
+    return jsonify({
+        "success": True,
+        "activities": activities,
+    })
+
+
+@app.route("/dashboard/staff-performance", methods=["GET"])
+@require_staff()
+def dashboard_staff_performance():
+    """Staff performance dashboard page"""
+    return render_template("staff_performance.html")
+
+
+# =====================================================================
+# CLIENT SUCCESS METRICS API ENDPOINTS
+# =====================================================================
+
+@app.route("/api/client-success/dashboard", methods=["GET"])
+@require_staff()
+def api_client_success_dashboard():
+    """Get dashboard summary for client success metrics"""
+    from services.client_success_service import ClientSuccessService
+
+    service = ClientSuccessService(g.db_session)
+    summary = service.get_dashboard_summary()
+
+    return jsonify({
+        "success": True,
+        **summary,
+    })
+
+
+@app.route("/api/client-success/aggregate", methods=["GET"])
+@require_staff()
+def api_client_success_aggregate():
+    """Get aggregate success report"""
+    from services.client_success_service import ClientSuccessService
+
+    period = request.args.get("period", "all")
+
+    service = ClientSuccessService(g.db_session)
+    report = service.get_aggregate_report(period=period)
+
+    return jsonify({
+        "success": True,
+        **report,
+    })
+
+
+@app.route("/api/client-success/client/<int:client_id>", methods=["GET"])
+@require_staff()
+def api_client_success_client(client_id):
+    """Get success summary for a specific client"""
+    from services.client_success_service import ClientSuccessService
+
+    service = ClientSuccessService(g.db_session)
+    summary = service.get_client_summary(client_id)
+
+    if "error" in summary:
+        return jsonify({"success": False, "error": summary["error"]}), 404
+
+    return jsonify({
+        "success": True,
+        **summary,
+    })
+
+
+@app.route("/api/client-success/client/<int:client_id>/snapshot", methods=["POST"])
+@require_staff()
+def api_client_success_create_snapshot(client_id):
+    """Create a new success metric snapshot for a client"""
+    from services.client_success_service import ClientSuccessService
+
+    data = request.get_json() or {}
+    snapshot_type = data.get("snapshot_type", "manual")
+
+    service = ClientSuccessService(g.db_session)
+    snapshot = service.create_snapshot(client_id, snapshot_type)
+
+    if not snapshot:
+        return jsonify({"success": False, "error": "Failed to create snapshot"}), 400
+
+    return jsonify({
+        "success": True,
+        "snapshot": snapshot.to_dict(),
+    })
+
+
+@app.route("/api/client-success/client/<int:client_id>/history", methods=["GET"])
+@require_staff()
+def api_client_success_history(client_id):
+    """Get snapshot history for a client"""
+    from services.client_success_service import ClientSuccessService
+
+    limit = int(request.args.get("limit", 12))
+
+    service = ClientSuccessService(g.db_session)
+    history = service.get_snapshot_history(client_id, limit=limit)
+
+    return jsonify({
+        "success": True,
+        "history": [s.to_dict() for s in history],
+    })
+
+
+@app.route("/api/client-success/top-performers", methods=["GET"])
+@require_staff()
+def api_client_success_top_performers():
+    """Get top performing clients"""
+    from services.client_success_service import ClientSuccessService
+
+    limit = int(request.args.get("limit", 10))
+    metric = request.args.get("metric", "deletion_rate")
+
+    service = ClientSuccessService(g.db_session)
+    performers = service.get_top_performers(limit=limit, metric=metric)
+
+    return jsonify({
+        "success": True,
+        "metric": metric,
+        "performers": performers,
+    })
+
+
+@app.route("/api/client-success/trend", methods=["GET"])
+@require_staff()
+def api_client_success_trend():
+    """Get success metrics trend over time"""
+    from services.client_success_service import ClientSuccessService
+
+    period = request.args.get("period", "month")
+    granularity = request.args.get("granularity", "day")
+
+    service = ClientSuccessService(g.db_session)
+    trend = service.get_success_trend(period=period, granularity=granularity)
+
+    return jsonify({
+        "success": True,
+        "period": period,
+        "trend": trend,
+    })
+
+
+@app.route("/api/client-success/bureau-breakdown", methods=["GET"])
+@require_staff()
+def api_client_success_bureau_breakdown():
+    """Get success metrics broken down by bureau"""
+    from services.client_success_service import ClientSuccessService
+
+    service = ClientSuccessService(g.db_session)
+    breakdown = service.get_bureau_breakdown()
+
+    return jsonify({
+        "success": True,
+        **breakdown,
+    })
+
+
+@app.route("/api/client-success/update-all", methods=["POST"])
+@require_staff()
+def api_client_success_update_all():
+    """Create snapshots for all active clients"""
+    from services.client_success_service import ClientSuccessService
+
+    data = request.get_json() or {}
+    snapshot_type = data.get("snapshot_type", "periodic")
+
+    service = ClientSuccessService(g.db_session)
+    result = service.update_all_clients(snapshot_type=snapshot_type)
+
+    return jsonify({
+        "success": True,
+        **result,
+    })
+
+
+@app.route("/api/client-success/export", methods=["GET"])
+@require_staff()
+def api_client_success_export():
+    """Export success metrics data"""
+    from services.client_success_service import ClientSuccessService
+    import csv
+    import io
+
+    client_ids = request.args.get("client_ids")
+    if client_ids:
+        client_ids = [int(id) for id in client_ids.split(",")]
+    else:
+        client_ids = None
+
+    service = ClientSuccessService(g.db_session)
+    data = service.export_success_data(client_ids=client_ids)
+
+    # Create CSV
+    output = io.StringIO()
+    if data:
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "text/csv"
+    response.headers["Content-Disposition"] = "attachment; filename=client_success_metrics.csv"
+
+    return response
+
+
+@app.route("/dashboard/client-success", methods=["GET"])
+@require_staff()
+def dashboard_client_success():
+    """Client success metrics dashboard page"""
+    return render_template("client_success.html")
+
+
+# =====================================================================
+# AI DISPUTE WRITER API ENDPOINTS
+# =====================================================================
+
+@app.route("/api/ai-dispute-writer/dashboard", methods=["GET"])
+@require_staff()
+def api_ai_dispute_writer_dashboard():
+    """Get dashboard data for AI Dispute Writer"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    client_id = request.args.get("client_id", type=int)
+
+    service = AIDisputeWriterService(g.db_session)
+    data = service.get_dashboard_data(client_id=client_id)
+
+    if "error" in data:
+        return jsonify({"success": False, "error": data["error"]}), 400
+
+    return jsonify({
+        "success": True,
+        **data,
+    })
+
+
+@app.route("/api/ai-dispute-writer/rounds", methods=["GET"])
+@require_staff()
+def api_ai_dispute_writer_rounds():
+    """Get information about all dispute rounds"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    service = AIDisputeWriterService(g.db_session)
+    rounds = service.get_all_rounds_info()
+
+    return jsonify({
+        "success": True,
+        "rounds": rounds,
+    })
+
+
+@app.route("/api/ai-dispute-writer/client/<int:client_id>/context", methods=["GET"])
+@require_staff()
+def api_ai_dispute_writer_context(client_id):
+    """Get client context for letter generation"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    service = AIDisputeWriterService(g.db_session)
+    context = service.get_client_context(client_id)
+
+    if "error" in context:
+        return jsonify({"success": False, "error": context["error"]}), 404
+
+    # Serialize context
+    return jsonify({
+        "success": True,
+        "client": {
+            "id": context["client"].id,
+            "name": context["client"].name,
+            "email": context["client"].email,
+            "current_round": context["client"].current_dispute_round or 1,
+        },
+        "violations_count": len(context["violations"]),
+        "dispute_items_count": len(context["dispute_items"]),
+        "cra_responses_count": len(context["cra_responses"]),
+        "current_round": context["current_round"],
+    })
+
+
+@app.route("/api/ai-dispute-writer/client/<int:client_id>/suggest", methods=["GET"])
+@require_staff()
+def api_ai_dispute_writer_suggest(client_id):
+    """Get AI suggestion for next action"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    service = AIDisputeWriterService(g.db_session)
+    suggestion = service.suggest_next_action(client_id)
+
+    if "error" in suggestion:
+        return jsonify({"success": False, "error": suggestion["error"]}), 400
+
+    return jsonify({
+        "success": True,
+        **suggestion,
+    })
+
+
+@app.route("/api/ai-dispute-writer/generate", methods=["POST"])
+@require_staff()
+def api_ai_dispute_writer_generate():
+    """Generate dispute letters using AI"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    if not client_id:
+        return jsonify({"success": False, "error": "client_id required"}), 400
+
+    round_number = data.get("round", 1)
+    selected_item_ids = data.get("selected_items")
+    bureaus = data.get("bureaus")
+    custom_instructions = data.get("custom_instructions")
+    tone = data.get("tone", "professional")
+
+    service = AIDisputeWriterService(g.db_session)
+    result = service.generate_letters(
+        client_id=client_id,
+        round_number=round_number,
+        selected_item_ids=selected_item_ids,
+        bureaus=bureaus,
+        custom_instructions=custom_instructions,
+        tone=tone,
+    )
+
+    if "error" in result:
+        return jsonify({"success": False, "error": result["error"]}), 400
+
+    return jsonify(result)
+
+
+@app.route("/api/ai-dispute-writer/generate-quick", methods=["POST"])
+@require_staff()
+def api_ai_dispute_writer_generate_quick():
+    """Generate a quick single letter"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    bureau = data.get("bureau")
+    item_description = data.get("item_description")
+    violation_type = data.get("violation_type")
+
+    if not all([client_id, bureau, item_description, violation_type]):
+        return jsonify({
+            "success": False,
+            "error": "client_id, bureau, item_description, and violation_type required"
+        }), 400
+
+    custom_text = data.get("custom_text")
+
+    service = AIDisputeWriterService(g.db_session)
+    result = service.generate_quick_letter(
+        client_id=client_id,
+        bureau=bureau,
+        item_description=item_description,
+        violation_type=violation_type,
+        custom_text=custom_text,
+    )
+
+    if "error" in result:
+        return jsonify({"success": False, "error": result["error"]}), 400
+
+    return jsonify(result)
+
+
+@app.route("/api/ai-dispute-writer/regenerate", methods=["POST"])
+@require_staff()
+def api_ai_dispute_writer_regenerate():
+    """Regenerate a letter with feedback"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    bureau = data.get("bureau")
+    original_letter = data.get("original_letter")
+    feedback = data.get("feedback")
+    round_number = data.get("round", 1)
+
+    if not all([client_id, bureau, original_letter, feedback]):
+        return jsonify({
+            "success": False,
+            "error": "client_id, bureau, original_letter, and feedback required"
+        }), 400
+
+    service = AIDisputeWriterService(g.db_session)
+    result = service.regenerate_with_feedback(
+        client_id=client_id,
+        bureau=bureau,
+        original_letter=original_letter,
+        feedback=feedback,
+        round_number=round_number,
+    )
+
+    if "error" in result:
+        return jsonify({"success": False, "error": result["error"]}), 400
+
+    return jsonify(result)
+
+
+@app.route("/api/ai-dispute-writer/save", methods=["POST"])
+@require_staff()
+def api_ai_dispute_writer_save():
+    """Save a generated letter"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    data = request.get_json() or {}
+
+    client_id = data.get("client_id")
+    bureau = data.get("bureau")
+    content = data.get("content")
+    round_number = data.get("round", 1)
+    analysis_id = data.get("analysis_id")
+
+    if not all([client_id, bureau, content]):
+        return jsonify({
+            "success": False,
+            "error": "client_id, bureau, and content required"
+        }), 400
+
+    service = AIDisputeWriterService(g.db_session)
+    try:
+        letter = service.save_letter(
+            client_id=client_id,
+            bureau=bureau,
+            content=content,
+            round_number=round_number,
+            analysis_id=analysis_id,
+        )
+        return jsonify({
+            "success": True,
+            "letter_id": letter.id,
+            "message": "Letter saved successfully",
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+@app.route("/api/ai-dispute-writer/client/<int:client_id>/letters", methods=["GET"])
+@require_staff()
+def api_ai_dispute_writer_letters(client_id):
+    """Get saved letters for a client"""
+    from services.ai_dispute_writer_service import AIDisputeWriterService
+
+    round_number = request.args.get("round", type=int)
+
+    service = AIDisputeWriterService(g.db_session)
+    letters = service.get_saved_letters(client_id, round_number=round_number)
+
+    return jsonify({
+        "success": True,
+        "letters": [
+            {
+                "id": l.id,
+                "bureau": l.bureau,
+                "round": l.round_number,
+                "content": l.letter_content,
+                "created_at": l.created_at.isoformat() if l.created_at else None,
+                "sent_at": l.sent_at.isoformat() if l.sent_at else None,
+            }
+            for l in letters
+        ],
+    })
+
+
+@app.route("/dashboard/ai-dispute-writer", methods=["GET"])
+@require_staff()
+def dashboard_ai_dispute_writer():
+    """AI Dispute Writer dashboard page"""
+    return render_template("ai_dispute_writer.html")
+
+
+# =============================================================================
+# ROI CALCULATOR ENDPOINTS
+# =============================================================================
+
+@app.route("/api/roi-calculator/dashboard", methods=["GET"])
+@require_staff()
+def api_roi_calculator_dashboard():
+    """Get ROI calculator dashboard summary"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        service = ROICalculatorService()
+        summary = service.get_dashboard_summary()
+        return jsonify({"success": True, **summary})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/calculate/<int:client_id>", methods=["POST"])
+@require_staff()
+def api_roi_calculator_calculate(client_id):
+    """Calculate ROI for a specific client"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        data = request.get_json() or {}
+
+        actual_damages = data.get('actual_damages')
+        save = data.get('save', True)
+
+        service = ROICalculatorService()
+        result = service.calculate_roi(
+            client_id=client_id,
+            staff_id=session.get('staff_id'),
+            actual_damages=actual_damages,
+            save=save
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/quick-estimate", methods=["POST"])
+@require_staff()
+def api_roi_calculator_quick_estimate():
+    """Quick ROI estimate without client data"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        data = request.get_json() or {}
+
+        service = ROICalculatorService()
+        result = service.quick_estimate(
+            violations_count=data.get('violations_count', 0),
+            willful_count=data.get('willful_count', 0),
+            collections_count=data.get('collections_count', 0),
+            chargeoffs_count=data.get('chargeoffs_count', 0),
+            late_payments_count=data.get('late_payments_count', 0),
+            inquiries_count=data.get('inquiries_count', 0),
+            public_records_count=data.get('public_records_count', 0),
+            actual_damages=data.get('actual_damages', 0)
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/client/<int:client_id>", methods=["GET"])
+@require_staff()
+def api_roi_calculator_client_history(client_id):
+    """Get calculation history for a client"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        limit = request.args.get('limit', 10, type=int)
+
+        service = ROICalculatorService()
+        calculations = service.get_client_calculations(client_id, limit=limit)
+
+        return jsonify({"success": True, "calculations": calculations})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/calculation/<int:calculation_id>", methods=["GET"])
+@require_staff()
+def api_roi_calculator_get_calculation(calculation_id):
+    """Get a specific calculation"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        service = ROICalculatorService()
+        calculation = service.get_calculation(calculation_id)
+
+        if calculation:
+            return jsonify({"success": True, "calculation": calculation})
+        return jsonify({"success": False, "error": "Calculation not found"}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/stats", methods=["GET"])
+@require_staff()
+def api_roi_calculator_stats():
+    """Get aggregate statistics"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        period = request.args.get('period', 'all')
+
+        service = ROICalculatorService()
+        stats = service.get_aggregate_stats(period=period)
+
+        return jsonify({"success": True, **stats})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/roi-calculator/export", methods=["GET"])
+@require_staff()
+def api_roi_calculator_export():
+    """Export calculations as CSV"""
+    try:
+        from services.roi_calculator_service import ROICalculatorService
+        import csv
+        from io import StringIO
+
+        period = request.args.get('period', 'all')
+        client_ids = request.args.get('client_ids')
+
+        if client_ids:
+            client_ids = [int(x) for x in client_ids.split(',')]
+
+        service = ROICalculatorService()
+        data = service.export_calculations(client_ids=client_ids, period=period)
+
+        if not data:
+            return jsonify({"success": False, "error": "No data to export"}), 404
+
+        # Create CSV
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = f'attachment; filename=roi_calculations_{period}.csv'
+
+        return response
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/dashboard/roi-calculator", methods=["GET"])
+@require_staff()
+def dashboard_roi_calculator():
+    """ROI Calculator dashboard page"""
+    return render_template("roi_calculator.html")
+
+
+# =============================================================================
+# PAYMENT PLANS ENDPOINTS
+# =============================================================================
+
+@app.route("/api/payment-plans", methods=["GET"])
+@require_staff()
+def api_payment_plans_list():
+    """List payment plans with filtering"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+
+        status = request.args.get('status')
+        client_id = request.args.get('client_id', type=int)
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        service = PaymentPlanService()
+        result = service.list_plans(
+            status=status,
+            client_id=client_id,
+            limit=limit,
+            offset=offset
+        )
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans", methods=["POST"])
+@require_staff()
+def api_payment_plans_create():
+    """Create a new payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        required = ['client_id', 'total_amount']
+        for field in required:
+            if field not in data:
+                return jsonify({"success": False, "error": f"Missing {field}"}), 400
+
+        service = PaymentPlanService()
+        result = service.create_plan(
+            client_id=data['client_id'],
+            total_amount=data['total_amount'],
+            num_installments=data.get('num_installments', 3),
+            down_payment=data.get('down_payment', 0),
+            start_date=data.get('start_date'),
+            frequency=data.get('frequency', 'monthly'),
+            plan_name=data.get('plan_name'),
+            plan_type=data.get('plan_type', 'custom'),
+            payment_method=data.get('payment_method'),
+            auto_charge=data.get('auto_charge', False),
+            grace_period_days=data.get('grace_period_days', 5),
+            late_fee_amount=data.get('late_fee_amount', 0),
+            late_fee_percent=data.get('late_fee_percent', 0),
+            notes=data.get('notes'),
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>", methods=["GET"])
+@require_staff()
+def api_payment_plans_get(plan_id):
+    """Get a payment plan with installments"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.get_plan(plan_id)
+
+        if result:
+            return jsonify({"success": True, **result})
+        return jsonify({"success": False, "error": "Plan not found"}), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>", methods=["PUT"])
+@require_staff()
+def api_payment_plans_update(plan_id):
+    """Update a payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.update_plan(plan_id, data)
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/payment", methods=["POST"])
+@require_staff()
+def api_payment_plans_record_payment(plan_id):
+    """Record a payment against a plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        if 'amount' not in data:
+            return jsonify({"success": False, "error": "Amount is required"}), 400
+
+        service = PaymentPlanService()
+        result = service.record_payment(
+            plan_id=plan_id,
+            amount=data['amount'],
+            payment_method=data.get('payment_method', 'manual'),
+            installment_id=data.get('installment_id'),
+            reference_number=data.get('reference_number'),
+            stripe_payment_intent_id=data.get('stripe_payment_intent_id'),
+            staff_id=session.get('staff_id'),
+            notes=data.get('notes')
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/pause", methods=["POST"])
+@require_staff()
+def api_payment_plans_pause(plan_id):
+    """Pause a payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.pause_plan(plan_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/resume", methods=["POST"])
+@require_staff()
+def api_payment_plans_resume(plan_id):
+    """Resume a paused payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.resume_plan(plan_id)
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/cancel", methods=["POST"])
+@require_staff()
+def api_payment_plans_cancel(plan_id):
+    """Cancel a payment plan"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.cancel_plan(plan_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/<int:plan_id>/default", methods=["POST"])
+@require_staff()
+def api_payment_plans_default(plan_id):
+    """Mark a payment plan as defaulted"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.mark_defaulted(plan_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/installments/<int:installment_id>/waive", methods=["POST"])
+@require_staff()
+def api_payment_plans_waive_installment(installment_id):
+    """Waive an installment"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        data = request.get_json() or {}
+
+        service = PaymentPlanService()
+        result = service.waive_installment(installment_id, reason=data.get('reason'))
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/dashboard", methods=["GET"])
+@require_staff()
+def api_payment_plans_dashboard():
+    """Get payment plans dashboard summary"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        summary = service.get_dashboard_summary()
+
+        return jsonify({"success": True, **summary})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/due-soon", methods=["GET"])
+@require_staff()
+def api_payment_plans_due_soon():
+    """Get installments due soon"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        days = request.args.get('days', 7, type=int)
+
+        service = PaymentPlanService()
+        result = service.get_due_soon(days=days)
+
+        return jsonify({"success": True, "installments": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/overdue", methods=["GET"])
+@require_staff()
+def api_payment_plans_overdue():
+    """Get overdue installments"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.get_overdue()
+
+        return jsonify({"success": True, "installments": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/check-late", methods=["POST"])
+@require_staff()
+def api_payment_plans_check_late():
+    """Check for late payments and apply late fees"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        result = service.check_late_payments()
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/payment-plans/export", methods=["GET"])
+@require_staff()
+def api_payment_plans_export():
+    """Export payment plans as CSV"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        import csv
+        from io import StringIO
+
+        status = request.args.get('status')
+
+        service = PaymentPlanService()
+        data = service.export_plans(status=status)
+
+        if not data:
+            return jsonify({"success": False, "error": "No data to export"}), 404
+
+        # Create CSV
+        output = StringIO()
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv'
+        response.headers['Content-Disposition'] = 'attachment; filename=payment_plans.csv'
+
+        return response
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/payment-plans", methods=["GET"])
+@require_staff()
+def api_client_payment_plans(client_id):
+    """Get payment plans for a specific client"""
+    try:
+        from services.payment_plan_service import PaymentPlanService
+        service = PaymentPlanService()
+        plans = service.get_client_plans(client_id)
+
+        return jsonify({"success": True, "plans": plans})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/dashboard/payment-plans", methods=["GET"])
+@require_staff()
+def dashboard_payment_plans():
+    """Payment Plans management dashboard"""
+    return render_template("payment_plans.html")
+
+
+# ==============================================================================
+# BUREAU RESPONSE TRACKING ENDPOINTS (P24)
+# ==============================================================================
+
+
+@app.route("/api/bureau-tracking/dashboard", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_dashboard():
+    """Get bureau response tracking dashboard summary"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify(summary)
+
+
+@app.route("/api/bureau-tracking", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_list():
+    """List all bureau dispute tracking records"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    bureau = request.args.get('bureau')
+    status = request.args.get('status')
+    client_id = request.args.get('client_id', type=int)
+
+    if client_id:
+        disputes = service.get_client_disputes(client_id, bureau=bureau, status=status)
+    else:
+        disputes = service.get_all_pending(bureau=bureau)
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_create():
+    """Track a new dispute sent to a bureau"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    # Parse sent_date
+    sent_date_str = data.get('sent_date')
+    if sent_date_str:
+        sent_date = datetime.strptime(sent_date_str, '%Y-%m-%d').date()
+    else:
+        sent_date = datetime.now().date()
+
+    result = service.track_dispute_sent(
+        client_id=data.get('client_id'),
+        bureau=data.get('bureau'),
+        sent_date=sent_date,
+        dispute_round=data.get('dispute_round', 1),
+        item_ids=data.get('item_ids'),
+        sent_method=data.get('sent_method', 'certified_mail'),
+        tracking_number=data.get('tracking_number'),
+        letter_id=data.get('letter_id'),
+        certified_mail_id=data.get('certified_mail_id'),
+        case_id=data.get('case_id'),
+        is_complex=data.get('is_complex', False),
+        sent_by_staff_id=session.get('staff_id'),
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_get(tracking_id):
+    """Get a specific tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    tracking = service.get_tracking(tracking_id)
+
+    if tracking:
+        return jsonify({"success": True, "tracking": tracking})
+    return jsonify({"success": False, "error": "Tracking record not found"}), 404
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/delivery", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_confirm_delivery(tracking_id):
+    """Confirm delivery of dispute letter"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    delivery_date = None
+    if data.get('delivery_date'):
+        delivery_date = datetime.strptime(data['delivery_date'], '%Y-%m-%d').date()
+
+    result = service.confirm_delivery(
+        tracking_id=tracking_id,
+        delivery_date=delivery_date,
+        recalculate_deadline=data.get('recalculate_deadline', True)
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/response", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_record_response(tracking_id):
+    """Record a response received from bureau"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    response_date_str = data.get('response_date')
+    if response_date_str:
+        response_date = datetime.strptime(response_date_str, '%Y-%m-%d').date()
+    else:
+        response_date = datetime.now().date()
+
+    result = service.record_response(
+        tracking_id=tracking_id,
+        response_date=response_date,
+        response_type=data.get('response_type'),
+        items_deleted=data.get('items_deleted', 0),
+        items_updated=data.get('items_updated', 0),
+        items_verified=data.get('items_verified', 0),
+        items_investigating=data.get('items_investigating', 0),
+        response_document_id=data.get('response_document_id'),
+        follow_up_required=data.get('follow_up_required', False),
+        follow_up_type=data.get('follow_up_type'),
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/link-response", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_link_response(tracking_id):
+    """Link a CRA response document to tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json()
+    service = BureauResponseService()
+
+    result = service.link_cra_response(
+        tracking_id=tracking_id,
+        cra_response_id=data.get('cra_response_id')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/close", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_close(tracking_id):
+    """Close a tracking record"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    result = service.close_dispute(
+        tracking_id=tracking_id,
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/<int:tracking_id>/follow-up", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_complete_followup(tracking_id):
+    """Mark follow-up as completed"""
+    from services.bureau_response_service import BureauResponseService
+
+    data = request.get_json() or {}
+    service = BureauResponseService()
+
+    result = service.complete_follow_up(
+        tracking_id=tracking_id,
+        notes=data.get('notes')
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/bureau-tracking/check-overdue", methods=["POST"])
+@require_staff()
+def api_bureau_tracking_check_overdue():
+    """Check for overdue disputes and update status"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    result = service.check_overdue_disputes()
+
+    return jsonify(result)
+
+
+@app.route("/api/bureau-tracking/due-soon", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_due_soon():
+    """Get disputes due within N days"""
+    from services.bureau_response_service import BureauResponseService
+
+    days = request.args.get('days', 7, type=int)
+    service = BureauResponseService()
+    disputes = service.get_due_soon(days=days)
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking/overdue", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_overdue():
+    """Get all overdue disputes"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    disputes = service.get_overdue()
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/api/bureau-tracking/bureau-breakdown", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_breakdown():
+    """Get breakdown by bureau"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    breakdown = service.get_bureau_breakdown()
+
+    return jsonify({"success": True, "breakdown": breakdown})
+
+
+@app.route("/api/bureau-tracking/export", methods=["GET"])
+@require_staff()
+def api_bureau_tracking_export():
+    """Export tracking data as CSV"""
+    from services.bureau_response_service import BureauResponseService
+    from datetime import datetime
+    import csv
+    import io
+
+    service = BureauResponseService()
+
+    client_id = request.args.get('client_id', type=int)
+    status = request.args.get('status')
+    bureau = request.args.get('bureau')
+
+    data = service.export_data(
+        client_id=client_id,
+        status=status,
+        bureau=bureau
+    )
+
+    # Create CSV
+    output = io.StringIO()
+    if data:
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+
+    response = make_response(output.getvalue())
+    response.headers["Content-Disposition"] = f"attachment; filename=bureau_tracking_{datetime.now().strftime('%Y%m%d')}.csv"
+    response.headers["Content-Type"] = "text/csv"
+
+    return response
+
+
+@app.route("/api/clients/<int:client_id>/bureau-tracking", methods=["GET"])
+@require_staff()
+def api_client_bureau_tracking(client_id):
+    """Get bureau tracking for a specific client"""
+    from services.bureau_response_service import BureauResponseService
+
+    service = BureauResponseService()
+    bureau = request.args.get('bureau')
+    dispute_round = request.args.get('round', type=int)
+
+    disputes = service.get_client_disputes(
+        client_id=client_id,
+        bureau=bureau,
+        dispute_round=dispute_round
+    )
+
+    return jsonify({"success": True, "disputes": disputes})
+
+
+@app.route("/dashboard/bureau-tracking", methods=["GET"])
+@require_staff()
+def dashboard_bureau_tracking():
+    """Bureau Response Tracking dashboard"""
+    from services.bureau_response_service import BureauResponseService
+
+    db = get_db()
+    try:
+        # Get dashboard summary stats
+        stats = BureauResponseService.get_dashboard_summary(db)
+
+        # Get bureau breakdown
+        bureau_stats = BureauResponseService.get_bureau_breakdown(db)
+
+        # Get all pending disputes for the table
+        disputes = BureauResponseService.get_pending(db)
+
+        # Get due soon (within 7 days)
+        due_soon = BureauResponseService.get_due_soon(db, days=7)
+
+        # Get overdue disputes
+        overdue = BureauResponseService.get_overdue(db)
+
+        # Get response type breakdown
+        response_types = BureauResponseService.get_response_type_breakdown(db)
+
+        # Get client list for the tracking modal
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(['lead', 'cancelled'])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "bureau_tracking.html",
+            active_page='bureau-tracking',
+            stats=stats,
+            bureau_stats=bureau_stats,
+            disputes=disputes,
+            due_soon=due_soon,
+            overdue=overdue,
+            response_types=response_types,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
+# =============================================================================
+# LETTER TEMPLATE BUILDER ENDPOINTS (P26)
+# =============================================================================
+
+@app.route("/api/letter-templates", methods=["GET"])
+@require_staff()
+def api_letter_templates_list():
+    """List letter templates with filtering"""
+    from services.letter_template_service import LetterTemplateService
+
+    category = request.args.get('category')
+    dispute_round = request.args.get('dispute_round', type=int)
+    target_type = request.args.get('target_type')
+    is_active = request.args.get('is_active', 'true').lower() == 'true'
+    search = request.args.get('search')
+    limit = request.args.get('limit', 100, type=int)
+    offset = request.args.get('offset', 0, type=int)
+
+    service = LetterTemplateService()
+    templates = service.list_templates(
+        category=category,
+        dispute_round=dispute_round,
+        target_type=target_type,
+        is_active=is_active,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+
+    return jsonify({
+        'success': True,
+        'templates': templates,
+        'count': len(templates),
+    })
+
+
+@app.route("/api/letter-templates", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_create():
+    """Create a new letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    required = ['name', 'code', 'category', 'content']
+    for field in required:
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+
+    service = LetterTemplateService()
+    result = service.create_template(
+        name=data['name'],
+        code=data['code'],
+        category=data['category'],
+        content=data['content'],
+        dispute_round=data.get('dispute_round'),
+        target_type=data.get('target_type', 'bureau'),
+        subject=data.get('subject'),
+        footer=data.get('footer'),
+        variables=data.get('variables'),
+        required_attachments=data.get('required_attachments'),
+        recommended_for=data.get('recommended_for'),
+        description=data.get('description'),
+        instructions=data.get('instructions'),
+        legal_basis=data.get('legal_basis'),
+        is_system=False,
+        created_by_staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_get(template_id):
+    """Get a single letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    template = service.get_template(template_id)
+
+    if not template:
+        return jsonify({'success': False, 'error': 'Template not found'}), 404
+
+    return jsonify({
+        'success': True,
+        'template': template,
+    })
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["PUT"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_update(template_id):
+    """Update a letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    service = LetterTemplateService()
+    result = service.update_template(
+        template_id=template_id,
+        updates=data,
+        change_summary=data.get('change_summary'),
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>", methods=["DELETE"])
+@require_staff(roles=['admin'])
+def api_letter_templates_delete(template_id):
+    """Delete a letter template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.delete_template(template_id)
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/duplicate", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_duplicate(template_id):
+    """Duplicate an existing template"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    if not data.get('new_name') or not data.get('new_code'):
+        return jsonify({'success': False, 'error': 'new_name and new_code are required'}), 400
+
+    service = LetterTemplateService()
+    result = service.duplicate_template(
+        template_id=template_id,
+        new_name=data['new_name'],
+        new_code=data['new_code'],
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/versions", methods=["GET"])
+@require_staff()
+def api_letter_templates_versions(template_id):
+    """Get version history for a template"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    versions = service.get_template_versions(template_id)
+
+    return jsonify({
+        'success': True,
+        'versions': versions,
+        'count': len(versions),
+    })
+
+
+@app.route("/api/letter-templates/<int:template_id>/restore/<int:version_id>", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_restore(template_id, version_id):
+    """Restore a template to a previous version"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.restore_version(
+        template_id=template_id,
+        version_id=version_id,
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/<int:template_id>/render", methods=["POST"])
+@require_staff()
+def api_letter_templates_render(template_id):
+    """Render a template with variables"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    variables = data.get('variables', {}) if data else {}
+
+    service = LetterTemplateService()
+    result = service.render_template(template_id, variables)
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/generate", methods=["POST"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_generate():
+    """Generate a letter from a template for a client"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'No data provided'}), 400
+
+    required = ['template_id', 'client_id', 'target_type', 'target_name']
+    for field in required:
+        if not data.get(field):
+            return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
+
+    service = LetterTemplateService()
+    result = service.generate_letter(
+        template_id=data['template_id'],
+        client_id=data['client_id'],
+        target_type=data['target_type'],
+        target_name=data['target_name'],
+        custom_variables=data.get('custom_variables'),
+        staff_id=session.get('staff_id'),
+        case_id=data.get('case_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result), 201
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/generated", methods=["GET"])
+@require_staff()
+def api_letter_templates_generated_list():
+    """List generated letters"""
+    from services.letter_template_service import LetterTemplateService
+
+    client_id = request.args.get('client_id', type=int)
+    template_id = request.args.get('template_id', type=int)
+    status = request.args.get('status')
+    limit = request.args.get('limit', 50, type=int)
+    offset = request.args.get('offset', 0, type=int)
+
+    service = LetterTemplateService()
+    letters = service.list_generated_letters(
+        client_id=client_id,
+        template_id=template_id,
+        status=status,
+        limit=limit,
+        offset=offset,
+    )
+
+    return jsonify({
+        'success': True,
+        'letters': letters,
+        'count': len(letters),
+    })
+
+
+@app.route("/api/letter-templates/generated/<int:letter_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_generated_get(letter_id):
+    """Get a generated letter"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    letter = service.get_generated_letter(letter_id)
+
+    if not letter:
+        return jsonify({'success': False, 'error': 'Letter not found'}), 404
+
+    return jsonify({
+        'success': True,
+        'letter': letter,
+    })
+
+
+@app.route("/api/letter-templates/generated/<int:letter_id>/status", methods=["PUT"])
+@require_staff(roles=['admin', 'attorney', 'paralegal'])
+def api_letter_templates_generated_status(letter_id):
+    """Update generated letter status"""
+    from services.letter_template_service import LetterTemplateService
+
+    data = request.get_json()
+    if not data or not data.get('status'):
+        return jsonify({'success': False, 'error': 'Status is required'}), 400
+
+    service = LetterTemplateService()
+    result = service.update_letter_status(
+        letter_id=letter_id,
+        status=data['status'],
+        sent_method=data.get('sent_method'),
+        tracking_number=data.get('tracking_number'),
+        staff_id=session.get('staff_id'),
+    )
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/api/letter-templates/dashboard", methods=["GET"])
+@require_staff()
+def api_letter_templates_dashboard():
+    """Get dashboard summary for letter templates"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    summary = service.get_dashboard_summary()
+
+    return jsonify({
+        'success': True,
+        **summary,
+    })
+
+
+@app.route("/api/letter-templates/categories", methods=["GET"])
+@require_staff()
+def api_letter_templates_categories():
+    """Get available template categories"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'categories': LetterTemplateService.get_categories(),
+    })
+
+
+@app.route("/api/letter-templates/target-types", methods=["GET"])
+@require_staff()
+def api_letter_templates_target_types():
+    """Get available target types"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'target_types': LetterTemplateService.get_target_types(),
+    })
+
+
+@app.route("/api/letter-templates/variables", methods=["GET"])
+@require_staff()
+def api_letter_templates_variables():
+    """Get common template variables"""
+    from services.letter_template_service import LetterTemplateService
+
+    return jsonify({
+        'success': True,
+        'variables': LetterTemplateService.get_common_variables(),
+    })
+
+
+@app.route("/api/letter-templates/client-variables/<int:client_id>", methods=["GET"])
+@require_staff()
+def api_letter_templates_client_variables(client_id):
+    """Get variable values for a specific client"""
+    from services.letter_template_service import LetterTemplateService
+
+    bureau = request.args.get('bureau')
+
+    service = LetterTemplateService()
+    variables = service.get_client_variables(client_id, bureau)
+
+    return jsonify({
+        'success': True,
+        'variables': variables,
+    })
+
+
+@app.route("/api/letter-templates/seed", methods=["POST"])
+@require_staff(roles=['admin'])
+def api_letter_templates_seed():
+    """Seed default letter templates"""
+    from services.letter_template_service import LetterTemplateService
+
+    service = LetterTemplateService()
+    result = service.seed_default_templates()
+
+    if result.get('success'):
+        return jsonify(result)
+    return jsonify(result), 400
+
+
+@app.route("/dashboard/letter-templates", methods=["GET"])
+@require_staff()
+def dashboard_letter_templates():
+    """Letter Template Builder dashboard page"""
+    from services.letter_template_service import LetterTemplateService, CATEGORIES, TARGET_TYPES
+
+    service = LetterTemplateService()
+    summary = service.get_dashboard_summary()
+    templates = service.list_templates(is_active=True)
+
+    db = get_db()
+    try:
+        clients = db.query(Client).filter(
+            Client.dispute_status.notin_(['lead', 'cancelled'])
+        ).order_by(Client.name).all()
+
+        return render_template(
+            "letter_templates.html",
+            active_page='letter-templates',
+            stats=summary,
+            templates=templates,
+            categories=CATEGORIES,
+            target_types=TARGET_TYPES,
+            clients=clients,
+        )
+    finally:
+        db.close()
+
+
+# ==================== VOICEMAIL DROP ENDPOINTS ====================
+
+@app.route("/api/voicemail/recordings", methods=["GET"])
+@require_staff()
+def api_voicemail_recordings_list():
+    """List all voicemail recordings"""
+    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+
+    service = get_voicemail_drop_service()
+    try:
+        category = request.args.get('category')
+        active_only = request.args.get('active', 'true').lower() == 'true'
+
+        recordings = service.get_recordings(category=category, active_only=active_only)
+        return jsonify({
+            'success': True,
+            'recordings': [r.to_dict() for r in recordings],
+            'categories': VOICEMAIL_CATEGORIES
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings", methods=["POST"])
+@require_staff()
+def api_voicemail_recordings_create():
+    """Create a new voicemail recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+    import os
+    from werkzeug.utils import secure_filename
+
+    # Check for file upload
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No file selected'}), 400
+
+    # Validate file type
+    allowed_extensions = {'mp3', 'wav', 'm4a'}
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in allowed_extensions:
+        return jsonify({'success': False, 'error': f'Invalid file type. Allowed: {", ".join(allowed_extensions)}'}), 400
+
+    # Save file
+    filename = secure_filename(file.filename)
+    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    filename = f"{timestamp}_{filename}"
+
+    upload_dir = os.path.join('static', 'voicemail')
+    os.makedirs(upload_dir, exist_ok=True)
+    file_path = os.path.join(upload_dir, filename)
+    file.save(file_path)
+
+    # Get file size
+    file_size = os.path.getsize(file_path)
+
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.create_recording(
+            name=request.form.get('name', filename),
+            description=request.form.get('description'),
+            category=request.form.get('category', 'custom'),
+            file_path=f'/static/voicemail/{filename}',
+            file_name=filename,
+            file_size_bytes=file_size,
+            duration_seconds=int(request.form.get('duration', 0)) or None,
+            format=ext,
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        }), 201
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_recording_get(recording_id):
+    """Get a specific recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.get_recording(recording_id)
+        if not recording:
+            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["PUT"])
+@require_staff()
+def api_voicemail_recording_update(recording_id):
+    """Update a recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json() or {}
+    service = get_voicemail_drop_service()
+    try:
+        recording = service.update_recording(
+            recording_id,
+            name=data.get('name'),
+            description=data.get('description'),
+            category=data.get('category'),
+            is_active=data.get('is_active')
+        )
+
+        if not recording:
+            return jsonify({'success': False, 'error': 'Recording not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'recording': recording.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/recordings/<int:recording_id>", methods=["DELETE"])
+@require_staff()
+def api_voicemail_recording_delete(recording_id):
+    """Delete (deactivate) a recording"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.delete_recording(recording_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops", methods=["GET"])
+@require_staff()
+def api_voicemail_drops_list():
+    """List voicemail drops with filters"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        drops = service.get_drops(
+            client_id=request.args.get('client_id', type=int),
+            recording_id=request.args.get('recording_id', type=int),
+            status=request.args.get('status'),
+            provider=request.args.get('provider'),
+            limit=request.args.get('limit', 100, type=int),
+            offset=request.args.get('offset', 0, type=int)
+        )
+
+        return jsonify({
+            'success': True,
+            'drops': [d.to_dict() for d in drops]
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops", methods=["POST"])
+@require_staff()
+def api_voicemail_drops_send():
+    """Send a voicemail drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+
+    if not data.get('recording_id') or not data.get('client_id'):
+        return jsonify({'success': False, 'error': 'recording_id and client_id required'}), 400
+
+    # Parse scheduled time if provided
+    scheduled_at = None
+    if data.get('scheduled_at'):
+        try:
+            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.send_drop(
+            recording_id=data['recording_id'],
+            client_id=data['client_id'],
+            phone_number=data.get('phone_number'),
+            trigger_type=data.get('trigger_type', 'manual'),
+            trigger_event=data.get('trigger_event'),
+            scheduled_at=scheduled_at,
+            staff_id=session.get('staff_id'),
+            provider=data.get('provider')
+        )
+
+        status = 201 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_drop_get(drop_id):
+    """Get a specific drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        drop = service.get_drop(drop_id)
+        if not drop:
+            return jsonify({'success': False, 'error': 'Drop not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'drop': drop.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>/retry", methods=["POST"])
+@require_staff()
+def api_voicemail_drop_retry(drop_id):
+    """Retry a failed drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.retry_drop(drop_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/drops/<int:drop_id>/cancel", methods=["POST"])
+@require_staff()
+def api_voicemail_drop_cancel(drop_id):
+    """Cancel a pending drop"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.cancel_drop(drop_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/clients/<int:client_id>/history", methods=["GET"])
+@require_staff()
+def api_voicemail_client_history(client_id):
+    """Get voicemail drop history for a client"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        history = service.get_client_drop_history(
+            client_id,
+            limit=request.args.get('limit', 20, type=int)
+        )
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns", methods=["GET"])
+@require_staff()
+def api_voicemail_campaigns_list():
+    """List all campaigns"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        campaigns = service.get_campaigns(
+            status=request.args.get('status')
+        )
+        return jsonify({
+            'success': True,
+            'campaigns': [c.to_dict() for c in campaigns]
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns", methods=["POST"])
+@require_staff()
+def api_voicemail_campaigns_create():
+    """Create a new campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Request body required'}), 400
+
+    if not data.get('name') or not data.get('recording_id'):
+        return jsonify({'success': False, 'error': 'name and recording_id required'}), 400
+
+    # Parse scheduled time if provided
+    scheduled_at = None
+    if data.get('scheduled_at'):
+        try:
+            scheduled_at = datetime.fromisoformat(data['scheduled_at'].replace('Z', '+00:00'))
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid scheduled_at format'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        campaign = service.create_campaign(
+            name=data['name'],
+            recording_id=data['recording_id'],
+            description=data.get('description'),
+            target_type=data.get('target_type', 'manual'),
+            target_filters=data.get('target_filters'),
+            scheduled_at=scheduled_at,
+            send_window_start=data.get('send_window_start'),
+            send_window_end=data.get('send_window_end'),
+            send_days=data.get('send_days'),
+            staff_id=session.get('staff_id')
+        )
+
+        return jsonify({
+            'success': True,
+            'campaign': campaign.to_dict()
+        }), 201
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>", methods=["GET"])
+@require_staff()
+def api_voicemail_campaign_get(campaign_id):
+    """Get a specific campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        campaign = service.get_campaign(campaign_id)
+        if not campaign:
+            return jsonify({'success': False, 'error': 'Campaign not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'campaign': campaign.to_dict()
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/targets", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_add_targets(campaign_id):
+    """Add targets to a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    data = request.get_json()
+    if not data or not data.get('client_ids'):
+        return jsonify({'success': False, 'error': 'client_ids array required'}), 400
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.add_targets_to_campaign(campaign_id, data['client_ids'])
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/start", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_start(campaign_id):
+    """Start a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.start_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/pause", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_pause(campaign_id):
+    """Pause a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.pause_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/campaigns/<int:campaign_id>/cancel", methods=["POST"])
+@require_staff()
+def api_voicemail_campaign_cancel(campaign_id):
+    """Cancel a campaign"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        result = service.cancel_campaign(campaign_id)
+        status = 200 if result['success'] else 400
+        return jsonify(result), status
+    finally:
+        service.db.close()
+
+
+@app.route("/api/voicemail/stats", methods=["GET"])
+@require_staff()
+def api_voicemail_stats():
+    """Get voicemail drop statistics"""
+    from services.voicemail_drop_service import get_voicemail_drop_service
+
+    service = get_voicemail_drop_service()
+    try:
+        stats = service.get_stats()
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    finally:
+        service.db.close()
+
+
+@app.route("/dashboard/voicemail", methods=["GET"])
+@require_staff()
+def dashboard_voicemail():
+    """Voicemail Drops dashboard page"""
+    from services.voicemail_drop_service import get_voicemail_drop_service, VOICEMAIL_CATEGORIES
+
+    service = get_voicemail_drop_service()
+    try:
+        stats = service.get_stats()
+        recordings = service.get_recordings(active_only=True, limit=50)
+        recent_drops = service.get_drops(limit=20)
+        campaigns = service.get_campaigns(limit=10)
+
+        db = get_db()
+        try:
+            clients = db.query(Client).filter(
+                Client.phone.isnot(None),
+                Client.dispute_status.notin_(['lead', 'cancelled'])
+            ).order_by(Client.name).all()
+
+            return render_template(
+                "voicemail_drops.html",
+                active_page='voicemail',
+                stats=stats,
+                recordings=recordings,
+                recent_drops=recent_drops,
+                campaigns=campaigns,
+                categories=VOICEMAIL_CATEGORIES,
+                clients=clients,
+            )
+        finally:
+            db.close()
+    finally:
+        service.db.close()
 
 
 @app.errorhandler(404)

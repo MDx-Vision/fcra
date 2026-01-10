@@ -1,341 +1,227 @@
 // Exhaustive test for /dashboard/billing
-describe.skip('Staff Login Page - /dashboard/billing', () => {
+describe('Billing Management Page - /dashboard/billing', () => {
   beforeEach(() => {
+    cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/billing');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/billing');
-      cy.get('[data-testid="login-container"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
     });
 
-    it('should not have console errors', () => {
-      cy.window().then((win) => {
-        cy.stub(win.console, 'error').as('consoleError');
-      });
-      cy.visit('/dashboard/billing');
-      // Console error check removed - spy setup issue;
+    it('should have correct page title', () => {
+      cy.title().should('contain', 'Billing Management');
+      cy.title().should('contain', 'Brightpath Ascend FCRA Platform');
     });
 
     it('should not return server errors', () => {
-      cy.request('/dashboard/billing').its('status').should('eq', 200);
-    });
-
-    it('should have correct page title structure', () => {
-      cy.title().should('contain', 'Staff Login');
-      cy.title().should('contain', 'Brightpath Ascend FCRA Platform');
+      cy.request('/dashboard/billing').its('status').should('be.oneOf', [200, 302]);
     });
   });
 
-  describe.skip('UI Element Tests', () => {
-    it('should display the main login container', () => {
-      cy.get('[data-testid="login-container"]').should('be.visible');
+  describe('Header Tests', () => {
+    it('should display the page header', () => {
+      cy.get('.header h1').should('contain.text', 'Billing & Subscription Management');
     });
 
-    it('should display the logo and company branding', () => {
-      cy.get('.login-container .logo img').should('be.visible');
-      cy.get('.login-container .logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
-      cy.get('.login-container .logo h1').should('contain.text', 'Brightpath');
-      cy.get('.login-container .logo h1 span').should('contain.text', 'Ascend');
-      cy.get('.login-container .logo p').should('contain.text', 'FCRA Litigation Platform');
+    it('should display Stripe status indicator', () => {
+      cy.get('#stripeStatus').should('exist');
     });
 
-    it('should display all headings correctly', () => {
-      cy.get('h1').should('contain.text', 'Brightpath Ascend Group');
-      cy.get('h2').should('contain.text', 'Staff Login');
-      cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
-    });
-
-    it('should display the login card with staff badge', () => {
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('.staff-badge').should('be.visible');
-      cy.get('.staff-badge').should('contain.text', 'Staff Portal');
-      cy.get('.staff-badge svg').should('be.visible');
-    });
-
-    it('should display the subtitle', () => {
-      cy.get('.subtitle').should('contain.text', 'Sign in to access the admin dashboard');
-    });
-
-    it('should display client portal link', () => {
-      cy.get('.client-portal-link').should('be.visible');
-      cy.get('.client-portal-link').should('contain.text', 'Looking for client portal?');
-      cy.get('[data-testid="client-portal-link"]').should('contain.text', 'Client Login');
-      cy.get('[data-testid="client-portal-link"]').should('have.attr', 'href', '/portal/login');
+    it('should display Create Plan button', () => {
+      cy.get('.header .btn-primary').should('be.visible');
+      cy.get('.header .btn-primary').should('contain.text', 'Create Plan');
     });
   });
 
-  describe.skip('Form Tests', () => {
-    it('should display the login form with correct attributes', () => {
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('#loginForm').should('have.attr', 'method', 'POST');
-      cy.get('#loginForm').should('have.attr', 'action', '/staff/login');
+  describe('Stats Grid Tests', () => {
+    it('should display stats grid', () => {
+      cy.get('.stats-grid').should('be.visible');
     });
 
-    it('should display email input field with correct attributes', () => {
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('#email').should('have.attr', 'type', 'email');
-      cy.get('#email').should('have.attr', 'name', 'email');
-      cy.get('#email').should('have.attr', 'placeholder', 'your@email.com');
-      cy.get('#email').should('have.attr', 'required');
-      cy.get('#email').should('have.attr', 'autocomplete', 'email');
+    it('should display Monthly Recurring Revenue stat', () => {
+      cy.get('.stat-card').contains('Monthly Recurring Revenue').should('be.visible');
     });
 
-    it('should display password input field with correct attributes', () => {
-      cy.get('[data-testid="password-input"]').should('be.visible');
-      cy.get('#password').should('have.attr', 'type', 'password');
-      cy.get('#password').should('have.attr', 'name', 'password');
-      cy.get('#password').should('have.attr', 'placeholder', 'Enter your password');
-      cy.get('#password').should('have.attr', 'required');
-      cy.get('#password').should('have.attr', 'autocomplete', 'current-password');
+    it('should display Active Subscriptions stat', () => {
+      cy.get('.stat-card').contains('Active Subscriptions').should('be.visible');
     });
 
-    it('should display form labels correctly', () => {
-      cy.get('label[for="email"]').should('contain.text', 'Email Address');
-      cy.get('label[for="password"]').should('contain.text', 'Password');
+    it('should display Total Revenue stat', () => {
+      cy.get('.stat-card').contains('Total Revenue').should('be.visible');
     });
 
-    it('should accept text input in email field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
+    it('should display Past Due stat', () => {
+      cy.get('.stat-card').contains('Past Due').should('be.visible');
     });
 
-    it('should accept text input in password field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="password-input"]').should('have.value', 'password123');
-    });
-
-    it('should validate required email field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#email:invalid').should('exist');
-    });
-
-    it('should validate required password field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#password:invalid').should('exist');
-    });
-
-    it('should validate email format', () => {
-      cy.get('[data-testid="email-input"]').type('invalid-email');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#email:invalid').should('exist');
-    });
-
-    it('should disable submit button and show loading state on form submission', () => {
-      cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#loginBtn').should('be.disabled');
-      cy.get('#loginBtn').should('contain.text', 'Signing in...');
+    it('should have highlight style on MRR card', () => {
+      cy.get('.stat-card.highlight').should('exist');
     });
   });
 
-  describe.skip('Button Tests', () => {
-    it('should display the login button with correct attributes', () => {
-      cy.get('[data-testid="login-button"]').should('be.visible');
-      cy.get('#loginBtn').should('have.attr', 'type', 'submit');
-      cy.get('#loginBtn').should('have.class', 'login-btn');
-      cy.get('#loginBtn').should('contain.text', 'Sign In');
+  describe('Billing Plans Section Tests', () => {
+    it('should display billing plans section', () => {
+      cy.get('.content-card').contains('Billing Plans').should('be.visible');
     });
 
-    it('should display the password toggle button', () => {
-      cy.get('.toggle-btn').should('be.visible');
-      cy.get('.toggle-btn').should('have.attr', 'type', 'button');
-      cy.get('.toggle-btn').should('contain.text', '👁');
+    it('should display Initialize Default Plans button', () => {
+      cy.get('.content-card').contains('Initialize Default Plans').should('be.visible');
     });
 
-    it('should toggle password visibility when toggle button is clicked', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-    });
-
-    it('should make login button clickable', () => {
-      cy.get('[data-testid="login-button"]').should('not.be.disabled');
-      cy.get('[data-testid="login-button"]').click();
-    });
-
-    it('should make client portal link clickable', () => {
-      cy.get('[data-testid="client-portal-link"]').should('not.be.disabled');
-      cy.get('[data-testid="client-portal-link"]').should('have.attr', 'href', '/portal/login');
+    it('should show either plans grid or empty state', () => {
+      cy.get('.content-card').first().then(($card) => {
+        // Either plans exist or empty state is shown
+        const hasPlans = $card.find('.plans-grid').length > 0;
+        const hasEmptyState = $card.find('.empty-state').length > 0;
+        expect(hasPlans || hasEmptyState).to.be.true;
+      });
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
-    it('should trigger password toggle functionality', () => {
-      cy.get('[data-testid="password-input"]').type('testpassword');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      cy.get('[data-testid="password-input"]').should('have.value', 'testpassword');
+  describe('Subscriptions Section Tests', () => {
+    it('should display Active Subscriptions section', () => {
+      cy.get('.content-card').contains('Active Subscriptions').should('be.visible');
     });
 
-    it('should navigate to client portal when link is clicked', () => {
-      cy.get('[data-testid="client-portal-link"]').click();
-      cy.url().should('include', '/portal/login');
-    });
-
-    it('should submit form when login button is clicked with valid data', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@loginRequest');
+    it('should show either subscriptions table or empty state', () => {
+      cy.get('.content-card').last().within(() => {
+        cy.get('table, .empty-state').should('exist');
+      });
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Create Plan Modal Tests', () => {
+    it('should have create plan modal hidden by default', () => {
+      cy.get('#createPlanModal').should('exist');
+      cy.get('#createPlanModal').should('not.have.class', 'active');
+    });
+
+    it('should open create plan modal when button clicked', () => {
+      cy.get('.header .btn-primary').contains('Create Plan').click();
+      cy.get('#createPlanModal').should('have.class', 'active');
+    });
+
+    it('should display form fields in modal', () => {
+      cy.get('.header .btn-primary').contains('Create Plan').click();
+      cy.get('#planName').should('be.visible');
+      cy.get('#planDisplayName').should('be.visible');
+      cy.get('#planPrice').should('be.visible');
+      cy.get('#planInterval').should('be.visible');
+      cy.get('#planFeatures').should('be.visible');
+    });
+
+    it('should close modal when cancel button clicked', () => {
+      cy.get('.header .btn-primary').contains('Create Plan').click();
+      cy.get('#createPlanModal').should('have.class', 'active');
+      cy.get('#createPlanModal .btn-secondary').contains('Cancel').click();
+      cy.get('#createPlanModal').should('not.have.class', 'active');
+    });
+  });
+
+  describe('Form Input Tests', () => {
+    beforeEach(() => {
+      cy.get('.header .btn-primary').contains('Create Plan').click();
+    });
+
+    it('should accept text input in plan name field', () => {
+      cy.get('#planName').type('test-plan');
+      cy.get('#planName').should('have.value', 'test-plan');
+    });
+
+    it('should accept text input in display name field', () => {
+      cy.get('#planDisplayName').type('Test Plan');
+      cy.get('#planDisplayName').should('have.value', 'Test Plan');
+    });
+
+    it('should accept number input in price field', () => {
+      cy.get('#planPrice').type('299.99');
+      cy.get('#planPrice').should('have.value', '299.99');
+    });
+
+    it('should allow selecting billing interval', () => {
+      cy.get('#planInterval').select('year');
+      cy.get('#planInterval').should('have.value', 'year');
+    });
+
+    it('should accept text in features textarea', () => {
+      cy.get('#planFeatures').type('Feature 1\nFeature 2\nFeature 3');
+      cy.get('#planFeatures').should('contain.value', 'Feature 1');
+    });
+
+    it('should have required attribute on plan name', () => {
+      cy.get('#planName').should('have.attr', 'required');
+    });
+
+    it('should have required attribute on price', () => {
+      cy.get('#planPrice').should('have.attr', 'required');
+    });
+  });
+
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.header').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
     });
 
     it('should display correctly on tablet (768px)', () => {
       cy.viewport(768, 1024);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.header').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
     });
 
     it('should display correctly on mobile (375px)', () => {
       cy.viewport(375, 667);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
-      cy.get('[data-testid="login-button"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.header h1').should('be.visible');
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
-    it('should handle invalid form submissions gracefully', () => {
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#email:invalid').should('exist');
-      cy.get('#password:invalid').should('exist');
+  describe('Button Functionality Tests', () => {
+    it('should make Create Plan button clickable', () => {
+      cy.get('.header .btn-primary').contains('Create Plan').should('not.be.disabled');
     });
 
-    it('should handle network errors during login', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('loginError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@loginError');
-    });
-
-    it('should handle authentication errors', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 401 }).as('authError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('wrongpassword');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@authError');
-    });
-
-    it('should handle empty email input validation', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#email').then($input => {
-        expect($input[0].validationMessage).to.not.be.empty;
-      });
-    });
-
-    it('should handle empty password input validation', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#password').then($input => {
-        expect($input[0].validationMessage).to.not.be.empty;
-      });
-    });
-
-    it('should handle malformed email validation', () => {
-      cy.get('[data-testid="email-input"]').type('not-an-email');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#email').then($input => {
-        expect($input[0].validationMessage).to.not.be.empty;
-      });
+    it('should make Initialize Default Plans button clickable', () => {
+      cy.get('.btn').contains('Initialize Default Plans').should('not.be.disabled');
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
-    it('should have proper form labels associated with inputs', () => {
-      cy.get('label[for="email"]').should('exist');
-      cy.get('label[for="password"]').should('exist');
-      cy.get('#email').should('have.attr', 'id', 'email');
-      cy.get('#password').should('have.attr', 'id', 'password');
+  describe('Accessibility Tests', () => {
+    it('should have proper heading hierarchy', () => {
+      cy.get('h1').should('have.length.at.least', 1);
     });
 
-    it('should have proper alt text for logo image', () => {
-      cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
+    it('should have proper form labels in modal', () => {
+      cy.get('.header .btn-primary').contains('Create Plan').click();
+      cy.get('label[for="planName"]').should('exist');
+      cy.get('label[for="planPrice"]').should('exist');
+      cy.get('label[for="planInterval"]').should('exist');
     });
 
-    it('should support keyboard navigation', () => {
-      cy.get('[data-testid="email-input"]').focus().should('be.focused');
-      cy.get('[data-testid="email-input"]').type('{tab}');
-      cy.get('[data-testid="password-input"]').should('be.focused');
-      cy.get('[data-testid="password-input"]').type('{tab}');
-      cy.get('.toggle-btn').should('be.focused');
-      cy.get('.toggle-btn').type('{tab}');
-      cy.get('[data-testid="login-button"]').should('be.focused');
+    it('should have alert container for notifications', () => {
+      cy.get('#alertContainer').should('exist');
     });
   });
 
-  describe.skip('JavaScript Functionality Tests', () => {
-    it('should have togglePassword function available globally', () => {
-      cy.window().its('togglePassword').should('be.a', 'function');
-    });
-
-    it('should execute togglePassword function correctly', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.window().then(win => {
-        win.togglePassword('password');
-      });
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-    });
-
-    it('should add event listeners to form on page load', () => {
-      cy.get('#loginForm').should('exist');
-      cy.window().its('document').then(doc => {
-        const form = doc.getElementById('loginForm');
-        expect(form).to.not.be.null;
+  describe('JavaScript Functionality Tests', () => {
+    it('should have modal overlay functionality', () => {
+      // Modal should toggle class on open/close
+      cy.get('#createPlanModal').should('not.have.class', 'active');
+      cy.window().then((win) => {
+        if (typeof win.openCreatePlanModal === 'function') {
+          win.openCreatePlanModal();
+        }
       });
     });
-  });
 
-  describe.skip('Form State Management Tests', () => {
-    it('should maintain form values during password toggle', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('mypassword');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
-      cy.get('[data-testid="password-input"]').should('have.value', 'mypassword');
-    });
-
-    it('should clear form values on page refresh', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('mypassword');
-      cy.reload();
-      cy.get('[data-testid="email-input"]').should('have.value', '');
-      cy.get('[data-testid="password-input"]').should('have.value', '');
-    });
-
-    it('should preserve form attributes after interactions', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com').clear();
-      cy.get('[data-testid="email-input"]').should('have.attr', 'type', 'email');
-      cy.get('[data-testid="email-input"]').should('have.attr', 'required');
-      cy.get('[data-testid="password-input"]').type('password').clear();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'required');
+    it('should have form element for plan creation', () => {
+      cy.get('#createPlanForm').should('exist');
     });
   });
 });

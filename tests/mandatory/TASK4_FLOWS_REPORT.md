@@ -1,44 +1,37 @@
 # TASK 4: END-TO-END FLOW RESULTS
 
-**Timestamp:** 2025-12-29T01:40:15.784436
+**Timestamp:** 2026-01-05T14:40:14.492943
 
 ## Summary
 | Metric | Count |
 |--------|-------|
 | Flows Tested | 6 |
-| Flows Passed | 6 |
-| Flows Failed | 0 |
-| Total Steps | 16 |
-| Steps Passed | 16 |
+| Flows Passed | 0 |
+| Flows Failed | 6 |
+| Total Steps | 6 |
+| Steps Passed | 0 |
 
 ## Flow Details
 
-### Client Signup (PASS)
-- [+] Load signup page
-- [+] Fill personal info
-- [+] Navigate to step 2
+### Client Signup (PARTIAL)
+- [-] Error
 
-### Staff Login (PASS)
-- [+] Load login page
-- [+] Enter email
-- [+] Enter password
-- [+] Access dashboard
-- [+] Access clients page
-- [+] Access cases page
+### Staff Login (PARTIAL)
+- [-] Error
 
-### Client Management (PASS)
-- [+] Load clients page
+### Client Management (PARTIAL)
+- [-] Error
 
-### Case Management (PASS)
-- [+] Load cases page
-- [+] View case list (0 items)
+### Case Management (PARTIAL)
+- [-] Error
 
-### Settlement Flow (PASS)
-- [+] Load settlements page
-- [+] View settlements (0 items)
+### Settlement Flow (PARTIAL)
+- [-] Error
 
-### Client Portal (PASS)
-- [+] Load portal login
-- [+] Portal form exists
+### Client Portal (PARTIAL)
+- [-] Error
 
 ## Issues
+- {'flow': 'Client Signup', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/signup\nCall log:\n  - navigating to "'}
+- {'flow': 'Staff Login', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/staff/login\nCall log:\n  - navigating'}
+- {'flow': 'Client Management', 'error': 'Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/clients\nCall log:\n  - navi'}

@@ -1,286 +1,366 @@
 // Exhaustive test for /dashboard/affiliates
-describe.skip('Staff Login Page (/dashboard/affiliates)', () => {
+describe('Affiliate Dashboard Page - /dashboard/affiliates', () => {
   beforeEach(() => {
+    cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/affiliates');
+    cy.get('.main-content').should('exist');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
-      // Page redirects to staff login when not authenticated
-      cy.url().should('include', '/staff/login');
-      cy.get('[data-testid="login-container"]').should('be.visible');
+      cy.url().should('include', '/dashboard/affiliates');
+      cy.get('.main-content').should('exist');
     });
 
     it('should have correct page title', () => {
-      cy.title().should('eq', 'Staff Login - Brightpath Ascend FCRA Platform');
-    });
-
-    it('should not have console errors', () => {
-      cy.get('@consoleError').should('not.have.been.called');
+      cy.title().should('contain', 'Affiliate');
     });
 
     it('should not return server errors', () => {
-      cy.request('/dashboard/affiliates').then((response) => {
-        expect(response.status).to.not.be.oneOf([404, 500, 502, 503]);
-      });
+      cy.request('/dashboard/affiliates').its('status').should('be.oneOf', [200, 302]);
     });
   });
 
-  describe.skip('UI Element Tests', () => {
-    it('should display all headings correctly', () => {
-      cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
-      cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
+  describe('Header Tests', () => {
+    it('should display the page header', () => {
+      cy.get('.header h1').should('exist').and('contain.text', 'Affiliate');
     });
 
-    it('should display logo and branding', () => {
-      cy.get('.logo img').should('be.visible').and('have.attr', 'alt', 'Brightpath Ascend Group');
-      cy.contains('FCRA Litigation Platform').should('be.visible');
+    it('should display header subtitle', () => {
+      cy.get('.header-subtitle').should('exist');
     });
 
-    it('should display staff badge', () => {
-      cy.get('.staff-badge').should('be.visible').and('contain.text', 'Staff Portal');
-      cy.get('.staff-badge svg').should('exist');
+    it('should display Add Affiliate button', () => {
+      cy.get('[data-testid="add-affiliate-btn"]').should('exist').and('contain.text', 'Add Affiliate');
     });
 
-    it('should display subtitle', () => {
-      cy.contains('Sign in to access the admin dashboard').should('be.visible');
-    });
-
-    it('should display client portal link', () => {
-      cy.get('[data-testid="client-portal-link"]')
-        .should('be.visible')
-        .and('have.attr', 'href', '/portal/login');
-      cy.contains('Looking for client portal?').should('be.visible');
-    });
-
-    it('should display all buttons', () => {
-      cy.get('.toggle-btn').should('be.visible').and('contain.text', '👁');
-      cy.get('[data-testid="login-button"]')
-        .should('be.visible')
-        .and('contain.text', 'Sign In')
-        .and('have.attr', 'type', 'submit');
+    it('should have clickable Add Affiliate button', () => {
+      cy.get('[data-testid="add-affiliate-btn"]').should('not.be.disabled');
     });
   });
 
-  describe.skip('Form Tests', () => {
-    it('should display login form with correct attributes', () => {
-      cy.get('[data-testid="login-form"]')
-        .should('be.visible')
-        .and('have.attr', 'method', 'POST')
-        .and('have.attr', 'action', '/staff/login')
-        .and('have.id', 'loginForm');
+  describe('Stats Row Tests', () => {
+    it('should display stats row', () => {
+      cy.get('.stats-row').should('exist');
     });
 
-    it('should have email input with correct attributes', () => {
-      cy.get('[data-testid="email-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'email')
-        .and('have.attr', 'name', 'email')
-        .and('have.attr', 'id', 'email')
-        .should('have.attr', 'required')
-        .and('have.attr', 'placeholder', 'your@email.com')
-        .and('have.attr', 'autocomplete', 'email');
+    it('should display stat cards', () => {
+      cy.get('.stat-card').should('have.length', 4);
     });
 
-    it('should have password input with correct attributes', () => {
-      cy.get('[data-testid="password-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'password')
-        .and('have.attr', 'name', 'password')
-        .and('have.attr', 'id', 'password')
-        .should('have.attr', 'required')
-        .and('have.attr', 'placeholder', 'Enter your password')
-        .and('have.attr', 'autocomplete', 'current-password');
+    it('should display Total Affiliates stat', () => {
+      cy.get('[data-testid="stat-total-affiliates"]').should('exist');
+      cy.get('.stat-label').contains('Total Affiliates').should('exist');
     });
 
-    it('should have proper form labels', () => {
-      cy.contains('label', 'Email Address').should('be.visible').and('have.attr', 'for', 'email');
-      cy.contains('label', 'Password').should('be.visible').and('have.attr', 'for', 'password');
+    it('should display Total Referrals stat', () => {
+      cy.get('[data-testid="stat-total-referrals"]').should('exist');
+      cy.get('.stat-label').contains('Total Referrals').should('exist');
     });
 
-    it('should accept text input in email field', () => {
-      cy.get('[data-testid="email-input"]')
-        .type('test@example.com')
-        .should('have.value', 'test@example.com');
+    it('should display Pending Payouts stat', () => {
+      cy.get('[data-testid="stat-pending-payouts"]').should('exist');
+      cy.get('.stat-label').contains('Pending Payouts').should('exist');
     });
 
-    it('should accept text input in password field', () => {
-      cy.get('[data-testid="password-input"]')
-        .type('password123')
-        .should('have.value', 'password123');
+    it('should display Total Paid Out stat', () => {
+      cy.get('[data-testid="stat-total-paid"]').should('exist');
+      cy.get('.stat-label').contains('Total Paid').should('exist');
     });
 
-    it('should validate required email field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').then(($input) => {
-        expect($input[0].validationMessage).to.not.be.empty;
-      });
+    it('should display stat values', () => {
+      cy.get('.stat-value').should('have.length.at.least', 4);
     });
 
-    it('should validate required password field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="password-input"]').then(($input) => {
-        expect($input[0].validationMessage).to.not.be.empty;
-      });
-    });
-
-    it('should validate email format', () => {
-      cy.get('[data-testid="email-input"]').type('invalid-email');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').then(($input) => {
-        expect($input[0].validationMessage).to.contain('valid email');
-      });
-    });
-
-    it('should disable submit button and show loading state on form submission', () => {
-      cy.intercept('POST', '/staff/login', { delay: 1000 }).as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('#loginBtn').should('be.disabled').and('contain.text', 'Signing in...');
-      cy.get('.spinner').should('exist');
+    it('should display stat change indicators', () => {
+      cy.get('.stat-change').should('have.length.at.least', 1);
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
-    it('should toggle password visibility', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
+  describe('Tab Tests', () => {
+    it('should display tabs', () => {
+      cy.get('.tabs').should('exist');
     });
 
-    it('should navigate to client portal when link is clicked', () => {
-      cy.get('[data-testid="client-portal-link"]').click();
-      cy.url().should('include', '/portal/login');
+    it('should have Affiliates tab', () => {
+      cy.get('.tab').contains('Affiliates').should('exist');
     });
 
-    it('should submit form when enter key is pressed in email field', () => {
-      cy.intercept('POST', '/staff/login').as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="email-input"]').type('{enter}');
-      cy.wait('@loginRequest');
+    it('should have Commissions tab', () => {
+      cy.get('.tab').contains('Commissions').should('exist');
     });
 
-    it('should submit form when enter key is pressed in password field', () => {
-      cy.intercept('POST', '/staff/login').as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123{enter}');
-      cy.wait('@loginRequest');
+    it('should have Payouts tab', () => {
+      cy.get('.tab').contains('Payouts').should('exist');
+    });
+
+    it('should have active tab highlighted', () => {
+      cy.get('.tab.active').should('exist');
+    });
+
+    it('should switch tabs when clicked', () => {
+      cy.get('.tab').contains('Commissions').click();
+      cy.get('.tab').contains('Commissions').should('have.class', 'active');
+      cy.get('#tab-commissions').should('have.class', 'active');
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Affiliates Tab Tests', () => {
+    it('should display affiliates tab content by default', () => {
+      cy.get('#tab-affiliates').should('have.class', 'active');
+    });
+
+    it('should display card with title', () => {
+      cy.get('.card').should('exist');
+      cy.get('.card-title').contains('Affiliates').should('exist');
+    });
+
+    it('should display search box', () => {
+      cy.get('.search-box').should('exist');
+    });
+
+    it('should have search input', () => {
+      cy.get('[data-testid="affiliate-search"]').should('exist');
+    });
+
+    it('should have status filter dropdown', () => {
+      cy.get('[data-testid="affiliate-status-filter"]').should('exist');
+    });
+
+    it('should have placeholder text in search', () => {
+      cy.get('[data-testid="affiliate-search"]').should('have.attr', 'placeholder').and('contain', 'Search');
+    });
+
+    it('should accept input in search field', () => {
+      cy.get('[data-testid="affiliate-search"]').type('test').should('have.value', 'test');
+    });
+  });
+
+  describe('Table Tests', () => {
+    it('should display affiliates table', () => {
+      cy.get('[data-testid="affiliates-table"]').should('exist');
+    });
+
+    it('should display table headers', () => {
+      cy.get('[data-testid="affiliates-table"] th').should('have.length.at.least', 1);
+    });
+
+    it('should have Name column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Name').should('exist');
+    });
+
+    it('should have Email column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Email').should('exist');
+    });
+
+    it('should have Code column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Code').should('exist');
+    });
+
+    it('should have Status column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Status').should('exist');
+    });
+
+    it('should have Rate column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Rate').should('exist');
+    });
+
+    it('should have Referrals column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Referrals').should('exist');
+    });
+
+    it('should have Actions column header', () => {
+      cy.get('[data-testid="affiliates-table"] th').contains('Actions').should('exist');
+    });
+  });
+
+  describe('Modal Tests', () => {
+    it('should have affiliate modal element', () => {
+      cy.get('[data-testid="affiliate-modal"]').should('exist');
+    });
+
+    it('should have modal hidden by default', () => {
+      cy.get('[data-testid="affiliate-modal"]').should('not.have.class', 'active');
+    });
+
+    it('should open modal when Add Affiliate is clicked', () => {
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('[data-testid="affiliate-modal"]').should('have.class', 'active');
+    });
+
+    it('should have modal close button', () => {
+      cy.get('.modal-close').should('exist');
+    });
+
+    it('should close modal when close button is clicked', () => {
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('[data-testid="affiliate-modal"]').should('have.class', 'active');
+      cy.get('[data-testid="affiliate-modal"] .modal-close').click();
+      cy.get('[data-testid="affiliate-modal"]').should('not.have.class', 'active');
+    });
+  });
+
+  describe('Add Affiliate Form Tests', () => {
+    beforeEach(() => {
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('[data-testid="affiliate-modal"]').should('have.class', 'active');
+    });
+
+    it('should display form in modal', () => {
+      cy.get('#affiliate-form').should('exist');
+    });
+
+    it('should have name input', () => {
+      cy.get('[data-testid="affiliate-name-input"]').should('exist');
+    });
+
+    it('should have email input', () => {
+      cy.get('[data-testid="affiliate-email-input"]').should('exist');
+    });
+
+    it('should have phone input', () => {
+      cy.get('[data-testid="affiliate-phone-input"]').should('exist');
+    });
+
+    it('should have commission rate select', () => {
+      cy.get('[data-testid="affiliate-rate-select"]').should('exist');
+    });
+
+    it('should have parent affiliate select', () => {
+      cy.get('[data-testid="affiliate-parent-select"]').should('exist');
+    });
+
+    it('should have status select', () => {
+      cy.get('[data-testid="affiliate-status-select"]').should('exist');
+    });
+
+    it('should have payout method select', () => {
+      cy.get('[data-testid="affiliate-payout-method-select"]').should('exist');
+    });
+
+    it('should have payout details input', () => {
+      cy.get('[data-testid="affiliate-payout-details-input"]').should('exist');
+    });
+
+    it('should have notes textarea', () => {
+      cy.get('[data-testid="affiliate-notes-input"]').should('exist');
+    });
+
+    it('should have Save Affiliate submit button', () => {
+      cy.get('[data-testid="affiliate-save-btn"]').should('exist');
+    });
+
+    it('should have Cancel button', () => {
+      cy.get('#affiliate-form .btn-secondary').contains('Cancel').should('exist');
+    });
+  });
+
+  describe('Commissions Tab Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Commissions').click();
+    });
+
+    it('should display commissions tab content', () => {
+      cy.get('#tab-commissions').should('have.class', 'active');
+    });
+
+    it('should have commissions table', () => {
+      cy.get('[data-testid="commissions-table"]').should('exist');
+    });
+
+    it('should have commission status filter', () => {
+      cy.get('[data-testid="commission-status-filter"]').should('exist');
+    });
+  });
+
+  describe('Payouts Tab Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Payouts').click();
+    });
+
+    it('should display payouts tab content', () => {
+      cy.get('#tab-payouts').should('have.class', 'active');
+    });
+
+    it('should have payouts table', () => {
+      cy.get('[data-testid="payouts-table"]').should('exist');
+    });
+
+    it('should have Create Payout button', () => {
+      cy.get('[data-testid="create-payout-btn"]').should('exist');
+    });
+
+    it('should have payout status filter', () => {
+      cy.get('[data-testid="payout-status-filter"]').should('exist');
+    });
+  });
+
+  describe('Payout Modal Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Payouts').click();
+    });
+
+    it('should have payout modal element', () => {
+      cy.get('[data-testid="payout-modal"]').should('exist');
+    });
+
+    it('should open payout modal when Create Payout is clicked', () => {
+      cy.get('[data-testid="create-payout-btn"]').click();
+      cy.get('[data-testid="payout-modal"]').should('have.class', 'active');
+    });
+  });
+
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('.main-content').should('exist');
+      cy.get('.header').should('exist');
+      cy.get('.stats-row').should('exist');
+      cy.get('.card').should('exist');
     });
 
     it('should display correctly on tablet (768px)', () => {
       cy.viewport(768, 1024);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('.logo').should('be.visible');
+      cy.get('.main-content').should('exist');
+      cy.get('.card').should('exist');
     });
 
     it('should display correctly on mobile (375px)', () => {
       cy.viewport(375, 667);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('.logo').should('be.visible');
+      cy.get('.main-content').should('exist');
+      cy.get('.header h1').should('exist');
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
-    it('should handle network errors gracefully', () => {
-      cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@networkError');
+  describe('Button Functionality Tests', () => {
+    it('should have primary button styling', () => {
+      cy.get('.btn-primary').should('exist');
     });
 
-    it('should handle server errors (500)', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Internal Server Error' } }).as('serverError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@serverError');
-    });
-
-    it('should handle authentication errors (401)', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('authError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('wrongpassword');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@authError');
-    });
-
-    it('should handle empty form submission', () => {
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').should('have.focus');
-    });
-
-    it('should handle malformed email addresses', () => {
-      const malformedEmails = ['@example.com', 'test@', 'test.example.com', 'test@.com'];
-      malformedEmails.forEach((email) => {
-        cy.get('[data-testid="email-input"]').clear().type(email);
-        cy.get('[data-testid="password-input"]').type('password123');
-        cy.get('[data-testid="login-button"]').click();
-        cy.get('[data-testid="email-input"]').then(($input) => {
-          expect($input[0].validationMessage).to.not.be.empty;
-        });
-      });
+    it('should have secondary button styling', () => {
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('.btn-secondary').should('exist');
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
-    it('should have proper form structure for screen readers', () => {
-      cy.get('label[for="email"]').should('exist');
-      cy.get('label[for="password"]').should('exist');
-      cy.get('[data-testid="email-input"]').should('have.attr', 'id', 'email');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'id', 'password');
+  describe('Accessibility Tests', () => {
+    it('should have proper heading hierarchy', () => {
+      cy.get('h1').should('have.length.at.least', 1);
     });
 
-    it('should support keyboard navigation', () => {
-      cy.get('body').type('{tab}');
-      cy.focused().should('have.attr', 'data-testid', 'email-input');
-      cy.focused().type('{tab}');
-      cy.focused().should('have.attr', 'data-testid', 'password-input');
-      cy.focused().type('{tab}');
-      cy.focused().should('have.class', 'toggle-btn');
-      cy.focused().type('{tab}');
-      cy.focused().should('have.attr', 'data-testid', 'login-button');
+    it('should have form labels in modal', () => {
+      cy.get('[data-testid="add-affiliate-btn"]').click();
+      cy.get('#affiliate-form label').should('have.length.at.least', 1);
+    });
+
+    it('should have table headers for accessibility', () => {
+      cy.get('[data-testid="affiliates-table"] th').should('have.length.at.least', 1);
     });
   });
 
-  describe.skip('Security Tests', () => {
-    it('should have proper autocomplete attributes', () => {
-      cy.get('[data-testid="email-input"]').should('have.attr', 'autocomplete', 'email');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'autocomplete', 'current-password');
-    });
-
-    it('should mask password input by default', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-    });
-
-    it('should use HTTPS for form submission in production', () => {
-      cy.get('[data-testid="login-form"]').should('have.attr', 'action');
-      cy.get('[data-testid="login-form"]').then(($form) => {
-        const action = $form.attr('action');
-        if (action.startsWith('http')) {
-          expect(action).to.match(/^https:/);
-        }
-      });
+  describe('Empty State Tests', () => {
+    it('should display loading or empty state in table', () => {
+      cy.get('#affiliates-table-body').should('exist');
     });
   });
 });

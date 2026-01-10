@@ -2,7 +2,7 @@ import json
 import time
 import traceback
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy import and_, desc, func, or_
 
@@ -99,6 +99,16 @@ ACTION_TYPES = {
         "name": "Generate Document",
         "description": "Create document from template",
         "params": ["template_name", "document_type"],
+    },
+    "send_push": {
+        "name": "Send Push Notification",
+        "description": "Send a browser push notification",
+        "params": ["notification_type", "title", "body", "url"],
+    },
+    "send_voicemail": {
+        "name": "Send Voicemail Drop",
+        "description": "Send a ringless voicemail to client",
+        "params": ["recording_id", "recording_name"],
     },
 }
 
@@ -365,6 +375,122 @@ DEFAULT_TRIGGERS = [
         ],
         "priority": 10,
     },
+    # Secondary Bureau Freeze Deadline Triggers
+    {
+        "name": "Secondary Bureau Response Due Soon",
+        "description": "Notifies client when secondary bureau freeze response should arrive soon (25 days)",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "secondary_bureau_due_soon"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "bureau_response_soon",
+                    "subject": "Your {bureau_name} Freeze Response Should Arrive Soon!",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "bureau_response_soon",
+                    "message": "Good news! Your {bureau_name} freeze confirmation should arrive in the mail within the next 5 days. Watch your mailbox!",
+                },
+            },
+        ],
+        "priority": 6,
+    },
+    {
+        "name": "Secondary Bureau Response Overdue",
+        "description": "Alerts client and staff when secondary bureau hasn't responded after 30+ days",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "secondary_bureau_overdue"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "bureau_response_overdue",
+                    "subject": "Action Needed: {bureau_name} Response Overdue",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "bureau_response_overdue",
+                    "message": "Your {bureau_name} freeze response is overdue ({days_overdue} days). Please contact us for assistance - we can help follow up.",
+                },
+            },
+            {
+                "type": "add_note",
+                "params": {
+                    "note_text": "{bureau_name} freeze response overdue by {days_overdue} days - follow-up needed",
+                    "note_type": "deadline",
+                },
+            },
+        ],
+        "priority": 8,
+    },
+    # CRA Response Deadline Triggers
+    {
+        "name": "CRA Response Due Soon",
+        "description": "Notifies client when CRA dispute response should arrive soon",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "cra_response_due_soon"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "cra_response_soon",
+                    "subject": "Watch Your Mail: Dispute Response Expected Soon",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "cra_response_soon",
+                    "message": "Watch your mailbox! Your credit bureau dispute response should arrive within {days_remaining} days.",
+                },
+            },
+        ],
+        "priority": 6,
+    },
+    {
+        "name": "CRA Response Overdue",
+        "description": "Escalates when CRA hasn't responded to dispute within required timeframe",
+        "trigger_type": "deadline_approaching",
+        "conditions": {"deadline_type": "cra_response_overdue"},
+        "actions": [
+            {
+                "type": "send_email",
+                "params": {
+                    "template": "cra_response_overdue",
+                    "subject": "IMPORTANT: Credit Bureau Response Overdue - We're Taking Action",
+                },
+            },
+            {
+                "type": "send_sms",
+                "params": {
+                    "template": "cra_response_overdue",
+                    "message": "The credit bureau is {days_overdue} days overdue on your dispute. This may be an FCRA violation - we're following up!",
+                },
+            },
+            {
+                "type": "create_task",
+                "params": {
+                    "task_type": "escalate_cra_overdue",
+                    "payload": {"client_id": "{client_id}"},
+                    "priority": 2,
+                },
+            },
+            {
+                "type": "add_note",
+                "params": {
+                    "note_text": "CRA response overdue by {days_overdue} days - potential FCRA violation, escalation task created",
+                    "note_type": "violation",
+                },
+            },
+        ],
+        "priority": 9,
+    },
 ]
 
 
@@ -375,6 +501,10 @@ def install_automation_triggers(db):
         "Analyze Response and Progress Round",
         "No Response After 35 Days",
         "Reinsertion Detected",
+        "Secondary Bureau Response Due Soon",
+        "Secondary Bureau Response Overdue",
+        "CRA Response Due Soon",
+        "CRA Response Overdue",
     ]
 
     created_count = 0
@@ -423,9 +553,9 @@ class WorkflowTriggersService:
         trigger_type: str,
         conditions: Dict[str, Any],
         actions: List[Dict[str, Any]],
-        description: str = None,
+        description: Optional[str] = None,
         priority: int = 5,
-        staff_id: int = None,
+        staff_id: Optional[int] = None,
     ) -> WorkflowTrigger:
         """Create a new workflow trigger"""
         if trigger_type not in TRIGGER_TYPES:
@@ -672,7 +802,7 @@ class WorkflowTriggersService:
 
             for action in trigger.actions:
                 action_result = WorkflowTriggersService._execute_single_action(
-                    session, action, client_id, event_data
+                    session, action, cast(int, client_id) if client_id else 0, event_data
                 )
                 actions_executed.append(action_result)
                 if not action_result.get("success"):
@@ -685,10 +815,10 @@ class WorkflowTriggersService:
                 error_message = None
             elif len(errors) == len(trigger.actions):
                 status = "failed"
-                error_message = "; ".join(errors)
+                error_message = "; ".join(str(e) for e in errors if e)
             else:
                 status = "partial"
-                error_message = "; ".join(errors)
+                error_message = "; ".join(str(e) for e in errors if e)
 
             execution = WorkflowExecution(
                 trigger_id=trigger_id,
@@ -765,6 +895,14 @@ class WorkflowTriggersService:
                 result = WorkflowTriggersService._action_generate_document(
                     client_id, params, event_data
                 )
+            elif action_type == "send_push":
+                result = WorkflowTriggersService._action_send_push(
+                    session, client_id, params, event_data
+                )
+            elif action_type == "send_voicemail":
+                result = WorkflowTriggersService._action_send_voicemail(
+                    session, client_id, params, event_data
+                )
             else:
                 result = {
                     "success": False,
@@ -817,11 +955,15 @@ class WorkflowTriggersService:
     def _action_send_sms(
         session, client_id: int, params: Dict[str, Any], event_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Send SMS action"""
+        """Send SMS action - only sends if client has opted in"""
         try:
             client = session.query(Client).filter(Client.id == client_id).first()
             if not client or not client.phone:
                 return {"success": False, "error": "Client phone not found"}
+
+            # Check SMS opt-in before sending
+            if not getattr(client, 'sms_opt_in', False):
+                return {"success": False, "error": "Client has not opted in for SMS", "skipped": True}
 
             from services.task_queue_service import TaskQueueService
 
@@ -971,6 +1113,81 @@ class WorkflowTriggersService:
             )
 
             return {"success": True, "result": {"task_id": task.id}}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def _action_send_push(
+        session, client_id: int, params: Dict[str, Any], event_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Send push notification action"""
+        try:
+            from services.push_notification_service import send_to_client, is_push_configured
+
+            if not is_push_configured():
+                return {"success": False, "error": "Push notifications not configured", "skipped": True}
+
+            notification_type = params.get("notification_type", "case_update")
+            title = params.get("title")
+            body = params.get("body", "You have a new notification from Brightpath Ascend")
+            url = params.get("url")
+
+            result = send_to_client(
+                client_id=client_id,
+                notification_type=notification_type,
+                body=body,
+                url=url,
+                title=title,
+                trigger_id=event_data.get("trigger_id"),
+            )
+
+            return {
+                "success": result.get("success", False),
+                "result": {
+                    "sent_count": result.get("sent_count", 0),
+                    "failed_count": result.get("failed_count", 0),
+                },
+                "error": result.get("error"),
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def _action_send_voicemail(
+        session, client_id: int, params: Dict[str, Any], event_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Send voicemail drop action"""
+        try:
+            from services.voicemail_drop_service import get_voicemail_drop_service
+
+            recording_id = params.get("recording_id")
+            if not recording_id:
+                return {"success": False, "error": "No recording_id specified"}
+
+            client = session.query(Client).filter(Client.id == client_id).first()
+            if not client or not client.phone:
+                return {"success": False, "error": "Client phone not found"}
+
+            service = get_voicemail_drop_service()
+            try:
+                result = service.send_drop(
+                    recording_id=int(recording_id),
+                    client_id=client_id,
+                    trigger_type="workflow",
+                    trigger_event=event_data.get("event_type", "workflow_trigger")
+                )
+
+                return {
+                    "success": result.get("success", False),
+                    "result": {
+                        "drop_id": result.get("drop_id"),
+                        "status": result.get("status"),
+                    },
+                    "error": result.get("error"),
+                }
+            finally:
+                service.db.close()
+
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -1208,4 +1425,8 @@ def handle_execute_workflow(payload: Dict[str, Any]) -> Dict[str, Any]:
     event_type = payload.get("event_type")
     event_data = payload.get("event_data", {})
 
-    return WorkflowTriggersService.execute_actions(trigger_id, event_type, event_data)
+    return WorkflowTriggersService.execute_actions(
+        cast(int, trigger_id) if trigger_id else 0,
+        cast(str, event_type) if event_type else "",
+        event_data
+    )

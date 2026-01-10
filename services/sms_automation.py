@@ -111,6 +111,14 @@ def get_client_phone(db, client_id):
     return formatted, client
 
 
+def check_sms_opt_in(client):
+    """
+    Check if client has opted in for SMS notifications.
+    Returns True if opted in, False otherwise.
+    """
+    return getattr(client, 'sms_opt_in', False)
+
+
 def trigger_welcome_sms(db, client_id):
     """
     Send welcome SMS when new client signs up.
@@ -127,6 +135,9 @@ def trigger_welcome_sms(db, client_id):
     phone, client = get_client_phone(db, client_id)
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
+
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
 
     message = welcome_sms(client.name)
     result = send_sms(phone, message)
@@ -166,6 +177,9 @@ def trigger_document_reminder(db, client_id, doc_type="required documents"):
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
 
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
+
     message = document_reminder_sms(client.name, doc_type)
     result = send_sms(phone, message)
 
@@ -203,6 +217,9 @@ def trigger_case_update(db, client_id, new_status):
     phone, client = get_client_phone(db, client_id)
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
+
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
 
     message = case_update_sms(client.name, new_status)
     result = send_sms(phone, message)
@@ -242,6 +259,9 @@ def trigger_dispute_sent(db, client_id, bureau):
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
 
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
+
     message = dispute_sent_sms(client.name, bureau)
     result = send_sms(phone, message)
 
@@ -280,6 +300,9 @@ def trigger_cra_response(db, client_id, bureau):
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
 
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
+
     message = cra_response_sms(client.name, bureau)
     result = send_sms(phone, message)
 
@@ -317,6 +340,9 @@ def trigger_payment_reminder(db, client_id, amount=None):
     phone, client = get_client_phone(db, client_id)
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
+
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
 
     if amount is None and client.signup_amount:
         amount = client.signup_amount / 100
@@ -361,6 +387,9 @@ def trigger_analysis_ready(db, client_id):
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
 
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
+
     message = analysis_ready_sms(client.name)
     result = send_sms(phone, message)
 
@@ -399,6 +428,9 @@ def trigger_letters_ready(db, client_id, letter_count):
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
 
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
+
     message = letters_ready_sms(client.name, letter_count)
     result = send_sms(phone, message)
 
@@ -435,6 +467,9 @@ def trigger_round_started(db, client_id, round_number):
     phone, client = get_client_phone(db, client_id)
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
+
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
 
     message = round_started_sms(client.name, round_number)
     result = send_sms(phone, message)
@@ -473,6 +508,9 @@ def send_custom_sms(db, client_id, message_text):
     phone, client = get_client_phone(db, client_id)
     if not phone:
         return {"sent": False, "reason": "No valid phone number"}
+
+    if not check_sms_opt_in(client):
+        return {"sent": False, "reason": "Client has not opted in for SMS"}
 
     message = custom_sms(client.name, message_text)
     result = send_sms(phone, message)

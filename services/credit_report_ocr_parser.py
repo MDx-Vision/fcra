@@ -279,7 +279,7 @@ def parse_credit_report_vision(file_path: str) -> Dict[str, Any]:
     Returns:
         Dictionary with parsed credit report data
     """
-    result = {
+    result: Dict[str, Any] = {
         "success": False,
         "error": None,
         "report_type": "three_bureau",
@@ -354,15 +354,16 @@ def parse_credit_report_vision(file_path: str) -> Dict[str, Any]:
 
         # Parse JSON
         try:
-            extracted_data = json.loads(response_text)
+            extracted_data: Dict[str, Any] = json.loads(response_text)
             result["success"] = True
             result["data"] = extracted_data
 
-            # Add analysis
-            result["data"]["discrepancies"] = detect_discrepancies(extracted_data)
-            result["data"]["derogatory_accounts"] = detect_derogatory_accounts(
-                extracted_data.get("accounts", [])
-            )
+            # Add analysis - ensure data is a dict before assigning
+            if isinstance(result["data"], dict):
+                result["data"]["discrepancies"] = detect_discrepancies(extracted_data)
+                result["data"]["derogatory_accounts"] = detect_derogatory_accounts(
+                    extracted_data.get("accounts", [])
+                )
 
             # Log summary
             accounts = extracted_data.get("accounts", [])

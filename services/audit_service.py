@@ -47,9 +47,9 @@ PHI_FIELDS = [
 class AuditService:
     """Service for comprehensive audit logging with compliance features"""
 
-    def __init__(self, db: Session = None):
+    def __init__(self, db: Optional[Session] = None):
         self.db = db
-        self._current_request_id = None
+        self._current_request_id: Optional[str] = None
 
     def _get_db(self) -> Tuple[Session, bool]:
         """Get database session"""
@@ -119,7 +119,7 @@ class AuditService:
         return context
 
     def _detect_phi_access(
-        self, details: Dict = None, old_values: Dict = None, new_values: Dict = None
+        self, details: Optional[Dict[str, Any]] = None, old_values: Optional[Dict[str, Any]] = None, new_values: Optional[Dict[str, Any]] = None
     ) -> Tuple[bool, List[str]]:
         """Detect if PHI fields were accessed"""
         phi_accessed = []
@@ -140,18 +140,18 @@ class AuditService:
         event_type: str,
         resource_type: str,
         resource_id: Optional[str] = None,
-        action: str = None,
-        details: Dict = None,
-        old_values: Dict = None,
-        new_values: Dict = None,
-        severity: str = None,
-        user_id: int = None,
-        user_type: str = None,
-        user_email: str = None,
-        user_name: str = None,
-        duration_ms: int = None,
-        http_status: int = None,
-        compliance_flags: Dict = None,
+        action: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        old_values: Optional[Dict[str, Any]] = None,
+        new_values: Optional[Dict[str, Any]] = None,
+        severity: Optional[str] = None,
+        user_id: Optional[int] = None,
+        user_type: Optional[str] = None,
+        user_email: Optional[str] = None,
+        user_name: Optional[str] = None,
+        duration_ms: Optional[int] = None,
+        http_status: Optional[int] = None,
+        compliance_flags: Optional[Dict[str, Any]] = None,
     ) -> Optional[AuditLog]:
         """
         Core audit logging method
@@ -235,10 +235,10 @@ class AuditService:
         user_id: int,
         user_type: str,
         success: bool,
-        ip: str = None,
-        email: str = None,
-        name: str = None,
-        failure_reason: str = None,
+        ip: Optional[str] = None,
+        email: Optional[str] = None,
+        name: Optional[str] = None,
+        failure_reason: Optional[str] = None,
     ) -> Optional[AuditLog]:
         """Log login attempt"""
         event_type = "login" if success else "login_failed"
@@ -264,7 +264,7 @@ class AuditService:
         )
 
     def log_logout(
-        self, user_id: int, user_type: str, email: str = None, name: str = None
+        self, user_id: int, user_type: str, email: Optional[str] = None, name: Optional[str] = None
     ) -> Optional[AuditLog]:
         """Log logout event"""
         return self.log_event(
@@ -283,8 +283,8 @@ class AuditService:
         user_id: int,
         resource_type: str,
         resource_id: str,
-        fields_accessed: List[str] = None,
-        reason: str = None,
+        fields_accessed: Optional[List[str]] = None,
+        reason: Optional[str] = None,
     ) -> Optional[AuditLog]:
         """Log PHI/sensitive data access for HIPAA compliance"""
         is_phi = any(
@@ -308,7 +308,7 @@ class AuditService:
         self,
         user_id: int,
         client_id: int,
-        report_id: int = None,
+        report_id: Optional[int] = None,
         action_type: str = "view",
     ) -> Optional[AuditLog]:
         """Log credit report access - always treated as PHI"""
@@ -328,11 +328,11 @@ class AuditService:
 
     def log_export(
         self,
-        user_id: int,
+        user_id: Optional[int],
         resource_type: str,
         export_format: str,
-        record_count: int = None,
-        filter_criteria: Dict = None,
+        record_count: Optional[int] = None,
+        filter_criteria: Optional[Dict[str, Any]] = None,
     ) -> Optional[AuditLog]:
         """Log data export for compliance tracking"""
         return self.log_event(
@@ -352,9 +352,9 @@ class AuditService:
         self,
         action_type: str,
         document_type: str,
-        document_id: int = None,
-        client_id: int = None,
-        filename: str = None,
+        document_id: Optional[int] = None,
+        client_id: Optional[int] = None,
+        filename: Optional[str] = None,
     ) -> Optional[AuditLog]:
         """Log document upload/download/view actions"""
         event_map = {
@@ -381,9 +381,9 @@ class AuditService:
     def log_settings_change(
         self,
         setting_type: str,
-        old_values: Dict = None,
-        new_values: Dict = None,
-        description: str = None,
+        old_values: Optional[Dict[str, Any]] = None,
+        new_values: Optional[Dict[str, Any]] = None,
+        description: Optional[str] = None,
     ) -> Optional[AuditLog]:
         """Log system configuration changes"""
         return self.log_event(
@@ -401,8 +401,8 @@ class AuditService:
         self,
         target_user_id: int,
         target_user_type: str,
-        old_permissions: Dict = None,
-        new_permissions: Dict = None,
+        old_permissions: Optional[Dict[str, Any]] = None,
+        new_permissions: Optional[Dict[str, Any]] = None,
     ) -> Optional[AuditLog]:
         """Log permission/role changes"""
         return self.log_event(
@@ -418,7 +418,7 @@ class AuditService:
 
     def get_audit_trail(
         self, resource_type: str, resource_id: str, limit: int = 100
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """Get complete audit trail for a specific resource"""
         db, should_close = self._get_db()
 
@@ -442,11 +442,11 @@ class AuditService:
     def get_user_activity(
         self,
         user_id: int,
-        user_type: str = None,
-        start_date: datetime = None,
-        end_date: datetime = None,
+        user_type: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
         limit: int = 500,
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """Get activity report for a specific user"""
         db, should_close = self._get_db()
 
@@ -471,11 +471,11 @@ class AuditService:
 
     def get_security_events(
         self,
-        start_date: datetime = None,
-        end_date: datetime = None,
-        severity: str = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        severity: Optional[str] = None,
         limit: int = 500,
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """Get security-related events"""
         db, should_close = self._get_db()
 
@@ -513,11 +513,11 @@ class AuditService:
 
     def get_phi_access_logs(
         self,
-        start_date: datetime = None,
-        end_date: datetime = None,
-        user_id: int = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        user_id: Optional[int] = None,
         limit: int = 500,
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]]:
         """Get PHI access logs for HIPAA compliance"""
         db, should_close = self._get_db()
 
@@ -542,16 +542,16 @@ class AuditService:
 
     def get_logs(
         self,
-        event_type: str = None,
-        resource_type: str = None,
-        user_type: str = None,
-        severity: str = None,
-        start_date: datetime = None,
-        end_date: datetime = None,
-        search_query: str = None,
+        event_type: Optional[str] = None,
+        resource_type: Optional[str] = None,
+        user_type: Optional[str] = None,
+        severity: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        search_query: Optional[str] = None,
         page: int = 1,
         per_page: int = 50,
-    ) -> Tuple[List[Dict], int]:
+    ) -> Tuple[List[Dict[str, Any]], int]:
         """Get filtered audit logs with pagination"""
         db, should_close = self._get_db()
 
@@ -624,7 +624,7 @@ class AuditService:
                 AuditLog.timestamp >= start_date, AuditLog.timestamp <= end_date
             )
 
-            report = {
+            report: Dict[str, Any] = {
                 "report_type": report_type,
                 "period": {
                     "start": start_date.isoformat(),
@@ -890,10 +890,10 @@ class AuditService:
     def export_logs(
         self,
         format: str,
-        start_date: datetime = None,
-        end_date: datetime = None,
-        event_type: str = None,
-        resource_type: str = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
+        event_type: Optional[str] = None,
+        resource_type: Optional[str] = None,
     ) -> Tuple[str, str]:
         """
         Export audit logs to CSV or JSON
@@ -1046,7 +1046,7 @@ class AuditService:
 _audit_service_instance = None
 
 
-def get_audit_service(db: Session = None) -> AuditService:
+def get_audit_service(db: Optional[Session] = None) -> AuditService:
     """Get or create audit service instance"""
     global _audit_service_instance
     if db:

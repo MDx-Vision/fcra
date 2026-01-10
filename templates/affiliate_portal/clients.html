@@ -1,0 +1,216 @@
+{% extends "affiliate_portal/base.html" %}
+{% set active_page = 'clients' %}
+
+{% block title %}My Clients{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .status-legend {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: rgba(15, 23, 42, 0.5);
+        border-radius: 12px;
+    }
+    .status-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #94a3b8;
+    }
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    .status-dot.lead { background: #64748b; }
+    .status-dot.signup { background: #3b82f6; }
+    .status-dot.active { background: #22c55e; }
+    .status-dot.in-dispute { background: #eab308; }
+    .status-dot.complete { background: #10b981; }
+    .status-dot.paused { background: #f97316; }
+    
+    .client-card {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: grid;
+        grid-template-columns: 1fr auto auto auto;
+        gap: 20px;
+        align-items: center;
+    }
+    .client-info h4 {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .client-info p {
+        font-size: 13px;
+        color: #64748b;
+    }
+    .client-status {
+        text-align: center;
+    }
+    .client-round {
+        text-align: center;
+    }
+    .round-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        background: rgba(59, 130, 246, 0.2);
+        color: #3b82f6;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .client-earnings {
+        text-align: right;
+    }
+    
+    .filter-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .filter-bar select {
+        padding: 10px 16px;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-size: 14px;
+    }
+    .filter-bar input {
+        flex: 1;
+        padding: 10px 16px;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        color: #e2e8f0;
+        font-size: 14px;
+    }
+    .filter-bar input::placeholder {
+        color: #475569;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #64748b;
+    }
+    .empty-state svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    .empty-state h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+        color: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title" data-testid="page-title">My Clients</h1>
+    <p class="page-subtitle">Track the status and progress of your referred clients</p>
+</div>
+
+<!-- Status Legend -->
+<div class="status-legend" data-testid="status-legend">
+    <div class="status-legend-item"><span class="status-dot lead"></span> Lead</div>
+    <div class="status-legend-item"><span class="status-dot signup"></span> Signed Up</div>
+    <div class="status-legend-item"><span class="status-dot active"></span> Active</div>
+    <div class="status-legend-item"><span class="status-dot in-dispute"></span> In Dispute</div>
+    <div class="status-legend-item"><span class="status-dot complete"></span> Complete</div>
+    <div class="status-legend-item"><span class="status-dot paused"></span> Paused</div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar" data-testid="filter-bar">
+    <input type="text" id="search-clients" placeholder="Search by name or email..." onkeyup="filterClients()">
+    <select id="status-filter" onchange="filterClients()">
+        <option value="">All Statuses</option>
+        <option value="lead">Lead</option>
+        <option value="signup">Signed Up</option>
+        <option value="active">Active</option>
+        <option value="in_dispute">In Dispute</option>
+        <option value="complete">Complete</option>
+        <option value="paused">Paused</option>
+    </select>
+</div>
+
+<!-- Clients List -->
+<div class="card">
+    <div id="clients-list" data-testid="clients-list">
+        {% if clients %}
+            {% for client in clients %}
+            <div class="client-card" data-name="{{ client.first_name or '' }} {{ client.last_name or '' }}" data-email="{{ client.email or '' }}" data-status="{{ client.dispute_status or client.status or 'unknown' }}">
+                <div class="client-info">
+                    <h4>{{ client.first_name or '' }} {{ client.last_name or '' }}{% if not client.first_name and not client.last_name %}Client #{{ client.id }}{% endif %}</h4>
+                    <p>Joined {{ client.created_at.strftime('%b %d, %Y') if client.created_at else 'Unknown' }}</p>
+                </div>
+                <div class="client-status">
+                    {% set status = client.dispute_status or client.status or 'unknown' %}
+                    <span class="badge badge-{{ 'success' if status in ['active', 'complete'] else 'warning' if status in ['in_dispute', 'pending'] else 'info' if status == 'signup' else 'secondary' }}">
+                        {{ status|replace('_', ' ')|title }}
+                    </span>
+                </div>
+                <div class="client-round">
+                    {% if client.round_number %}
+                    <span class="round-badge">Round {{ client.round_number }}</span>
+                    {% else %}
+                    <span style="color: #64748b;">-</span>
+                    {% endif %}
+                </div>
+                <div class="client-earnings">
+                    {% set earnings = client_commissions.get(client.id, []) %}
+                    {% set total = earnings|sum(attribute='commission_amount') if earnings else 0 %}
+                    <div class="money">${{ "%.2f"|format(total) }}</div>
+                    <div style="font-size: 12px; color: #64748b;">earned</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <h3>No Clients Yet</h3>
+                <p>Share your referral link to start referring clients and earning commissions!</p>
+                <a href="{{ url_for('affiliate_portal.referral_link') }}" class="btn btn-primary" style="margin-top: 16px;">Get Referral Link</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterClients() {
+    const search = document.getElementById('search-clients').value.toLowerCase();
+    const status = document.getElementById('status-filter').value.toLowerCase();
+    const cards = document.querySelectorAll('.client-card');
+    
+    cards.forEach(card => {
+        const name = card.dataset.name.toLowerCase();
+        const email = card.dataset.email.toLowerCase();
+        const cardStatus = card.dataset.status.toLowerCase();
+        
+        const matchesSearch = !search || name.includes(search) || email.includes(search);
+        const matchesStatus = !status || cardStatus === status;
+        
+        card.style.display = (matchesSearch && matchesStatus) ? 'grid' : 'none';
+    });
+}
+</script>
+{% endblock %}

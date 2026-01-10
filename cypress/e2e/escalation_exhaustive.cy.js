@@ -1,335 +1,343 @@
 // Exhaustive test for /dashboard/escalation
-describe.skip('Staff Login Page (/dashboard/escalation)', () => {
+describe('Smart Escalation Engine - /dashboard/escalation', () => {
   beforeEach(() => {
-    // Visit the page directly since it's a login page and doesn't require auth
+    cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/escalation');
   });
 
-  // Page Load Tests
-  describe.skip('Page Load Tests', () => {
-    it('should load without errors', () => {
+  describe('Page Load Tests', () => {
+    it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/escalation');
-      cy.get('body').should('be.visible');
+      cy.get('.main-content').should('be.visible');
     });
 
     it('should have correct page title', () => {
-      cy.title().should('contain', 'Staff Login - Brightpath Ascend FCRA Platform');
+      cy.title().should('contain', 'Smart Escalation');
     });
 
-    it('should not have console errors', () => {
-      cy.window().then((win) => {
-        cy.stub(win.console, 'error').as('consoleError');
-      });
-      // Console error check removed - spy setup issue;
+    it('should display the page header', () => {
+      cy.get('.header h1').should('contain.text', 'Smart Escalation Engine');
+    });
+
+    it('should display header subtitle', () => {
+      cy.get('.header').should('contain.text', 'AI-powered');
     });
 
     it('should not return server errors', () => {
-      cy.request('/dashboard/escalation').then((response) => {
-        expect(response.status).to.not.be.oneOf([404, 500]);
+      cy.request('/dashboard/escalation').its('status').should('be.oneOf', [200, 302]);
+    });
+  });
+
+  describe('Header Actions Tests', () => {
+    it('should display Back to Dashboard link', () => {
+      cy.get('.header-actions a.btn-secondary').should('contain.text', 'Back to Dashboard');
+    });
+
+    it('should have correct link for Back to Dashboard', () => {
+      cy.get('.header-actions a.btn-secondary').should('have.attr', 'href', '/dashboard');
+    });
+  });
+
+  describe('Stats Grid Tests', () => {
+    it('should display stats grid', () => {
+      cy.get('.stats-grid').should('be.visible');
+    });
+
+    it('should display four stat cards', () => {
+      cy.get('.stats-grid .stat-card').should('have.length', 4);
+    });
+
+    it('should display Total Recommendations stat', () => {
+      cy.get('.stat-card.highlight').within(() => {
+        cy.get('.stat-label').should('contain.text', 'Total Recommendations');
+        cy.get('.stat-value').should('exist');
+      });
+    });
+
+    it('should display Applied stat', () => {
+      cy.get('.stat-card').contains('.stat-label', 'Applied').should('exist');
+    });
+
+    it('should display Completed stat', () => {
+      cy.get('.stat-card').contains('.stat-label', 'Completed').should('exist');
+    });
+
+    it('should display Success Rate stat', () => {
+      cy.get('.stat-card').contains('.stat-label', 'Success Rate').should('exist');
+    });
+  });
+
+  describe('Content Grid Tests', () => {
+    it('should display content grid', () => {
+      cy.get('.content-grid').should('be.visible');
+    });
+
+    it('should display cards', () => {
+      cy.get('.card').should('have.length.at.least', 2);
+    });
+  });
+
+  describe('Cases Needing Review Tests', () => {
+    it('should display Cases Needing Escalation Review card', () => {
+      cy.get('.card-title').contains('Cases Needing Escalation Review').should('exist');
+    });
+
+    it('should display case count', () => {
+      cy.get('.card-header').contains('cases').should('exist');
+    });
+
+    it('should display either case items or empty state', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.case-item').length) {
+          cy.get('.case-item').first().should('be.visible');
+        } else {
+          cy.get('.empty-state').should('exist');
+        }
+      });
+    });
+
+    it('should display case info if cases exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.case-item').length) {
+          cy.get('.case-item').first().within(() => {
+            cy.get('.case-name').should('exist');
+            cy.get('.case-detail').should('exist');
+          });
+        } else {
+          cy.get('.empty-state h3').should('contain.text', 'All Caught Up');
+        }
+      });
+    });
+
+    it('should display priority badge if cases exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.case-item').length) {
+          cy.get('.priority-badge').first().should('be.visible');
+        } else {
+          cy.get('.empty-state').should('exist');
+        }
+      });
+    });
+
+    it('should display View and Analyze buttons if cases exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.case-item').length) {
+          cy.get('.case-item').first().within(() => {
+            cy.get('.btn').contains('View').should('exist');
+            cy.get('.btn').contains('Analyze').should('exist');
+          });
+        } else {
+          cy.get('.empty-state').should('exist');
+        }
       });
     });
   });
 
-  // UI Element Tests
-  describe.skip('UI Element Tests', () => {
-    it('should display all headings', () => {
-      cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
-      cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
+  describe('Recent Recommendations Tests', () => {
+    it('should display Recent Recommendations card', () => {
+      cy.get('.card-title').contains('Recent Recommendations').should('exist');
     });
 
-    it('should display logo and company branding', () => {
-      cy.get('.logo img').should('be.visible').and('have.attr', 'alt', 'Brightpath Ascend Group');
-      cy.contains('FCRA Litigation Platform').should('be.visible');
-    });
-
-    it('should display staff badge', () => {
-      cy.get('.staff-badge').should('be.visible').and('contain.text', 'Staff Portal');
-      cy.get('.staff-badge svg').should('be.visible');
-    });
-
-    it('should display subtitle', () => {
-      cy.contains('Sign in to access the admin dashboard').should('be.visible');
-    });
-
-    it('should display login container', () => {
-      cy.get('[data-testid="login-container"]').should('be.visible');
-    });
-
-    it('should display login card', () => {
-      cy.get('[data-testid="login-card"]').should('be.visible');
-    });
-
-    it('should display client portal link', () => {
-      cy.get('[data-testid="client-portal-link"]')
-        .should('be.visible')
-        .and('have.attr', 'href', '/portal/login');
-      cy.contains('Looking for client portal?').should('be.visible');
-    });
-  });
-
-  // Form Tests
-  describe.skip('Form Tests', () => {
-    it('should display login form with correct attributes', () => {
-      cy.get('[data-testid="login-form"]')
-        .should('be.visible')
-        .and('have.attr', 'id', 'loginForm')
-        .and('have.attr', 'method', 'POST')
-        .and('have.attr', 'action', '/staff/login');
-    });
-
-    it('should display email input with correct attributes', () => {
-      cy.get('[data-testid="email-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'email')
-        .and('have.attr', 'name', 'email')
-        .and('have.attr', 'id', 'email')
-        .should('have.attr', 'required')
-        .and('have.attr', 'placeholder', 'your@email.com')
-        .and('have.attr', 'autocomplete', 'email');
-    });
-
-    it('should display email label', () => {
-      cy.contains('label', 'Email Address').should('be.visible');
-    });
-
-    it('should display password input with correct attributes', () => {
-      cy.get('[data-testid="password-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'password')
-        .and('have.attr', 'name', 'password')
-        .and('have.attr', 'id', 'password')
-        .should('have.attr', 'required')
-        .and('have.attr', 'placeholder', 'Enter your password')
-        .and('have.attr', 'autocomplete', 'current-password');
-    });
-
-    it('should display password label', () => {
-      cy.contains('label', 'Password').should('be.visible');
-    });
-
-    it('should accept text in email input', () => {
-      cy.get('[data-testid="email-input"]')
-        .type('test@example.com')
-        .should('have.value', 'test@example.com');
-    });
-
-    it('should accept text in password input', () => {
-      cy.get('[data-testid="password-input"]')
-        .type('password123')
-        .should('have.value', 'password123');
-    });
-
-    it('should validate required email field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').then(($input) => {
-        expect($input[0].validationMessage).to.not.be.empty;
+    it('should display either recommendation items or empty state', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.recommendation-item').length) {
+          cy.get('.recommendation-item').first().should('be.visible');
+        } else {
+          cy.get('.empty-state').should('exist');
+        }
       });
     });
 
-    it('should validate required password field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="password-input"]').then(($input) => {
-        expect($input[0].validationMessage).to.not.be.empty;
+    it('should display recommendation action if recommendations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.recommendation-item').length) {
+          cy.get('.recommendation-action').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
       });
     });
 
-    it('should validate email format', () => {
-      cy.get('[data-testid="email-input"]').type('invalid-email');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').then(($input) => {
-        expect($input[0].validationMessage).to.contain('valid email');
+    it('should display confidence badge if recommendations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.confidence-badge').length) {
+          cy.get('.confidence-badge').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
       });
     });
 
-    it('should submit form with valid data', () => {
-      cy.intercept('POST', '/staff/login').as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@loginRequest');
+    it('should display recommendation reasoning if recommendations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.recommendation-reasoning').length) {
+          cy.get('.recommendation-reasoning').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
     });
   });
 
-  // Button Tests
-  describe.skip('Button Tests', () => {
-    it('should display login button with correct attributes', () => {
-      cy.get('[data-testid="login-button"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'submit')
-        .and('have.attr', 'id', 'loginBtn')
-        .and('have.class', 'login-btn')
-        .and('contain.text', 'Sign In');
+  describe('Top Performing Strategies Tests', () => {
+    it('should display Top Performing Strategies card', () => {
+      cy.get('.card-title').contains('Top Performing Strategies').should('exist');
     });
 
-    it('should display password toggle button', () => {
-      cy.get('.toggle-btn')
-        .should('be.visible')
-        .and('have.attr', 'type', 'button')
-        .and('contain.text', '👁');
-    });
-
-    it('should toggle password visibility when toggle button is clicked', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-    });
-
-    it('should disable login button and show loading state on submit', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="login-button"]')
-        .should('be.disabled')
-        .and('contain.text', 'Signing in...');
-    });
-
-    it('should navigate to client portal when link is clicked', () => {
-      cy.get('[data-testid="client-portal-link"]').click();
-      cy.url().should('include', '/portal/login');
+    it('should display either action type cards or empty state', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.action-type-card').length) {
+          cy.get('.action-type-card').first().should('be.visible');
+        } else {
+          cy.get('.empty-state').should('exist');
+        }
+      });
     });
   });
 
-  // Interactive Element Tests
-  describe.skip('Interactive Element Tests', () => {
-    it('should focus email input when clicked', () => {
-      cy.get('[data-testid="email-input"]').click().should('be.focused');
+  describe('Action Types Tests', () => {
+    it('should display Action Types card', () => {
+      cy.get('.card-title').contains('Action Types').should('exist');
     });
 
-    it('should focus password input when clicked', () => {
-      cy.get('[data-testid="password-input"]').click().should('be.focused');
+    it('should display action type cards', () => {
+      cy.get('.action-type-card').should('have.length.at.least', 1);
     });
 
-    it('should maintain password toggle functionality with keyboard input', () => {
-      cy.get('[data-testid="password-input"]').type('testpassword');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]')
-        .should('have.attr', 'type', 'text')
-        .and('have.value', 'testpassword');
+    it('should display action type icon', () => {
+      cy.get('.action-type-icon').first().should('be.visible');
     });
 
-    it('should allow form submission with Enter key', () => {
-      cy.intercept('POST', '/staff/login').as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123{enter}');
-      cy.wait('@loginRequest');
+    it('should display action type name', () => {
+      cy.get('.action-type-name').first().should('be.visible');
     });
   });
 
-  // Responsive Tests
-  describe.skip('Responsive Tests', () => {
+  describe('Recently Applied Tests', () => {
+    it('should display Recently Applied card', () => {
+      cy.get('.card-title').contains('Recently Applied').should('exist');
+    });
+  });
+
+  describe('JavaScript Function Tests', () => {
+    it('should have generateRecommendation function', () => {
+      cy.window().should('have.property', 'generateRecommendation');
+    });
+  });
+
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('.logo').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
+      cy.get('.content-grid').should('be.visible');
     });
 
     it('should display correctly on tablet (768px)', () => {
       cy.viewport(768, 1024);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
     });
 
     it('should display correctly on mobile (375px)', () => {
       cy.viewport(375, 667);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
-      cy.get('[data-testid="login-button"]').should('be.visible');
-    });
-
-    it('should maintain functionality on mobile', () => {
-      cy.viewport(375, 667);
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
+      cy.get('.main-content').should('be.visible');
     });
   });
 
-  // Error Handling Tests
-  describe.skip('Error Handling Tests', () => {
-    it('should handle empty form submission', () => {
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').should('be.focused');
+  describe('Priority Badge Styling Tests', () => {
+    it('should have urgent priority badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.priority-urgent').length) {
+          cy.get('.priority-urgent').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
     });
 
-    it('should handle network errors gracefully', () => {
-      cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@networkError');
+    it('should have high priority badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.priority-high').length) {
+          cy.get('.priority-high').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
     });
 
-    it('should handle server errors', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('serverError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@serverError');
-    });
-
-    it('should handle invalid credentials', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 401 }).as('invalidCredentials');
-      cy.get('[data-testid="email-input"]').type('invalid@example.com');
-      cy.get('[data-testid="password-input"]').type('wrongpassword');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@invalidCredentials');
-    });
-  });
-
-  // Accessibility Tests
-  describe.skip('Accessibility Tests', () => {
-    it('should have proper form labels', () => {
-      cy.get('label[for="email"]').should('exist');
-      cy.get('label[for="password"]').should('exist');
-    });
-
-    it('should have proper input associations', () => {
-      cy.get('[data-testid="email-input"]').should('have.attr', 'id', 'email');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'id', 'password');
-    });
-
-    it('should have proper image alt text', () => {
-      cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
-    });
-
-    it('should support keyboard navigation', () => {
-      cy.get('body').type('{tab}');
-      cy.get('[data-testid="email-input"]').should('be.focused');
-      cy.focused().type('{tab}');
-      cy.get('[data-testid="password-input"]').should('be.focused');
-      cy.focused().type('{tab}');
-      cy.get('.toggle-btn').should('be.focused');
-      cy.focused().type('{tab}');
-      cy.get('[data-testid="login-button"]').should('be.focused');
+    it('should have medium priority badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.priority-medium').length) {
+          cy.get('.priority-medium').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
     });
   });
 
-  // Security Tests
-  describe.skip('Security Tests', () => {
-    it('should have autocomplete attributes for security', () => {
-      cy.get('[data-testid="email-input"]').should('have.attr', 'autocomplete', 'email');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'autocomplete', 'current-password');
+  describe('Confidence Badge Styling Tests', () => {
+    it('should have confidence-high badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.confidence-high').length) {
+          cy.get('.confidence-high').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
     });
 
-    it('should mask password input by default', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
+    it('should have confidence-medium badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.confidence-medium').length) {
+          cy.get('.confidence-medium').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
     });
 
-    it('should prevent multiple form submissions', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="login-button"]').should('be.disabled');
+    it('should have confidence-low badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.confidence-low').length) {
+          cy.get('.confidence-low').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
+    });
+  });
+
+  describe('Case Item Styling Tests', () => {
+    it('should have urgent case item styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.case-item.urgent').length) {
+          cy.get('.case-item.urgent').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
+    });
+
+    it('should have high case item styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.case-item.high').length) {
+          cy.get('.case-item.high').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
+    });
+
+    it('should have medium case item styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.case-item.medium').length) {
+          cy.get('.case-item.medium').first().should('be.visible');
+        } else {
+          cy.get('.content-grid').should('exist');
+        }
+      });
     });
   });
 });

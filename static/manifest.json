@@ -1,0 +1,105 @@
+{
+  "name": "Brightpath Ascend Group - Client Portal",
+  "short_name": "Brightpath",
+  "description": "Manage your credit repair journey with Brightpath Ascend Group",
+  "start_url": "/portal/dashboard",
+  "scope": "/portal/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#14b8a6",
+  "categories": ["finance", "business"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/static/images/pwa/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/static/images/pwa/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/static/images/pwa/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/static/images/pwa/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/static/images/pwa/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/static/images/pwa/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/static/images/pwa/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/static/images/pwa/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/images/pwa/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Client Dashboard on Mobile"
+    },
+    {
+      "src": "/static/images/pwa/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Client Dashboard on Desktop"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your case dashboard",
+      "url": "/portal/dashboard",
+      "icons": [{ "src": "/static/images/pwa/shortcut-dashboard.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Documents",
+      "short_name": "Docs",
+      "description": "View and upload documents",
+      "url": "/portal/documents",
+      "icons": [{ "src": "/static/images/pwa/shortcut-documents.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Messages",
+      "short_name": "Messages",
+      "description": "Chat with your case manager",
+      "url": "/portal/messages",
+      "icons": [{ "src": "/static/images/pwa/shortcut-messages.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

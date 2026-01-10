@@ -187,7 +187,7 @@ def analyze_response_patterns(db, client_id: int) -> Dict:
     """Analyze bureau response patterns for the client"""
     responses = db.query(CRAResponse).filter_by(client_id=client_id).all()
 
-    patterns = {
+    patterns: Dict[str, Any] = {
         "bureaus": {},
         "frivolous_count": 0,
         "no_response_count": 0,
@@ -222,7 +222,7 @@ def analyze_response_patterns(db, client_id: int) -> Dict:
     return patterns
 
 
-def calculate_violation_severity(db, client_id: int, analysis_id: int = None) -> Dict:
+def calculate_violation_severity(db, client_id: int, analysis_id: Optional[int] = None) -> Dict:
     """Calculate severity of violations for the case"""
     query = db.query(Violation).filter_by(client_id=client_id)
     if analysis_id:
@@ -230,7 +230,7 @@ def calculate_violation_severity(db, client_id: int, analysis_id: int = None) ->
 
     violations = query.all()
 
-    severity = {
+    severity: Dict[str, Any] = {
         "total_violations": len(violations),
         "willful_count": sum(1 for v in violations if v.is_willful),
         "section_counts": {},
@@ -290,7 +290,7 @@ def assess_documentation(db, client_id: int) -> Dict:
     return strength
 
 
-def estimate_damages(db, client_id: int, analysis_id: int = None) -> Dict:
+def estimate_damages(db, client_id: int, analysis_id: Optional[int] = None) -> Dict:
     """Estimate potential damages for the case"""
     query = db.query(Damages).filter_by(client_id=client_id)
     if analysis_id:
@@ -318,7 +318,7 @@ def estimate_damages(db, client_id: int, analysis_id: int = None) -> Dict:
 
 
 def recommend_escalation(
-    client_id: int, item_id: int = None, bureau: str = None
+    client_id: int, item_id: Optional[int] = None, bureau: Optional[str] = None
 ) -> Dict:
     """
     Main recommendation engine - analyzes case and returns optimal escalation strategy
@@ -722,7 +722,7 @@ def save_recommendation(recommendation: Dict) -> int:
         )
         db.add(rec)
         db.commit()
-        return rec.id
+        return int(rec.id)  # type: ignore[arg-type]
     finally:
         db.close()
 
@@ -805,7 +805,7 @@ def get_escalation_stats() -> Dict:
         applied_recs = [r for r in all_recs if r.applied]
         completed_recs = [r for r in applied_recs if r.outcome_actual]
 
-        action_stats = {}
+        action_stats: Dict[str, Dict[str, Any]] = {}
         for rec in completed_recs:
             action = rec.recommended_action
             if action not in action_stats:
@@ -821,14 +821,14 @@ def get_escalation_stats() -> Dict:
                 action_stats[action]["successful"] += 1
 
         for action in action_stats:
-            total = action_stats[action]["total"]
-            successful = action_stats[action]["successful"]
+            total = int(action_stats[action]["total"])
+            successful = int(action_stats[action]["successful"])
             action_stats[action]["success_rate"] = (
                 successful / total if total > 0 else 0
             )
 
         sorted_actions = sorted(
-            action_stats.items(), key=lambda x: x[1]["success_rate"], reverse=True
+            action_stats.items(), key=lambda x: float(x[1]["success_rate"]), reverse=True
         )
 
         return {
@@ -842,7 +842,7 @@ def get_escalation_stats() -> Dict:
                 for a, s in sorted_actions[:5]
             ],
             "overall_success_rate": (
-                sum(s["successful"] for s in action_stats.values())
+                sum(int(s["successful"]) for s in action_stats.values())
                 / len(completed_recs)
                 if completed_recs
                 else 0

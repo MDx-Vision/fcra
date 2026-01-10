@@ -7,7 +7,7 @@ import statistics
 from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
@@ -465,8 +465,8 @@ class AttorneyAnalyticsService:
 
             recommendations = []
             for attorney in attorneys:
-                score = 50
-                reasons = []
+                score: float = 50.0
+                reasons: List[str] = []
 
                 outcomes = (
                     db.query(CaseOutcome)
@@ -766,7 +766,7 @@ class AttorneyAnalyticsService:
 
     def _identify_strengths(self, outcomes: List) -> List[str]:
         """Identify strength areas from case outcomes"""
-        strengths = []
+        strengths: List[str] = []
 
         if not outcomes:
             return strengths

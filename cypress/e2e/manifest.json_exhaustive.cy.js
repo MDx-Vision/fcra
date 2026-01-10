@@ -1,18 +1,19 @@
 // Exhaustive test for /manifest.json
-describe.skip('/manifest.json', () => {
-  beforeEach(() => {
-    // Public route - no auth required
-    cy.visit('/manifest.json');
-  });
+// Note: This is a JSON endpoint, not an HTML page, so we use cy.request() instead of cy.visit()
+describe('/manifest.json', () => {
+  // No beforeEach visit needed - each test uses cy.request()
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load without errors', () => {
-      cy.url().should('include', '/manifest.json');
-      cy.get('@consoleError').should('not.have.been.called');
+      cy.request('/manifest.json').then((response) => {
+        expect(response.status).to.eq(200);
+      });
     });
 
     it('should have correct URL', () => {
-      cy.url().should('eq', Cypress.config().baseUrl + '/manifest.json');
+      cy.request('/manifest.json').then((response) => {
+        expect(response.status).to.eq(200);
+      });
     });
 
     it('should not have server errors', () => {
@@ -30,7 +31,7 @@ describe.skip('/manifest.json', () => {
     });
   });
 
-  describe.skip('PWA Manifest Content Tests', () => {
+  describe('PWA Manifest Content Tests', () => {
     it('should have required PWA manifest fields', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
@@ -94,7 +95,7 @@ describe.skip('/manifest.json', () => {
     });
   });
 
-  describe.skip('PWA Icons Tests', () => {
+  describe('PWA Icons Tests', () => {
     it('should have required icon sizes', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
@@ -140,7 +141,7 @@ describe.skip('/manifest.json', () => {
     });
   });
 
-  describe.skip('PWA Shortcuts Tests', () => {
+  describe('PWA Shortcuts Tests', () => {
     it('should have shortcuts array', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
@@ -192,7 +193,7 @@ describe.skip('/manifest.json', () => {
     });
   });
 
-  describe.skip('Content Type and Headers Tests', () => {
+  describe('Content Type and Headers Tests', () => {
     it('should have correct content type', () => {
       cy.request('/manifest.json').then((response) => {
         expect(response.headers).to.have.property('content-type');
@@ -210,7 +211,7 @@ describe.skip('/manifest.json', () => {
     });
   });
 
-  describe.skip('JSON Structure Validation Tests', () => {
+  describe('JSON Structure Validation Tests', () => {
     it('should not have extra unexpected properties', () => {
       cy.request('/manifest.json').then((response) => {
         const manifest = response.body;
@@ -256,7 +257,7 @@ describe.skip('/manifest.json', () => {
     });
   });
 
-  describe.skip('Performance Tests', () => {
+  describe('Performance Tests', () => {
     it('should load quickly', () => {
       const startTime = Date.now();
       cy.request('/manifest.json').then(() => {

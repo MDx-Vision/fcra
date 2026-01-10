@@ -1,0 +1,83 @@
+{% extends "affiliate_portal/base.html" %}
+{% set active_page = 'payouts' %}
+
+{% block title %}Payouts{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title" data-testid="page-title">Payout History</h1>
+    <p class="page-subtitle">Track your commission payouts</p>
+</div>
+
+<!-- Payout Info Card -->
+<div class="card" style="margin-bottom: 20px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+        <div>
+            <h4 style="color: #64748b; font-size: 14px; margin-bottom: 8px;">Pending Earnings</h4>
+            <div class="money" style="font-size: 28px;">${{ "%.2f"|format(affiliate.pending_earnings or 0) }}</div>
+        </div>
+        <div>
+            <h4 style="color: #64748b; font-size: 14px; margin-bottom: 8px;">Payout Method</h4>
+            <div style="font-size: 18px;">{{ affiliate.payout_method or 'Not Set' }}</div>
+            <a href="{{ url_for('affiliate_portal.settings') }}" style="color: #22c55e; font-size: 13px;">Update</a>
+        </div>
+        <div>
+            <h4 style="color: #64748b; font-size: 14px; margin-bottom: 8px;">Minimum Payout</h4>
+            <div style="font-size: 18px;">$50.00</div>
+            <span style="color: #64748b; font-size: 13px;">Payouts processed monthly</span>
+        </div>
+    </div>
+</div>
+
+<!-- Payouts Table -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">All Payouts</h3>
+    </div>
+    <table data-testid="payouts-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Reference</th>
+                <th>Status</th>
+                <th>Processed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in payouts %}
+            <tr>
+                <td>{{ p.created_at.strftime('%b %d, %Y') if p.created_at else '-' }}</td>
+                <td class="money">${{ "%.2f"|format(p.amount or 0) }}</td>
+                <td>{{ p.payout_method or '-' }}</td>
+                <td>{{ p.payout_reference or '-' }}</td>
+                <td>
+                    <span class="badge badge-{{ 'success' if p.status == 'completed' else 'warning' if p.status == 'pending' else 'info' if p.status == 'processing' else 'danger' }}">
+                        {{ p.status or 'pending' }}
+                    </span>
+                </td>
+                <td>{{ p.processed_at.strftime('%b %d, %Y') if p.processed_at else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: #64748b; padding: 60px;">
+                    No payouts yet. Keep referring to reach the minimum payout threshold!
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Payout Schedule Info -->
+<div class="card" style="margin-top: 20px;">
+    <h3 class="card-title" style="margin-bottom: 16px;">Payout Schedule</h3>
+    <div style="color: #94a3b8; font-size: 14px; line-height: 1.8;">
+        <p><strong>Processing:</strong> Payouts are processed on the 1st and 15th of each month.</p>
+        <p><strong>Minimum:</strong> You must have at least $50 in pending earnings to receive a payout.</p>
+        <p><strong>Methods:</strong> PayPal, Venmo, Zelle, Check, or Bank Transfer (update in Settings).</p>
+        <p><strong>Timeline:</strong> Payouts typically arrive within 3-5 business days after processing.</p>
+    </div>
+</div>
+{% endblock %}

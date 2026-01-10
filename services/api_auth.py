@@ -44,8 +44,8 @@ JWT_EXPIRY_DAYS = 7
 
 
 def create_jwt_token(
-    user_id: int = None,
-    scopes: List[str] = None,
+    user_id: Optional[int] = None,
+    scopes: Optional[List[str]] = None,
     expires_in_days: int = JWT_EXPIRY_DAYS,
 ) -> str:
     """
@@ -134,8 +134,8 @@ def add_rate_limit_headers(response, rate_info: dict):
 
 
 def log_api_request(
-    api_key_id: int, response_status: int, start_time: float, error: str = None
-):
+    api_key_id: int, response_status: int, start_time: float, error: Optional[str] = None
+) -> None:
     """Log an API request for analytics."""
     try:
         duration_ms = int((time.time() - start_time) * 1000)
@@ -159,7 +159,7 @@ def log_api_request(
         print(f"API request logging failed: {e}")
 
 
-def require_api_key(scopes: List[str] = None):
+def require_api_key(scopes: Optional[List[str]] = None):
     """
     Decorator to require API key authentication.
 
@@ -312,7 +312,7 @@ def require_api_key(scopes: List[str] = None):
 
 
 def require_auth(
-    scopes: List[str] = None, allow_session: bool = True, allow_api_key: bool = True
+    scopes: Optional[List[str]] = None, allow_session: bool = True, allow_api_key: bool = True
 ):
     """
     Flexible authentication decorator that accepts session auth OR API key.

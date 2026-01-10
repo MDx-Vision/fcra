@@ -1,33 +1,36 @@
-<nav class="sidebar">
+<nav class="sidebar" data-portal="staff">
     {% set staff_role = session.get('staff_role', 'viewer') %}
-    
+
     <div class="logo">
         <img src="/static/images/logo.png" alt="Brightpath Ascend" onerror="this.style.display='none'">
         <span>Bright<span class="highlight">path</span>Ascend</span>
+        <button type="button" data-theme-toggle class="sidebar-theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+            <span class="theme-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </span>
+        </button>
     </div>
     
     <div class="sidebar-nav">
-        <div class="nav-section" data-section="main">
+        <!-- Pinned Dashboard Link (always visible) -->
+        <a href="/dashboard" class="nav-item pinned {% if active_page == 'dashboard' %}active{% endif %}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            Dashboard
+        </a>
+
+        <div class="nav-divider"></div>
+
+        <div class="nav-section" data-section="clients">
             <div class="nav-section-title">
-                <span>Main</span>
+                <span>Clients & Cases</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <div class="nav-section-items">
-                <a href="/dashboard" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                    Dashboard
-                </a>
-                <a href="/dashboard/analytics" class="nav-item {% if active_page == 'analytics' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                    Analytics
-                </a>
-                <a href="/dashboard/calendar" class="nav-item {% if active_page == 'calendar' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Calendar
-                </a>
                 <a href="/dashboard/contacts" class="nav-item {% if active_page == 'contacts' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    Clients
+                    All Clients
                 </a>
                 <a href="/dashboard/clients" class="nav-item {% if active_page == 'clients' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -40,12 +43,33 @@
                 {% if staff_role in ['admin', 'attorney'] %}
                 <a href="/dashboard/signups" class="nav-item {% if active_page == 'signups' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                    Signups & Payments
+                    Signups
                 </a>
                 {% endif %}
+                <a href="/dashboard/calendar" class="nav-item {% if active_page == 'calendar' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Calendar
+                </a>
+                <a href="/dashboard/booking-management" class="nav-item {% if active_page == 'booking_management' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    Bookings
+                </a>
+                <a href="/dashboard/messaging" class="nav-item {% if active_page == 'messaging' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Messages
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section" data-section="processing">
+            <div class="nav-section-title">
+                <span>Processing</span>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="nav-section-items">
                 <a href="/dashboard/queue" class="nav-item {% if active_page == 'queue' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                    Processing Queue
+                    Queue
                 </a>
                 <a href="/dashboard/documents" class="nav-item {% if active_page == 'documents' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -56,13 +80,17 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     Credit Import
                 </a>
+                <a href="/dashboard/auto-pull" class="nav-item {% if active_page == 'auto-pull' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    Auto-Pull
+                </a>
                 {% endif %}
             </div>
         </div>
         
-        <div class="nav-section" data-section="cases">
+        <div class="nav-section" data-section="workflow">
             <div class="nav-section-title">
-                <span>Cases</span>
+                <span>Case Workflow</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <div class="nav-section-items">
@@ -78,26 +106,30 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Settlements
                 </a>
+                <a href="/dashboard/bureau-tracking" class="nav-item {% if active_page == 'bureau-tracking' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    Bureau Tracking
+                </a>
                 <a href="/dashboard/furnishers" class="nav-item {% if active_page == 'furnishers' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4"/></svg>
-                    Furnisher Intelligence
+                    Furnishers
                 </a>
                 {% if staff_role in ['admin', 'attorney'] %}
                 <a href="/dashboard/patterns" class="nav-item {% if active_page == 'patterns' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17H5a2 2 0 0 0-2 2 2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm12-2h-4a2 2 0 0 0-2 2 2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zM5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6"/><circle cx="12" cy="4" r="2"/></svg>
-                    Violation Patterns
+                    Patterns
                 </a>
                 {% endif %}
                 {% if staff_role in ['admin', 'attorney', 'paralegal'] %}
                 <a href="/dashboard/triage" class="nav-item {% if active_page == 'triage' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                    Case Triage
+                    Triage
                 </a>
                 {% endif %}
                 {% if staff_role in ['admin', 'attorney'] %}
                 <a href="/dashboard/escalation" class="nav-item {% if active_page == 'escalation' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    Smart Escalation
+                    Escalation
                 </a>
                 {% endif %}
             </div>
@@ -113,6 +145,10 @@
                 <a href="/dashboard/case-law" class="nav-item {% if active_page == 'case-law' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                     Case Law Database
+                </a>
+                <a href="/dashboard/letter-templates" class="nav-item {% if active_page == 'letter-templates' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Letter Templates
                 </a>
                 <a href="/dashboard/knowledge-base" class="nav-item {% if active_page == 'knowledge-base' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
@@ -138,6 +174,10 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                     Frivolousness Tracker
                 </a>
+                <a href="/dashboard/ai-dispute-writer" class="nav-item {% if active_page == 'ai-dispute-writer' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    AI Dispute Writer
+                </a>
                 <a href="/dashboard/letter-queue" class="nav-item {% if active_page == 'letter-queue' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                     Letter Queue
@@ -152,40 +192,6 @@
                     Demand Generator
                 </a>
                 {% endif %}
-            </div>
-        </div>
-        {% endif %}
-        
-        {% if staff_role in ['admin', 'attorney'] %}
-        <div class="nav-section" data-section="revenue">
-            <div class="nav-section-title">
-                <span>Revenue</span>
-                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            <div class="nav-section-items">
-                <a href="/dashboard/affiliates" class="nav-item {% if active_page == 'affiliates' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    Affiliates
-                </a>
-                <a href="/dashboard/predictive" class="nav-item {% if active_page == 'predictive' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
-                    Predictive Analytics
-                </a>
-                <a href="/dashboard/ml-insights" class="nav-item {% if active_page == 'ml-insights' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    ML Insights
-                </a>
-            </div>
-        </div>
-        {% endif %}
-        
-        {% if staff_role in ['admin', 'attorney', 'paralegal'] %}
-        <div class="nav-section" data-section="regulatory">
-            <div class="nav-section-title">
-                <span>Regulatory</span>
-                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </div>
-            <div class="nav-section-items">
                 <a href="/dashboard/cfpb" class="nav-item {% if active_page == 'cfpb' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                     CFPB Complaints
@@ -193,6 +199,57 @@
                 <a href="/dashboard/sol" class="nav-item {% if active_page == 'sol' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     SOL Tracker
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if staff_role in ['admin', 'attorney'] %}
+        <div class="nav-section" data-section="analytics">
+            <div class="nav-section-title">
+                <span>Analytics</span>
+                <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="nav-section-items">
+                <a href="/dashboard/analytics" class="nav-item {% if active_page == 'analytics' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Overview
+                </a>
+                <a href="/dashboard/revenue" class="nav-item {% if active_page == 'revenue' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    Revenue
+                </a>
+                <a href="/dashboard/invoices" class="nav-item {% if active_page == 'invoices' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Invoices
+                </a>
+                <a href="/dashboard/predictive" class="nav-item {% if active_page == 'predictive' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+                    Predictive
+                </a>
+                <a href="/dashboard/ml-insights" class="nav-item {% if active_page == 'ml-insights' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    ML Insights
+                </a>
+                <a href="/dashboard/client-success" class="nav-item {% if active_page == 'client-success' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Client Success
+                </a>
+                <a href="/dashboard/staff-performance" class="nav-item {% if active_page == 'staff-performance' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="23 6 23 1 18 1"/><line x1="20" y1="4" x2="23" y2="1"/></svg>
+                    Staff Performance
+                </a>
+                <a href="/dashboard/roi-calculator" class="nav-item {% if active_page == 'roi-calculator' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/><line x1="8" y1="18" x2="10" y2="18"/></svg>
+                    ROI Calculator
+                </a>
+                <a href="/dashboard/payment-plans" class="nav-item {% if active_page == 'payment-plans' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    Payment Plans
+                </a>
+                <a href="/dashboard/affiliates" class="nav-item {% if active_page == 'affiliates' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Affiliates
                 </a>
             </div>
         </div>
@@ -216,6 +273,22 @@
                 <a href="/dashboard/workflows" class="nav-item {% if active_page == 'workflows' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                     Workflow Triggers
+                </a>
+                <a href="/dashboard/voicemail" class="nav-item {% if active_page == 'voicemail' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    Voicemail Drops
+                </a>
+                <a href="/dashboard/email-templates" class="nav-item {% if active_page == 'email-templates' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Email Templates
+                </a>
+                <a href="/dashboard/drip-campaigns" class="nav-item {% if active_page == 'drip-campaigns' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6m0 12v2M4.93 4.93l4.24 4.24m5.66 5.66l4.24 4.24M2 12h6m8 0h6M4.93 19.07l4.24-4.24m5.66-5.66l4.24-4.24"/></svg>
+                    Drip Campaigns
+                </a>
+                <a href="/dashboard/sms-templates" class="nav-item {% if active_page == 'sms-templates' %}active{% endif %}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    SMS Templates
                 </a>
                 <a href="/dashboard/tasks" class="nav-item {% if active_page == 'tasks' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -248,18 +321,12 @@
         </div>
         {% endif %}
         
-        <div class="nav-section" data-section="tools">
+        <div class="nav-section" data-section="settings">
             <div class="nav-section-title">
-                <span>Tools</span>
+                <span>Settings</span>
                 <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <div class="nav-section-items">
-                {% if staff_role in ['admin', 'attorney'] %}
-                <a href="/dashboard/analytics" class="nav-item {% if active_page == 'analytics' %}active{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                    Analytics
-                </a>
-                {% endif %}
                 <a href="/dashboard/settings" class="nav-item {% if active_page == 'settings' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                     Settings
@@ -283,16 +350,16 @@
     </div>
     
     <div class="sidebar-user">
-        <div style="padding: 15px 20px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px;">{{ session.get('staff_initials', 'U') }}</div>
+        <div class="sidebar-user-container">
+            <div class="sidebar-user-card">
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-avatar">{{ session.get('staff_initials', 'U') }}</div>
                     <div style="flex: 1;">
-                        <div style="color: white; font-weight: 600; font-size: 14px;">{{ session.get('staff_name', 'User') }}</div>
-                        <div style="color: #84cc16; font-size: 12px; text-transform: capitalize;">{{ session.get('staff_role', 'staff') }}</div>
+                        <div class="sidebar-user-name">{{ session.get('staff_name', 'User') }}</div>
+                        <div class="sidebar-user-role">{{ session.get('staff_role', 'staff') }}</div>
                     </div>
                 </div>
-                <a href="/staff/logout" style="display: block; margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 6px; color: #94a3b8; font-size: 12px; text-align: center; text-decoration: none; transition: all 0.2s;">Sign Out</a>
+                <a href="/staff/logout" class="sidebar-logout">Sign Out</a>
             </div>
         </div>
     </div>
@@ -300,47 +367,69 @@
 
 <script>
 (function() {
-    const STORAGE_KEY = 'dashboard_sidebar_sections';
-    
-    function getSavedState() {
+    const STORAGE_KEY = 'dashboard_sidebar_active_section';
+
+    function getSavedSection() {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            return saved ? JSON.parse(saved) : {};
+            return localStorage.getItem(STORAGE_KEY) || null;
         } catch (e) {
-            return {};
+            return null;
         }
     }
-    
-    function saveState(state) {
+
+    function saveSection(sectionId) {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            localStorage.setItem(STORAGE_KEY, sectionId);
         } catch (e) {
             console.error('Failed to save sidebar state', e);
         }
     }
-    
+
+    function closeAllSections() {
+        document.querySelectorAll('.nav-section').forEach(section => {
+            const items = section.querySelector('.nav-section-items');
+            const chevron = section.querySelector('.chevron');
+            if (items) {
+                items.classList.remove('expanded');
+                if (chevron) chevron.classList.remove('rotated');
+            }
+        });
+    }
+
+    function openSection(section) {
+        const items = section.querySelector('.nav-section-items');
+        const chevron = section.querySelector('.chevron');
+        if (items) {
+            items.classList.add('expanded');
+            if (chevron) chevron.classList.add('rotated');
+        }
+    }
+
     function toggleSection(section) {
         const sectionId = section.dataset.section;
         const items = section.querySelector('.nav-section-items');
-        const chevron = section.querySelector('.chevron');
-        
-        if (items) {
-            const isExpanded = items.classList.toggle('expanded');
-            if (chevron) chevron.classList.toggle('rotated', isExpanded);
-            
-            const state = getSavedState();
-            state[sectionId] = isExpanded;
-            saveState(state);
+        const isCurrentlyExpanded = items && items.classList.contains('expanded');
+
+        // Close all sections first (true accordion behavior)
+        closeAllSections();
+
+        // If it wasn't expanded, open it now
+        if (!isCurrentlyExpanded) {
+            openSection(section);
+            saveSection(sectionId);
+        } else {
+            // If clicking same section, keep it closed
+            saveSection('');
         }
     }
-    
+
     function initSidebar() {
         const sidebarNav = document.querySelector('.sidebar-nav');
         if (!sidebarNav) {
             console.warn('Sidebar nav not found');
             return;
         }
-        
+
         // Handle click events on section titles
         sidebarNav.addEventListener('click', function(e) {
             const title = e.target.closest('.nav-section-title');
@@ -353,39 +442,37 @@
                 }
             }
         });
-        
-        // Initialize sections on page load
-        const savedState = getSavedState();
+
+        // Initialize - open section with active item or saved section
+        const savedSection = getSavedSection();
         const sections = document.querySelectorAll('.nav-section');
-        
+        let sectionToOpen = null;
+
+        // First priority: section containing active nav item
         sections.forEach(section => {
-            const sectionId = section.dataset.section;
             const items = section.querySelector('.nav-section-items');
-            const chevron = section.querySelector('.chevron');
-            
-            if (items) {
-                const hasActiveItem = items.querySelector('.nav-item.active');
-                
-                // Check saved state first, otherwise expand main and sections with active items
-                if (savedState[sectionId] !== undefined) {
-                    if (savedState[sectionId]) {
-                        items.classList.add('expanded');
-                        if (chevron) chevron.classList.add('rotated');
-                    } else {
-                        items.classList.remove('expanded');
-                        if (chevron) chevron.classList.remove('rotated');
-                    }
-                } else if (hasActiveItem || sectionId === 'main') {
-                    items.classList.add('expanded');
-                    if (chevron) chevron.classList.add('rotated');
-                    savedState[sectionId] = true;
-                }
+            if (items && items.querySelector('.nav-item.active')) {
+                sectionToOpen = section;
             }
         });
-        
-        saveState(savedState);
+
+        // Second priority: saved section from localStorage
+        if (!sectionToOpen && savedSection) {
+            sectionToOpen = document.querySelector(`.nav-section[data-section="${savedSection}"]`);
+        }
+
+        // Default: open first section
+        if (!sectionToOpen && sections.length > 0) {
+            sectionToOpen = sections[0];
+        }
+
+        // Open the determined section
+        if (sectionToOpen) {
+            openSection(sectionToOpen);
+            saveSection(sectionToOpen.dataset.section);
+        }
     }
-    
+
     // Run immediately since script is at bottom of sidebar
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSidebar);
@@ -394,3 +481,6 @@
     }
 })();
 </script>
+
+{# Theme Service Script #}
+<script src="/static/js/theme-service.js"></script>

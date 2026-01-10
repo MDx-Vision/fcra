@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter Template Builder - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        .btn-secondary:hover { background: #cbd5e1; }
+        .btn-info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.primary {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+        }
+        .stat-card.success {
+            background: linear-gradient(135deg, #319795 0%, #22c55e 100%);
+            color: white;
+        }
+        .stat-card.info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        .stat-card.warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .stat-subtext {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .card-body {
+            padding: 20px;
+        }
+
+        .filters-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+        .search-input {
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 250px;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .template-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .template-card:hover {
+            border-color: #22c55e;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+        }
+        .template-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        .template-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .template-code {
+            font-size: 11px;
+            color: #64748b;
+            font-family: monospace;
+        }
+        .template-description {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 15px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .template-meta {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .badge-category { background: #dbeafe; color: #1e40af; }
+        .badge-round { background: #d1fae5; color: #047857; }
+        .badge-target { background: #fef3c7; color: #92400e; }
+        .badge-system { background: #e0e7ff; color: #3730a3; }
+        .badge-custom { background: #fce7f3; color: #9d174d; }
+        .badge-active { background: #d1fae5; color: #047857; }
+        .badge-inactive { background: #fee2e2; color: #dc2626; }
+
+        .sidebar-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .sidebar-card-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f1f5f9;
+            font-weight: 600;
+            font-size: 14px;
+            color: #1a1a2e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-card-body {
+            padding: 15px 20px;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .category-item:hover {
+            background: #e2e8f0;
+        }
+        .category-item.active {
+            background: #d1fae5;
+            color: #047857;
+        }
+        .category-count {
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .variable-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .variable-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 12px;
+        }
+        .variable-item:last-child {
+            border-bottom: none;
+        }
+        .variable-name {
+            font-family: monospace;
+            color: #22c55e;
+            cursor: pointer;
+        }
+        .variable-name:hover {
+            text-decoration: underline;
+        }
+        .variable-desc {
+            color: #64748b;
+            text-align: right;
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-state {
+            padding: 60px 40px;
+            text-align: center;
+            color: #64748b;
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-content.wide { max-width: 1200px; }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #f1f5f9;
+            flex-shrink: 0;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+        .form-hint {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .editor-layout {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+        }
+        .editor-main {
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+        }
+        .preview-content {
+            font-family: 'Times New Roman', serif;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .variable-helper {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .variable-helper h4 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+        }
+        .variable-chip {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+            margin: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .variable-chip:hover {
+            background: #22c55e;
+            color: white;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+        .tab:hover { color: #1a1a2e; }
+        .tab.active {
+            color: #22c55e;
+            border-bottom-color: #22c55e;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            color: #64748b;
+            transition: color 0.2s;
+        }
+        .action-btn:hover { color: #1a1a2e; }
+        .action-btn.edit { color: #3b82f6; }
+        .action-btn.duplicate { color: #22c55e; }
+        .action-btn.delete { color: #ef4444; }
+
+        .most-used-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .most-used-item:last-child {
+            border-bottom: none;
+        }
+        .most-used-name {
+            font-size: 13px;
+            color: #1a1a2e;
+        }
+        .most-used-count {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        @media (max-width: 1200px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            .content-grid { grid-template-columns: 1fr; }
+            .editor-layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .main-content { margin-left: 0; padding: 15px; }
+            .template-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <main class="main-content">
+        <div class="header">
+            <div>
+                <h1>Letter Template Builder</h1>
+                <div class="header-subtitle">Create and manage dispute letter templates</div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="seedDefaults()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Seed Defaults
+                </button>
+                <button class="btn btn-primary" onclick="openCreateModal()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Template
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card primary" data-testid="stat-total">
+                <div class="stat-label">Total Templates</div>
+                <div class="stat-value">{{ stats.total_templates if stats else 0 }}</div>
+                <div class="stat-subtext">{{ stats.system_templates if stats else 0 }} system, {{ stats.custom_templates if stats else 0 }} custom</div>
+            </div>
+            <div class="stat-card success" data-testid="stat-active">
+                <div class="stat-label">Active Templates</div>
+                <div class="stat-value">{{ stats.active_templates if stats else 0 }}</div>
+                <div class="stat-subtext">Ready to use</div>
+            </div>
+            <div class="stat-card info" data-testid="stat-generated">
+                <div class="stat-label">Letters Generated</div>
+                <div class="stat-value">{{ stats.total_generated if stats else 0 }}</div>
+                <div class="stat-subtext">{{ stats.letters_today if stats else 0 }} today</div>
+            </div>
+            <div class="stat-card warning" data-testid="stat-sent">
+                <div class="stat-label">Letters Sent</div>
+                <div class="stat-value">{{ stats.letters_sent if stats else 0 }}</div>
+                <div class="stat-subtext">Delivered to bureaus</div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- Main Content -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Templates</span>
+                    <input type="text" class="search-input" id="search-input" placeholder="Search templates..." onkeyup="filterTemplates()">
+                </div>
+                <div class="card-body">
+                    <div class="filters-bar">
+                        <div class="filter-group">
+                            <span class="filter-label">Category:</span>
+                            <select class="filter-select" id="filter-category" onchange="filterTemplates()">
+                                <option value="">All Categories</option>
+                                {% for key, cat in categories.items() %}
+                                <option value="{{ key }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Round:</span>
+                            <select class="filter-select" id="filter-round" onchange="filterTemplates()">
+                                <option value="">All Rounds</option>
+                                <option value="1">Round 1</option>
+                                <option value="2">Round 2</option>
+                                <option value="3">Round 3</option>
+                                <option value="4">Round 4</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <span class="filter-label">Target:</span>
+                            <select class="filter-select" id="filter-target" onchange="filterTemplates()">
+                                <option value="">All Targets</option>
+                                {% for key, name in target_types.items() %}
+                                <option value="{{ key }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="template-grid" id="template-grid">
+                        {% if templates %}
+                            {% for template in templates %}
+                            <div class="template-card" data-id="{{ template.id }}"
+                                 data-category="{{ template.category }}"
+                                 data-round="{{ template.dispute_round or '' }}"
+                                 data-target="{{ template.target_type }}"
+                                 data-name="{{ template.name|lower }}"
+                                 data-code="{{ template.code|lower }}"
+                                 onclick="viewTemplate({{ template.id }})">
+                                <div class="template-card-header">
+                                    <div>
+                                        <div class="template-name">{{ template.name }}</div>
+                                        <div class="template-code">{{ template.code }}</div>
+                                    </div>
+                                    <div>
+                                        {% if template.is_system %}
+                                        <span class="badge badge-system">System</span>
+                                        {% else %}
+                                        <span class="badge badge-custom">Custom</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="template-description">{{ template.description or 'No description' }}</div>
+                                <div class="template-meta">
+                                    <span class="badge badge-category">{{ categories[template.category].name if template.category in categories else template.category }}</span>
+                                    {% if template.dispute_round %}
+                                    <span class="badge badge-round">Round {{ template.dispute_round }}</span>
+                                    {% endif %}
+                                    <span class="badge badge-target">{{ target_types[template.target_type] if template.target_type in target_types else template.target_type }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state" style="grid-column: 1/-1;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="12" y1="18" x2="12" y2="12"/>
+                                    <line x1="9" y1="15" x2="15" y2="15"/>
+                                </svg>
+                                <h3>No Templates Yet</h3>
+                                <p>Create your first letter template or seed default templates.</p>
+                                <button class="btn btn-primary btn-sm" onclick="seedDefaults()" style="margin-top: 15px;">Seed Default Templates</button>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Categories -->
+                <div class="sidebar-card" data-testid="categories-card">
+                    <div class="sidebar-card-header">
+                        <span>Categories</span>
+                    </div>
+                    <div class="sidebar-card-body">
+                        <div class="category-list">
+                            <div class="category-item active" onclick="filterByCategory('')">
+                                <span>All Templates</span>
+                                <span class="category-count">{{ stats.total_templates if stats else 0 }}</span>
+                            </div>
+                            {% for key, cat in categories.items() %}
+                            <div class="category-item" onclick="filterByCategory('{{ key }}')">
+                                <span>{{ cat.name }}</span>
+                                <span class="category-count">{{ stats.categories[key] if stats and stats.categories and key in stats.categories else 0 }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Most Used -->
+                <div class="sidebar-card" data-testid="most-used-card">
+                    <div class="sidebar-card-header">
+                        <span>Most Used</span>
+                    </div>
+                    <div class="sidebar-card-body">
+                        {% if stats and stats.most_used %}
+                            {% for template in stats.most_used %}
+                            <div class="most-used-item" onclick="viewTemplate({{ template.id }})">
+                                <span class="most-used-name">{{ template.name }}</span>
+                                <span class="most-used-count">{{ template.use_count }} uses</span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="font-size: 13px; color: #64748b;">No templates used yet</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="sidebar-card" data-testid="quick-actions-card">
+                    <div class="sidebar-card-header">
+                        <span>Quick Actions</span>
+                    </div>
+                    <div class="sidebar-card-body">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn btn-info btn-sm" onclick="openGenerateModal()" style="justify-content: center; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                Generate Letter
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="openCreateModal()" style="justify-content: center; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                New Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Variables Reference -->
+                <div class="sidebar-card" data-testid="variables-card">
+                    <div class="sidebar-card-header">
+                        <span>Common Variables</span>
+                    </div>
+                    <div class="sidebar-card-body">
+                        <div class="variable-list">
+                            <div class="variable-item">
+                                <span class="variable-name" onclick="copyVariable('client_name')">{client_name}</span>
+                                <span class="variable-desc">Full name</span>
+                            </div>
+                            <div class="variable-item">
+                                <span class="variable-name" onclick="copyVariable('client_address')">{client_address}</span>
+                                <span class="variable-desc">Full address</span>
+                            </div>
+                            <div class="variable-item">
+                                <span class="variable-name" onclick="copyVariable('bureau_name')">{bureau_name}</span>
+                                <span class="variable-desc">Target bureau</span>
+                            </div>
+                            <div class="variable-item">
+                                <span class="variable-name" onclick="copyVariable('dispute_items')">{dispute_items}</span>
+                                <span class="variable-desc">List of items</span>
+                            </div>
+                            <div class="variable-item">
+                                <span class="variable-name" onclick="copyVariable('current_date')">{current_date}</span>
+                                <span class="variable-desc">Today's date</span>
+                            </div>
+                        </div>
+                        <a href="#" onclick="showAllVariables(); return false;" style="font-size: 12px; color: #22c55e; text-decoration: none; display: block; margin-top: 10px;">View all variables...</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create/Edit Template Modal -->
+    <div class="modal" id="template-modal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <span class="modal-title" id="modal-title">Create Template</span>
+                <button class="modal-close" onclick="closeModal('template-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <div class="tab active" data-tab="details">Details</div>
+                    <div class="tab" data-tab="content">Content</div>
+                    <div class="tab" data-tab="preview">Preview</div>
+                </div>
+
+                <div class="tab-content active" id="tab-details">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Template Name *</label>
+                            <input type="text" class="form-input" id="template-name" placeholder="e.g., Initial Dispute - Round 1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Template Code *</label>
+                            <input type="text" class="form-input" id="template-code" placeholder="e.g., initial_dispute_r1">
+                            <div class="form-hint">Unique identifier (lowercase, underscores only)</div>
+                        </div>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label class="form-label">Category *</label>
+                            <select class="form-select" id="template-category">
+                                {% for key, cat in categories.items() %}
+                                <option value="{{ key }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Dispute Round</label>
+                            <select class="form-select" id="template-round">
+                                <option value="">Any Round</option>
+                                <option value="1">Round 1</option>
+                                <option value="2">Round 2</option>
+                                <option value="3">Round 3</option>
+                                <option value="4">Round 4</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Target Type</label>
+                            <select class="form-select" id="template-target">
+                                {% for key, name in target_types.items() %}
+                                <option value="{{ key }}">{{ name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-input" id="template-description" placeholder="Brief description of this template">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Legal Basis</label>
+                        <input type="text" class="form-input" id="template-legal" placeholder="e.g., FCRA Section 611 (15 U.S.C. 1681i)">
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-content">
+                    <div class="editor-layout">
+                        <div class="editor-main">
+                            <div class="form-group">
+                                <label class="form-label">Subject Line (Optional)</label>
+                                <input type="text" class="form-input" id="template-subject" placeholder="e.g., Re: Dispute of Inaccurate Information">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Letter Content *</label>
+                                <textarea class="form-textarea" id="template-content" placeholder="Enter letter content here. Use {variable_name} for placeholders." style="height: 300px;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Footer (Optional)</label>
+                                <textarea class="form-textarea" id="template-footer" placeholder="Optional closing text or signature block" style="height: 80px;"></textarea>
+                            </div>
+                        </div>
+                        <div class="variable-helper">
+                            <h4>Insert Variable</h4>
+                            <p style="font-size: 12px; color: #64748b; margin-bottom: 15px;">Click a variable to insert it at cursor position</p>
+                            <div id="variable-chips">
+                                <span class="variable-chip" onclick="insertVariable('client_name')">{client_name}</span>
+                                <span class="variable-chip" onclick="insertVariable('client_first_name')">{client_first_name}</span>
+                                <span class="variable-chip" onclick="insertVariable('client_address')">{client_address}</span>
+                                <span class="variable-chip" onclick="insertVariable('client_dob')">{client_dob}</span>
+                                <span class="variable-chip" onclick="insertVariable('client_ssn_last4')">{client_ssn_last4}</span>
+                                <span class="variable-chip" onclick="insertVariable('bureau_name')">{bureau_name}</span>
+                                <span class="variable-chip" onclick="insertVariable('bureau_address')">{bureau_address}</span>
+                                <span class="variable-chip" onclick="insertVariable('dispute_items')">{dispute_items}</span>
+                                <span class="variable-chip" onclick="insertVariable('violation_summary')">{violation_summary}</span>
+                                <span class="variable-chip" onclick="insertVariable('current_date')">{current_date}</span>
+                                <span class="variable-chip" onclick="insertVariable('dispute_round')">{dispute_round}</span>
+                                <span class="variable-chip" onclick="insertVariable('deadline_date')">{deadline_date}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-preview">
+                    <h4 style="margin-bottom: 15px;">Preview with Sample Data</h4>
+                    <div class="editor-preview">
+                        <div class="preview-content" id="preview-content">
+                            Enter content in the Content tab to see preview...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('template-modal')">Cancel</button>
+                <button class="btn btn-primary" id="save-template-btn" onclick="saveTemplate()">Save Template</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Letter Modal -->
+    <div class="modal" id="generate-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Generate Letter</span>
+                <button class="modal-close" onclick="closeModal('generate-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Template *</label>
+                    <select class="form-select" id="gen-template">
+                        <option value="">Select a template...</option>
+                        {% for template in templates %}
+                        <option value="{{ template.id }}">{{ template.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Client *</label>
+                    <select class="form-select" id="gen-client">
+                        <option value="">Select a client...</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.name or client.email }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Target Type *</label>
+                        <select class="form-select" id="gen-target-type">
+                            {% for key, name in target_types.items() %}
+                            <option value="{{ key }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Target Name *</label>
+                        <select class="form-select" id="gen-target-name">
+                            <option value="Equifax">Equifax</option>
+                            <option value="Experian">Experian</option>
+                            <option value="TransUnion">TransUnion</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('generate-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="generateLetter()">Generate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Template Modal -->
+    <div class="modal" id="view-modal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <span class="modal-title" id="view-title">Template Details</span>
+                <button class="modal-close" onclick="closeModal('view-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="editor-layout">
+                    <div>
+                        <div style="margin-bottom: 20px;">
+                            <span id="view-badges"></span>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label class="form-label">Description</label>
+                            <p id="view-description" style="color: #475569; font-size: 14px;"></p>
+                        </div>
+                        <div style="margin-bottom: 15px;">
+                            <label class="form-label">Legal Basis</label>
+                            <p id="view-legal" style="color: #475569; font-size: 14px;"></p>
+                        </div>
+                        <div>
+                            <label class="form-label">Content Preview</label>
+                            <div class="editor-preview" id="view-content" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="sidebar-card" style="margin: 0;">
+                            <div class="sidebar-card-header">Actions</div>
+                            <div class="sidebar-card-body">
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                    <button class="btn btn-info btn-sm" id="use-template-btn" style="width: 100%;">
+                                        Use This Template
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" id="edit-template-btn" style="width: 100%;">
+                                        Edit Template
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" id="duplicate-template-btn" style="width: 100%;">
+                                        Duplicate
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTemplateId = null;
+        let templates = {{ templates | tojson | safe }};
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById('tab-' + tabId).classList.add('active');
+
+                // Update preview when switching to preview tab
+                if (tabId === 'preview') {
+                    updatePreview();
+                }
+            });
+        });
+
+        function openCreateModal() {
+            currentTemplateId = null;
+            document.getElementById('modal-title').textContent = 'Create Template';
+            document.getElementById('save-template-btn').textContent = 'Create Template';
+
+            // Clear form
+            document.getElementById('template-name').value = '';
+            document.getElementById('template-code').value = '';
+            document.getElementById('template-category').value = 'initial_dispute';
+            document.getElementById('template-round').value = '';
+            document.getElementById('template-target').value = 'bureau';
+            document.getElementById('template-description').value = '';
+            document.getElementById('template-legal').value = '';
+            document.getElementById('template-subject').value = '';
+            document.getElementById('template-content').value = '';
+            document.getElementById('template-footer').value = '';
+
+            // Reset to first tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.tab[data-tab="details"]').classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-details').classList.add('active');
+
+            document.getElementById('template-modal').classList.add('active');
+        }
+
+        function openEditModal(templateId) {
+            currentTemplateId = templateId;
+            document.getElementById('modal-title').textContent = 'Edit Template';
+            document.getElementById('save-template-btn').textContent = 'Save Changes';
+
+            // Fetch template data
+            fetch(`/api/letter-templates/${templateId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const t = data.template;
+                        document.getElementById('template-name').value = t.name || '';
+                        document.getElementById('template-code').value = t.code || '';
+                        document.getElementById('template-category').value = t.category || 'initial_dispute';
+                        document.getElementById('template-round').value = t.dispute_round || '';
+                        document.getElementById('template-target').value = t.target_type || 'bureau';
+                        document.getElementById('template-description').value = t.description || '';
+                        document.getElementById('template-legal').value = t.legal_basis || '';
+                        document.getElementById('template-subject').value = t.subject || '';
+                        document.getElementById('template-content').value = t.content || '';
+                        document.getElementById('template-footer').value = t.footer || '';
+                    }
+                });
+
+            closeModal('view-modal');
+            document.getElementById('template-modal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        async function saveTemplate() {
+            const data = {
+                name: document.getElementById('template-name').value,
+                code: document.getElementById('template-code').value,
+                category: document.getElementById('template-category').value,
+                dispute_round: document.getElementById('template-round').value || null,
+                target_type: document.getElementById('template-target').value,
+                description: document.getElementById('template-description').value,
+                legal_basis: document.getElementById('template-legal').value,
+                subject: document.getElementById('template-subject').value,
+                content: document.getElementById('template-content').value,
+                footer: document.getElementById('template-footer').value,
+            };
+
+            if (!data.name || !data.code || !data.content) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const url = currentTemplateId
+                    ? `/api/letter-templates/${currentTemplateId}`
+                    : '/api/letter-templates';
+                const method = currentTemplateId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('template-modal');
+                    location.reload();
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        function viewTemplate(templateId) {
+            fetch(`/api/letter-templates/${templateId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const t = data.template;
+                        document.getElementById('view-title').textContent = t.name;
+
+                        // Badges
+                        let badges = '';
+                        if (t.is_system) {
+                            badges += '<span class="badge badge-system">System</span> ';
+                        } else {
+                            badges += '<span class="badge badge-custom">Custom</span> ';
+                        }
+                        badges += `<span class="badge badge-category">${t.category}</span> `;
+                        if (t.dispute_round) {
+                            badges += `<span class="badge badge-round">Round ${t.dispute_round}</span> `;
+                        }
+                        badges += `<span class="badge badge-target">${t.target_type}</span>`;
+                        document.getElementById('view-badges').innerHTML = badges;
+
+                        document.getElementById('view-description').textContent = t.description || 'No description';
+                        document.getElementById('view-legal').textContent = t.legal_basis || 'Not specified';
+                        document.getElementById('view-content').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${t.content || ''}</pre>`;
+
+                        // Button handlers
+                        document.getElementById('use-template-btn').onclick = () => {
+                            closeModal('view-modal');
+                            document.getElementById('gen-template').value = templateId;
+                            document.getElementById('generate-modal').classList.add('active');
+                        };
+                        document.getElementById('edit-template-btn').onclick = () => openEditModal(templateId);
+                        document.getElementById('duplicate-template-btn').onclick = () => duplicateTemplate(templateId, t.name);
+
+                        document.getElementById('view-modal').classList.add('active');
+                    }
+                });
+        }
+
+        async function duplicateTemplate(templateId, name) {
+            const newName = prompt('Enter name for duplicate:', `${name} (Copy)`);
+            if (!newName) return;
+
+            const newCode = prompt('Enter code for duplicate:', `${newName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`);
+            if (!newCode) return;
+
+            try {
+                const response = await fetch(`/api/letter-templates/${templateId}/duplicate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_name: newName, new_code: newCode })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('view-modal');
+                    location.reload();
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        function filterTemplates() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const category = document.getElementById('filter-category').value;
+            const round = document.getElementById('filter-round').value;
+            const target = document.getElementById('filter-target').value;
+
+            document.querySelectorAll('.template-card').forEach(card => {
+                const cardCategory = card.dataset.category;
+                const cardRound = card.dataset.round;
+                const cardTarget = card.dataset.target;
+                const cardName = card.dataset.name;
+                const cardCode = card.dataset.code;
+
+                const matchSearch = !search || cardName.includes(search) || cardCode.includes(search);
+                const matchCategory = !category || cardCategory === category;
+                const matchRound = !round || cardRound === round;
+                const matchTarget = !target || cardTarget === target || cardTarget === 'all';
+
+                if (matchSearch && matchCategory && matchRound && matchTarget) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function filterByCategory(category) {
+            document.getElementById('filter-category').value = category;
+            filterTemplates();
+
+            // Update active state
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.category-item').classList.add('active');
+        }
+
+        function insertVariable(varName) {
+            const textarea = document.getElementById('template-content');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const variable = `{${varName}}`;
+
+            textarea.value = text.substring(0, start) + variable + text.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start + variable.length, start + variable.length);
+        }
+
+        function copyVariable(varName) {
+            navigator.clipboard.writeText(`{${varName}}`);
+            alert(`Copied {${varName}} to clipboard`);
+        }
+
+        function updatePreview() {
+            const content = document.getElementById('template-content').value;
+            const subject = document.getElementById('template-subject').value;
+            const footer = document.getElementById('template-footer').value;
+
+            // Sample data for preview
+            const sampleData = {
+                client_name: 'John Smith',
+                client_first_name: 'John',
+                client_last_name: 'Smith',
+                client_address: '123 Main Street\nAnytown, CA 90210',
+                client_dob: '01/15/1980',
+                client_ssn_last4: '1234',
+                client_phone: '(555) 123-4567',
+                client_email: 'john@example.com',
+                bureau_name: 'Equifax Information Services LLC',
+                bureau_address: 'P.O. Box 740241\nAtlanta, GA 30374-0241',
+                dispute_items: '1. Capital One - $5,000 - Collection\n2. Chase Bank - $2,500 - Charge-off',
+                violation_summary: 'Re-aging of account, Inaccurate balance reporting',
+                current_date: new Date().toLocaleDateString(),
+                dispute_round: '2',
+                deadline_date: new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString(),
+                company_name: 'Brightpath Ascend Group',
+                staff_name: 'Jane Doe',
+            };
+
+            let preview = content;
+            for (const [key, value] of Object.entries(sampleData)) {
+                preview = preview.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+            }
+
+            if (footer) {
+                preview += '\n\n' + footer;
+                for (const [key, value] of Object.entries(sampleData)) {
+                    preview = preview.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+                }
+            }
+
+            document.getElementById('preview-content').textContent = preview || 'Enter content in the Content tab to see preview...';
+        }
+
+        function openGenerateModal() {
+            document.getElementById('generate-modal').classList.add('active');
+        }
+
+        async function generateLetter() {
+            const templateId = document.getElementById('gen-template').value;
+            const clientId = document.getElementById('gen-client').value;
+            const targetType = document.getElementById('gen-target-type').value;
+            const targetName = document.getElementById('gen-target-name').value;
+
+            if (!templateId || !clientId || !targetType || !targetName) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/letter-templates/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template_id: parseInt(templateId),
+                        client_id: parseInt(clientId),
+                        target_type: targetType,
+                        target_name: targetName,
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    closeModal('generate-modal');
+                    alert(`Letter generated successfully! ID: ${result.letter.id}`);
+                    // Could open a new modal to show the generated letter
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        async function seedDefaults() {
+            if (!confirm('Seed default letter templates? This will add system templates if they do not exist.')) return;
+
+            try {
+                const response = await fetch('/api/letter-templates/seed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(`${result.message}`);
+                    location.reload();
+                } else {
+                    alert(`Error: ${result.error}`);
+                }
+            } catch (err) {
+                alert(`Error: ${err.message}`);
+            }
+        }
+
+        function showAllVariables() {
+            fetch('/api/letter-templates/variables')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        let msg = 'Available Variables:\n\n';
+                        data.variables.forEach(v => {
+                            msg += `{${v.name}} - ${v.description}\n`;
+                        });
+                        alert(msg);
+                    }
+                });
+        }
+
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Auto-generate code from name
+        document.getElementById('template-name').addEventListener('input', function() {
+            if (!currentTemplateId) {
+                const code = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                document.getElementById('template-code').value = code;
+            }
+        });
+    </script>
+</body>
+</html>
