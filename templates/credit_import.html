@@ -301,6 +301,8 @@
         .frequency-manual { background: #f3f4f6; color: #6b7280; }
         .frequency-daily { background: #dbeafe; color: #1e40af; }
         .frequency-weekly { background: #f0fdf4; color: #166534; }
+        .frequency-with_letter { background: #fef3c7; color: #92400e; }
+        .client-option:hover { background: #f0fdf4; color: #166534; }
         .loading-spinner {
             display: inline-block;
             width: 16px;
@@ -363,6 +365,24 @@
         <div class="content-card" data-testid="credentials-card">
             <div class="card-header">
                 <h2 class="card-title">Stored Credentials</h2>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div style="position: relative;">
+                        <input type="text" id="searchInput" placeholder="Search clients..."
+                               onkeyup="searchCredentials()"
+                               style="padding: 10px 16px 10px 40px; border: 1px solid #e2e8f0; border-radius: 8px; width: 280px; font-size: 14px;"
+                               data-testid="search-input">
+                        <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </div>
+                    <select id="statusFilter" onchange="searchCredentials()" style="padding: 10px 16px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px;" data-testid="status-filter">
+                        <option value="">All Status</option>
+                        <option value="success">Success</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
             </div>
 
             <table data-testid="credentials-table">
@@ -381,7 +401,7 @@
                 <tbody id="credentialsTableBody">
                     {% if credentials %}
                         {% for cred in credentials %}
-                        <tr data-testid="credential-row-{{ cred.id }}">
+                        <tr data-testid="credential-row-{{ cred.id }}" data-name="{{ cred.client_name|lower if cred.client_name else '' }}" data-service="{{ cred.service_name|lower }}" data-status="{{ 'inactive' if not cred.is_active else (cred.last_import_status or 'pending') }}">
                             <td>
                                 <div class="client-cell">
                                     <div class="client-avatar">{{ cred.client_name[:2]|upper if cred.client_name else 'NA' }}</div>
@@ -444,13 +464,23 @@
                     <input type="hidden" id="credentialId" name="id">
                     
                     <div class="form-group">
-                        <label for="clientSelect">Client <span style="color: #ef4444;">*</span></label>
-                        <select id="clientSelect" name="client_id" required data-testid="client-select">
-                            <option value="">Select a client...</option>
-                            {% for client in clients %}
-                            <option value="{{ client.id }}">{{ client.name }}</option>
-                            {% endfor %}
-                        </select>
+                        <label for="clientSearch">Client <span style="color: #ef4444;">*</span></label>
+                        <div style="position: relative;">
+                            <input type="text" id="clientSearch" placeholder="Type to search clients..."
+                                   autocomplete="off"
+                                   style="width: 100%; padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px;"
+                                   onfocus="showClientDropdown()" onkeyup="filterClients()" data-testid="client-search">
+                            <input type="hidden" id="clientSelect" name="client_id" required>
+                            <div id="clientDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                {% for client in clients %}
+                                <div class="client-option" data-id="{{ client.id }}" data-name="{{ client.name }}"
+                                     onclick="selectClient({{ client.id }}, '{{ client.name|e }}')"
+                                     style="padding: 10px 12px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #f1f5f9;">
+                                    {{ client.name }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -486,7 +516,9 @@
                             <option value="manual">Manual</option>
                             <option value="daily">Daily</option>
                             <option value="weekly">Weekly</option>
+                            <option value="with_letter">With Letter Send (Auto)</option>
                         </select>
+                        <small style="color: #64748b; font-size: 12px;">"With Letter Send" auto-imports before generating dispute letters</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -499,7 +531,61 @@
 
     <script>
         let credentialsData = {{ credentials | tojson | safe if credentials else '[]' }};
-        
+
+        function searchCredentials() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const rows = document.querySelectorAll('#credentialsTableBody tr[data-name]');
+
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                const service = row.dataset.service || '';
+                const status = row.dataset.status || '';
+
+                const matchesSearch = !query || name.includes(query) || service.includes(query);
+                const matchesStatus = !statusFilter || status === statusFilter;
+
+                row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+            });
+        }
+
+        // Searchable client dropdown
+        function showClientDropdown() {
+            document.getElementById('clientDropdown').style.display = 'block';
+            filterClients();
+        }
+
+        function hideClientDropdown() {
+            setTimeout(() => {
+                document.getElementById('clientDropdown').style.display = 'none';
+            }, 200);
+        }
+
+        function filterClients() {
+            const query = document.getElementById('clientSearch').value.toLowerCase().trim();
+            const options = document.querySelectorAll('.client-option');
+
+            options.forEach(opt => {
+                const name = opt.dataset.name.toLowerCase();
+                opt.style.display = name.includes(query) ? '' : 'none';
+            });
+        }
+
+        function selectClient(id, name) {
+            document.getElementById('clientSelect').value = id;
+            document.getElementById('clientSearch').value = name;
+            document.getElementById('clientDropdown').style.display = 'none';
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('clientDropdown');
+            const search = document.getElementById('clientSearch');
+            if (dropdown && !dropdown.contains(e.target) && e.target !== search) {
+                dropdown.style.display = 'none';
+            }
+        });
+
         function showAlert(message, type) {
             const container = document.getElementById('alertContainer');
             const alert = document.createElement('div');
@@ -514,17 +600,20 @@
             document.getElementById('modalTitle').textContent = 'Add Credential';
             document.getElementById('credentialForm').reset();
             document.getElementById('credentialId').value = '';
+            document.getElementById('clientSelect').value = '';
+            document.getElementById('clientSearch').value = '';
             document.getElementById('passwordInput').required = true;
             document.getElementById('credentialModal').classList.add('active');
         }
-        
+
         function openEditModal(id) {
             const cred = credentialsData.find(c => c.id === id);
             if (!cred) return;
-            
+
             document.getElementById('modalTitle').textContent = 'Edit Credential';
             document.getElementById('credentialId').value = id;
             document.getElementById('clientSelect').value = cred.client_id;
+            document.getElementById('clientSearch').value = cred.client_name || '';
             document.getElementById('serviceSelect').value = cred.service_name;
             document.getElementById('usernameInput').value = cred.username;
             document.getElementById('passwordInput').value = '';

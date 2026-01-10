@@ -163,7 +163,7 @@ def detect_bureau(text: str) -> str:
         bureau_scores[bureau] = score
 
     if max(bureau_scores.values()) > 0:
-        return max(bureau_scores, key=bureau_scores.get)
+        return max(bureau_scores, key=lambda k: bureau_scores[k])
 
     return "Unknown"
 
@@ -231,7 +231,7 @@ def _month_to_num(month_name: str) -> int:
 
 def extract_personal_info(text: str) -> Dict[str, Any]:
     """Extract personal information from credit report text."""
-    info = {
+    info: Dict[str, Optional[str]] = {
         "name": None,
         "address": None,
         "ssn_last_4": None,
@@ -359,7 +359,7 @@ def extract_currency(text: str) -> Optional[float]:
 
 def extract_accounts(text: str) -> List[Dict[str, Any]]:
     """Extract account information from credit report text."""
-    accounts = []
+    accounts: List[Dict[str, Any]] = []
 
     if not text:
         return accounts
@@ -462,7 +462,7 @@ def extract_accounts(text: str) -> List[Dict[str, Any]]:
                 }
 
                 if not any(
-                    a.get("name", "").upper() == creditor.upper()
+                    str(a.get("name", "") or "").upper() == creditor.upper()
                     and a.get("number") == account_num
                     for a in accounts
                 ):
@@ -484,7 +484,7 @@ def extract_accounts(text: str) -> List[Dict[str, Any]]:
 
             if creditor and len(creditor) >= 3:
                 if not any(
-                    a.get("name", "").upper() == creditor.upper() for a in accounts
+                    str(a.get("name", "") or "").upper() == creditor.upper() for a in accounts
                 ):
                     accounts.append(
                         {
@@ -531,7 +531,7 @@ def _detect_account_type(creditor: str, context: str) -> str:
 
 def extract_inquiries(text: str) -> List[Dict[str, Any]]:
     """Extract inquiry information from credit report text."""
-    inquiries = []
+    inquiries: List[Dict[str, Any]] = []
 
     if not text:
         return inquiries
@@ -585,7 +585,7 @@ def extract_inquiries(text: str) -> List[Dict[str, Any]]:
                 }
 
                 if not any(
-                    i.get("company", "").upper() == company.upper()
+                    str(i.get("company", "") or "").upper() == company.upper()
                     and i.get("date") == date
                     for i in inquiries
                 ):
@@ -596,7 +596,7 @@ def extract_inquiries(text: str) -> List[Dict[str, Any]]:
 
 def extract_collections(text: str) -> List[Dict[str, Any]]:
     """Extract collection account information from credit report text."""
-    collections = []
+    collections: List[Dict[str, Any]] = []
 
     if not text:
         return collections
@@ -662,7 +662,7 @@ def extract_collections(text: str) -> List[Dict[str, Any]]:
                 }
 
                 if not any(
-                    c.get("agency", "").upper() == agency.upper() for c in collections
+                    str(c.get("agency", "") or "").upper() == agency.upper() for c in collections
                 ):
                     collections.append(collection_data)
 
@@ -671,7 +671,7 @@ def extract_collections(text: str) -> List[Dict[str, Any]]:
 
 def extract_public_records(text: str) -> List[Dict[str, Any]]:
     """Extract public record information from credit report text."""
-    records = []
+    records: List[Dict[str, Any]] = []
 
     if not text:
         return records
@@ -756,7 +756,7 @@ def parse_credit_report_pdf(file_path: str) -> Dict[str, Any]:
     Returns:
         Dictionary with parsed credit report data
     """
-    result = {
+    result: Dict[str, Any] = {
         "success": False,
         "error": None,
         "bureau": "Unknown",
@@ -786,31 +786,36 @@ def parse_credit_report_pdf(file_path: str) -> Dict[str, Any]:
     result["text_length"] = len(text)
 
     result["bureau"] = detect_bureau(text)
-    result["personal_info"] = extract_personal_info(text)
-    result["accounts"] = extract_accounts(text)
-    result["inquiries"] = extract_inquiries(text)
-    result["collections"] = extract_collections(text)
-    result["public_records"] = extract_public_records(text)
+    personal_info = extract_personal_info(text)
+    result["personal_info"] = personal_info
+    accounts = extract_accounts(text)
+    result["accounts"] = accounts
+    inquiries = extract_inquiries(text)
+    result["inquiries"] = inquiries
+    collections = extract_collections(text)
+    result["collections"] = collections
+    public_records = extract_public_records(text)
+    result["public_records"] = public_records
 
     confidence = 0.0
     if result["bureau"] != "Unknown":
         confidence += 0.2
-    if result["personal_info"].get("name"):
+    if personal_info.get("name"):
         confidence += 0.2
-    if result["personal_info"].get("ssn_last_4"):
+    if personal_info.get("ssn_last_4"):
         confidence += 0.1
-    if len(result["accounts"]) > 0:
+    if len(accounts) > 0:
         confidence += 0.3
-    if len(result["inquiries"]) > 0:
+    if len(inquiries) > 0:
         confidence += 0.1
-    if len(result["collections"]) > 0 or len(result["public_records"]) > 0:
+    if len(collections) > 0 or len(public_records) > 0:
         confidence += 0.1
 
     result["parsing_confidence"] = min(confidence, 1.0)
     result["success"] = True
 
     logger.info(
-        f"Parsed credit report: bureau={result['bureau']}, accounts={len(result['accounts'])}, confidence={result['parsing_confidence']:.2f}"
+        f"Parsed credit report: bureau={result['bureau']}, accounts={len(accounts)}, confidence={result['parsing_confidence']:.2f}"
     )
 
     return result

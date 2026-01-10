@@ -1,3 +1,24 @@
+{# Theme: Flash Prevention Script (must be before stylesheets) #}
+<script>
+(function() {
+    var theme;
+    try {
+        theme = localStorage.getItem('brightpath-theme');
+    } catch (e) {}
+    if (!theme) {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+        } else {
+            theme = 'light';
+        }
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+})();
+</script>
+
+{# Theme Variables CSS #}
+<link rel="stylesheet" href="/static/css/theme-variables.css">
+
 <style>
     .sidebar {
         position: fixed;
@@ -5,30 +26,31 @@
         top: 0;
         width: 260px;
         height: 100vh;
-        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+        background: var(--theme-sidebar-bg, linear-gradient(180deg, #1a1a2e 0%, #16213e 100%));
         display: flex;
         flex-direction: column;
         z-index: 100;
+        transition: background 0.2s ease;
     }
-    
+
     .logo {
         display: flex;
         align-items: center;
         padding: 20px;
-        color: white;
+        color: var(--theme-sidebar-text, white);
         font-size: 18px;
         font-weight: 700;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
+        border-bottom: 1px solid var(--theme-sidebar-border, rgba(255,255,255,0.1));
     }
     .logo img { height: 35px; margin-right: 10px; }
-    .logo .highlight { color: #84cc16; }
-    
+    .logo .highlight { color: var(--theme-accent, #22c55e); }
+
     .sidebar-nav {
         flex: 1;
         overflow-y: auto;
         padding: 15px 10px;
     }
-    
+
     .sidebar-nav::-webkit-scrollbar {
         width: 4px;
     }
@@ -39,69 +61,100 @@
         background: rgba(255,255,255,0.2);
         border-radius: 2px;
     }
-    
-    .nav-section {
-        margin-bottom: 5px;
+
+    /* Theme toggle in sidebar header */
+    .sidebar-theme-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        margin-left: auto;
+        border: none;
+        border-radius: 8px;
+        background: var(--theme-sidebar-hover, rgba(255,255,255,0.05));
+        color: var(--theme-sidebar-text-muted, #94a3b8);
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
-    
+    .sidebar-theme-toggle:hover {
+        background: var(--theme-accent-bg, rgba(34, 197, 94, 0.15));
+        color: var(--theme-accent, #22c55e);
+    }
+    .sidebar-theme-toggle .theme-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-section {
+        margin-bottom: 8px;
+    }
+
     .nav-section-title {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 15px;
-        color: #64748b;
+        padding: 12px 15px;
+        color: var(--theme-sidebar-text-muted, #64748b);
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.8px;
         cursor: pointer;
         border-radius: 8px;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
         user-select: none;
     }
     .nav-section-title:hover {
-        background: rgba(255,255,255,0.05);
-        color: #94a3b8;
+        background: var(--theme-sidebar-hover, rgba(255,255,255,0.06));
+        color: var(--theme-sidebar-text, #cbd5e1);
     }
-    
+
     .nav-section-title .chevron {
-        width: 16px;
-        height: 16px;
-        transition: transform 0.3s ease;
+        width: 14px;
+        height: 14px;
+        opacity: 0.6;
+        transition: transform 0.25s ease, opacity 0.2s ease;
+    }
+    .nav-section-title:hover .chevron {
+        opacity: 1;
     }
     .nav-section-title .chevron.rotated {
         transform: rotate(180deg);
     }
-    
+
     .nav-section-items {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease, opacity 0.3s ease;
+        transition: max-height 0.25s ease-out, opacity 0.2s ease-out;
         opacity: 0;
+        padding-left: 8px;
     }
     .nav-section-items.expanded {
-        max-height: 500px;
+        max-height: 600px;
         opacity: 1;
+        transition: max-height 0.35s ease-in, opacity 0.25s ease-in;
     }
-    
+
     .nav-item {
         display: flex;
         align-items: center;
         padding: 10px 15px;
         margin: 2px 0;
-        color: #94a3b8;
+        color: var(--theme-sidebar-text-muted, #94a3b8);
         text-decoration: none;
         border-radius: 8px;
         font-size: 14px;
         transition: all 0.2s;
     }
     .nav-item:hover {
-        background: rgba(255,255,255,0.1);
-        color: white;
+        background: var(--theme-sidebar-hover, rgba(255,255,255,0.1));
+        color: var(--theme-sidebar-text, white);
     }
     .nav-item.active {
-        background: linear-gradient(135deg, #319795 0%, #84cc16 100%);
-        color: #1a1a2e;
+        background: var(--theme-gradient-accent, linear-gradient(135deg, #22c55e 0%, #16a34a 100%));
+        color: white;
         font-weight: 600;
     }
     .nav-item svg {
@@ -110,17 +163,103 @@
         margin-right: 12px;
         flex-shrink: 0;
     }
-    
+
+    /* Pinned navigation item (always visible) */
+    .nav-item.pinned {
+        background: var(--theme-sidebar-hover, rgba(255,255,255,0.08));
+        border: 1px solid var(--theme-sidebar-border, rgba(255,255,255,0.1));
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    .nav-item.pinned:hover {
+        background: rgba(255,255,255,0.15);
+        border-color: rgba(255,255,255,0.2);
+    }
+    .nav-item.pinned.active {
+        background: var(--theme-gradient-accent, linear-gradient(135deg, #22c55e 0%, #16a34a 100%));
+        border-color: transparent;
+        color: white;
+    }
+
+    /* Navigation divider */
+    .nav-divider {
+        height: 1px;
+        background: var(--theme-sidebar-border, rgba(255,255,255,0.1));
+        margin: 10px 15px;
+    }
+
     .sidebar-user {
         margin-top: auto;
     }
-    
+
+    .sidebar-user-container {
+        padding: 15px 20px;
+        border-top: 1px solid var(--theme-sidebar-border, rgba(255,255,255,0.1));
+    }
+
+    .sidebar-user-card {
+        padding: 15px;
+        background: var(--theme-sidebar-hover, rgba(255,255,255,0.05));
+        border-radius: 10px;
+    }
+
+    .sidebar-user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .sidebar-user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--theme-gradient-accent, linear-gradient(135deg, #22c55e 0%, #16a34a 100%));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .sidebar-user-name {
+        color: var(--theme-sidebar-text, white);
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .sidebar-user-role {
+        color: var(--theme-accent, #22c55e);
+        font-size: 12px;
+        text-transform: capitalize;
+    }
+
+    .sidebar-logout {
+        display: block;
+        margin-top: 10px;
+        padding: 8px;
+        background: var(--theme-sidebar-hover, rgba(255,255,255,0.1));
+        border-radius: 6px;
+        color: var(--theme-sidebar-text-muted, #94a3b8);
+        font-size: 12px;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+
+    .sidebar-logout:hover {
+        background: rgba(255,255,255,0.15);
+        color: var(--theme-sidebar-text, white);
+    }
+
     .main-content {
         margin-left: 260px;
         padding: 30px;
         min-height: 100vh;
+        background: var(--theme-bg-secondary, #f3f4f6);
+        transition: background-color 0.2s ease;
     }
-    
+
     @media (max-width: 768px) {
         .sidebar {
             transform: translateX(-100%);
@@ -133,4 +272,7 @@
             margin-left: 0;
         }
     }
+
+    /* Light mode sidebar adjustments - keep sidebar dark in both modes */
+    /* This makes the sidebar always dark for professional look */
 </style>

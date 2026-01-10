@@ -133,23 +133,44 @@ class Config:
         )
 
     # =========================================================================
-    # EMAIL (SENDGRID)
+    # EMAIL (GMAIL SMTP)
     # =========================================================================
 
     @property
+    def GMAIL_USER(self) -> str:
+        """Gmail email address for SMTP authentication."""
+        return os.environ.get("GMAIL_USER", "")
+
+    @property
+    def GMAIL_APP_PASSWORD(self) -> str:
+        """Gmail App Password for SMTP authentication (requires 2FA enabled)."""
+        return os.environ.get("GMAIL_APP_PASSWORD", "")
+
+    @property
+    def EMAIL_FROM_ADDRESS(self) -> str:
+        """Default sender email address."""
+        return os.environ.get("EMAIL_FROM_ADDRESS", self.GMAIL_USER or "noreply@fcra-platform.com")
+
+    @property
+    def EMAIL_FROM_NAME(self) -> str:
+        """Default sender name."""
+        return os.environ.get("EMAIL_FROM_NAME", "Brightpath Ascend Group")
+
+    # Legacy SendGrid properties (deprecated - kept for backward compatibility)
+    @property
     def SENDGRID_API_KEY(self) -> str:
-        """SendGrid API key for email delivery."""
+        """Deprecated - use GMAIL_USER and GMAIL_APP_PASSWORD instead."""
         return os.environ.get("SENDGRID_API_KEY", "")
 
     @property
     def SENDGRID_FROM_EMAIL(self) -> str:
-        """Default sender email address."""
-        return os.environ.get("SENDGRID_FROM_EMAIL", "noreply@fcra-platform.com")
+        """Deprecated - use EMAIL_FROM_ADDRESS instead."""
+        return self.EMAIL_FROM_ADDRESS
 
     @property
     def SENDGRID_FROM_NAME(self) -> str:
-        """Default sender name."""
-        return os.environ.get("SENDGRID_FROM_NAME", "FCRA Litigation Platform")
+        """Deprecated - use EMAIL_FROM_NAME instead."""
+        return self.EMAIL_FROM_NAME
 
     # =========================================================================
     # SMS (TWILIO)
@@ -169,6 +190,11 @@ class Config:
     def TWILIO_PHONE_NUMBER(self) -> str:
         """Twilio phone number for sending SMS."""
         return os.environ.get("TWILIO_PHONE_NUMBER", "")
+
+    @property
+    def TWILIO_MESSAGING_SERVICE_SID(self) -> str:
+        """Twilio Messaging Service SID for A2P 10DLC compliance."""
+        return os.environ.get("TWILIO_MESSAGING_SERVICE_SID", "")
 
     # =========================================================================
     # PAYMENTS (STRIPE)
@@ -315,7 +341,9 @@ class Config:
         """
         checks = {
             "anthropic": lambda: bool(self.ANTHROPIC_API_KEY),
-            "sendgrid": lambda: bool(self.SENDGRID_API_KEY),
+            "gmail": lambda: all([self.GMAIL_USER, self.GMAIL_APP_PASSWORD]),
+            "email": lambda: all([self.GMAIL_USER, self.GMAIL_APP_PASSWORD]),  # Alias
+            "sendgrid": lambda: all([self.GMAIL_USER, self.GMAIL_APP_PASSWORD]),  # Legacy - now checks Gmail
             "twilio": lambda: all(
                 [
                     self.TWILIO_ACCOUNT_SID,
@@ -380,7 +408,7 @@ class Config:
         """
         services = [
             "anthropic",
-            "sendgrid",
+            "gmail",
             "twilio",
             "stripe",
             "sendcertified",

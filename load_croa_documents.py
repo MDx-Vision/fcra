@@ -15,7 +15,7 @@ from datetime import date
 # CONFIGURATION - UPDATE THIS PATH
 # =============================================================================
 
-DOCS_FOLDER = "/Users/rafaelrodriguez/fcra/docs/htm"  # Your CROA documents folder
+DOCS_FOLDER = "/home/runner/workspace/docs/htm"  # CROA documents folder
 
 # =============================================================================
 # DOCUMENT DEFINITIONS (in signing order)

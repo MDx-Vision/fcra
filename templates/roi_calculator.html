@@ -1,0 +1,735 @@
+{% extends "includes/dashboard_base.html" %}
+
+{% block title %}ROI Calculator - Dashboard{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">ROI Calculator</h1>
+            <p class="text-muted mb-0">Calculate potential settlement and recovery values</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="exportCalculations()">
+                <i class="fas fa-download me-1"></i> Export CSV
+            </button>
+            <button class="btn btn-primary" onclick="openQuickEstimate()">
+                <i class="fas fa-calculator me-1"></i> Quick Estimate
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4" id="statsCards">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                                <i class="fas fa-calculator text-primary fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Calculations</h6>
+                            <h3 class="mb-0" id="totalCalculations">--</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                                <i class="fas fa-dollar-sign text-success fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Avg Estimate</h6>
+                            <h3 class="mb-0" id="avgEstimate">--</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                                <i class="fas fa-gavel text-warning fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Litigation Recommended</h6>
+                            <h3 class="mb-0" id="litigationCount">--</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                                <i class="fas fa-chart-line text-info fa-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Total Value</h6>
+                            <h3 class="mb-0" id="totalValue">--</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Client Calculator -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-user me-2 text-primary"></i>Client ROI Calculator</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Client Search -->
+                    <div class="mb-3">
+                        <label class="form-label">Select Client</label>
+                        <select class="form-select" id="clientSelect">
+                            <option value="">Search for a client...</option>
+                        </select>
+                    </div>
+
+                    <!-- Optional Actual Damages -->
+                    <div class="mb-3">
+                        <label class="form-label d-flex justify-content-between">
+                            <span>Actual Damages (Optional)</span>
+                            <a href="#" class="text-decoration-none small" onclick="toggleDamagesInputs(event)">
+                                <span id="damagesToggleText">Show inputs</span>
+                            </a>
+                        </label>
+                        <div id="damagesInputs" style="display: none;">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="creditDenial" placeholder="Credit Denial">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="higherInterest" placeholder="Higher Interest">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="emotionalDistress" placeholder="Emotional Distress">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="timeLost" placeholder="Time Lost">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary w-100" id="calculateBtn" onclick="calculateROI()" disabled>
+                        <i class="fas fa-calculator me-1"></i> Calculate ROI
+                    </button>
+
+                    <!-- Results Section -->
+                    <div id="resultsSection" style="display: none;" class="mt-4">
+                        <hr>
+                        <h6 class="mb-3">Calculation Results</h6>
+
+                        <!-- Estimate Cards -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="bg-light rounded p-2 text-center">
+                                    <small class="text-muted d-block">Conservative</small>
+                                    <strong class="text-success" id="resultConservative">$0</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-light rounded p-2 text-center">
+                                    <small class="text-muted d-block">Moderate</small>
+                                    <strong class="text-primary" id="resultModerate">$0</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-light rounded p-2 text-center">
+                                    <small class="text-muted d-block">Aggressive</small>
+                                    <strong class="text-warning" id="resultAggressive">$0</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="bg-primary rounded p-2 text-center">
+                                    <small class="text-white-50 d-block">Most Likely</small>
+                                    <strong class="text-white" id="resultMostLikely">$0</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Violations Summary -->
+                        <div class="mb-3">
+                            <h6 class="small text-muted mb-2">Violations</h6>
+                            <div class="d-flex flex-wrap gap-2" id="violationBadges"></div>
+                        </div>
+
+                        <!-- Litigation Score -->
+                        <div class="mb-3">
+                            <h6 class="small text-muted mb-2">Litigation Potential</h6>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" id="litigationBar" role="progressbar" style="width: 0%;">0%</div>
+                            </div>
+                            <small class="text-muted" id="litigationNotes"></small>
+                        </div>
+
+                        <!-- Total Value -->
+                        <div class="bg-success bg-opacity-10 rounded p-3 text-center">
+                            <small class="text-muted d-block">Total Estimated Value</small>
+                            <h3 class="text-success mb-0" id="resultTotalValue">$0</h3>
+                            <small class="text-muted">Includes credit improvement value</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Calculations -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i>Recent Calculations</h5>
+                    <select class="form-select form-select-sm w-auto" id="periodFilter" onchange="loadDashboard()">
+                        <option value="all">All Time</option>
+                        <option value="week">This Week</option>
+                        <option value="month" selected>This Month</option>
+                        <option value="quarter">This Quarter</option>
+                    </select>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Violations</th>
+                                    <th>Most Likely</th>
+                                    <th>Litigation</th>
+                                    <th>Date</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentCalculations">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i> Loading...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Averages Summary -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2 text-primary"></i>Average Estimates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-3">
+                            <div class="text-center">
+                                <small class="text-muted d-block">Conservative</small>
+                                <h5 class="text-success mb-0" id="avgConservative">--</h5>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="text-center">
+                                <small class="text-muted d-block">Moderate</small>
+                                <h5 class="text-primary mb-0" id="avgModerate">--</h5>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="text-center">
+                                <small class="text-muted d-block">Aggressive</small>
+                                <h5 class="text-warning mb-0" id="avgAggressive">--</h5>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="text-center">
+                                <small class="text-muted d-block">Avg Litigation Score</small>
+                                <h5 class="text-info mb-0" id="avgLitigationScore">--</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Estimate Modal -->
+<div class="modal fade" id="quickEstimateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-calculator me-2"></i>Quick ROI Estimate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-4">Enter estimated numbers for a quick ROI calculation without selecting a client.</p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Violations</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Total Violations</label>
+                            <input type="number" class="form-control" id="qeViolations" value="0" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Willful Violations</label>
+                            <input type="number" class="form-control" id="qeWillful" value="0" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Actual Damages ($)</label>
+                            <input type="number" class="form-control" id="qeActualDamages" value="0" min="0">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Negative Items</h6>
+                        <div class="mb-2">
+                            <label class="form-label small">Collections</label>
+                            <input type="number" class="form-control form-control-sm" id="qeCollections" value="0" min="0">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Charge-offs</label>
+                            <input type="number" class="form-control form-control-sm" id="qeChargeoffs" value="0" min="0">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Late Payments</label>
+                            <input type="number" class="form-control form-control-sm" id="qeLatePayments" value="0" min="0">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Inquiries</label>
+                            <input type="number" class="form-control form-control-sm" id="qeInquiries" value="0" min="0">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Public Records</label>
+                            <input type="number" class="form-control form-control-sm" id="qePublicRecords" value="0" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Estimate Results -->
+                <div id="qeResults" style="display: none;" class="mt-4">
+                    <hr>
+                    <h6 class="mb-3">Estimated Results</h6>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Conservative</small>
+                                <h5 class="text-success mb-0" id="qeConservative">$0</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Moderate</small>
+                                <h5 class="text-primary mb-0" id="qeModerate">$0</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="bg-light rounded p-3 text-center">
+                                <small class="text-muted d-block">Aggressive</small>
+                                <h5 class="text-warning mb-0" id="qeAggressive">$0</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="bg-primary rounded p-3 text-center">
+                                <small class="text-white-50 d-block">Most Likely</small>
+                                <h5 class="text-white mb-0" id="qeMostLikely">$0</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6">
+                            <div class="bg-info bg-opacity-10 rounded p-3 text-center">
+                                <small class="text-muted d-block">Score Improvement</small>
+                                <h5 class="text-info mb-0">+<span id="qeScoreImprovement">0</span> pts</h5>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-success bg-opacity-10 rounded p-3 text-center">
+                                <small class="text-muted d-block">Total Value</small>
+                                <h5 class="text-success mb-0" id="qeTotalValue">$0</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="runQuickEstimate()">
+                    <i class="fas fa-calculator me-1"></i> Calculate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Calculation Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-chart-pie me-2"></i>Calculation Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detailsContent">
+                <div class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(value || 0);
+};
+
+const formatDate = (dateStr) => {
+    if (!dateStr) return '--';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+let clients = [];
+let selectedClientId = null;
+
+// Load dashboard data
+async function loadDashboard() {
+    try {
+        const response = await fetch('/api/roi-calculator/dashboard');
+        const data = await response.json();
+
+        if (data.success) {
+            // Update stats
+            document.getElementById('totalCalculations').textContent = data.total_calculations || 0;
+            document.getElementById('avgEstimate').textContent = formatCurrency(data.averages?.most_likely);
+            document.getElementById('litigationCount').textContent = data.high_litigation_count || 0;
+            document.getElementById('totalValue').textContent = formatCurrency(data.total_estimated_value);
+
+            // Update averages
+            document.getElementById('avgConservative').textContent = formatCurrency(data.averages?.conservative);
+            document.getElementById('avgModerate').textContent = formatCurrency(data.averages?.moderate);
+            document.getElementById('avgAggressive').textContent = formatCurrency(data.averages?.aggressive);
+            document.getElementById('avgLitigationScore').textContent = (data.averages?.litigation_score || 0).toFixed(0) + '%';
+
+            // Update recent calculations table
+            renderRecentCalculations(data.recent || []);
+        }
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+function renderRecentCalculations(calculations) {
+    const tbody = document.getElementById('recentCalculations');
+
+    if (!calculations.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    No calculations yet. Select a client to get started.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = calculations.map(calc => `
+        <tr>
+            <td>
+                <strong>${calc.client_name || 'Unknown'}</strong>
+            </td>
+            <td>
+                <span class="badge bg-secondary">${calc.total_violations || 0}</span>
+            </td>
+            <td class="text-success fw-bold">${formatCurrency(calc.most_likely_estimate)}</td>
+            <td>
+                ${calc.litigation_recommended
+                    ? '<span class="badge bg-warning text-dark"><i class="fas fa-gavel me-1"></i>Recommended</span>'
+                    : '<span class="badge bg-light text-muted">' + (calc.litigation_score || 0) + '%</span>'
+                }
+            </td>
+            <td class="text-muted small">${formatDate(calc.calculated_at)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewCalculation(${calc.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Load clients for dropdown
+async function loadClients() {
+    try {
+        const response = await fetch('/api/clients?limit=500');
+        const data = await response.json();
+
+        if (data.clients) {
+            clients = data.clients;
+            const select = document.getElementById('clientSelect');
+
+            select.innerHTML = '<option value="">Search for a client...</option>' +
+                clients.map(c => `<option value="${c.id}">${c.name} (${c.email || 'No email'})</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error loading clients:', error);
+    }
+}
+
+// Client selection
+document.getElementById('clientSelect').addEventListener('change', function() {
+    selectedClientId = this.value ? parseInt(this.value) : null;
+    document.getElementById('calculateBtn').disabled = !selectedClientId;
+    document.getElementById('resultsSection').style.display = 'none';
+});
+
+// Toggle damages inputs
+function toggleDamagesInputs(e) {
+    e.preventDefault();
+    const inputs = document.getElementById('damagesInputs');
+    const text = document.getElementById('damagesToggleText');
+
+    if (inputs.style.display === 'none') {
+        inputs.style.display = 'block';
+        text.textContent = 'Hide inputs';
+    } else {
+        inputs.style.display = 'none';
+        text.textContent = 'Show inputs';
+    }
+}
+
+// Calculate ROI for selected client
+async function calculateROI() {
+    if (!selectedClientId) return;
+
+    const btn = document.getElementById('calculateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Calculating...';
+
+    try {
+        const actualDamages = {};
+        const creditDenial = parseFloat(document.getElementById('creditDenial').value);
+        const higherInterest = parseFloat(document.getElementById('higherInterest').value);
+        const emotionalDistress = parseFloat(document.getElementById('emotionalDistress').value);
+        const timeLost = parseFloat(document.getElementById('timeLost').value);
+
+        if (!isNaN(creditDenial)) actualDamages.credit_denial = creditDenial;
+        if (!isNaN(higherInterest)) actualDamages.higher_interest = higherInterest;
+        if (!isNaN(emotionalDistress)) actualDamages.emotional_distress = emotionalDistress;
+        if (!isNaN(timeLost)) actualDamages.time_lost = timeLost;
+
+        const response = await fetch(`/api/roi-calculator/calculate/${selectedClientId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                actual_damages: Object.keys(actualDamages).length ? actualDamages : null,
+                save: true
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            displayResults(data);
+            loadDashboard(); // Refresh dashboard
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Error calculating ROI:', error);
+        alert('Error calculating ROI. Please try again.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-calculator me-1"></i> Calculate ROI';
+    }
+}
+
+function displayResults(data) {
+    document.getElementById('resultsSection').style.display = 'block';
+
+    // Estimates
+    document.getElementById('resultConservative').textContent = formatCurrency(data.estimates?.conservative);
+    document.getElementById('resultModerate').textContent = formatCurrency(data.estimates?.moderate);
+    document.getElementById('resultAggressive').textContent = formatCurrency(data.estimates?.aggressive);
+    document.getElementById('resultMostLikely').textContent = formatCurrency(data.estimates?.most_likely);
+
+    // Total value
+    document.getElementById('resultTotalValue').textContent = formatCurrency(data.total_estimated_value);
+
+    // Violation badges
+    const violations = data.violations || {};
+    const badgesHtml = [];
+    if (violations.fcra > 0) badgesHtml.push(`<span class="badge bg-danger">FCRA: ${violations.fcra}</span>`);
+    if (violations.fdcpa > 0) badgesHtml.push(`<span class="badge bg-warning text-dark">FDCPA: ${violations.fdcpa}</span>`);
+    if (violations.tcpa > 0) badgesHtml.push(`<span class="badge bg-info">TCPA: ${violations.tcpa}</span>`);
+    if (violations.willful > 0) badgesHtml.push(`<span class="badge bg-dark">Willful: ${violations.willful}</span>`);
+    if (!badgesHtml.length) badgesHtml.push('<span class="badge bg-secondary">No violations found</span>');
+    document.getElementById('violationBadges').innerHTML = badgesHtml.join('');
+
+    // Litigation score
+    const litigation = data.litigation || {};
+    const score = litigation.score || 0;
+    const bar = document.getElementById('litigationBar');
+    bar.style.width = score + '%';
+    bar.textContent = score + '%';
+    bar.className = 'progress-bar ' + (score >= 70 ? 'bg-danger' : score >= 50 ? 'bg-warning' : score >= 30 ? 'bg-info' : 'bg-secondary');
+    document.getElementById('litigationNotes').textContent = litigation.notes || '';
+}
+
+// Quick estimate modal
+function openQuickEstimate() {
+    document.getElementById('qeResults').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('quickEstimateModal')).show();
+}
+
+async function runQuickEstimate() {
+    try {
+        const response = await fetch('/api/roi-calculator/quick-estimate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                violations_count: parseInt(document.getElementById('qeViolations').value) || 0,
+                willful_count: parseInt(document.getElementById('qeWillful').value) || 0,
+                actual_damages: parseFloat(document.getElementById('qeActualDamages').value) || 0,
+                collections_count: parseInt(document.getElementById('qeCollections').value) || 0,
+                chargeoffs_count: parseInt(document.getElementById('qeChargeoffs').value) || 0,
+                late_payments_count: parseInt(document.getElementById('qeLatePayments').value) || 0,
+                inquiries_count: parseInt(document.getElementById('qeInquiries').value) || 0,
+                public_records_count: parseInt(document.getElementById('qePublicRecords').value) || 0
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            document.getElementById('qeResults').style.display = 'block';
+            document.getElementById('qeConservative').textContent = formatCurrency(data.estimates?.conservative);
+            document.getElementById('qeModerate').textContent = formatCurrency(data.estimates?.moderate);
+            document.getElementById('qeAggressive').textContent = formatCurrency(data.estimates?.aggressive);
+            document.getElementById('qeMostLikely').textContent = formatCurrency(data.estimates?.most_likely);
+            document.getElementById('qeScoreImprovement').textContent = data.score_improvement?.estimated_points || 0;
+            document.getElementById('qeTotalValue').textContent = formatCurrency(data.total_estimated_value);
+        }
+    } catch (error) {
+        console.error('Error running quick estimate:', error);
+    }
+}
+
+// View calculation details
+async function viewCalculation(calculationId) {
+    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    modal.show();
+
+    try {
+        const response = await fetch(`/api/roi-calculator/calculation/${calculationId}`);
+        const data = await response.json();
+
+        if (data.success && data.calculation) {
+            const calc = data.calculation;
+            document.getElementById('detailsContent').innerHTML = `
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6>Violations</h6>
+                        <table class="table table-sm">
+                            <tr><td>FCRA</td><td class="text-end">${calc.fcra_violations_count || 0}</td></tr>
+                            <tr><td>FDCPA</td><td class="text-end">${calc.fdcpa_violations_count || 0}</td></tr>
+                            <tr><td>TCPA</td><td class="text-end">${calc.tcpa_violations_count || 0}</td></tr>
+                            <tr><td>Willful</td><td class="text-end">${calc.willful_violations || 0}</td></tr>
+                            <tr class="table-active"><td><strong>Total</strong></td><td class="text-end"><strong>${calc.total_violations || 0}</strong></td></tr>
+                        </table>
+
+                        <h6>Statutory Damages</h6>
+                        <table class="table table-sm">
+                            <tr><td>Minimum</td><td class="text-end">${formatCurrency(calc.statutory_damages_min)}</td></tr>
+                            <tr><td>Maximum</td><td class="text-end">${formatCurrency(calc.statutory_damages_max)}</td></tr>
+                            <tr><td>Punitive Potential</td><td class="text-end">${formatCurrency(calc.punitive_damages_potential)}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Settlement Estimates</h6>
+                        <table class="table table-sm">
+                            <tr><td>Conservative</td><td class="text-end text-success">${formatCurrency(calc.conservative_estimate)}</td></tr>
+                            <tr><td>Moderate</td><td class="text-end text-primary">${formatCurrency(calc.moderate_estimate)}</td></tr>
+                            <tr><td>Aggressive</td><td class="text-end text-warning">${formatCurrency(calc.aggressive_estimate)}</td></tr>
+                            <tr class="table-primary"><td><strong>Most Likely</strong></td><td class="text-end"><strong>${formatCurrency(calc.most_likely_estimate)}</strong></td></tr>
+                        </table>
+
+                        <h6>Credit Improvement</h6>
+                        <table class="table table-sm">
+                            <tr><td>Estimated Score Increase</td><td class="text-end">+${calc.estimated_score_improvement || 0} pts</td></tr>
+                            <tr><td>Credit Value</td><td class="text-end">${formatCurrency(calc.credit_value_improvement)}</td></tr>
+                        </table>
+
+                        <h6>Litigation</h6>
+                        <table class="table table-sm">
+                            <tr><td>Score</td><td class="text-end">${calc.litigation_score || 0}%</td></tr>
+                            <tr><td>Recommended</td><td class="text-end">${calc.litigation_recommended ? '<span class="badge bg-warning">Yes</span>' : '<span class="badge bg-secondary">No</span>'}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <hr>
+                <div class="bg-success bg-opacity-10 rounded p-3 text-center">
+                    <h6 class="text-muted mb-1">Total Estimated Value</h6>
+                    <h2 class="text-success mb-0">${formatCurrency(calc.total_estimated_value)}</h2>
+                </div>
+                ${calc.litigation_notes ? `<p class="text-muted mt-3 mb-0"><strong>Notes:</strong> ${calc.litigation_notes}</p>` : ''}
+            `;
+        } else {
+            document.getElementById('detailsContent').innerHTML = '<p class="text-danger">Error loading calculation details.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading calculation:', error);
+        document.getElementById('detailsContent').innerHTML = '<p class="text-danger">Error loading calculation details.</p>';
+    }
+}
+
+// Export calculations
+function exportCalculations() {
+    const period = document.getElementById('periodFilter').value;
+    window.location.href = `/api/roi-calculator/export?period=${period}`;
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboard();
+    loadClients();
+
+    // Auto-refresh every 60 seconds
+    setInterval(loadDashboard, 60000);
+});
+</script>
+{% endblock %}

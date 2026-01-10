@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-import requests
+import requests  # type: ignore[import-untyped]
 
 from database import (
     Analysis,
@@ -136,7 +136,7 @@ class SmartCreditAdapter(BaseCreditAdapter):
                 "error": "SmartCredit API key not configured. Please add SMARTCREDIT_API_KEY to your environment.",
             }
 
-        payload = {
+        payload: Dict[str, Any] = {
             "ssn_last4": ssn_last4,
             "date_of_birth": dob,
             "report_type": "tri-merge",
@@ -408,7 +408,7 @@ class IdentityIQAdapter(BaseCreditAdapter):
                 "error": "IdentityIQ API credentials not configured. Please add IDENTITYIQ_API_KEY and IDENTITYIQ_API_SECRET to your environment.",
             }
 
-        payload = {
+        payload: Dict[str, Any] = {
             "consumer": {
                 "ssn_last4": ssn_last4,
                 "dob": dob,
@@ -689,7 +689,7 @@ class ExperianConnectAdapter(BaseCreditAdapter):
                 "error": "Experian Connect API credentials not configured. Please add EXPERIAN_CLIENT_ID and EXPERIAN_CLIENT_SECRET to your environment.",
             }
 
-        payload = {
+        payload: Dict[str, Any] = {
             "consumerPii": {
                 "primaryApplicant": {
                     "name": {
@@ -782,7 +782,7 @@ class ExperianConnectAdapter(BaseCreditAdapter):
         try:
             credit_profile = raw_data.get("creditProfile", {})
 
-            parsed = {
+            parsed: Dict[str, Any] = {
                 "provider": self.PROVIDER_NAME,
                 "report_date": datetime.utcnow().isoformat(),
                 "consumer": {"name": None, "addresses": [], "employers": []},
@@ -892,7 +892,7 @@ class CreditPullService:
 
         self.provider_name = provider_name
         adapter_class = PROVIDER_ADAPTERS[provider_name]
-        self.adapter = adapter_class(api_key=api_key, sandbox=self.sandbox)
+        self.adapter = adapter_class(api_key=api_key, sandbox=self.sandbox)  # type: ignore[abstract]
 
         logger.info(f"Set credit provider to: {provider_name}")
         return True
@@ -930,7 +930,7 @@ class CreditPullService:
                 session.commit()
                 session.refresh(connection)
 
-            self._integration_id = connection.id
+            self._integration_id = connection.id  # type: ignore[assignment]
             return self._integration_id
         except Exception as e:
             logger.error(f"Error getting integration ID: {e}")
@@ -942,13 +942,13 @@ class CreditPullService:
     def _log_event(
         self,
         event_type: str,
-        event_data: Dict = None,
-        client_id: int = None,
-        request_id: str = None,
-        response_status: int = None,
-        error_message: str = None,
+        event_data: Optional[Dict[str, Any]] = None,
+        client_id: Optional[int] = None,
+        request_id: Optional[str] = None,
+        response_status: Optional[int] = None,
+        error_message: Optional[str] = None,
         cost_cents: int = 0,
-        db=None,
+        db: Any = None,
     ) -> None:
         """Log an integration event for audit trail."""
         session = db or SessionLocal()
@@ -1068,8 +1068,8 @@ class CreditPullService:
                 ssn_last4=ssn_last4,
                 dob=dob,
                 full_ssn=full_ssn,
-                first_name=client.first_name,
-                last_name=client.last_name,
+                first_name=str(client.first_name) if client.first_name else None,
+                last_name=str(client.last_name) if client.last_name else None,
                 address=address,
             )
 
@@ -1174,21 +1174,21 @@ class CreditPullService:
                     "error": pull_request.error_message,
                 }
 
-            self.set_provider(pull_request.provider)
-            status_result = self.adapter.get_status(pull_request.external_request_id)
+            self.set_provider(str(pull_request.provider) if pull_request.provider else "smartcredit")
+            status_result = self.adapter.get_status(str(pull_request.external_request_id) if pull_request.external_request_id else "")
 
             if (
                 status_result.get("success")
                 and status_result.get("status") == "complete"
             ):
-                pull_request.status = "complete"
+                pull_request.status = "complete"  # type: ignore[assignment]
                 if status_result.get("scores"):
                     scores = status_result["scores"]
                     pull_request.score_experian = scores.get("experian")
                     pull_request.score_equifax = scores.get("equifax")
                     pull_request.score_transunion = scores.get("transunion")
-                pull_request.pulled_at = datetime.utcnow()
-                pull_request.updated_at = datetime.utcnow()
+                pull_request.pulled_at = datetime.utcnow()  # type: ignore[assignment]
+                pull_request.updated_at = datetime.utcnow()  # type: ignore[assignment]
                 session.commit()
 
             return {
@@ -1249,8 +1249,8 @@ class CreditPullService:
                     "error": "No external request ID - report not fetched from provider",
                 }
 
-            self.set_provider(pull_request.provider)
-            report_result = self.adapter.get_report(pull_request.external_request_id)
+            self.set_provider(str(pull_request.provider) if pull_request.provider else "smartcredit")
+            report_result = self.adapter.get_report(str(pull_request.external_request_id) if pull_request.external_request_id else "")
 
             if not report_result.get("success"):
                 return {
@@ -1262,8 +1262,8 @@ class CreditPullService:
             parse_result = self.adapter.parse_report(report_result.get("raw_data"))
 
             if parse_result.get("success"):
-                pull_request.parsed_data = parse_result.get("parsed_data")
-                pull_request.updated_at = datetime.utcnow()
+                pull_request.parsed_data = parse_result.get("parsed_data")  # type: ignore[assignment]
+                pull_request.updated_at = datetime.utcnow()  # type: ignore[assignment]
                 session.commit()
 
             return parse_result
@@ -1412,7 +1412,7 @@ class CreditPullService:
                     "credit_report_id": credit_report.id,
                     "analysis_id": analysis.id,
                 },
-                client_id=client.id,
+                client_id=client.id,  # type: ignore[arg-type]
                 request_id=str(request_id),
                 db=session,
             )
@@ -1447,7 +1447,7 @@ class CreditPullService:
         providers = []
 
         for name, adapter_class in PROVIDER_ADAPTERS.items():
-            adapter = adapter_class(sandbox=self.sandbox)
+            adapter = adapter_class(sandbox=self.sandbox)  # type: ignore[abstract]
             providers.append(
                 {
                     "name": name,

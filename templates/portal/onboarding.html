@@ -1,0 +1,796 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'onboarding' %}
+
+{% block title %}Complete Your Setup{% endblock %}
+
+{% block extra_css %}
+<style>
+    .onboarding-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .onboarding-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .onboarding-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 8px;
+    }
+    .onboarding-header p {
+        color: #64748b;
+        font-size: 16px;
+    }
+
+    /* Progress bar */
+    .progress-section {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .progress-text {
+        font-size: 14px;
+        color: #64748b;
+    }
+    .progress-percentage {
+        font-size: 24px;
+        font-weight: 700;
+        color: #319795;
+    }
+    .progress-bar {
+        height: 12px;
+        background: #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #319795, #22c55e);
+        border-radius: 6px;
+        transition: width 0.5s ease;
+    }
+
+    /* Steps list */
+    .steps-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .step-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    .step-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    .step-card.active {
+        border-color: #319795;
+        background: linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%);
+    }
+    .step-card.complete {
+        background: #f0fdf4;
+        border-color: #22c55e;
+    }
+    .step-card.locked {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .step-number {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+    .step-card.complete .step-number {
+        background: #22c55e;
+        color: white;
+    }
+    .step-card.active .step-number {
+        background: #319795;
+        color: white;
+    }
+    .step-card:not(.complete):not(.active) .step-number {
+        background: #e2e8f0;
+        color: #64748b;
+    }
+
+    .step-content {
+        flex: 1;
+    }
+    .step-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+    }
+    .step-description {
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .step-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    .step-card.complete .step-status {
+        color: #22c55e;
+    }
+    .step-card.active .step-status {
+        color: #319795;
+    }
+
+    .step-action {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .step-card.active .step-action {
+        background: #319795;
+        color: white;
+    }
+    .step-card.active .step-action:hover {
+        background: #2c7a7b;
+    }
+    .step-card.complete .step-action {
+        background: #dcfce7;
+        color: #22c55e;
+    }
+
+    /* Step detail modal */
+    .step-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .step-modal.active {
+        display: flex;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 20px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 32px;
+    }
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+    .modal-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+    .modal-close {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f5f9;
+        cursor: pointer;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-close:hover {
+        background: #e2e8f0;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: all 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #319795;
+        box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.1);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .upload-zone {
+        border: 2px dashed #e2e8f0;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .upload-zone:hover {
+        border-color: #319795;
+        background: #f0fdfa;
+    }
+    .upload-zone.has-file {
+        border-color: #22c55e;
+        background: #f0fdf4;
+    }
+    .upload-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+    .upload-text {
+        font-size: 16px;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    .upload-hint {
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 14px;
+        background: #319795;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        background: #2c7a7b;
+    }
+    .btn-primary:disabled {
+        background: #94a3b8;
+        cursor: not-allowed;
+    }
+
+    .completion-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #dcfce7;
+        color: #16a34a;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* All complete celebration */
+    .celebration {
+        text-align: center;
+        padding: 60px 40px;
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-radius: 20px;
+        margin-top: 32px;
+    }
+    .celebration-icon {
+        font-size: 80px;
+        margin-bottom: 24px;
+    }
+    .celebration h2 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #16a34a;
+        margin-bottom: 12px;
+    }
+    .celebration p {
+        color: #64748b;
+        font-size: 16px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        .step-card {
+            flex-direction: column;
+            text-align: center;
+        }
+        .step-status {
+            margin-top: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="onboarding-container" data-testid="onboarding-container">
+    <div class="onboarding-header">
+        <h1 data-testid="onboarding-title">Complete Your Setup</h1>
+        <p>Follow these steps to get started with your credit repair journey</p>
+    </div>
+
+    {# Client Stage Status Banner #}
+    {% set client_stage = current_user.client.client_stage if current_user and current_user.client else 'onboarding' %}
+
+    {% if client_stage == 'pending_payment' %}
+    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #f59e0b;" data-testid="cancellation-notice">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">⏳</span>
+            <div>
+                <div style="font-weight: 600; color: #92400e; margin-bottom: 4px;">3-Day Cancellation Period Active</div>
+                <div style="font-size: 14px; color: #a16207;">
+                    Your agreements have been signed. You have 3 business days to cancel if you change your mind.
+                    Once this period ends, we'll charge your card and begin sending your dispute letters.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif client_stage == 'payment_failed' %}
+    <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #ef4444;" data-testid="payment-failed-notice">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">⚠️</span>
+            <div>
+                <div style="font-weight: 600; color: #991b1b; margin-bottom: 4px;">Payment Failed</div>
+                <div style="font-size: 14px; color: #b91c1c;">
+                    We couldn't process your payment. Please update your payment method below to continue.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elif client_stage == 'active' %}
+    <div style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border-radius: 12px; padding: 20px; margin-bottom: 24px; border: 1px solid #22c55e;" data-testid="active-notice">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 24px;">✅</span>
+            <div>
+                <div style="font-weight: 600; color: #166534; margin-bottom: 4px;">Your Case is Active!</div>
+                <div style="font-size: 14px; color: #15803d;">
+                    Your dispute letters are being prepared. Check your <a href="{{ url_for('portal.dashboard') }}" style="color: #166534; font-weight: 600;">Case Dashboard</a> for updates.
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Progress Section -->
+    <div class="progress-section" data-testid="progress-section">
+        <div class="progress-header">
+            <span class="progress-text">{{ progress.completed_steps }} of {{ progress.total_steps }} steps complete</span>
+            <span class="progress-percentage" data-testid="progress-percentage">{{ progress.percentage }}%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ progress.percentage }}%" data-testid="progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- Steps List -->
+    <div class="steps-list" data-testid="steps-list">
+        {% for step in progress.steps %}
+        <div class="step-card {% if step.is_complete %}complete{% elif step.key == progress.current_step %}active{% else %}locked{% endif %}"
+             data-step="{{ step.key }}"
+             data-testid="step-{{ step.key }}"
+             onclick="openStep('{{ step.key }}')">
+            <div class="step-number">
+                {% if step.is_complete %}
+                    ✓
+                {% else %}
+                    {{ loop.index }}
+                {% endif %}
+            </div>
+            <div class="step-content">
+                <div class="step-title">{{ step.name }}</div>
+                <div class="step-description">{{ step.description }}</div>
+            </div>
+            <div class="step-status">
+                {% if step.is_complete %}
+                    <span class="completion-badge">Complete</span>
+                {% elif step.key == progress.current_step %}
+                    <button class="step-action" data-testid="start-{{ step.key }}">Start</button>
+                {% else %}
+                    <span style="color: #94a3b8;">Locked</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if progress.is_complete %}
+    <div class="celebration" data-testid="celebration">
+        <div class="celebration-icon">🎉</div>
+        <h2>Setup Complete!</h2>
+        <p>You're all set! Our team will now begin analyzing your credit report and preparing your dispute letters.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Step Modals -->
+<!-- Personal Info Modal -->
+<div class="step-modal" id="modal-personal_info" data-testid="modal-personal_info">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Personal Information</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="form-personal_info" onsubmit="submitStep(event, 'personal_info')">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" value="{{ current_user.first_name or '' }}" required data-testid="input-first_name">
+                </div>
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" id="last_name" name="last_name" value="{{ current_user.last_name or '' }}" required data-testid="input-last_name">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="date_of_birth">Date of Birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth" value="{{ current_user.date_of_birth.strftime('%Y-%m-%d') if current_user.date_of_birth else '' }}" required data-testid="input-dob">
+                </div>
+                <div class="form-group">
+                    <label for="ssn_last_four">SSN Last 4 Digits</label>
+                    <input type="text" id="ssn_last_four" name="ssn_last_four" maxlength="4" pattern="\d{4}" value="{{ current_user.ssn_last_four or '' }}" required data-testid="input-ssn">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="address_street">Street Address</label>
+                <input type="text" id="address_street" name="address_street" value="{{ current_user.address_street or '' }}" required data-testid="input-street">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="address_city">City</label>
+                    <input type="text" id="address_city" name="address_city" value="{{ current_user.address_city or '' }}" required data-testid="input-city">
+                </div>
+                <div class="form-group">
+                    <label for="address_state">State</label>
+                    <input type="text" id="address_state" name="address_state" maxlength="2" value="{{ current_user.address_state or '' }}" required data-testid="input-state">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="address_zip">ZIP Code</label>
+                <input type="text" id="address_zip" name="address_zip" maxlength="10" value="{{ current_user.address_zip or '' }}" required data-testid="input-zip">
+            </div>
+            <button type="submit" class="btn-primary" data-testid="save-personal_info">Save & Continue</button>
+        </form>
+    </div>
+</div>
+
+<!-- ID Documents Modal -->
+<div class="step-modal" id="modal-id_documents" data-testid="modal-id_documents">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">ID Verification</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="form-id_documents" onsubmit="submitStep(event, 'id_documents')">
+            <p style="color: #64748b; margin-bottom: 20px;">Please upload clear photos of your driver's license or state ID.</p>
+            <div class="form-group">
+                <label>Front of ID</label>
+                <div class="upload-zone" id="upload-id-front" onclick="document.getElementById('id_front').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Click to upload front of ID</div>
+                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                </div>
+                <input type="file" id="id_front" name="id_front" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-id-front')" data-testid="input-id-front">
+            </div>
+            <div class="form-group">
+                <label>Back of ID (Optional)</label>
+                <div class="upload-zone" id="upload-id-back" onclick="document.getElementById('id_back').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Click to upload back of ID</div>
+                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                </div>
+                <input type="file" id="id_back" name="id_back" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-id-back')" data-testid="input-id-back">
+            </div>
+            <button type="submit" class="btn-primary" data-testid="save-id_documents">Upload & Continue</button>
+        </form>
+    </div>
+</div>
+
+<!-- SSN Card Modal -->
+<div class="step-modal" id="modal-ssn_card" data-testid="modal-ssn_card">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Social Security Card</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="form-ssn_card" onsubmit="submitStep(event, 'ssn_card')">
+            <p style="color: #64748b; margin-bottom: 20px;">Upload a photo of your Social Security card for identity verification.</p>
+            <div class="form-group">
+                <label>Social Security Card</label>
+                <div class="upload-zone" id="upload-ssn" onclick="document.getElementById('ssn_card_file').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Click to upload SSN card</div>
+                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                </div>
+                <input type="file" id="ssn_card_file" name="ssn_card" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-ssn')" data-testid="input-ssn-card">
+            </div>
+            <button type="submit" class="btn-primary" data-testid="save-ssn_card">Upload & Continue</button>
+        </form>
+    </div>
+</div>
+
+<!-- Proof of Address Modal -->
+<div class="step-modal" id="modal-proof_of_address" data-testid="modal-proof_of_address">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Proof of Address</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="form-proof_of_address" onsubmit="submitStep(event, 'proof_of_address')">
+            <p style="color: #64748b; margin-bottom: 20px;">Upload a recent utility bill, bank statement, or other document showing your current address.</p>
+            <div class="form-group">
+                <label>Proof of Address Document</label>
+                <div class="upload-zone" id="upload-poa" onclick="document.getElementById('poa_file').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Click to upload document</div>
+                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                </div>
+                <input type="file" id="poa_file" name="proof_of_address" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-poa')" data-testid="input-poa">
+            </div>
+            <button type="submit" class="btn-primary" data-testid="save-proof_of_address">Upload & Continue</button>
+        </form>
+    </div>
+</div>
+
+<!-- Credit Monitoring Modal -->
+<div class="step-modal" id="modal-credit_monitoring" data-testid="modal-credit_monitoring">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Credit Monitoring</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="form-credit_monitoring" onsubmit="submitStep(event, 'credit_monitoring')">
+            <p style="color: #64748b; margin-bottom: 20px;">Connect your credit monitoring service so we can access your credit reports.</p>
+            <div class="form-group">
+                <label for="credit_service">Credit Monitoring Service</label>
+                <select id="credit_service" name="credit_monitoring_service" required data-testid="select-credit-service">
+                    <option value="">Select your service...</option>
+                    <option value="identityiq" {% if current_user.credit_monitoring_service == 'identityiq' %}selected{% endif %}>IdentityIQ</option>
+                    <option value="myscoreiq" {% if current_user.credit_monitoring_service == 'myscoreiq' %}selected{% endif %}>MyScoreIQ</option>
+                    <option value="smartcredit" {% if current_user.credit_monitoring_service == 'smartcredit' %}selected{% endif %}>SmartCredit</option>
+                    <option value="creditkarma" {% if current_user.credit_monitoring_service == 'creditkarma' %}selected{% endif %}>Credit Karma</option>
+                    <option value="experian" {% if current_user.credit_monitoring_service == 'experian' %}selected{% endif %}>Experian</option>
+                    <option value="other" {% if current_user.credit_monitoring_service == 'other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="credit_username">Username/Email</label>
+                <input type="text" id="credit_username" name="credit_monitoring_username" value="{{ current_user.credit_monitoring_username or '' }}" required data-testid="input-credit-username">
+            </div>
+            <div class="form-group">
+                <label for="credit_password">Password</label>
+                <input type="password" id="credit_password" name="credit_monitoring_password" placeholder="Enter your password" required data-testid="input-credit-password">
+                <small style="color: #64748b; display: block; margin-top: 8px;">Your credentials are encrypted and only used to access your credit reports.</small>
+            </div>
+            <button type="submit" class="btn-primary" data-testid="save-credit_monitoring">Save & Continue</button>
+        </form>
+    </div>
+</div>
+
+<!-- Agreement Modal -->
+<div class="step-modal" id="modal-agreement" data-testid="modal-agreement">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Service Agreements</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div style="text-align: center; padding: 20px 0;">
+            <div style="font-size: 64px; margin-bottom: 20px;">📋</div>
+            <h3 style="font-size: 20px; font-weight: 600; color: #1a1a2e; margin-bottom: 12px;">CROA Required Documents</h3>
+            <p style="color: #64748b; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                Federal law requires you to review and sign 7 important documents before we can begin working on your credit repair case. This process ensures your rights are protected.
+            </p>
+
+            <div style="background: #f0fdfa; border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left;">
+                <div style="font-size: 14px; font-weight: 600; color: #319795; margin-bottom: 12px;">Documents you'll sign:</div>
+                <ol style="font-size: 13px; color: #475569; margin-left: 20px; line-height: 1.8;">
+                    <li>Consumer Credit File Rights Disclosure</li>
+                    <li>Limited Power of Attorney</li>
+                    <li>Service Agreement</li>
+                    <li>Notice of Right to Cancel</li>
+                    <li>Service Completion Authorization</li>
+                    <li>HIPAA Authorization (optional)</li>
+                    <li>Client Welcome Packet</li>
+                </ol>
+            </div>
+
+            <div style="background: #fef3c7; border-radius: 8px; padding: 12px; margin-bottom: 24px;">
+                <div style="font-size: 13px; color: #92400e;">
+                    <strong>3-Day Right to Cancel:</strong> After signing, you have 3 business days to cancel without any charges.
+                </div>
+            </div>
+
+            <a href="{{ url_for('portal.croa_agreements') }}" class="btn-primary" style="display: inline-block; text-decoration: none; padding: 14px 40px;" data-testid="start-agreements">
+                Review & Sign Documents
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="step-modal" id="modal-payment" data-testid="modal-payment">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Round 1 Payment</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="form-payment" onsubmit="submitStep(event, 'payment')">
+            <p style="color: #64748b; margin-bottom: 20px;">Your payment will be charged when we send your Round 1 dispute letters (after the 3-day cancellation period).</p>
+
+            <!-- Pricing breakdown -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #64748b;">Round 1 Base Price</span>
+                    <span style="color: #1a1a2e;">$497</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                    <span style="color: #22c55e;">Analysis Credit Applied</span>
+                    <span style="color: #22c55e;">-$199</span>
+                </div>
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; display: flex; justify-content: space-between;">
+                    <span style="font-weight: 600; color: #1a1a2e;">Your Total</span>
+                    <span style="font-size: 24px; font-weight: 700; color: #16a34a;">$298</span>
+                </div>
+            </div>
+
+            <div style="background: #fef3c7; border-radius: 8px; padding: 12px; margin-bottom: 20px;">
+                <div style="font-size: 13px; color: #92400e;">
+                    <strong>Note:</strong> You won't be charged until the 3-day cancellation period ends and your dispute letters are ready to send.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="payment_method">Payment Method</label>
+                <select id="payment_method" name="payment_method" required data-testid="select-payment">
+                    <option value="">Select payment method...</option>
+                    <option value="stripe">Credit/Debit Card</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary" data-testid="save-payment">Add Payment Method</button>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentModal = null;
+
+function openStep(stepKey) {
+    const card = document.querySelector(`[data-step="${stepKey}"]`);
+    if (card.classList.contains('locked')) return;
+
+    const modal = document.getElementById(`modal-${stepKey}`);
+    if (modal) {
+        modal.classList.add('active');
+        currentModal = modal;
+    }
+}
+
+function closeModal() {
+    if (currentModal) {
+        currentModal.classList.remove('active');
+        currentModal = null;
+    }
+}
+
+// Close modal on background click
+document.querySelectorAll('.step-modal').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+});
+
+function handleFileSelect(input, zoneId) {
+    const zone = document.getElementById(zoneId);
+    if (input.files.length > 0) {
+        zone.classList.add('has-file');
+        zone.querySelector('.upload-text').textContent = input.files[0].name;
+        zone.querySelector('.upload-icon').textContent = '✅';
+    }
+}
+
+async function submitStep(event, stepKey) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    try {
+        // For file uploads, use the documents upload endpoint
+        if (['id_documents', 'ssn_card', 'proof_of_address'].includes(stepKey)) {
+            // Upload files first
+            const uploadResponse = await fetch('/portal/api/onboarding/upload', {
+                method: 'POST',
+                body: formData
+            });
+        }
+
+        // Mark step as complete
+        const response = await fetch('/portal/api/onboarding/complete-step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ step: stepKey })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            closeModal();
+            // Reload to show updated progress
+            window.location.reload();
+        } else {
+            alert(data.error || 'Failed to save. Please try again.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    }
+}
+
+// Sync progress on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await fetch('/portal/api/onboarding/sync', { method: 'POST' });
+    } catch (error) {
+        console.error('Sync error:', error);
+    }
+});
+</script>
+{% endblock %}

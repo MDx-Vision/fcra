@@ -7,6 +7,7 @@ Uses historical averages, Bayesian updating, and pattern matching.
 import json
 import math
 from datetime import datetime, timedelta
+from typing import Any, Optional
 
 from sqlalchemy import and_, func, or_
 
@@ -155,8 +156,8 @@ class MLLearningService:
         db.commit()
 
     def get_similar_cases(
-        self, violation_types: list = None, furnisher_id: int = None, limit: int = 10
-    ) -> list:
+        self, violation_types: Optional[list[Any]] = None, furnisher_id: Optional[int] = None, limit: int = 10
+    ) -> list[Any]:
         """
         Find similar historical cases for comparison.
 
@@ -197,7 +198,7 @@ class MLLearningService:
         finally:
             db.close()
 
-    def calculate_success_rate(self, filters: dict = None) -> dict:
+    def calculate_success_rate(self, filters: Optional[dict[Any, Any]] = None) -> dict[str, Any]:
         """
         Calculate success rates by various dimensions.
 
@@ -255,9 +256,9 @@ class MLLearningService:
 
             success = won + settled
 
-            by_violation = {}
+            by_violation: dict[str, Any] = {}
             for outcome in outcomes:
-                for vtype in outcome.violation_types or []:
+                for vtype in list(outcome.violation_types or []):
                     if vtype not in by_violation:
                         by_violation[vtype] = {"total": 0, "success": 0}
                     by_violation[vtype]["total"] += 1
@@ -268,9 +269,9 @@ class MLLearningService:
                 data = by_violation[vtype]
                 data["rate"] = round(data["success"] / max(data["total"], 1), 3)
 
-            by_furnisher = {}
+            by_furnisher: dict[Any, dict[str, Any]] = {}
             for outcome in outcomes:
-                fid = outcome.furnisher_id or "unknown"
+                fid: Any = outcome.furnisher_id or "unknown"
                 if fid not in by_furnisher:
                     by_furnisher[fid] = {"total": 0, "success": 0}
                 by_furnisher[fid]["total"] += 1
@@ -303,7 +304,7 @@ class MLLearningService:
         finally:
             db.close()
 
-    def get_average_settlement(self, filters: dict = None) -> dict:
+    def get_average_settlement(self, filters: Optional[dict[Any, Any]] = None) -> dict[str, Any]:
         """
         Calculate average settlement amounts with statistical breakdown.
         """
@@ -339,7 +340,7 @@ class MLLearningService:
                     "by_violation_type": {},
                 }
 
-            amounts = sorted([o.settlement_amount for o in outcomes])
+            amounts: list[float] = sorted([float(o.settlement_amount) for o in outcomes])
             n = len(amounts)
 
             avg = sum(amounts) / n
@@ -355,15 +356,15 @@ class MLLearningService:
             p25_idx = int(n * 0.25)
             p75_idx = int(n * 0.75)
 
-            by_violation = {}
+            by_violation: dict[str, Any] = {}
             for outcome in outcomes:
-                for vtype in outcome.violation_types or []:
+                for vtype in list(outcome.violation_types or []):
                     if vtype not in by_violation:
                         by_violation[vtype] = []
                     by_violation[vtype].append(outcome.settlement_amount)
 
-            for vtype in by_violation:
-                vals = by_violation[vtype]
+            for vtype in list(by_violation.keys()):
+                vals: list[Any] = by_violation[vtype]
                 by_violation[vtype] = {
                     "count": len(vals),
                     "average": round(sum(vals) / len(vals), 2),
@@ -387,7 +388,7 @@ class MLLearningService:
         finally:
             db.close()
 
-    def get_resolution_time_estimate(self, violation_types: list = None) -> dict:
+    def get_resolution_time_estimate(self, violation_types: Optional[list[Any]] = None) -> dict[str, Any]:
         """
         Estimate time to resolution based on historical data.
         """
@@ -444,7 +445,7 @@ class MLLearningService:
         finally:
             db.close()
 
-    def generate_prediction_features(self, client_id: int) -> dict:
+    def generate_prediction_features(self, client_id: int) -> dict[str, Any]:
         """
         Extract ML features from a client's case for prediction.
         """
@@ -462,11 +463,12 @@ class MLLearningService:
             )
             client = db.query(Client).filter(Client.id == client_id).first()
 
-            features = {
+            violation_types_list: list[str] = list(
+                set(str(v.violation_type) for v in violations if v.violation_type)
+            )
+            features: dict[str, Any] = {
                 "violation_count": len(violations),
-                "violation_types": list(
-                    set(v.violation_type for v in violations if v.violation_type)
-                ),
+                "violation_types": violation_types_list,
                 "bureaus_affected": list(set(v.bureau for v in violations if v.bureau)),
                 "bureaus_count": len(set(v.bureau for v in violations if v.bureau)),
                 "willful_count": sum(1 for v in violations if v.is_willful),
@@ -484,11 +486,11 @@ class MLLearningService:
             }
 
             if damages:
-                features["actual_damages"] = damages.actual_damages_total or 0
-                features["statutory_damages"] = damages.statutory_damages_total or 0
-                features["total_damages"] = (
-                    features["actual_damages"] + features["statutory_damages"]
-                )
+                actual_dmg = damages.actual_damages_total or 0
+                statutory_dmg = damages.statutory_damages_total or 0
+                features["actual_damages"] = actual_dmg
+                features["statutory_damages"] = statutory_dmg
+                features["total_damages"] = actual_dmg + statutory_dmg
 
             if case_score:
                 features["case_score"] = case_score.total_score or 0
@@ -496,8 +498,8 @@ class MLLearningService:
                     case_score.settlement_probability or 0
                 )
 
-            weighted_score = 0
-            for vtype in features["violation_types"]:
+            weighted_score: float = 0.0
+            for vtype in violation_types_list:
                 vtype_lower = vtype.lower() if vtype else ""
                 weight = self.VIOLATION_WEIGHTS.get(
                     vtype_lower, self.VIOLATION_WEIGHTS["default"]
@@ -506,10 +508,10 @@ class MLLearningService:
             features["weighted_violation_score"] = round(weighted_score, 2)
 
             features["has_reinsertion"] = any(
-                "reinsertion" in (v or "").lower() for v in features["violation_types"]
+                "reinsertion" in (v or "").lower() for v in violation_types_list
             )
             features["has_identity_theft"] = any(
-                "identity" in (v or "").lower() for v in features["violation_types"]
+                "identity" in (v or "").lower() for v in violation_types_list
             )
 
             return features
@@ -725,27 +727,29 @@ class MLLearningService:
                     "message": "No resolved predictions yet",
                 }
 
-            by_type = {}
+            by_type: dict[str, dict[str, Any]] = {}
             for pred in predictions:
-                ptype = pred.prediction_type
+                ptype: str = str(pred.prediction_type)
                 if ptype not in by_type:
                     by_type[ptype] = {"total": 0, "accurate": 0, "errors": []}
 
-                by_type[ptype]["total"] += 1
+                by_type[ptype]["total"] = int(by_type[ptype]["total"]) + 1
                 if pred.was_accurate:
-                    by_type[ptype]["accurate"] += 1
+                    by_type[ptype]["accurate"] = int(by_type[ptype]["accurate"]) + 1
 
                 if pred.prediction_error is not None:
-                    by_type[ptype]["errors"].append(pred.prediction_error)
+                    errors_list: list[Any] = by_type[ptype]["errors"]
+                    errors_list.append(pred.prediction_error)
 
-            for ptype in by_type:
-                data = by_type[ptype]
+            for ptype_key in by_type:
+                data = by_type[ptype_key]
                 data["accuracy_rate"] = round(
-                    data["accurate"] / max(data["total"], 1), 3
+                    int(data["accurate"]) / max(int(data["total"]), 1), 3
                 )
-                if data["errors"]:
+                errors_list = data["errors"]
+                if errors_list:
                     data["mean_error"] = round(
-                        sum(data["errors"]) / len(data["errors"]), 2
+                        sum(errors_list) / len(errors_list), 2
                     )
                 else:
                     data["mean_error"] = None
@@ -785,9 +789,9 @@ class MLLearningService:
             settlement_stats = self.get_average_settlement()
 
             outcomes = db.query(CaseOutcome).all()
-            outcomes_by_type = {}
+            outcomes_by_type: dict[str, int] = {}
             for o in outcomes:
-                otype = o.final_outcome
+                otype: str = str(o.final_outcome)
                 outcomes_by_type[otype] = outcomes_by_type.get(otype, 0) + 1
 
             predictions_last_30 = (
@@ -859,27 +863,27 @@ class MLLearningService:
             return "Model is well-trained. Predictions should be highly reliable."
 
 
-def record_outcome(client_id: int, outcome_data: dict) -> dict:
+def record_outcome(client_id: int, outcome_data: dict[str, Any]) -> dict[str, Any]:
     """Convenience function to record a case outcome."""
     service = MLLearningService()
     return service.record_outcome(client_id, outcome_data)
 
 
 def get_similar_cases(
-    violation_types: list = None, furnisher_id: int = None, limit: int = 10
-) -> list:
+    violation_types: Optional[list[Any]] = None, furnisher_id: Optional[int] = None, limit: int = 10
+) -> list[Any]:
     """Convenience function to find similar cases."""
     service = MLLearningService()
     return service.get_similar_cases(violation_types, furnisher_id, limit)
 
 
-def calculate_success_rate(filters: dict = None) -> dict:
+def calculate_success_rate(filters: Optional[dict[Any, Any]] = None) -> dict[str, Any]:
     """Convenience function to calculate success rates."""
     service = MLLearningService()
     return service.calculate_success_rate(filters)
 
 
-def get_average_settlement(filters: dict = None) -> dict:
+def get_average_settlement(filters: Optional[dict[Any, Any]] = None) -> dict[str, Any]:
     """Convenience function to get average settlements."""
     service = MLLearningService()
     return service.get_average_settlement(filters)

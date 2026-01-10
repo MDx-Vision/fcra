@@ -1,317 +1,153 @@
 // Exhaustive test for /dashboard/settings
-describe.skip('Staff Login Page', () => {
+describe('Settings Page - /dashboard/settings', () => {
   beforeEach(() => {
+    cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/settings');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/settings');
-      cy.get('[data-testid="login-container"]').should('be.visible');
-    });
-
-    it('should not have console errors', () => {
-      cy.window().then((win) => {
-        cy.stub(win.console, 'error').as('consoleError');
-      });
-      cy.reload();
-      // Console error check removed - spy setup issue;
-    });
-
-    it('should return 200 status', () => {
-      cy.request('/dashboard/settings').its('status').should('eq', 200);
+      cy.get('.main-content').should('be.visible');
     });
 
     it('should have correct page title', () => {
-      cy.title().should('contain', 'Staff Login - Brightpath Ascend FCRA Platform');
+      cy.title().should('contain', 'Settings');
+      cy.title().should('contain', 'Brightpath Ascend FCRA Platform');
+    });
+
+    it('should not return server errors', () => {
+      cy.request('/dashboard/settings').its('status').should('be.oneOf', [200, 302]);
     });
   });
 
-  describe.skip('UI Element Tests', () => {
-    it('should display all required headings', () => {
-      cy.contains('h1', 'Brightpath Ascend Group').should('be.visible');
-      cy.get('[data-testid="login-title"]').should('contain', 'Staff Login').and('be.visible');
+  describe('Header Tests', () => {
+    it('should display the page header', () => {
+      cy.get('.header h1').should('be.visible');
     });
 
-    it('should display logo and company information', () => {
-      cy.get('.logo img').should('be.visible').and('have.attr', 'alt', 'Brightpath Ascend Group');
-      cy.contains('FCRA Litigation Platform').should('be.visible');
+    it('should display Back to Dashboard button', () => {
+      cy.get('.header .btn-secondary').should('contain.text', 'Back to Dashboard');
     });
 
-    it('should display staff badge', () => {
-      cy.get('.staff-badge').should('be.visible').and('contain', 'Staff Portal');
-      cy.get('.staff-badge svg').should('be.visible');
-    });
-
-    it('should display login card', () => {
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.contains('.subtitle', 'Sign in to access the admin dashboard').should('be.visible');
-    });
-
-    it('should display client portal link', () => {
-      cy.get('[data-testid="client-portal-link"]').should('be.visible').and('have.attr', 'href', '/portal/login');
-      cy.contains('.client-portal-link', 'Looking for client portal?').should('be.visible');
+    it('should have working back button link', () => {
+      cy.get('.header .btn-secondary').should('have.attr', 'href', '/dashboard');
     });
   });
 
-  describe.skip('Form Tests', () => {
-    it('should display login form with correct attributes', () => {
-      cy.get('[data-testid="login-form"]')
-        .should('be.visible')
-        .and('have.attr', 'id', 'loginForm')
-        .and('have.attr', 'method', 'POST')
-        .and('have.attr', 'action', '/staff/login');
+  describe('Settings Form Tests', () => {
+    it('should display settings form', () => {
+      cy.get('#settingsForm').should('exist');
     });
 
-    it('should have email input with correct attributes', () => {
-      cy.get('[data-testid="email-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'email')
-        .and('have.attr', 'id', 'email')
-        .and('have.attr', 'name', 'email')
-        .and('have.attr', 'placeholder', 'your@email.com')
-        .should('have.attr', 'required')
-        .and('have.attr', 'autocomplete', 'email');
-      
-      cy.get('label[for="email"]').should('contain', 'Email Address');
+    it('should have form element', () => {
+      cy.get('form').should('exist');
+    });
+  });
+
+  describe('Content Card Tests', () => {
+    it('should display content cards', () => {
+      cy.get('.content-card').should('have.length.at.least', 1);
     });
 
-    it('should have password input with correct attributes', () => {
-      cy.get('[data-testid="password-input"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'password')
-        .and('have.attr', 'id', 'password')
-        .and('have.attr', 'name', 'password')
-        .and('have.attr', 'placeholder', 'Enter your password')
-        .should('have.attr', 'required')
-        .and('have.attr', 'autocomplete', 'current-password');
-      
-      cy.get('label[for="password"]').should('contain', 'Password');
+    it('should display section titles', () => {
+      cy.get('.section-title').should('have.length.at.least', 1);
+    });
+  });
+
+  describe('Signup Field Configuration Section', () => {
+    it('should display Signup Field Configuration section', () => {
+      cy.get('.section-title').contains('Signup Field Configuration').should('be.visible');
+    });
+  });
+
+  describe('Pricing Tier Configuration Section', () => {
+    it('should display Pricing Tier Configuration section', () => {
+      cy.get('.section-title').contains('Pricing Tier Configuration').should('be.visible');
+    });
+  });
+
+  describe('Manual Payment Information Section', () => {
+    it('should display Manual Payment Information section', () => {
+      cy.get('.section-title').contains('Manual Payment Information').should('be.visible');
+    });
+  });
+
+  describe('Payment Methods Section', () => {
+    it('should display Payment Methods section', () => {
+      cy.get('.section-title').contains('Payment Methods').should('be.visible');
+    });
+  });
+
+  describe('Form Controls Tests', () => {
+    it('should have Save Settings button', () => {
+      cy.get('.btn-primary').contains('Save Settings').should('be.visible');
     });
 
-    it('should accept text input in email field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
+    it('should have Cancel button', () => {
+      cy.get('.btn-secondary').contains('Cancel').should('be.visible');
     });
 
-    it('should accept text input in password field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="password-input"]').should('have.value', 'password123');
+    it('should have clickable save button', () => {
+      cy.get('.btn-primary').contains('Save Settings').should('not.be.disabled');
     });
+  });
 
-    it('should validate required email field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').then(($input) => {
-        expect($input[0].validity.valid).to.be.false;
-        expect($input[0].validationMessage).to.not.be.empty;
+  describe('SMS Settings Link Tests', () => {
+    it('should display link to SMS settings', () => {
+      cy.get('a[href="/dashboard/settings/sms"]').should('exist');
+    });
+  });
+
+  describe('Toggle Controls Tests', () => {
+    it('should display toggle switches for field configuration', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.toggle-switch').length > 0) {
+          cy.get('.toggle-switch').should('have.length.at.least', 1);
+        }
       });
     });
-
-    it('should validate required password field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="password-input"]').then(($input) => {
-        expect($input[0].validity.valid).to.be.false;
-        expect($input[0].validationMessage).to.not.be.empty;
-      });
-    });
-
-    it('should validate email format', () => {
-      cy.get('[data-testid="email-input"]').type('invalid-email');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]').then(($input) => {
-        expect($input[0].validity.valid).to.be.false;
-      });
-    });
-
-    it('should submit form with valid data', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('loginRequest');
-      
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      
-      cy.wait('@loginRequest');
-      cy.get('@loginRequest').should('have.been.called');
-    });
   });
 
-  describe.skip('Button Tests', () => {
-    it('should display login button with correct attributes', () => {
-      cy.get('[data-testid="login-button"]')
-        .should('be.visible')
-        .and('have.attr', 'type', 'submit')
-        .and('have.attr', 'id', 'loginBtn')
-        .and('have.class', 'login-btn')
-        .and('contain', 'Sign In');
-    });
-
-    it('should display password toggle button', () => {
-      cy.get('.toggle-btn')
-        .should('be.visible')
-        .and('have.attr', 'type', 'button')
-        .and('contain', '👁');
-    });
-
-    it('should toggle password visibility', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-    });
-
-    it('should disable login button and show loading state on submit', () => {
-      cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('slowLogin');
-      
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      
-      cy.get('[data-testid="login-button"]')
-        .should('be.disabled')
-        .and('contain', 'Signing in...');
-    });
-
-    it('should make client portal link clickable', () => {
-      cy.get('[data-testid="client-portal-link"]').should('not.be.disabled');
-      cy.get('[data-testid="client-portal-link"]').click();
-      cy.url().should('include', '/portal/login');
-    });
-  });
-
-  describe.skip('Interactive Element Tests', () => {
-    it('should focus on email input when clicking label', () => {
-      cy.get('label[for="email"]').click();
-      cy.get('[data-testid="email-input"]').should('have.focus');
-    });
-
-    it('should focus on password input when clicking label', () => {
-      cy.get('label[for="password"]').click();
-      cy.get('[data-testid="password-input"]').should('have.focus');
-    });
-
-    it('should maintain form state during interactions', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('.toggle-btn').click();
-      
-      cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
-      cy.get('[data-testid="password-input"]').should('have.value', 'password123');
-    });
-  });
-
-  describe.skip('Responsive Tests', () => {
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.header').should('be.visible');
+      cy.get('.content-card').should('be.visible');
     });
 
     it('should display correctly on tablet (768px)', () => {
       cy.viewport(768, 1024);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.content-card').should('be.visible');
     });
 
     it('should display correctly on mobile (375px)', () => {
       cy.viewport(375, 667);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
-      cy.get('[data-testid="login-button"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.header h1').should('be.visible');
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
-    it('should handle server errors gracefully', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Server error' } }).as('serverError');
-      
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      
-      cy.wait('@serverError');
+  describe('Accessibility Tests', () => {
+    it('should have proper heading hierarchy', () => {
+      cy.get('h1').should('have.length.at.least', 1);
+      cy.get('h2').should('have.length.at.least', 1);
     });
 
-    it('should handle network errors', () => {
-      cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      
-      cy.wait('@networkError');
-    });
-
-    it('should handle authentication errors', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('authError');
-      
-      cy.get('[data-testid="email-input"]').type('wrong@example.com');
-      cy.get('[data-testid="password-input"]').type('wrongpassword');
-      cy.get('[data-testid="login-button"]').click();
-      
-      cy.wait('@authError');
-    });
-
-    it('should clear form on page refresh', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.reload();
-      
-      cy.get('[data-testid="email-input"]').should('have.value', '');
-      cy.get('[data-testid="password-input"]').should('have.value', '');
+    it('should have form labels', () => {
+      cy.get('label').should('have.length.at.least', 1);
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
-    it('should have proper form labels', () => {
-      cy.get('label[for="email"]').should('exist');
-      cy.get('label[for="password"]').should('exist');
+  describe('Button Functionality Tests', () => {
+    it('should have primary button styling', () => {
+      cy.get('.btn-primary').should('exist');
     });
 
-    it('should support keyboard navigation', () => {
-      cy.get('[data-testid="email-input"]').focus().type('{tab}');
-      cy.get('[data-testid="password-input"]').should('have.focus');
-      cy.type('{tab}');
-      cy.get('.toggle-btn').should('have.focus');
-      cy.type('{tab}');
-      cy.get('[data-testid="login-button"]').should('have.focus');
-    });
-
-    it('should support enter key submission', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 200 }).as('enterSubmit');
-      
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123{enter}');
-      
-      cy.wait('@enterSubmit');
-    });
-  });
-
-  describe.skip('Security Tests', () => {
-    it('should have autocomplete attributes for security', () => {
-      cy.get('[data-testid="email-input"]').should('have.attr', 'autocomplete', 'email');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'autocomplete', 'current-password');
-    });
-
-    it('should mask password input by default', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.get('[data-testid="password-input"]').type('secretpassword');
-      cy.get('[data-testid="password-input"]').should('have.value', 'secretpassword');
-    });
-
-    it('should POST to secure endpoint', () => {
-      cy.get('[data-testid="login-form"]').should('have.attr', 'action', '/staff/login');
-      cy.get('[data-testid="login-form"]').should('have.attr', 'method', 'POST');
+    it('should have secondary button styling', () => {
+      cy.get('.btn-secondary').should('exist');
     });
   });
 });

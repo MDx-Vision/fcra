@@ -13,10 +13,10 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
-import requests
+import requests  # type: ignore[import-untyped]
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import API_SCOPES, WEBHOOK_EVENTS, APIKey, APIRequest, APIWebhook, get_db
+from database import API_SCOPES, WEBHOOK_EVENTS, APIKey, APIRequest, APIWebhook, Staff, get_db
 
 
 class RateLimiter:
@@ -86,10 +86,10 @@ rate_limiter = RateLimiter()
 class APIAccessService:
     """Service for managing API access, keys, and webhooks"""
 
-    def __init__(self, db=None):
+    def __init__(self, db: Any = None):
         self.db = db
 
-    def _get_db(self):
+    def _get_db(self) -> Tuple[Any, bool]:
         """Get database session"""
         if self.db:
             return self.db, False
@@ -376,9 +376,9 @@ class APIAccessService:
                 else 0
             )
 
-            endpoint_counts = defaultdict(int)
-            daily_counts = defaultdict(int)
-            status_counts = defaultdict(int)
+            endpoint_counts: Dict[str, int] = defaultdict(int)
+            daily_counts: Dict[str, int] = defaultdict(int)
+            status_counts: Dict[str, int] = defaultdict(int)
 
             for r in requests:
                 endpoint_counts[r.endpoint] += 1
@@ -1039,6 +1039,6 @@ class APIAccessService:
         }
 
 
-def get_api_access_service(db=None) -> APIAccessService:
+def get_api_access_service(db: Any = None) -> APIAccessService:
     """Factory function to get API access service instance"""
     return APIAccessService(db)

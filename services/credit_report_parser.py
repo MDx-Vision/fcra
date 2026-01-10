@@ -6,7 +6,7 @@ Specifically optimized for MyScoreIQ Angular-rendered reports.
 
 import logging
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from bs4 import BeautifulSoup
 
@@ -53,7 +53,7 @@ class CreditReportParser:
         self.html = html_content
         self.service = service_name
         self.soup = BeautifulSoup(html_content, "html.parser")
-        self._summary_counts = None
+        self._summary_counts: Optional[Dict[str, Any]] = None
 
     def parse(self) -> Dict:
         """Parse the credit report and return structured data."""
@@ -125,9 +125,9 @@ class CreditReportParser:
         logger.info(f"Summary counts extracted: {counts}")
         return counts
 
-    def _extract_scores(self) -> Dict:
+    def _extract_scores(self) -> Dict[str, Optional[int]]:
         """Extract credit scores for all three bureaus."""
-        scores = {
+        scores: Dict[str, Optional[int]] = {
             "transunion": None,
             "experian": None,
             "equifax": None,
@@ -325,7 +325,7 @@ class CreditReportParser:
                 continue
             seen_creditors.add(account_key)
 
-            account = {
+            account: Dict[str, Any] = {
                 "creditor": text,
                 "original_creditor": original_creditor,
                 "account_number": None,
@@ -685,9 +685,9 @@ class CreditReportParser:
 
         return inquiries
 
-    def _extract_public_records(self) -> List[Dict]:
+    def _extract_public_records(self) -> List[Dict[str, Any]]:
         """Extract public records ONLY if they actually exist in the report."""
-        records = []
+        records: List[Dict[str, Any]] = []
 
         if self._summary_counts and self._summary_counts.get("public_records", 0) == 0:
             logger.info("No public records found in summary - skipping extraction")
@@ -739,9 +739,9 @@ class CreditReportParser:
 
         return records
 
-    def _extract_collections(self) -> List[Dict]:
+    def _extract_collections(self) -> List[Dict[str, Any]]:
         """Extract collection accounts ONLY if they actually exist in the report."""
-        collections = []
+        collections: List[Dict[str, Any]] = []
 
         if self._summary_counts and self._summary_counts.get("collections", 0) == 0:
             logger.info("No collections found in summary - skipping extraction")
@@ -767,9 +767,9 @@ class CreditReportParser:
 
         return collections
 
-    def _extract_creditor_contacts(self) -> List[Dict]:
+    def _extract_creditor_contacts(self) -> List[Dict[str, Any]]:
         """Extract creditor contact information including addresses and phone numbers."""
-        contacts = []
+        contacts: List[Dict[str, Any]] = []
 
         contact_section = self.soup.find("div", id="CreditorContacts")
         if not contact_section:
@@ -960,8 +960,8 @@ def parse_credit_report(html_path: str, service_name: str = "unknown") -> Dict:
                         on_time_count += 1
 
         # Calculate credit utilization
-        total_balance = 0
-        total_limit = 0
+        total_balance: float = 0.0
+        total_limit: float = 0.0
         for acct in parsed.get("accounts", []):
             balance_str = acct.get("balance", "") or ""
             limit_str = acct.get("credit_limit", "") or ""

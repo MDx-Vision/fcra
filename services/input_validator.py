@@ -11,13 +11,16 @@ Provides:
 import html
 import re
 from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
-import bleach
+import bleach  # type: ignore[import-untyped]
 from flask import jsonify, request
+
+F = TypeVar('F', bound=Callable[..., Any])
 
 # Allowed HTML tags for rich text fields (very restrictive)
 ALLOWED_TAGS = ["b", "i", "u", "strong", "em", "p", "br", "ul", "ol", "li"]
-ALLOWED_ATTRIBUTES = {}
+ALLOWED_ATTRIBUTES: Dict[str, List[str]] = {}
 
 # Regex patterns for validation
 PATTERNS = {
@@ -65,7 +68,7 @@ class ValidationError(Exception):
         super().__init__(f"{field}: {message}")
 
 
-def sanitize_string(value, max_length=None, allow_html=False):
+def sanitize_string(value: Any, max_length: Optional[int] = None, allow_html: bool = False) -> Optional[str]:
     """
     Sanitize a string value.
 
@@ -106,7 +109,7 @@ def sanitize_string(value, max_length=None, allow_html=False):
     return value
 
 
-def sanitize_html(value):
+def sanitize_html(value: Optional[str]) -> Optional[str]:
     """Sanitize HTML content, allowing only safe tags."""
     if value is None:
         return None
@@ -115,7 +118,7 @@ def sanitize_html(value):
     )
 
 
-def validate_email(email):
+def validate_email(email: Optional[str]) -> bool:
     """Validate email format."""
     if not email:
         return False
@@ -123,7 +126,7 @@ def validate_email(email):
     return bool(PATTERNS["email"].match(email))
 
 
-def validate_phone(phone):
+def validate_phone(phone: Optional[str]) -> bool:
     """Validate phone number format."""
     if not phone:
         return True  # Phone is often optional
@@ -131,7 +134,7 @@ def validate_phone(phone):
     return bool(PATTERNS["phone"].match(phone))
 
 
-def validate_ssn(ssn):
+def validate_ssn(ssn: Optional[str]) -> bool:
     """Validate SSN format (with or without dashes)."""
     if not ssn:
         return True  # SSN might be optional
@@ -139,7 +142,7 @@ def validate_ssn(ssn):
     return bool(PATTERNS["ssn"].match(ssn))
 
 
-def validate_zip(zip_code):
+def validate_zip(zip_code: Optional[str]) -> bool:
     """Validate ZIP code format."""
     if not zip_code:
         return True
@@ -147,7 +150,7 @@ def validate_zip(zip_code):
     return bool(PATTERNS["zip"].match(zip_code))
 
 
-def validate_state(state):
+def validate_state(state: Optional[str]) -> bool:
     """Validate 2-letter state code."""
     if not state:
         return True
@@ -155,14 +158,14 @@ def validate_state(state):
     return bool(PATTERNS["state"].match(state))
 
 
-def validate_date(date_str):
+def validate_date(date_str: Optional[str]) -> bool:
     """Validate date format (YYYY-MM-DD)."""
     if not date_str:
         return True
     return bool(PATTERNS["date"].match(date_str))
 
 
-def validate_name(name):
+def validate_name(name: Optional[str]) -> bool:
     """Validate name contains only allowed characters."""
     if not name:
         return False
@@ -170,7 +173,7 @@ def validate_name(name):
     return bool(PATTERNS["name"].match(name)) and len(name) >= 1
 
 
-def detect_sql_injection(value):
+def detect_sql_injection(value: Any) -> bool:
     """Check if value contains SQL injection patterns."""
     if not value or not isinstance(value, str):
         return False
@@ -180,7 +183,7 @@ def detect_sql_injection(value):
     return False
 
 
-def detect_xss(value):
+def detect_xss(value: Any) -> bool:
     """Check if value contains XSS patterns."""
     if not value or not isinstance(value, str):
         return False
@@ -190,7 +193,7 @@ def detect_xss(value):
     return False
 
 
-def sanitize_dict(data, rules=None):
+def sanitize_dict(data: Any, rules: Optional[Dict[str, str]] = None) -> Any:
     """
     Sanitize all string values in a dictionary.
 
@@ -253,7 +256,7 @@ def sanitize_dict(data, rules=None):
     return sanitized
 
 
-def validate_request_data(required_fields=None, field_rules=None):
+def validate_request_data(required_fields: Optional[List[str]] = None, field_rules: Optional[Dict[str, str]] = None) -> Callable[[F], F]:
     """
     Decorator to validate and sanitize request JSON data.
 
@@ -337,7 +340,7 @@ def validate_request_data(required_fields=None, field_rules=None):
     return decorator
 
 
-def sanitize_credit_report_html(html_content):
+def sanitize_credit_report_html(html_content: Optional[str]) -> Optional[str]:
     """
     Sanitize credit report HTML while preserving structure.
     More permissive than general sanitization since this is internal data.

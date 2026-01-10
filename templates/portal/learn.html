@@ -4,13 +4,13 @@
 {% block content %}
 
 <!-- Hero -->
-<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 24px; border: none;">
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 24px; border: none;" data-testid="hero-section">
     <h2 style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; margin: 0 0 12px 0;">Understanding Your Rights</h2>
     <p style="font-size: 16px; opacity: 0.8; margin: 0;">Knowledge is power. Learn how federal law protects you and what we're doing to enforce those protections.</p>
 </div>
 
 <!-- Quick Stats -->
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="stats-grid">
     <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px;">
         <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">$1,000</div>
         <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px;">Per Violation (Statutory)</div>
@@ -30,7 +30,7 @@
 </div>
 
 <!-- FCRA Overview -->
-<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px;" data-testid="fcra-overview">
     <div class="card-title">📜 The Fair Credit Reporting Act (FCRA)</div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;" class="two-col-responsive">
@@ -53,7 +53,7 @@
 </div>
 
 <!-- Violation Types -->
-<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;" data-testid="violations-section">
     <div class="card-title">🔍 Types of Violations We Find</div>
     <p style="color: #6b7280; margin-bottom: 20px;">These are the most common FCRA violations we identify in credit reports. Each one can result in damages.</p>
 
@@ -103,7 +103,7 @@
 </div>
 
 <!-- Dispute Process -->
-<div class="card animate-fade-in-up" data-delay="700" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="700" style="margin-bottom: 24px;" data-testid="dispute-process">
     <div class="card-title">⚡ How The Dispute Process Works</div>
     <p style="color: #6b7280; margin-bottom: 24px;">Our strategic approach follows a proven escalation path to maximize your results.</p>
 
@@ -143,7 +143,7 @@
 </div>
 
 <!-- Glossary -->
-<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;" data-testid="glossary">
     <div class="card-title">📖 Glossary of Terms</div>
     <p style="color: #6b7280; margin-bottom: 20px;">Common terms you'll encounter during your case.</p>
 
@@ -184,7 +184,7 @@
 </div>
 
 <!-- FAQ -->
-<div class="card animate-fade-in-up" data-delay="900" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="900" style="margin-bottom: 24px;" data-testid="faq-section">
     <div class="card-title">❓ Frequently Asked Questions</div>
 
     <details>
@@ -229,7 +229,7 @@
 </div>
 
 <!-- CTA -->
-<div class="card animate-fade-in-up" data-delay="1000" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); text-align: center; padding: 40px 24px; border: none;">
+<div class="card animate-fade-in-up" data-delay="1000" style="background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); text-align: center; padding: 40px 24px; border: none;" data-testid="cta-section">
     <h3 style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; color: white; margin: 0 0 12px 0;">Still Have Questions?</h3>
     <p style="font-size: 15px; color: rgba(255,255,255,0.8); margin: 0 0 24px 0;">We're here to help you understand every step of the process.</p>
     <a href="{{ url_for('portal.profile') }}" style="display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; background: white; color: #0d9488; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; text-decoration: none;">Contact Us</a>

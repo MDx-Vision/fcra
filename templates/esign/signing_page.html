@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Documents - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #319795;
+            --primary-dark: #2c7a7b;
+            --secondary: #1a1a2e;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: var(--secondary);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header .logo {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .header .signer-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+            gap: 8px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            font-size: 13px;
+            border: 2px solid var(--border);
+        }
+
+        .step.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .step.completed {
+            border-color: var(--success);
+            background: var(--success);
+            color: white;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .step.active .step-number,
+        .step.completed .step-number {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        /* Consent Section */
+        .consent-content {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            background: #fafafa;
+        }
+
+        .consent-content h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: var(--secondary);
+        }
+
+        .consent-content h3 {
+            font-size: 16px;
+            margin: 20px 0 12px;
+            color: var(--text);
+        }
+
+        .consent-content p {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .consent-content ul {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        .consent-content li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .acknowledgment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .acknowledgment-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .acknowledgment-item:hover {
+            background: #e2e8f0;
+        }
+
+        .acknowledgment-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--primary);
+        }
+
+        .acknowledgment-item label {
+            flex: 1;
+            cursor: pointer;
+            line-height: 1.5;
+        }
+
+        /* Document Review */
+        .document-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #f8fafc;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .document-item:hover {
+            border-color: var(--primary);
+        }
+
+        .document-item.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(49, 151, 149, 0.05), rgba(49, 151, 149, 0.1));
+        }
+
+        .document-item.signed {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .document-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .document-item.signed .document-icon {
+            background: var(--success);
+        }
+
+        .document-name {
+            font-weight: 600;
+        }
+
+        .document-status {
+            font-size: 12px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            background: var(--border);
+        }
+
+        .document-status.signed {
+            background: var(--success);
+            color: white;
+        }
+
+        /* Document Viewer */
+        .document-viewer {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .document-viewer-header {
+            background: var(--secondary);
+            color: white;
+            padding: 12px 16px;
+            font-weight: 600;
+        }
+
+        .document-content {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 24px;
+            background: white;
+        }
+
+        .scroll-indicator {
+            background: var(--warning);
+            color: white;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .scroll-indicator.complete {
+            background: var(--success);
+        }
+
+        /* Signature Section */
+        .signature-section {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .signature-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .signature-tab {
+            padding: 8px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .signature-tab.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+
+        .signature-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 24px;
+            font-family: 'Brush Script MT', cursive;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .signature-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .signature-canvas-container {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            background: white;
+            margin-bottom: 16px;
+        }
+
+        #signatureCanvas {
+            width: 100%;
+            height: 150px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: crosshair;
+        }
+
+        .canvas-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .intent-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .intent-checkbox input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            margin-top: 2px;
+            accent-color: var(--primary);
+        }
+
+        .intent-checkbox label {
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(49, 151, 149, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* Completed State */
+        .completion-card {
+            text-align: center;
+            padding: 48px;
+        }
+
+        .completion-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 40px;
+            color: white;
+        }
+
+        .certificate-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: left;
+        }
+
+        .certificate-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #bbf7d0;
+        }
+
+        .certificate-row:last-child {
+            border-bottom: none;
+        }
+
+        .certificate-label {
+            color: var(--text-muted);
+        }
+
+        .certificate-value {
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .progress-steps {
+                flex-wrap: wrap;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        /* Hidden sections */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">Brightpath Ascend</div>
+        <div class="signer-info">Signing as: {{ session.signer_name }} ({{ session.signer_email }})</div>
+    </header>
+
+    <div class="container">
+        <!-- Progress Steps -->
+        <div class="progress-steps">
+            <div class="step" id="step-consent">
+                <span class="step-number">1</span>
+                <span>Consent</span>
+            </div>
+            <div class="step" id="step-review">
+                <span class="step-number">2</span>
+                <span>Review</span>
+            </div>
+            <div class="step" id="step-sign">
+                <span class="step-number">3</span>
+                <span>Sign</span>
+            </div>
+            <div class="step" id="step-complete">
+                <span class="step-number">4</span>
+                <span>Complete</span>
+            </div>
+        </div>
+
+        <!-- Section 1: Consent -->
+        <div class="section active" id="section-consent">
+            <div class="card">
+                <h1 class="card-title">Electronic Signature Consent</h1>
+                <p class="card-subtitle">Please review and acknowledge the following before signing documents electronically.</p>
+
+                <div class="consent-content">
+                    {{ consent_disclosure | safe }}
+                </div>
+
+                <div class="acknowledgment-list">
+                    <div class="acknowledgment-item" onclick="toggleCheckbox('ack1')">
+                        <input type="checkbox" id="ack1">
+                        <label for="ack1">I understand the hardware and software requirements and confirm my system meets these requirements.</label>
+                    </div>
+                    <div class="acknowledgment-item" onclick="toggleCheckbox('ack2')">
+                        <input type="checkbox" id="ack2">
+                        <label for="ack2">I understand my right to receive paper copies of any documents I sign electronically.</label>
+                    </div>
+                    <div class="acknowledgment-item" onclick="toggleCheckbox('ack3')">
+                        <input type="checkbox" id="ack3">
+                        <label for="ack3">I understand my right to withdraw consent to use electronic signatures at any time.</label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" id="btn-consent" disabled onclick="submitConsent()">
+                        I Agree - Continue to Documents
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Document Review -->
+        <div class="section" id="section-review">
+            <div class="card">
+                <h1 class="card-title">Review Documents</h1>
+                <p class="card-subtitle">Please review each document carefully before signing.</p>
+
+                <div class="document-list" id="document-list">
+                    {% for doc in documents %}
+                    <div class="document-item" data-uuid="{{ doc.document_uuid }}" data-name="{{ doc.document_name }}" onclick="selectDocument('{{ doc.document_uuid }}')">
+                        <div class="document-info">
+                            <div class="document-icon">{{ loop.index }}</div>
+                            <div>
+                                <div class="document-name">{{ doc.document_name }}</div>
+                                <div style="color: var(--text-muted); font-size: 12px;">{{ doc.document_type }}</div>
+                            </div>
+                        </div>
+                        <span class="document-status" id="status-{{ doc.document_uuid }}">
+                            {% if doc.status == 'signed' %}Signed{% else %}Pending{% endif %}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Sign Document -->
+        <div class="section" id="section-sign">
+            <div class="card">
+                <h1 class="card-title" id="sign-doc-title">Sign Document</h1>
+                <p class="card-subtitle">Please read the document below and sign at the bottom.</p>
+
+                <div class="document-viewer">
+                    <div class="document-viewer-header" id="viewer-doc-name">Document</div>
+                    <div class="document-content" id="document-content" onscroll="trackScroll()">
+                        <!-- Document HTML will be loaded here -->
+                    </div>
+                    <div class="scroll-indicator" id="scroll-indicator">
+                        Scroll to the bottom to enable signing
+                    </div>
+                </div>
+
+                <div class="signature-section" id="signature-section" style="opacity: 0.5; pointer-events: none;">
+                    <h3 style="margin-bottom: 16px;">Your Signature</h3>
+
+                    <div class="signature-tabs">
+                        <div class="signature-tab active" onclick="switchSignatureType('typed')">Type</div>
+                        <div class="signature-tab" onclick="switchSignatureType('drawn')">Draw</div>
+                    </div>
+
+                    <div id="typed-signature">
+                        <input type="text" class="signature-input" id="typed-name" placeholder="Type your full name" oninput="validateSignature()">
+                        <p style="color: var(--text-muted); font-size: 12px; text-align: center;">Type exactly: {{ session.signer_name }}</p>
+                    </div>
+
+                    <div id="drawn-signature" style="display: none;">
+                        <div class="signature-canvas-container">
+                            <canvas id="signatureCanvas"></canvas>
+                            <div class="canvas-controls">
+                                <button class="btn btn-secondary" onclick="clearCanvas()">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="intent-checkbox">
+                        <input type="checkbox" id="intent-confirm" onchange="validateSignature()">
+                        <label for="intent-confirm">I intend this to be my legally binding electronic signature.</label>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="backToReview()">Back to Documents</button>
+                    <button class="btn btn-primary" id="btn-sign" disabled onclick="signDocument()">
+                        Sign Document
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Complete -->
+        <div class="section" id="section-complete">
+            <div class="card completion-card">
+                <div class="completion-icon">&#10003;</div>
+                <h1 class="card-title">All Documents Signed!</h1>
+                <p class="card-subtitle">Your signature session has been completed successfully.</p>
+
+                <div class="certificate-info" id="certificate-info">
+                    <!-- Certificate details will be added here -->
+                </div>
+
+                <p style="color: var(--text-muted); margin-bottom: 24px;">
+                    A copy of all signed documents has been sent to <strong>{{ session.signer_email }}</strong>
+                </p>
+
+                {% if session.return_url %}
+                <div class="button-group" style="justify-content: center;">
+                    <a href="{{ session.return_url }}" class="btn btn-primary">Return to Portal</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sessionUuid = '{{ session_uuid }}';
+        const signerName = '{{ session.signer_name }}';
+        let currentDocumentUuid = null;
+        let signedDocuments = [];
+        let scrolledToBottom = false;
+        let signatureType = 'typed';
+        let reviewStartTime = null;
+        let signatureCanvas, signatureCtx;
+        let isDrawing = false;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepIndicators('consent');
+            initCanvas();
+            checkConsentAcknowledgments();
+
+            // Check if consent already given
+            {% if session.esign_consent_given %}
+            showSection('review');
+            updateStepIndicators('review');
+            {% endif %}
+        });
+
+        function toggleCheckbox(id) {
+            const checkbox = document.getElementById(id);
+            checkbox.checked = !checkbox.checked;
+            checkConsentAcknowledgments();
+        }
+
+        function checkConsentAcknowledgments() {
+            const ack1 = document.getElementById('ack1').checked;
+            const ack2 = document.getElementById('ack2').checked;
+            const ack3 = document.getElementById('ack3').checked;
+            document.getElementById('btn-consent').disabled = !(ack1 && ack2 && ack3);
+        }
+
+        // Listen for checkbox changes
+        ['ack1', 'ack2', 'ack3'].forEach(id => {
+            document.getElementById(id).addEventListener('change', checkConsentAcknowledgments);
+        });
+
+        async function submitConsent() {
+            try {
+                const response = await fetch(`/api/esign/session/${sessionUuid}/consent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        hardware_software_acknowledged: true,
+                        paper_copy_right_acknowledged: true,
+                        consent_withdrawal_acknowledged: true
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showSection('review');
+                    updateStepIndicators('review');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (e) {
+                alert('Error submitting consent: ' + e.message);
+            }
+        }
+
+        function selectDocument(docUuid) {
+            currentDocumentUuid = docUuid;
+            loadDocument(docUuid);
+        }
+
+        async function loadDocument(docUuid) {
+            try {
+                const response = await fetch(`/api/esign/session/${sessionUuid}/document/${docUuid}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const doc = result.document;
+                    document.getElementById('sign-doc-title').textContent = doc.document_name;
+                    document.getElementById('viewer-doc-name').textContent = doc.document_name;
+                    document.getElementById('document-content').innerHTML = doc.document_html || '<p>Document content loading...</p>';
+
+                    scrolledToBottom = false;
+                    reviewStartTime = Date.now();
+                    document.getElementById('scroll-indicator').textContent = 'Scroll to the bottom to enable signing';
+                    document.getElementById('scroll-indicator').classList.remove('complete');
+                    document.getElementById('signature-section').style.opacity = '0.5';
+                    document.getElementById('signature-section').style.pointerEvents = 'none';
+                    document.getElementById('btn-sign').disabled = true;
+
+                    showSection('sign');
+                    updateStepIndicators('sign');
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (e) {
+                alert('Error loading document: ' + e.message);
+            }
+        }
+
+        function trackScroll() {
+            const content = document.getElementById('document-content');
+            const scrollPercent = Math.round((content.scrollTop + content.clientHeight) / content.scrollHeight * 100);
+
+            // Report progress
+            if (scrollPercent % 25 === 0) {
+                const duration = Math.round((Date.now() - reviewStartTime) / 1000);
+                fetch(`/api/esign/session/${sessionUuid}/document/${currentDocumentUuid}/progress`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scroll_percentage: scrollPercent,
+                        review_duration_seconds: duration
+                    })
+                });
+            }
+
+            if (scrollPercent >= 95 && !scrolledToBottom) {
+                scrolledToBottom = true;
+                document.getElementById('scroll-indicator').textContent = 'You have reviewed the document. Please sign below.';
+                document.getElementById('scroll-indicator').classList.add('complete');
+                document.getElementById('signature-section').style.opacity = '1';
+                document.getElementById('signature-section').style.pointerEvents = 'auto';
+                validateSignature();
+            }
+        }
+
+        function switchSignatureType(type) {
+            signatureType = type;
+            document.querySelectorAll('.signature-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (type === 'typed') {
+                document.getElementById('typed-signature').style.display = 'block';
+                document.getElementById('drawn-signature').style.display = 'none';
+            } else {
+                document.getElementById('typed-signature').style.display = 'none';
+                document.getElementById('drawn-signature').style.display = 'block';
+            }
+            validateSignature();
+        }
+
+        function validateSignature() {
+            if (!scrolledToBottom) {
+                document.getElementById('btn-sign').disabled = true;
+                return;
+            }
+
+            const intentChecked = document.getElementById('intent-confirm').checked;
+            let hasSignature = false;
+
+            if (signatureType === 'typed') {
+                const typedName = document.getElementById('typed-name').value.trim().toLowerCase();
+                hasSignature = typedName === signerName.toLowerCase();
+            } else {
+                // Check if canvas has content
+                hasSignature = !isCanvasEmpty();
+            }
+
+            document.getElementById('btn-sign').disabled = !(intentChecked && hasSignature);
+        }
+
+        async function signDocument() {
+            const duration = Math.round((Date.now() - reviewStartTime) / 1000);
+            let signatureValue = '';
+
+            if (signatureType === 'typed') {
+                signatureValue = document.getElementById('typed-name').value;
+            } else {
+                signatureValue = signatureCanvas.toDataURL('image/png');
+            }
+
+            try {
+                const response = await fetch(`/api/esign/session/${sessionUuid}/document/${currentDocumentUuid}/sign`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        signature_type: signatureType,
+                        signature_value: signatureValue,
+                        intent_confirmed: true,
+                        typed_name: document.getElementById('typed-name').value || signerName
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    signedDocuments.push({
+                        uuid: currentDocumentUuid,
+                        certificate: result.certificate_number,
+                        timestamp: result.signature_timestamp
+                    });
+
+                    // Update document status
+                    const statusEl = document.getElementById(`status-${currentDocumentUuid}`);
+                    if (statusEl) {
+                        statusEl.textContent = 'Signed';
+                        statusEl.classList.add('signed');
+                    }
+
+                    const docItem = document.querySelector(`[data-uuid="${currentDocumentUuid}"]`);
+                    if (docItem) {
+                        docItem.classList.add('signed');
+                    }
+
+                    // Check if all documents are signed
+                    checkAllSigned();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (e) {
+                alert('Error signing document: ' + e.message);
+            }
+        }
+
+        function checkAllSigned() {
+            const totalDocs = {{ documents | length }};
+            if (signedDocuments.length >= totalDocs) {
+                completeSession();
+            } else {
+                backToReview();
+            }
+        }
+
+        async function completeSession() {
+            try {
+                const response = await fetch(`/api/esign/session/${sessionUuid}/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Show completion
+                    showSection('complete');
+                    updateStepIndicators('complete');
+
+                    // Display certificate info
+                    let certHtml = '';
+                    signedDocuments.forEach((doc, idx) => {
+                        certHtml += `
+                            <div class="certificate-row">
+                                <span class="certificate-label">Document ${idx + 1}</span>
+                                <span class="certificate-value">${doc.certificate}</span>
+                            </div>
+                        `;
+                    });
+                    certHtml += `
+                        <div class="certificate-row">
+                            <span class="certificate-label">Completed At</span>
+                            <span class="certificate-value">${new Date().toLocaleString()}</span>
+                        </div>
+                    `;
+                    document.getElementById('certificate-info').innerHTML = certHtml;
+                }
+            } catch (e) {
+                console.error('Error completing session:', e);
+            }
+        }
+
+        function backToReview() {
+            currentDocumentUuid = null;
+            showSection('review');
+            updateStepIndicators('review');
+        }
+
+        function showSection(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(`section-${name}`).classList.add('active');
+        }
+
+        function updateStepIndicators(currentStep) {
+            const steps = ['consent', 'review', 'sign', 'complete'];
+            const currentIndex = steps.indexOf(currentStep);
+
+            steps.forEach((step, idx) => {
+                const stepEl = document.getElementById(`step-${step}`);
+                stepEl.classList.remove('active', 'completed');
+
+                if (idx < currentIndex) {
+                    stepEl.classList.add('completed');
+                } else if (idx === currentIndex) {
+                    stepEl.classList.add('active');
+                }
+            });
+        }
+
+        // Canvas functions
+        function initCanvas() {
+            signatureCanvas = document.getElementById('signatureCanvas');
+            signatureCtx = signatureCanvas.getContext('2d');
+
+            // Set canvas size
+            const container = signatureCanvas.parentElement;
+            signatureCanvas.width = container.clientWidth - 32;
+            signatureCanvas.height = 150;
+
+            signatureCtx.strokeStyle = '#1e293b';
+            signatureCtx.lineWidth = 2;
+            signatureCtx.lineCap = 'round';
+
+            signatureCanvas.addEventListener('mousedown', startDrawing);
+            signatureCanvas.addEventListener('mousemove', draw);
+            signatureCanvas.addEventListener('mouseup', stopDrawing);
+            signatureCanvas.addEventListener('mouseout', stopDrawing);
+
+            // Touch events
+            signatureCanvas.addEventListener('touchstart', handleTouch);
+            signatureCanvas.addEventListener('touchmove', handleTouchMove);
+            signatureCanvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            signatureCtx.beginPath();
+            signatureCtx.moveTo(e.offsetX, e.offsetY);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            signatureCtx.lineTo(e.offsetX, e.offsetY);
+            signatureCtx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            validateSignature();
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = signatureCanvas.getBoundingClientRect();
+            startDrawing({ offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top });
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = signatureCanvas.getBoundingClientRect();
+            draw({ offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top });
+        }
+
+        function clearCanvas() {
+            signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+            validateSignature();
+        }
+
+        function isCanvasEmpty() {
+            const pixels = signatureCtx.getImageData(0, 0, signatureCanvas.width, signatureCanvas.height).data;
+            for (let i = 3; i < pixels.length; i += 4) {
+                if (pixels[i] !== 0) return false;
+            }
+            return true;
+        }
+    </script>
+</body>
+</html>

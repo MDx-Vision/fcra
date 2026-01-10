@@ -1,0 +1,719 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'timeline' %}
+
+{% block title %}My Journey{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="timeline-page" data-testid="timeline-page">
+    <!-- Header Section -->
+    <div class="page-header" data-testid="timeline-header">
+        <h1>My Journey</h1>
+        <p class="subtitle">Track your progress from signup to credit restoration</p>
+    </div>
+
+    <!-- Progress Summary -->
+    <div class="progress-summary-card" data-testid="progress-summary">
+        <h3>Your Progress</h3>
+        <div class="stage-progress" id="stage-progress" data-testid="stage-progress">
+            <div class="stage-item" data-stage="signup">
+                <div class="stage-icon pending"><i class="fas fa-user-plus"></i></div>
+                <span>Signup</span>
+            </div>
+            <div class="stage-connector"></div>
+            <div class="stage-item" data-stage="onboarding">
+                <div class="stage-icon pending"><i class="fas fa-clipboard-check"></i></div>
+                <span>Onboarding</span>
+            </div>
+            <div class="stage-connector"></div>
+            <div class="stage-item" data-stage="report_uploaded">
+                <div class="stage-icon pending"><i class="fas fa-file-upload"></i></div>
+                <span>Report</span>
+            </div>
+            <div class="stage-connector"></div>
+            <div class="stage-item" data-stage="analysis_complete">
+                <div class="stage-icon pending"><i class="fas fa-search"></i></div>
+                <span>Analysis</span>
+            </div>
+            <div class="stage-connector"></div>
+            <div class="stage-item" data-stage="disputes_sent">
+                <div class="stage-icon pending"><i class="fas fa-paper-plane"></i></div>
+                <span>Disputes</span>
+            </div>
+            <div class="stage-connector"></div>
+            <div class="stage-item" data-stage="awaiting_response">
+                <div class="stage-icon pending"><i class="fas fa-envelope-open"></i></div>
+                <span>Responses</span>
+            </div>
+            <div class="stage-connector"></div>
+            <div class="stage-item" data-stage="completed">
+                <div class="stage-icon pending"><i class="fas fa-trophy"></i></div>
+                <span>Resolved</span>
+            </div>
+        </div>
+        <div class="current-stage-label" id="current-stage-label" data-testid="current-stage-label">
+            <span class="stage-indicator"></span>
+            <span class="stage-text">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="timeline-filters" data-testid="timeline-filters">
+        <button class="filter-btn active" data-category="all" data-testid="filter-all">All Events</button>
+        <button class="filter-btn" data-category="milestones" data-testid="filter-milestones">Milestones</button>
+        <button class="filter-btn" data-category="onboarding" data-testid="filter-onboarding">Onboarding</button>
+        <button class="filter-btn" data-category="documents" data-testid="filter-documents">Documents</button>
+        <button class="filter-btn" data-category="disputes" data-testid="filter-disputes">Disputes</button>
+        <button class="filter-btn" data-category="responses" data-testid="filter-responses">Responses</button>
+    </div>
+
+    <!-- Timeline Container -->
+    <div class="timeline-container" data-testid="timeline-container">
+        <div class="timeline" id="timeline-list" data-testid="timeline-list">
+            <div class="timeline-loading" id="timeline-loading" data-testid="timeline-loading">
+                <div class="loading-spinner"></div>
+                <p>Loading your timeline...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="empty-state" style="display: none;" data-testid="empty-state">
+        <div class="empty-icon"><i class="fas fa-stream"></i></div>
+        <h3>No Events Yet</h3>
+        <p>Your journey will appear here as you complete steps in your credit repair process.</p>
+        <a href="{{ url_for('portal.onboarding') }}" class="btn-primary" data-testid="start-onboarding-btn">Start Onboarding</a>
+    </div>
+
+    <!-- Load More Button -->
+    <div class="load-more-container" id="load-more-container" style="display: none;" data-testid="load-more-container">
+        <button class="btn-secondary" id="load-more-btn" data-testid="load-more-btn">Load More Events</button>
+    </div>
+</div>
+
+<style>
+.timeline-page {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.page-header .subtitle {
+    color: #64748b;
+    font-size: 16px;
+}
+
+/* Progress Summary Card */
+.progress-summary-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d3748 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    color: white;
+}
+
+.progress-summary-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: rgba(255,255,255,0.9);
+}
+
+.stage-progress {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.stage-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.stage-item span {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    white-space: nowrap;
+}
+
+.stage-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.stage-icon.pending {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.4);
+    border: 2px dashed rgba(255,255,255,0.2);
+}
+
+.stage-icon.completed {
+    background: #22c55e;
+    color: white;
+    border: 2px solid #22c55e;
+}
+
+.stage-icon.current {
+    background: #3b82f6;
+    color: white;
+    border: 2px solid #3b82f6;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+.stage-connector {
+    flex: 1;
+    height: 2px;
+    background: rgba(255,255,255,0.1);
+    min-width: 20px;
+    margin: 0 4px;
+    position: relative;
+    top: -10px;
+}
+
+.stage-connector.completed {
+    background: #22c55e;
+}
+
+.current-stage-label {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.stage-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #3b82f6;
+}
+
+.stage-text {
+    color: rgba(255,255,255,0.8);
+}
+
+/* Filter Buttons */
+.timeline-filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    background: white;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+.filter-btn.active {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+}
+
+/* Timeline */
+.timeline-container {
+    position: relative;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #22c55e 0%, #e2e8f0 100%);
+}
+
+.timeline-event {
+    position: relative;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.timeline-event:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateX(4px);
+}
+
+.timeline-event.milestone {
+    border-left: 3px solid #22c55e;
+}
+
+.timeline-event::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 20px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #22c55e;
+}
+
+.timeline-event.milestone::before {
+    width: 16px;
+    height: 16px;
+    left: -28px;
+    top: 18px;
+    background: #22c55e;
+    border-color: #22c55e;
+}
+
+.event-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.event-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #f0fdf4;
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.event-icon.onboarding { background: #eff6ff; color: #3b82f6; }
+.event-icon.documents { background: #fef3c7; color: #d97706; }
+.event-icon.disputes { background: #f0fdf4; color: #22c55e; }
+.event-icon.responses { background: #fce7f3; color: #db2777; }
+.event-icon.status { background: #f3e8ff; color: #9333ea; }
+.event-icon.communication { background: #e0e7ff; color: #6366f1; }
+.event-icon.completion { background: #fef3c7; color: #eab308; }
+
+.event-content {
+    flex: 1;
+}
+
+.event-title {
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.event-description {
+    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.event-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.event-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.event-category {
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: capitalize;
+}
+
+/* Loading State */
+.timeline-loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #22c55e;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 16px;
+    border: 2px dashed #e2e8f0;
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 32px;
+    color: #94a3b8;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.empty-state p {
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.btn-primary {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* Load More */
+.load-more-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn-secondary {
+    padding: 12px 32px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    border-color: #22c55e;
+    color: #22c55e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .timeline-page {
+        padding: 16px;
+    }
+
+    .stage-progress {
+        justify-content: flex-start;
+    }
+
+    .stage-item span {
+        font-size: 10px;
+    }
+
+    .stage-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    .timeline {
+        padding-left: 24px;
+    }
+
+    .timeline::before {
+        left: 6px;
+    }
+
+    .timeline-event::before {
+        left: -22px;
+        width: 10px;
+        height: 10px;
+    }
+
+    .timeline-event.milestone::before {
+        left: -24px;
+        width: 14px;
+        height: 14px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentOffset = 0;
+    let currentCategory = 'all';
+    let totalEvents = 0;
+    const limit = 20;
+
+    // Load initial data
+    loadProgress();
+    loadTimeline();
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.dataset.category;
+            currentOffset = 0;
+            loadTimeline();
+        });
+    });
+
+    // Load more button
+    document.getElementById('load-more-btn').addEventListener('click', function() {
+        currentOffset += limit;
+        loadTimeline(true);
+    });
+
+    function loadProgress() {
+        fetch('/portal/api/timeline/progress')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateProgressDisplay(data);
+                }
+            })
+            .catch(error => console.error('Error loading progress:', error));
+    }
+
+    function updateProgressDisplay(data) {
+        const stages = data.stages || [];
+        const currentStage = data.current_stage || 'signup';
+
+        stages.forEach((stage, index) => {
+            const stageEl = document.querySelector(`.stage-item[data-stage="${stage.key}"]`);
+            const iconEl = stageEl?.querySelector('.stage-icon');
+            const connectorEl = stageEl?.nextElementSibling;
+
+            if (iconEl) {
+                iconEl.classList.remove('pending', 'completed', 'current');
+                if (stage.completed) {
+                    iconEl.classList.add('completed');
+                } else if (stage.key === currentStage) {
+                    iconEl.classList.add('current');
+                } else {
+                    iconEl.classList.add('pending');
+                }
+            }
+
+            if (connectorEl && connectorEl.classList.contains('stage-connector')) {
+                if (stage.completed) {
+                    connectorEl.classList.add('completed');
+                } else {
+                    connectorEl.classList.remove('completed');
+                }
+            }
+        });
+
+        // Update label
+        const stageLabels = {
+            'signup': 'Getting started',
+            'onboarding': 'Completing onboarding',
+            'report_uploaded': 'Credit report received',
+            'analysis_complete': 'Report analyzed',
+            'disputes_sent': 'Disputes in progress',
+            'awaiting_response': 'Waiting for bureau responses',
+            'completed': 'Case resolved!'
+        };
+
+        const labelEl = document.getElementById('current-stage-label');
+        labelEl.querySelector('.stage-text').textContent = stageLabels[currentStage] || 'In progress';
+    }
+
+    function loadTimeline(append = false) {
+        const loading = document.getElementById('timeline-loading');
+        const timeline = document.getElementById('timeline-list');
+        const emptyState = document.getElementById('empty-state');
+        const loadMoreContainer = document.getElementById('load-more-container');
+
+        if (!append) {
+            loading.style.display = 'block';
+            timeline.innerHTML = '';
+            timeline.appendChild(loading);
+        }
+
+        let url = `/portal/api/timeline?limit=${limit}&offset=${currentOffset}`;
+        if (currentCategory === 'milestones') {
+            url += '&milestones_only=true';
+        } else if (currentCategory !== 'all') {
+            url += `&category=${currentCategory}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+
+                if (!data.success) {
+                    console.error('Error loading timeline:', data.error);
+                    return;
+                }
+
+                totalEvents = data.total;
+                const events = data.events || [];
+
+                if (events.length === 0 && currentOffset === 0) {
+                    emptyState.style.display = 'block';
+                    loadMoreContainer.style.display = 'none';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+
+                if (!append) {
+                    timeline.innerHTML = '';
+                }
+
+                events.forEach(event => {
+                    timeline.appendChild(createEventElement(event));
+                });
+
+                // Show/hide load more
+                if (currentOffset + events.length < totalEvents) {
+                    loadMoreContainer.style.display = 'block';
+                } else {
+                    loadMoreContainer.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading timeline:', error);
+                loading.style.display = 'none';
+            });
+    }
+
+    function createEventElement(event) {
+        const div = document.createElement('div');
+        div.className = 'timeline-event' + (event.is_milestone ? ' milestone' : '');
+        div.dataset.testid = 'timeline-event';
+
+        const iconClass = event.icon || 'circle';
+        const categoryClass = event.category || 'general';
+        const dateStr = event.event_date ? formatDate(event.event_date) : '';
+
+        div.innerHTML = `
+            <div class="event-header">
+                <div class="event-icon ${categoryClass}">
+                    <i class="fas fa-${iconClass}"></i>
+                </div>
+                <div class="event-content">
+                    <div class="event-title">${escapeHtml(event.title)}</div>
+                    ${event.description ? `<div class="event-description">${escapeHtml(event.description)}</div>` : ''}
+                    <div class="event-meta">
+                        <span class="event-date"><i class="fas fa-clock"></i> ${dateStr}</span>
+                        <span class="event-category">${categoryClass}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return div;
+    }
+
+    function formatDate(isoString) {
+        const date = new Date(isoString);
+        const now = new Date();
+        const diff = now - date;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+        if (days === 0) {
+            return 'Today';
+        } else if (days === 1) {
+            return 'Yesterday';
+        } else if (days < 7) {
+            return `${days} days ago`;
+        } else {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>
+{% endblock %}

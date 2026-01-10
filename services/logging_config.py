@@ -2,20 +2,23 @@
 Comprehensive Logging Configuration for FCRA Litigation Platform
 
 Provides structured logging with:
-- Request/response logging
+- Request/response logging with correlation IDs
 - Error tracking with stack traces
 - Performance monitoring
 - Audit trail for user actions
 - Database query logging
+- JSON format for production (LOG_FORMAT=json or ENVIRONMENT=production)
 """
 
 import json
 import logging
 import logging.handlers
 import os
+import socket
 import sys
 import time
 import traceback
+import uuid
 from datetime import datetime
 from functools import wraps
 
@@ -26,6 +29,27 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)-20s | %(message)s"
 LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
+# Determine if we should use JSON logging
+USE_JSON_LOGS = (
+    os.environ.get("LOG_FORMAT", "").lower() == "json"
+    or os.environ.get("ENVIRONMENT", "").lower() == "production"
+    or os.environ.get("FLASK_ENV", "").lower() == "production"
+)
+
+# Service metadata
+SERVICE_NAME = os.environ.get("SERVICE_NAME", "fcra-app")
+HOSTNAME = socket.gethostname()
+
+
+def get_correlation_id():
+    """Get current request correlation ID."""
+    try:
+        from flask import g
+
+        return getattr(g, "correlation_id", None)
+    except RuntimeError:
+        return None
+
 
 # JSON format for structured logging (production)
 class JSONFormatter(logging.Formatter):
@@ -33,14 +57,21 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record):
         log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
+            "service": SERVICE_NAME,
+            "hostname": HOSTNAME,
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno,
         }
+
+        # Add correlation ID if available
+        correlation_id = get_correlation_id()
+        if correlation_id:
+            log_data["correlation_id"] = correlation_id
 
         # Add exception info if present
         if record.exc_info:
@@ -54,7 +85,7 @@ class JSONFormatter(logging.Formatter):
         if hasattr(record, "extra_data"):
             log_data.update(record.extra_data)
 
-        return json.dumps(log_data)
+        return json.dumps(log_data, default=str)
 
 
 def setup_logging(app=None):
@@ -72,7 +103,7 @@ def setup_logging(app=None):
     console_handler.setLevel(logging.DEBUG)
 
     # Use JSON format in production, readable format in development
-    if os.environ.get("FLASK_ENV") == "production":
+    if USE_JSON_LOGS:
         console_handler.setFormatter(JSONFormatter())
     else:
         console_handler.setFormatter(logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT))
@@ -124,15 +155,23 @@ perf_logger = get_logger("performance")
 
 def log_request(request):
     """Log incoming HTTP request."""
+    correlation_id = get_correlation_id()
     api_logger.info(
         f"REQUEST {request.method} {request.path}",
         extra={
             "extra_data": {
+                "event": "request",
                 "method": request.method,
                 "path": request.path,
+                "query_string": (
+                    request.query_string.decode("utf-8", errors="ignore")[:200]
+                    if request.query_string
+                    else None
+                ),
                 "remote_addr": request.remote_addr,
-                "user_agent": str(request.user_agent),
+                "user_agent": str(request.user_agent)[:200],
                 "content_length": request.content_length,
+                "correlation_id": correlation_id,
             }
         },
     )
@@ -141,13 +180,16 @@ def log_request(request):
 def log_response(response, duration_ms):
     """Log HTTP response."""
     level = logging.INFO if response.status_code < 400 else logging.WARNING
+    correlation_id = get_correlation_id()
     api_logger.log(
         level,
         f"RESPONSE {response.status_code} ({duration_ms:.0f}ms)",
         extra={
             "extra_data": {
+                "event": "response",
                 "status_code": response.status_code,
-                "duration_ms": duration_ms,
+                "duration_ms": round(duration_ms, 2),
+                "correlation_id": correlation_id,
             }
         },
     )
@@ -241,18 +283,24 @@ def timed(func):
 
 # Flask middleware for request logging
 def init_request_logging(app):
-    """Initialize request/response logging middleware."""
+    """Initialize request/response logging middleware with correlation IDs."""
 
     @app.before_request
     def before_request():
         from flask import g, request
 
+        # Generate or extract correlation ID
+        g.correlation_id = request.headers.get("X-Correlation-ID") or str(uuid.uuid4())
         g.start_time = time.time()
         log_request(request)
 
     @app.after_request
     def after_request(response):
         from flask import g
+
+        # Add correlation ID to response headers
+        if hasattr(g, "correlation_id"):
+            response.headers["X-Correlation-ID"] = g.correlation_id
 
         if hasattr(g, "start_time"):
             duration_ms = (time.time() - g.start_time) * 1000
@@ -261,9 +309,16 @@ def init_request_logging(app):
 
     @app.errorhandler(Exception)
     def handle_exception(e):
-        from flask import request
+        from flask import g, request
 
-        log_error(e, context={"path": request.path, "method": request.method})
+        log_error(
+            e,
+            context={
+                "path": request.path,
+                "method": request.method,
+                "correlation_id": getattr(g, "correlation_id", None),
+            },
+        )
         # Re-raise to let Flask handle it
         raise e
 

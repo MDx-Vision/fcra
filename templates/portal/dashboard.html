@@ -4,33 +4,33 @@
 {% block content %}
 
 <!-- Hero Section -->
-<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 24px; border: none;">
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 48px 24px; margin-bottom: 24px; border: none;" data-testid="hero-section">
     <p style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; color: #14b8a6; margin: 0 0 16px 0;">Your credit. Our fight.</p>
     <h2 style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 600; margin: 0 0 24px 0;">Your Case</h2>
     <div style="margin-bottom: 12px;">
-        <span style="font-family: 'Playfair Display', serif; font-size: 64px; font-weight: 700; color: #14b8a6;" class="animate-number" data-value="{{ total_violations|default(0) }}" data-prefix="$">$0</span>
+        <span style="font-family: 'Playfair Display', serif; font-size: 64px; font-weight: 700; color: #14b8a6;" class="animate-number" data-value="{{ total_violations|default(0) }}" data-prefix="$" data-testid="violations-value">$0</span>
     </div>
     <p style="font-size: 16px; opacity: 0.8; margin: 0;">in violations identified</p>
 </div>
 
 <!-- Stats Grid -->
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
-    <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px;">
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive" data-testid="stats-grid">
+    <div class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px;" data-testid="stat-accounts">
         <div style="font-size: 28px; margin-bottom: 8px;">⚠️</div>
         <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;" class="animate-number" data-value="{{ disputed_accounts|default(0) }}">0</div>
         <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Accounts Disputed</div>
     </div>
-    <div class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px;">
+    <div class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px;" data-testid="stat-bureaus">
         <div style="font-size: 28px; margin-bottom: 8px;">🏛️</div>
         <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;" class="animate-number" data-value="{{ bureau_count|default(3) }}">0</div>
         <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Bureaus Notified</div>
     </div>
-    <div class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px;">
+    <div class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px;" data-testid="stat-days">
         <div style="font-size: 28px; margin-bottom: 8px;">⏱️</div>
         <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;"><span class="animate-number" data-value="{{ days_until_response|default(0) }}">0</span>d</div>
         <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Until Response</div>
     </div>
-    <div class="card animate-fade-in-up" data-delay="400" style="text-align: center; padding: 24px;">
+    <div class="card animate-fade-in-up" data-delay="400" style="text-align: center; padding: 24px;" data-testid="stat-round">
         <div style="font-size: 28px; margin-bottom: 8px;">🛡️</div>
         <div style="font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; color: #0d9488;">{{ current_round|default(1) }}/4</div>
         <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Round Progress</div>
@@ -44,11 +44,11 @@
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;" class="two-col-responsive">
 
     <!-- Progress Ring Card -->
-    <div class="card animate-fade-in-up" data-delay="500" style="padding: 32px; text-align: center;">
+    <div class="card animate-fade-in-up" data-delay="500" style="padding: 32px; text-align: center;" data-testid="progress-card">
         <div class="card-title" style="text-align: left;">📊 Case Progress</div>
 
         <!-- Progress Ring -->
-        <div style="position: relative; width: 180px; height: 180px; margin: 24px auto;">
+        <div style="position: relative; width: 180px; height: 180px; margin: 24px auto;" data-testid="progress-ring">
             <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg);">
                 <defs>
                     <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -70,13 +70,13 @@
                 />
             </svg>
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
-                <span style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #1e3a5f;" class="progress-percent-text">0</span><span style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #1e3a5f;">%</span>
+                <span style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #1e3a5f;" class="progress-percent-text" data-testid="progress-percent">0</span><span style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #1e3a5f;">%</span>
                 <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px;">Complete</div>
             </div>
         </div>
 
         <!-- Round Markers -->
-        <div style="margin-top: 24px;">
+        <div style="margin-top: 24px;" data-testid="round-markers">
             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                 {% for i in range(1, 5) %}
                 <div style="text-align: center; flex: 1;">
@@ -86,7 +86,7 @@
                 {% endfor %}
             </div>
             <div style="height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;">
-                <div class="progress-bar-fill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%); border-radius: 3px; transition: width 1s ease-out;" data-width="{{ progress_percent|default(25) }}"></div>
+                <div class="progress-bar-fill" style="height: 100%; width: 0%; background: linear-gradient(90deg, #0d9488 0%, #14b8a6 100%); border-radius: 3px; transition: width 1s ease-out;" data-width="{{ progress_percent|default(25) }}" data-testid="progress-bar"></div>
             </div>
         </div>
     </div>
@@ -95,7 +95,7 @@
     <div style="display: flex; flex-direction: column; gap: 16px;">
 
         <!-- What's Next -->
-        <div class="card animate-fade-in-up" data-delay="600" style="padding: 24px; flex: 1;">
+        <div class="card animate-fade-in-up" data-delay="600" style="padding: 24px; flex: 1;" data-testid="whats-next">
             <div style="font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">📅 What's Next</div>
             <h4 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: #1e3a5f; margin: 0 0 8px 0;">Bureau response expected</h4>
             <div style="display: inline-block; padding: 8px 16px; background: rgba(13, 148, 136, 0.1); border-radius: 8px;">
@@ -104,7 +104,7 @@
         </div>
 
         <!-- Action Card -->
-        <a href="{{ url_for('portal.documents') }}" class="card animate-fade-in-up" data-delay="700" style="padding: 24px; background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-decoration: none; display: block; flex: 1; border: none;">
+        <a href="{{ url_for('portal.documents') }}" class="card animate-fade-in-up" data-delay="700" style="padding: 24px; background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); text-decoration: none; display: block; flex: 1; border: none;" data-testid="action-card">
             <div style="font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">⚡ Action Needed</div>
             <h4 style="font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600; color: white; margin: 0 0 8px 0;">Received a letter?</h4>
             <p style="font-size: 14px; color: #9ca3af; margin: 0 0 16px 0; line-height: 1.5;">Bureau responses strengthen your case. Upload them instantly.</p>
@@ -116,20 +116,20 @@
 </div>
 
 <!-- Score Journey -->
-<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="800" style="margin-bottom: 24px;" data-testid="score-journey">
     <div class="card-title">📈 Your Credit Score Journey</div>
     <p style="color: #6b7280; margin-bottom: 24px;">Track your progress as we work to remove inaccurate items from your report.</p>
 
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;" class="stats-grid-responsive">
-        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border-radius: 12px; padding: 24px; text-align: center;">
+        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%); border-radius: 12px; padding: 24px; text-align: center;" data-testid="starting-score">
             <div style="font-size: 12px; color: #991b1b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Starting Score</div>
             <div style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #dc2626;">{{ starting_score|default('--') }}</div>
         </div>
-        <div style="background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(13, 148, 136, 0.2) 100%); border-radius: 12px; padding: 24px; text-align: center;">
+        <div style="background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(13, 148, 136, 0.2) 100%); border-radius: 12px; padding: 24px; text-align: center;" data-testid="current-score">
             <div style="font-size: 12px; color: #0f766e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Current Score</div>
             <div style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #0d9488;">{{ current_score|default('--') }}</div>
         </div>
-        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 24px; text-align: center;">
+        <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 12px; padding: 24px; text-align: center;" data-testid="points-gained">
             <div style="font-size: 12px; color: #1e40af; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Points Gained</div>
             <div style="font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: #2563eb;">{% if starting_score and current_score %}+{{ current_score - starting_score }}{% else %}--{% endif %}</div>
         </div>
@@ -137,7 +137,7 @@
 </div>
 
 <!-- Timeline -->
-<div class="card animate-fade-in-up" data-delay="900">
+<div class="card animate-fade-in-up" data-delay="900" data-testid="timeline">
     <div class="card-title">🗓️ Your Dispute Journey</div>
     <p style="color: #6b7280; margin-bottom: 24px;">Every step we're taking to restore your credit.</p>
 
@@ -233,8 +233,127 @@
     </div>
 </div>
 
+<!-- Recent Activity Card -->
+<div class="card animate-fade-in-up" data-delay="800" style="padding: 24px; margin-bottom: 24px;" data-testid="recent-activity-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div class="card-title" style="margin: 0;">📈 Recent Activity</div>
+        <a href="{{ url_for('portal.timeline') }}" style="font-size: 13px; font-weight: 600; color: #0d9488; text-decoration: none;">View full journey →</a>
+    </div>
+
+    <div id="recent-timeline-events" data-testid="recent-timeline-events">
+        <div style="text-align: center; padding: 20px; color: #9ca3af;">
+            <div class="loading-spinner-small" style="width: 24px; height: 24px; border: 2px solid #e5e7eb; border-top-color: #0d9488; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 8px;"></div>
+            Loading activity...
+        </div>
+    </div>
+</div>
+
+<style>
+.activity-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.activity-item:last-child {
+    border-bottom: none;
+}
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #f0fdf4;
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.activity-content {
+    flex: 1;
+}
+.activity-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1e3a5f;
+    margin-bottom: 2px;
+}
+.activity-date {
+    font-size: 12px;
+    color: #9ca3af;
+}
+.activity-empty {
+    text-align: center;
+    padding: 24px;
+    color: #9ca3af;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadRecentActivity();
+});
+
+function loadRecentActivity() {
+    const container = document.getElementById('recent-timeline-events');
+
+    fetch('/portal/api/timeline/recent?limit=4')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success || !data.events || data.events.length === 0) {
+                container.innerHTML = `
+                    <div class="activity-empty">
+                        <p style="margin: 0;">No activity yet. Your journey will appear here as you progress.</p>
+                        <a href="/portal/onboarding" style="display: inline-block; margin-top: 12px; font-size: 13px; font-weight: 600; color: #0d9488;">Start onboarding →</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.events.map(event => `
+                <div class="activity-item" data-testid="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-${event.icon || 'circle'}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">${escapeHtml(event.title)}</div>
+                        <div class="activity-date">${formatDate(event.event_date)}</div>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading timeline:', error);
+            container.innerHTML = `<div class="activity-empty">Unable to load activity</div>`;
+        });
+}
+
+function formatDate(isoString) {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const now = new Date();
+    const diff = now - date;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+
 <!-- Trust Footer -->
-<div style="display: flex; justify-content: center; gap: 40px; margin-top: 32px; padding: 24px 0; border-top: 1px solid #e5e7eb; flex-wrap: wrap;">
+<div style="display: flex; justify-content: center; gap: 40px; margin-top: 32px; padding: 24px 0; border-top: 1px solid #e5e7eb; flex-wrap: wrap;" data-testid="trust-footer">
     <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: #6b7280;">
         <span style="color: #0d9488;">🔒</span> Bank-Level Security
     </div>

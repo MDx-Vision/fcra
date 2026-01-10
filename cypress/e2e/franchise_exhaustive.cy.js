@@ -1,357 +1,457 @@
 // Exhaustive test for /dashboard/franchise
-describe.skip('Staff Login Page - /dashboard/franchise', () => {
+describe('Franchise Management - /dashboard/franchise', () => {
   beforeEach(() => {
+    cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/franchise');
   });
 
-  describe.skip('Page Load Tests', () => {
-    it('should load without errors', () => {
+  describe('Page Load Tests', () => {
+    it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/franchise');
-      cy.get('[data-testid="login-container"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
     });
 
     it('should have correct page title', () => {
-      cy.title().should('contain', 'Staff Login - Brightpath Ascend FCRA Platform');
+      cy.title().should('contain', 'Franchise');
     });
 
-    it('should not have console errors', () => {
-      cy.window().then((win) => {
-        cy.stub(win.console, 'error').as('consoleError');
-      });
-      // Console error check removed - spy setup issue;
+    it('should display the page header', () => {
+      cy.get('.header h1').should('contain.text', 'Franchise Management');
     });
 
-    it('should return 200 status code', () => {
-      cy.request('/dashboard/franchise').its('status').should('eq', 200);
+    it('should not return server errors', () => {
+      cy.request('/dashboard/franchise').its('status').should('be.oneOf', [200, 302]);
     });
   });
 
-  describe.skip('UI Element Tests', () => {
-    describe.skip('Logo and Branding', () => {
-      it('should display company logo', () => {
-        cy.get('.logo img').should('be.visible').and('have.attr', 'src', '/static/images/logo.png');
-        cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
-      });
-
-      it('should display main heading', () => {
-        cy.get('h1').should('be.visible').and('contain.text', 'Brightpath');
-        cy.get('h1 span').should('contain.text', 'Ascend');
-      });
-
-      it('should display platform description', () => {
-        cy.get('.logo p').should('contain.text', 'FCRA Litigation Platform');
-      });
+  describe('Header Actions Tests', () => {
+    it('should display New Organization button', () => {
+      cy.get('.header-actions .btn-primary').should('contain.text', 'New Organization');
     });
 
-    describe.skip('Staff Badge', () => {
-      it('should display staff portal badge', () => {
-        cy.get('.staff-badge').should('be.visible').and('contain.text', 'Staff Portal');
-        cy.get('.staff-badge svg').should('be.visible');
-      });
-    });
-
-    describe.skip('Headings', () => {
-      it('should display H1 heading', () => {
-        cy.get('h1').should('be.visible').and('contain.text', 'Brightpath Ascend Group');
-      });
-
-      it('should display H2 heading', () => {
-        cy.get('[data-testid="login-title"]').should('be.visible').and('contain.text', 'Staff Login');
-      });
-
-      it('should display subtitle', () => {
-        cy.get('.subtitle').should('contain.text', 'Sign in to access the admin dashboard');
-      });
-    });
-
-    describe.skip('Login Card', () => {
-      it('should display login card container', () => {
-        cy.get('[data-testid="login-card"]').should('be.visible');
-      });
-    });
-
-    describe.skip('Buttons', () => {
-      it('should display password toggle button', () => {
-        cy.get('.toggle-btn').should('be.visible').and('contain.text', '👁');
-        cy.get('.toggle-btn').should('have.attr', 'type', 'button');
-      });
-
-      it('should display sign in button', () => {
-        cy.get('[data-testid="login-button"]').should('be.visible').and('contain.text', 'Sign In');
-        cy.get('[data-testid="login-button"]').should('have.attr', 'type', 'submit');
-        cy.get('#loginBtn').should('have.class', 'login-btn');
-      });
-
-      it('should have clickable buttons', () => {
-        cy.get('.toggle-btn').should('not.be.disabled');
-        cy.get('[data-testid="login-button"]').should('not.be.disabled');
-      });
-    });
-
-    describe.skip('Client Portal Link', () => {
-      it('should display client portal link', () => {
-        cy.get('.client-portal-link').should('contain.text', 'Looking for client portal?');
-        cy.get('[data-testid="client-portal-link"]').should('be.visible').and('contain.text', 'Client Login');
-        cy.get('[data-testid="client-portal-link"]').should('have.attr', 'href', '/portal/login');
-      });
+    it('should open modal when New Organization clicked', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#createOrgModal').should('have.class', 'active');
     });
   });
 
-  describe.skip('Form Tests', () => {
-    describe.skip('Login Form Structure', () => {
-      it('should display login form with correct attributes', () => {
-        cy.get('[data-testid="login-form"]').should('be.visible');
-        cy.get('#loginForm').should('have.attr', 'method', 'POST');
-        cy.get('#loginForm').should('have.attr', 'action', '/staff/login');
-      });
+  describe('Stats Grid Tests', () => {
+    it('should display stats grid', () => {
+      cy.get('.stats-grid').should('be.visible');
+    });
 
-      it('should have email input field', () => {
-        cy.get('[data-testid="email-input"]').should('be.visible');
-        cy.get('#email').should('have.attr', 'type', 'email');
-        cy.get('#email').should('have.attr', 'name', 'email');
-        cy.get('#email').should('have.attr', 'required');
-        cy.get('#email').should('have.attr', 'placeholder', 'your@email.com');
-        cy.get('#email').should('have.attr', 'autocomplete', 'email');
-      });
+    it('should display four stat cards', () => {
+      cy.get('.stats-grid .stat-card').should('have.length', 4);
+    });
 
-      it('should have password input field', () => {
-        cy.get('[data-testid="password-input"]').should('be.visible');
-        cy.get('#password').should('have.attr', 'type', 'password');
-        cy.get('#password').should('have.attr', 'name', 'password');
-        cy.get('#password').should('have.attr', 'required');
-        cy.get('#password').should('have.attr', 'placeholder', 'Enter your password');
-        cy.get('#password').should('have.attr', 'autocomplete', 'current-password');
-      });
-
-      it('should have form labels', () => {
-        cy.get('label[for="email"]').should('contain.text', 'Email Address');
-        cy.get('label[for="password"]').should('contain.text', 'Password');
+    it('should display Total Organizations stat', () => {
+      cy.get('.stat-card.highlight').within(() => {
+        cy.get('.stat-label').should('contain.text', 'Total Organizations');
+        cy.get('.stat-value').should('exist');
       });
     });
 
-    describe.skip('Form Input Functionality', () => {
-      it('should accept text in email field', () => {
-        cy.get('[data-testid="email-input"]').type('test@example.com');
-        cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
-      });
-
-      it('should accept text in password field', () => {
-        cy.get('[data-testid="password-input"]').type('password123');
-        cy.get('[data-testid="password-input"]').should('have.value', 'password123');
-      });
-
-      it('should clear input fields', () => {
-        cy.get('[data-testid="email-input"]').type('test@example.com').clear();
-        cy.get('[data-testid="email-input"]').should('have.value', '');
-        cy.get('[data-testid="password-input"]').type('password123').clear();
-        cy.get('[data-testid="password-input"]').should('have.value', '');
-      });
+    it('should display Total Clients stat', () => {
+      cy.get('.stat-card').contains('.stat-label', 'Total Clients').should('exist');
     });
 
-    describe.skip('Form Validation', () => {
-      it('should show validation for empty required fields', () => {
-        cy.get('[data-testid="login-button"]').click();
-        cy.get('#email:invalid').should('exist');
-        cy.get('#password:invalid').should('exist');
-      });
-
-      it('should validate email format', () => {
-        cy.get('[data-testid="email-input"]').type('invalid-email');
-        cy.get('[data-testid="login-button"]').click();
-        cy.get('#email:invalid').should('exist');
-      });
-
-      it('should accept valid email format', () => {
-        cy.get('[data-testid="email-input"]').type('valid@example.com');
-        cy.get('#email:valid').should('exist');
-      });
+    it('should display Pending Transfers stat', () => {
+      cy.get('.stat-card').contains('.stat-label', 'Pending Transfers').should('exist');
     });
 
-    describe.skip('Password Toggle Functionality', () => {
-      it('should toggle password visibility', () => {
-        cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-        cy.get('.toggle-btn').click();
-        cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-        cy.get('.toggle-btn').click();
-        cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      });
+    it('should display Total Revenue stat', () => {
+      cy.get('.stat-card').contains('.stat-label', 'Total Revenue').should('exist');
+    });
+  });
 
-      it('should maintain password value during toggle', () => {
-        cy.get('[data-testid="password-input"]').type('testpassword');
-        cy.get('.toggle-btn').click();
-        cy.get('[data-testid="password-input"]').should('have.value', 'testpassword');
-        cy.get('.toggle-btn').click();
-        cy.get('[data-testid="password-input"]').should('have.value', 'testpassword');
-      });
+  describe('Tabs Tests', () => {
+    it('should display tabs', () => {
+      cy.get('.tabs').should('be.visible');
     });
 
-    describe.skip('Form Submission', () => {
-      it('should disable submit button and show loading state on form submission', () => {
-        cy.get('[data-testid="email-input"]').type('test@example.com');
-        cy.get('[data-testid="password-input"]').type('password123');
-        
-        cy.intercept('POST', '/staff/login', { delay: 1000, statusCode: 200 }).as('loginRequest');
-        
-        cy.get('[data-testid="login-button"]').click();
-        cy.get('#loginBtn').should('be.disabled');
-        cy.get('#loginBtn').should('contain.text', 'Signing in...');
-        cy.get('#loginBtn .spinner').should('exist');
-      });
+    it('should have Organization Hierarchy tab', () => {
+      cy.get('.tab').contains('Organization Hierarchy').should('exist');
+    });
 
-      it('should submit form with valid credentials', () => {
-        cy.intercept('POST', '/staff/login', { statusCode: 200, body: { success: true } }).as('loginSuccess');
-        
-        cy.get('[data-testid="email-input"]').type('staff@example.com');
-        cy.get('[data-testid="password-input"]').type('validpassword');
-        cy.get('[data-testid="login-button"]').click();
-        
-        cy.wait('@loginSuccess');
+    it('should have All Organizations tab', () => {
+      cy.get('.tab').contains('All Organizations').should('exist');
+    });
+
+    it('should have Transfers tab', () => {
+      cy.get('.tab').contains('Transfers').should('exist');
+    });
+
+    it('should have Revenue tab', () => {
+      cy.get('.tab').contains('Revenue').should('exist');
+    });
+
+    it('should switch tabs on click', () => {
+      cy.get('.tab').contains('All Organizations').click();
+      cy.get('#tab-list').should('have.class', 'active');
+    });
+  });
+
+  describe('Hierarchy Tab Tests', () => {
+    it('should display hierarchy tab content by default', () => {
+      cy.get('#tab-hierarchy').should('have.class', 'active');
+    });
+
+    it('should display content section', () => {
+      cy.get('.content-section').should('be.visible');
+    });
+
+    it('should display section title', () => {
+      cy.get('.section-title').should('contain.text', 'Organization Hierarchy');
+    });
+
+    it('should display either org tree or empty state', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-tree').length) {
+          cy.get('.org-tree').should('be.visible');
+        } else {
+          cy.get('.empty-state').should('be.visible');
+        }
       });
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
-    describe.skip('Navigation Links', () => {
-      it('should navigate to client portal when clicked', () => {
-        cy.get('[data-testid="client-portal-link"]').should('have.attr', 'href', '/portal/login');
-        cy.get('[data-testid="client-portal-link"]').click();
-        cy.url().should('include', '/portal/login');
+  describe('Organization Tree Tests', () => {
+    it('should display org tree items if organizations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-tree-item').length) {
+          cy.get('.org-tree-item').first().should('be.visible');
+        } else {
+          cy.get('.empty-state').should('exist');
+        }
       });
     });
 
-    describe.skip('Form Interactions', () => {
-      it('should focus on email field when clicked', () => {
-        cy.get('[data-testid="email-input"]').click();
-        cy.get('[data-testid="email-input"]').should('be.focused');
-      });
-
-      it('should focus on password field when clicked', () => {
-        cy.get('[data-testid="password-input"]').click();
-        cy.get('[data-testid="password-input"]').should('be.focused');
-      });
-
-      it('should navigate between fields using tab', () => {
-        cy.get('[data-testid="email-input"]').focus().type('{tab}');
-        cy.get('[data-testid="password-input"]').should('be.focused');
+    it('should display org tree node if organizations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-tree-node').length) {
+          cy.get('.org-tree-node').first().should('be.visible');
+        } else {
+          cy.get('.content-section').should('exist');
+        }
       });
     });
-  });
 
-  describe.skip('Responsive Tests', () => {
-    const viewports = [
-      { name: 'Desktop', width: 1280, height: 720 },
-      { name: 'Tablet', width: 768, height: 1024 },
-      { name: 'Mobile', width: 375, height: 667 }
-    ];
-
-    viewports.forEach(viewport => {
-      describe(`${viewport.name} (${viewport.width}px)`, () => {
-        beforeEach(() => {
-          cy.viewport(viewport.width, viewport.height);
-        });
-
-        it('should display all elements properly', () => {
-          cy.get('[data-testid="login-container"]').should('be.visible');
-          cy.get('[data-testid="login-card"]').should('be.visible');
-          cy.get('[data-testid="login-form"]').should('be.visible');
-          cy.get('[data-testid="email-input"]').should('be.visible');
-          cy.get('[data-testid="password-input"]').should('be.visible');
-          cy.get('[data-testid="login-button"]').should('be.visible');
-        });
-
-        it('should maintain functionality', () => {
-          cy.get('[data-testid="email-input"]').type('test@example.com');
-          cy.get('[data-testid="password-input"]').type('password123');
-          cy.get('.toggle-btn').click();
-          cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-        });
+    it('should display org tree name if organizations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-tree-name').length) {
+          cy.get('.org-tree-name').first().should('be.visible');
+        } else {
+          cy.get('.content-section').should('exist');
+        }
       });
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
-    describe.skip('Network Error Handling', () => {
-      it('should handle server errors gracefully', () => {
-        cy.intercept('POST', '/staff/login', { statusCode: 500, body: { error: 'Server error' } }).as('serverError');
-        
-        cy.get('[data-testid="email-input"]').type('test@example.com');
-        cy.get('[data-testid="password-input"]').type('password123');
-        cy.get('[data-testid="login-button"]').click();
-        
-        cy.wait('@serverError');
-      });
+  describe('List Tab Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('All Organizations').click();
+    });
 
-      it('should handle invalid credentials', () => {
-        cy.intercept('POST', '/staff/login', { statusCode: 401, body: { error: 'Invalid credentials' } }).as('invalidLogin');
-        
-        cy.get('[data-testid="email-input"]').type('wrong@example.com');
-        cy.get('[data-testid="password-input"]').type('wrongpassword');
-        cy.get('[data-testid="login-button"]').click();
-        
-        cy.wait('@invalidLogin');
-      });
+    it('should display list tab content', () => {
+      cy.get('#tab-list').should('have.class', 'active');
+    });
 
-      it('should handle network timeout', () => {
-        cy.intercept('POST', '/staff/login', { delay: 30000, statusCode: 408 }).as('timeout');
-        
-        cy.get('[data-testid="email-input"]').type('test@example.com');
-        cy.get('[data-testid="password-input"]').type('password123');
-        cy.get('[data-testid="login-button"]').click();
+    it('should display org cards if organizations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-card').length) {
+          cy.get('.org-card').first().should('be.visible');
+        } else {
+          cy.get('#tab-list').should('exist');
+        }
       });
     });
 
-    describe.skip('Form Error States', () => {
-      it('should handle malformed email addresses', () => {
-        const invalidEmails = ['@example.com', 'test@', 'test.com', 'test@@example.com'];
-        
-        invalidEmails.forEach(email => {
-          cy.get('[data-testid="email-input"]').clear().type(email);
-          cy.get('[data-testid="login-button"]').click();
-          cy.get('#email:invalid').should('exist');
-        });
+    it('should display org card header if organizations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-card').length) {
+          cy.get('.org-card-header').first().should('be.visible');
+        } else {
+          cy.get('#tab-list').should('exist');
+        }
       });
+    });
 
-      it('should prevent submission with empty fields', () => {
-        cy.get('[data-testid="login-button"]').click();
-        cy.url().should('include', '/dashboard/franchise');
+    it('should display org card stats if organizations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-card').length) {
+          cy.get('.org-card-stats').first().should('be.visible');
+        } else {
+          cy.get('#tab-list').should('exist');
+        }
+      });
+    });
+
+    it('should display org card actions if organizations exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-card').length) {
+          cy.get('.org-card-actions').first().should('be.visible');
+        } else {
+          cy.get('#tab-list').should('exist');
+        }
       });
     });
   });
 
-  describe.skip('Accessibility Tests', () => {
-    it('should have proper labels for form inputs', () => {
-      cy.get('#email').should('have.attr', 'aria-describedby').or('not.have.attr', 'aria-describedby');
-      cy.get('label[for="email"]').should('exist');
-      cy.get('label[for="password"]').should('exist');
+  describe('Transfers Tab Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Transfers').click();
     });
 
-    it('should be keyboard navigable', () => {
-      cy.get('body').type('{tab}');
-      cy.focused().should('match', '[data-testid="email-input"]');
-      cy.focused().type('{tab}');
-      cy.focused().should('match', '[data-testid="password-input"]');
-      cy.focused().type('{tab}');
-      cy.focused().should('match', '.toggle-btn');
+    it('should display transfers tab content', () => {
+      cy.get('#tab-transfers').should('have.class', 'active');
     });
 
-    it('should have proper contrast and visibility', () => {
-      cy.get('[data-testid="login-title"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
-      cy.get('[data-testid="login-button"]').should('be.visible');
+    it('should display New Transfer button', () => {
+      cy.get('#tab-transfers .btn-primary').should('contain.text', 'New Transfer');
+    });
+
+    it('should display either transfers table or empty state', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('#tab-transfers .data-table').length) {
+          cy.get('#tab-transfers .data-table').should('be.visible');
+        } else {
+          cy.get('#tab-transfers .empty-state').should('be.visible');
+        }
+      });
     });
   });
 
-  describe.skip('Security Tests', () => {
-    it('should have proper form attributes for security', () => {
-      cy.get('#email').should('have.attr', 'autocomplete', 'email');
-      cy.get('#password').should('have.attr', 'autocomplete', 'current-password');
-      cy.get('#password').should('have.attr', 'type', 'password');
+  describe('Revenue Tab Tests', () => {
+    beforeEach(() => {
+      cy.get('.tab').contains('Revenue').click();
     });
 
-    it('should not expose sensitive data in DOM', () => {
-      cy.get('[data-testid="password-input"]').type('secretpassword');
-      cy.get('body').should('not.contain.text', 'secretpassword');
+    it('should display revenue tab content', () => {
+      cy.get('#tab-revenue').should('have.class', 'active');
+    });
+
+    it('should display revenue summary', () => {
+      cy.get('.revenue-summary').should('be.visible');
+    });
+
+    it('should display revenue cards', () => {
+      cy.get('.revenue-card').should('have.length', 3);
+    });
+
+    it('should display revenue table', () => {
+      cy.get('#tab-revenue .data-table').should('be.visible');
+    });
+  });
+
+  describe('Create Organization Modal Tests', () => {
+    it('should have create org modal in DOM', () => {
+      cy.get('#createOrgModal').should('exist');
+    });
+
+    it('should not be visible by default', () => {
+      cy.get('#createOrgModal').should('not.have.class', 'active');
+    });
+
+    it('should open modal when button clicked', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#createOrgModal').should('have.class', 'active');
+    });
+
+    it('should display modal title', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('.modal-title').should('contain.text', 'Create Organization');
+    });
+
+    it('should have organization name input', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#createOrgModal input[name="name"]').should('exist');
+    });
+
+    it('should have organization type select', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#createOrgModal select[name="org_type"]').should('exist');
+    });
+
+    it('should have parent organization select', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#createOrgModal select[name="parent_org_id"]').should('exist');
+    });
+
+    it('should close modal when close button clicked', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#createOrgModal').should('have.class', 'active');
+      cy.get('#createOrgModal .modal-close').click();
+      cy.get('#createOrgModal').should('not.have.class', 'active');
+    });
+  });
+
+  describe('Edit Organization Modal Tests', () => {
+    it('should have edit org modal in DOM', () => {
+      cy.get('#editOrgModal').should('exist');
+    });
+
+    it('should not be visible by default', () => {
+      cy.get('#editOrgModal').should('not.have.class', 'active');
+    });
+  });
+
+  describe('Members Modal Tests', () => {
+    it('should have members modal in DOM', () => {
+      cy.get('#membersModal').should('exist');
+    });
+
+    it('should not be visible by default', () => {
+      cy.get('#membersModal').should('not.have.class', 'active');
+    });
+  });
+
+  describe('Transfer Modal Tests', () => {
+    it('should have transfer modal in DOM', () => {
+      cy.get('#transferModal').should('exist');
+    });
+
+    it('should not be visible by default', () => {
+      cy.get('#transferModal').should('not.have.class', 'active');
+    });
+
+    it('should open transfer modal from transfers tab', () => {
+      cy.get('.tab').contains('Transfers').click();
+      cy.get('#tab-transfers .btn-primary').click();
+      cy.get('#transferModal').should('have.class', 'active');
+    });
+  });
+
+  describe('Consolidated Report Modal Tests', () => {
+    it('should have consolidated report modal in DOM', () => {
+      cy.get('#consolidatedReportModal').should('exist');
+    });
+
+    it('should not be visible by default', () => {
+      cy.get('#consolidatedReportModal').should('not.have.class', 'active');
+    });
+  });
+
+  describe('JavaScript Function Tests', () => {
+    it('should have openModal function', () => {
+      cy.window().should('have.property', 'openModal');
+    });
+
+    it('should have closeModal function', () => {
+      cy.window().should('have.property', 'closeModal');
+    });
+
+    it('should have createOrganization function', () => {
+      cy.window().should('have.property', 'createOrganization');
+    });
+
+    it('should have viewOrganization function', () => {
+      cy.window().should('have.property', 'viewOrganization');
+    });
+
+    it('should have editOrganization function', () => {
+      cy.window().should('have.property', 'editOrganization');
+    });
+
+    it('should have updateOrganization function', () => {
+      cy.window().should('have.property', 'updateOrganization');
+    });
+
+    it('should have manageMembers function', () => {
+      cy.window().should('have.property', 'manageMembers');
+    });
+
+    it('should have addMember function', () => {
+      cy.window().should('have.property', 'addMember');
+    });
+
+    it('should have removeMember function', () => {
+      cy.window().should('have.property', 'removeMember');
+    });
+
+    it('should have createTransfer function', () => {
+      cy.window().should('have.property', 'createTransfer');
+    });
+
+    it('should have approveTransfer function', () => {
+      cy.window().should('have.property', 'approveTransfer');
+    });
+
+    it('should have viewConsolidatedReport function', () => {
+      cy.window().should('have.property', 'viewConsolidatedReport');
+    });
+  });
+
+  describe('Responsive Tests', () => {
+    it('should display correctly on desktop (1280px)', () => {
+      cy.viewport(1280, 720);
+      cy.get('.main-content').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
+      cy.get('.tabs').should('be.visible');
+    });
+
+    it('should display correctly on tablet (768px)', () => {
+      cy.viewport(768, 1024);
+      cy.get('.main-content').should('be.visible');
+      cy.get('.stats-grid').should('be.visible');
+    });
+
+    it('should display correctly on mobile (375px)', () => {
+      cy.viewport(375, 667);
+      cy.get('.main-content').should('be.visible');
+    });
+  });
+
+  describe('Status Badge Styling Tests', () => {
+    it('should have pending status badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.status-badge.pending').length) {
+          cy.get('.status-badge.pending').first().should('be.visible');
+        } else {
+          cy.get('.main-content').should('exist');
+        }
+      });
+    });
+
+    it('should have approved status badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.status-badge.approved').length) {
+          cy.get('.status-badge.approved').first().should('be.visible');
+        } else {
+          cy.get('.main-content').should('exist');
+        }
+      });
+    });
+  });
+
+  describe('Organization Type Badge Styling Tests', () => {
+    it('should have headquarters org type styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-card-type.headquarters').length) {
+          cy.get('.org-card-type.headquarters').first().should('be.visible');
+        } else {
+          cy.get('.main-content').should('exist');
+        }
+      });
+    });
+
+    it('should have regional org type styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-card-type.regional').length) {
+          cy.get('.org-card-type.regional').first().should('be.visible');
+        } else {
+          cy.get('.main-content').should('exist');
+        }
+      });
+    });
+
+    it('should have branch org type styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.org-card-type.branch').length) {
+          cy.get('.org-card-type.branch').first().should('be.visible');
+        } else {
+          cy.get('.main-content').should('exist');
+        }
+      });
     });
   });
 });

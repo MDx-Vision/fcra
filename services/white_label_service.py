@@ -5,7 +5,7 @@ Handles tenant management, branding, and access control for partner law firms.
 
 import secrets
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -172,7 +172,7 @@ class WhiteLabelService:
             if key in allowed_fields:
                 setattr(tenant, key, value)
 
-        tenant.updated_at = datetime.utcnow()
+        tenant.updated_at = datetime.utcnow()  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(tenant)
 
@@ -308,8 +308,8 @@ class WhiteLabelService:
         )
 
         if existing:
-            existing.role = role
-            existing.is_primary_admin = is_primary_admin
+            existing.role = role  # type: ignore[assignment]
+            existing.is_primary_admin = is_primary_admin  # type: ignore[assignment]
             self.db.commit()
             return existing
 
@@ -427,7 +427,7 @@ class WhiteLabelService:
         )
         if not tenant_client:
             return None
-        return self.get_tenant_by_id(tenant_client.tenant_id)
+        return self.get_tenant_by_id(cast(int, tenant_client.tenant_id))
 
     def generate_tenant_api_key(self, tenant_id: int) -> str:
         """
@@ -444,8 +444,8 @@ class WhiteLabelService:
             raise ValueError(f"Tenant with ID {tenant_id} not found")
 
         new_api_key = self._generate_api_key()
-        tenant.api_key = new_api_key
-        tenant.updated_at = datetime.utcnow()
+        tenant.api_key = new_api_key  # type: ignore[assignment]
+        tenant.updated_at = datetime.utcnow()  # type: ignore[assignment]
         self.db.commit()
 
         return new_api_key
@@ -465,18 +465,21 @@ class WhiteLabelService:
         if not tenant or not tenant.is_active:
             return False
 
-        features = tenant.features_enabled or []
-        if isinstance(features, dict):
-            features = list(features.keys()) if features else []
+        features_raw: Any = tenant.features_enabled or []
+        features: List[str]
+        if isinstance(features_raw, dict):
+            features = list(features_raw.keys()) if features_raw else []
+        else:
+            features = features_raw
 
         tier_config = SUBSCRIPTION_TIERS.get(
-            tenant.subscription_tier, SUBSCRIPTION_TIERS["basic"]
+            cast(str, tenant.subscription_tier), SUBSCRIPTION_TIERS["basic"]
         )
-        tier_features = tier_config.get("features", [])
+        tier_features: List[str] = cast(List[str], tier_config.get("features", []))
 
         return feature_name in features or feature_name in tier_features
 
-    def get_tenant_usage_stats(self, tenant_id: int) -> Dict[str, Any]:
+    def get_tenant_usage_stats(self, tenant_id: int) -> Optional[Dict[str, Any]]:
         """
         Get usage statistics for a tenant.
 
@@ -484,7 +487,7 @@ class WhiteLabelService:
             tenant_id: ID of the tenant
 
         Returns:
-            Dictionary with usage statistics
+            Dictionary with usage statistics or None if not found
         """
         tenant = self.get_tenant_by_id(tenant_id)
         if not tenant:

@@ -4,7 +4,7 @@
 {% block content %}
 
 <!-- Profile Header -->
-<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;">
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; padding: 32px; margin-bottom: 24px; border: none;" data-testid="profile-header">
     <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
         <div style="width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.2);">
             <span style="font-size: 36px; font-weight: 700; color: white;">{{ (current_user.first_name or 'C')[0] }}</span>
@@ -20,24 +20,75 @@
     </div>
 </div>
 
-<!-- Quick Actions -->
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
-    <a href="{{ url_for('portal.documents') }}" class="card animate-fade-in-up" data-delay="100" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
-        <div style="font-size: 32px; margin-bottom: 12px;">📤</div>
-        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Upload Document</div>
-    </a>
-    <a href="{{ url_for('portal.dashboard') }}" class="card animate-fade-in-up" data-delay="200" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
-        <div style="font-size: 32px; margin-bottom: 12px;">📊</div>
-        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">View Case</div>
-    </a>
-    <a href="{{ url_for('portal.learn') }}" class="card animate-fade-in-up" data-delay="300" style="text-align: center; padding: 24px; text-decoration: none; cursor: pointer;">
-        <div style="font-size: 32px; margin-bottom: 12px;">📖</div>
-        <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Learn FCRA</div>
-    </a>
+<!-- Billing & Account Section - Consolidated from nav -->
+<div class="card animate-fade-in-up" data-delay="100" style="margin-bottom: 24px;" data-testid="billing-section">
+    <div class="card-title">💳 Billing & Account</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" class="two-col-responsive">
+        <a href="{{ url_for('portal.portal_invoices') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📄</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Invoices</div>
+                <div style="font-size: 12px; color: #6b7280;">View billing history</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.portal_payment_plans') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📋</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Payment Plans</div>
+                <div style="font-size: 12px; color: #6b7280;">Manage your payments</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.subscription') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">💳</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Subscription</div>
+                <div style="font-size: 12px; color: #6b7280;">Manage subscription</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.status') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">❄️</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Freeze Status</div>
+                <div style="font-size: 12px; color: #6b7280;">Bureau freeze tracking</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.booking') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📞</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Book a Call</div>
+                <div style="font-size: 12px; color: #6b7280;">Schedule appointment</div>
+            </div>
+        </a>
+        <a href="{{ url_for('portal.learn') }}" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 10px; text-decoration: none; transition: all 0.2s; border: 1px solid #e5e7eb;" onmouseover="this.style.background='#f0fdf4'; this.style.borderColor='#0d9488';" onmouseout="this.style.background='#f9fafb'; this.style.borderColor='#e5e7eb';">
+            <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #0d9488, #0f766e); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 18px;">📖</span>
+            </div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: #1e3a5f;">Learn FCRA</div>
+                <div style="font-size: 12px; color: #6b7280;">Education resources</div>
+            </div>
+        </a>
+    </div>
+    <!-- Logout Button -->
+    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+        <a href="{{ url_for('portal_logout') }}" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; background: #fee2e2; color: #991b1b; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+            🚪 Sign Out
+        </a>
+    </div>
 </div>
 
 <!-- Personal Info -->
-<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="400" style="margin-bottom: 24px;" data-testid="personal-info">
     <div class="card-title">👤 Personal Information</div>
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;" class="two-col-responsive">
         <div>
@@ -60,21 +111,8 @@
     <p style="font-size: 13px; color: #9ca3af; margin: 20px 0 0 0;">Need to update your contact information? Contact us and we'll help.</p>
 </div>
 
-<!-- Detailed Status Link -->
-<div class="card animate-fade-in-up" data-delay="500" style="margin-bottom: 24px; background: #f9fafb; border: 1px solid #e5e7eb;">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-        <div>
-            <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 4px 0;">📋 Detailed Bureau Status</h4>
-            <p style="font-size: 14px; color: #6b7280; margin: 0;">View and update individual account statuses across all bureaus.</p>
-        </div>
-        <a href="{{ url_for('portal.status') }}" style="display: inline-flex; align-items: center; gap: 6px; padding: 12px 20px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 600; color: #1e3a5f; cursor: pointer; text-decoration: none;">
-            View Status →
-        </a>
-    </div>
-</div>
-
 <!-- Contact -->
-<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;">
+<div class="card animate-fade-in-up" data-delay="600" style="margin-bottom: 24px;" data-testid="contact-section">
     <div class="card-title">📞 Get in Touch</div>
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">
         <a href="tel:9179094051" style="display: flex; flex-direction: column; align-items: center; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb; text-decoration: none; transition: all 0.2s ease;">
@@ -103,7 +141,7 @@
     <!-- Message Form -->
     <div style="background: #f9fafb; border-radius: 12px; padding: 24px;">
         <h4 style="font-size: 16px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Send Us a Message</h4>
-        <form action="{{ url_for('portal.send_message') }}" method="POST">
+        <form action="{{ url_for('portal.send_message') }}" method="POST" data-testid="contact-form">
                         <div style="margin-bottom: 16px;">
                 <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Subject</label>
                 <select name="subject" style="width: 100%; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; background: white;">
@@ -123,8 +161,369 @@
     </div>
 </div>
 
+<!-- WhatsApp Notifications -->
+<div class="card animate-fade-in-up" data-delay="650" style="margin-bottom: 24px;" data-testid="whatsapp-section">
+    <div class="card-title">💬 WhatsApp Notifications</div>
+    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
+        Get case updates and send documents via WhatsApp for faster communication.
+    </p>
+
+    <div id="whatsapp-status" style="margin-bottom: 20px;">
+        <!-- Status will be loaded dynamically -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: #9ca3af;" id="whatsapp-status-indicator"></div>
+            <span style="font-size: 14px; color: #6b7280;" id="whatsapp-status-text">Loading...</span>
+        </div>
+    </div>
+
+    <!-- WhatsApp Number Input -->
+    <div id="whatsapp-setup" style="display: none;">
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">WhatsApp Number</label>
+            <div style="display: flex; gap: 12px;">
+                <input type="tel" id="whatsapp-number" placeholder="+1 (555) 123-4567"
+                       value="{{ client.phone|default('') if client else '' }}"
+                       style="flex: 1; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 15px;">
+                <button type="button" id="send-verification-btn" onclick="requestWhatsAppVerification()"
+                        style="padding: 12px 20px; background: #25D366; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                    Send Code
+                </button>
+            </div>
+            <p style="font-size: 12px; color: #9ca3af; margin: 8px 0 0 0;">
+                We'll send a verification code to this number via WhatsApp.
+            </p>
+        </div>
+    </div>
+
+    <!-- Verification Code Input -->
+    <div id="whatsapp-verify" style="display: none;">
+        <div style="padding: 16px; background: #fef3c7; border-radius: 8px; margin-bottom: 16px;">
+            <p style="font-size: 14px; color: #92400e; margin: 0;">
+                <strong>Verification code sent!</strong> Check your WhatsApp for a 6-digit code.
+            </p>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">Enter Verification Code</label>
+            <div style="display: flex; gap: 12px;">
+                <input type="text" id="verification-code" placeholder="123456" maxlength="6"
+                       style="flex: 1; padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 18px; letter-spacing: 4px; text-align: center;">
+                <button type="button" id="verify-btn" onclick="verifyWhatsApp()"
+                        style="padding: 12px 20px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    Verify
+                </button>
+            </div>
+        </div>
+        <button type="button" onclick="showWhatsAppSetup()" style="padding: 8px 16px; background: transparent; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; cursor: pointer;">
+            ← Change Number
+        </button>
+    </div>
+
+    <!-- Verified State -->
+    <div id="whatsapp-verified" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: rgba(13, 148, 136, 0.1); border-radius: 8px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center;">
+                    <span style="color: white; font-size: 20px;">✓</span>
+                </div>
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #0d9488;">WhatsApp Verified</div>
+                    <div style="font-size: 13px; color: #6b7280;" id="verified-number"></div>
+                </div>
+            </div>
+            <button type="button" onclick="optOutWhatsApp()" style="padding: 8px 16px; background: transparent; color: #ef4444; border: 1px solid #ef4444; border-radius: 6px; font-size: 13px; cursor: pointer;">
+                Disable
+            </button>
+        </div>
+        <p style="font-size: 13px; color: #6b7280; margin: 0;">
+            You'll receive case updates and can send us documents via WhatsApp. Send <strong>HELP</strong> anytime for available commands.
+        </p>
+    </div>
+</div>
+
+<!-- Push Notifications -->
+<div class="card animate-fade-in-up" data-delay="700" style="margin-bottom: 24px;" data-testid="push-notifications-section">
+    <div class="card-title">🔔 Browser Notifications</div>
+    <p style="font-size: 14px; color: #6b7280; margin: 0 0 20px 0;">
+        Get instant notifications in your browser when there are updates to your case.
+    </p>
+
+    <div id="push-not-supported" style="display: none; padding: 16px; background: #fee2e2; border-radius: 8px; margin-bottom: 16px;">
+        <p style="font-size: 14px; color: #991b1b; margin: 0;">
+            Your browser doesn't support push notifications. Try using Chrome, Firefox, or Edge.
+        </p>
+    </div>
+
+    <div id="push-status" style="margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; background: #f9fafb; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #9ca3af;" id="push-status-indicator"></div>
+                <span style="font-size: 14px; color: #6b7280;" id="push-status-text">Checking...</span>
+            </div>
+            <button type="button" id="push-toggle-btn" onclick="PushNotifications.toggle()"
+                    data-push-toggle
+                    data-subscribed-text="Disable Notifications"
+                    data-unsubscribed-text="Enable Notifications"
+                    style="padding: 10px 20px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                Enable Notifications
+            </button>
+        </div>
+    </div>
+
+    <!-- Notification Preferences (shown when subscribed) -->
+    <div id="push-preferences" data-push-preferences style="display: none;">
+        <h4 style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 0 0 16px 0;">Notification Preferences</h4>
+        <div style="display: grid; gap: 12px;">
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-case-updates" checked onchange="updatePushPreference('notify_case_updates', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Case Updates</div>
+                    <div style="font-size: 12px; color: #6b7280;">Status changes and progress updates</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-messages" checked onchange="updatePushPreference('notify_messages', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">New Messages</div>
+                    <div style="font-size: 12px; color: #6b7280;">When you receive a message from our team</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-documents" checked onchange="updatePushPreference('notify_documents', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Document Updates</div>
+                    <div style="font-size: 12px; color: #6b7280;">New documents available for download</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-deadlines" checked onchange="updatePushPreference('notify_deadlines', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Deadline Reminders</div>
+                    <div style="font-size: 12px; color: #6b7280;">Important dates and upcoming deadlines</div>
+                </div>
+            </label>
+            <label style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f9fafb; border-radius: 8px; cursor: pointer;">
+                <input type="checkbox" id="pref-payments" checked onchange="updatePushPreference('notify_payments', this.checked)"
+                       style="width: 18px; height: 18px; accent-color: #0d9488;">
+                <div>
+                    <div style="font-size: 14px; font-weight: 600; color: #1e3a5f;">Payment Reminders</div>
+                    <div style="font-size: 12px; color: #6b7280;">Upcoming payments and invoice updates</div>
+                </div>
+            </label>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+<script>
+// Push notification UI updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for PushNotifications to initialize
+    setTimeout(function() {
+        updatePushUI();
+    }, 500);
+});
+
+function updatePushUI() {
+    const indicator = document.getElementById('push-status-indicator');
+    const text = document.getElementById('push-status-text');
+    const toggleBtn = document.getElementById('push-toggle-btn');
+    const prefsPanel = document.getElementById('push-preferences');
+    const notSupported = document.getElementById('push-not-supported');
+
+    if (!PushNotifications.isSupported) {
+        notSupported.style.display = 'block';
+        toggleBtn.style.display = 'none';
+        text.textContent = 'Not supported';
+        return;
+    }
+
+    if (PushNotifications.isSubscribed) {
+        indicator.style.background = '#10b981';
+        text.textContent = 'Notifications enabled';
+        toggleBtn.textContent = 'Disable Notifications';
+        toggleBtn.style.background = '#ef4444';
+        prefsPanel.style.display = 'block';
+        loadPushPreferences();
+    } else {
+        indicator.style.background = '#9ca3af';
+        text.textContent = 'Notifications disabled';
+        toggleBtn.textContent = 'Enable Notifications';
+        toggleBtn.style.background = '#0d9488';
+        prefsPanel.style.display = 'none';
+    }
+}
+
+async function loadPushPreferences() {
+    const subs = await PushNotifications.getSubscriptionInfo();
+    if (subs.length > 0) {
+        const sub = subs[0];
+        document.getElementById('pref-case-updates').checked = sub.notify_case_updates !== false;
+        document.getElementById('pref-messages').checked = sub.notify_messages !== false;
+        document.getElementById('pref-documents').checked = sub.notify_documents !== false;
+        document.getElementById('pref-deadlines').checked = sub.notify_deadlines !== false;
+        document.getElementById('pref-payments').checked = sub.notify_payments !== false;
+    }
+}
+
+async function updatePushPreference(pref, value) {
+    const prefs = {};
+    prefs[pref] = value;
+    await PushNotifications.updatePreferences(prefs);
+}
+
+// Override PushNotifications updateUI to include our custom updates
+const originalUpdateUI = PushNotifications.updateUI.bind(PushNotifications);
+PushNotifications.updateUI = function() {
+    originalUpdateUI();
+    updatePushUI();
+};
+</script>
+
+<script>
+// WhatsApp verification functions
+function loadWhatsAppStatus() {
+    fetch('/api/portal/whatsapp/status')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                updateWhatsAppUI(data);
+            }
+        })
+        .catch(err => {
+            document.getElementById('whatsapp-status-text').textContent = 'Unable to load status';
+        });
+}
+
+function updateWhatsAppUI(data) {
+    const statusIndicator = document.getElementById('whatsapp-status-indicator');
+    const statusText = document.getElementById('whatsapp-status-text');
+    const setupDiv = document.getElementById('whatsapp-setup');
+    const verifyDiv = document.getElementById('whatsapp-verify');
+    const verifiedDiv = document.getElementById('whatsapp-verified');
+    const verifiedNumber = document.getElementById('verified-number');
+
+    if (data.whatsapp_verified && data.whatsapp_opt_in) {
+        // Verified and opted in
+        statusIndicator.style.background = '#25D366';
+        statusText.textContent = 'WhatsApp notifications enabled';
+        setupDiv.style.display = 'none';
+        verifyDiv.style.display = 'none';
+        verifiedDiv.style.display = 'block';
+        verifiedNumber.textContent = data.whatsapp_number || '';
+    } else {
+        // Not verified
+        statusIndicator.style.background = '#9ca3af';
+        statusText.textContent = 'WhatsApp not enabled';
+        setupDiv.style.display = 'block';
+        verifyDiv.style.display = 'none';
+        verifiedDiv.style.display = 'none';
+    }
+}
+
+function showWhatsAppSetup() {
+    document.getElementById('whatsapp-setup').style.display = 'block';
+    document.getElementById('whatsapp-verify').style.display = 'none';
+}
+
+function requestWhatsAppVerification() {
+    const number = document.getElementById('whatsapp-number').value.trim();
+    if (!number) {
+        alert('Please enter your WhatsApp number');
+        return;
+    }
+
+    const btn = document.getElementById('send-verification-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    fetch('/api/portal/whatsapp/request-verification', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({whatsapp_number: number})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('whatsapp-setup').style.display = 'none';
+            document.getElementById('whatsapp-verify').style.display = 'block';
+        } else {
+            alert(data.error || 'Failed to send verification code');
+        }
+    })
+    .catch(err => {
+        alert('Error sending verification code');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Send Code';
+    });
+}
+
+function verifyWhatsApp() {
+    const code = document.getElementById('verification-code').value.trim();
+    if (!code || code.length !== 6) {
+        alert('Please enter the 6-digit verification code');
+        return;
+    }
+
+    const btn = document.getElementById('verify-btn');
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+
+    fetch('/api/portal/whatsapp/verify', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({code: code})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            loadWhatsAppStatus();
+        } else {
+            alert(data.error || 'Invalid verification code');
+        }
+    })
+    .catch(err => {
+        alert('Error verifying code');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Verify';
+    });
+}
+
+function optOutWhatsApp() {
+    if (!confirm('Are you sure you want to disable WhatsApp notifications?')) {
+        return;
+    }
+
+    fetch('/api/portal/whatsapp/opt-out', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            loadWhatsAppStatus();
+        } else {
+            alert(data.error || 'Failed to opt out');
+        }
+    })
+    .catch(err => {
+        alert('Error opting out');
+    });
+}
+
+// Load status on page load
+document.addEventListener('DOMContentLoaded', loadWhatsAppStatus);
+</script>
+
 <!-- Referral -->
-<div class="card animate-fade-in-up" data-delay="700" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; margin-bottom: 24px; border: none;">
+<div class="card animate-fade-in-up" data-delay="700" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; margin-bottom: 24px; border: none;" data-testid="referral-section">
     <div style="text-align: center; margin-bottom: 24px;">
         <div style="font-size: 48px; margin-bottom: 16px;">🎁</div>
         <h3 style="font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 600; margin: 0 0 8px 0;">Know Someone Who Could Use Our Services?</h3>
@@ -164,7 +563,7 @@
 </div>
 
 <!-- Account Status -->
-<div class="card animate-fade-in-up" data-delay="800">
+<div class="card animate-fade-in-up" data-delay="800" data-testid="security-section">
     <div class="card-title">🔐 Security & Account</div>
 
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;" class="stats-grid-responsive">

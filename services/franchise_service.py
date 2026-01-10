@@ -5,7 +5,7 @@ Handles organization hierarchy, member management, client assignments, and reven
 
 import re
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
@@ -77,8 +77,10 @@ class FranchiseService:
                     f"Parent organization with ID {parent_org_id} not found"
                 )
 
-            parent_level = FRANCHISE_ORG_TYPES.get(parent.org_type, {}).get("level", 0)
-            child_level = FRANCHISE_ORG_TYPES.get(org_type, {}).get("level", 0)
+            parent_type_config = FRANCHISE_ORG_TYPES.get(cast(str, parent.org_type), {})
+            parent_level = cast(int, parent_type_config.get("level", 0))
+            child_type_config = FRANCHISE_ORG_TYPES.get(org_type, {})
+            child_level = cast(int, child_type_config.get("level", 0))
             if child_level <= parent_level:
                 raise ValueError(
                     f"Child organization type must be lower in hierarchy than parent"
@@ -170,7 +172,7 @@ class FranchiseService:
             if key in allowed_fields:
                 setattr(org, key, value)
 
-        org.updated_at = datetime.utcnow()
+        org.updated_at = datetime.utcnow()  # type: ignore[assignment]
         self.db.commit()
         self.db.refresh(org)
 
@@ -198,8 +200,8 @@ class FranchiseService:
                 "Cannot delete organization with child organizations. Delete children first."
             )
 
-        org.is_active = False
-        org.updated_at = datetime.utcnow()
+        org.is_active = False  # type: ignore[assignment]
+        org.updated_at = datetime.utcnow()  # type: ignore[assignment]
         self.db.commit()
 
         return True
@@ -294,7 +296,7 @@ class FranchiseService:
 
         all_children = list(direct_children)
         for child in direct_children:
-            all_children.extend(self.get_child_organizations(child.id, recursive=True))
+            all_children.extend(self.get_child_organizations(cast(int, child.id), recursive=True))
 
         return all_children
 
@@ -396,7 +398,7 @@ class FranchiseService:
             self.db.query(OrganizationMembership).filter_by(
                 staff_id=staff_id, is_primary=True
             ).update({"is_primary": False})
-            membership.is_primary = True
+            membership.is_primary = True  # type: ignore[assignment]
 
         self.db.commit()
         self.db.refresh(membership)
@@ -523,9 +525,9 @@ class FranchiseService:
                 .all()
             )
 
-        org_ids = [org_id]
+        org_ids: List[int] = [org_id]
         child_orgs = self.get_child_organizations(org_id, recursive=True)
-        org_ids.extend([child.id for child in child_orgs])
+        org_ids.extend([cast(int, child.id) for child in child_orgs])
 
         return (
             self.db.query(OrganizationClient)
@@ -627,11 +629,11 @@ class FranchiseService:
         if transfer.status != "pending":
             raise ValueError(f"Transfer is already {transfer.status}")
 
-        transfer.approved_by_staff_id = approved_by_staff_id
-        transfer.completed_at = datetime.utcnow()
+        transfer.approved_by_staff_id = approved_by_staff_id  # type: ignore[assignment]
+        transfer.completed_at = datetime.utcnow()  # type: ignore[assignment]
 
         if approve:
-            transfer.status = "approved"
+            transfer.status = "approved"  # type: ignore[assignment]
 
             self.db.query(OrganizationClient).filter_by(
                 organization_id=transfer.from_org_id, client_id=transfer.client_id
@@ -644,7 +646,7 @@ class FranchiseService:
             )
             self.db.add(new_assignment)
         else:
-            transfer.status = "rejected"
+            transfer.status = "rejected"  # type: ignore[assignment]
 
         self.db.commit()
         self.db.refresh(transfer)
@@ -730,10 +732,10 @@ class FranchiseService:
         if not org:
             return {}
 
-        org_ids = [org_id]
+        org_ids: List[int] = [org_id]
         if include_children:
             child_orgs = self.get_child_organizations(org_id, recursive=True)
-            org_ids.extend([child.id for child in child_orgs])
+            org_ids.extend([cast(int, child.id) for child in child_orgs])
 
         client_assignments = (
             self.db.query(OrganizationClient)
@@ -829,10 +831,10 @@ class FranchiseService:
         days = period_days.get(period, 30)
         start_date = datetime.utcnow() - timedelta(days=days)
 
-        org_ids = [org_id]
+        org_ids: List[int] = [org_id]
         if include_children:
             child_orgs = self.get_child_organizations(org_id, recursive=True)
-            org_ids.extend([child.id for child in child_orgs])
+            org_ids.extend([cast(int, child.id) for child in child_orgs])
 
         client_assignments = (
             self.db.query(OrganizationClient)
@@ -842,8 +844,8 @@ class FranchiseService:
         client_ids = [a.client_id for a in client_assignments]
 
         total_revenue = 0.0
-        revenue_by_type = {}
-        revenue_by_month = {}
+        revenue_by_type: Dict[str, float] = {}
+        revenue_by_month: Dict[str, float] = {}
 
         if client_ids:
             settlements = (
@@ -983,7 +985,7 @@ class FranchiseService:
 
                 if membership.role in ["owner", "manager"]:
                     children = self.get_child_organizations(
-                        membership.organization_id, recursive=True
+                        cast(int, membership.organization_id), recursive=True
                     )
                     accessible_orgs.update(children)
 
@@ -1021,7 +1023,7 @@ class FranchiseService:
         for parent_membership in parent_memberships:
             if parent_membership.role in ["owner", "manager"]:
                 children = self.get_child_organizations(
-                    parent_membership.organization_id, recursive=True
+                    cast(int, parent_membership.organization_id), recursive=True
                 )
                 if any(child.id == org_id for child in children):
                     return parent_membership.has_permission(permission)
@@ -1046,14 +1048,14 @@ class FranchiseService:
         )
 
         if membership:
-            role_config = FRANCHISE_MEMBER_ROLES.get(membership.role, {})
+            role_config = FRANCHISE_MEMBER_ROLES.get(cast(str, membership.role), {})
             return {
                 "has_access": True,
                 "is_direct_member": True,
                 "role": membership.role,
                 "role_name": role_config.get("name", membership.role),
-                "permissions": role_config.get("permissions", [])
-                + (membership.permissions or []),
+                "permissions": list(role_config.get("permissions", []))
+                + list(membership.permissions or []),
                 "is_primary": membership.is_primary,
             }
 
@@ -1075,10 +1077,10 @@ class FranchiseService:
         for parent_membership in parent_memberships:
             if parent_membership.role in ["owner", "manager"]:
                 children = self.get_child_organizations(
-                    parent_membership.organization_id, recursive=True
+                    cast(int, parent_membership.organization_id), recursive=True
                 )
                 if any(child.id == org_id for child in children):
-                    role_config = FRANCHISE_MEMBER_ROLES.get(parent_membership.role, {})
+                    role_config = FRANCHISE_MEMBER_ROLES.get(cast(str, parent_membership.role), {})
                     return {
                         "has_access": True,
                         "is_direct_member": False,
@@ -1110,9 +1112,9 @@ class FranchiseService:
         if not org:
             return {}
 
-        org_ids = [org_id]
+        org_ids: List[int] = [org_id]
         child_orgs = self.get_child_organizations(org_id, recursive=True)
-        org_ids.extend([child.id for child in child_orgs])
+        org_ids.extend([cast(int, child.id) for child in child_orgs])
 
         client_assignments = (
             self.db.query(OrganizationClient)
@@ -1272,7 +1274,7 @@ class FranchiseService:
         }
 
 
-def get_org_filter(db, staff_user) -> List[int]:
+def get_org_filter(db, staff_user) -> Optional[List[int]]:
     """
     Get list of organization IDs that a staff user has access to for query filtering.
 
@@ -1310,10 +1312,10 @@ def get_org_filter(db, staff_user) -> List[int]:
 
         return []
 
-    return [org.id for org in accessible_orgs]
+    return [cast(int, org.id) for org in accessible_orgs]
 
 
-def get_clients_for_org(db, org_ids: Optional[List[int]]) -> List[int]:
+def get_clients_for_org(db, org_ids: Optional[List[int]]) -> Optional[List[int]]:
     """
     Get list of client IDs belonging to specified organizations.
 

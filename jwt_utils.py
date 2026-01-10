@@ -1,6 +1,7 @@
 import jwt
 import datetime
 from functools import wraps
+from typing import Optional
 from flask import request, jsonify
 
 from services.config import config
@@ -9,7 +10,7 @@ from services.config import config
 SECRET_KEY = config.SECRET_KEY
 
 
-def create_token(user_id: int = None, scopes: list = None):
+def create_token(user_id: Optional[int] = None, scopes: Optional[list] = None):
     """
     Generate a JWT token for API access (7-day expiry).
 

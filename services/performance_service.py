@@ -86,7 +86,7 @@ class InMemoryCache:
                 return True
             return False
 
-    def clear(self, pattern: str = None) -> int:
+    def clear(self, pattern: Optional[str] = None) -> int:
         """Clear cache entries matching pattern (or all if no pattern)"""
         with self._lock:
             if pattern is None:
@@ -172,7 +172,7 @@ def generate_cache_key(*args, **kwargs) -> str:
     return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
 
 
-def cached(ttl: int = 300, key_prefix: str = None):
+def cached(ttl: int = 300, key_prefix: Optional[str] = None) -> Callable:
     """
     Decorator to cache function results with TTL
 
@@ -182,9 +182,9 @@ def cached(ttl: int = 300, key_prefix: str = None):
             return db.query(Client).all()
     """
 
-    def decorator(f: Callable):
+    def decorator(f: Callable) -> Callable:
         @wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             prefix = key_prefix or f.__name__
             cache_key = f"{prefix}:{generate_cache_key(*args, **kwargs)}"
 
@@ -198,8 +198,8 @@ def cached(ttl: int = 300, key_prefix: str = None):
             app_cache.set(cache_key, result, ttl)
             return result
 
-        wrapper.cache_key_prefix = key_prefix or f.__name__
-        wrapper.invalidate = lambda: app_cache.clear(f"{key_prefix or f.__name__}:*")
+        setattr(wrapper, 'cache_key_prefix', key_prefix or f.__name__)
+        setattr(wrapper, 'invalidate', lambda: app_cache.clear(f"{key_prefix or f.__name__}:*"))
         return wrapper
 
     return decorator
@@ -230,7 +230,7 @@ class PerformanceService:
         duration_ms: float,
         status: int,
         cache_hit: bool = False,
-        error_message: str = None,
+        error_message: Optional[str] = None,
     ) -> None:
         """Record a request for performance tracking"""
         with _metrics_lock:
@@ -251,7 +251,7 @@ class PerformanceService:
                 }
             )
 
-    def get_endpoint_metrics(self, endpoint: str = None, method: str = None) -> Dict:
+    def get_endpoint_metrics(self, endpoint: Optional[str] = None, method: Optional[str] = None) -> Dict:
         """Get performance metrics for an endpoint"""
         with _metrics_lock:
             if endpoint and method:
@@ -430,7 +430,7 @@ class PerformanceService:
         """Get cache statistics"""
         return app_cache.get_stats()
 
-    def clear_cache(self, pattern: str = None) -> Dict:
+    def clear_cache(self, pattern: Optional[str] = None) -> Dict:
         """Clear cache entries matching pattern"""
         cleared = app_cache.clear(pattern)
         return {"success": True, "cleared_count": cleared, "pattern": pattern or "*"}
@@ -496,10 +496,10 @@ class PerformanceService:
             pool = engine.pool
 
             pool_stats = {
-                "pool_size": pool.size(),
-                "checked_out_connections": pool.checkedout(),
-                "checked_in_connections": pool.checkedin(),
-                "overflow": pool.overflow(),
+                "pool_size": pool.size() if hasattr(pool, "size") else 0,
+                "checked_out_connections": pool.checkedout() if hasattr(pool, "checkedout") else 0,
+                "checked_in_connections": pool.checkedin() if hasattr(pool, "checkedin") else 0,
+                "overflow": pool.overflow() if hasattr(pool, "overflow") else 0,
                 "invalid_connections": (
                     pool.invalidatedcount() if hasattr(pool, "invalidatedcount") else 0
                 ),

@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Performance - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-secondary {
+            background: white;
+            color: #1a1a2e;
+            border: 2px solid #e2e8f0;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+            color: white;
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-card.highlight .stat-value {
+            color: #84cc16;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        .stat-card.highlight .stat-label {
+            color: #94a3b8;
+        }
+        .stat-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        .stat-trend.up { background: #dcfce7; color: #166534; }
+        .stat-trend.down { background: #fee2e2; color: #991b1b; }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .card-header select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+        }
+
+        /* Leaderboard */
+        .leaderboard {
+            list-style: none;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .leaderboard-item:last-child { border-bottom: none; }
+        .rank {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .rank-1 { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; }
+        .rank-2 { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); color: white; }
+        .rank-3 { background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: white; }
+        .rank-default { background: #f1f5f9; color: #64748b; }
+        .staff-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #84cc16, #22c55e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .staff-info { flex: 1; }
+        .staff-name { font-weight: 600; color: #1a1a2e; font-size: 14px; }
+        .staff-role { font-size: 12px; color: #64748b; }
+        .staff-points {
+            font-weight: 700;
+            font-size: 18px;
+            color: #22c55e;
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            list-style: none;
+        }
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .activity-content { flex: 1; }
+        .activity-text { font-size: 13px; color: #334155; }
+        .activity-text strong { color: #1a1a2e; }
+        .activity-time { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+        /* Chart Container */
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* Team Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 13px;
+            color: #334155;
+        }
+        tr:hover { background: #f8fafc; }
+
+        /* Metric Badges */
+        .metric-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .metric-high { background: #dcfce7; color: #166534; }
+        .metric-medium { background: #fef3c7; color: #92400e; }
+        .metric-low { background: #fee2e2; color: #991b1b; }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success { background: #22c55e; }
+        .toast.error { background: #ef4444; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Staff Performance</h1>
+            <div style="display: flex; gap: 10px;">
+                <select id="periodSelect" onchange="loadDashboard()">
+                    <option value="day">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month" selected>This Month</option>
+                    <option value="quarter">This Quarter</option>
+                    <option value="year">This Year</option>
+                </select>
+                <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card highlight">
+                <div class="stat-value" id="statTodayPoints">-</div>
+                <div class="stat-label">Points Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statTodayActivities">-</div>
+                <div class="stat-label">Activities Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statActiveStaff">-</div>
+                <div class="stat-label">Active Staff Today</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAvgResponseTime">-</div>
+                <div class="stat-label">Avg Response Time</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Chart Section -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Performance Trend</h2>
+                    <select id="trendMetric" onchange="loadTrend()">
+                        <option value="points">Points</option>
+                        <option value="activities">Activities</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Leaderboard -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Leaderboard</h2>
+                    <select id="leaderboardMetric" onchange="loadLeaderboard()">
+                        <option value="points">By Points</option>
+                        <option value="activities">By Activities</option>
+                        <option value="cases">By Cases</option>
+                        <option value="response_time">By Response Time</option>
+                    </select>
+                </div>
+                <ul class="leaderboard" id="leaderboardList">
+                    <li class="empty-state">Loading...</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Team Overview & Recent Activity -->
+        <div class="dashboard-grid">
+            <!-- Team Overview Table -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Team Overview</h2>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Staff Member</th>
+                            <th>Role</th>
+                            <th>Activities</th>
+                            <th>Points</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teamTableBody">
+                        <tr>
+                            <td colspan="4" class="empty-state">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="content-card">
+                <div class="card-header">
+                    <h2>Recent Activity</h2>
+                </div>
+                <ul class="activity-feed" id="activityFeed">
+                    <li class="empty-state">Loading...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let trendChart = null;
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/staff-performance/dashboard');
+                const data = await res.json();
+                if (data.success) {
+                    renderStats(data.dashboard);
+                    renderRecentActivity(data.dashboard.recent_activities);
+                }
+            } catch (err) {
+                console.error('Error loading dashboard:', err);
+            }
+
+            loadLeaderboard();
+            loadTeamMetrics();
+            loadTrend();
+        }
+
+        function renderStats(dashboard) {
+            document.getElementById('statTodayPoints').textContent = dashboard.today.points.toLocaleString();
+            document.getElementById('statTodayActivities').textContent = dashboard.today.activities;
+            document.getElementById('statActiveStaff').textContent = dashboard.today.active_staff + '/' + dashboard.team.total_staff;
+
+            const avgTime = dashboard.month.avg_response_time_minutes;
+            if (avgTime >= 60) {
+                document.getElementById('statAvgResponseTime').textContent = Math.round(avgTime / 60) + 'h';
+            } else {
+                document.getElementById('statAvgResponseTime').textContent = Math.round(avgTime) + 'm';
+            }
+        }
+
+        // Leaderboard
+        async function loadLeaderboard() {
+            const period = document.getElementById('periodSelect').value;
+            const metric = document.getElementById('leaderboardMetric').value;
+
+            try {
+                const res = await fetch(`/api/staff-performance/leaderboard?period=${period}&metric=${metric}&limit=10`);
+                const data = await res.json();
+                if (data.success) {
+                    renderLeaderboard(data.leaderboard, metric);
+                }
+            } catch (err) {
+                console.error('Error loading leaderboard:', err);
+            }
+        }
+
+        function renderLeaderboard(leaderboard, metric) {
+            const list = document.getElementById('leaderboardList');
+
+            if (!leaderboard.length) {
+                list.innerHTML = '<li class="empty-state">No data for this period</li>';
+                return;
+            }
+
+            list.innerHTML = leaderboard.map(entry => {
+                const rankClass = entry.rank <= 3 ? `rank-${entry.rank}` : 'rank-default';
+                let valueDisplay;
+
+                if (metric === 'points') {
+                    valueDisplay = entry.points + ' pts';
+                } else if (metric === 'activities') {
+                    valueDisplay = entry.activities;
+                } else if (metric === 'cases') {
+                    valueDisplay = entry.cases_completed + ' cases';
+                } else if (metric === 'response_time') {
+                    valueDisplay = entry.avg_response_time ? entry.avg_response_time + 'm' : 'N/A';
+                }
+
+                return `
+                    <li class="leaderboard-item">
+                        <div class="rank ${rankClass}">${entry.rank}</div>
+                        <div class="staff-avatar">${entry.initials}</div>
+                        <div class="staff-info">
+                            <div class="staff-name">${entry.name}</div>
+                            <div class="staff-role">${entry.role}</div>
+                        </div>
+                        <div class="staff-points">${valueDisplay}</div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        // Team Metrics
+        async function loadTeamMetrics() {
+            const period = document.getElementById('periodSelect').value;
+            const days = {day: 1, week: 7, month: 30, quarter: 90, year: 365}[period] || 30;
+
+            try {
+                const res = await fetch(`/api/staff-performance/team/metrics?days=${days}`);
+                const data = await res.json();
+                if (data.success) {
+                    renderTeamTable(data.metrics.staff_breakdown);
+                }
+            } catch (err) {
+                console.error('Error loading team metrics:', err);
+            }
+        }
+
+        function renderTeamTable(staffBreakdown) {
+            const tbody = document.getElementById('teamTableBody');
+
+            if (!staffBreakdown.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No activity data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = staffBreakdown.map(staff => `
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="staff-avatar" style="width: 32px; height: 32px; font-size: 12px;">${staff.name.split(' ').map(n => n[0]).join('')}</div>
+                            <span style="font-weight: 600;">${staff.name}</span>
+                        </div>
+                    </td>
+                    <td>${staff.role || 'Staff'}</td>
+                    <td>${staff.activities}</td>
+                    <td><span class="metric-badge ${staff.points >= 100 ? 'metric-high' : staff.points >= 50 ? 'metric-medium' : 'metric-low'}">${staff.points} pts</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // Performance Trend
+        async function loadTrend() {
+            const period = document.getElementById('periodSelect').value;
+            const days = {day: 1, week: 7, month: 30, quarter: 90, year: 365}[period] || 30;
+
+            try {
+                const res = await fetch(`/api/staff-performance/trend?days=${days}`);
+                const data = await res.json();
+                if (data.success) {
+                    renderTrendChart(data.trend);
+                }
+            } catch (err) {
+                console.error('Error loading trend:', err);
+            }
+        }
+
+        function renderTrendChart(trend) {
+            const metric = document.getElementById('trendMetric').value;
+            const ctx = document.getElementById('trendChart').getContext('2d');
+
+            if (trendChart) {
+                trendChart.destroy();
+            }
+
+            const labels = trend.map(t => {
+                const date = new Date(t.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            const values = trend.map(t => metric === 'points' ? t.points : t.activities);
+
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: metric === 'points' ? 'Points' : 'Activities',
+                        data: values,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Recent Activity
+        function renderRecentActivity(activities) {
+            const feed = document.getElementById('activityFeed');
+
+            if (!activities || !activities.length) {
+                feed.innerHTML = '<li class="empty-state">No recent activity</li>';
+                return;
+            }
+
+            const activityIcons = {
+                'case_assigned': '📋',
+                'case_completed': '✅',
+                'document_reviewed': '📄',
+                'letter_sent': '✉️',
+                'response_processed': '📬',
+                'message_sent': '💬',
+                'call_completed': '📞',
+                'note_added': '📝',
+                'status_changed': '🔄',
+                'analysis_reviewed': '🔍',
+                'dispute_filed': '⚖️'
+            };
+
+            feed.innerHTML = activities.slice(0, 10).map(activity => {
+                const icon = activityIcons[activity.activity_type] || '📌';
+                const time = new Date(activity.created_at);
+                const timeAgo = getTimeAgo(time);
+
+                return `
+                    <li class="activity-item">
+                        <div class="activity-icon">${icon}</div>
+                        <div class="activity-content">
+                            <div class="activity-text">
+                                <strong>${activity.staff_name}</strong> ${activity.description || activity.activity_type.replace(/_/g, ' ')}
+                            </div>
+                            <div class="activity-time">${timeAgo}</div>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Initial load
+        loadDashboard();
+
+        // Auto-refresh every 60 seconds
+        setInterval(loadDashboard, 60000);
+    </script>
+</body>
+</html>

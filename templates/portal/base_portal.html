@@ -1,9 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-portal="client">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Client Portal{% endblock %} - Brightpath</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>{% block title %}Client Portal{% endblock %} - Brightpath Ascend Group</title>
+
+    {# PWA Meta Tags #}
+    <meta name="description" content="Manage your credit repair journey with Brightpath Ascend Group">
+    <meta name="theme-color" content="#14b8a6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Brightpath">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Brightpath">
+    <meta name="msapplication-TileColor" content="#14b8a6">
+    <meta name="msapplication-TileImage" content="/static/images/pwa/icon-144x144.png">
+
+    {# PWA Manifest #}
+    <link rel="manifest" href="/static/manifest.json">
+
+    {# PWA Icons #}
+    <link rel="apple-touch-icon" href="/static/images/pwa/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/pwa/icon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/pwa/icon-72x72.png">
+
+    {# Theme: Flash Prevention (must be before stylesheets) #}
+    {% include 'includes/theme_head.html' %}
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,8 +38,8 @@
             position: absolute;
             top: -40px;
             left: 0;
-            background: #1a1a2e;
-            color: white;
+            background: var(--theme-bg-inverse, #1a1a2e);
+            color: var(--theme-text-inverse, white);
             padding: 8px 16px;
             z-index: 10000;
             text-decoration: none;
@@ -28,7 +51,7 @@
         }
         /* Focus visible for keyboard navigation */
         *:focus-visible {
-            outline: 3px solid #319795;
+            outline: 3px solid var(--theme-accent, #319795);
             outline-offset: 2px;
         }
     </style>
@@ -38,37 +61,67 @@
     <!-- Accessibility: Skip to main content link -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <header class="header" role="banner">
-        <div class="logo">
-            <div class="logo-icon">⚖️</div>
-            <span class="logo-text">Brightpath</span>
+    <header class="header" role="banner" data-testid="portal-header">
+        <div class="logo" data-testid="portal-logo">
+            <img src="/static/images/logo.png" alt="Brightpath Ascend Group" style="height: 40px; margin-right: 10px; background: transparent;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="logo-icon" style="display: none;">⚖️</div>
+            <span class="logo-text">Brightpath Ascend</span>
         </div>
-        <div class="user-info">
-            <span class="user-name">{{ current_user.first_name if current_user.first_name else 'Client' }}</span>
-            <div class="user-avatar">{{ (current_user.first_name or 'C')[0] }}</div>
+        <div class="user-info" data-testid="user-info">
+            {# Theme Toggle Button #}
+            {% include 'includes/theme_toggle.html' %}
+            <span class="user-name" data-testid="client-name">{{ current_user.first_name if current_user.first_name else 'Client' }}</span>
+            <div class="user-avatar" data-testid="user-avatar">{{ (current_user.first_name or 'C')[0] }}</div>
         </div>
     </header>
 
-    <nav class="nav-tabs" role="navigation" aria-label="Main navigation">
-        <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}">
-            <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
+    {# Determine client stage for navigation - default to 'active' for legacy clients #}
+    {% set client_stage = current_user.client.client_stage if current_user and current_user.client else 'active' %}
+    {% set has_full_access = client_stage == 'active' %}
+    {% set is_onboarding = client_stage in ['onboarding', 'pending_payment', 'payment_failed'] %}
+
+    <nav class="nav-tabs" role="navigation" aria-label="Main navigation" data-testid="portal-nav">
+        {% if is_onboarding %}
+        {# ============ ONBOARDING NAV (3 items) ============ #}
+        <a href="{{ url_for('portal.onboarding') }}" class="nav-tab {% if active_tab == 'onboarding' %}active{% endif %}" data-testid="nav-onboarding">
+            <span class="nav-icon" aria-hidden="true">🚀</span><span class="nav-label">Setup</span>
         </a>
-        <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}">
-            <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
+        <a href="{{ url_for('portal.croa_agreements') }}" class="nav-tab {% if active_tab == 'agreements' %}active{% endif %}" data-testid="nav-agreements">
+            <span class="nav-icon" aria-hidden="true">📝</span><span class="nav-label">Agreements</span>
         </a>
-        <a href="{{ url_for('portal.learn') }}" class="nav-tab {% if active_tab == 'learn' %}active{% endif %}">
-            <span class="nav-icon" aria-hidden="true">📖</span><span class="nav-label">Learn</span>
-        </a>
-        <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}">
+        <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="nav-profile">
             <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
         </a>
+        {% else %}
+        {# ============ ACTIVE CLIENT NAV (6 items) ============ #}
+        {# 1. Case - Main dashboard #}
+        <a href="{{ url_for('portal.dashboard') }}" class="nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="nav-case">
+            <span class="nav-icon" aria-hidden="true">📊</span><span class="nav-label">Case</span>
+        </a>
+        {# 2. Documents - Upload & view files #}
+        <a href="{{ url_for('portal.documents') }}" class="nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="nav-documents">
+            <span class="nav-icon" aria-hidden="true">📁</span><span class="nav-label">Documents</span>
+        </a>
+        {# 3. Communication - Messages + Book Call combined #}
+        <a href="{{ url_for('portal.communication') }}" class="nav-tab {% if active_tab == 'communication' or active_tab == 'messages' or active_tab == 'booking' %}active{% endif %}" data-testid="nav-communication">
+            <span class="nav-icon" aria-hidden="true">💬</span><span class="nav-label">Contact</span>
+        </a>
+        {# 4. Journey - Progress timeline #}
+        <a href="{{ url_for('portal.timeline') }}" class="nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="nav-timeline">
+            <span class="nav-icon" aria-hidden="true">📈</span><span class="nav-label">Journey</span>
+        </a>
+        {# 6. Profile - Settings & Billing (contains Invoices, Plans, Subscription, Status) #}
+        <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="nav-profile">
+            <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
+        </a>
+        {% endif %}
     </nav>
 
     <main class="main-content" id="main-content" role="main">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}" style="padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; background: {% if category == 'success' %}#d1fae5{% else %}#fee2e2{% endif %}; color: {% if category == 'success' %}#065f46{% else %}#991b1b{% endif %};">
+                    <div class="alert alert-{{ category }}" style="padding: 12px 16px; margin-bottom: 16px; border-radius: 8px; background: {% if category == 'success' %}var(--theme-success-bg, #d1fae5){% else %}var(--theme-danger-bg, #fee2e2){% endif %}; color: {% if category == 'success' %}var(--theme-success, #065f46){% else %}var(--theme-danger, #991b1b){% endif %};">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -77,22 +130,41 @@
         {% block content %}{% endblock %}
     </main>
 
-    <nav class="mobile-nav">
-        <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}">
-            <span>📊</span><span>Case</span>
+    <nav class="mobile-nav" data-testid="mobile-nav">
+        {% if is_onboarding %}
+        {# Onboarding mobile nav: 3 items #}
+        <a href="{{ url_for('portal.onboarding') }}" class="mobile-nav-tab {% if active_tab == 'onboarding' %}active{% endif %}" data-testid="mobile-nav-onboarding">
+            <span>🚀</span><span>Setup</span>
         </a>
-        <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}">
-            <span>📁</span><span>Documents</span>
+        <a href="{{ url_for('portal.croa_agreements') }}" class="mobile-nav-tab {% if active_tab == 'agreements' %}active{% endif %}" data-testid="mobile-nav-agreements">
+            <span>📝</span><span>Sign</span>
         </a>
-        <a href="{{ url_for('portal.learn') }}" class="mobile-nav-tab {% if active_tab == 'learn' %}active{% endif %}">
-            <span>📖</span><span>Learn</span>
-        </a>
-        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}">
+        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>
         </a>
+        {% else %}
+        {# Active clients mobile nav: 5 items #}
+        <a href="{{ url_for('portal.dashboard') }}" class="mobile-nav-tab {% if active_tab == 'case' %}active{% endif %}" data-testid="mobile-nav-case">
+            <span>📊</span><span>Case</span>
+        </a>
+        <a href="{{ url_for('portal.documents') }}" class="mobile-nav-tab {% if active_tab == 'documents' %}active{% endif %}" data-testid="mobile-nav-documents">
+            <span>📁</span><span>Docs</span>
+        </a>
+        <a href="{{ url_for('portal.communication') }}" class="mobile-nav-tab {% if active_tab == 'communication' or active_tab == 'messages' or active_tab == 'booking' %}active{% endif %}" data-testid="mobile-nav-communication">
+            <span>💬</span><span>Contact</span>
+        </a>
+        <a href="{{ url_for('portal.timeline') }}" class="mobile-nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="mobile-nav-timeline">
+            <span>📈</span><span>Journey</span>
+        </a>
+        <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="mobile-nav-profile">
+            <span>👤</span><span>Profile</span>
+        </a>
+        {% endif %}
     </nav>
 
     <script src="{{ url_for('static', filename='js/portal-redesign.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-service.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -284,7 +284,7 @@ class WhiteLabelConfigService:
             if key in allowed_fields:
                 setattr(config, key, value)
 
-        config.updated_at = datetime.utcnow()
+        setattr(config, 'updated_at', datetime.utcnow())
         self.db.commit()
         self.db.refresh(config)
 
@@ -390,7 +390,8 @@ class WhiteLabelConfigService:
         if not config:
             return self._get_default_css()
 
-        font_css = FONT_FAMILIES.get(config.font_family, FONT_FAMILIES["inter"])
+        font_family_key = str(config.font_family) if config.font_family else "inter"
+        font_css = FONT_FAMILIES.get(font_family_key, FONT_FAMILIES["inter"])
 
         css = f"""
 :root {{

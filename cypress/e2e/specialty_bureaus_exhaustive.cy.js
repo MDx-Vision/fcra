@@ -1,292 +1,453 @@
 // Exhaustive test for /dashboard/specialty-bureaus
-describe.skip('Staff Login Page - /dashboard/specialty-bureaus', () => {
+describe('Specialty Bureau Disputes - /dashboard/specialty-bureaus', () => {
   beforeEach(() => {
+    cy.login('test@example.com', 'testpass123');
     cy.visit('/dashboard/specialty-bureaus');
   });
 
-  describe.skip('Page Load Tests', () => {
+  describe('Page Load Tests', () => {
     it('should load the page without errors', () => {
       cy.url().should('include', '/dashboard/specialty-bureaus');
-      cy.get('[data-testid="login-container"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
     });
 
     it('should have correct page title', () => {
-      cy.title().should('contain', 'Staff Login - Brightpath Ascend FCRA Platform');
+      cy.title().should('contain', 'Specialty Bureau Disputes');
     });
 
-    it('should not have console errors', () => {
-      cy.get('@consoleError').should('not.have.been.called');
+    it('should display the page header', () => {
+      cy.get('.header h1').should('contain.text', 'Specialty Bureau Disputes');
     });
 
     it('should not return server errors', () => {
-      cy.request('/dashboard/specialty-bureaus').then((response) => {
-        expect(response.status).to.not.be.oneOf([404, 500]);
+      cy.request('/dashboard/specialty-bureaus').its('status').should('be.oneOf', [200, 302]);
+    });
+  });
+
+  describe('Header Actions Tests', () => {
+    it('should display Back to Dashboard button', () => {
+      cy.get('.header-actions a.btn-secondary').should('contain.text', 'Back to Dashboard');
+    });
+
+    it('should have correct link for Back to Dashboard', () => {
+      cy.get('.header-actions a.btn-secondary').should('have.attr', 'href', '/dashboard');
+    });
+
+    it('should display New Dispute button', () => {
+      cy.get('.header-actions .btn-primary').should('contain.text', 'New Dispute');
+    });
+
+    it('should open modal when New Dispute button clicked', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#disputeModal').should('have.class', 'active');
+    });
+  });
+
+  describe('Stats Row Tests', () => {
+    it('should display stats row', () => {
+      cy.get('.stats-row').should('be.visible');
+    });
+
+    it('should display five stat cards', () => {
+      cy.get('.stats-row .stat-card').should('have.length', 5);
+    });
+
+    it('should display Total Disputes stat', () => {
+      cy.get('.stat-card').first().within(() => {
+        cy.get('.stat-label').should('contain.text', 'Total Disputes');
+        cy.get('.stat-value').should('exist');
+      });
+    });
+
+    it('should display Pending stat with styling', () => {
+      cy.get('.stat-card.pending').within(() => {
+        cy.get('.stat-label').should('contain.text', 'Pending');
+        cy.get('.stat-value').should('exist');
+      });
+    });
+
+    it('should display Awaiting Response stat with styling', () => {
+      cy.get('.stat-card.awaiting').within(() => {
+        cy.get('.stat-label').should('contain.text', 'Awaiting Response');
+        cy.get('.stat-value').should('exist');
+      });
+    });
+
+    it('should display Resolved stat with styling', () => {
+      cy.get('.stat-card.resolved').within(() => {
+        cy.get('.stat-label').should('contain.text', 'Resolved');
+        cy.get('.stat-value').should('exist');
+      });
+    });
+
+    it('should display Success Rate stat with styling', () => {
+      cy.get('.stat-card.success').within(() => {
+        cy.get('.stat-label').should('contain.text', 'Success Rate');
+        cy.get('.stat-value').should('exist');
       });
     });
   });
 
-  describe.skip('UI Element Tests', () => {
-    it('should display the main logo and company name', () => {
-      cy.get('.logo img').should('be.visible').and('have.attr', 'src', '/static/images/logo.png');
-      cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
+  describe('Bureaus Grid Tests', () => {
+    it('should display bureaus grid', () => {
+      cy.get('.bureaus-grid').should('be.visible');
     });
 
-    it('should display all headings correctly', () => {
-      cy.get('h1').should('contain.text', 'Brightpath Ascend Group');
-      cy.get('[data-testid="login-title"]').should('contain.text', 'Staff Login');
+    it('should display bureau cards if bureaus exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.bureau-card').length) {
+          cy.get('.bureau-card').first().should('be.visible');
+        } else {
+          cy.get('.bureaus-grid').should('exist');
+        }
+      });
     });
 
-    it('should display FCRA Platform subtitle', () => {
-      cy.get('.logo p').should('contain.text', 'FCRA Litigation Platform');
+    it('should display bureau header with icon and name', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.bureau-card').length) {
+          cy.get('.bureau-card').first().within(() => {
+            cy.get('.bureau-header').should('be.visible');
+            cy.get('.bureau-icon').should('be.visible');
+            cy.get('.bureau-name').should('be.visible');
+          });
+        } else {
+          cy.get('.bureaus-grid').should('exist');
+        }
+      });
     });
 
-    it('should display staff portal badge', () => {
-      cy.get('.staff-badge').should('be.visible').and('contain.text', 'Staff Portal');
-      cy.get('.staff-badge svg').should('be.visible');
+    it('should display bureau stats', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.bureau-card').length) {
+          cy.get('.bureau-card').first().within(() => {
+            cy.get('.bureau-stats').should('be.visible');
+          });
+        } else {
+          cy.get('.bureaus-grid').should('exist');
+        }
+      });
     });
 
-    it('should display login subtitle', () => {
-      cy.get('.subtitle').should('contain.text', 'Sign in to access the admin dashboard');
-    });
-
-    it('should display client portal link', () => {
-      cy.get('[data-testid="client-portal-link"]')
-        .should('be.visible')
-        .and('contain.text', 'Client Login')
-        .and('have.attr', 'href', '/portal/login');
-    });
-
-    it('should display all buttons', () => {
-      cy.get('.toggle-btn').should('be.visible').and('contain.text', '👁');
-      cy.get('[data-testid="login-button"]')
-        .should('be.visible')
-        .and('contain.text', 'Sign In')
-        .and('have.attr', 'type', 'submit');
-    });
-  });
-
-  describe.skip('Form Tests', () => {
-    it('should have login form with correct attributes', () => {
-      cy.get('[data-testid="login-form"]')
-        .should('have.attr', 'method', 'POST')
-        .and('have.attr', 'action', '/staff/login')
-        .and('have.id', 'loginForm');
-    });
-
-    it('should have email input with correct attributes', () => {
-      cy.get('[data-testid="email-input"]')
-        .should('have.attr', 'type', 'email')
-        .and('have.attr', 'name', 'email')
-        .and('have.attr', 'id', 'email')
-        .and('have.attr', 'placeholder', 'your@email.com')
-        .should('have.attr', 'required')
-        .and('have.attr', 'autocomplete', 'email');
-    });
-
-    it('should have password input with correct attributes', () => {
-      cy.get('[data-testid="password-input"]')
-        .should('have.attr', 'type', 'password')
-        .and('have.attr', 'name', 'password')
-        .and('have.attr', 'id', 'password')
-        .and('have.attr', 'placeholder', 'Enter your password')
-        .should('have.attr', 'required')
-        .and('have.attr', 'autocomplete', 'current-password');
-    });
-
-    it('should have proper form labels', () => {
-      cy.get('label[for="email"]').should('contain.text', 'Email Address');
-      cy.get('label[for="password"]').should('contain.text', 'Password');
-    });
-
-    it('should accept text input in email field', () => {
-      cy.get('[data-testid="email-input"]')
-        .type('test@example.com')
-        .should('have.value', 'test@example.com');
-    });
-
-    it('should accept text input in password field', () => {
-      cy.get('[data-testid="password-input"]')
-        .type('password123')
-        .should('have.value', 'password123');
-    });
-
-    it('should validate required email field', () => {
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]:invalid').should('exist');
-    });
-
-    it('should validate required password field', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="password-input"]:invalid').should('exist');
-    });
-
-    it('should validate email format', () => {
-      cy.get('[data-testid="email-input"]').type('invalid-email');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]:invalid').should('exist');
-    });
-
-    it('should submit form with valid data', () => {
-      cy.intercept('POST', '/staff/login').as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@loginRequest');
-    });
-
-    it('should disable submit button and show loading state on form submission', () => {
-      cy.intercept('POST', '/staff/login', { delay: 1000 }).as('loginRequest');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="login-button"]')
-        .should('be.disabled')
-        .and('contain.text', 'Signing in...');
+    it('should display bureau action buttons', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.bureau-card').length) {
+          cy.get('.bureau-card').first().within(() => {
+            cy.get('.bureau-actions').should('be.visible');
+          });
+        } else {
+          cy.get('.bureaus-grid').should('exist');
+        }
+      });
     });
   });
 
-  describe.skip('Interactive Element Tests', () => {
-    it('should toggle password visibility', () => {
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'text');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="password-input"]').should('have.attr', 'type', 'password');
+  describe('Filter Tests', () => {
+    it('should display filters section', () => {
+      cy.get('.filters').should('be.visible');
     });
 
-    it('should navigate to client portal when link is clicked', () => {
-      cy.get('[data-testid="client-portal-link"]').click();
-      cy.url().should('include', '/portal/login');
+    it('should display filter buttons', () => {
+      cy.get('.filter-btn').should('have.length.at.least', 5);
     });
 
-    it('should have clickable submit button', () => {
-      cy.get('[data-testid="login-button"]').should('not.be.disabled');
-      cy.get('[data-testid="login-button"]').click();
+    it('should have All filter button', () => {
+      cy.get('.filter-btn').contains('All').should('exist');
     });
 
-    it('should have clickable password toggle button', () => {
-      cy.get('.toggle-btn').should('be.visible').and('not.be.disabled');
+    it('should have Pending filter button', () => {
+      cy.get('.filter-btn').contains('Pending').should('exist');
+    });
+
+    it('should have Awaiting Response filter button', () => {
+      cy.get('.filter-btn').contains('Awaiting Response').should('exist');
+    });
+
+    it('should have Resolved filter button', () => {
+      cy.get('.filter-btn').contains('Resolved').should('exist');
+    });
+
+    it('should have Escalated filter button', () => {
+      cy.get('.filter-btn').contains('Escalated').should('exist');
+    });
+
+    it('should display client select filter', () => {
+      cy.get('.select-filter').should('exist');
+    });
+
+    it('should have All Clients default option', () => {
+      cy.get('.select-filter option').first().should('contain.text', 'All Clients');
     });
   });
 
-  describe.skip('Responsive Tests', () => {
+  describe('Disputes Section Tests', () => {
+    it('should display disputes section', () => {
+      cy.get('.disputes-section').should('be.visible');
+    });
+
+    it('should display section header', () => {
+      cy.get('.section-header').should('be.visible');
+    });
+
+    it('should display section title', () => {
+      cy.get('.section-title').should('contain.text', 'Recent Disputes');
+    });
+  });
+
+  describe('Table or Empty State Tests', () => {
+    it('should display either disputes table or empty state', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('table').length) {
+          cy.get('table').should('be.visible');
+        } else {
+          cy.get('.empty-state').should('be.visible');
+        }
+      });
+    });
+
+    it('should display table headers if disputes exist', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('table').length) {
+          cy.get('table thead').should('contain.text', 'Client');
+          cy.get('table thead').should('contain.text', 'Bureau');
+          cy.get('table thead').should('contain.text', 'Account');
+          cy.get('table thead').should('contain.text', 'Status');
+        } else {
+          cy.get('.empty-state h3').should('contain.text', 'No Disputes Found');
+        }
+      });
+    });
+
+    it('should display empty state message when no disputes', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.empty-state').length) {
+          cy.get('.empty-state h3').should('contain.text', 'No Disputes Found');
+          cy.get('.empty-state p').should('contain.text', 'Start by creating');
+        } else {
+          cy.get('table tbody tr').should('have.length.at.least', 1);
+        }
+      });
+    });
+
+    it('should display Create First Dispute button in empty state', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.empty-state').length) {
+          cy.get('.empty-state .btn-primary').should('contain.text', 'Create First Dispute');
+        } else {
+          cy.get('table').should('be.visible');
+        }
+      });
+    });
+  });
+
+  describe('Modal Tests', () => {
+    it('should have modal in DOM', () => {
+      cy.get('#disputeModal').should('exist');
+    });
+
+    it('should not be visible by default', () => {
+      cy.get('#disputeModal').should('not.have.class', 'active');
+    });
+
+    it('should open modal when New Dispute button clicked', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#disputeModal').should('have.class', 'active');
+    });
+
+    it('should display modal header', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('.modal-header h2').should('contain.text', 'New Specialty Bureau Dispute');
+    });
+
+    it('should close modal when close button clicked', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#disputeModal').should('have.class', 'active');
+      cy.get('.modal-close').click();
+      cy.get('#disputeModal').should('not.have.class', 'active');
+    });
+
+    it('should close modal when clicking outside', () => {
+      cy.get('.header-actions .btn-primary').click();
+      cy.get('#disputeModal').should('have.class', 'active');
+      cy.get('#disputeModal').click('topLeft');
+      cy.get('#disputeModal').should('not.have.class', 'active');
+    });
+  });
+
+  describe('Form Tests', () => {
+    beforeEach(() => {
+      cy.get('.header-actions .btn-primary').click();
+    });
+
+    it('should display dispute form', () => {
+      cy.get('#disputeForm').should('be.visible');
+    });
+
+    it('should have client select field', () => {
+      cy.get('#disputeForm select[name="client_id"]').should('exist');
+    });
+
+    it('should have bureau select field', () => {
+      cy.get('#disputeForm select[name="bureau_name"]').should('exist');
+    });
+
+    it('should have dispute type select field', () => {
+      cy.get('#disputeForm select[name="dispute_type"]').should('exist');
+    });
+
+    it('should have letter type select field', () => {
+      cy.get('#disputeForm select[name="letter_type"]').should('exist');
+    });
+
+    it('should have account name input field', () => {
+      cy.get('#disputeForm input[name="account_name"]').should('exist');
+    });
+
+    it('should have account number input field', () => {
+      cy.get('#disputeForm input[name="account_number"]').should('exist');
+    });
+
+    it('should have dispute reason textarea', () => {
+      cy.get('#disputeForm textarea[name="dispute_reason"]').should('exist');
+    });
+
+    it('should have letter sent date field', () => {
+      cy.get('#disputeForm input[name="letter_sent_date"]').should('exist');
+    });
+
+    it('should have tracking number field', () => {
+      cy.get('#disputeForm input[name="tracking_number"]').should('exist');
+    });
+
+    it('should have notes textarea', () => {
+      cy.get('#disputeForm textarea[name="notes"]').should('exist');
+    });
+
+    it('should have Cancel button', () => {
+      cy.get('.form-actions').contains('Cancel').should('exist');
+    });
+
+    it('should have Save Dispute button', () => {
+      cy.get('.form-actions').contains('Save Dispute').should('exist');
+    });
+  });
+
+  describe('JavaScript Function Tests', () => {
+    it('should have openNewDisputeModal function', () => {
+      cy.window().should('have.property', 'openNewDisputeModal');
+    });
+
+    it('should have closeModal function', () => {
+      cy.window().should('have.property', 'closeModal');
+    });
+
+    it('should have filterByClient function', () => {
+      cy.window().should('have.property', 'filterByClient');
+    });
+
+    it('should have filterByBureau function', () => {
+      cy.window().should('have.property', 'filterByBureau');
+    });
+
+    it('should have editDispute function', () => {
+      cy.window().should('have.property', 'editDispute');
+    });
+
+    it('should have deleteDispute function', () => {
+      cy.window().should('have.property', 'deleteDispute');
+    });
+
+    it('should have submitDispute function', () => {
+      cy.window().should('have.property', 'submitDispute');
+    });
+  });
+
+  describe('Responsive Tests', () => {
     it('should display correctly on desktop (1280px)', () => {
       cy.viewport(1280, 720);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.stats-row').should('be.visible');
+      cy.get('.bureaus-grid').should('be.visible');
     });
 
     it('should display correctly on tablet (768px)', () => {
       cy.viewport(768, 1024);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.stats-row').should('be.visible');
     });
 
     it('should display correctly on mobile (375px)', () => {
       cy.viewport(375, 667);
-      cy.get('[data-testid="login-container"]').should('be.visible');
-      cy.get('[data-testid="login-card"]').should('be.visible');
-      cy.get('[data-testid="login-form"]').should('be.visible');
-      cy.get('[data-testid="email-input"]').should('be.visible');
-      cy.get('[data-testid="password-input"]').should('be.visible');
-      cy.get('[data-testid="login-button"]').should('be.visible');
+      cy.get('.main-content').should('be.visible');
+      cy.get('.stats-row').should('be.visible');
     });
   });
 
-  describe.skip('Error Handling Tests', () => {
-    it('should handle form submission with empty fields', () => {
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]:invalid').should('exist');
-      cy.get('[data-testid="password-input"]:invalid').should('exist');
+  describe('Status Badge Styling Tests', () => {
+    it('should have pending status badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.status-badge.pending').length) {
+          cy.get('.status-badge.pending').first().should('be.visible');
+        } else {
+          cy.get('.disputes-section').should('exist');
+        }
+      });
     });
 
-    it('should handle invalid email format', () => {
-      cy.get('[data-testid="email-input"]').type('notanemail');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.get('[data-testid="email-input"]:invalid').should('exist');
+    it('should have sent status badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.status-badge.sent').length) {
+          cy.get('.status-badge.sent').first().should('be.visible');
+        } else {
+          cy.get('.disputes-section').should('exist');
+        }
+      });
     });
 
-    it('should handle network errors gracefully', () => {
-      cy.intercept('POST', '/staff/login', { forceNetworkError: true }).as('networkError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
+    it('should have awaiting_response status badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.status-badge.awaiting_response').length) {
+          cy.get('.status-badge.awaiting_response').first().should('be.visible');
+        } else {
+          cy.get('.disputes-section').should('exist');
+        }
+      });
     });
 
-    it('should handle server errors (500)', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 500 }).as('serverError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@serverError');
-    });
-
-    it('should handle authentication errors (401)', () => {
-      cy.intercept('POST', '/staff/login', { statusCode: 401 }).as('authError');
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('wrongpassword');
-      cy.get('[data-testid="login-button"]').click();
-      cy.wait('@authError');
-    });
-  });
-
-  describe.skip('Accessibility Tests', () => {
-    it('should have proper form structure for screen readers', () => {
-      cy.get('label[for="email"]').should('exist');
-      cy.get('label[for="password"]').should('exist');
-      cy.get('[data-testid="email-input"]').should('have.attr', 'id', 'email');
-      cy.get('[data-testid="password-input"]').should('have.attr', 'id', 'password');
-    });
-
-    it('should be keyboard navigable', () => {
-      cy.get('[data-testid="email-input"]').focus();
-      cy.focused().should('have.attr', 'data-testid', 'email-input');
-      cy.focused().type('{tab}');
-      cy.focused().should('have.attr', 'data-testid', 'password-input');
-      cy.focused().type('{tab}');
-      cy.focused().should('have.class', 'toggle-btn');
-      cy.focused().type('{tab}');
-      cy.focused().should('have.attr', 'data-testid', 'login-button');
-    });
-
-    it('should have proper image alt text', () => {
-      cy.get('.logo img').should('have.attr', 'alt', 'Brightpath Ascend Group');
+    it('should have resolved status badge styling', () => {
+      cy.get('body').then(($body) => {
+        if ($body.find('.status-badge.resolved').length) {
+          cy.get('.status-badge.resolved').first().should('be.visible');
+        } else {
+          cy.get('.disputes-section').should('exist');
+        }
+      });
     });
   });
 
-  describe.skip('Data Validation Tests', () => {
-    it('should maintain form state during interaction', () => {
-      cy.get('[data-testid="email-input"]').type('test@example.com');
-      cy.get('[data-testid="password-input"]').type('password123');
-      cy.get('.toggle-btn').click();
-      cy.get('[data-testid="email-input"]').should('have.value', 'test@example.com');
-      cy.get('[data-testid="password-input"]').should('have.value', 'password123');
+  describe('Data Attribute Tests', () => {
+    it('should have page-title data-testid', () => {
+      cy.get('[data-testid="page-title"]').should('exist');
     });
 
-    it('should handle special characters in inputs', () => {
-      const specialEmail = 'test+user@example-domain.co.uk';
-      const specialPassword = 'P@$$w0rd!2023';
-      cy.get('[data-testid="email-input"]').type(specialEmail);
-      cy.get('[data-testid="password-input"]').type(specialPassword);
-      cy.get('[data-testid="email-input"]').should('have.value', specialEmail);
-      cy.get('[data-testid="password-input"]').should('have.value', specialPassword);
+    it('should have stats-row data-testid', () => {
+      cy.get('[data-testid="stats-row"]').should('exist');
     });
 
-    it('should handle long input values', () => {
-      const longEmail = 'verylongemailaddressfortesting@verylongdomainnamefortesting.com';
-      const longPassword = 'verylongpasswordfortestingpurposes123456789';
-      cy.get('[data-testid="email-input"]').type(longEmail);
-      cy.get('[data-testid="password-input"]').type(longPassword);
-      cy.get('[data-testid="email-input"]').should('have.value', longEmail);
-      cy.get('[data-testid="password-input"]').should('have.value', longPassword);
+    it('should have bureaus-grid data-testid', () => {
+      cy.get('[data-testid="bureaus-grid"]').should('exist');
+    });
+
+    it('should have filters data-testid', () => {
+      cy.get('[data-testid="filters"]').should('exist');
+    });
+
+    it('should have disputes-section data-testid', () => {
+      cy.get('[data-testid="disputes-section"]').should('exist');
+    });
+
+    it('should have dispute-modal data-testid', () => {
+      cy.get('[data-testid="dispute-modal"]').should('exist');
     });
   });
 });

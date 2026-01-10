@@ -206,9 +206,9 @@ def _parse_amount(amount_value: Any) -> Optional[float]:
 def _is_derogatory_status(status: str) -> bool:
     """Check if a payment status code indicates derogatory status."""
     if status in PAYMENT_STATUS_CODES:
-        return PAYMENT_STATUS_CODES[status]["is_derogatory"]
+        return bool(PAYMENT_STATUS_CODES[status]["is_derogatory"])
     if status.upper() in REVOLVING_STATUS_CODES:
-        return REVOLVING_STATUS_CODES[status.upper()]["is_derogatory"]
+        return bool(REVOLVING_STATUS_CODES[status.upper()]["is_derogatory"])
     derogatory_chars = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "G", "H", "K", "L"]
     return any(char in status for char in derogatory_chars)
 
@@ -216,9 +216,9 @@ def _is_derogatory_status(status: str) -> bool:
 def _get_status_description(status: str) -> str:
     """Get the description for a payment status code."""
     if status in PAYMENT_STATUS_CODES:
-        return PAYMENT_STATUS_CODES[status]["description"]
+        return str(PAYMENT_STATUS_CODES[status]["description"])
     if status.upper() in REVOLVING_STATUS_CODES:
-        return REVOLVING_STATUS_CODES[status.upper()]["description"]
+        return str(REVOLVING_STATUS_CODES[status.upper()]["description"])
     return f"Unknown status code: {status}"
 
 
@@ -1170,7 +1170,7 @@ def check_duplicate_reporting(tradelines: List[Dict[str, Any]]) -> List[Dict[str
     """
     violations = []
 
-    account_map = {}
+    account_map: Dict[str, Dict[str, Any]] = {}
 
     for tradeline in tradelines:
         original_creditor = tradeline.get("original_creditor", "").lower().strip()

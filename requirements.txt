@@ -1,6 +1,6 @@
 # Core Flask
 Flask==3.0.0
-Flask-CORS==4.0.0
+Flask-CORS==6.0.2
 Flask-Limiter>=3.5.0
 Werkzeug==3.1.4
 gunicorn==21.2.0
@@ -10,7 +10,7 @@ sqlalchemy
 psycopg2-binary
 
 # AI
-anthropic==0.74.1
+anthropic==0.75.0
 
 # PDF Generation & Parsing
 fpdf2
@@ -21,17 +21,19 @@ pypdf
 
 # Document Processing
 python-docx
-beautifulsoup4==4.12.3
+beautifulsoup4==4.14.3
 
 # Security & Auth
 pyjwt
 cryptography
 bleach>=6.0.0
+pyotp>=2.9.0
+qrcode[pil]>=7.4.2
 
 # External Services
 stripe
 twilio
-sendgrid
+# sendgrid - removed, using Gmail SMTP instead
 paramiko
 
 # Utilities
@@ -41,3 +43,7 @@ python-dotenv>=1.0.0
 
 # Testing
 playwright
+psutil>=5.9.0
+sentry-sdk[flask]>=2.0.0
+alembic>=1.13.0
+flasgger>=0.9.7

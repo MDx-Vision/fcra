@@ -17,6 +17,15 @@ The Brightpath Ascend FCRA Platform is the most comprehensive litigation automat
 - **Client Avatar/Photo System** - Personalized profiles with upload functionality
 - **Admin Dashboard** (`/dashboard`) - Professional case management interface
 
+### Client Portal Document Upload System ✅ (December 2025)
+- **Multi-Document Type Support** - CRA Response, ID/Proof, Court Order, Other uploads
+- **CRA Response Details** - Bureau checkboxes (Equifax/Experian/TransUnion) + Round selection (1-4)
+- **ID/Proof Multi-Upload** - Driver's License (front/back), SSN Card (front/back), Utility Bill
+- **Smart Validation** - Required vs optional file indicators
+- **Secondary Bureau Freeze Status** (`/portal/status`) - Track freeze status for 9 secondary bureaus:
+  - Innovis, ChexSystems, Clarity Services Inc, LexisNexis, CoreLogic Teletrack
+  - Factor Trust Inc, MicroBilt/PRBC, LexisNexis Risk Solutions, DataX Ltd
+
 ### Credit Report Analysis
 - **Two-Stage AI Analysis** - Section-by-section processing for comprehensive violation detection
 - **Credit Report PDF Parser** - Multi-library extraction with bureau detection
@@ -595,6 +604,6 @@ Based on the comprehensive "Credit Repair Warfare" legal guide, the following ha
 
 ---
 
-*Document Last Updated: December 25, 2025*
+*Document Last Updated: December 31, 2025*
 *Platform Version: Brightpath Ascend FCRA v2.0*
-*Latest Features: BAG CRM Feature Parity - Complete client manager with bulk operations, tags, quick links, and pagination*
+*Latest Features: Client Portal Document Upload Enhancements - CRA Response bureau/round selection, multi-file ID/Proof uploads, Secondary Bureau Freeze Status tracking*

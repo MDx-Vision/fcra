@@ -23,21 +23,22 @@ def register_task_handler(task_type: str):
 @register_task_handler("send_email")
 def handle_send_email(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Handle email sending tasks"""
-    from services.email_service import EmailService
+    from services import email_service
 
-    email_service = EmailService()
     to_email = payload.get("to_email")
     subject = payload.get("subject")
     body = payload.get("body")
     template = payload.get("template")
     template_data = payload.get("template_data", {})
 
-    if template:
-        success = email_service.send_template_email(
+    if template and hasattr(email_service, "send_template_email"):
+        result = email_service.send_template_email(
             to_email, subject, template, template_data
         )
+        success = result.get("success", False) if isinstance(result, dict) else bool(result)
     else:
-        success = email_service.send_email(to_email, subject, body)
+        result = email_service.send_email(to_email, subject, body)
+        success = result.get("success", False) if isinstance(result, dict) else bool(result)
 
     return {"success": success, "to_email": to_email}
 
@@ -45,9 +46,8 @@ def handle_send_email(payload: Dict[str, Any]) -> Dict[str, Any]:
 @register_task_handler("send_sms")
 def handle_send_sms(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Handle SMS sending tasks"""
-    from services.sms_service import SMSService
+    from services import sms_service
 
-    sms_service = SMSService()
     to_phone = payload.get("to_phone")
     message = payload.get("message")
 
@@ -55,7 +55,7 @@ def handle_send_sms(payload: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "success": result.get("success", False),
         "to_phone": to_phone,
-        "sid": result.get("sid"),
+        "sid": result.get("message_sid"),
     }
 
 
@@ -107,7 +107,7 @@ def generate_case_summary_report(parameters: Dict[str, Any]) -> Dict[str, Any]:
 
 def generate_revenue_report(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Generate weekly revenue report"""
-    from database import Payment, get_db
+    from database import Payment, get_db  # type: ignore[attr-defined]
 
     session = get_db()
     try:
@@ -135,7 +135,7 @@ def generate_revenue_report(parameters: Dict[str, Any]) -> Dict[str, Any]:
 
 def generate_sol_deadline_report(parameters: Dict[str, Any]) -> Dict[str, Any]:
     """Generate SOL deadline check report"""
-    from database import NegativeItem, get_db
+    from database import NegativeItem, get_db  # type: ignore[attr-defined]
 
     session = get_db()
     try:
@@ -212,7 +212,7 @@ def handle_bulk_dispute(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def generate_dispute_letter(
-    client_id: int, letter_type: str, bureau: str
+    client_id: int, letter_type: str, bureau: Optional[str]
 ) -> Dict[str, Any]:
     """Generate a single dispute letter"""
     return {
@@ -336,44 +336,43 @@ class TaskQueueService:
             session.close()
 
     @staticmethod
-    def _execute_task(session, task: BackgroundTask) -> Dict[str, Any]:
+    def _execute_task(session, task: BackgroundTask) -> Dict[str, Any]:  # type: ignore[type-arg]
         """Execute a single task"""
-        task.status = "running"
-        task.started_at = datetime.utcnow()
+        task.status = "running"  # type: ignore[assignment]
+        task.started_at = datetime.utcnow()  # type: ignore[assignment]
         session.commit()
 
-        handler = TASK_HANDLERS.get(task.task_type)
+        task_type: str = task.task_type  # type: ignore[assignment]
+        handler = TASK_HANDLERS.get(task_type)
 
         if not handler:
-            task.status = "failed"
-            task.error_message = (
-                f"No handler registered for task type: {task.task_type}"
-            )
-            task.completed_at = datetime.utcnow()
+            task.status = "failed"  # type: ignore[assignment]
+            error_msg = f"No handler registered for task type: {task.task_type}"
+            task.error_message = error_msg  # type: ignore[assignment]
+            task.completed_at = datetime.utcnow()  # type: ignore[assignment]
             session.commit()
             return {"task_id": task.id, "success": False, "error": task.error_message}
 
         try:
             result = handler(task.payload or {})
-            task.status = "completed"
-            task.result = result
-            task.completed_at = datetime.utcnow()
+            task.status = "completed"  # type: ignore[assignment]
+            task.result = result  # type: ignore[assignment]
+            task.completed_at = datetime.utcnow()  # type: ignore[assignment]
             session.commit()
 
             return {"task_id": task.id, "success": True, "result": result}
         except Exception as e:
             error_msg = f"{str(e)}\n{traceback.format_exc()}"
-            task.retries += 1
+            task.retries += 1  # type: ignore[assignment]
 
             if task.retries >= task.max_retries:
-                task.status = "failed"
-                task.error_message = error_msg
-                task.completed_at = datetime.utcnow()
+                task.status = "failed"  # type: ignore[assignment]
+                task.error_message = error_msg  # type: ignore[assignment]
+                task.completed_at = datetime.utcnow()  # type: ignore[assignment]
             else:
-                task.status = "pending"
-                task.error_message = (
-                    f"Retry {task.retries}/{task.max_retries}: {str(e)}"
-                )
+                task.status = "pending"  # type: ignore[assignment]
+                retry_msg = f"Retry {task.retries}/{task.max_retries}: {str(e)}"
+                task.error_message = retry_msg  # type: ignore[assignment]
 
             session.commit()
 

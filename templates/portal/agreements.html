@@ -1,0 +1,874 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Service Agreements{% endblock %}
+
+{% block extra_css %}
+<style>
+.agreements-page {
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 8px;
+}
+
+.page-header .subtitle {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Progress Steps */
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    padding: 0 20px;
+    overflow-x: auto;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    min-width: 80px;
+}
+
+.progress-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 0;
+}
+
+.progress-step.completed:not(:last-child)::after {
+    background: #22c55e;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed .step-number {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+}
+
+.progress-step.current .step-number {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.step-label {
+    font-size: 10px;
+    color: #94a3b8;
+    margin-top: 8px;
+    text-align: center;
+    max-width: 70px;
+    line-height: 1.2;
+}
+
+.progress-step.completed .step-label,
+.progress-step.current .step-label {
+    color: #1a1a2e;
+    font-weight: 500;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+/* Document Container */
+.document-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.document-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d3748 100%);
+    color: white;
+    padding: 20px 24px;
+}
+
+.document-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+}
+
+.document-header .doc-description {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.document-content {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 24px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.document-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.document-content::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.document-content::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.scroll-notice {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 12px 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.scroll-notice.hidden {
+    display: none;
+}
+
+/* Signature Section */
+.signature-section {
+    padding: 24px;
+    background: #f8fafc;
+}
+
+.signature-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0 0 16px 0;
+}
+
+.signature-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.sig-tab {
+    padding: 8px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sig-tab:hover {
+    border-color: #22c55e;
+}
+
+.sig-tab.active {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: white;
+}
+
+.signature-canvas-wrapper {
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+#signature-canvas {
+    display: block;
+    width: 100%;
+    height: 150px;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.canvas-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #94a3b8;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.signature-canvas-wrapper.has-signature .canvas-placeholder {
+    display: none;
+}
+
+.typed-signature-input {
+    display: none;
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 24px;
+    font-family: 'Brush Script MT', cursive;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.typed-signature-input.active {
+    display: block;
+}
+
+.sig-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.btn-clear {
+    padding: 8px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+/* Sign Button */
+.sign-button-wrapper {
+    margin-top: 20px;
+}
+
+.btn-sign {
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-sign:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.btn-sign:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-skip {
+    width: 100%;
+    padding: 12px 24px;
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 12px;
+}
+
+/* Cancellation Notice */
+.cancellation-notice {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.cancellation-notice h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cancellation-notice p {
+    font-size: 14px;
+    color: #78350f;
+    margin: 0 0 16px 0;
+}
+
+.cancellation-notice .countdown {
+    font-size: 24px;
+    font-weight: 700;
+    color: #92400e;
+}
+
+.btn-cancel-service {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Complete State */
+.complete-state {
+    text-align: center;
+    padding: 60px 24px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.complete-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 48px;
+    color: white;
+}
+
+.complete-state h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+}
+
+.complete-state p {
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+/* Loading */
+.loading-state {
+    text-align: center;
+    padding: 60px 24px;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #22c55e;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .agreements-page {
+        padding: 16px;
+    }
+
+    .progress-steps {
+        padding: 0;
+    }
+
+    .step-label {
+        display: none;
+    }
+
+    .document-content {
+        max-height: 300px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="agreements-page" data-testid="agreements-page">
+    <!-- Header -->
+    <div class="page-header" data-testid="agreements-header">
+        <h1>Service Agreements</h1>
+        <p class="subtitle">Please review and sign each document in order</p>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps" id="progress-steps" data-testid="progress-steps">
+        <div class="progress-step" data-step="1">
+            <div class="step-number">1</div>
+            <div class="step-label">Rights Disclosure</div>
+        </div>
+        <div class="progress-step" data-step="2">
+            <div class="step-number">2</div>
+            <div class="step-label">Power of Attorney</div>
+        </div>
+        <div class="progress-step" data-step="3">
+            <div class="step-number">3</div>
+            <div class="step-label">Service Agreement</div>
+        </div>
+        <div class="progress-step" data-step="4">
+            <div class="step-number">4</div>
+            <div class="step-label">Cancel Notice</div>
+        </div>
+        <div class="progress-step" data-step="5">
+            <div class="step-number">5</div>
+            <div class="step-label">Service Auth</div>
+        </div>
+        <div class="progress-step" data-step="6">
+            <div class="step-number">6</div>
+            <div class="step-label">HIPAA</div>
+        </div>
+        <div class="progress-step" data-step="7">
+            <div class="step-number">7</div>
+            <div class="step-label">Welcome</div>
+        </div>
+    </div>
+
+    <!-- Cancellation Notice (shown after service agreement signed) -->
+    <div class="cancellation-notice" id="cancellation-notice" style="display: none;" data-testid="cancellation-notice">
+        <h3><i class="fas fa-exclamation-triangle"></i> Right to Cancel</h3>
+        <p>You have the right to cancel this agreement within 3 business days without any charges.</p>
+        <div class="countdown" id="cancellation-countdown">Loading...</div>
+        <button class="btn-cancel-service" id="btn-cancel-service" data-testid="btn-cancel-service">
+            Cancel Service
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" id="loading-state" data-testid="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Loading documents...</p>
+    </div>
+
+    <!-- Document Container -->
+    <div class="document-container" id="document-container" style="display: none;" data-testid="document-container">
+        <div class="document-header">
+            <h2 id="doc-title">Document Title</h2>
+            <p class="doc-description" id="doc-description">Document description</p>
+        </div>
+
+        <div class="document-content" id="document-content" data-testid="document-content">
+            <!-- Document HTML will be loaded here -->
+        </div>
+
+        <div class="scroll-notice" id="scroll-notice">
+            <i class="fas fa-arrow-down"></i>
+            Please scroll to read the entire document before signing
+        </div>
+
+        <div class="signature-section" data-testid="signature-section">
+            <h3>Your Signature</h3>
+
+            <div class="signature-tabs">
+                <button class="sig-tab active" data-type="draw" data-testid="tab-draw">Draw Signature</button>
+                <button class="sig-tab" data-type="type" data-testid="tab-type">Type Name</button>
+            </div>
+
+            <div class="signature-canvas-wrapper" id="canvas-wrapper">
+                <canvas id="signature-canvas" data-testid="signature-canvas"></canvas>
+                <div class="canvas-placeholder">Sign here</div>
+            </div>
+
+            <input type="text" class="typed-signature-input" id="typed-signature" placeholder="Type your full legal name" data-testid="typed-signature">
+
+            <div class="sig-actions">
+                <button class="btn-clear" id="btn-clear" data-testid="btn-clear">Clear</button>
+            </div>
+
+            <div class="sign-button-wrapper">
+                <button class="btn-sign" id="btn-sign" disabled data-testid="btn-sign">
+                    <i class="fas fa-signature"></i>
+                    Sign Document
+                </button>
+                <button class="btn-skip" id="btn-skip" style="display: none;" data-testid="btn-skip">
+                    Skip this optional document
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complete State -->
+    <div class="complete-state" id="complete-state" style="display: none;" data-testid="complete-state">
+        <div class="complete-icon"><i class="fas fa-check"></i></div>
+        <h2>All Documents Signed!</h2>
+        <p>Thank you for completing your service agreements. We're ready to begin working on your case.</p>
+        <a href="{{ url_for('portal.dashboard') }}" class="btn-sign" style="display: inline-flex; width: auto;">
+            Go to Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('signature-canvas');
+    const ctx = canvas.getContext('2d');
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    const typedSignature = document.getElementById('typed-signature');
+    const btnSign = document.getElementById('btn-sign');
+    const btnSkip = document.getElementById('btn-skip');
+    const btnClear = document.getElementById('btn-clear');
+    const documentContent = document.getElementById('document-content');
+    const scrollNotice = document.getElementById('scroll-notice');
+
+    let isDrawing = false;
+    let hasSignature = false;
+    let hasScrolledToBottom = false;
+    let signatureType = 'drawn';
+    let currentDocument = null;
+    let isOptional = false;
+
+    // Initialize canvas
+    function initCanvas() {
+        const rect = canvasWrapper.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = 150;
+        ctx.strokeStyle = '#1a1a2e';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    }
+    initCanvas();
+    window.addEventListener('resize', initCanvas);
+
+    // Drawing handlers
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        return { x, y };
+    }
+
+    function startDrawing(e) {
+        e.preventDefault();
+        isDrawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        hasSignature = true;
+        canvasWrapper.classList.add('has-signature');
+        updateSignButton();
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', stopDrawing);
+
+    // Signature type tabs
+    document.querySelectorAll('.sig-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.sig-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+
+            signatureType = this.dataset.type;
+
+            if (signatureType === 'type') {
+                canvasWrapper.style.display = 'none';
+                typedSignature.classList.add('active');
+            } else {
+                canvasWrapper.style.display = 'block';
+                typedSignature.classList.remove('active');
+            }
+            updateSignButton();
+        });
+    });
+
+    // Typed signature input
+    typedSignature.addEventListener('input', function() {
+        hasSignature = this.value.trim().length >= 2;
+        updateSignButton();
+    });
+
+    // Clear button
+    btnClear.addEventListener('click', function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        typedSignature.value = '';
+        hasSignature = false;
+        canvasWrapper.classList.remove('has-signature');
+        updateSignButton();
+    });
+
+    // Scroll detection
+    documentContent.addEventListener('scroll', function() {
+        const isAtBottom = this.scrollHeight - this.scrollTop <= this.clientHeight + 50;
+        if (isAtBottom) {
+            hasScrolledToBottom = true;
+            scrollNotice.classList.add('hidden');
+            updateSignButton();
+        }
+    });
+
+    // Update sign button state
+    function updateSignButton() {
+        const canSign = hasSignature && hasScrolledToBottom;
+        btnSign.disabled = !canSign;
+    }
+
+    // Sign button
+    btnSign.addEventListener('click', async function() {
+        if (!currentDocument) return;
+
+        let signatureData;
+        if (signatureType === 'drawn') {
+            signatureData = canvas.toDataURL('image/png');
+        } else {
+            signatureData = typedSignature.value;
+        }
+
+        btnSign.disabled = true;
+        btnSign.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing...';
+
+        try {
+            const response = await fetch('/portal/api/croa/sign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    document_code: currentDocument.code,
+                    signature_data: signatureData,
+                    signature_type: signatureType
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Update progress display
+                updateProgress(result.documents_completed);
+
+                // Check cancellation status
+                if (result.cancellation_status) {
+                    showCancellationNotice(result.cancellation_status);
+                }
+
+                if (result.is_complete) {
+                    showComplete();
+                } else if (result.next_document) {
+                    loadDocument(result.next_document);
+                } else {
+                    showComplete();
+                }
+            } else {
+                alert(result.error || 'Failed to sign document');
+            }
+        } catch (error) {
+            console.error('Error signing:', error);
+            alert('An error occurred. Please try again.');
+        }
+
+        btnSign.disabled = false;
+        btnSign.innerHTML = '<i class="fas fa-signature"></i> Sign Document';
+    });
+
+    // Skip optional document
+    btnSkip.addEventListener('click', async function() {
+        if (!currentDocument) return;
+
+        try {
+            const response = await fetch('/portal/api/croa/skip-optional', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ document_code: currentDocument.code })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                if (result.next_document && result.next_document.document) {
+                    loadDocument(result.next_document.document);
+                } else {
+                    showComplete();
+                }
+            }
+        } catch (error) {
+            console.error('Error skipping:', error);
+        }
+    });
+
+    // Cancel service
+    document.getElementById('btn-cancel-service').addEventListener('click', async function() {
+        if (!confirm('Are you sure you want to cancel? This cannot be undone.')) return;
+
+        const reason = prompt('Please tell us why you\'re cancelling (optional):');
+
+        try {
+            const response = await fetch('/portal/api/croa/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: reason })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('Your service has been cancelled. No charges will be made.');
+                window.location.href = '/portal/';
+            } else {
+                alert(result.error || 'Unable to cancel at this time');
+            }
+        } catch (error) {
+            console.error('Error cancelling:', error);
+        }
+    });
+
+    // Load document
+    function loadDocument(doc) {
+        currentDocument = doc;
+        isOptional = !doc.is_required;
+
+        document.getElementById('doc-title').textContent = doc.name;
+        document.getElementById('doc-description').textContent = doc.description;
+        documentContent.innerHTML = doc.content_html || '<p>Document content loading...</p>';
+
+        // Reset state
+        hasScrolledToBottom = documentContent.scrollHeight <= documentContent.clientHeight;
+        scrollNotice.classList.toggle('hidden', hasScrolledToBottom);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        typedSignature.value = '';
+        hasSignature = false;
+        canvasWrapper.classList.remove('has-signature');
+
+        btnSkip.style.display = isOptional ? 'block' : 'none';
+        updateSignButton();
+
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('document-container').style.display = 'block';
+    }
+
+    // Update progress steps
+    function updateProgress(completed) {
+        document.querySelectorAll('.progress-step').forEach((step, index) => {
+            const stepNum = index + 1;
+            step.classList.remove('completed', 'current');
+
+            if (stepNum <= completed) {
+                step.classList.add('completed');
+            } else if (stepNum === completed + 1) {
+                step.classList.add('current');
+            }
+        });
+    }
+
+    // Show cancellation notice
+    function showCancellationNotice(status) {
+        if (status.in_cancellation_period) {
+            const notice = document.getElementById('cancellation-notice');
+            notice.style.display = 'block';
+
+            const countdown = document.getElementById('cancellation-countdown');
+            countdown.textContent = `${status.days_remaining} business day(s) remaining`;
+        }
+    }
+
+    // Show complete state
+    function showComplete() {
+        document.getElementById('document-container').style.display = 'none';
+        document.getElementById('complete-state').style.display = 'block';
+    }
+
+    // Load initial document
+    async function init() {
+        try {
+            // Get progress first
+            const progressRes = await fetch('/portal/api/croa/progress');
+            const progress = await progressRes.json();
+
+            if (progress.success) {
+                updateProgress(progress.documents_completed);
+
+                // Check cancellation status
+                if (progress.cancellation_status && progress.cancellation_status.in_cancellation_period) {
+                    showCancellationNotice(progress.cancellation_status);
+                }
+
+                if (progress.is_complete) {
+                    document.getElementById('loading-state').style.display = 'none';
+                    showComplete();
+                    return;
+                }
+            }
+
+            // Get current document
+            const docRes = await fetch('/portal/api/croa/current-document');
+            const docData = await docRes.json();
+
+            if (docData.success && docData.document) {
+                loadDocument(docData.document);
+            } else if (docData.is_complete) {
+                document.getElementById('loading-state').style.display = 'none';
+                showComplete();
+            }
+        } catch (error) {
+            console.error('Error initializing:', error);
+            document.getElementById('loading-state').innerHTML = '<p>Error loading documents. Please refresh.</p>';
+        }
+    }
+
+    init();
+});
+</script>
+{% endblock %}
