@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload ID Documents - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(255,255,255,0.05);
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo { display: flex; align-items: center; gap: 12px; color: white; }
+        .logo h1 { font-size: 1.3rem; font-weight: 600; }
+        .logo h1 span { color: #22c55e; }
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .tab {
+            padding: 18px 30px;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active { color: #22c55e; border-bottom-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .card-header { margin-bottom: 25px; }
+        .card-header h2 { font-size: 1.4rem; color: #1e293b; margin-bottom: 8px; }
+        .card-header p { color: #64748b; font-size: 0.95rem; }
+        .upload-section { margin-bottom: 30px; }
+        .upload-section h3 {
+            font-size: 1rem;
+            color: #1e293b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .upload-box {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-box:hover { border-color: #22c55e; background: rgba(34,197,94,0.05); }
+        .upload-box.uploaded {
+            border-color: #22c55e;
+            border-style: solid;
+            background: rgba(34,197,94,0.05);
+        }
+        .upload-icon { font-size: 2rem; margin-bottom: 10px; }
+        .upload-box.uploaded .upload-icon { color: #22c55e; }
+        .upload-label { font-size: 0.9rem; color: #475569; font-weight: 500; }
+        .upload-hint { font-size: 0.8rem; color: #94a3b8; margin-top: 5px; }
+        .upload-status { font-size: 0.85rem; color: #22c55e; margin-top: 8px; font-weight: 500; }
+        .required-badge {
+            background: #fee2e2;
+            color: #dc2626;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .optional-badge {
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 25px;
+        }
+        .info-box p { color: #1e40af; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><h1>Brightpath <span>Ascend</span></h1></div>
+    </div>
+    <div class="tabs">
+        <div class="tab active">🚀 Setup</div>
+        <div class="tab">📝 Agreements</div>
+        <div class="tab">👤 Profile</div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Upload Identity Documents</h2>
+                <p>We need to verify your identity to process your credit disputes</p>
+            </div>
+
+            <div class="info-box">
+                <p>📸 Make sure photos are clear, well-lit, and all text is readable. Files must be JPG, PNG, or PDF.</p>
+            </div>
+
+            <div class="upload-section">
+                <h3>🪪 Driver's License <span class="required-badge">Required</span></h3>
+                <div class="upload-grid">
+                    <div class="upload-box uploaded">
+                        <div class="upload-icon">✓</div>
+                        <div class="upload-label">Front</div>
+                        <div class="upload-status">Uploaded ✓</div>
+                    </div>
+                    <div class="upload-box">
+                        <div class="upload-icon">📤</div>
+                        <div class="upload-label">Back</div>
+                        <div class="upload-hint">Optional but recommended</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <h3>🔢 Social Security Card <span class="required-badge">Required</span></h3>
+                <div class="upload-grid">
+                    <div class="upload-box">
+                        <div class="upload-icon">📤</div>
+                        <div class="upload-label">Front</div>
+                        <div class="upload-hint">Click to upload</div>
+                    </div>
+                    <div class="upload-box">
+                        <div class="upload-icon">📤</div>
+                        <div class="upload-label">Back</div>
+                        <div class="upload-hint">Optional</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <h3>📄 Proof of Address <span class="required-badge">Required</span></h3>
+                <div class="upload-grid">
+                    <div class="upload-box uploaded">
+                        <div class="upload-icon">✓</div>
+                        <div class="upload-label">Utility Bill / Bank Statement</div>
+                        <div class="upload-status">electric_bill.pdf ✓</div>
+                    </div>
+                    <div style="padding: 20px; color: #64748b; font-size: 0.85rem;">
+                        <strong>Accepted documents:</strong>
+                        <ul style="margin-top: 8px; margin-left: 20px;">
+                            <li>Utility bill (electric, gas, water)</li>
+                            <li>Bank statement</li>
+                            <li>Lease agreement</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-primary">Save & Continue →</button>
+        </div>
+    </div>
+</body>
+</html>

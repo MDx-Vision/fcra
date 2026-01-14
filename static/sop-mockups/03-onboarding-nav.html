@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(255,255,255,0.05);
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .logo img {
+            height: 40px;
+        }
+        .logo h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .logo h1 span {
+            color: #22c55e;
+        }
+        .user-menu {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.9rem;
+        }
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .tab {
+            padding: 18px 30px;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab.active {
+            color: #22c55e;
+            border-bottom-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+        .tab:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .progress-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .progress-header h2 {
+            font-size: 1.3rem;
+            color: #1e293b;
+        }
+        .progress-badge {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .progress-steps {
+            display: flex;
+            gap: 15px;
+        }
+        .step {
+            flex: 1;
+            text-align: center;
+        }
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        .step-circle.complete {
+            background: #22c55e;
+            color: white;
+        }
+        .step-circle.current {
+            background: #3b82f6;
+            color: white;
+        }
+        .step-circle.pending {
+            background: #e2e8f0;
+            color: #94a3b8;
+        }
+        .step-label {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .step-label.current {
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+        }
+        .content-card h3 {
+            font-size: 1.1rem;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Logo">
+            <h1>Brightpath <span>Ascend</span></h1>
+        </div>
+        <div class="user-menu">Welcome, John Smith</div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active">🚀 Setup</div>
+        <div class="tab">📝 Agreements</div>
+        <div class="tab">👤 Profile</div>
+    </div>
+
+    <div class="container">
+        <div class="progress-card">
+            <div class="progress-header">
+                <h2>Complete Your Setup</h2>
+                <span class="progress-badge">Step 2 of 4</span>
+            </div>
+            <div class="progress-steps">
+                <div class="step">
+                    <div class="step-circle complete">✓</div>
+                    <div class="step-label">Personal Info</div>
+                </div>
+                <div class="step">
+                    <div class="step-circle current">2</div>
+                    <div class="step-label current">ID Documents</div>
+                </div>
+                <div class="step">
+                    <div class="step-circle pending">3</div>
+                    <div class="step-label">Credentials</div>
+                </div>
+                <div class="step">
+                    <div class="step-circle pending">4</div>
+                    <div class="step-label">Payment</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <h3>Personal Information</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" value="John" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" value="Smith" readonly>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" value="john.smith@email.com" readonly>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="text" value="01/15/1985" readonly>
+                </div>
+                <div class="form-group">
+                    <label>SSN (Last 4)</label>
+                    <input type="text" value="••••" readonly>
+                </div>
+            </div>
+            <button class="btn-primary">Save & Continue →</button>
+        </div>
+    </div>
+</body>
+</html>

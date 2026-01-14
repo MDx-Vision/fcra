@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bureau Status - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; color: white; }
+        .logo h1 { font-size: 1.3rem; }
+        .logo h1 span { color: #22c55e; }
+        .nav { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 30px; display: flex; }
+        .nav-item { padding: 18px 25px; color: #64748b; font-size: 0.95rem; border-bottom: 3px solid transparent; }
+        .nav-item.active { color: #22c55e; border-bottom-color: #22c55e; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .page-title { font-size: 1.4rem; color: #1e293b; margin-bottom: 20px; }
+        .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .bureau-detail { margin-bottom: 30px; }
+        .bureau-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e2e8f0; }
+        .bureau-name { font-size: 1.2rem; font-weight: 600; color: #1e293b; }
+        .bureau-status { padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+        .bureau-status.pending { background: #fef3c7; color: #92400e; }
+        .bureau-status.responded { background: #dcfce7; color: #166534; }
+        .item-list { }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8fafc; border-radius: 10px; margin-bottom: 10px; }
+        .item-info { flex: 1; }
+        .item-name { font-weight: 500; color: #1e293b; margin-bottom: 4px; }
+        .item-detail { font-size: 0.85rem; color: #64748b; }
+        .item-status { padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; font-weight: 500; }
+        .item-status.disputed { background: #dbeafe; color: #1d4ed8; }
+        .item-status.deleted { background: #dcfce7; color: #166534; }
+        .item-status.verified { background: #fee2e2; color: #991b1b; }
+        .summary-row { display: flex; gap: 20px; margin-top: 15px; }
+        .summary-stat { flex: 1; text-align: center; padding: 15px; background: #f1f5f9; border-radius: 10px; }
+        .summary-num { font-size: 1.5rem; font-weight: 700; color: #1e293b; }
+        .summary-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="logo"><h1>Brightpath <span>Ascend</span></h1></div></div>
+    <div class="nav">
+        <div class="nav-item">📊 Case</div>
+        <div class="nav-item active">🏛️ Bureaus</div>
+        <div class="nav-item">📁 Documents</div>
+        <div class="nav-item">💬 Messages</div>
+        <div class="nav-item">👤 Profile</div>
+    </div>
+    <div class="container">
+        <h1 class="page-title">Bureau Status Details</h1>
+
+        <div class="card">
+            <div class="bureau-detail">
+                <div class="bureau-header">
+                    <span class="bureau-name">Equifax</span>
+                    <span class="bureau-status responded">Response Received</span>
+                </div>
+                <div class="item-list">
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">Capital One - Collection</div>
+                            <div class="item-detail">Account #****4532 • Opened 03/2022</div>
+                        </div>
+                        <span class="item-status deleted">Deleted</span>
+                    </div>
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">Midland Credit Management</div>
+                            <div class="item-detail">Account #****8891 • Balance $2,340</div>
+                        </div>
+                        <span class="item-status disputed">Under Investigation</span>
+                    </div>
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">Portfolio Recovery</div>
+                            <div class="item-detail">Account #****2156 • Balance $890</div>
+                        </div>
+                        <span class="item-status disputed">Under Investigation</span>
+                    </div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-stat">
+                        <div class="summary-num">4</div>
+                        <div class="summary-label">Total Disputed</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-num" style="color: #22c55e;">1</div>
+                        <div class="summary-label">Deleted</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-num" style="color: #f59e0b;">3</div>
+                        <div class="summary-label">Pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="bureau-detail">
+                <div class="bureau-header">
+                    <span class="bureau-name">Experian</span>
+                    <span class="bureau-status pending">Awaiting Response</span>
+                </div>
+                <div class="item-list">
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">LVNV Funding LLC</div>
+                            <div class="item-detail">Account #****7723 • Balance $1,450</div>
+                        </div>
+                        <span class="item-status disputed">Disputed</span>
+                    </div>
+                    <div class="item">
+                        <div class="item-info">
+                            <div class="item-name">Synchrony Bank</div>
+                            <div class="item-detail">Account #****3398 • Balance $3,200</div>
+                        </div>
+                        <span class="item-status disputed">Disputed</span>
+                    </div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-stat">
+                        <div class="summary-num">5</div>
+                        <div class="summary-label">Total Disputed</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-num" style="color: #22c55e;">1</div>
+                        <div class="summary-label">Deleted</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-num" style="color: #f59e0b;">4</div>
+                        <div class="summary-label">Pending</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

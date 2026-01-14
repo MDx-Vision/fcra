@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Portal Guide - Brightpath Ascend Group</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.7;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header h1 span {
+            color: #22c55e;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Journey Overview */
+        .journey-overview {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .journey-steps {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .journey-step {
+            flex: 1;
+            min-width: 140px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .journey-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #22c55e;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .journey-step .step-num {
+            background: #22c55e;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: 600;
+        }
+
+        .journey-step .step-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .journey-step .step-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        /* Stage Headers */
+        .stage-header {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 16px 16px 0 0;
+            margin-top: 50px;
+        }
+
+        .stage-header h2 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .stage-header .stage-num {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        /* Content Sections */
+        .content-section {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .content-section.standalone {
+            border-radius: 16px;
+            margin-top: 30px;
+        }
+
+        /* Step Headers */
+        .step-header {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .step-header h3 {
+            color: #1e293b;
+            font-size: 1.3rem;
+        }
+
+        .step-header .url-badge {
+            background: #f1f5f9;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #3b82f6;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .step-header .tab-badge {
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        /* Lists */
+        ol, ul {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        /* Screenshots */
+        .screenshot {
+            margin: 25px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .screenshot img {
+            width: 100%;
+            display: block;
+        }
+
+        .screenshot-caption {
+            background: #f1f5f9;
+            padding: 12px 15px;
+            font-size: 0.85rem;
+            color: #64748b;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .info-box.warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .info-box.success {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .info-box.critical {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Document List */
+        .doc-list {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .doc-list h4 {
+            margin-bottom: 15px;
+            color: #475569;
+        }
+
+        .doc-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .doc-item:last-child {
+            border-bottom: none;
+        }
+
+        .doc-num {
+            background: #22c55e;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+
+        .doc-name {
+            flex: 1;
+        }
+
+        .doc-required {
+            color: #22c55e;
+            font-size: 0.85rem;
+        }
+
+        .doc-optional {
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-badge.disputed { background: #dbeafe; color: #1d4ed8; }
+        .status-badge.pending { background: #fef3c7; color: #b45309; }
+        .status-badge.deleted { background: #dcfce7; color: #16a34a; }
+        .status-badge.frozen { background: #cffafe; color: #0891b2; }
+
+        /* Quick Reference Cards */
+        .quick-ref {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .quick-ref-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .quick-ref-card h4 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #22c55e;
+        }
+
+        /* Timeline Colors Legend */
+        .timeline-legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.green { background: #22c55e; }
+        .legend-dot.yellow { background: #eab308; }
+        .legend-dot.blue { background: #3b82f6; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Print Styles */
+        @media print {
+            .header { padding: 30px 20px; }
+            .screenshot { page-break-inside: avoid; }
+            .stage-header { page-break-before: always; }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .journey-step:not(:last-child)::after { display: none; }
+            .journey-steps { flex-direction: column; }
+            .container { padding: 20px 15px; }
+            .content-section { padding: 20px; }
+            table { font-size: 0.85rem; }
+            th, td { padding: 8px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Brightpath <span>Ascend</span> Group</h1>
+        <p class="subtitle">Complete Client Portal Guide - Your step-by-step journey from signup to case completion</p>
+    </div>
+
+    <div class="container">
+        <!-- Journey Overview -->
+        <div class="journey-overview">
+            <h2 style="text-align: center; margin-bottom: 10px;">Your Credit Repair Journey</h2>
+            <p style="text-align: center; color: #64748b;">Follow these 5 stages to financial freedom</p>
+
+            <div class="journey-steps">
+                <div class="journey-step">
+                    <div class="step-num">1</div>
+                    <div class="step-title">SIGNUP</div>
+                    <div class="step-desc">Create your account</div>
+                </div>
+                <div class="journey-step">
+                    <div class="step-num">2</div>
+                    <div class="step-title">ONBOARDING</div>
+                    <div class="step-desc">Upload docs & sign papers</div>
+                </div>
+                <div class="journey-step">
+                    <div class="step-num">3</div>
+                    <div class="step-title">ACTIVE</div>
+                    <div class="step-desc">Full portal access</div>
+                </div>
+                <div class="journey-step">
+                    <div class="step-num">4</div>
+                    <div class="step-title">DISPUTES</div>
+                    <div class="step-desc">Track your progress</div>
+                </div>
+                <div class="journey-step">
+                    <div class="step-num">5</div>
+                    <div class="step-title">COMPLETE</div>
+                    <div class="step-desc">Case closed - success!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== STAGE 1 ==================== -->
+        <div class="stage-header">
+            <span class="stage-num">STAGE 1</span>
+            <h2>Getting Started</h2>
+        </div>
+
+        <div class="content-section">
+            <!-- Step 1.1 -->
+            <div class="step-header">
+                <h3>Step 1.1: Create Your Account</h3>
+                <span class="url-badge">brightpathascendgroup.com/get-started</span>
+            </div>
+
+            <ol>
+                <li><strong>Fill in your information:</strong>
+                    <ul>
+                        <li>Full legal name</li>
+                        <li>Email address</li>
+                        <li>Phone number</li>
+                        <li>Full mailing address (where you receive mail)</li>
+                    </ul>
+                </li>
+                <li><strong>Select your credit monitoring service:</strong>
+                    <ul>
+                        <li>IdentityIQ (recommended)</li>
+                        <li>MyScoreIQ</li>
+                        <li>SmartCredit</li>
+                        <li>Other</li>
+                    </ul>
+                </li>
+                <li>Enter your <strong>SSN (last 4 digits only)</strong> - required for identity verification</li>
+                <li>Click <strong>Get Started</strong></li>
+            </ol>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/01-signup-form.png" alt="Signup Form">
+                <div class="screenshot-caption">Screenshot: The signup form with all required fields</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 1.2 -->
+            <div class="step-header">
+                <h3>Step 1.2: Login to Your Portal</h3>
+                <span class="url-badge">portal.brightpathascendgroup.com</span>
+            </div>
+
+            <ol>
+                <li>Enter your email address</li>
+                <li>Enter your password</li>
+                <li>Click <strong>Sign In</strong></li>
+            </ol>
+
+            <div class="info-box">
+                <strong>First time?</strong> Check your email for login instructions.
+            </div>
+
+            <div class="info-box warning">
+                <strong>Forgot password?</strong> Click "Forgot Password" and follow the email instructions.
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/02-login-page.png" alt="Login Page">
+                <div class="screenshot-caption">Screenshot: Portal login screen</div>
+            </div>
+        </div>
+
+        <!-- ==================== STAGE 2 ==================== -->
+        <div class="stage-header">
+            <span class="stage-num">STAGE 2</span>
+            <h2>Onboarding (New Clients)</h2>
+        </div>
+
+        <div class="content-section">
+            <p>When you first log in, you'll see <strong>3 tabs</strong>:</p>
+            <ul>
+                <li>🚀 <strong>Setup</strong> - Complete your profile</li>
+                <li>📝 <strong>Agreements</strong> - Sign required documents</li>
+                <li>👤 <strong>Profile</strong> - Your account settings</li>
+            </ul>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/03-onboarding-nav.png" alt="Onboarding Navigation">
+                <div class="screenshot-caption">Screenshot: The onboarding navigation with 3 tabs</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 2.1 -->
+            <div class="step-header">
+                <h3>Step 2.1: Setup - Personal Information</h3>
+                <span class="tab-badge">🚀 Setup</span>
+            </div>
+
+            <p>Complete your personal information:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>What to Enter</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Full Legal Name</td><td>Your name exactly as it appears on your ID</td></tr>
+                    <tr><td>Date of Birth</td><td>MM/DD/YYYY format</td></tr>
+                    <tr><td>SSN Last 4</td><td>Last 4 digits of your Social Security Number</td></tr>
+                    <tr><td>Current Address</td><td>Where you currently live and receive mail</td></tr>
+                    <tr><td>Previous Address</td><td>If you moved in the last 2 years</td></tr>
+                </tbody>
+            </table>
+
+            <p>Click <strong>Save & Continue</strong> when done.</p>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/04-personal-info.png" alt="Personal Info Form">
+                <div class="screenshot-caption">Screenshot: Personal information form in Setup tab</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 2.2 -->
+            <div class="step-header">
+                <h3>Step 2.2: Setup - Upload Identity Documents</h3>
+                <span class="tab-badge">🚀 Setup → Identity Documents</span>
+            </div>
+
+            <p>You need to upload:</p>
+
+            <h4 style="margin-top: 20px;">Driver's License</h4>
+            <ul>
+                <li><strong>Front</strong>: Required ✓</li>
+                <li><strong>Back</strong>: Optional (but recommended)</li>
+            </ul>
+
+            <h4 style="margin-top: 20px;">Social Security Card</h4>
+            <ul>
+                <li><strong>Front</strong>: Required ✓</li>
+                <li><strong>Back</strong>: Optional</li>
+            </ul>
+
+            <h4 style="margin-top: 20px;">Proof of Address</h4>
+            <p>Choose ONE of:</p>
+            <ul>
+                <li>Utility bill (electric, gas, water)</li>
+                <li>Bank statement</li>
+                <li>Lease agreement</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>How to upload:</strong>
+                <ol>
+                    <li>Click the upload box for each document</li>
+                    <li>Take a clear photo or scan</li>
+                    <li>Make sure all text is readable</li>
+                    <li>Click <strong>Upload</strong></li>
+                </ol>
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/05-id-upload.png" alt="ID Upload Section">
+                <div class="screenshot-caption">Screenshot: Identity document upload section with checkmarks</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 2.3 -->
+            <div class="step-header">
+                <h3>Step 2.3: Setup - Credit Monitoring Credentials</h3>
+                <span class="tab-badge">🚀 Setup → Credit Monitoring</span>
+            </div>
+
+            <p>We need access to your credit monitoring account to pull your reports.</p>
+
+            <ol>
+                <li>Select your service from the dropdown</li>
+                <li>Enter your <strong>username</strong></li>
+                <li>Enter your <strong>password</strong></li>
+                <li>Click <strong>Save Credentials</strong></li>
+            </ol>
+
+            <div class="info-box success">
+                <strong>🔒 Your credentials are encrypted and secure.</strong>
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/06-credit-monitoring.png" alt="Credit Monitoring Setup">
+                <div class="screenshot-caption">Screenshot: Credit monitoring credentials form</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 2.4 -->
+            <div class="step-header">
+                <h3>Step 2.4: Sign Your Agreements</h3>
+                <span class="tab-badge">📝 Agreements</span>
+            </div>
+
+            <p>You must sign <strong>7 documents</strong> in order. Each document:</p>
+            <ol>
+                <li>Scroll to the bottom to read the entire document</li>
+                <li>Sign using your finger/mouse OR type your name</li>
+                <li>Click <strong>Sign & Continue</strong></li>
+            </ol>
+
+            <div class="doc-list">
+                <h4>Documents You'll Sign:</h4>
+                <div class="doc-item">
+                    <span class="doc-num">1</span>
+                    <span class="doc-name">Rights Disclosure</span>
+                    <span class="doc-required">✓ Required</span>
+                </div>
+                <div class="doc-item">
+                    <span class="doc-num">2</span>
+                    <span class="doc-name">Service Agreement</span>
+                    <span class="doc-required">✓ Required</span>
+                </div>
+                <div class="doc-item">
+                    <span class="doc-num">3</span>
+                    <span class="doc-name">Cancellation Notice</span>
+                    <span class="doc-required">✓ Required</span>
+                </div>
+                <div class="doc-item">
+                    <span class="doc-num">4</span>
+                    <span class="doc-name">Privacy Policy</span>
+                    <span class="doc-required">✓ Required</span>
+                </div>
+                <div class="doc-item">
+                    <span class="doc-num">5</span>
+                    <span class="doc-name">Fee Schedule</span>
+                    <span class="doc-required">✓ Required</span>
+                </div>
+                <div class="doc-item">
+                    <span class="doc-num">6</span>
+                    <span class="doc-name">Power of Attorney</span>
+                    <span class="doc-required">✓ Required</span>
+                </div>
+                <div class="doc-item">
+                    <span class="doc-num">7</span>
+                    <span class="doc-name">HIPAA Authorization</span>
+                    <span class="doc-optional">Optional</span>
+                </div>
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/07-agreements.png" alt="Agreement Signing">
+                <div class="screenshot-caption">Screenshot: Agreement document with signature area</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 2.5 -->
+            <div class="step-header">
+                <h3>Step 2.5: Cancellation Rights</h3>
+            </div>
+
+            <p>After signing, you'll see a <strong>3-Day Cancellation Notice</strong>.</p>
+
+            <div class="info-box critical">
+                <strong>Important:</strong> You have 3 business days to cancel for a full refund.
+                <ul style="margin-top: 10px;">
+                    <li>The countdown shows when your cancellation period ends</li>
+                    <li>After 3 days, your case begins processing</li>
+                </ul>
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/08-cancellation.png" alt="Cancellation Notice">
+                <div class="screenshot-caption">Screenshot: 3-day cancellation countdown</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 2.6 -->
+            <div class="step-header">
+                <h3>Step 2.6: Make Your First Payment</h3>
+                <span class="tab-badge">🚀 Setup → Payment</span>
+            </div>
+
+            <p>Complete your initial payment to activate your account.</p>
+
+            <div class="info-box">
+                <strong>Pricing Breakdown:</strong>
+                <ul style="margin-top: 10px;">
+                    <li>Analysis Fee: <strong>$199</strong> (credited toward Round 1)</li>
+                    <li>Round 1: <strong>$497</strong> ($298 after $199 credit applied)</li>
+                </ul>
+            </div>
+
+            <ol>
+                <li>Enter your card details</li>
+                <li>Review the amount</li>
+                <li>Click <strong>Pay Now</strong></li>
+            </ol>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/09-payment.png" alt="Payment Form">
+                <div class="screenshot-caption">Screenshot: Payment form with pricing breakdown</div>
+            </div>
+        </div>
+
+        <!-- ==================== STAGE 3 ==================== -->
+        <div class="stage-header">
+            <span class="stage-num">STAGE 3</span>
+            <h2>Active Client Portal</h2>
+        </div>
+
+        <div class="content-section">
+            <p>Once onboarding is complete, you'll have <strong>5 tabs</strong>:</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tab</th>
+                        <th>Icon</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Case</td><td>📊</td><td>Your main dashboard</td></tr>
+                    <tr><td>Documents</td><td>📁</td><td>Upload and download files</td></tr>
+                    <tr><td>Contact</td><td>💬</td><td>Message us or book calls</td></tr>
+                    <tr><td>Journey</td><td>📈</td><td>Your progress timeline</td></tr>
+                    <tr><td>Profile</td><td>👤</td><td>Settings and billing</td></tr>
+                </tbody>
+            </table>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/10-active-nav.png" alt="Active Client Navigation">
+                <div class="screenshot-caption">Screenshot: Full portal navigation for active clients</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 3.1 -->
+            <div class="step-header">
+                <h3>Step 3.1: Case Dashboard</h3>
+                <span class="tab-badge">📊 Case</span>
+            </div>
+
+            <p>Your dashboard shows:</p>
+
+            <h4 style="margin-top: 20px;">Current Round Status</h4>
+            <ul>
+                <li>Which dispute round you're on (1, 2, 3, or 4)</li>
+                <li>Current status (Active, Pending Response, Complete)</li>
+            </ul>
+
+            <h4 style="margin-top: 20px;">Items Being Disputed</h4>
+            <ul>
+                <li>Number of negative items per bureau</li>
+                <li>Equifax | Experian | TransUnion</li>
+            </ul>
+
+            <h4 style="margin-top: 20px;">Recent Activity</h4>
+            <ul>
+                <li>Latest updates on your case</li>
+                <li>What's been sent, what's been received</li>
+            </ul>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/11-case-dashboard.png" alt="Case Dashboard">
+                <div class="screenshot-caption">Screenshot: Main case dashboard with status cards</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 3.2 -->
+            <div class="step-header">
+                <h3>Step 3.2: View Detailed Bureau Status</h3>
+                <span class="tab-badge">📊 Case → "View Details" button</span>
+            </div>
+
+            <p>See each disputed item broken down by bureau:</p>
+
+            <h4 style="margin-top: 20px;">For Each Account You'll See:</h4>
+            <ul>
+                <li>Creditor name and account number (last 4 digits)</li>
+                <li>Account type (Collection, Credit Card, etc.)</li>
+                <li>Balance amount</li>
+                <li>Current status:
+                    <ul style="margin-top: 10px;">
+                        <li><span class="status-badge disputed">📤 DISPUTED</span> - We sent the dispute</li>
+                        <li><span class="status-badge pending">⏳ PENDING</span> - Waiting for response</li>
+                        <li><span class="status-badge deleted">✓ DELETED</span> - Successfully removed!</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/12-bureau-status.png" alt="Bureau Status Detail">
+                <div class="screenshot-caption">Screenshot: Detailed bureau status showing Equifax, Experian, TransUnion sections</div>
+            </div>
+        </div>
+
+        <!-- ==================== STAGE 4 ==================== -->
+        <div class="stage-header">
+            <span class="stage-num">STAGE 4</span>
+            <h2>Your Ongoing Responsibilities</h2>
+        </div>
+
+        <div class="content-section">
+            <!-- Step 4.1 -->
+            <div class="step-header">
+                <h3>Step 4.1: Upload Bureau Responses (CRITICAL!)</h3>
+                <span class="tab-badge">📁 Documents</span>
+            </div>
+
+            <div class="info-box critical">
+                <strong>⚠️ When you receive ANY mail from Equifax, Experian, or TransUnion:</strong>
+            </div>
+
+            <ol>
+                <li>Go to <strong>Documents</strong> tab</li>
+                <li>Click <strong>📩 CRA Response</strong></li>
+                <li>Select which bureau sent it</li>
+                <li>Select which round it's responding to (or "Not Sure")</li>
+                <li>Upload the document</li>
+                <li>Click <strong>Upload</strong></li>
+            </ol>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/13-cra-upload.png" alt="CRA Response Upload">
+                <div class="screenshot-caption">Screenshot: CRA response upload form with bureau selection</div>
+            </div>
+
+            <h4 style="margin-top: 30px;">What to Upload:</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mail Type</th>
+                        <th>Upload?</th>
+                        <th>Why</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Investigation Complete</td><td>✓ YES</td><td>Shows dispute results</td></tr>
+                    <tr><td>Item Deleted</td><td>✓ YES</td><td>Proof of success!</td></tr>
+                    <tr><td>Item Verified</td><td>✓ YES</td><td>We'll prepare next round</td></tr>
+                    <tr><td>Frivolous Letter</td><td>✓ YES</td><td>We'll escalate</td></tr>
+                    <tr><td>Any Bureau Letter</td><td>✓ YES</td><td>All documentation matters</td></tr>
+                </tbody>
+            </table>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 4.2 -->
+            <div class="step-header">
+                <h3>Step 4.2: Download Your Dispute Letters</h3>
+                <span class="tab-badge">📁 Documents</span>
+            </div>
+
+            <p>Your dispute letters are available for download:</p>
+
+            <ol>
+                <li>Find the letter in your document list</li>
+                <li>Click <strong>👁️ Preview</strong> to view in browser</li>
+                <li>Click <strong>⬇️ Download</strong> to save a copy</li>
+            </ol>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/14-documents-list.png" alt="Document Download">
+                <div class="screenshot-caption">Screenshot: Documents list with preview and download buttons</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 4.3 -->
+            <div class="step-header">
+                <h3>Step 4.3: Message Your Case Team</h3>
+                <span class="tab-badge">💬 Contact</span>
+            </div>
+
+            <p>Have a question? Send us a message:</p>
+
+            <ol>
+                <li>Go to <strong>Contact</strong> tab</li>
+                <li>Type your message in the text box</li>
+                <li>Click <strong>Send</strong></li>
+            </ol>
+
+            <div class="info-box">
+                We typically respond within <strong>24 business hours</strong>. Your entire message history is saved for reference.
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/15-messages.png" alt="Messaging">
+                <div class="screenshot-caption">Screenshot: Live messaging interface</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 4.4 -->
+            <div class="step-header">
+                <h3>Step 4.4: Book a Phone Call</h3>
+                <span class="tab-badge">💬 Contact → Book a Call</span>
+            </div>
+
+            <p>Need to speak with someone?</p>
+
+            <ol>
+                <li>Go to <strong>Contact</strong> tab</li>
+                <li>Click <strong>Book a Call</strong></li>
+                <li>Select an available date</li>
+                <li>Select a time slot</li>
+                <li>Click <strong>Confirm Booking</strong></li>
+            </ol>
+
+            <div class="info-box success">
+                You'll receive a confirmation email with call details.
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/16-booking.png" alt="Book a Call">
+                <div class="screenshot-caption">Screenshot: Call booking calendar with available slots</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 4.5 -->
+            <div class="step-header">
+                <h3>Step 4.5: Track Your Progress</h3>
+                <span class="tab-badge">📈 Journey</span>
+            </div>
+
+            <p>See your complete case timeline:</p>
+
+            <p>Each event shows:</p>
+            <ul>
+                <li>📅 Date it happened</li>
+                <li>📝 What happened</li>
+                <li>🏷️ Category (dispute, response, deletion, etc.)</li>
+            </ul>
+
+            <h4 style="margin-top: 20px;">Timeline Colors:</h4>
+            <div class="timeline-legend">
+                <div class="legend-item">
+                    <span class="legend-dot green"></span>
+                    <span><strong>Green</strong> - Success! (deletions, completions)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot yellow"></span>
+                    <span><strong>Yellow</strong> - Action needed from you</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot blue"></span>
+                    <span><strong>Blue</strong> - Information (dispute sent)</span>
+                </div>
+            </div>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/17-timeline.png" alt="Journey Timeline">
+                <div class="screenshot-caption">Screenshot: Visual timeline showing case progress</div>
+            </div>
+        </div>
+
+        <!-- ==================== STAGE 5 ==================== -->
+        <div class="stage-header">
+            <span class="stage-num">STAGE 5</span>
+            <h2>Profile & Settings</h2>
+        </div>
+
+        <div class="content-section">
+            <!-- Step 5.1 -->
+            <div class="step-header">
+                <h3>Step 5.1: Update Your Information</h3>
+                <span class="tab-badge">👤 Profile</span>
+            </div>
+
+            <p>Keep your information current:</p>
+
+            <ul>
+                <li><strong>Contact Info</strong>: Phone, email</li>
+                <li><strong>Mailing Address</strong>: CRITICAL - bureaus mail responses here!</li>
+                <li><strong>Communication Preferences</strong>: Email/SMS notifications</li>
+            </ul>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/18-profile.png" alt="Profile Settings">
+                <div class="screenshot-caption">Screenshot: Profile settings form</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 5.2 -->
+            <div class="step-header">
+                <h3>Step 5.2: Check Credit Freeze Status</h3>
+                <span class="tab-badge">👤 Profile → Bureau Status</span>
+            </div>
+
+            <p>Track your security freezes at all bureaus:</p>
+
+            <h4 style="margin-top: 20px;">Major Bureaus (The Big 3):</h4>
+            <ul>
+                <li>Equifax</li>
+                <li>Experian</li>
+                <li>TransUnion</li>
+            </ul>
+
+            <h4 style="margin-top: 20px;">Secondary Bureaus (9 total):</h4>
+            <ul>
+                <li>Innovis</li>
+                <li>ChexSystems</li>
+                <li>LexisNexis</li>
+                <li>Clarity Services</li>
+                <li>CoreLogic Teletrack</li>
+                <li>Factor Trust</li>
+                <li>MicroBilt/PRBC</li>
+                <li>LexisNexis Risk Solutions</li>
+                <li>DataX Ltd</li>
+            </ul>
+
+            <h4 style="margin-top: 20px;">Status Meanings:</h4>
+            <ul>
+                <li><span class="status-badge frozen">❄️ FROZEN</span> - Freeze is active (good!)</li>
+                <li><span class="status-badge pending">⏳ PENDING</span> - Waiting for confirmation</li>
+                <li style="color: #ef4444;">❌ <strong>NOT FROZEN</strong> - Needs attention</li>
+            </ul>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/19-freeze-status.png" alt="Freeze Status">
+                <div class="screenshot-caption">Screenshot: Bureau freeze status with all 12 bureaus listed</div>
+            </div>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <!-- Step 5.3 -->
+            <div class="step-header">
+                <h3>Step 5.3: View Invoices & Billing</h3>
+                <span class="tab-badge">👤 Profile → Billing</span>
+            </div>
+
+            <p>See your payment history:</p>
+
+            <ul>
+                <li>Invoice date and amount</li>
+                <li>Payment status (Paid, Due, Overdue)</li>
+                <li>Download invoice PDFs</li>
+                <li>Update payment method</li>
+            </ul>
+
+            <div class="screenshot">
+                <img src="../static/images/sop/20-billing.png" alt="Billing">
+                <div class="screenshot-caption">Screenshot: Invoice list with payment status</div>
+            </div>
+        </div>
+
+        <!-- ==================== STAGE 6 ==================== -->
+        <div class="stage-header">
+            <span class="stage-num">STAGE 6</span>
+            <h2>Understanding the Dispute Rounds</h2>
+        </div>
+
+        <div class="content-section">
+            <div class="quick-ref">
+                <div class="quick-ref-card">
+                    <h4>Round 1: Initial Disputes</h4>
+                    <ul>
+                        <li>We analyze your credit reports</li>
+                        <li>Identify all disputable items</li>
+                        <li>Send disputes to all three bureaus</li>
+                        <li>Bureaus have 30-45 days to respond</li>
+                    </ul>
+                    <div class="info-box warning" style="margin-top: 15px; margin-bottom: 0;">
+                        <strong>Your job:</strong> Upload ALL responses you receive!
+                    </div>
+                </div>
+
+                <div class="quick-ref-card">
+                    <h4>Round 2: Follow-Up Disputes</h4>
+                    <ul>
+                        <li>We analyze bureau responses</li>
+                        <li>Items not deleted get re-disputed</li>
+                        <li>Stronger legal language used</li>
+                        <li>Different dispute strategies applied</li>
+                    </ul>
+                    <div class="info-box warning" style="margin-top: 15px; margin-bottom: 0;">
+                        <strong>Your job:</strong> Keep uploading responses!
+                    </div>
+                </div>
+
+                <div class="quick-ref-card">
+                    <h4>Round 3: Escalated Disputes</h4>
+                    <ul>
+                        <li>Direct bureau communication</li>
+                        <li>CFPB complaint preparation</li>
+                        <li>Method of Verification (MOV) requests</li>
+                        <li>Demand for documented proof</li>
+                    </ul>
+                    <div class="info-box warning" style="margin-top: 15px; margin-bottom: 0;">
+                        <strong>Your job:</strong> Continue uploading all mail!
+                    </div>
+                </div>
+
+                <div class="quick-ref-card">
+                    <h4>Round 4: Pre-Litigation</h4>
+                    <ul>
+                        <li>Final demand letters</li>
+                        <li>Attorney review (if applicable)</li>
+                        <li>Settlement negotiation</li>
+                        <li>Litigation preparation if needed</li>
+                    </ul>
+                    <div class="info-box warning" style="margin-top: 15px; margin-bottom: 0;">
+                        <strong>Your job:</strong> Stay responsive and upload everything!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== QUICK REFERENCE ==================== -->
+        <div class="stage-header" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+            <span class="stage-num">QUICK REFERENCE</span>
+            <h2>Helpful Information</h2>
+        </div>
+
+        <div class="content-section">
+            <h3 style="margin-bottom: 20px;">What Do I Upload?</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Received This</th>
+                        <th>Do This</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Letter from Equifax</td><td>Upload as CRA Response → Equifax</td></tr>
+                    <tr><td>Letter from Experian</td><td>Upload as CRA Response → Experian</td></tr>
+                    <tr><td>Letter from TransUnion</td><td>Upload as CRA Response → TransUnion</td></tr>
+                    <tr><td>Collection notice</td><td>Upload as Collection Letter</td></tr>
+                    <tr><td>New credit report</td><td>Upload as Credit Report</td></tr>
+                    <tr><td>Court papers</td><td>Upload as Legal Document</td></tr>
+                    <tr><td>Updated ID</td><td>Upload as ID/Proof</td></tr>
+                </tbody>
+            </table>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <h3 style="margin-bottom: 20px;">Response Timeline</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Timeframe</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Dispute sent</td><td>Day 0</td></tr>
+                    <tr><td>Bureau acknowledgment</td><td>5-10 days</td></tr>
+                    <tr><td>Bureau investigation</td><td>30-45 days</td></tr>
+                    <tr><td>Final response</td><td>30-45 days from dispute</td></tr>
+                    <tr><td>Next round (if needed)</td><td>After responses received</td></tr>
+                </tbody>
+            </table>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <h3 style="margin-bottom: 20px;">Need Help?</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>When to Use</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>💬 Portal Messages</td><td>General questions (24hr response)</td></tr>
+                    <tr><td>📞 Book a Call</td><td>Complex issues, need to talk</td></tr>
+                    <tr><td>📧 Email</td><td>support@brightpathascendgroup.com</td></tr>
+                </tbody>
+            </table>
+
+            <hr style="margin: 40px 0; border: none; border-top: 2px solid #e2e8f0;">
+
+            <h3 style="margin-bottom: 20px;">Install the App</h3>
+            <p>Access your portal faster by installing it on your phone:</p>
+
+            <div class="quick-ref" style="margin-top: 20px;">
+                <div class="quick-ref-card">
+                    <h4>📱 iPhone</h4>
+                    <ol>
+                        <li>Open Safari</li>
+                        <li>Go to the portal</li>
+                        <li>Tap Share button (box with arrow)</li>
+                        <li>Tap "Add to Home Screen"</li>
+                        <li>Tap "Add"</li>
+                    </ol>
+                </div>
+
+                <div class="quick-ref-card">
+                    <h4>📱 Android</h4>
+                    <ol>
+                        <li>Open Chrome</li>
+                        <li>Go to the portal</li>
+                        <li>Tap menu (three dots)</li>
+                        <li>Tap "Add to Home Screen" or "Install App"</li>
+                        <li>Tap "Add"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>Brightpath Ascend Group</strong></p>
+        <p>Last Updated: January 2026</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Call - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; color: white; }
+        .logo h1 { font-size: 1.3rem; }
+        .logo h1 span { color: #22c55e; }
+        .nav { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 30px; display: flex; }
+        .nav-item { padding: 18px 25px; color: #64748b; font-size: 0.95rem; border-bottom: 3px solid transparent; }
+        .nav-item.active { color: #22c55e; border-bottom-color: #22c55e; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .page-title { font-size: 1.4rem; color: #1e293b; margin-bottom: 20px; }
+        .booking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .card-title { font-size: 1.1rem; font-weight: 600; color: #1e293b; margin-bottom: 20px; }
+        .calendar { }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .calendar-month { font-weight: 600; color: #1e293b; }
+        .calendar-nav { display: flex; gap: 8px; }
+        .calendar-nav button { width: 32px; height: 32px; border: 1px solid #e2e8f0; background: white; border-radius: 6px; cursor: pointer; }
+        .calendar-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 10px; }
+        .weekday { text-align: center; font-size: 0.8rem; color: #64748b; font-weight: 500; padding: 8px; }
+        .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .day { text-align: center; padding: 10px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; }
+        .day.other-month { color: #cbd5e1; }
+        .day.today { background: #f1f5f9; font-weight: 600; }
+        .day.available { color: #1e293b; }
+        .day.available:hover { background: #dcfce7; }
+        .day.selected { background: #22c55e; color: white; }
+        .day.unavailable { color: #cbd5e1; cursor: not-allowed; }
+        .time-slots { }
+        .slots-date { font-size: 0.9rem; color: #64748b; margin-bottom: 15px; }
+        .slot-list { display: flex; flex-direction: column; gap: 10px; }
+        .slot { padding: 14px 18px; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
+        .slot:hover { border-color: #22c55e; background: #f0fdf4; }
+        .slot.selected { border-color: #22c55e; background: #dcfce7; }
+        .slot-time { font-weight: 500; color: #1e293b; }
+        .slot-duration { font-size: 0.85rem; color: #64748b; }
+        .btn-book { background: #22c55e; color: white; border: none; padding: 14px 30px; border-radius: 8px; font-size: 1rem; font-weight: 500; cursor: pointer; width: 100%; margin-top: 20px; }
+        .btn-book:disabled { background: #94a3b8; cursor: not-allowed; }
+        .upcoming { margin-top: 25px; }
+        .upcoming-title { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 15px; }
+        .upcoming-item { display: flex; gap: 15px; padding: 15px; background: #f8fafc; border-radius: 10px; }
+        .upcoming-icon { width: 45px; height: 45px; background: #dbeafe; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .upcoming-info { flex: 1; }
+        .upcoming-date { font-weight: 500; color: #1e293b; }
+        .upcoming-time { font-size: 0.85rem; color: #64748b; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="logo"><h1>Brightpath <span>Ascend</span></h1></div></div>
+    <div class="nav">
+        <div class="nav-item">📊 Case</div>
+        <div class="nav-item">📁 Documents</div>
+        <div class="nav-item">💬 Messages</div>
+        <div class="nav-item active">📞 Book Call</div>
+        <div class="nav-item">👤 Profile</div>
+    </div>
+    <div class="container">
+        <h1 class="page-title">📞 Book a Consultation Call</h1>
+
+        <div class="booking-grid">
+            <div class="card">
+                <h3 class="card-title">Select a Date</h3>
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <span class="calendar-month">January 2026</span>
+                        <div class="calendar-nav">
+                            <button>‹</button>
+                            <button>›</button>
+                        </div>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <div class="weekday">Sun</div>
+                        <div class="weekday">Mon</div>
+                        <div class="weekday">Tue</div>
+                        <div class="weekday">Wed</div>
+                        <div class="weekday">Thu</div>
+                        <div class="weekday">Fri</div>
+                        <div class="weekday">Sat</div>
+                    </div>
+                    <div class="calendar-days">
+                        <div class="day other-month">29</div>
+                        <div class="day other-month">30</div>
+                        <div class="day other-month">31</div>
+                        <div class="day unavailable">1</div>
+                        <div class="day unavailable">2</div>
+                        <div class="day unavailable">3</div>
+                        <div class="day unavailable">4</div>
+                        <div class="day unavailable">5</div>
+                        <div class="day unavailable">6</div>
+                        <div class="day unavailable">7</div>
+                        <div class="day unavailable">8</div>
+                        <div class="day unavailable">9</div>
+                        <div class="day unavailable">10</div>
+                        <div class="day unavailable">11</div>
+                        <div class="day unavailable">12</div>
+                        <div class="day today available">13</div>
+                        <div class="day selected">14</div>
+                        <div class="day available">15</div>
+                        <div class="day available">16</div>
+                        <div class="day available">17</div>
+                        <div class="day unavailable">18</div>
+                        <div class="day unavailable">19</div>
+                        <div class="day available">20</div>
+                        <div class="day available">21</div>
+                        <div class="day available">22</div>
+                        <div class="day available">23</div>
+                        <div class="day available">24</div>
+                        <div class="day unavailable">25</div>
+                        <div class="day unavailable">26</div>
+                        <div class="day available">27</div>
+                        <div class="day available">28</div>
+                        <div class="day available">29</div>
+                        <div class="day available">30</div>
+                        <div class="day available">31</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Available Times</h3>
+                <div class="time-slots">
+                    <div class="slots-date">Tuesday, January 14, 2026</div>
+                    <div class="slot-list">
+                        <div class="slot">
+                            <span class="slot-time">9:00 AM</span>
+                            <span class="slot-duration">30 min</span>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-time">10:00 AM</span>
+                            <span class="slot-duration">30 min</span>
+                        </div>
+                        <div class="slot selected">
+                            <span class="slot-time">11:30 AM</span>
+                            <span class="slot-duration">30 min</span>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-time">2:00 PM</span>
+                            <span class="slot-duration">30 min</span>
+                        </div>
+                        <div class="slot">
+                            <span class="slot-time">3:30 PM</span>
+                            <span class="slot-duration">30 min</span>
+                        </div>
+                    </div>
+                    <button class="btn-book">Confirm Booking</button>
+                </div>
+
+                <div class="upcoming">
+                    <h4 class="upcoming-title">Your Upcoming Calls</h4>
+                    <div class="upcoming-item">
+                        <div class="upcoming-icon">📞</div>
+                        <div class="upcoming-info">
+                            <div class="upcoming-date">Thursday, January 16</div>
+                            <div class="upcoming-time">2:00 PM - Case Review with Sarah</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

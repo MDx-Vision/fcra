@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journey Timeline - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; color: white; }
+        .logo h1 { font-size: 1.3rem; }
+        .logo h1 span { color: #22c55e; }
+        .nav { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 30px; display: flex; }
+        .nav-item { padding: 18px 25px; color: #64748b; font-size: 0.95rem; border-bottom: 3px solid transparent; }
+        .nav-item.active { color: #22c55e; border-bottom-color: #22c55e; }
+        .container { max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        .page-title { font-size: 1.4rem; color: #1e293b; margin-bottom: 25px; }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .stat-num { font-size: 2rem; font-weight: 700; color: #22c55e; }
+        .stat-label { font-size: 0.85rem; color: #64748b; margin-top: 5px; }
+        .timeline { position: relative; padding-left: 30px; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+        .timeline-item { position: relative; margin-bottom: 25px; }
+        .timeline-dot { position: absolute; left: -26px; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 0 2px #e2e8f0; }
+        .timeline-dot.complete { background: #22c55e; box-shadow: 0 0 0 2px #22c55e; }
+        .timeline-dot.current { background: #3b82f6; box-shadow: 0 0 0 2px #3b82f6; animation: pulse 2s infinite; }
+        .timeline-dot.pending { background: #e2e8f0; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 2px #3b82f6; } 50% { box-shadow: 0 0 0 6px rgba(59,130,246,0.3); } }
+        .timeline-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .timeline-card.current { border-left: 3px solid #3b82f6; }
+        .timeline-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .timeline-title { font-weight: 600; color: #1e293b; }
+        .timeline-date { font-size: 0.85rem; color: #64748b; }
+        .timeline-desc { font-size: 0.9rem; color: #64748b; line-height: 1.5; }
+        .timeline-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; margin-top: 10px; }
+        .timeline-badge.success { background: #dcfce7; color: #166534; }
+        .timeline-badge.info { background: #dbeafe; color: #1d4ed8; }
+        .timeline-badge.warning { background: #fef3c7; color: #92400e; }
+        .section-header { font-size: 0.9rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin: 30px 0 15px; padding-left: 30px; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="logo"><h1>Brightpath <span>Ascend</span></h1></div></div>
+    <div class="nav">
+        <div class="nav-item">📊 Case</div>
+        <div class="nav-item">📁 Documents</div>
+        <div class="nav-item">💬 Messages</div>
+        <div class="nav-item active">📈 Journey</div>
+        <div class="nav-item">👤 Profile</div>
+    </div>
+    <div class="container">
+        <h1 class="page-title">📈 Your Credit Repair Journey</h1>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-num">3</div>
+                <div class="stat-label">Items Deleted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">12</div>
+                <div class="stat-label">Total Disputed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">+47</div>
+                <div class="stat-label">Score Increase</div>
+            </div>
+        </div>
+
+        <div class="section-header">Current Activity</div>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-dot current"></div>
+                <div class="timeline-card current">
+                    <div class="timeline-header">
+                        <span class="timeline-title">⏳ Awaiting Bureau Responses</span>
+                        <span class="timeline-date">In Progress</span>
+                    </div>
+                    <div class="timeline-desc">
+                        Waiting for responses from Experian and TransUnion. Expected by February 9, 2026.
+                    </div>
+                    <span class="timeline-badge warning">2 of 3 Pending</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">Completed Milestones</div>
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-dot complete"></div>
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <span class="timeline-title">📩 Equifax Response Received</span>
+                        <span class="timeline-date">Jan 12, 2026</span>
+                    </div>
+                    <div class="timeline-desc">
+                        Equifax completed investigation. 1 item deleted, 3 items verified, 0 items updated.
+                    </div>
+                    <span class="timeline-badge success">1 Deletion</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot complete"></div>
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <span class="timeline-title">📤 Round 1 Disputes Sent</span>
+                        <span class="timeline-date">Jan 10, 2026</span>
+                    </div>
+                    <div class="timeline-desc">
+                        Dispute letters sent to all 3 bureaus via certified mail. 12 total items disputed.
+                    </div>
+                    <span class="timeline-badge info">All Bureaus</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot complete"></div>
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <span class="timeline-title">📝 Agreements Signed</span>
+                        <span class="timeline-date">Jan 8, 2026</span>
+                    </div>
+                    <div class="timeline-desc">
+                        All 7 CROA-required documents signed. 3-day cancellation period completed.
+                    </div>
+                    <span class="timeline-badge success">Complete</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot complete"></div>
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <span class="timeline-title">🔍 Credit Analysis Complete</span>
+                        <span class="timeline-date">Jan 7, 2026</span>
+                    </div>
+                    <div class="timeline-desc">
+                        Identified 12 negative items with 8 potential FCRA violations across all bureaus.
+                    </div>
+                    <span class="timeline-badge info">12 Items Found</span>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-dot complete"></div>
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <span class="timeline-title">🚀 Account Created</span>
+                        <span class="timeline-date">Jan 6, 2026</span>
+                    </div>
+                    <div class="timeline-desc">
+                        Welcome to Brightpath Ascend! Your credit repair journey begins.
+                    </div>
+                    <span class="timeline-badge success">Started</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

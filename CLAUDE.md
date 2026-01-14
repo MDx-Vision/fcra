@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-05)
+## Current Status (2026-01-13)
 
 ### Test Status: 100% PASSING
 - **Unit tests**: 5,700+ passing (96 test files, ~150s runtime)
@@ -49,7 +49,85 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 - **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
 
-### Current Work (2026-01-05) - Session: "Test Coverage Analysis & Improvement"
+### Current Work (2026-01-13) - Session: "Client Portal SOP Screenshots"
+
+**Task**: Create unique screenshots for Client Portal SOP Guide
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Created 18 Static HTML Mockups** (`static/sop-mockups/`):
+   - `03-onboarding-nav.html` - Onboarding navigation with 3 tabs
+   - `04-personal-info.html` - Personal information form
+   - `05-id-upload.html` - Identity document upload section
+   - `06-credit-monitoring.html` - Credit monitoring credentials form
+   - `07-agreements.html` - Agreement signing with signature pad
+   - `08-cancellation.html` - 3-day cancellation countdown
+   - `09-payment.html` - Payment form with pricing breakdown
+   - `10-active-nav.html` - Active client navigation (5 tabs)
+   - `11-dashboard.html` - Case dashboard with status cards
+   - `12-bureau-status.html` - Detailed bureau status by account
+   - `13-cra-upload.html` - CRA response upload form
+   - `14-documents-list.html` - Documents library with categories
+   - `15-messages.html` - Live support chat interface
+   - `16-booking.html` - Call booking calendar
+   - `17-timeline.html` - Journey timeline with milestones
+   - `18-profile.html` - Profile settings form
+   - `19-freeze-status.html` - Bureau freeze tracking (12 bureaus)
+   - `20-billing.html` - Billing & invoices page
+
+2. **Captured All 20 Screenshots** using Playwright:
+   - Screenshots 01-02: From live Flask server (signup form, login page)
+   - Screenshots 03-20: From static HTML mockups
+   - All saved to `static/images/sop/` with unique content
+
+3. **Client Portal SOP Guide** (`/portal/guide`):
+   - Complete HTML guide with all 20 embedded screenshots
+   - 5-stage journey overview with visual progress
+   - Step-by-step instructions for every portal feature
+   - Quick reference tables for uploads and timelines
+
+**Files Created**:
+- `static/sop-mockups/*.html` - 18 mockup files
+- `static/images/sop/01-20*.png` - 20 unique screenshots
+- `templates/portal/client_guide.html` - Full SOP guide
+
+**Client Portal Features Documented**:
+- Authentication (login, password reset)
+- Onboarding (setup wizard, ID upload, agreements)
+- Case management (dashboard, bureau status)
+- Document management (upload CRA responses, download letters)
+- Communication (messaging, call booking)
+- Progress tracking (journey timeline)
+- Account settings (profile, freeze status, billing)
+
+---
+
+### Previous Work (2026-01-13) - Session: "Get Started Page Cleanup"
+
+**Task**: Remove white-label code and update SMS opt-in disclosure
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Removed White-Label Code** from `/get-started` page:
+   - Removed `{% include 'includes/whitelabel_branding.html' %}` include
+   - Hardcoded title to "Brightpath Ascend Group"
+   - Simplified logo section (removed 15 lines of Jinja conditionals)
+   - Hardcoded company name to "Brightpath Ascend Group"
+
+2. **Updated SMS Opt-In Disclosure** (TCPA Compliance):
+   - Changed simple checkbox to full legal disclosure
+   - Added: "I agree to receive SMS text messages from Brightpath Ascend Group about my credit repair case at the phone number provided. Message frequency varies. Msg & data rates may apply. Reply STOP to unsubscribe."
+   - Added links to SMS Terms and Privacy Policy
+   - Checkbox aligned to top of multi-line text
+
+**Files Modified**:
+- `templates/get_started.html` - Removed white-label, updated SMS disclosure
+
+---
+
+### Previous Work (2026-01-05) - Session: "Test Coverage Analysis & Improvement"
 
 **Task**: Comprehensive Test Coverage Analysis & Implementation
 

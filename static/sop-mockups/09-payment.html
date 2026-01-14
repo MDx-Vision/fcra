@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(255,255,255,0.05);
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo { display: flex; align-items: center; gap: 12px; color: white; }
+        .logo h1 { font-size: 1.3rem; font-weight: 600; }
+        .logo h1 span { color: #22c55e; }
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .tab {
+            padding: 18px 30px;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active { color: #22c55e; border-bottom-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .card h2 { font-size: 1.3rem; color: #1e293b; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #374151;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .card-icons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .card-icon {
+            background: #f8fafc;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 1.5rem;
+        }
+        .summary-card { background: #f8fafc; }
+        .summary-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .summary-header h3 { color: #64748b; font-size: 0.9rem; margin-bottom: 10px; }
+        .summary-total {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            font-size: 0.95rem;
+        }
+        .summary-line.subtotal { color: #64748b; }
+        .summary-line.credit { color: #22c55e; }
+        .summary-line.total {
+            border-top: 2px solid #e2e8f0;
+            margin-top: 10px;
+            padding-top: 15px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            color: #64748b;
+            font-size: 0.85rem;
+            margin-top: 20px;
+        }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .pricing-note {
+            background: #dbeafe;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><h1>Brightpath <span>Ascend</span></h1></div>
+    </div>
+    <div class="tabs">
+        <div class="tab active">🚀 Setup</div>
+        <div class="tab">📝 Agreements</div>
+        <div class="tab">👤 Profile</div>
+    </div>
+    <div class="container">
+        <div class="payment-grid">
+            <div class="card">
+                <h2>Payment Details</h2>
+                <div class="card-icons">
+                    <span class="card-icon">💳</span>
+                    <span class="card-icon">VISA</span>
+                    <span class="card-icon">MC</span>
+                    <span class="card-icon">AMEX</span>
+                </div>
+                <div class="form-group">
+                    <label>Cardholder Name</label>
+                    <input type="text" placeholder="John Smith">
+                </div>
+                <div class="form-group">
+                    <label>Card Number</label>
+                    <input type="text" placeholder="1234 5678 9012 3456">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Expiration</label>
+                        <input type="text" placeholder="MM/YY">
+                    </div>
+                    <div class="form-group">
+                        <label>CVC</label>
+                        <input type="text" placeholder="123">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Billing ZIP Code</label>
+                    <input type="text" placeholder="10001">
+                </div>
+                <div class="secure-badge">
+                    🔒 Secured by Stripe • 256-bit SSL encryption
+                </div>
+            </div>
+
+            <div class="card summary-card">
+                <div class="summary-header">
+                    <h3>Amount Due Today</h3>
+                    <div class="summary-total">$298</div>
+                </div>
+                <div class="summary-line subtotal">
+                    <span>Round 1 Dispute Fee</span>
+                    <span>$497</span>
+                </div>
+                <div class="summary-line credit">
+                    <span>Analysis Credit Applied</span>
+                    <span>-$199</span>
+                </div>
+                <div class="summary-line total">
+                    <span>Total Due Today</span>
+                    <span>$298</span>
+                </div>
+                <button class="btn-primary">Pay $298 Now</button>
+                <div class="pricing-note">
+                    💡 Your $199 analysis fee has been credited toward Round 1. Future rounds are $297 each.
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

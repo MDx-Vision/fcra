@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Dashboard - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; color: white; }
+        .logo h1 { font-size: 1.3rem; }
+        .logo h1 span { color: #22c55e; }
+        .nav { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 30px; display: flex; }
+        .nav-item { padding: 18px 25px; color: #64748b; font-size: 0.95rem; border-bottom: 3px solid transparent; }
+        .nav-item.active { color: #22c55e; border-bottom-color: #22c55e; }
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .section-title { font-size: 1.2rem; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .round-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .round-badge { background: #22c55e; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 600; }
+        .round-date { color: #64748b; font-size: 0.9rem; }
+        .bureau-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .bureau-card { background: #f8fafc; border-radius: 12px; padding: 20px; text-align: center; }
+        .bureau-name { font-weight: 600; color: #1e293b; margin-bottom: 15px; font-size: 1.1rem; }
+        .bureau-stats { display: flex; justify-content: center; gap: 15px; }
+        .stat { text-align: center; }
+        .stat-num { font-size: 1.8rem; font-weight: 700; }
+        .stat-num.disputed { color: #3b82f6; }
+        .stat-num.deleted { color: #22c55e; }
+        .stat-num.pending { color: #f59e0b; }
+        .stat-label { font-size: 0.75rem; color: #64748b; }
+        .activity-list { }
+        .activity-item { display: flex; align-items: flex-start; gap: 15px; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .activity-icon.sent { background: #dbeafe; }
+        .activity-icon.received { background: #dcfce7; }
+        .activity-icon.deleted { background: #fef3c7; }
+        .activity-content { flex: 1; }
+        .activity-title { font-weight: 500; color: #1e293b; margin-bottom: 4px; }
+        .activity-desc { font-size: 0.85rem; color: #64748b; }
+        .activity-date { font-size: 0.8rem; color: #94a3b8; }
+        .btn-view { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 8px; color: #475569; cursor: pointer; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="logo"><h1>Brightpath <span>Ascend</span></h1></div></div>
+    <div class="nav">
+        <div class="nav-item active">📊 Case</div>
+        <div class="nav-item">📁 Documents</div>
+        <div class="nav-item">💬 Contact</div>
+        <div class="nav-item">📈 Journey</div>
+        <div class="nav-item">👤 Profile</div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="round-header">
+                <div>
+                    <h2 class="section-title">📊 Current Round Status</h2>
+                </div>
+                <div style="text-align: right;">
+                    <span class="round-badge">Round 1 Active</span>
+                    <div class="round-date">Started: January 10, 2026</div>
+                </div>
+            </div>
+            <div class="bureau-grid">
+                <div class="bureau-card">
+                    <div class="bureau-name">Equifax</div>
+                    <div class="bureau-stats">
+                        <div class="stat">
+                            <div class="stat-num disputed">4</div>
+                            <div class="stat-label">Disputed</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num deleted">1</div>
+                            <div class="stat-label">Deleted</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num pending">3</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bureau-card">
+                    <div class="bureau-name">Experian</div>
+                    <div class="bureau-stats">
+                        <div class="stat">
+                            <div class="stat-num disputed">5</div>
+                            <div class="stat-label">Disputed</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num deleted">1</div>
+                            <div class="stat-label">Deleted</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num pending">4</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bureau-card">
+                    <div class="bureau-name">TransUnion</div>
+                    <div class="bureau-stats">
+                        <div class="stat">
+                            <div class="stat-num disputed">3</div>
+                            <div class="stat-label">Disputed</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num deleted">1</div>
+                            <div class="stat-label">Deleted</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-num pending">2</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h2 class="section-title">📋 Recent Activity</h2>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon deleted">✓</div>
+                    <div class="activity-content">
+                        <div class="activity-title">Item Deleted - Capital One Collection</div>
+                        <div class="activity-desc">Equifax confirmed deletion of account ending in 4532</div>
+                    </div>
+                    <div class="activity-date">Today</div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon received">📩</div>
+                    <div class="activity-content">
+                        <div class="activity-title">Response Received - Experian</div>
+                        <div class="activity-desc">Investigation complete letter uploaded</div>
+                    </div>
+                    <div class="activity-date">Jan 12</div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon sent">📤</div>
+                    <div class="activity-content">
+                        <div class="activity-title">Disputes Sent - All Bureaus</div>
+                        <div class="activity-desc">Round 1 dispute letters mailed via certified mail</div>
+                    </div>
+                    <div class="activity-date">Jan 10</div>
+                </div>
+            </div>
+            <button class="btn-view" style="margin-top: 15px;">View All Activity →</button>
+        </div>
+    </div>
+</body>
+</html>

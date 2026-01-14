@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Monitoring Setup - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(255,255,255,0.05);
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo { display: flex; align-items: center; gap: 12px; color: white; }
+        .logo h1 { font-size: 1.3rem; font-weight: 600; }
+        .logo h1 span { color: #22c55e; }
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .tab {
+            padding: 18px 30px;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            border-bottom: 3px solid transparent;
+        }
+        .tab.active { color: #22c55e; border-bottom-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .container { max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .card-header { margin-bottom: 25px; text-align: center; }
+        .card-header h2 { font-size: 1.4rem; color: #1e293b; margin-bottom: 8px; }
+        .card-header p { color: #64748b; font-size: 0.95rem; }
+        .service-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 20px;
+        }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #374151;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+        }
+        .password-field {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        .security-notice {
+            background: #dcfce7;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .security-notice .icon { font-size: 1.5rem; }
+        .security-notice .text { font-size: 0.85rem; color: #166534; }
+        .security-notice .text strong { display: block; margin-bottom: 4px; }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+        }
+        .help-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .help-text a { color: #3b82f6; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><h1>Brightpath <span>Ascend</span></h1></div>
+    </div>
+    <div class="tabs">
+        <div class="tab active">🚀 Setup</div>
+        <div class="tab">📝 Agreements</div>
+        <div class="tab">👤 Profile</div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="service-icon">📊</div>
+                <h2>Credit Monitoring Credentials</h2>
+                <p>We need access to pull your credit reports</p>
+            </div>
+
+            <div class="form-group">
+                <label>Credit Monitoring Service</label>
+                <select>
+                    <option>Select your service...</option>
+                    <option selected>IdentityIQ</option>
+                    <option>MyScoreIQ</option>
+                    <option>SmartCredit</option>
+                    <option>Privacy Guard</option>
+                    <option>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Username / Email</label>
+                <input type="text" placeholder="Your login username or email">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <div class="password-field">
+                    <input type="password" placeholder="Your account password">
+                    <button class="password-toggle">👁</button>
+                </div>
+            </div>
+
+            <div class="security-notice">
+                <span class="icon">🔒</span>
+                <div class="text">
+                    <strong>Your credentials are encrypted and secure</strong>
+                    We use bank-level AES-256 encryption. Your password is never stored in plain text and is only used to pull your credit reports.
+                </div>
+            </div>
+
+            <button class="btn-primary">Save Credentials →</button>
+
+            <div class="help-text">
+                Don't have a credit monitoring account? <a href="#">Sign up for IdentityIQ</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

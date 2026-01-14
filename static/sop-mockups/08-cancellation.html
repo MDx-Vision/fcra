@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancellation Period - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 550px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 25px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+        .subtitle {
+            color: #64748b;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .countdown {
+            background: #fef3c7;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .countdown-label {
+            color: #92400e;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .time-block {
+            text-align: center;
+        }
+        .time-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #92400e;
+            line-height: 1;
+        }
+        .time-label {
+            font-size: 0.8rem;
+            color: #b45309;
+            margin-top: 5px;
+        }
+        .divider {
+            font-size: 2rem;
+            color: #d97706;
+            align-self: flex-start;
+        }
+        .end-date {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .end-date span {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .end-date strong {
+            color: #1e293b;
+            display: block;
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+        .info-list {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .info-item:last-child { border-bottom: none; }
+        .info-icon {
+            width: 24px;
+            height: 24px;
+            background: #dcfce7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .info-text {
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.5;
+        }
+        .btn-cancel {
+            background: transparent;
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .btn-continue {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">⏰</div>
+        <h1>3-Day Cancellation Period</h1>
+        <p class="subtitle">You have 3 business days to cancel for a full refund. After this period, your case will begin processing.</p>
+
+        <div class="countdown">
+            <div class="countdown-label">Time Remaining</div>
+            <div class="countdown-timer">
+                <div class="time-block">
+                    <div class="time-value">2</div>
+                    <div class="time-label">Days</div>
+                </div>
+                <span class="divider">:</span>
+                <div class="time-block">
+                    <div class="time-value">14</div>
+                    <div class="time-label">Hours</div>
+                </div>
+                <span class="divider">:</span>
+                <div class="time-block">
+                    <div class="time-value">32</div>
+                    <div class="time-label">Minutes</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="end-date">
+            <span>Cancellation period ends:</span>
+            <strong>Wednesday, January 15, 2026 at 5:00 PM EST</strong>
+        </div>
+
+        <div class="info-list">
+            <div class="info-item">
+                <span class="info-icon">✓</span>
+                <span class="info-text">Full refund if you cancel within this period</span>
+            </div>
+            <div class="info-item">
+                <span class="info-icon">✓</span>
+                <span class="info-text">Your case processing begins after the period ends</span>
+            </div>
+            <div class="info-item">
+                <span class="info-icon">✓</span>
+                <span class="info-text">This is required by the Credit Repair Organizations Act</span>
+            </div>
+        </div>
+
+        <button class="btn-cancel">Cancel My Service</button>
+        <button class="btn-continue">Continue to Portal →</button>
+    </div>
+</body>
+</html>

@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Started - Free Credit Report Analysis | {{ whitelabel_branding.organization_name if whitelabel_branding and whitelabel_branding.organization_name else 'Brightpath Ascend Group' }}</title>
+    <title>Get Started - Free Credit Report Analysis | Brightpath Ascend Group</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    {% include 'includes/whitelabel_branding.html' ignore missing %}
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -410,21 +409,8 @@
     <div class="container">
         <header class="header">
             <div class="logo">
-                {% if whitelabel_branding and whitelabel_branding.logo_url %}
-                <img src="{{ whitelabel_branding.logo_url }}" alt="{{ whitelabel_branding.organization_name|default('Logo', true) }}" onerror="this.style.display='none'">
-                {% else %}
                 <img src="/static/images/logo.png" alt="Brightpath Ascend Group" onerror="this.style.display='none'">
-                {% endif %}
-                {% if whitelabel_branding and whitelabel_branding.organization_name %}
-                {% set name_parts = whitelabel_branding.organization_name.split(' ') %}
-                {% if name_parts|length > 1 %}
-                <h1>{{ name_parts[:-1]|join(' ') }} <span style="color: {{ whitelabel_branding.accent_color or '#84cc16' }}">{{ name_parts[-1] }}</span></h1>
-                {% else %}
-                <h1>{{ whitelabel_branding.organization_name }}</h1>
-                {% endif %}
-                {% else %}
                 <h1>Brightpath <span>Ascend</span> Group</h1>
-                {% endif %}
             </div>
             <p class="tagline">Discover errors on your credit report and take the first step toward financial freedom.</p>
         </header>
@@ -475,10 +461,12 @@
                 </div>
 
                 <!-- Communication Preferences -->
-                <div class="form-group" style="display: flex; flex-direction: column; gap: 8px;">
-                    <label style="display: flex; align-items: center; cursor: pointer; font-weight: 400;">
-                        <input type="checkbox" name="sms_opt_in" id="smsOptIn" style="width: 18px; height: 18px; margin-right: 10px; accent-color: #22c55e;" data-testid="sms-opt-in-checkbox">
-                        <span style="font-size: 14px; color: #374151;">Send me text updates about my case</span>
+                <div class="form-group" style="display: flex; flex-direction: column; gap: 12px;">
+                    <label style="display: flex; align-items: flex-start; cursor: pointer; font-weight: 400;">
+                        <input type="checkbox" name="sms_opt_in" id="smsOptIn" style="width: 18px; height: 18px; margin-right: 10px; margin-top: 2px; accent-color: #22c55e; flex-shrink: 0;" data-testid="sms-opt-in-checkbox">
+                        <span style="font-size: 13px; color: #374151; line-height: 1.5;">
+                            I agree to receive SMS text messages from Brightpath Ascend Group about my credit repair case at the phone number provided. Message frequency varies. Msg & data rates may apply. Reply STOP to unsubscribe. <a href="/sms-terms" style="color: #3b82f6;">SMS Terms</a> <a href="/privacy" style="color: #3b82f6;">Privacy Policy</a>
+                        </span>
                     </label>
                     <label style="display: flex; align-items: center; cursor: pointer; font-weight: 400;">
                         <input type="checkbox" name="email_opt_in" id="emailOptIn" checked style="width: 18px; height: 18px; margin-right: 10px; accent-color: #22c55e;" data-testid="email-opt-in-checkbox">

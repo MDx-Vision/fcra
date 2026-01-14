@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Information - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(255,255,255,0.05);
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+        .logo h1 { font-size: 1.3rem; font-weight: 600; }
+        .logo h1 span { color: #22c55e; }
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .tab {
+            padding: 18px 30px;
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab.active {
+            color: #22c55e;
+            border-bottom-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            margin-bottom: 25px;
+        }
+        .card-header h2 {
+            font-size: 1.4rem;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .card-header p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+        .form-section {
+            margin-bottom: 25px;
+        }
+        .form-section h3 {
+            font-size: 1rem;
+            color: #475569;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #374151;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #22c55e;
+            box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 15px;
+        }
+        .required::after {
+            content: " *";
+            color: #ef4444;
+        }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .btn-primary:hover {
+            background: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1>Brightpath <span>Ascend</span></h1>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active">🚀 Setup</div>
+        <div class="tab">📝 Agreements</div>
+        <div class="tab">👤 Profile</div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Personal Information</h2>
+                <p>Please provide your details exactly as they appear on your ID</p>
+            </div>
+
+            <div class="form-section">
+                <h3>Basic Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Full Legal Name</label>
+                        <input type="text" placeholder="John Michael Smith">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">Date of Birth</label>
+                        <input type="text" placeholder="MM/DD/YYYY">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">SSN (Last 4 Digits)</label>
+                        <input type="text" placeholder="1234" maxlength="4">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" placeholder="(555) 123-4567">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Current Address</h3>
+                <div class="form-group">
+                    <label class="required">Street Address</label>
+                    <input type="text" placeholder="123 Main Street, Apt 4B">
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label class="required">City</label>
+                        <input type="text" placeholder="New York">
+                    </div>
+                    <div class="form-group">
+                        <label class="required">State</label>
+                        <select>
+                            <option>Select...</option>
+                            <option>NY</option>
+                            <option>CA</option>
+                            <option>TX</option>
+                            <option>FL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">ZIP Code</label>
+                        <input type="text" placeholder="10001">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Previous Address (if moved in last 2 years)</h3>
+                <div class="form-group">
+                    <label>Street Address</label>
+                    <input type="text" placeholder="456 Oak Avenue">
+                </div>
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" placeholder="Los Angeles">
+                    </div>
+                    <div class="form-group">
+                        <label>State</label>
+                        <select><option>Select...</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>ZIP Code</label>
+                        <input type="text" placeholder="90001">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-primary">Save & Continue →</button>
+        </div>
+    </div>
+</body>
+</html>

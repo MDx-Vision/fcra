@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents - Brightpath Ascend</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; min-height: 100vh; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px 30px; color: white; }
+        .logo h1 { font-size: 1.3rem; }
+        .logo h1 span { color: #22c55e; }
+        .nav { background: white; border-bottom: 1px solid #e2e8f0; padding: 0 30px; display: flex; }
+        .nav-item { padding: 18px 25px; color: #64748b; font-size: 0.95rem; border-bottom: 3px solid transparent; }
+        .nav-item.active { color: #22c55e; border-bottom-color: #22c55e; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .page-title { font-size: 1.4rem; color: #1e293b; }
+        .btn-upload { background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .tabs-row { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 8px 16px; border: 1px solid #e2e8f0; background: white; border-radius: 20px; font-size: 0.85rem; color: #64748b; cursor: pointer; }
+        .tab-btn.active { background: #1e293b; color: white; border-color: #1e293b; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; }
+        .doc-list { }
+        .doc-item { display: flex; align-items: center; gap: 15px; padding: 18px 25px; border-bottom: 1px solid #f1f5f9; }
+        .doc-item:last-child { border-bottom: none; }
+        .doc-item:hover { background: #f8fafc; }
+        .doc-icon { width: 45px; height: 45px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+        .doc-icon.letter { background: #dbeafe; }
+        .doc-icon.response { background: #dcfce7; }
+        .doc-icon.id { background: #fef3c7; }
+        .doc-icon.agreement { background: #f3e8ff; }
+        .doc-info { flex: 1; }
+        .doc-name { font-weight: 500; color: #1e293b; margin-bottom: 4px; }
+        .doc-meta { font-size: 0.85rem; color: #64748b; }
+        .doc-actions { display: flex; gap: 10px; }
+        .btn-action { padding: 8px 14px; border: 1px solid #e2e8f0; background: white; border-radius: 6px; font-size: 0.85rem; color: #475569; cursor: pointer; }
+        .btn-action:hover { background: #f8fafc; }
+        .btn-action.primary { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+        .empty-state { text-align: center; padding: 50px; color: #64748b; }
+        .category-header { padding: 12px 25px; background: #f8fafc; font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+    <div class="header"><div class="logo"><h1>Brightpath <span>Ascend</span></h1></div></div>
+    <div class="nav">
+        <div class="nav-item">📊 Case</div>
+        <div class="nav-item active">📁 Documents</div>
+        <div class="nav-item">💬 Messages</div>
+        <div class="nav-item">📈 Journey</div>
+        <div class="nav-item">👤 Profile</div>
+    </div>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">📁 My Documents</h1>
+            <button class="btn-upload">📤 Upload New</button>
+        </div>
+
+        <div class="tabs-row">
+            <button class="tab-btn active">All Documents</button>
+            <button class="tab-btn">Dispute Letters</button>
+            <button class="tab-btn">CRA Responses</button>
+            <button class="tab-btn">ID Documents</button>
+            <button class="tab-btn">Agreements</button>
+        </div>
+
+        <div class="card">
+            <div class="category-header">Dispute Letters</div>
+            <div class="doc-list">
+                <div class="doc-item">
+                    <div class="doc-icon letter">📤</div>
+                    <div class="doc-info">
+                        <div class="doc-name">Round 1 Dispute Letter - Equifax</div>
+                        <div class="doc-meta">Sent Jan 10, 2026 • PDF • 245 KB</div>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action primary">View</button>
+                        <button class="btn-action">Download</button>
+                    </div>
+                </div>
+                <div class="doc-item">
+                    <div class="doc-icon letter">📤</div>
+                    <div class="doc-info">
+                        <div class="doc-name">Round 1 Dispute Letter - Experian</div>
+                        <div class="doc-meta">Sent Jan 10, 2026 • PDF • 238 KB</div>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action primary">View</button>
+                        <button class="btn-action">Download</button>
+                    </div>
+                </div>
+                <div class="doc-item">
+                    <div class="doc-icon letter">📤</div>
+                    <div class="doc-info">
+                        <div class="doc-name">Round 1 Dispute Letter - TransUnion</div>
+                        <div class="doc-meta">Sent Jan 10, 2026 • PDF • 241 KB</div>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action primary">View</button>
+                        <button class="btn-action">Download</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-header">CRA Responses</div>
+            <div class="doc-list">
+                <div class="doc-item">
+                    <div class="doc-icon response">📩</div>
+                    <div class="doc-info">
+                        <div class="doc-name">Equifax Investigation Results</div>
+                        <div class="doc-meta">Received Jan 12, 2026 • PDF • 1.2 MB</div>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action primary">View</button>
+                        <button class="btn-action">Download</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-header">Signed Agreements</div>
+            <div class="doc-list">
+                <div class="doc-item">
+                    <div class="doc-icon agreement">📝</div>
+                    <div class="doc-info">
+                        <div class="doc-name">Service Agreement</div>
+                        <div class="doc-meta">Signed Jan 8, 2026 • PDF • 156 KB</div>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action primary">View</button>
+                        <button class="btn-action">Download</button>
+                    </div>
+                </div>
+                <div class="doc-item">
+                    <div class="doc-icon agreement">📝</div>
+                    <div class="doc-info">
+                        <div class="doc-name">Rights Disclosure</div>
+                        <div class="doc-meta">Signed Jan 8, 2026 • PDF • 89 KB</div>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="btn-action primary">View</button>
+                        <button class="btn-action">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
