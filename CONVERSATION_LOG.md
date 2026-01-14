@@ -2,7 +2,113 @@
 
 > This file tracks our development sessions and key decisions for continuity.
 >
-> **Last Updated**: 2026-01-05
+> **Last Updated**: 2026-01-13
+
+---
+
+## Session: 2026-01-13 - "Client Portal SOP Screenshots"
+
+### Task Overview
+Create unique, real screenshots for all 20 images in the Client Portal SOP Guide. Previously, screenshots were duplicates/placeholders.
+
+### Solution Approach
+Created static HTML mockup files to bypass database connection issues, then captured screenshots using Playwright browser automation.
+
+### Files Created
+
+#### Static HTML Mockups (`static/sop-mockups/`)
+| File | Description |
+|------|-------------|
+| `03-onboarding-nav.html` | Onboarding navigation with 3 tabs |
+| `04-personal-info.html` | Personal information form |
+| `05-id-upload.html` | Identity document upload section |
+| `06-credit-monitoring.html` | Credit monitoring credentials form |
+| `07-agreements.html` | Agreement signing with signature pad |
+| `08-cancellation.html` | 3-day cancellation countdown |
+| `09-payment.html` | Payment form with pricing breakdown |
+| `10-active-nav.html` | Active client navigation (5 tabs) |
+| `11-case-dashboard.html` | Case dashboard with status cards |
+| `12-bureau-status.html` | Detailed bureau status by account |
+| `13-cra-upload.html` | CRA response upload form |
+| `14-documents-list.html` | Documents library with categories |
+| `15-messages.html` | Live support chat interface |
+| `16-booking.html` | Call booking calendar |
+| `17-timeline.html` | Journey timeline with milestones |
+| `18-profile.html` | Profile settings form |
+| `19-freeze-status.html` | Bureau freeze tracking (12 bureaus) |
+| `20-billing.html` | Billing & invoices page |
+
+#### Screenshots (`static/images/sop/`)
+All 20 screenshots captured with unique content:
+- `01-signup-form.png` - From live Flask server
+- `02-login-page.png` - From live Flask server
+- `03-20*.png` - From static HTML mockups
+
+### Client Portal SOP Guide (`/portal/guide`)
+Complete HTML guide featuring:
+- 5-stage journey overview with visual progress
+- All 20 screenshots embedded with captions
+- Step-by-step instructions for every feature
+- Quick reference tables
+- Mobile app installation instructions
+
+### Why This Matters
+1. **Client Training** - Visual guide helps clients understand the portal
+2. **Self-Service Help** - Reduces support tickets
+3. **Onboarding Tool** - Can be sent to new clients
+4. **Documentation** - Screenshots independent of live database
+
+### Commit
+`14613f8` - "Add Client Portal SOP Guide with 20 unique screenshots"
+
+---
+
+## Session: 2026-01-13 - "Get Started Page Cleanup"
+
+### Task Overview
+Remove white-label code from get-started page and update SMS opt-in disclosure for TCPA compliance.
+
+### Changes Made
+
+#### 1. Removed White-Label Code from `/get-started`
+- Removed `{% include 'includes/whitelabel_branding.html' %}` include
+- Hardcoded page title to "Brightpath Ascend Group"
+- Simplified logo section - removed 15 lines of Jinja conditionals
+- Hardcoded company name "Brightpath Ascend Group" with "Ascend" highlighted in green
+
+**Before:**
+```html
+{% if whitelabel_branding and whitelabel_branding.logo_url %}
+<img src="{{ whitelabel_branding.logo_url }}" ...>
+{% else %}
+<img src="/static/images/logo.png" ...>
+{% endif %}
+{% if whitelabel_branding and whitelabel_branding.organization_name %}
+...15 lines of conditionals...
+{% endif %}
+```
+
+**After:**
+```html
+<img src="/static/images/logo.png" alt="Brightpath Ascend Group" onerror="this.style.display='none'">
+<h1>Brightpath <span>Ascend</span> Group</h1>
+```
+
+#### 2. Updated SMS Opt-In Disclosure (TCPA Compliance)
+- Changed simple "Send me text updates about my case" to full legal disclosure
+- New text: "I agree to receive SMS text messages from Brightpath Ascend Group about my credit repair case at the phone number provided. Message frequency varies. Msg & data rates may apply. Reply STOP to unsubscribe."
+- Added links to SMS Terms (`/sms-terms`) and Privacy Policy (`/privacy`)
+- Checkbox aligned to top of multi-line text for better UX
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `templates/get_started.html` | Removed white-label, updated SMS disclosure |
+
+### Why These Changes Matter
+1. **Simplified codebase** - No need to maintain white-label logic on this specific page
+2. **TCPA Compliance** - Full SMS disclosure protects against $500-$1,500 per message penalties
+3. **Cleaner template** - ~20 lines of Jinja conditionals removed
 
 ---
 
