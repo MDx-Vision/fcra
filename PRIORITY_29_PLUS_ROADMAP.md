@@ -384,12 +384,65 @@ Features are prioritized based on:
 
 ---
 
+## Priority 41: Additional Payment Methods (PayPal, Venmo, Zelle)
+
+**Status**: Proposed
+**Effort**: Medium
+**Dependencies**: Stripe already integrated, Affirm BNPL complete
+
+### Description
+Add popular alternative payment methods to increase conversion rates and accommodate client preferences.
+
+### Features
+- [ ] PayPal checkout integration
+- [ ] Venmo (via PayPal/Braintree)
+- [ ] Zelle instructions display (manual verification)
+- [ ] Cash App instructions display (manual verification)
+- [ ] Payment method selector in onboarding
+- [ ] Admin payment verification for manual methods
+
+### Technical Approach
+
+**PayPal/Venmo (Automated)**:
+- PayPal Checkout SDK or Braintree integration
+- Venmo available through PayPal business account
+- Instant confirmation via webhooks
+- ~2.9% + $0.30 per transaction
+
+**Zelle/Cash App (Manual)**:
+- Display company Zelle email/phone
+- Display Cash App $cashtag
+- Client submits confirmation number
+- Staff verifies and approves payment
+- Lower fees but requires manual work
+
+### Implementation Steps
+1. [ ] Create PayPal business account
+2. [ ] Integrate PayPal Checkout SDK
+3. [ ] Add payment method selector to onboarding UI
+4. [ ] Create manual payment verification workflow
+5. [ ] Add admin UI for payment approval
+6. [ ] Update payment receipts/emails
+
+### Fee Comparison
+| Method | Fee | Automation |
+|--------|-----|------------|
+| Credit Card (Stripe) | 2.9% + $0.30 | Full |
+| ACH (Stripe) | 0.8% (max $5) | Full |
+| PayPal | 2.9% + $0.30 | Full |
+| Venmo | 1.9% + $0.10 | Full |
+| Zelle | Free | Manual |
+| Cash App | Free (personal) | Manual |
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | 2026-01-18 | Added P41: PayPal, Venmo, Zelle |
 | 1.0 | 2026-01-09 | Initial roadmap with P29-P40 |
 
 ---
 
-*Last Updated: 2026-01-09*
+*Last Updated: 2026-01-18*
