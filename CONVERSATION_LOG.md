@@ -2,7 +2,72 @@
 
 > This file tracks our development sessions and key decisions for continuity.
 >
-> **Last Updated**: 2026-01-05
+> **Last Updated**: 2026-01-18
+
+---
+
+## Session: 2026-01-18 - "Portal UX Improvements"
+
+### Task Overview
+Added signup link to client portal login page so new users can discover the registration flow.
+
+### What Was Done
+- Identified gap: `/portal/login` had no link to signup form
+- Added "New here? Get your free credit analysis" link
+- Links to existing `/get-started` signup form
+- Added `data-testid="signup-link"` for Cypress testing
+
+### Files Modified
+| File | Action |
+|------|--------|
+| `templates/portal_login.html` | MODIFIED - Added signup link section |
+
+### Commits
+- `c49bb93` - feat: Add signup link to client portal login page
+
+### Test Status
+- 5,725 unit tests passing ✅
+- No regressions
+
+---
+
+## Session: 2026-01-18 - "Unit Test Fixes"
+
+### Task Overview
+Fixed 32 failing unit tests caused by incorrect mock paths and missing functions.
+
+### Root Cause Analysis
+Tests were mocking functions at the wrong module level. When functions are imported locally inside methods, mocks must target the source module, not the calling module.
+
+### Fixes Applied
+| Service | Issue | Fix |
+|---------|-------|-----|
+| push_notification_service | Wrong mock path for `get_db` | `database.get_db` |
+| stripe_webhooks_service | Wrong mock path for email functions | `services.email_service.*` |
+| scheduled_jobs_service | Missing `log_milestone` function | Added to timeline_service |
+| client_payment_service | Wrong mock path for stripe client | `services.stripe_client.*` |
+| ai_dispute_writer_service | Wrong mock path for Anthropic | `anthropic.Anthropic` |
+
+### Bug Fixes
+- `push_notification_service.py`: Fixed Android detection (check before Linux)
+- `timeline_service.py`: Added missing `log_milestone()` function
+
+### Files Modified
+| File | Action |
+|------|--------|
+| `services/push_notification_service.py` | MODIFIED - Android detection fix |
+| `services/timeline_service.py` | MODIFIED - Added log_milestone() |
+| `tests/test_push_notification_service.py` | MODIFIED - Fixed 12 mock paths |
+| `tests/test_stripe_webhooks_service.py` | MODIFIED - Fixed 7 mock paths |
+| `tests/test_scheduled_jobs_service.py` | MODIFIED - Fixed 4 mock paths |
+| + 6 more test files | MODIFIED - Various mock path fixes |
+
+### Commits
+- `65339e1` - fix: Fix 32 failing unit tests - all 5725 tests now passing
+
+### Test Status
+- 5,725 unit tests passing ✅ (was 5,693)
+- 9 skipped (intentional)
 
 ---
 
