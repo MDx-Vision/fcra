@@ -2,6 +2,22 @@
 
 ## Session: 2026-01-18
 
+### Portal UX Improvements
+- **Status:** ✅ COMPLETE
+- **Started:** 2026-01-18
+
+- Actions taken:
+  - Added signup link to client portal login page (`/portal/login`)
+  - New link: "New here? Get your free credit analysis" → `/get-started`
+  - Added `data-testid="signup-link"` for Cypress testing
+
+- Files modified:
+  - `templates/portal_login.html` - Added signup link section
+
+- **Commit**: `c49bb93` - Pushed to main
+
+---
+
 ### Unit Test Fixes
 - **Status:** ✅ COMPLETE
 - **Started:** 2026-01-18

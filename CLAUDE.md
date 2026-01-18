@@ -50,7 +50,25 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 - **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
 
-### Current Work (2026-01-18) - Session: "Unit Test Fixes"
+### Current Work (2026-01-18) - Session: "Portal UX Improvements"
+
+**Task**: Add Signup Link to Client Portal Login
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+- Added "New here? Get your free credit analysis" link to `/portal/login`
+- Links to existing `/get-started` signup form
+- Includes `data-testid="signup-link"` for Cypress testing
+
+**File Modified**:
+- `templates/portal_login.html` - Added signup link section
+
+**Commit**: `c49bb93` - "feat: Add signup link to client portal login page"
+
+---
+
+### Previous Work (2026-01-18) - Session: "Unit Test Fixes"
 
 **Task**: Fix 32 Failing Unit Tests
 
