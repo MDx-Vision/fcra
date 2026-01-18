@@ -1,14 +1,15 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-05)
+## Current Status (2026-01-18)
 
-### Test Status: 100% PASSING
-- **Unit tests**: 5,700+ passing (96 test files, ~150s runtime)
+### Test Status: 100% PASSING ✅
+- **Unit tests**: 5,725 passing (96 test files, ~35s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Integration tests**: 2 test files (tests/integration/)
 - **Full QA suite**: All tests pass
 - **Service coverage**: 86/86 services have dedicated test files (100%)
+- **Skipped tests**: 9 (intentional - environment-specific)
 
 ### Feature Phases
 - Phase 1: Core Platform ✅
@@ -49,7 +50,60 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 - **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
 
-### Current Work (2026-01-05) - Session: "Test Coverage Analysis & Improvement"
+### Current Work (2026-01-18) - Session: "Unit Test Fixes"
+
+**Task**: Fix 32 Failing Unit Tests
+
+**Status**: ✅ COMPLETE
+
+**What Was Done**:
+1. **Fixed Mock Path Issues** (most common problem):
+   - Tests were mocking functions at the wrong module level
+   - When functions are imported locally inside methods, mocks must target the source module
+   - Pattern: `services.X.function` → `source_module.function`
+
+2. **Specific Mock Path Fixes**:
+   | Service | Wrong Path | Correct Path |
+   |---------|------------|--------------|
+   | push_notification_service | `services.push_notification_service.get_db` | `database.get_db` |
+   | push_notification_service | `services.push_notification_service.PushSubscription` | `database.PushSubscription` |
+   | stripe_webhooks_service | `services.stripe_webhooks_service.send_payment_failed_email` | `services.email_service.send_payment_failed_email` |
+   | stripe_webhooks_service | `services.stripe_webhooks_service.PREPAY_PACKAGES` | `services.client_payment_service.PREPAY_PACKAGES` |
+   | stripe_webhooks_service | `services.stripe_webhooks_service.get_timeline_service` | `services.timeline_service.get_timeline_service` |
+   | scheduled_jobs_service | `services.scheduled_jobs_service.log_milestone` | `services.timeline_service.log_milestone` |
+   | client_payment_service | `services.client_payment_service.get_stripe_client` | `services.stripe_client.get_stripe_client` |
+   | ai_dispute_writer_service | `services.ai_dispute_writer_service.Anthropic` | `anthropic.Anthropic` |
+
+3. **Bug Fixes**:
+   - `push_notification_service.py`: Fixed `_parse_device_name` to check Android before Linux (Android UA strings contain "Linux")
+   - `timeline_service.py`: Added missing `log_milestone()` function
+
+4. **Test Logic Fixes**:
+   - `test_client_success_service.py`: Adjusted metrics in `test_b_grade` to produce B grade
+   - `test_scheduled_jobs_service.py`: Added email service mocks for reminder tests
+   - `test_stripe_plans_service.py`: Check property existence without triggering getter
+   - `test_push_notification_service.py`: Fixed `filter_by` mock to support chained calls
+
+**Files Modified**:
+- `services/push_notification_service.py` - Bug fix for Android detection
+- `services/timeline_service.py` - Added `log_milestone()` function
+- `tests/test_push_notification_service.py` - Fixed 12 mock paths + filter_by chain
+- `tests/test_stripe_webhooks_service.py` - Fixed 7 mock paths
+- `tests/test_scheduled_jobs_service.py` - Fixed 4 mock paths + email mocks
+- `tests/test_client_payment_service.py` - Fixed 2 mock paths
+- `tests/test_ai_dispute_writer_service.py` - Fixed 1 mock path
+- `tests/integration/test_client_journey_flow.py` - Fixed 1 mock path
+- `tests/integration/test_payment_workflow.py` - Fixed 1 mock path
+- `tests/test_client_success_service.py` - Fixed test assertions
+- `tests/test_stripe_plans_service.py` - Fixed property check
+
+**Commit**: `65339e1` - "fix: Fix 32 failing unit tests - all 5725 tests now passing"
+
+**Test Command**: `python3 -m pytest --tb=short -q`
+
+---
+
+### Previous Work (2026-01-05) - Session: "Test Coverage Analysis & Improvement"
 
 **Task**: Comprehensive Test Coverage Analysis & Implementation
 
