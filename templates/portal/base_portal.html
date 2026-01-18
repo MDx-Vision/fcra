@@ -177,6 +177,12 @@
     </script>
     {% endif %}
 
+    {# AI Chat Widget - Only for active clients, not on the chat page itself #}
+    {% if has_full_access and active_tab != 'chat' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chat-widget.css') }}">
+    <script src="{{ url_for('static', filename='js/chat-widget.js') }}"></script>
+    {% endif %}
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

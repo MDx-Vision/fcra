@@ -1,0 +1,465 @@
+{% extends "portal/base_portal.html" %}
+{% set active_tab = 'chat' %}
+{% block title %}AI Chat Support{% endblock %}
+{% block content %}
+
+<!-- Hero Section -->
+<div class="card animate-fade-in" style="background: linear-gradient(135deg, #0a2540 0%, #1e3a5f 100%); color: white; text-align: center; padding: 32px 24px; margin-bottom: 24px; border: none;" data-testid="chat-hero">
+    <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 600; margin: 0 0 8px 0;">AI Chat Support</h2>
+    <p style="font-size: 14px; opacity: 0.8; margin: 0;">Get instant answers about your case and the FCRA process</p>
+</div>
+
+<!-- Chat Container -->
+<div class="card animate-fade-in-up" style="display: flex; flex-direction: column; height: calc(100vh - 350px); min-height: 500px;" data-testid="chat-container">
+    <!-- Escalated Banner -->
+    <div id="page-escalated-banner" style="display: none; background: #fef3c7; color: #92400e; padding: 12px 24px; font-size: 14px; text-align: center; border-bottom: 1px solid #fcd34d;">
+        Connected to human support - a team member will respond shortly
+    </div>
+
+    <!-- Messages List -->
+    <div id="page-messages-list" style="flex: 1; overflow-y: auto; padding: 24px;" data-testid="messages-list">
+        <!-- Welcome State -->
+        <div id="page-welcome-state" style="text-align: center; padding: 48px 24px;">
+            <div style="font-size: 64px; margin-bottom: 16px;">AI</div>
+            <h3 style="font-size: 24px; font-weight: 600; color: var(--theme-text-primary, #1e3a5f); margin: 0 0 12px 0;">Hi there!</h3>
+            <p style="font-size: 15px; color: #6b7280; margin: 0 0 24px 0; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6;">
+                I'm your AI assistant. I can help answer questions about your credit restoration case, the FCRA dispute process, timelines, and more.
+            </p>
+            <button id="page-start-btn" style="padding: 14px 32px; background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">
+                Start Conversation
+            </button>
+        </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="page-typing" style="display: none; padding: 12px 24px;">
+        <div style="display: flex; gap: 6px; background: #f3f4f6; padding: 12px 16px; border-radius: 16px; width: fit-content;">
+            <span style="width: 8px; height: 8px; background: #9ca3af; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out;"></span>
+            <span style="width: 8px; height: 8px; background: #9ca3af; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out 0.2s;"></span>
+            <span style="width: 8px; height: 8px; background: #9ca3af; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out 0.4s;"></span>
+        </div>
+    </div>
+
+    <!-- Message Input -->
+    <div style="border-top: 1px solid #e5e7eb; padding: 16px 24px;" data-testid="message-input">
+        <form id="page-chat-form" style="display: flex; gap: 12px;">
+            <textarea id="page-chat-input" placeholder="Type your message..." rows="2" disabled
+                style="flex: 1; border: 1px solid #d1d5db; border-radius: 12px; padding: 12px 16px; font-size: 14px; resize: none; font-family: inherit; max-height: 100px;"
+                onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); pageSendMessage(); }"></textarea>
+            <button type="submit" id="page-send-btn" disabled style="padding: 12px 24px; background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; align-self: flex-end; opacity: 0.5;">
+                Send
+            </button>
+        </form>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <p style="font-size: 12px; color: #9ca3af; margin: 0;">Press Enter to send, Shift+Enter for new line</p>
+            <button id="page-escalate-btn" style="display: none; background: transparent; border: 1px dashed #d1d5db; color: #6b7280; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+                Talk to a person
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Helpful Info -->
+<div style="margin-top: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;" class="stats-grid-responsive" data-testid="chat-info">
+    <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 8px;">24/7</div>
+        <div style="font-size: 13px; color: #0f766e; font-weight: 500;">AI Available</div>
+    </div>
+    <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 8px;">Instant</div>
+        <div style="font-size: 13px; color: #0f766e; font-weight: 500;">Response Time</div>
+    </div>
+    <div style="background: #f0fdfa; border-radius: 12px; padding: 20px; text-align: center;">
+        <div style="font-size: 24px; margin-bottom: 8px;">100%</div>
+        <div style="font-size: 13px; color: #0f766e; font-weight: 500;">Secure & Private</div>
+    </div>
+</div>
+
+<!-- Previous Conversations -->
+<div class="card animate-fade-in-up" style="margin-top: 24px;" data-testid="previous-conversations">
+    <h3 style="font-size: 18px; font-weight: 600; margin: 0 0 16px 0; color: var(--theme-text-primary, #1e3a5f);">Previous Conversations</h3>
+    <div id="page-conversations-list">
+        <p style="color: #6b7280; font-size: 14px;">Loading conversations...</p>
+    </div>
+</div>
+
+<style>
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+.page-message {
+    display: flex;
+    margin-bottom: 16px;
+    animation: fadeInMessage 0.3s ease;
+}
+
+@keyframes fadeInMessage {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.page-message.user {
+    justify-content: flex-end;
+}
+
+.page-message.assistant {
+    justify-content: flex-start;
+}
+
+.page-message .content {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.page-message.user .content {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.page-message.assistant .content {
+    background: #f3f4f6;
+    color: #1e3a5f;
+    border-bottom-left-radius: 4px;
+}
+
+.page-message.system .content {
+    background: #fef3c7;
+    color: #92400e;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 100%;
+}
+
+.page-message .time {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+.page-message.user .time {
+    text-align: right;
+}
+
+.conv-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.conv-item:hover {
+    background: #f3f4f6;
+}
+
+.conv-item.active {
+    background: #f0fdfa;
+    border: 1px solid #14b8a6;
+}
+
+/* Dark mode support */
+[data-theme="dark"] .page-message.assistant .content {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+[data-theme="dark"] .conv-item {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .conv-item:hover {
+    background: #334155;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let pageConversationId = null;
+let pageIsLoading = false;
+let pageIsEscalated = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadPageConversations();
+
+    document.getElementById('page-start-btn').addEventListener('click', pageStartConversation);
+    document.getElementById('page-chat-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        pageSendMessage();
+    });
+    document.getElementById('page-escalate-btn').addEventListener('click', pageEscalateChat);
+});
+
+function loadPageConversations() {
+    fetch('/portal/api/chat/conversations?include_closed=true')
+        .then(r => r.json())
+        .then(data => {
+            const container = document.getElementById('page-conversations-list');
+
+            if (!data.success || !data.conversations || data.conversations.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280; font-size: 14px;">No previous conversations yet.</p>';
+                return;
+            }
+
+            // Check for active conversation
+            const activeConv = data.conversations.find(c => c.status === 'active' || c.status === 'escalated');
+            if (activeConv) {
+                pageConversationId = activeConv.id;
+                pageIsEscalated = activeConv.status === 'escalated';
+                enablePageChat();
+                loadPageConversation();
+            }
+
+            // Render conversation list
+            container.innerHTML = data.conversations.map(conv => {
+                const date = new Date(conv.started_at);
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const statusBadge = conv.status === 'active' ? '<span style="background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Active</span>' :
+                                   conv.status === 'escalated' ? '<span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Escalated</span>' :
+                                   '<span style="background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Closed</span>';
+
+                return `
+                    <div class="conv-item ${conv.id === pageConversationId ? 'active' : ''}" onclick="selectConversation(${conv.id}, '${conv.status}')">
+                        <div>
+                            <div style="font-weight: 500; font-size: 14px; color: var(--theme-text-primary, #1e3a5f);">Conversation #${conv.id}</div>
+                            <div style="font-size: 12px; color: #6b7280;">${dateStr} &middot; ${conv.total_messages} messages</div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                `;
+            }).join('');
+        })
+        .catch(err => {
+            document.getElementById('page-conversations-list').innerHTML = '<p style="color: #ef4444; font-size: 14px;">Failed to load conversations.</p>';
+        });
+}
+
+function selectConversation(convId, status) {
+    if (status === 'closed') {
+        // For closed conversations, just view them
+        pageConversationId = convId;
+        loadPageConversation();
+        // Keep input disabled for closed conversations
+        return;
+    }
+
+    pageConversationId = convId;
+    pageIsEscalated = status === 'escalated';
+    enablePageChat();
+    loadPageConversation();
+
+    // Update active state in list
+    document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+}
+
+function pageStartConversation() {
+    if (pageIsLoading) return;
+
+    pageIsLoading = true;
+    document.getElementById('page-start-btn').textContent = 'Starting...';
+
+    fetch('/portal/api/chat/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                pageConversationId = data.conversation_id;
+                enablePageChat();
+                addPageMessage('assistant', data.welcome_message);
+                loadPageConversations(); // Refresh list
+            } else {
+                alert(data.error || 'Failed to start chat');
+            }
+        })
+        .catch(err => {
+            alert('Connection error. Please try again.');
+        })
+        .finally(() => {
+            pageIsLoading = false;
+            document.getElementById('page-start-btn').textContent = 'Start Conversation';
+        });
+}
+
+function enablePageChat() {
+    document.getElementById('page-welcome-state').style.display = 'none';
+    document.getElementById('page-chat-input').disabled = false;
+    document.getElementById('page-send-btn').disabled = false;
+    document.getElementById('page-send-btn').style.opacity = '1';
+    document.getElementById('page-escalate-btn').style.display = pageIsEscalated ? 'none' : 'block';
+
+    if (pageIsEscalated) {
+        document.getElementById('page-escalated-banner').style.display = 'block';
+    }
+}
+
+function loadPageConversation() {
+    if (!pageConversationId) return;
+
+    fetch(`/portal/api/chat/conversation/${pageConversationId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                pageIsEscalated = data.conversation.is_escalated;
+
+                const container = document.getElementById('page-messages-list');
+                const welcome = document.getElementById('page-welcome-state');
+                container.innerHTML = '';
+                container.appendChild(welcome);
+                welcome.style.display = 'none';
+
+                data.messages.forEach(msg => {
+                    addPageMessage(msg.role, msg.content, msg.created_at, msg.is_staff);
+                });
+
+                scrollPageToBottom();
+
+                // Update escalation UI
+                if (pageIsEscalated) {
+                    document.getElementById('page-escalated-banner').style.display = 'block';
+                    document.getElementById('page-escalate-btn').style.display = 'none';
+                }
+            }
+        })
+        .catch(err => console.error('Failed to load conversation:', err));
+}
+
+function pageSendMessage() {
+    const input = document.getElementById('page-chat-input');
+    const message = input.value.trim();
+    if (!message || pageIsLoading || !pageConversationId) return;
+
+    pageIsLoading = true;
+    document.getElementById('page-send-btn').disabled = true;
+
+    addPageMessage('user', message);
+    input.value = '';
+
+    showPageTyping(true);
+
+    fetch('/portal/api/chat/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            conversation_id: pageConversationId,
+            message: message
+        })
+    })
+        .then(r => r.json())
+        .then(data => {
+            showPageTyping(false);
+
+            if (data.success) {
+                addPageMessage('assistant', data.response);
+
+                if (data.escalation_suggested && !pageIsEscalated) {
+                    document.getElementById('page-escalate-btn').style.display = 'block';
+                }
+            } else {
+                alert(data.error || 'Failed to send message');
+            }
+        })
+        .catch(err => {
+            showPageTyping(false);
+            alert('Connection error. Please try again.');
+        })
+        .finally(() => {
+            pageIsLoading = false;
+            document.getElementById('page-send-btn').disabled = false;
+            input.focus();
+        });
+}
+
+function pageEscalateChat() {
+    if (pageIsLoading || !pageConversationId) return;
+
+    pageIsLoading = true;
+
+    fetch('/portal/api/chat/escalate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            conversation_id: pageConversationId,
+            reason: 'Client requested human support'
+        })
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                pageIsEscalated = true;
+                document.getElementById('page-escalated-banner').style.display = 'block';
+                document.getElementById('page-escalate-btn').style.display = 'none';
+                addPageMessage('system', 'Connected to human support. A team member will respond shortly.');
+                loadPageConversations(); // Refresh list
+            } else {
+                alert(data.error || 'Failed to connect to support');
+            }
+        })
+        .catch(err => {
+            alert('Connection error. Please try again.');
+        })
+        .finally(() => {
+            pageIsLoading = false;
+        });
+}
+
+function addPageMessage(role, content, timestamp, isStaff) {
+    const container = document.getElementById('page-messages-list');
+    const msgEl = document.createElement('div');
+    msgEl.className = `page-message ${role}`;
+
+    const time = timestamp ? new Date(timestamp).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+    }) : new Date().toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit'
+    });
+
+    let staffLabel = '';
+    if (isStaff && role === 'assistant') {
+        staffLabel = '<div style="font-size: 11px; font-weight: 600; opacity: 0.7; margin-bottom: 4px;">Brightpath Team</div>';
+    }
+
+    msgEl.innerHTML = `
+        <div class="content">
+            ${staffLabel}
+            ${escapeHtml(content)}
+            <div class="time">${time}</div>
+        </div>
+    `;
+
+    container.appendChild(msgEl);
+    scrollPageToBottom();
+}
+
+function showPageTyping(show) {
+    document.getElementById('page-typing').style.display = show ? 'block' : 'none';
+    if (show) scrollPageToBottom();
+}
+
+function scrollPageToBottom() {
+    const container = document.getElementById('page-messages-list');
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML.replace(/\n/g, '<br>');
+}
+</script>
+{% endblock %}
