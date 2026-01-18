@@ -1682,3 +1682,219 @@ def api_create_payment_checkout():
         return jsonify({'error': str(e)}), 500
     finally:
         db.close()
+
+
+# =============================================================================
+# AI CHAT SUPPORT API
+# =============================================================================
+
+@portal.route('/api/chat/start', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_chat_start():
+    """Start a new AI chat conversation"""
+    from database import get_db
+    from services.chat_service import get_chat_service
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    db = get_db()
+    try:
+        service = get_chat_service(db)
+        result = service.start_conversation(client_id)
+
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Failed to start conversation')}), 400
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@portal.route('/api/chat/message', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_chat_message():
+    """Send a message and get AI response"""
+    from database import get_db
+    from services.chat_service import get_chat_service
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    conversation_id = data.get('conversation_id')
+    message = data.get('message', '').strip()
+
+    if not conversation_id:
+        return jsonify({'error': 'conversation_id is required'}), 400
+    if not message:
+        return jsonify({'error': 'message is required'}), 400
+
+    db = get_db()
+    try:
+        service = get_chat_service(db)
+        result = service.send_message(
+            conversation_id=conversation_id,
+            message=message,
+            client_id=client_id
+        )
+
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Failed to send message')}), 400
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@portal.route('/api/chat/conversations', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_chat_conversations():
+    """Get all conversations for the current client"""
+    from database import get_db
+    from services.chat_service import get_chat_service
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    include_closed = request.args.get('include_closed', 'false').lower() == 'true'
+
+    db = get_db()
+    try:
+        service = get_chat_service(db)
+        result = service.get_client_conversations(
+            client_id=client_id,
+            include_closed=include_closed
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@portal.route('/api/chat/conversation/<int:conversation_id>', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_chat_conversation(conversation_id):
+    """Get a specific conversation with all messages"""
+    from database import get_db
+    from services.chat_service import get_chat_service
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    db = get_db()
+    try:
+        service = get_chat_service(db)
+        result = service.get_conversation(
+            conversation_id=conversation_id,
+            client_id=client_id
+        )
+
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Conversation not found')}), 404
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@portal.route('/api/chat/escalate', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_chat_escalate():
+    """Escalate conversation to human support"""
+    from database import get_db
+    from services.chat_service import get_chat_service
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    conversation_id = data.get('conversation_id')
+    reason = data.get('reason', 'Client requested human support')
+
+    if not conversation_id:
+        return jsonify({'error': 'conversation_id is required'}), 400
+
+    db = get_db()
+    try:
+        service = get_chat_service(db)
+        result = service.escalate_to_staff(
+            conversation_id=conversation_id,
+            reason=reason,
+            client_id=client_id
+        )
+
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Failed to escalate')}), 400
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@portal.route('/api/chat/close', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_chat_close():
+    """Close a conversation"""
+    from database import get_db
+    from services.chat_service import get_chat_service
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    conversation_id = data.get('conversation_id')
+
+    if not conversation_id:
+        return jsonify({'error': 'conversation_id is required'}), 400
+
+    db = get_db()
+    try:
+        service = get_chat_service(db)
+        result = service.close_conversation(
+            conversation_id=conversation_id,
+            client_id=client_id
+        )
+
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Failed to close conversation')}), 400
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@portal.route('/chat')
+@portal_login_required
+@require_full_access
+def chat():
+    """Full chat page for client support"""
+    current_user = get_current_user()
+    if not current_user:
+        return redirect(url_for('portal_login'))
+
+    return render_template('portal/chat.html', current_user=current_user)

@@ -37486,6 +37486,118 @@ def api_get_total_unread():
 
 
 # =============================================================================
+# AI CHAT SUPPORT - Staff endpoints for escalated conversations
+# =============================================================================
+
+@app.route('/api/chat/escalated', methods=['GET'])
+@require_staff()
+def api_get_escalated_chats():
+    """Get all escalated chat conversations for staff dashboard"""
+    db = get_db()
+    try:
+        from services.chat_service import get_chat_service
+
+        staff_id = session.get('staff_id')
+        # Pass staff_id to filter by assigned, or None for all escalated
+        filter_assigned = request.args.get('assigned', 'false').lower() == 'true'
+
+        service = get_chat_service(db)
+        result = service.get_escalated_conversations(
+            staff_id=staff_id if filter_assigned else None
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/chat/conversation/<int:conversation_id>', methods=['GET'])
+@require_staff()
+def api_staff_get_conversation(conversation_id):
+    """Get a conversation (staff can view any conversation)"""
+    db = get_db()
+    try:
+        from services.chat_service import get_chat_service
+
+        service = get_chat_service(db)
+        result = service.get_conversation(conversation_id=conversation_id)
+
+        if not result.get('success'):
+            return jsonify({'error': result.get('error', 'Conversation not found')}), 404
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/chat/conversation/<int:conversation_id>/respond', methods=['POST'])
+@require_staff()
+def api_staff_respond_chat(conversation_id):
+    """Staff responds to an escalated conversation"""
+    db = get_db()
+    try:
+        from services.chat_service import get_chat_service
+
+        staff_id = session.get('staff_id')
+        if not staff_id:
+            return jsonify({'success': False, 'error': 'Not authenticated'}), 401
+
+        data = request.get_json() or {}
+        message = data.get('message', '').strip()
+
+        if not message:
+            return jsonify({'success': False, 'error': 'message is required'}), 400
+
+        service = get_chat_service(db)
+        result = service.staff_respond(
+            conversation_id=conversation_id,
+            staff_id=staff_id,
+            message=message
+        )
+
+        if not result.get('success'):
+            return jsonify({'success': False, 'error': result.get('error', 'Failed to send response')}), 400
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/chat/conversation/<int:conversation_id>/close', methods=['POST'])
+@require_staff()
+def api_staff_close_chat(conversation_id):
+    """Staff closes a conversation"""
+    db = get_db()
+    try:
+        from services.chat_service import get_chat_service
+
+        service = get_chat_service(db)
+        result = service.close_conversation(conversation_id=conversation_id)
+
+        if not result.get('success'):
+            return jsonify({'success': False, 'error': result.get('error', 'Failed to close')}), 400
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/dashboard/chat')
+@require_staff()
+def dashboard_chat():
+    """Staff dashboard page for managing escalated chats"""
+    return render_template('chat_dashboard.html')
+
+
+# =============================================================================
 # WHATSAPP WEBHOOKS - Twilio WhatsApp message handlers
 # =============================================================================
 
