@@ -3,7 +3,7 @@
 > Priority 30: AI-Powered Chat Support for Client Portal
 >
 > **Created**: 2026-01-18
-> **Status**: 🔄 PLANNING
+> **Status**: 🔄 IN PROGRESS - Phase 1 Complete
 
 ---
 
@@ -49,10 +49,10 @@ CI=true npx cypress run --spec "cypress/e2e/portal_chat.cy.js"
 
 ---
 
-## Phase 1: Database & Models
+## Phase 1: Database & Models ✅ COMPLETE
 
 ### 1.1 Database Schema
-- [ ] Create `ChatConversation` model
+- [x] Create `ChatConversation` model
   ```python
   id: Integer (PK)
   client_id: Integer (FK -> Client)
@@ -61,10 +61,10 @@ CI=true npx cypress run --spec "cypress/e2e/portal_chat.cy.js"
   status: String (active, closed, escalated)
   escalated_to_staff_id: Integer (FK -> Staff, nullable)
   escalated_at: DateTime (nullable)
-  metadata: JSON (nullable)
+  extra_data: JSON (nullable)  # renamed from metadata (reserved word)
   ```
 
-- [ ] Create `ChatMessage` model
+- [x] Create `ChatMessage` model
   ```python
   id: Integer (PK)
   conversation_id: Integer (FK -> ChatConversation)
@@ -72,16 +72,16 @@ CI=true npx cypress run --spec "cypress/e2e/portal_chat.cy.js"
   content: Text
   created_at: DateTime
   tokens_used: Integer (nullable)
-  metadata: JSON (nullable)
+  extra_data: JSON (nullable)  # renamed from metadata (reserved word)
   ```
 
-- [ ] Add migration entries to `database.py`
-- [ ] **RUN TESTS** after database changes
+- [x] Add migration entries to `database.py`
+- [x] **RUN TESTS** after database changes
 
 ### 1.2 Verification
-- [ ] Models can be imported without errors
-- [ ] Migration runs successfully
-- [ ] All existing tests still pass
+- [x] Models can be imported without errors
+- [x] Migration runs successfully
+- [x] All existing tests still pass (5758 passed, 9 skipped)
 
 ---
 
@@ -288,12 +288,12 @@ CI=true npx cypress run
 
 | Phase | Status | Tests Before | Tests After |
 |-------|--------|--------------|-------------|
-| Phase 1: Database | ⏳ Pending | 5725 | - |
-| Phase 2: Service | ⏳ Pending | - | - |
+| Phase 1: Database | ✅ Complete | 5596 | 5758 |
+| Phase 2: Service | ⏳ Pending | 5758 | - |
 | Phase 3: API | ⏳ Pending | - | - |
 | Phase 4: Frontend | ⏳ Pending | - | - |
 | Phase 5: Staff UI | ⏳ Pending | - | - |
-| Phase 6: Testing | ⏳ Pending | - | 5755+ |
+| Phase 6: Testing | ⏳ Pending | - | 5788+ |
 
 ---
 
@@ -301,7 +301,7 @@ CI=true npx cypress run
 
 | File | Action | Description | Status |
 |------|--------|-------------|--------|
-| `database.py` | MODIFY | Add ChatConversation, ChatMessage models | ⏳ |
+| `database.py` | MODIFY | Add ChatConversation, ChatMessage models | ✅ Done |
 | `services/chat_service.py` | CREATE | AI chat service (~400 lines) | ⏳ |
 | `services/chat_knowledge_base.py` | CREATE | FCRA knowledge for AI | ⏳ |
 | `tests/test_chat_service.py` | CREATE | Unit tests (30+ tests) | ⏳ |
