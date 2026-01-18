@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Support - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-top: 8px;
+        }
+        .stat-card.urgent .value {
+            color: #dc2626;
+        }
+
+        .chat-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 24px;
+            height: calc(100vh - 280px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        /* Conversations List */
+        .conversations-list {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .conv-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .conv-item:hover {
+            background: #f8fafc;
+        }
+        .conv-item.selected {
+            background: #f0fdfa;
+            border-left: 3px solid #14b8a6;
+        }
+
+        .conv-avatar {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            margin-right: 14px;
+            flex-shrink: 0;
+        }
+
+        .conv-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .conv-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .conv-preview {
+            font-size: 13px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .conv-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .conv-time {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .conv-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .conv-badge.urgent {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .conv-badge.waiting {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .chat-header-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .chat-header-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        .chat-header-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .chat-header-status {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .chat-header-actions button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+            color: white;
+            border: none;
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Messages */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: #f9fafb;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 16px;
+        }
+        .message.user {
+            justify-content: flex-end;
+        }
+        .message.assistant {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant .message-content {
+            background: white;
+            color: #1e3a5f;
+            border: 1px solid #e2e8f0;
+            border-bottom-left-radius: 4px;
+        }
+        .message.system .message-content {
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 100%;
+            font-size: 13px;
+        }
+        .message-meta {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+        .message.user .message-meta {
+            text-align: right;
+        }
+        .message-staff-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #0d9488;
+            margin-bottom: 4px;
+        }
+
+        /* Input */
+        .chat-input-area {
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .chat-input-form {
+            display: flex;
+            gap: 12px;
+        }
+        .chat-input {
+            flex: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 14px;
+            resize: none;
+            font-family: inherit;
+        }
+        .chat-input:focus {
+            outline: none;
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+        }
+        .send-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+            text-align: center;
+            padding: 40px;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .chat-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content" data-testid="chat-dashboard">
+        <div class="header">
+            <div>
+                <h1>AI Chat Support</h1>
+                <p class="header-subtitle">Manage escalated conversations from the client portal</p>
+            </div>
+            <button class="btn-secondary" onclick="loadConversations()">Refresh</button>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card" data-testid="stat-total">
+                <div class="label">Total Escalated</div>
+                <div class="value" id="stat-total">-</div>
+            </div>
+            <div class="stat-card urgent" data-testid="stat-waiting">
+                <div class="label">Waiting for Response</div>
+                <div class="value" id="stat-waiting">-</div>
+            </div>
+            <div class="stat-card" data-testid="stat-assigned">
+                <div class="label">Assigned to Me</div>
+                <div class="value" id="stat-assigned">-</div>
+            </div>
+            <div class="stat-card" data-testid="stat-avg-wait">
+                <div class="label">Avg Wait Time</div>
+                <div class="value" id="stat-avg-wait">-</div>
+            </div>
+        </div>
+
+        <!-- Chat Grid -->
+        <div class="chat-grid">
+            <!-- Conversations List -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Escalated Chats</h2>
+                    <span id="conv-count" style="color: #64748b; font-size: 13px;">0 conversations</span>
+                </div>
+                <div class="conversations-list" id="conversations-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="card">
+                <div id="chat-container">
+                    <div class="empty-state" id="no-chat-selected">
+                        <div class="empty-state-icon">Select a conversation</div>
+                        <h3>No Conversation Selected</h3>
+                        <p>Select a conversation from the list to view and respond.</p>
+                    </div>
+
+                    <div class="chat-area" id="chat-area" style="display: none;">
+                        <div class="chat-header">
+                            <div class="chat-header-info">
+                                <div class="chat-header-avatar" id="chat-avatar">-</div>
+                                <div>
+                                    <div class="chat-header-name" id="chat-client-name">Client Name</div>
+                                    <div class="chat-header-status" id="chat-status">Escalated</div>
+                                </div>
+                            </div>
+                            <div class="chat-header-actions">
+                                <button class="btn-secondary" onclick="closeConversation()">Close Chat</button>
+                                <button class="btn-primary" onclick="viewClientProfile()">View Profile</button>
+                            </div>
+                        </div>
+
+                        <div class="chat-messages" id="chat-messages">
+                            <!-- Messages will be loaded here -->
+                        </div>
+
+                        <div class="chat-input-area">
+                            <form class="chat-input-form" id="staff-chat-form" onsubmit="sendStaffMessage(event)">
+                                <textarea
+                                    class="chat-input"
+                                    id="staff-message-input"
+                                    placeholder="Type your response..."
+                                    rows="2"
+                                    onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendStaffMessage(event); }"
+                                ></textarea>
+                                <button type="submit" class="send-btn" id="staff-send-btn">Send</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversations = [];
+        let selectedConvId = null;
+        let selectedClientId = null;
+        let pollInterval = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConversations();
+            // Poll every 30 seconds
+            pollInterval = setInterval(loadConversations, 30000);
+        });
+
+        function loadConversations() {
+            fetch('/api/chat/escalated')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        conversations = data.conversations || [];
+                        renderConversations();
+                        updateStats();
+
+                        // Refresh current conversation if one is selected
+                        if (selectedConvId) {
+                            loadConversation(selectedConvId);
+                        }
+                    }
+                })
+                .catch(err => console.error('Failed to load conversations:', err));
+        }
+
+        function renderConversations() {
+            const container = document.getElementById('conversations-list');
+            document.getElementById('conv-count').textContent = `${conversations.length} conversation${conversations.length !== 1 ? 's' : ''}`;
+
+            if (conversations.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">All clear!</div>
+                        <h3>No Escalated Chats</h3>
+                        <p>No clients are waiting for support right now.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = conversations.map(conv => {
+                const initials = conv.client_name ? conv.client_name.split(' ').map(n => n[0]).join('').toUpperCase() : '?';
+                const isUrgent = conv.waiting_time && conv.waiting_time.includes('hour');
+
+                return `
+                    <div class="conv-item ${conv.id === selectedConvId ? 'selected' : ''}"
+                         onclick="selectConversation(${conv.id}, ${conv.client_id})"
+                         data-testid="conv-item-${conv.id}">
+                        <div class="conv-avatar">${initials}</div>
+                        <div class="conv-info">
+                            <div class="conv-name">${escapeHtml(conv.client_name)}</div>
+                            <div class="conv-preview">${escapeHtml(conv.last_message || 'No messages')}</div>
+                            <div class="conv-meta">
+                                <span class="conv-time">${conv.waiting_time}</span>
+                                ${isUrgent ? '<span class="conv-badge urgent">Urgent</span>' : '<span class="conv-badge waiting">Waiting</span>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = conversations.length;
+
+            // Waiting (all escalated without staff response yet)
+            const waiting = conversations.filter(c => !c.assigned_to).length;
+            document.getElementById('stat-waiting').textContent = waiting;
+
+            // Assigned to current staff - would need staff_id from session
+            const assigned = conversations.filter(c => c.assigned_to).length;
+            document.getElementById('stat-assigned').textContent = assigned;
+
+            // Average wait time
+            if (conversations.length > 0) {
+                const times = conversations.map(c => {
+                    if (c.waiting_time.includes('min')) return parseInt(c.waiting_time);
+                    if (c.waiting_time.includes('hour')) return parseInt(c.waiting_time) * 60;
+                    if (c.waiting_time.includes('day')) return parseInt(c.waiting_time) * 1440;
+                    return 0;
+                });
+                const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+                document.getElementById('stat-avg-wait').textContent = avg < 60 ? `${avg}m` : `${Math.round(avg/60)}h`;
+            } else {
+                document.getElementById('stat-avg-wait').textContent = '-';
+            }
+        }
+
+        function selectConversation(convId, clientId) {
+            selectedConvId = convId;
+            selectedClientId = clientId;
+
+            // Update selection UI
+            document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`[data-testid="conv-item-${convId}"]`).classList.add('selected');
+
+            loadConversation(convId);
+        }
+
+        function loadConversation(convId) {
+            fetch(`/api/chat/conversation/${convId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('no-chat-selected').style.display = 'none';
+                        document.getElementById('chat-area').style.display = 'flex';
+
+                        // Find conversation info
+                        const conv = conversations.find(c => c.id === convId);
+                        if (conv) {
+                            const initials = conv.client_name ? conv.client_name.split(' ').map(n => n[0]).join('').toUpperCase() : '?';
+                            document.getElementById('chat-avatar').textContent = initials;
+                            document.getElementById('chat-client-name').textContent = conv.client_name;
+                            document.getElementById('chat-status').textContent = `Escalated ${conv.waiting_time} ago`;
+                        }
+
+                        renderMessages(data.messages);
+                    }
+                })
+                .catch(err => console.error('Failed to load conversation:', err));
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('chat-messages');
+
+            container.innerHTML = messages.map(msg => {
+                const time = new Date(msg.created_at).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+
+                let staffLabel = '';
+                if (msg.is_staff && msg.role === 'assistant') {
+                    staffLabel = '<div class="message-staff-label">Staff Response</div>';
+                }
+
+                return `
+                    <div class="message ${msg.role}">
+                        <div>
+                            <div class="message-content">
+                                ${staffLabel}
+                                ${escapeHtml(msg.content)}
+                            </div>
+                            <div class="message-meta">${time}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendStaffMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('staff-message-input');
+            const message = input.value.trim();
+
+            if (!message || !selectedConvId) return;
+
+            const btn = document.getElementById('staff-send-btn');
+            btn.disabled = true;
+
+            fetch(`/api/chat/conversation/${selectedConvId}/respond`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        input.value = '';
+                        loadConversation(selectedConvId);
+                    } else {
+                        alert(data.error || 'Failed to send message');
+                    }
+                })
+                .catch(err => {
+                    alert('Connection error. Please try again.');
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                });
+        }
+
+        function closeConversation() {
+            if (!selectedConvId) return;
+
+            if (!confirm('Are you sure you want to close this conversation?')) return;
+
+            fetch(`/api/chat/conversation/${selectedConvId}/close`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        selectedConvId = null;
+                        selectedClientId = null;
+                        document.getElementById('chat-area').style.display = 'none';
+                        document.getElementById('no-chat-selected').style.display = 'flex';
+                        loadConversations();
+                    } else {
+                        alert(data.error || 'Failed to close conversation');
+                    }
+                })
+                .catch(err => {
+                    alert('Connection error. Please try again.');
+                });
+        }
+
+        function viewClientProfile() {
+            if (selectedClientId) {
+                window.location.href = `/dashboard/client/${selectedClientId}`;
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+    </script>
+</body>
+</html>
