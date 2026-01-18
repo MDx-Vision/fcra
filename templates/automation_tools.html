@@ -1789,13 +1789,13 @@
             }
 
             tbody.innerHTML = clients.map(client => {
-                const nextRound = (client.current_round || 1) + 1;
+                const nextRound = (client.current_dispute_round || 1) + 1;
                 const canAdvance = nextRound <= 4;
                 
                 return `
                     <tr>
                         <td><strong>${client.name}</strong></td>
-                        <td>${getRoundLabel(client.current_round)}</td>
+                        <td>${getRoundLabel(client.current_dispute_round)}</td>
                         <td>${getBureauBadges(client.bureaus_responded)}</td>
                         <td><span style="color:#16a34a;font-weight:600;">${client.total_deleted}</span></td>
                         <td>
@@ -1833,7 +1833,7 @@
                 return `
                     <tr>
                         <td><strong>${client.name}</strong></td>
-                        <td>${getRoundLabel(client.current_round)}</td>
+                        <td>${getRoundLabel(client.current_dispute_round)}</td>
                         <td>${getBureauBadges(client.bureaus_responded)}</td>
                         <td>${getBureauBadges(client.bureaus_missing)}</td>
                         <td>${roundStarted}</td>

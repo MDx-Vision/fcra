@@ -555,7 +555,7 @@
                 </thead>
                 <tbody id="clientTableBody" data-testid="clients-table-body">
                     {% for client in clients %}
-                    <tr data-testid="client-row-{{ client.id }}" data-round="{{ client.current_round }}" data-name="{{ client.name|lower }}" data-client-id="{{ client.id }}">
+                    <tr data-testid="client-row-{{ client.id }}" data-round="{{ client.current_dispute_round }}" data-name="{{ client.name|lower }}" data-client-id="{{ client.id }}">
                         <td class="checkbox-cell">
                             <input type="checkbox" class="client-checkbox" value="{{ client.id }}" onchange="updateSelectedCount()">
                         </td>
@@ -579,8 +579,8 @@
                             </span>
                         </td>
                         <td>
-                            <span class="round-badge round-{{ client.current_round }}" data-testid="client-round-{{ client.id }}">
-                                Round {{ client.current_round }}
+                            <span class="round-badge round-{{ client.current_dispute_round }}" data-testid="client-round-{{ client.id }}">
+                                Round {{ client.current_dispute_round }}
                             </span>
                         </td>
                         <td>
@@ -1002,7 +1002,7 @@
                     document.getElementById('clientInfo').innerHTML = `
                         <div class="info-item"><label>ID</label><span>${client.id}</span></div>
                         <div class="info-item"><label>Email</label><span>${client.email || 'N/A'}</span></div>
-                        <div class="info-item"><label>Current Round</label><span>Round ${client.current_round}</span></div>
+                        <div class="info-item"><label>Current Round</label><span>Round ${client.current_dispute_round}</span></div>
                         <div class="info-item"><label>Status</label><span>${client.dispute_status}</span></div>
                         <div class="info-item"><label>Round Started</label><span>${client.round_started_at || 'N/A'}</span></div>
                         <div class="info-item"><label>Created</label><span>${client.created_at || 'N/A'}</span></div>
