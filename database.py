@@ -4349,6 +4349,67 @@ class ClientMessage(Base):
     staff = relationship("Staff", backref="client_messages")
 
 
+class ChatConversation(Base):
+    """AI chat conversations with clients"""
+    __tablename__ = 'chat_conversations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False, index=True)
+
+    # Conversation status
+    status = Column(String(20), default='active')  # active, closed, escalated
+    started_at = Column(DateTime, default=datetime.utcnow)
+    ended_at = Column(DateTime, nullable=True)
+
+    # Escalation tracking
+    escalated_to_staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    escalated_at = Column(DateTime, nullable=True)
+    escalation_reason = Column(String(255), nullable=True)
+
+    # Context snapshot (client state at conversation start)
+    client_context = Column(JSON, nullable=True)
+
+    # Usage tracking
+    total_messages = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="chat_conversations")
+    escalated_to = relationship("Staff", backref="escalated_chats")
+    messages = relationship("ChatMessage", back_populates="conversation", order_by="ChatMessage.created_at")
+
+
+class ChatMessage(Base):
+    """Individual messages in AI chat conversations"""
+    __tablename__ = 'chat_messages'
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey('chat_conversations.id'), nullable=False, index=True)
+
+    # Message content
+    role = Column(String(20), nullable=False)  # user, assistant, system
+    content = Column(Text, nullable=False)
+
+    # AI metadata (for assistant messages)
+    tokens_used = Column(Integer, nullable=True)
+    model_used = Column(String(50), nullable=True)
+
+    # Staff response (for escalated conversations)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    extra_data = Column(JSON, nullable=True)  # Additional message data
+
+    # Relationships
+    conversation = relationship("ChatConversation", back_populates="messages")
+    staff = relationship("Staff", backref="chat_responses")
+
+
 class OnboardingProgress(Base):
     """Track client onboarding wizard progress"""
     __tablename__ = 'onboarding_progress'
@@ -7647,6 +7708,30 @@ def init_db():
         ("generated_letters", "file_size_bytes", "INTEGER"),
         ("generated_letters", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("generated_letters", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # AI Chat Conversations
+        ("chat_conversations", "id", "SERIAL PRIMARY KEY"),
+        ("chat_conversations", "client_id", "INTEGER NOT NULL REFERENCES clients(id)"),
+        ("chat_conversations", "status", "VARCHAR(20) DEFAULT 'active'"),
+        ("chat_conversations", "started_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("chat_conversations", "ended_at", "TIMESTAMP"),
+        ("chat_conversations", "escalated_to_staff_id", "INTEGER REFERENCES staff(id)"),
+        ("chat_conversations", "escalated_at", "TIMESTAMP"),
+        ("chat_conversations", "escalation_reason", "VARCHAR(255)"),
+        ("chat_conversations", "client_context", "JSONB"),
+        ("chat_conversations", "total_messages", "INTEGER DEFAULT 0"),
+        ("chat_conversations", "total_tokens", "INTEGER DEFAULT 0"),
+        ("chat_conversations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("chat_conversations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # AI Chat Messages
+        ("chat_messages", "id", "SERIAL PRIMARY KEY"),
+        ("chat_messages", "conversation_id", "INTEGER NOT NULL REFERENCES chat_conversations(id) ON DELETE CASCADE"),
+        ("chat_messages", "role", "VARCHAR(20) NOT NULL"),
+        ("chat_messages", "content", "TEXT NOT NULL"),
+        ("chat_messages", "tokens_used", "INTEGER"),
+        ("chat_messages", "model_used", "VARCHAR(50)"),
+        ("chat_messages", "staff_id", "INTEGER REFERENCES staff(id)"),
+        ("chat_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("chat_messages", "metadata", "JSONB"),
     ]
 
     conn = engine.connect()
