@@ -581,7 +581,7 @@ class ChatService:
             'client_name': f"{client.first_name or ''} {client.last_name or ''}".strip() or "Client",
             'case_status': client.dispute_status or 'unknown',
             'client_stage': client.client_stage or 'unknown',
-            'dispute_round': client.current_round or 1,
+            'dispute_round': client.current_dispute_round or 1,
             'days_active': days_active
         }
 
