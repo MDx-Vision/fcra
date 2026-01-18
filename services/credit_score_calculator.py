@@ -957,3 +957,403 @@ def get_improvement_summary(client_id):
 def quick_estimate(current_score, num_negatives):
     """Quick estimate without detailed violation types"""
     return estimate_score_improvement(current_score, num_negatives)
+
+
+# =============================================================
+# PORTAL SCORE SIMULATOR FUNCTIONS
+# =============================================================
+
+def get_client_dispute_items_with_impact(client_id):
+    """
+    Get a client's dispute items with estimated score impact for each.
+    Used by the portal score simulator to show selectable items.
+    """
+    from database import DisputeItem, get_db
+
+    db = get_db()
+    try:
+        items = (
+            db.query(DisputeItem)
+            .filter_by(client_id=client_id)
+            .filter(DisputeItem.status.notin_(['deleted', 'removed']))
+            .order_by(DisputeItem.bureau, DisputeItem.creditor_name)
+            .all()
+        )
+
+        result = []
+        for item in items:
+            item_type = categorize_violation_type(
+                f"{item.item_type} {item.creditor_name} {item.reason_for_dispute or ''}"
+            )
+            impact = SCORE_IMPACT_BY_TYPE.get(item_type, SCORE_IMPACT_BY_TYPE["unknown"])
+
+            result.append({
+                "id": item.id,
+                "bureau": item.bureau,
+                "creditor_name": item.creditor_name,
+                "account_id": item.account_id,
+                "item_type": item.item_type,
+                "classified_type": item_type,
+                "status": item.status,
+                "dispute_round": item.dispute_round,
+                "impact": {
+                    "min": impact["min"],
+                    "max": impact["max"],
+                    "avg": impact["avg"],
+                    "label": impact["label"],
+                    "severity": impact.get("severity", "moderate"),
+                    "category": impact.get("category", "other"),
+                },
+            })
+
+        return result
+    finally:
+        db.close()
+
+
+def simulate_score_with_items(client_id, selected_item_ids, current_score=None):
+    """
+    Simulate score improvement if specific items are removed.
+
+    Args:
+        client_id: Client ID
+        selected_item_ids: List of DisputeItem IDs to simulate removing
+        current_score: Optional override for current score
+
+    Returns:
+        Detailed simulation results
+    """
+    from database import Client, CreditScoreSnapshot, DisputeItem, get_db
+
+    db = get_db()
+    try:
+        # Get current score
+        if not current_score:
+            snapshot = (
+                db.query(CreditScoreSnapshot)
+                .filter_by(client_id=client_id)
+                .order_by(CreditScoreSnapshot.created_at.desc())
+                .first()
+            )
+            if snapshot and snapshot.average_score:
+                current_score = snapshot.average_score
+            else:
+                # Default to fair credit
+                current_score = 620
+
+        # Get selected items
+        items = (
+            db.query(DisputeItem)
+            .filter(DisputeItem.id.in_(selected_item_ids))
+            .filter_by(client_id=client_id)
+            .all()
+        )
+
+        if not items:
+            return {
+                "success": False,
+                "error": "No valid items selected",
+                "current_score": current_score,
+            }
+
+        # Calculate impact
+        selected_items_for_calc = []
+        item_details = []
+
+        for item in items:
+            item_type = categorize_violation_type(
+                f"{item.item_type} {item.creditor_name} {item.reason_for_dispute or ''}"
+            )
+            impact = SCORE_IMPACT_BY_TYPE.get(item_type, SCORE_IMPACT_BY_TYPE["unknown"])
+
+            selected_items_for_calc.append({"type": item_type, "count": 1})
+            item_details.append({
+                "id": item.id,
+                "bureau": item.bureau,
+                "creditor_name": item.creditor_name,
+                "item_type": item_type,
+                "impact_avg": impact["avg"],
+                "impact_range": f"{impact['min']}-{impact['max']}",
+                "severity": impact.get("severity", "moderate"),
+            })
+
+        # Run calculation
+        projection = estimate_by_item_types(current_score, selected_items_for_calc)
+
+        return {
+            "success": True,
+            "current_score": current_score,
+            "current_range": get_score_range_label(current_score),
+            "projected_score": projection["projected"]["avg"],
+            "projected_range": projection["projected"]["range_avg"],
+            "projected_min": projection["projected"]["min"],
+            "projected_max": projection["projected"]["max"],
+            "potential_gain": projection["potential_gain"]["avg"],
+            "potential_gain_range": f"{projection['potential_gain']['min']}-{projection['potential_gain']['max']}",
+            "items_selected": len(items),
+            "item_details": item_details,
+            "confidence_level": _calculate_confidence(items),
+            "estimated_timeline_months": _estimate_timeline(len(items)),
+        }
+    finally:
+        db.close()
+
+
+def _calculate_confidence(items):
+    """Calculate confidence level based on item types"""
+    high_confidence_types = ["collection", "inquiry", "late_payment_30", "hard_inquiry"]
+    low_confidence_types = ["bankruptcy", "foreclosure", "judgment", "identity_theft"]
+
+    high_count = sum(1 for item in items if categorize_violation_type(item.item_type) in high_confidence_types)
+    low_count = sum(1 for item in items if categorize_violation_type(item.item_type) in low_confidence_types)
+
+    if low_count > len(items) * 0.3:
+        return "low"
+    elif high_count > len(items) * 0.5:
+        return "high"
+    return "medium"
+
+
+def _estimate_timeline(num_items):
+    """Estimate months to complete dispute rounds"""
+    if num_items <= 3:
+        return 2
+    elif num_items <= 6:
+        return 3
+    elif num_items <= 10:
+        return 4
+    else:
+        return 6
+
+
+def save_scenario(client_id, scenario_data):
+    """
+    Save a score improvement scenario for a client.
+
+    Args:
+        client_id: Client ID
+        scenario_data: Dict with name, selected_items, current_score, etc.
+
+    Returns:
+        Saved scenario dict
+    """
+    from database import ScoreScenario, get_db
+
+    db = get_db()
+    try:
+        scenario = ScoreScenario(
+            client_id=client_id,
+            name=scenario_data.get("name", "My Scenario"),
+            description=scenario_data.get("description"),
+            current_score=scenario_data.get("current_score"),
+            projected_score=scenario_data.get("projected_score"),
+            potential_gain=scenario_data.get("potential_gain"),
+            selected_items=scenario_data.get("selected_items", []),
+            item_breakdown=scenario_data.get("item_breakdown"),
+            goal_score=scenario_data.get("goal_score"),
+            goal_gap=scenario_data.get("goal_gap"),
+            confidence_level=scenario_data.get("confidence_level", "medium"),
+            estimated_timeline_months=scenario_data.get("estimated_timeline_months"),
+            is_favorite=scenario_data.get("is_favorite", False),
+        )
+
+        db.add(scenario)
+        db.commit()
+        db.refresh(scenario)
+
+        return {"success": True, "scenario": scenario.to_dict()}
+    except Exception as e:
+        db.rollback()
+        return {"success": False, "error": str(e)}
+    finally:
+        db.close()
+
+
+def get_client_scenarios(client_id):
+    """Get all saved scenarios for a client"""
+    from database import ScoreScenario, get_db
+
+    db = get_db()
+    try:
+        scenarios = (
+            db.query(ScoreScenario)
+            .filter_by(client_id=client_id, is_active=True)
+            .order_by(ScoreScenario.is_favorite.desc(), ScoreScenario.created_at.desc())
+            .all()
+        )
+
+        return [s.to_dict() for s in scenarios]
+    finally:
+        db.close()
+
+
+def delete_scenario(client_id, scenario_id):
+    """Soft delete a scenario"""
+    from database import ScoreScenario, get_db
+
+    db = get_db()
+    try:
+        scenario = (
+            db.query(ScoreScenario)
+            .filter_by(id=scenario_id, client_id=client_id)
+            .first()
+        )
+
+        if not scenario:
+            return {"success": False, "error": "Scenario not found"}
+
+        scenario.is_active = False
+        db.commit()
+
+        return {"success": True}
+    finally:
+        db.close()
+
+
+def toggle_scenario_favorite(client_id, scenario_id):
+    """Toggle favorite status of a scenario"""
+    from database import ScoreScenario, get_db
+
+    db = get_db()
+    try:
+        scenario = (
+            db.query(ScoreScenario)
+            .filter_by(id=scenario_id, client_id=client_id)
+            .first()
+        )
+
+        if not scenario:
+            return {"success": False, "error": "Scenario not found"}
+
+        scenario.is_favorite = not scenario.is_favorite
+        db.commit()
+
+        return {"success": True, "is_favorite": scenario.is_favorite}
+    finally:
+        db.close()
+
+
+def get_goal_recommendations(current_score, target_score):
+    """
+    Get recommendations for reaching a target score.
+
+    Returns guidance on what types of items to focus on.
+    """
+    if not current_score or not target_score:
+        return {"error": "Both current and target scores required"}
+
+    gap = target_score - current_score
+
+    if gap <= 0:
+        return {
+            "message": "You've already reached your goal!",
+            "gap": 0,
+            "recommendations": [],
+        }
+
+    recommendations = []
+
+    # Prioritize by impact
+    sorted_types = sorted(
+        SCORE_IMPACT_BY_TYPE.items(),
+        key=lambda x: x[1]["avg"],
+        reverse=True
+    )
+
+    points_remaining = gap
+    suggested_removals = []
+
+    for type_key, type_data in sorted_types:
+        if points_remaining <= 0:
+            break
+        if type_data["category"] in ["fraud", "error"]:
+            continue  # Skip fraud/error as those are special cases
+
+        suggested_removals.append({
+            "type": type_key,
+            "label": type_data["label"],
+            "avg_impact": type_data["avg"],
+            "category": type_data["category"],
+        })
+        points_remaining -= type_data["avg"]
+
+    # Build recommendations
+    if gap <= 30:
+        recommendations.append("Focus on removing hard inquiries and small collections")
+        recommendations.append("Your goal is achievable with minimal removals")
+    elif gap <= 75:
+        recommendations.append("Target collections and late payments for biggest impact")
+        recommendations.append("Consider disputing inaccurate account statuses")
+    elif gap <= 150:
+        recommendations.append("Focus on major derogatory items like charge-offs")
+        recommendations.append("Multiple rounds of disputes may be needed")
+        recommendations.append("Expect 3-6 months for significant improvement")
+    else:
+        recommendations.append("Significant credit restoration needed")
+        recommendations.append("Address public records and major delinquencies first")
+        recommendations.append("This may require 6+ months of consistent effort")
+
+    return {
+        "current_score": current_score,
+        "target_score": target_score,
+        "gap": gap,
+        "current_range": get_score_range_label(current_score),
+        "target_range": get_score_range_label(target_score),
+        "estimated_items_to_remove": len(suggested_removals),
+        "suggested_focus": suggested_removals[:5],  # Top 5
+        "recommendations": recommendations,
+    }
+
+
+def get_portal_score_summary(client_id):
+    """
+    Get a summary of score data for the portal simulator page.
+    Combines current scores, items, and any saved scenarios.
+    """
+    from database import Client, CreditScoreSnapshot, DisputeItem, get_db
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return {"error": "Client not found"}
+
+        # Get latest score snapshot
+        snapshot = (
+            db.query(CreditScoreSnapshot)
+            .filter_by(client_id=client_id)
+            .order_by(CreditScoreSnapshot.created_at.desc())
+            .first()
+        )
+
+        # Get dispute items count
+        items = db.query(DisputeItem).filter_by(client_id=client_id).all()
+        active_items = [i for i in items if i.status not in ['deleted', 'removed']]
+        removed_items = [i for i in items if i.status in ['deleted', 'removed']]
+
+        # Get saved scenarios
+        scenarios = get_client_scenarios(client_id)
+
+        return {
+            "client_name": f"{client.first_name} {client.last_name}",
+            "scores": {
+                "equifax": snapshot.equifax_score if snapshot else None,
+                "experian": snapshot.experian_score if snapshot else None,
+                "transunion": snapshot.transunion_score if snapshot else None,
+                "average": snapshot.average_score if snapshot else None,
+                "range": get_score_range_label(snapshot.average_score if snapshot else None),
+                "snapshot_date": snapshot.created_at.isoformat() if snapshot else None,
+            },
+            "items": {
+                "total": len(items),
+                "active": len(active_items),
+                "removed": len(removed_items),
+            },
+            "scenarios": {
+                "count": len(scenarios),
+                "favorites": len([s for s in scenarios if s.get("is_favorite")]),
+            },
+            "has_data": snapshot is not None or len(items) > 0,
+        }
+    finally:
+        db.close()

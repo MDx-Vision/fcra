@@ -1898,3 +1898,169 @@ def chat():
         return redirect(url_for('portal_login'))
 
     return render_template('portal/chat.html', current_user=current_user)
+
+
+# =============================================================
+# SCORE SIMULATOR API ENDPOINTS
+# =============================================================
+
+@portal.route('/score-simulator')
+@portal_login_required
+@require_full_access
+def score_simulator():
+    """Credit score simulator page"""
+    current_user = get_current_user()
+    if not current_user:
+        return redirect(url_for('portal_login'))
+
+    return render_template('portal/score_simulator.html', current_user=current_user)
+
+
+@portal.route('/api/score/summary')
+@portal_login_required
+@require_full_access
+def api_score_summary():
+    """Get score summary for simulator page"""
+    from services.credit_score_calculator import get_portal_score_summary
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    result = get_portal_score_summary(client_id)
+    if 'error' in result:
+        return jsonify({'error': result['error']}), 400
+
+    return jsonify(result)
+
+
+@portal.route('/api/score/items')
+@portal_login_required
+@require_full_access
+def api_score_items():
+    """Get dispute items with impact estimates for selection"""
+    from services.credit_score_calculator import get_client_dispute_items_with_impact
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    items = get_client_dispute_items_with_impact(client_id)
+    return jsonify({'items': items, 'count': len(items)})
+
+
+@portal.route('/api/score/simulate', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_score_simulate():
+    """Run what-if simulation with selected items"""
+    from services.credit_score_calculator import simulate_score_with_items
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    selected_item_ids = data.get('selected_items', [])
+    current_score = data.get('current_score')
+
+    if not selected_item_ids:
+        return jsonify({'error': 'No items selected'}), 400
+
+    result = simulate_score_with_items(client_id, selected_item_ids, current_score)
+    return jsonify(result)
+
+
+@portal.route('/api/score/scenarios', methods=['GET'])
+@portal_login_required
+@require_full_access
+def api_score_scenarios_list():
+    """List saved scenarios for client"""
+    from services.credit_score_calculator import get_client_scenarios
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    scenarios = get_client_scenarios(client_id)
+    return jsonify({'scenarios': scenarios, 'count': len(scenarios)})
+
+
+@portal.route('/api/score/scenarios', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_score_scenarios_save():
+    """Save a new scenario"""
+    from services.credit_score_calculator import save_scenario
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    result = save_scenario(client_id, data)
+
+    if not result.get('success'):
+        return jsonify({'error': result.get('error', 'Failed to save')}), 400
+
+    return jsonify(result)
+
+
+@portal.route('/api/score/scenarios/<int:scenario_id>', methods=['DELETE'])
+@portal_login_required
+@require_full_access
+def api_score_scenarios_delete(scenario_id):
+    """Delete a scenario"""
+    from services.credit_score_calculator import delete_scenario
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    result = delete_scenario(client_id, scenario_id)
+
+    if not result.get('success'):
+        return jsonify({'error': result.get('error', 'Failed to delete')}), 400
+
+    return jsonify(result)
+
+
+@portal.route('/api/score/scenarios/<int:scenario_id>/favorite', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_score_scenarios_toggle_favorite(scenario_id):
+    """Toggle favorite status of a scenario"""
+    from services.credit_score_calculator import toggle_scenario_favorite
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    result = toggle_scenario_favorite(client_id, scenario_id)
+
+    if not result.get('success'):
+        return jsonify({'error': result.get('error', 'Failed to toggle favorite')}), 400
+
+    return jsonify(result)
+
+
+@portal.route('/api/score/goal-tips', methods=['POST'])
+@portal_login_required
+@require_full_access
+def api_score_goal_tips():
+    """Get tips for reaching a target score"""
+    from services.credit_score_calculator import get_goal_recommendations
+
+    client_id = get_client_id()
+    if not client_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    data = request.get_json() or {}
+    current_score = data.get('current_score')
+    target_score = data.get('target_score')
+
+    if not current_score or not target_score:
+        return jsonify({'error': 'current_score and target_score required'}), 400
+
+    result = get_goal_recommendations(current_score, target_score)
+    return jsonify(result)

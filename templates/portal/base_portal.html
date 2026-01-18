@@ -110,6 +110,10 @@
         <a href="{{ url_for('portal.timeline') }}" class="nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="nav-timeline">
             <span class="nav-icon" aria-hidden="true">📈</span><span class="nav-label">Journey</span>
         </a>
+        {# 5. Score Simulator - What-if score projections #}
+        <a href="{{ url_for('portal.score_simulator') }}" class="nav-tab {% if active_tab == 'score-simulator' %}active{% endif %}" data-testid="nav-score-simulator">
+            <span class="nav-icon" aria-hidden="true">🎯</span><span class="nav-label">Score Sim</span>
+        </a>
         {# 6. Profile - Settings & Billing (contains Invoices, Plans, Subscription, Status) #}
         <a href="{{ url_for('portal.profile') }}" class="nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="nav-profile">
             <span class="nav-icon" aria-hidden="true">👤</span><span class="nav-label">Profile</span>
@@ -155,6 +159,9 @@
         </a>
         <a href="{{ url_for('portal.timeline') }}" class="mobile-nav-tab {% if active_tab == 'timeline' %}active{% endif %}" data-testid="mobile-nav-timeline">
             <span>📈</span><span>Journey</span>
+        </a>
+        <a href="{{ url_for('portal.score_simulator') }}" class="mobile-nav-tab {% if active_tab == 'score-simulator' %}active{% endif %}" data-testid="mobile-nav-score-simulator">
+            <span>🎯</span><span>Score</span>
         </a>
         <a href="{{ url_for('portal.profile') }}" class="mobile-nav-tab {% if active_tab == 'profile' or active_tab in ['invoices', 'payment-plans', 'subscription', 'status'] %}active{% endif %}" data-testid="mobile-nav-profile">
             <span>👤</span><span>Profile</span>

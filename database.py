@@ -1857,6 +1857,64 @@ class CreditScoreProjection(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class ScoreScenario(Base):
+    """Store saved 'what-if' score improvement scenarios for clients"""
+    __tablename__ = 'score_scenarios'
+
+    id = Column(Integer, primary_key=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=False)
+
+    # Scenario details
+    name = Column(String(100), default='My Scenario')
+    description = Column(Text)
+
+    # Scores
+    current_score = Column(Integer)
+    projected_score = Column(Integer)
+    potential_gain = Column(Integer)
+
+    # Selected items for removal
+    selected_items = Column(JSON)  # List of dispute item IDs
+    item_breakdown = Column(JSON)  # Detailed breakdown by item type
+
+    # Goal tracking
+    goal_score = Column(Integer)
+    goal_gap = Column(Integer)  # Points needed to reach goal
+
+    # Confidence and estimates
+    confidence_level = Column(String(20), default='medium')  # low, medium, high
+    estimated_timeline_months = Column(Integer)
+
+    # Status
+    is_favorite = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+
+    # Audit
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'client_id': self.client_id,
+            'name': self.name,
+            'description': self.description,
+            'current_score': self.current_score,
+            'projected_score': self.projected_score,
+            'potential_gain': self.potential_gain,
+            'selected_items': self.selected_items,
+            'item_breakdown': self.item_breakdown,
+            'goal_score': self.goal_score,
+            'goal_gap': self.goal_gap,
+            'confidence_level': self.confidence_level,
+            'estimated_timeline_months': self.estimated_timeline_months,
+            'is_favorite': self.is_favorite,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
 class CFPBComplaint(Base):
     """Track CFPB complaints filed against CRAs and furnishers"""
     __tablename__ = 'cfpb_complaints'

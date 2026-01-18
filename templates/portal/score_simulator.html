@@ -1,0 +1,1208 @@
+{% extends "portal/base_portal.html" %}
+
+{% block title %}Score Simulator - Brightpath Ascend Group{% endblock %}
+
+{% block content %}
+<div class="score-simulator-page">
+    <!-- Header -->
+    <div class="page-header">
+        <h1>Credit Score Simulator</h1>
+        <p class="subtitle">See how removing negative items could improve your score</p>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Loading your credit data...</p>
+    </div>
+
+    <!-- Main Content (hidden until loaded) -->
+    <div id="main-content" style="display: none;">
+        <!-- Current Score Section -->
+        <div class="score-summary-card">
+            <div class="score-header">
+                <h2>Your Current Credit Score</h2>
+                <span id="score-date" class="score-date"></span>
+            </div>
+            <div class="score-display">
+                <div class="score-gauge-container">
+                    <canvas id="score-gauge" width="200" height="120"></canvas>
+                    <div class="score-value">
+                        <span id="current-score">---</span>
+                        <span id="score-range" class="score-range-label">Loading...</span>
+                    </div>
+                </div>
+                <div class="bureau-scores">
+                    <div class="bureau-score">
+                        <span class="bureau-name">Equifax</span>
+                        <span id="equifax-score" class="bureau-value">---</span>
+                    </div>
+                    <div class="bureau-score">
+                        <span class="bureau-name">Experian</span>
+                        <span id="experian-score" class="bureau-value">---</span>
+                    </div>
+                    <div class="bureau-score">
+                        <span class="bureau-name">TransUnion</span>
+                        <span id="transunion-score" class="bureau-value">---</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulator Section -->
+        <div class="simulator-section">
+            <div class="simulator-left">
+                <!-- Item Selection -->
+                <div class="items-card">
+                    <div class="items-header">
+                        <h3>Select Items to Remove</h3>
+                        <div class="items-actions">
+                            <button onclick="selectAll()" class="btn-link">Select All</button>
+                            <button onclick="clearAll()" class="btn-link">Clear</button>
+                        </div>
+                    </div>
+                    <div class="items-summary">
+                        <span id="items-selected-count">0</span> of <span id="items-total-count">0</span> items selected
+                    </div>
+                    <div id="items-list" class="items-list">
+                        <!-- Items loaded dynamically -->
+                    </div>
+                    <div id="no-items-message" class="no-items-message" style="display: none;">
+                        <p>No dispute items found.</p>
+                        <p>Items will appear here once your credit report is analyzed.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="simulator-right">
+                <!-- Simulation Results -->
+                <div class="results-card">
+                    <h3>Projected Improvement</h3>
+                    <div id="results-placeholder" class="results-placeholder">
+                        <p>Select items on the left to see your projected score improvement</p>
+                    </div>
+                    <div id="results-content" style="display: none;">
+                        <div class="results-comparison">
+                            <div class="result-box current">
+                                <span class="result-label">Current</span>
+                                <span id="result-current-score" class="result-score">---</span>
+                                <span id="result-current-range" class="result-range">---</span>
+                            </div>
+                            <div class="result-arrow">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                                </svg>
+                            </div>
+                            <div class="result-box projected">
+                                <span class="result-label">Projected</span>
+                                <span id="result-projected-score" class="result-score">---</span>
+                                <span id="result-projected-range" class="result-range">---</span>
+                            </div>
+                        </div>
+                        <div class="results-gain">
+                            <span class="gain-label">Potential Gain</span>
+                            <span id="result-gain" class="gain-value">+0</span>
+                            <span id="result-gain-range" class="gain-range">points</span>
+                        </div>
+                        <div class="results-details">
+                            <div class="detail-row">
+                                <span>Items Selected</span>
+                                <span id="result-items-count">0</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>Confidence</span>
+                                <span id="result-confidence" class="confidence-badge">Medium</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>Est. Timeline</span>
+                                <span id="result-timeline">2-3 months</span>
+                            </div>
+                        </div>
+                        <button onclick="saveScenario()" class="btn-save-scenario">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                                <polyline points="17 21 17 13 7 13 7 21"/>
+                                <polyline points="7 3 7 8 15 8"/>
+                            </svg>
+                            Save This Scenario
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Goal Setting -->
+                <div class="goal-card">
+                    <h3>Set Your Goal</h3>
+                    <div class="goal-input-group">
+                        <label for="goal-score">Target Score</label>
+                        <input type="number" id="goal-score" min="300" max="850" placeholder="e.g., 700">
+                        <button onclick="getGoalTips()" class="btn-goal">Get Tips</button>
+                    </div>
+                    <div id="goal-tips" class="goal-tips" style="display: none;">
+                        <!-- Tips loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Saved Scenarios -->
+                <div class="scenarios-card">
+                    <h3>Saved Scenarios</h3>
+                    <div id="scenarios-list" class="scenarios-list">
+                        <!-- Scenarios loaded dynamically -->
+                    </div>
+                    <div id="no-scenarios" class="no-scenarios">
+                        <p>No saved scenarios yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Scenario Modal -->
+    <div id="save-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Save Scenario</h3>
+                <button onclick="closeSaveModal()" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="scenario-name">Scenario Name</label>
+                    <input type="text" id="scenario-name" placeholder="e.g., Best Case, Conservative">
+                </div>
+                <div class="form-group">
+                    <label for="scenario-description">Notes (optional)</label>
+                    <textarea id="scenario-description" rows="3" placeholder="Add any notes about this scenario..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeSaveModal()" class="btn-cancel">Cancel</button>
+                <button onclick="confirmSaveScenario()" class="btn-confirm">Save Scenario</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.score-simulator-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.page-header .subtitle {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Score Summary Card */
+.score-summary-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+}
+
+.score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.score-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.score-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.score-display {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+}
+
+.score-gauge-container {
+    position: relative;
+    width: 200px;
+    height: 140px;
+}
+
+.score-value {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.score-value span:first-child {
+    display: block;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.score-range-label {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.bureau-scores {
+    display: flex;
+    gap: 24px;
+}
+
+.bureau-score {
+    text-align: center;
+}
+
+.bureau-name {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.bureau-value {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Simulator Section */
+.simulator-section {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+}
+
+@media (max-width: 900px) {
+    .simulator-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+.items-card, .results-card, .goal-card, .scenarios-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.items-card h3, .results-card h3, .goal-card h3, .scenarios-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.items-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.items-header h3 {
+    margin: 0 !important;
+}
+
+.items-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+}
+
+.btn-link:hover {
+    text-decoration: underline;
+}
+
+.items-summary {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.items-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.item-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: var(--bg-secondary);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.item-row:hover {
+    background: var(--bg-hover);
+}
+
+.item-row.selected {
+    background: rgba(20, 184, 166, 0.1);
+    border: 1px solid var(--accent-color);
+}
+
+.item-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+}
+
+.item-details {
+    flex: 1;
+}
+
+.item-creditor {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.item-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.item-impact {
+    text-align: right;
+}
+
+.impact-value {
+    font-weight: 600;
+    color: #22c55e;
+}
+
+.impact-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.no-items-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+/* Results */
+.results-placeholder {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.results-comparison {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.result-box {
+    text-align: center;
+    padding: 16px 24px;
+    border-radius: 8px;
+    min-width: 100px;
+}
+
+.result-box.current {
+    background: var(--bg-secondary);
+}
+
+.result-box.projected {
+    background: rgba(20, 184, 166, 0.1);
+    border: 1px solid var(--accent-color);
+}
+
+.result-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.result-score {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.result-range {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.result-arrow {
+    color: var(--accent-color);
+}
+
+.result-arrow svg {
+    width: 24px;
+    height: 24px;
+}
+
+.results-gain {
+    text-align: center;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(20, 184, 166, 0.1));
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.gain-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.gain-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #22c55e;
+}
+
+.gain-range {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-left: 4px;
+}
+
+.results-details {
+    margin-bottom: 16px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.confidence-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.confidence-badge.high {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+.confidence-badge.medium {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+}
+
+.confidence-badge.low {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.btn-save-scenario {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.btn-save-scenario:hover {
+    background: var(--accent-hover);
+}
+
+.btn-save-scenario svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Goal Setting */
+.goal-input-group {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.goal-input-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.goal-input-group input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.btn-goal {
+    padding: 10px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.btn-goal:hover {
+    background: var(--bg-hover);
+}
+
+.goal-tips {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.goal-tips h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.goal-tips ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.goal-tips li {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.goal-gap {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Scenarios */
+.scenarios-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.scenario-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.scenario-info {
+    flex: 1;
+}
+
+.scenario-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.scenario-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.scenario-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.scenario-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: var(--text-secondary);
+}
+
+.scenario-actions button:hover {
+    color: var(--text-primary);
+}
+
+.scenario-actions button.favorite.active {
+    color: #eab308;
+}
+
+.no-scenarios {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-cancel {
+    padding: 10px 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.btn-confirm {
+    padding: 10px 20px;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.btn-confirm:hover {
+    background: var(--accent-hover);
+}
+</style>
+
+<script>
+// State
+let currentSimulation = null;
+let selectedItems = new Set();
+let allItems = [];
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadSummary();
+    loadItems();
+    loadScenarios();
+});
+
+// Load score summary
+async function loadSummary() {
+    try {
+        const response = await fetch('/portal/api/score/summary');
+        const data = await response.json();
+
+        if (data.error) {
+            console.error('Error loading summary:', data.error);
+            return;
+        }
+
+        // Update scores
+        document.getElementById('current-score').textContent = data.scores.average || '---';
+        document.getElementById('score-range').textContent = data.scores.range || 'Unknown';
+        document.getElementById('equifax-score').textContent = data.scores.equifax || '---';
+        document.getElementById('experian-score').textContent = data.scores.experian || '---';
+        document.getElementById('transunion-score').textContent = data.scores.transunion || '---';
+
+        if (data.scores.snapshot_date) {
+            const date = new Date(data.scores.snapshot_date);
+            document.getElementById('score-date').textContent = 'As of ' + date.toLocaleDateString();
+        }
+
+        // Draw gauge
+        if (data.scores.average) {
+            drawScoreGauge(data.scores.average);
+        }
+
+        // Hide loading, show content
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+    } catch (err) {
+        console.error('Error:', err);
+    }
+}
+
+// Draw score gauge
+function drawScoreGauge(score) {
+    const canvas = document.getElementById('score-gauge');
+    const ctx = canvas.getContext('2d');
+    const centerX = 100;
+    const centerY = 100;
+    const radius = 80;
+
+    // Clear
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw background arc
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI);
+    ctx.strokeStyle = 'var(--border-color)';
+    ctx.lineWidth = 12;
+    ctx.stroke();
+
+    // Calculate angle based on score (300-850)
+    const minScore = 300;
+    const maxScore = 850;
+    const percentage = (score - minScore) / (maxScore - minScore);
+    const angle = Math.PI + (percentage * Math.PI);
+
+    // Determine color based on score
+    let color;
+    if (score < 580) color = '#ef4444'; // Poor - red
+    else if (score < 670) color = '#f97316'; // Fair - orange
+    else if (score < 740) color = '#eab308'; // Good - yellow
+    else if (score < 800) color = '#84cc16'; // Very Good - light green
+    else color = '#22c55e'; // Excellent - green
+
+    // Draw score arc
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, Math.PI, angle);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+}
+
+// Load dispute items
+async function loadItems() {
+    try {
+        const response = await fetch('/portal/api/score/items');
+        const data = await response.json();
+
+        allItems = data.items || [];
+        document.getElementById('items-total-count').textContent = allItems.length;
+
+        if (allItems.length === 0) {
+            document.getElementById('items-list').style.display = 'none';
+            document.getElementById('no-items-message').style.display = 'block';
+            return;
+        }
+
+        renderItems();
+    } catch (err) {
+        console.error('Error loading items:', err);
+    }
+}
+
+// Render items list
+function renderItems() {
+    const container = document.getElementById('items-list');
+    container.innerHTML = '';
+
+    // Group by bureau
+    const byBureau = {};
+    allItems.forEach(item => {
+        if (!byBureau[item.bureau]) byBureau[item.bureau] = [];
+        byBureau[item.bureau].push(item);
+    });
+
+    Object.keys(byBureau).sort().forEach(bureau => {
+        const bureauHeader = document.createElement('div');
+        bureauHeader.className = 'bureau-header';
+        bureauHeader.innerHTML = `<strong>${bureau}</strong> (${byBureau[bureau].length} items)`;
+        bureauHeader.style.cssText = 'padding: 8px 12px; font-size: 12px; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 4px; margin-bottom: 8px;';
+        container.appendChild(bureauHeader);
+
+        byBureau[bureau].forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'item-row' + (selectedItems.has(item.id) ? ' selected' : '');
+            row.onclick = () => toggleItem(item.id);
+
+            row.innerHTML = `
+                <input type="checkbox" class="item-checkbox" ${selectedItems.has(item.id) ? 'checked' : ''} onclick="event.stopPropagation(); toggleItem(${item.id})">
+                <div class="item-details">
+                    <div class="item-creditor">${item.creditor_name || 'Unknown'}</div>
+                    <div class="item-meta">${item.impact.label} &middot; ${item.item_type || 'N/A'}</div>
+                </div>
+                <div class="item-impact">
+                    <div class="impact-value">+${item.impact.avg}</div>
+                    <div class="impact-label">points</div>
+                </div>
+            `;
+
+            container.appendChild(row);
+        });
+    });
+}
+
+// Toggle item selection
+function toggleItem(itemId) {
+    if (selectedItems.has(itemId)) {
+        selectedItems.delete(itemId);
+    } else {
+        selectedItems.add(itemId);
+    }
+
+    document.getElementById('items-selected-count').textContent = selectedItems.size;
+    renderItems();
+
+    if (selectedItems.size > 0) {
+        runSimulation();
+    } else {
+        document.getElementById('results-placeholder').style.display = 'block';
+        document.getElementById('results-content').style.display = 'none';
+    }
+}
+
+// Select all items
+function selectAll() {
+    allItems.forEach(item => selectedItems.add(item.id));
+    document.getElementById('items-selected-count').textContent = selectedItems.size;
+    renderItems();
+    runSimulation();
+}
+
+// Clear all selections
+function clearAll() {
+    selectedItems.clear();
+    document.getElementById('items-selected-count').textContent = 0;
+    renderItems();
+    document.getElementById('results-placeholder').style.display = 'block';
+    document.getElementById('results-content').style.display = 'none';
+}
+
+// Run simulation
+async function runSimulation() {
+    try {
+        const response = await fetch('/portal/api/score/simulate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ selected_items: Array.from(selectedItems) })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+            console.error('Simulation error:', data.error);
+            return;
+        }
+
+        currentSimulation = data;
+
+        // Update UI
+        document.getElementById('results-placeholder').style.display = 'none';
+        document.getElementById('results-content').style.display = 'block';
+
+        document.getElementById('result-current-score').textContent = data.current_score;
+        document.getElementById('result-current-range').textContent = data.current_range;
+        document.getElementById('result-projected-score').textContent = data.projected_score;
+        document.getElementById('result-projected-range').textContent = data.projected_range;
+        document.getElementById('result-gain').textContent = '+' + data.potential_gain;
+        document.getElementById('result-gain-range').textContent = `(${data.potential_gain_range} range)`;
+        document.getElementById('result-items-count').textContent = data.items_selected;
+
+        const confidenceBadge = document.getElementById('result-confidence');
+        confidenceBadge.textContent = data.confidence_level.charAt(0).toUpperCase() + data.confidence_level.slice(1);
+        confidenceBadge.className = 'confidence-badge ' + data.confidence_level;
+
+        document.getElementById('result-timeline').textContent = data.estimated_timeline_months + ' months';
+
+    } catch (err) {
+        console.error('Error running simulation:', err);
+    }
+}
+
+// Save scenario
+function saveScenario() {
+    if (!currentSimulation) return;
+    document.getElementById('save-modal').style.display = 'flex';
+    document.getElementById('scenario-name').value = '';
+    document.getElementById('scenario-description').value = '';
+}
+
+function closeSaveModal() {
+    document.getElementById('save-modal').style.display = 'none';
+}
+
+async function confirmSaveScenario() {
+    const name = document.getElementById('scenario-name').value || 'My Scenario';
+    const description = document.getElementById('scenario-description').value;
+
+    try {
+        const response = await fetch('/portal/api/score/scenarios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                description,
+                current_score: currentSimulation.current_score,
+                projected_score: currentSimulation.projected_score,
+                potential_gain: currentSimulation.potential_gain,
+                selected_items: Array.from(selectedItems),
+                item_breakdown: currentSimulation.item_details,
+                confidence_level: currentSimulation.confidence_level,
+                estimated_timeline_months: currentSimulation.estimated_timeline_months
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            closeSaveModal();
+            loadScenarios();
+            alert('Scenario saved!');
+        } else {
+            alert('Error saving scenario: ' + data.error);
+        }
+    } catch (err) {
+        console.error('Error saving scenario:', err);
+        alert('Error saving scenario');
+    }
+}
+
+// Load saved scenarios
+async function loadScenarios() {
+    try {
+        const response = await fetch('/portal/api/score/scenarios');
+        const data = await response.json();
+
+        const container = document.getElementById('scenarios-list');
+        const noScenarios = document.getElementById('no-scenarios');
+
+        if (!data.scenarios || data.scenarios.length === 0) {
+            container.style.display = 'none';
+            noScenarios.style.display = 'block';
+            return;
+        }
+
+        container.style.display = 'block';
+        noScenarios.style.display = 'none';
+        container.innerHTML = '';
+
+        data.scenarios.forEach(scenario => {
+            const item = document.createElement('div');
+            item.className = 'scenario-item';
+            item.innerHTML = `
+                <div class="scenario-info">
+                    <div class="scenario-name">${scenario.name}</div>
+                    <div class="scenario-meta">${scenario.current_score} → ${scenario.projected_score} (+${scenario.potential_gain})</div>
+                </div>
+                <div class="scenario-actions">
+                    <button onclick="toggleFavorite(${scenario.id})" class="favorite ${scenario.is_favorite ? 'active' : ''}" title="Favorite">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="${scenario.is_favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                    </button>
+                    <button onclick="deleteScenario(${scenario.id})" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    } catch (err) {
+        console.error('Error loading scenarios:', err);
+    }
+}
+
+async function toggleFavorite(scenarioId) {
+    try {
+        await fetch(`/portal/api/score/scenarios/${scenarioId}/favorite`, { method: 'POST' });
+        loadScenarios();
+    } catch (err) {
+        console.error('Error:', err);
+    }
+}
+
+async function deleteScenario(scenarioId) {
+    if (!confirm('Delete this scenario?')) return;
+
+    try {
+        await fetch(`/portal/api/score/scenarios/${scenarioId}`, { method: 'DELETE' });
+        loadScenarios();
+    } catch (err) {
+        console.error('Error:', err);
+    }
+}
+
+// Goal tips
+async function getGoalTips() {
+    const targetScore = parseInt(document.getElementById('goal-score').value);
+    const currentScore = parseInt(document.getElementById('current-score').textContent);
+
+    if (!targetScore || targetScore < 300 || targetScore > 850) {
+        alert('Please enter a valid target score (300-850)');
+        return;
+    }
+
+    try {
+        const response = await fetch('/portal/api/score/goal-tips', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ current_score: currentScore, target_score: targetScore })
+        });
+
+        const data = await response.json();
+
+        const container = document.getElementById('goal-tips');
+        container.style.display = 'block';
+
+        if (data.gap <= 0) {
+            container.innerHTML = `<p style="color: #22c55e; font-weight: 500;">You've already reached your goal!</p>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="goal-gap">
+                <span>Points needed:</span>
+                <strong>+${data.gap}</strong>
+            </div>
+            <h4>Recommendations:</h4>
+            <ul>
+                ${data.recommendations.map(r => `<li>${r}</li>`).join('')}
+            </ul>
+        `;
+    } catch (err) {
+        console.error('Error:', err);
+    }
+}
+</script>
+{% endblock %}
