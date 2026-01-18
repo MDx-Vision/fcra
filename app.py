@@ -900,6 +900,16 @@ def inject_tenant_branding():
     }
 
 
+@app.context_processor
+def inject_affirm_config():
+    """Inject Affirm BNPL config into all templates"""
+    from services.config import config
+    return {
+        "affirm_configured": config.is_configured('affirm'),
+        "affirm_public_key": config.AFFIRM_PUBLIC_KEY if config.is_configured('affirm') else None,
+    }
+
+
 @app.route("/auth")
 def auth_redirect():
     """Redirect to staff login page"""

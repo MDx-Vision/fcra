@@ -165,6 +165,18 @@
     <script src="{{ url_for('static', filename='js/portal-redesign.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme-service.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
+
+    {# Affirm BNPL Integration #}
+    {% if affirm_public_key %}
+    <script>
+        var _affirm_config = {
+            public_api_key: "{{ affirm_public_key }}",
+            script: "https://cdn1-sandbox.affirm.com/js/v2/affirm.js"
+        };
+        (function(m,g,n,d,a,e,h,c){var b=m[n]||{},k=document.createElement(e),p=document.getElementsByTagName(e)[0],l=function(a,b,c){return function(){a[b]._.push([c,arguments])}};b[d]=l(b,d,"set");var f=b[d];b[a]={};b[a]._=[];f._=[];b._=[];b[a][h]=l(b,a,h);b[c]=function(){b._.push([h,arguments])};a=0;for(c="hierarchyChange hierarchyChangeClose hierarchyChangeSubmit get hierarchyChangeBack hierarchyChangeNext applicationChange applicationChangeBack applicationChangeNext applicationPromote applicationSubmitStart applicationSubmitError applicationSubmitSuccess".split(" ");a<c.length;a++)b[c[a]]=l(b,"events",c[a]);c=function(a){return function(){var d=Array.prototype.slice.call(arguments);d.unshift(a);f.apply(b,d)}};for(a=0;a<"ui,currentCheckout,currentApplication,currentOrderId".split(",").length;a++)b[c[a]]=c(c[a]);k.async=!0;k.src=g[e];p.parentNode.insertBefore(k,p);delete g[e];f(g);m[n]=b})(window,_affirm_config,"affirm","checkout","ui","script","ready","jsReady");
+    </script>
+    {% endif %}
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

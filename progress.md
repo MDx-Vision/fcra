@@ -2,12 +2,12 @@
 
 ## Session: 2026-01-18
 
-### Affirm BNPL Integration (Backend)
+### Affirm BNPL Integration (Full Stack)
 - **Status:** ✅ COMPLETE
 - **Started:** 2026-01-18
 
 - Actions taken:
-  - **AffirmService**: Created full BNPL integration service (~450 lines)
+  - **Backend (AffirmService)**: Created full BNPL integration service (~450 lines)
     - Checkout creation with client prefill
     - Charge authorization, capture, void, refund
     - Webhook handling for all event types
@@ -24,6 +24,24 @@
     - POST /api/webhooks/affirm
   - **Unit Tests**: 33 comprehensive tests
 
+  - **Frontend (NEW)**:
+    - Added Affirm.js SDK to `base_portal.html` with dynamic loading
+    - Added context processor for Affirm config injection
+    - Updated onboarding payment modal with:
+      - "Pay Now" (Stripe) option
+      - "Pay Over Time" (Affirm) option with term selector
+      - 3/6/12 month term buttons
+      - Monthly payment calculator display
+    - Added JavaScript functions:
+      - `selectPaymentMethod()` - toggle payment method UI
+      - `selectAffirmTerm()` - select 3/6/12 month terms
+      - `updateAffirmPaymentDisplay()` - show monthly payment
+      - `initiateAffirmCheckout()` - create Affirm checkout
+      - `initiateStripeCheckout()` - fallback to Stripe
+    - Added portal routes:
+      - `GET /portal/payment/affirm/success` - handle Affirm callback
+      - `POST /portal/api/payment/create-checkout` - Stripe checkout creation
+
 - Files created:
   - `services/affirm_service.py` - Affirm BNPL service
   - `tests/test_affirm_service.py` - 33 unit tests
@@ -31,12 +49,14 @@
 - Files modified:
   - `services/config.py` - Added Affirm config properties
   - `database.py` - Added Affirm fields + migrations
-  - `app.py` - Added 7 Affirm API endpoints
+  - `app.py` - Added 7 Affirm API endpoints + context processor
+  - `templates/portal/base_portal.html` - Added Affirm.js SDK
+  - `templates/portal/onboarding.html` - Added Affirm payment UI + JS
+  - `routes/portal.py` - Added Affirm success route + config passing
 
 - **Next Steps** (require merchant account):
   - Apply for Affirm merchant account at https://www.affirm.com/business
-  - Add Affirm.js to frontend templates
-  - Add "Pay over time" option in onboarding UI
+  - Add API keys to production environment
 
 ---
 

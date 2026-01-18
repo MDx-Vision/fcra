@@ -1001,13 +1001,17 @@ def onboarding():
     if not current_user:
         return redirect(url_for('portal_login'))
 
+    from services.config import config
+
     db = get_db()
     try:
         service = get_onboarding_service(db)
         progress = service.get_progress_summary(get_client_id())
         return render_template('portal/onboarding.html',
                                current_user=current_user,
-                               progress=progress)
+                               progress=progress,
+                               affirm_configured=config.is_configured('affirm'),
+                               affirm_public_key=config.AFFIRM_PUBLIC_KEY)
     finally:
         db.close()
 
@@ -1560,5 +1564,121 @@ def api_portal_payment_plan_detail(plan_id):
             'success': True,
             'plan': plan_data
         })
+    finally:
+        db.close()
+
+
+# ============================================================================
+# Affirm Payment Routes
+# ============================================================================
+
+@portal.route('/payment/affirm/success')
+@portal_login_required
+@require_onboarding_access
+def affirm_payment_success():
+    """Handle Affirm payment success callback"""
+    from flask import request, flash
+    from database import get_db, Client
+    from services.affirm_service import get_affirm_service
+    from services.timeline_service import log_milestone
+
+    checkout_token = request.args.get('checkout_token')
+    client_id = get_client_id()
+
+    db = get_db()
+    try:
+        # Get the client
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            flash('Client not found', 'error')
+            return redirect(url_for('portal.onboarding'))
+
+        # Confirm the payment with Affirm
+        affirm_service = get_affirm_service()
+        if checkout_token:
+            result = affirm_service.confirm_checkout(checkout_token)
+            if result.get('success'):
+                # Update client Affirm status
+                client.affirm_checkout_token = checkout_token
+                client.affirm_charge_id = result.get('charge_id')
+                client.affirm_status = 'authorized'
+
+                # Log timeline event
+                try:
+                    log_milestone(
+                        db,
+                        client_id,
+                        'affirm_payment_authorized',
+                        f'Affirm payment authorized for Round 1 - ${298:.2f}'
+                    )
+                except Exception:
+                    pass
+
+                db.commit()
+                flash('Payment authorized successfully! Your Round 1 will begin after the cancellation period.', 'success')
+            else:
+                flash(f'Payment confirmation failed: {result.get("error", "Unknown error")}', 'error')
+        else:
+            flash('Payment completed', 'success')
+
+        return redirect(url_for('portal.onboarding'))
+    except Exception as e:
+        db.rollback()
+        flash(f'Error processing payment: {str(e)}', 'error')
+        return redirect(url_for('portal.onboarding'))
+    finally:
+        db.close()
+
+
+@portal.route('/api/payment/create-checkout', methods=['POST'])
+@portal_login_required
+@require_onboarding_access
+def api_create_payment_checkout():
+    """Create a Stripe checkout session for round payment"""
+    from flask import jsonify, request
+    from database import get_db, Client
+    from services.client_payment_service import get_client_payment_service
+
+    data = request.get_json() or {}
+    payment_type = data.get('payment_type', 'round')
+    round_number = data.get('round', 1)
+    client_id = get_client_id()
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'error': 'Client not found'}), 404
+
+        service = get_client_payment_service(db)
+
+        # Determine amount based on round
+        if round_number == 1:
+            # Round 1 is $298 after $199 credit
+            amount_cents = 29800
+        else:
+            # Round 2+ is $297
+            amount_cents = 29700
+
+        success_url = request.host_url.rstrip('/') + url_for('portal.onboarding') + '?payment=success'
+        cancel_url = request.host_url.rstrip('/') + url_for('portal.onboarding') + '?payment=cancelled'
+
+        result = service.create_round_payment_intent(
+            client_id=client_id,
+            amount_cents=amount_cents,
+            round_number=round_number,
+            success_url=success_url,
+            cancel_url=cancel_url
+        )
+
+        if result.get('error'):
+            return jsonify({'error': result['error']}), 400
+
+        return jsonify({
+            'success': True,
+            'checkout_url': result.get('checkout_url')
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
     finally:
         db.close()

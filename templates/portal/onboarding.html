@@ -669,7 +669,7 @@
             <h2 class="modal-title">Round 1 Payment</h2>
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
-        <form id="form-payment" onsubmit="submitStep(event, 'payment')">
+        <form id="form-payment" onsubmit="submitPayment(event)">
             <p style="color: #64748b; margin-bottom: 20px;">Your payment will be charged when we send your Round 1 dispute letters (after the 3-day cancellation period).</p>
 
             <!-- Pricing breakdown -->
@@ -694,20 +694,69 @@
                 </div>
             </div>
 
+            <!-- Payment Method Selection -->
             <div class="form-group">
-                <label for="payment_method">Payment Method</label>
-                <select id="payment_method" name="payment_method" required data-testid="select-payment">
-                    <option value="">Select payment method...</option>
-                    <option value="stripe">Credit/Debit Card</option>
-                </select>
+                <label style="margin-bottom: 12px; display: block;">Choose Payment Method</label>
+
+                <!-- Pay Now Option -->
+                <div class="payment-option" onclick="selectPaymentMethod('stripe')" data-method="stripe" style="border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <input type="radio" name="payment_method" value="stripe" id="pm-stripe" style="width: 20px; height: 20px;" data-testid="radio-stripe">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #1a1a2e; margin-bottom: 2px;">Pay Now</div>
+                            <div style="font-size: 13px; color: #64748b;">Credit card, debit card, or bank account</div>
+                        </div>
+                        <div style="font-weight: 700; color: #16a34a; font-size: 18px;">$298</div>
+                    </div>
+                </div>
+
+                <!-- Affirm BNPL Option -->
+                {% if affirm_configured %}
+                <div class="payment-option" onclick="selectPaymentMethod('affirm')" data-method="affirm" style="border: 2px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <input type="radio" name="payment_method" value="affirm" id="pm-affirm" style="width: 20px; height: 20px;" data-testid="radio-affirm">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #1a1a2e; margin-bottom: 2px;">
+                                Pay Over Time with <span style="color: #0066ff; font-weight: 700;">Affirm</span>
+                            </div>
+                            <div style="font-size: 13px; color: #64748b;">Split into easy monthly payments</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: #0066ff; font-size: 18px;" id="affirm-monthly">~$25/mo</div>
+                            <div style="font-size: 11px; color: #64748b;">for 12 months*</div>
+                        </div>
+                    </div>
+                    <!-- Affirm Details (shown when selected) -->
+                    <div id="affirm-details" style="display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <button type="button" class="affirm-term-btn active" onclick="selectAffirmTerm(3)" data-term="3" style="flex: 1; padding: 10px; border: 2px solid #0066ff; border-radius: 8px; background: #eff6ff; color: #0066ff; font-weight: 600; cursor: pointer;">3 mo</button>
+                            <button type="button" class="affirm-term-btn" onclick="selectAffirmTerm(6)" data-term="6" style="flex: 1; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; color: #374151; font-weight: 600; cursor: pointer;">6 mo</button>
+                            <button type="button" class="affirm-term-btn" onclick="selectAffirmTerm(12)" data-term="12" style="flex: 1; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; background: white; color: #374151; font-weight: 600; cursor: pointer;">12 mo</button>
+                        </div>
+                        <div style="background: white; border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 28px; font-weight: 700; color: #0066ff;" id="affirm-payment-display">~$100/mo</div>
+                            <div style="font-size: 12px; color: #64748b;">Estimated payment. Final terms at checkout.</div>
+                        </div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 12px; text-align: center;">
+                            *Rates 0-36% APR. Subject to credit check. <a href="https://www.affirm.com/how-it-works" target="_blank" style="color: #0066ff;">Learn more</a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            <button type="submit" class="btn-primary" data-testid="save-payment">Add Payment Method</button>
+
+            <button type="submit" class="btn-primary" data-testid="save-payment" id="payment-submit-btn">
+                Continue to Payment
+            </button>
         </form>
     </div>
 </div>
 
 <script>
 let currentModal = null;
+let selectedPaymentMethod = null;
+let selectedAffirmTerm = 12;
+const PAYMENT_AMOUNT_CENTS = 29800; // $298.00
 
 function openStep(stepKey) {
     const card = document.querySelector(`[data-step="${stepKey}"]`);
@@ -745,6 +794,155 @@ function handleFileSelect(input, zoneId) {
         zone.classList.add('has-file');
         zone.querySelector('.upload-text').textContent = input.files[0].name;
         zone.querySelector('.upload-icon').textContent = '✅';
+    }
+}
+
+// Payment method selection
+function selectPaymentMethod(method) {
+    selectedPaymentMethod = method;
+
+    // Update radio buttons
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.checked = (radio.value === method);
+    });
+
+    // Update visual selection
+    document.querySelectorAll('.payment-option').forEach(opt => {
+        if (opt.dataset.method === method) {
+            opt.style.borderColor = method === 'affirm' ? '#0066ff' : '#319795';
+            opt.style.boxShadow = '0 0 0 3px ' + (method === 'affirm' ? 'rgba(0, 102, 255, 0.1)' : 'rgba(49, 151, 149, 0.1)');
+        } else {
+            opt.style.borderColor = '#e2e8f0';
+            opt.style.boxShadow = 'none';
+        }
+    });
+
+    // Show/hide Affirm details
+    const affirmDetails = document.getElementById('affirm-details');
+    if (affirmDetails) {
+        affirmDetails.style.display = method === 'affirm' ? 'block' : 'none';
+    }
+
+    // Update submit button text
+    const submitBtn = document.getElementById('payment-submit-btn');
+    if (method === 'affirm') {
+        submitBtn.textContent = 'Continue with Affirm';
+        submitBtn.style.background = '#0066ff';
+    } else {
+        submitBtn.textContent = 'Continue to Payment';
+        submitBtn.style.background = '#319795';
+    }
+}
+
+// Affirm term selection
+function selectAffirmTerm(months) {
+    selectedAffirmTerm = months;
+
+    // Update button styles
+    document.querySelectorAll('.affirm-term-btn').forEach(btn => {
+        if (parseInt(btn.dataset.term) === months) {
+            btn.style.borderColor = '#0066ff';
+            btn.style.background = '#eff6ff';
+            btn.style.color = '#0066ff';
+            btn.classList.add('active');
+        } else {
+            btn.style.borderColor = '#e2e8f0';
+            btn.style.background = 'white';
+            btn.style.color = '#374151';
+            btn.classList.remove('active');
+        }
+    });
+
+    // Update payment display
+    updateAffirmPaymentDisplay(months);
+}
+
+function updateAffirmPaymentDisplay(months) {
+    const amount = PAYMENT_AMOUNT_CENTS / 100;
+    const monthlyPayment = (amount / months).toFixed(0);
+
+    document.getElementById('affirm-payment-display').textContent = `~$${monthlyPayment}/mo`;
+    document.getElementById('affirm-monthly').textContent = `~$${Math.round(amount / 12)}/mo`;
+}
+
+// Payment form submission
+async function submitPayment(event) {
+    event.preventDefault();
+
+    if (!selectedPaymentMethod) {
+        alert('Please select a payment method');
+        return;
+    }
+
+    const submitBtn = document.getElementById('payment-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing...';
+
+    try {
+        if (selectedPaymentMethod === 'affirm') {
+            await initiateAffirmCheckout();
+        } else {
+            await initiateStripeCheckout();
+        }
+    } catch (error) {
+        console.error('Payment error:', error);
+        alert('Payment failed: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = selectedPaymentMethod === 'affirm' ? 'Continue with Affirm' : 'Continue to Payment';
+    }
+}
+
+async function initiateAffirmCheckout() {
+    const response = await fetch('/api/payment/affirm/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            client_id: {{ current_user.client.id if current_user and current_user.client else 'null' }},
+            amount_cents: PAYMENT_AMOUNT_CENTS,
+            description: 'Credit Restoration - Round 1',
+            success_url: window.location.origin + '/portal/payment/affirm/success',
+            cancel_url: window.location.origin + '/portal/onboarding',
+            round: 1
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        throw new Error(data.error);
+    }
+
+    // Redirect to Affirm checkout
+    if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+    } else if (typeof affirm !== 'undefined') {
+        // Use Affirm.js modal if available
+        affirm.checkout({
+            checkout_token: data.checkout_token
+        });
+        affirm.checkout.open();
+    }
+}
+
+async function initiateStripeCheckout() {
+    // For Stripe, redirect to the existing payment flow
+    const response = await fetch('/portal/api/payment/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            payment_type: 'round',
+            round: 1
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        throw new Error(data.error);
+    }
+
+    if (data.checkout_url) {
+        window.location.href = data.checkout_url;
     }
 }
 
@@ -788,6 +986,10 @@ async function submitStep(event, stepKey) {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await fetch('/portal/api/onboarding/sync', { method: 'POST' });
+        // Initialize Affirm payment display
+        if (document.getElementById('affirm-monthly')) {
+            updateAffirmPaymentDisplay(12);
+        }
     } catch (error) {
         console.error('Sync error:', error);
     }

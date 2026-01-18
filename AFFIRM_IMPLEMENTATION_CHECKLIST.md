@@ -210,7 +210,7 @@ AFFIRM_ENVIRONMENT=sandbox  # or 'production'
 |-------|--------|-------|
 | Phase 1: Merchant Account | ⏳ Pending | Need to apply |
 | Phase 2: Backend | ✅ COMPLETE | affirm_service.py, config, database, API endpoints |
-| Phase 3: Frontend | ⏳ Pending | |
+| Phase 3: Frontend | ✅ COMPLETE | Affirm.js, payment UI, success routes |
 | Phase 4: Webhooks | ✅ COMPLETE | Included in Phase 2 backend work |
 | Phase 5: Testing | ✅ COMPLETE | 33 unit tests passing |
 | Phase 6: Go Live | ⏳ Pending | Need merchant account first |
@@ -224,10 +224,11 @@ AFFIRM_ENVIRONMENT=sandbox  # or 'production'
 | `services/affirm_service.py` | CREATE | Affirm API integration | ✅ DONE |
 | `tests/test_affirm_service.py` | CREATE | Unit tests (33 tests) | ✅ DONE |
 | `database.py` | MODIFY | Add Affirm payment fields | ✅ DONE |
-| `app.py` | MODIFY | Add Affirm API endpoints (7 endpoints) | ✅ DONE |
+| `app.py` | MODIFY | Add Affirm API endpoints (7 endpoints), context processor | ✅ DONE |
 | `services/config.py` | MODIFY | Add Affirm config | ✅ DONE |
-| `templates/portal/onboarding.html` | MODIFY | Add Affirm payment option | ⏳ Pending |
-| `templates/portal/base_portal.html` | MODIFY | Add Affirm.js script | ⏳ Pending |
+| `templates/portal/onboarding.html` | MODIFY | Add Affirm payment option + JS | ✅ DONE |
+| `templates/portal/base_portal.html` | MODIFY | Add Affirm.js script | ✅ DONE |
+| `routes/portal.py` | MODIFY | Add Affirm success route, Stripe checkout route | ✅ DONE |
 | `requirements.txt` | MODIFY | Add Affirm SDK (if using) | N/A (using requests) |
 | `.env.example` | MODIFY | Add Affirm env vars | ⏳ Pending |
 
