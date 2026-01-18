@@ -647,7 +647,7 @@ class TestCreateCheckoutSession:
 
         call_kwargs = mock_stripe.checkout.Session.create.call_args.kwargs
         assert call_kwargs["mode"] == "payment"
-        assert call_kwargs["payment_method_types"] == ["card"]
+        assert call_kwargs["payment_method_types"] == ["card", "us_bank_account"]
 
     @patch('services.stripe_client.get_stripe_client')
     def test_create_checkout_session_all_tiers(self, mock_get_client):
