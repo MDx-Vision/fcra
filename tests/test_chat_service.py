@@ -244,7 +244,7 @@ class TestConversationLifecycle:
         mock_client.created_at = datetime.utcnow() - timedelta(days=30)
         mock_client.dispute_status = 'round_1'
         mock_client.client_stage = 'active'
-        mock_client.current_round = 1
+        mock_client.current_dispute_round = 1
 
         # Mock query returns
         mock_query = MagicMock()
@@ -549,7 +549,7 @@ class TestClientContext:
         mock_client.created_at = datetime.utcnow() - timedelta(days=45)
         mock_client.dispute_status = 'round_2'
         mock_client.client_stage = 'active'
-        mock_client.current_round = 2
+        mock_client.current_dispute_round = 2
 
         def query_side_effect(model_or_func):
             mock_query = MagicMock()
