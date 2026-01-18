@@ -209,27 +209,27 @@ AFFIRM_ENVIRONMENT=sandbox  # or 'production'
 | Phase | Status | Notes |
 |-------|--------|-------|
 | Phase 1: Merchant Account | ⏳ Pending | Need to apply |
-| Phase 2: Backend | ⏳ Pending | |
+| Phase 2: Backend | ✅ COMPLETE | affirm_service.py, config, database, API endpoints |
 | Phase 3: Frontend | ⏳ Pending | |
-| Phase 4: Webhooks | ⏳ Pending | |
-| Phase 5: Testing | ⏳ Pending | |
-| Phase 6: Go Live | ⏳ Pending | |
+| Phase 4: Webhooks | ✅ COMPLETE | Included in Phase 2 backend work |
+| Phase 5: Testing | ✅ COMPLETE | 33 unit tests passing |
+| Phase 6: Go Live | ⏳ Pending | Need merchant account first |
 
 ---
 
 ## Files to Create/Modify
 
-| File | Action | Description |
-|------|--------|-------------|
-| `services/affirm_service.py` | CREATE | Affirm API integration |
-| `tests/test_affirm_service.py` | CREATE | Unit tests |
-| `database.py` | MODIFY | Add Affirm payment fields |
-| `app.py` | MODIFY | Add Affirm API endpoints |
-| `services/config.py` | MODIFY | Add Affirm config |
-| `templates/portal/onboarding.html` | MODIFY | Add Affirm payment option |
-| `templates/portal/base_portal.html` | MODIFY | Add Affirm.js script |
-| `requirements.txt` | MODIFY | Add Affirm SDK (if using) |
-| `.env.example` | MODIFY | Add Affirm env vars |
+| File | Action | Description | Status |
+|------|--------|-------------|--------|
+| `services/affirm_service.py` | CREATE | Affirm API integration | ✅ DONE |
+| `tests/test_affirm_service.py` | CREATE | Unit tests (33 tests) | ✅ DONE |
+| `database.py` | MODIFY | Add Affirm payment fields | ✅ DONE |
+| `app.py` | MODIFY | Add Affirm API endpoints (7 endpoints) | ✅ DONE |
+| `services/config.py` | MODIFY | Add Affirm config | ✅ DONE |
+| `templates/portal/onboarding.html` | MODIFY | Add Affirm payment option | ⏳ Pending |
+| `templates/portal/base_portal.html` | MODIFY | Add Affirm.js script | ⏳ Pending |
+| `requirements.txt` | MODIFY | Add Affirm SDK (if using) | N/A (using requests) |
+| `.env.example` | MODIFY | Add Affirm env vars | ⏳ Pending |
 
 ---
 

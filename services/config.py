@@ -211,6 +211,25 @@ class Config:
         return os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
     # =========================================================================
+    # PAYMENTS (AFFIRM BNPL)
+    # =========================================================================
+
+    @property
+    def AFFIRM_PUBLIC_KEY(self) -> str:
+        """Affirm public API key for client-side integration."""
+        return os.environ.get("AFFIRM_PUBLIC_KEY", "")
+
+    @property
+    def AFFIRM_PRIVATE_KEY(self) -> str:
+        """Affirm private API key for server-side operations."""
+        return os.environ.get("AFFIRM_PRIVATE_KEY", "")
+
+    @property
+    def AFFIRM_ENVIRONMENT(self) -> str:
+        """Affirm environment (sandbox or production)."""
+        return os.environ.get("AFFIRM_ENVIRONMENT", "sandbox")
+
+    # =========================================================================
     # CERTIFIED MAIL (SENDCERTIFIED)
     # =========================================================================
 
@@ -352,6 +371,7 @@ class Config:
                 ]
             ),
             "stripe": lambda: bool(self.STRIPE_SECRET_KEY),
+            "affirm": lambda: all([self.AFFIRM_PUBLIC_KEY, self.AFFIRM_PRIVATE_KEY]),
             "sendcertified": lambda: all(
                 [
                     self.SENDCERTIFIED_SFTP_HOST,
@@ -411,6 +431,7 @@ class Config:
             "gmail",
             "twilio",
             "stripe",
+            "affirm",
             "sendcertified",
             "notarize",
             "experian",

@@ -36282,6 +36282,331 @@ def stripe_webhook_handler():
 
 
 # =============================================================================
+# AFFIRM BNPL - Buy Now Pay Later Integration
+# =============================================================================
+
+@app.route("/api/payment/affirm/create", methods=["POST"])
+@require_staff()
+def affirm_create_checkout():
+    """
+    Create an Affirm checkout session.
+
+    Request body:
+    {
+        "client_id": 123,
+        "amount_cents": 49700,  // $497.00
+        "description": "Credit Restoration - Round 1",
+        "success_url": "https://example.com/payment/success",
+        "cancel_url": "https://example.com/payment/cancel"
+    }
+    """
+    from services.affirm_service import get_affirm_service, AffirmError
+
+    data = request.get_json() or {}
+
+    required_fields = ['client_id', 'amount_cents', 'description', 'success_url', 'cancel_url']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    db = get_db()
+    try:
+        # Get client for prefill data
+        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        if not client:
+            return jsonify({'error': 'Client not found'}), 404
+
+        service = get_affirm_service()
+
+        if not service.is_configured():
+            return jsonify({'error': 'Affirm is not configured'}), 503
+
+        result = service.create_checkout(
+            client_id=data['client_id'],
+            amount_cents=data['amount_cents'],
+            description=data['description'],
+            success_url=data['success_url'],
+            cancel_url=data['cancel_url'],
+            client_email=client.email,
+            client_name=client.name,
+            client_phone=client.phone,
+            metadata={
+                'service': 'fcra_credit_restoration',
+                'round': data.get('round', 1),
+            }
+        )
+
+        # Store checkout token on client
+        client.affirm_checkout_token = result.get('checkout_token')
+        client.affirm_status = 'pending'
+        db.commit()
+
+        return jsonify(result)
+
+    except AffirmError as e:
+        return jsonify({'error': str(e), 'code': e.error_code}), 400
+    except Exception as e:
+        print(f"Affirm checkout error: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/payment/affirm/confirm", methods=["POST"])
+@require_staff()
+def affirm_confirm_payment():
+    """
+    Confirm an Affirm payment after client approval.
+
+    Called when client is redirected back from Affirm with checkout_token.
+
+    Request body:
+    {
+        "client_id": 123,
+        "checkout_token": "token_from_affirm_redirect"
+    }
+    """
+    from services.affirm_service import get_affirm_service, AffirmError
+
+    data = request.get_json() or {}
+
+    if 'checkout_token' not in data:
+        return jsonify({'error': 'Missing checkout_token'}), 400
+    if 'client_id' not in data:
+        return jsonify({'error': 'Missing client_id'}), 400
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        if not client:
+            return jsonify({'error': 'Client not found'}), 404
+
+        service = get_affirm_service()
+
+        # Authorize the charge
+        auth_result = service.authorize_charge(
+            checkout_token=data['checkout_token'],
+            order_id=f"client_{client.id}"
+        )
+
+        # Immediately capture (or delay for manual review)
+        capture_result = service.capture_charge(auth_result['charge_id'])
+
+        # Update client record
+        client.affirm_charge_id = capture_result['charge_id']
+        client.affirm_status = 'captured'
+        client.payment_status = 'paid'
+        client.payment_method = 'affirm'
+        client.payment_received_at = datetime.utcnow()
+
+        # Update total paid
+        amount_cents = auth_result.get('amount', 0)
+        client.total_paid = (client.total_paid or 0) + amount_cents
+
+        db.commit()
+
+        return jsonify({
+            'success': True,
+            'charge_id': capture_result['charge_id'],
+            'status': capture_result['status'],
+            'amount_cents': amount_cents,
+        })
+
+    except AffirmError as e:
+        # Update client status on failure
+        if 'client_id' in data:
+            client = db.query(Client).filter(Client.id == data['client_id']).first()
+            if client:
+                client.affirm_status = 'failed'
+                db.commit()
+        return jsonify({'error': str(e), 'code': e.error_code}), 400
+    except Exception as e:
+        print(f"Affirm confirm error: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/payment/affirm/status/<int:client_id>", methods=["GET"])
+@require_staff()
+def affirm_get_status(client_id):
+    """Get Affirm payment status for a client."""
+    from services.affirm_service import get_affirm_service, AffirmError
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return jsonify({'error': 'Client not found'}), 404
+
+        result = {
+            'client_id': client_id,
+            'affirm_status': client.affirm_status,
+            'affirm_charge_id': client.affirm_charge_id,
+        }
+
+        # If we have a charge ID, get current status from Affirm
+        if client.affirm_charge_id:
+            service = get_affirm_service()
+            if service.is_configured():
+                try:
+                    charge = service.get_charge(client.affirm_charge_id)
+                    result['affirm_details'] = charge
+                except AffirmError:
+                    pass  # Ignore errors fetching details
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/payment/affirm/refund", methods=["POST"])
+@require_staff()
+def affirm_refund():
+    """
+    Refund an Affirm payment.
+
+    Request body:
+    {
+        "client_id": 123,
+        "amount_cents": null  // null for full refund, or specific amount
+    }
+    """
+    from services.affirm_service import get_affirm_service, AffirmError
+
+    data = request.get_json() or {}
+
+    if 'client_id' not in data:
+        return jsonify({'error': 'Missing client_id'}), 400
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == data['client_id']).first()
+        if not client:
+            return jsonify({'error': 'Client not found'}), 404
+
+        if not client.affirm_charge_id:
+            return jsonify({'error': 'No Affirm charge found for this client'}), 400
+
+        service = get_affirm_service()
+        result = service.refund_charge(
+            charge_id=client.affirm_charge_id,
+            amount_cents=data.get('amount_cents')
+        )
+
+        # Update client status
+        client.affirm_status = 'refunded'
+        client.payment_status = 'refunded'
+        db.commit()
+
+        return jsonify(result)
+
+    except AffirmError as e:
+        return jsonify({'error': str(e), 'code': e.error_code}), 400
+    except Exception as e:
+        print(f"Affirm refund error: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/payment/affirm/estimate", methods=["GET"])
+def affirm_estimate():
+    """
+    Get monthly payment estimates for Affirm financing.
+
+    Query params:
+    - amount_cents: Total amount in cents (required)
+    - months: Financing term (optional, default 12)
+    """
+    from services.affirm_service import get_affirm_service
+
+    amount_cents = request.args.get('amount_cents', type=int)
+    months = request.args.get('months', 12, type=int)
+
+    if not amount_cents:
+        return jsonify({'error': 'Missing amount_cents parameter'}), 400
+
+    if months not in [3, 6, 12]:
+        return jsonify({'error': 'months must be 3, 6, or 12'}), 400
+
+    service = get_affirm_service()
+    result = service.get_monthly_payment(amount_cents, months)
+
+    return jsonify(result)
+
+
+@app.route("/api/webhooks/affirm", methods=["POST"])
+def affirm_webhook_handler():
+    """
+    Handle Affirm webhook events.
+
+    Events handled:
+    - charge.created
+    - charge.captured
+    - charge.voided
+    - charge.refunded
+    - charge.failed
+    """
+    from services.affirm_service import get_affirm_service, AffirmError
+
+    payload = request.get_data()
+    signature = request.headers.get('X-Affirm-Signature')
+
+    try:
+        service = get_affirm_service()
+
+        # Verify signature (optional in sandbox)
+        if service.environment == 'production':
+            if not service.verify_webhook_signature(payload, signature):
+                return jsonify({'error': 'Invalid signature'}), 401
+
+        # Parse event
+        event_data = request.get_json()
+        event_type = event_data.get('type', '')
+
+        # Process webhook
+        result = service.handle_webhook(event_type, event_data)
+
+        # Update client record if charge ID is present
+        charge_id = event_data.get('id') or event_data.get('charge_id')
+        if charge_id:
+            db = get_db()
+            try:
+                client = db.query(Client).filter(Client.affirm_charge_id == charge_id).first()
+                if client:
+                    # Map event type to status
+                    status_map = {
+                        'charge.created': 'authorized',
+                        'charge.captured': 'captured',
+                        'charge.voided': 'voided',
+                        'charge.refunded': 'refunded',
+                        'charge.failed': 'failed',
+                    }
+                    new_status = status_map.get(event_type)
+                    if new_status:
+                        client.affirm_status = new_status
+                        if new_status == 'captured':
+                            client.payment_status = 'paid'
+                        elif new_status in ['voided', 'refunded']:
+                            client.payment_status = new_status
+                        elif new_status == 'failed':
+                            client.payment_status = 'failed'
+                        db.commit()
+            finally:
+                db.close()
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print(f"Affirm webhook error: {e}")
+        return jsonify({'error': str(e)}), 400
+
+
+# =============================================================================
 # CRON ENDPOINT - For external schedulers (Replit, Railway, etc.)
 # =============================================================================
 

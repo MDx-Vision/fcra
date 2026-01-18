@@ -253,6 +253,11 @@ class Client(Base):
     prepay_package = Column(String(50))  # starter, standard, complete, unlimited
     prepay_rounds_remaining = Column(Integer)  # Rounds remaining if prepaid
 
+    # Affirm BNPL Payment Tracking
+    affirm_checkout_token = Column(String(255))  # Checkout session token from Affirm
+    affirm_charge_id = Column(String(255))  # Captured charge ID from Affirm
+    affirm_status = Column(String(30))  # pending, authorized, captured, voided, refunded, failed
+
     organization_id = Column(Integer, nullable=True, index=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -6956,6 +6961,10 @@ def init_db():
         ("clients", "lead_score", "INTEGER DEFAULT 0"),
         ("clients", "lead_score_factors", "JSONB"),
         ("clients", "lead_scored_at", "TIMESTAMP"),
+        # Affirm BNPL payment tracking
+        ("clients", "affirm_checkout_token", "VARCHAR(255)"),
+        ("clients", "affirm_charge_id", "VARCHAR(255)"),
+        ("clients", "affirm_status", "VARCHAR(30)"),
         ("client_tags", "id", "SERIAL PRIMARY KEY"),
         ("client_tags", "name", "VARCHAR(100) UNIQUE NOT NULL"),
         ("client_tags", "color", "VARCHAR(7) DEFAULT '#6366f1'"),
