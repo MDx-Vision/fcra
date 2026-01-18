@@ -2,19 +2,37 @@
 
 ## Session: 2026-01-18
 
-### Portal UX Improvements
+### Payment & UX Improvements
 - **Status:** ✅ COMPLETE
 - **Started:** 2026-01-18
 
 - Actions taken:
-  - Added signup link to client portal login page (`/portal/login`)
-  - New link: "New here? Get your free credit analysis" → `/get-started`
-  - Added `data-testid="signup-link"` for Cypress testing
+  - **ACH Bank Payments**: Added `us_bank_account` to all Stripe checkouts (0.8% fee vs 2.9%)
+  - **Portal Signup Link**: Added "New here?" link to `/portal/login`
+  - **SMS Consent**: Restored A2P 10DLC compliant consent language
+  - **Documentation**: Created PRODUCTION_DEPLOYMENT_GUIDE.md and PAYMENT_OPTIONS_RESEARCH.md
+  - **Affirm Checklist**: Created AFFIRM_IMPLEMENTATION_CHECKLIST.md for BNPL integration
 
 - Files modified:
-  - `templates/portal_login.html` - Added signup link section
+  - `services/client_payment_service.py` - ACH for prepay checkout
+  - `services/stripe_plans_service.py` - ACH for subscription checkout
+  - `services/stripe_client.py` - ACH for tier checkout
+  - `templates/portal_login.html` - Signup link
+  - `templates/get_started.html` - SMS consent text
+  - `tests/test_stripe_client.py` - Updated test for ACH
 
-- **Commit**: `c49bb93` - Pushed to main
+- **Commits**:
+  - `c49bb93` - feat: Add signup link to client portal login page
+  - `586c419` - fix: Restore A2P 10DLC compliant SMS consent language
+  - `9f26296` - fix: Change 'credit repair' to 'credit restoration'
+  - `ae153da` - feat: Add ACH bank payment option to all Stripe checkouts
+  - `69d4e83` - test: Update test to expect ACH payment method
+
+- **Payment Methods Now Active**:
+  - ✅ Credit/Debit Cards (2.9% + $0.30)
+  - ✅ ACH Bank Transfer (0.8%, max $5) - NEW!
+  - ✅ Apple Pay (auto-enabled via Stripe)
+  - ✅ Google Pay (auto-enabled via Stripe)
 
 ---
 

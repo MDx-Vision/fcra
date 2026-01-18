@@ -50,21 +50,52 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
 - **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
 
-### Current Work (2026-01-18) - Session: "Portal UX Improvements"
+### Current Work (2026-01-18) - Session: "Payment & UX Improvements"
 
-**Task**: Add Signup Link to Client Portal Login
+**Task**: ACH Payments + Portal UX + SMS Consent
 
 **Status**: ✅ COMPLETE
 
 **What Was Done**:
-- Added "New here? Get your free credit analysis" link to `/portal/login`
-- Links to existing `/get-started` signup form
-- Includes `data-testid="signup-link"` for Cypress testing
 
-**File Modified**:
-- `templates/portal_login.html` - Added signup link section
+1. **ACH Bank Payments (0.8% fees vs 2.9% cards)**
+   - Added `us_bank_account` to all Stripe checkout sessions
+   - Uses Stripe Financial Connections for instant bank verification
+   - Saves ~$10 per $497 payment
 
-**Commit**: `c49bb93` - "feat: Add signup link to client portal login page"
+2. **Portal Login Signup Link**
+   - Added "New here? Get your free credit analysis" link to `/portal/login`
+   - Links to existing `/get-started` signup form
+
+3. **SMS Consent Restoration (A2P 10DLC Compliant)**
+   - Restored full consent language for SMS opt-in
+   - "I agree to receive SMS notifications regarding my credit restoration case, business consulting, funding applications, and account updates. Message and data rates may apply. Reply STOP to unsubscribe."
+
+4. **Documentation**
+   - Created `PRODUCTION_DEPLOYMENT_GUIDE.md`
+   - Created `PAYMENT_OPTIONS_RESEARCH.md`
+
+**Files Modified**:
+- `services/client_payment_service.py` - ACH for prepay checkout
+- `services/stripe_plans_service.py` - ACH for subscription checkout
+- `services/stripe_client.py` - ACH for tier checkout
+- `templates/portal_login.html` - Signup link
+- `templates/get_started.html` - SMS consent text
+
+**Commits**:
+- `c49bb93` - feat: Add signup link to client portal login page
+- `586c419` - fix: Restore A2P 10DLC compliant SMS consent language
+- `9f26296` - fix: Change 'credit repair' to 'credit restoration'
+- `ae153da` - feat: Add ACH bank payment option to all Stripe checkouts
+- `69d4e83` - test: Update test to expect ACH payment method
+
+**Payment Methods Now Supported**:
+| Method | Fee | Status |
+|--------|-----|--------|
+| Credit/Debit Card | 2.9% + $0.30 | ✅ Active |
+| ACH Bank Transfer | 0.8% (max $5) | ✅ NEW |
+| Apple Pay | Same as card | ✅ Auto-enabled |
+| Google Pay | Same as card | ✅ Auto-enabled |
 
 ---
 
