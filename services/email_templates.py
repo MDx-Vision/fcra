@@ -800,7 +800,7 @@ def fcra_analysis_summary_email(
         </p>
 
         <p style="color: #334155; line-height: 1.6; font-size: 16px;">
-            We've completed a comprehensive analysis of your credit report and identified significant FCRA (Fair Credit Reporting Act) violations. Please find your detailed 40+ page report attached to this email.
+            We've completed a comprehensive analysis of your credit report and identified significant FCRA (Fair Credit Reporting Act) violations. Please find your detailed report attached to this email.
         </p>
 
         <!-- Case Summary Box -->
