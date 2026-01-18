@@ -183,7 +183,7 @@ class TestScheduledJobFlow:
 
         service = ScheduledJobsService(mock_db)
 
-        with patch('services.scheduled_jobs_service.log_milestone'):
+        with patch('services.timeline_service.log_milestone'):
             result = service.capture_due_payments()
 
         assert result['success'] == True

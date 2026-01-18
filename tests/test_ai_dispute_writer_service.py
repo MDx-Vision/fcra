@@ -96,7 +96,7 @@ class TestServiceInit:
         service = AIDisputeWriterService(mock_db)
 
         with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test_key'}):
-            with patch('services.ai_dispute_writer_service.Anthropic') as mock_anthropic:
+            with patch('anthropic.Anthropic') as mock_anthropic:
                 mock_client = MagicMock()
                 mock_anthropic.return_value = mock_client
 

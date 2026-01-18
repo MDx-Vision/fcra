@@ -604,3 +604,24 @@ def log_status_changed(db: Session, client_id: int, old_status: str, new_status:
         description=f"Changed from {old_status.replace('_', ' ').title()}" if old_status else None,
         metadata={'old_status': old_status, 'new_status': new_status}
     )
+
+
+def log_milestone(db: Session, client_id: int, event_type: str, title: str, description: str = None) -> None:
+    """Log a milestone event for a client.
+
+    Generic function for logging important milestones in the client journey.
+
+    Args:
+        db: Database session
+        client_id: Client ID
+        event_type: Type of milestone event (e.g., 'case_activated', 'round_complete')
+        title: Display title for the event
+        description: Optional description
+    """
+    service = TimelineService(db)
+    service.create_event(
+        client_id=client_id,
+        event_type=event_type,
+        title=title,
+        description=description
+    )

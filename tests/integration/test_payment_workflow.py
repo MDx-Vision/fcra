@@ -201,7 +201,7 @@ class TestPaymentFailureRecoveryWorkflow:
         service = StripeWebhooksService(mock_db)
 
         with patch.object(service, '_log_timeline'):
-            with patch('services.stripe_webhooks_service.send_payment_failed_email'):
+            with patch('services.email_service.send_payment_failed_email'):
                 event = {
                     'type': 'payment_intent.payment_failed',
                     'id': 'evt_fail',

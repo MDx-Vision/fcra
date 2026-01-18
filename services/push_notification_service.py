@@ -754,18 +754,18 @@ def _parse_device_name(user_agent: Optional[str]) -> str:
     elif 'safari' in ua:
         browser = 'Safari'
 
-    # Detect OS
+    # Detect OS (check Android before Linux since Android UA contains "Linux")
     os_name = ''
-    if 'windows' in ua:
+    if 'android' in ua:
+        os_name = 'Android'
+    elif 'iphone' in ua or 'ipad' in ua:
+        os_name = 'iOS'
+    elif 'windows' in ua:
         os_name = 'Windows'
     elif 'mac' in ua:
         os_name = 'Mac'
     elif 'linux' in ua:
         os_name = 'Linux'
-    elif 'android' in ua:
-        os_name = 'Android'
-    elif 'iphone' in ua or 'ipad' in ua:
-        os_name = 'iOS'
 
     if os_name:
         return f'{browser} on {os_name}'

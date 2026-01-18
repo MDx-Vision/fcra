@@ -1675,6 +1675,5 @@ class TestEdgeCases:
         service = StripePlansService()
         assert service._stripe is None
 
-        # Accessing stripe property would call get_stripe_client
-        # We just verify the property exists
-        assert hasattr(service, 'stripe')
+        # Verify the stripe property exists on the class (without triggering the getter)
+        assert isinstance(type(service).__dict__.get('stripe'), property)

@@ -169,7 +169,7 @@ class TestSubscribe:
 
     def test_creates_new_subscription(self):
         """Test creating new subscription."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_db.query.return_value.filter_by.return_value.first.return_value = None
             mock_get_db.return_value = mock_db
@@ -177,7 +177,7 @@ class TestSubscribe:
             mock_sub = MagicMock()
             mock_sub.id = 1
 
-            with patch('services.push_notification_service.PushSubscription') as MockSub:
+            with patch('database.PushSubscription') as MockSub:
                 MockSub.return_value = mock_sub
 
                 result = subscribe(
@@ -192,7 +192,7 @@ class TestSubscribe:
 
     def test_updates_existing_subscription(self):
         """Test updating existing subscription."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_existing = MagicMock()
             mock_existing.id = 1
@@ -215,7 +215,7 @@ class TestUnsubscribe:
 
     def test_subscription_not_found(self):
         """Test error when subscription not found."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_db.query.return_value.filter_by.return_value.first.return_value = None
             mock_get_db.return_value = mock_db
@@ -227,7 +227,7 @@ class TestUnsubscribe:
 
     def test_removes_subscription(self):
         """Test successful subscription removal."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_sub = MagicMock()
             mock_db.query.return_value.filter_by.return_value.first.return_value = mock_sub
@@ -244,7 +244,7 @@ class TestUpdatePreferences:
 
     def test_subscription_not_found(self):
         """Test error when subscription not found."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_db.query.return_value.get.return_value = None
             mock_get_db.return_value = mock_db
@@ -258,7 +258,7 @@ class TestUpdatePreferences:
 
     def test_updates_valid_preferences(self):
         """Test updating valid preferences."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_sub = MagicMock()
             mock_db.query.return_value.get.return_value = mock_sub
@@ -277,13 +277,17 @@ class TestGetSubscriptions:
 
     def test_returns_client_subscriptions(self):
         """Test getting subscriptions by client."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_subs = [
                 MagicMock(to_dict=MagicMock(return_value={'id': 1})),
                 MagicMock(to_dict=MagicMock(return_value={'id': 2}))
             ]
-            mock_db.query.return_value.filter_by.return_value.all.return_value = mock_subs
+            # Chain filter_by to return itself (supports multiple filter_by calls)
+            mock_query = MagicMock()
+            mock_query.filter_by.return_value = mock_query
+            mock_query.all.return_value = mock_subs
+            mock_db.query.return_value = mock_query
             mock_get_db.return_value = mock_db
 
             result = get_subscriptions(client_id=1)
@@ -325,7 +329,7 @@ class TestSendToClient:
 
     def test_no_subscriptions(self):
         """Test when client has no subscriptions."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_db.query.return_value.filter_by.return_value.all.return_value = []
             mock_db.query.return_value.filter_by.return_value.filter.return_value.all.return_value = []
@@ -346,7 +350,7 @@ class TestSendToStaff:
 
     def test_no_subscriptions(self):
         """Test when staff has no subscriptions."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_db.query.return_value.filter_by.return_value.all.return_value = []
             mock_db.query.return_value.filter_by.return_value.filter.return_value.all.return_value = []
@@ -367,7 +371,7 @@ class TestSendToAllStaff:
 
     def test_no_subscriptions(self):
         """Test when no staff have subscriptions."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_db.query.return_value.filter.return_value.all.return_value = []
             mock_db.query.return_value.filter.return_value.filter.return_value.all.return_value = []
@@ -387,7 +391,7 @@ class TestGetNotificationLogs:
 
     def test_returns_logs(self):
         """Test getting notification logs."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_logs = [
                 MagicMock(to_dict=MagicMock(return_value={'id': 1}))
@@ -405,7 +409,7 @@ class TestCleanupExpiredSubscriptions:
 
     def test_deletes_old_inactive(self):
         """Test deleting old inactive subscriptions."""
-        with patch('services.push_notification_service.get_db') as mock_get_db:
+        with patch('database.get_db') as mock_get_db:
             mock_db = MagicMock()
             mock_old_subs = [MagicMock(), MagicMock()]
             mock_db.query.return_value.filter.return_value.all.return_value = mock_old_subs

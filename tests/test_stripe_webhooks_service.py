@@ -237,7 +237,7 @@ class TestPaymentSucceeded:
         service = StripeWebhooksService(mock_db)
 
         with patch.object(service, '_log_timeline'):
-            with patch('services.stripe_webhooks_service.PREPAY_PACKAGES', {
+            with patch('services.client_payment_service.PREPAY_PACKAGES', {
                 'standard': {'name': 'Standard Package', 'rounds': 4}
             }):
                 event = {
@@ -359,7 +359,7 @@ class TestPaymentFailed:
         service = StripeWebhooksService(mock_db)
 
         with patch.object(service, '_log_timeline'):
-            with patch('services.stripe_webhooks_service.send_payment_failed_email'):
+            with patch('services.email_service.send_payment_failed_email'):
                 event = {
                     'type': 'payment_intent.payment_failed',
                     'id': 'evt_fail',
@@ -395,7 +395,7 @@ class TestPaymentFailed:
         service = StripeWebhooksService(mock_db)
 
         with patch.object(service, '_log_timeline'):
-            with patch('services.stripe_webhooks_service.send_payment_failed_email') as mock_email:
+            with patch('services.email_service.send_payment_failed_email') as mock_email:
                 event = {
                     'type': 'payment_intent.payment_failed',
                     'id': 'evt_fail',
@@ -541,7 +541,7 @@ class TestCheckoutCompleted:
 
         service = StripeWebhooksService(mock_db)
 
-        with patch('services.stripe_webhooks_service.PREPAY_PACKAGES', {
+        with patch('services.client_payment_service.PREPAY_PACKAGES', {
             'complete': {'name': 'Complete Package', 'rounds': 6}
         }):
             event = {
@@ -598,7 +598,7 @@ class TestLogTimeline:
         mock_db = MagicMock(spec=Session)
         service = StripeWebhooksService(mock_db)
 
-        with patch('services.stripe_webhooks_service.get_timeline_service') as mock_get_timeline:
+        with patch('services.timeline_service.get_timeline_service') as mock_get_timeline:
             mock_timeline = MagicMock()
             mock_get_timeline.return_value = mock_timeline
 
@@ -622,7 +622,7 @@ class TestLogTimeline:
         mock_db = MagicMock(spec=Session)
         service = StripeWebhooksService(mock_db)
 
-        with patch('services.stripe_webhooks_service.get_timeline_service') as mock_get_timeline:
+        with patch('services.timeline_service.get_timeline_service') as mock_get_timeline:
             mock_get_timeline.side_effect = Exception("Timeline error")
 
             # Should not raise
@@ -737,7 +737,7 @@ class TestEventDataExtraction:
         }
 
         with patch.object(service, '_log_timeline'):
-            with patch('services.stripe_webhooks_service.send_payment_failed_email'):
+            with patch('services.email_service.send_payment_failed_email'):
                 result = service.handle_event(event)
 
         assert result['success'] == True

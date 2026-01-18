@@ -76,7 +76,7 @@ class TestCaptureDuePayments:
 
         service = ScheduledJobsService(mock_db)
 
-        with patch('services.scheduled_jobs_service.log_milestone'):
+        with patch('services.timeline_service.log_milestone'):
             result = service.capture_due_payments()
 
         assert result['success'] == True
@@ -198,12 +198,17 @@ class TestSendPaymentReminders:
         mock_client = MagicMock()
         mock_client.id = 1
         mock_client.email = 'test@example.com'
+        mock_client.first_name = 'Test'
+        mock_client.last_name = 'Client'
+        mock_client.round_1_amount_due = 29800
 
         mock_db.query.return_value.join.return_value.filter.return_value.all.return_value = [mock_client]
         mock_db.query.return_value.filter.return_value.all.return_value = []
 
         service = ScheduledJobsService(mock_db)
-        result = service.send_payment_reminders()
+
+        with patch('services.email_service.send_payment_reminder_email'):
+            result = service.send_payment_reminders()
 
         assert result['success'] == True
         assert result['results']['sent'] >= 1
@@ -215,17 +220,25 @@ class TestSendPaymentReminders:
         mock_upcoming = MagicMock()
         mock_upcoming.id = 1
         mock_upcoming.email = 'upcoming@example.com'
+        mock_upcoming.first_name = 'Test'
+        mock_upcoming.last_name = 'Upcoming'
+        mock_upcoming.round_1_amount_due = 29800
 
         mock_failed = MagicMock()
         mock_failed.id = 2
         mock_failed.email = 'failed@example.com'
+        mock_failed.first_name = 'Test'
+        mock_failed.last_name = 'Failed'
         mock_failed.client_stage = 'payment_failed'
 
         mock_db.query.return_value.join.return_value.filter.return_value.all.return_value = [mock_upcoming]
         mock_db.query.return_value.filter.return_value.all.return_value = [mock_failed]
 
         service = ScheduledJobsService(mock_db)
-        result = service.send_payment_reminders()
+
+        with patch('services.email_service.send_payment_reminder_email'):
+            with patch('services.email_service.send_payment_failed_email'):
+                result = service.send_payment_reminders()
 
         assert result['success'] == True
         assert result['results']['sent'] == 2
@@ -351,7 +364,7 @@ class TestTimelineLogging:
 
         service = ScheduledJobsService(mock_db)
 
-        with patch('services.scheduled_jobs_service.log_milestone') as mock_log:
+        with patch('services.timeline_service.log_milestone') as mock_log:
             result = service.capture_due_payments()
 
             mock_log.assert_called_once()
@@ -372,7 +385,7 @@ class TestTimelineLogging:
 
         service = ScheduledJobsService(mock_db)
 
-        with patch('services.scheduled_jobs_service.log_milestone') as mock_log:
+        with patch('services.timeline_service.log_milestone') as mock_log:
             mock_log.side_effect = Exception("Timeline error")
 
             result = service.capture_due_payments()

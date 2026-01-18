@@ -222,9 +222,11 @@ class TestCalculateSuccessGrade:
         mock_db = MagicMock(spec=Session)
         service = ClientSuccessService(mock_db)
 
+        # Score calculation: deletion_rate 60 → 30pts, avg_score_change 50 → 30pts, items_deleted 12 → 12pts
+        # Total: 72 points → B+ grade (70-79 = B+, 60-69 = B)
         metrics = {
-            'deletion_rate': 50,
-            'avg_score_change': 40,
+            'deletion_rate': 60,
+            'avg_score_change': 50,
             'items_deleted': 12
         }
 

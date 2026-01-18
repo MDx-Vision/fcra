@@ -117,7 +117,7 @@ class TestServiceInit:
         mock_db = MagicMock(spec=Session)
         service = ClientPaymentService(mock_db)
 
-        with patch('services.client_payment_service.get_stripe_client') as mock_get_stripe:
+        with patch('services.stripe_client.get_stripe_client') as mock_get_stripe:
             mock_stripe = MagicMock()
             mock_get_stripe.return_value = mock_stripe
 
@@ -132,7 +132,7 @@ class TestServiceInit:
         mock_db = MagicMock(spec=Session)
         service = ClientPaymentService(mock_db)
 
-        with patch('services.client_payment_service.get_stripe_client') as mock_get_stripe:
+        with patch('services.stripe_client.get_stripe_client') as mock_get_stripe:
             mock_get_stripe.side_effect = Exception("Stripe not configured")
 
             stripe = service.stripe
