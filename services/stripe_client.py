@@ -191,7 +191,15 @@ def create_checkout_session(
         raise ValueError(f"Invalid pricing tier: {tier_key}")
 
     session_params = {
-        "payment_method_types": ["card"],
+        "payment_method_types": ["card", "us_bank_account"],
+        "payment_method_options": {
+            "us_bank_account": {
+                "financial_connections": {
+                    "permissions": ["payment_method"],
+                },
+                "verification_method": "instant",
+            },
+        },
         "mode": "payment",
         "line_items": [
             {

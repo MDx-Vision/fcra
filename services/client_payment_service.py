@@ -469,7 +469,15 @@ class ClientPaymentService:
                 }
 
             session = self.stripe.checkout.Session.create(
-                payment_method_types=['card'],
+                payment_method_types=['card', 'us_bank_account'],
+                payment_method_options={
+                    'us_bank_account': {
+                        'financial_connections': {
+                            'permissions': ['payment_method'],
+                        },
+                        'verification_method': 'instant',
+                    },
+                },
                 mode='payment',
                 line_items=[{
                     'price_data': {

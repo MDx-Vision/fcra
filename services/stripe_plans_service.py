@@ -351,7 +351,15 @@ class StripePlansService:
 
             session = self.stripe.checkout.Session.create(
                 customer=customer_id,
-                payment_method_types=["card"],
+                payment_method_types=["card", "us_bank_account"],
+                payment_method_options={
+                    "us_bank_account": {
+                        "financial_connections": {
+                            "permissions": ["payment_method"],
+                        },
+                        "verification_method": "instant",
+                    },
+                },
                 mode="subscription",
                 line_items=[
                     {
