@@ -1821,17 +1821,45 @@ What-if score projections for client portal.
 
 ---
 
-## Priority 32: Unified Inbox
+## ~~Priority 32: Unified Inbox~~ ✅ COMPLETE
 
-**Status**: Not Started | **Effort**: Medium (2-3 weeks)
+**Completed: 2026-01-19**
 
-Single view for all client communications (email, SMS, portal messages).
-- [ ] UnifiedInboxService
-- [ ] Channel filtering (All, Email, SMS, Portal, Calls)
-- [ ] Search and conversation threading
-- [ ] Quick reply from inbox
+### What Was Implemented
 
-See `CRM_ENHANCEMENT_CHECKLIST.md` for detailed implementation plan.
+1. **UnifiedInboxService** (`services/unified_inbox_service.py` - ~800 lines):
+   - [x] Aggregates messages from 5 channels (Email, SMS, WhatsApp, Portal, AI Chat)
+   - [x] UnifiedMessage normalization pattern
+   - [x] Channel filtering (All, Email, SMS, Portal, Calls)
+   - [x] Search and conversation threading
+   - [x] Quick reply support
+   - [x] Mark as read/unread
+   - [x] Assign to staff
+
+2. **API Endpoints** (11 endpoints):
+   - [x] `GET /api/unified-inbox/messages` - List messages with filters
+   - [x] `GET /api/unified-inbox/message/<id>` - Get single message
+   - [x] `POST /api/unified-inbox/message/<id>/read` - Mark as read
+   - [x] `POST /api/unified-inbox/message/<id>/reply` - Quick reply
+   - [x] `GET /api/unified-inbox/stats` - Unread counts by channel
+   - Plus 6 more endpoints
+
+3. **Dashboard UI** (`templates/unified_inbox.html`):
+   - [x] Channel tabs with unread badges
+   - [x] Message list with search
+   - [x] Conversation thread view
+   - [x] Quick reply modal
+   - [x] Assign to staff dropdown
+
+### Files Created/Modified
+- `services/unified_inbox_service.py` (NEW) - ~800 lines
+- `templates/unified_inbox.html` (NEW) - Dashboard UI
+- `app.py` - Added 11 API endpoints
+- `tests/test_unified_inbox_service.py` (NEW) - 30 tests
+- `cypress/e2e/unified_inbox_exhaustive.cy.js` (NEW) - E2E tests
+
+### Test Status
+- 30/30 unit tests passing
 
 ---
 
