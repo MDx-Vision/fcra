@@ -4380,6 +4380,80 @@ class Booking(Base):
     client = relationship("Client", backref="bookings")
 
 
+class CalendarIntegration(Base):
+    """Staff calendar integrations (Google, Outlook) for booking sync"""
+    __tablename__ = 'calendar_integrations'
+
+    id = Column(Integer, primary_key=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+
+    # Provider info
+    provider = Column(String(20), nullable=False)  # 'google', 'outlook'
+    calendar_id = Column(String(255), nullable=True)  # Selected calendar ID
+    calendar_name = Column(String(255), nullable=True)  # Display name
+
+    # OAuth tokens (encrypted)
+    access_token = Column(Text, nullable=True)
+    refresh_token = Column(Text, nullable=True)
+    token_expires_at = Column(DateTime, nullable=True)
+
+    # Sync settings
+    sync_enabled = Column(Boolean, default=True)
+    sync_direction = Column(String(20), default='bidirectional')  # 'to_calendar', 'from_calendar', 'bidirectional'
+    check_free_busy = Column(Boolean, default=True)  # Use for availability checking
+
+    # Last sync tracking
+    last_sync_at = Column(DateTime, nullable=True)
+    last_sync_status = Column(String(20), nullable=True)  # 'success', 'error'
+    last_sync_error = Column(Text, nullable=True)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    connected_at = Column(DateTime, default=datetime.utcnow)
+    disconnected_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    staff = relationship("Staff", backref="calendar_integrations")
+
+
+class CalendarEvent(Base):
+    """Synced calendar events for tracking"""
+    __tablename__ = 'calendar_events'
+
+    id = Column(Integer, primary_key=True, index=True)
+    integration_id = Column(Integer, ForeignKey('calendar_integrations.id'), nullable=False, index=True)
+
+    # External event reference
+    external_event_id = Column(String(255), nullable=False, index=True)  # Google/Outlook event ID
+
+    # Local booking reference (if synced from our system)
+    booking_id = Column(Integer, ForeignKey('bookings.id'), nullable=True, index=True)
+
+    # Event details
+    title = Column(String(500), nullable=False)
+    description = Column(Text, nullable=True)
+    start_time = Column(DateTime, nullable=False, index=True)
+    end_time = Column(DateTime, nullable=False)
+    location = Column(String(500), nullable=True)
+    is_all_day = Column(Boolean, default=False)
+
+    # Status
+    status = Column(String(20), default='confirmed')  # confirmed, tentative, cancelled
+    sync_status = Column(String(20), default='synced')  # synced, pending, error
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    integration = relationship("CalendarIntegration", backref="events")
+    booking = relationship("Booking", backref="calendar_event")
+
+
 class ClientMessage(Base):
     """Messages between clients and staff for live support"""
     __tablename__ = 'client_messages'
@@ -7790,6 +7864,41 @@ def init_db():
         ("chat_messages", "staff_id", "INTEGER REFERENCES staff(id)"),
         ("chat_messages", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("chat_messages", "metadata", "JSONB"),
+        # Calendar Integrations
+        ("calendar_integrations", "id", "SERIAL PRIMARY KEY"),
+        ("calendar_integrations", "staff_id", "INTEGER NOT NULL REFERENCES staff(id)"),
+        ("calendar_integrations", "provider", "VARCHAR(20) NOT NULL"),
+        ("calendar_integrations", "calendar_id", "VARCHAR(255)"),
+        ("calendar_integrations", "calendar_name", "VARCHAR(255)"),
+        ("calendar_integrations", "access_token", "TEXT"),
+        ("calendar_integrations", "refresh_token", "TEXT"),
+        ("calendar_integrations", "token_expires_at", "TIMESTAMP"),
+        ("calendar_integrations", "sync_enabled", "BOOLEAN DEFAULT TRUE"),
+        ("calendar_integrations", "sync_direction", "VARCHAR(20) DEFAULT 'bidirectional'"),
+        ("calendar_integrations", "check_free_busy", "BOOLEAN DEFAULT TRUE"),
+        ("calendar_integrations", "last_sync_at", "TIMESTAMP"),
+        ("calendar_integrations", "last_sync_status", "VARCHAR(20)"),
+        ("calendar_integrations", "last_sync_error", "TEXT"),
+        ("calendar_integrations", "is_active", "BOOLEAN DEFAULT TRUE"),
+        ("calendar_integrations", "connected_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("calendar_integrations", "disconnected_at", "TIMESTAMP"),
+        ("calendar_integrations", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("calendar_integrations", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Calendar Events
+        ("calendar_events", "id", "SERIAL PRIMARY KEY"),
+        ("calendar_events", "integration_id", "INTEGER NOT NULL REFERENCES calendar_integrations(id)"),
+        ("calendar_events", "external_event_id", "VARCHAR(255) NOT NULL"),
+        ("calendar_events", "booking_id", "INTEGER REFERENCES bookings(id)"),
+        ("calendar_events", "title", "VARCHAR(500) NOT NULL"),
+        ("calendar_events", "description", "TEXT"),
+        ("calendar_events", "start_time", "TIMESTAMP NOT NULL"),
+        ("calendar_events", "end_time", "TIMESTAMP NOT NULL"),
+        ("calendar_events", "location", "VARCHAR(500)"),
+        ("calendar_events", "is_all_day", "BOOLEAN DEFAULT FALSE"),
+        ("calendar_events", "status", "VARCHAR(20) DEFAULT 'confirmed'"),
+        ("calendar_events", "sync_status", "VARCHAR(20) DEFAULT 'synced'"),
+        ("calendar_events", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("calendar_events", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()

@@ -1835,15 +1835,72 @@ See `CRM_ENHANCEMENT_CHECKLIST.md` for detailed implementation plan.
 
 ---
 
-## Priority 33: Calendar Sync (Google/Outlook)
+## ~~Priority 33: Calendar Sync (Google/Outlook)~~ ✅ COMPLETE
 
-**Status**: Not Started | **Effort**: Medium (2 weeks)
+**Completed: 2026-01-19**
 
-External calendar integration for booking slots.
-- [ ] Google Calendar OAuth
-- [ ] Outlook Calendar OAuth
-- [ ] Bidirectional sync
-- [ ] Free/busy checking
+### What Was Implemented
+
+1. **Database Models** (`database.py`):
+   - [x] `CalendarIntegration` - Staff calendar connections (Google/Outlook)
+   - [x] `CalendarEvent` - Synced events with external event IDs
+   - [x] Migration entries for both tables
+
+2. **CalendarSyncService** (`services/calendar_sync_service.py` - ~700 lines):
+   - [x] Google Calendar OAuth flow (auth URL, token exchange, refresh)
+   - [x] Outlook Calendar OAuth flow (Microsoft Graph API)
+   - [x] List available calendars
+   - [x] Free/busy checking from connected calendars
+   - [x] Sync bookings to calendar (create events)
+   - [x] Delete calendar events on booking cancellation
+   - [x] Integration management (connect, disconnect, settings)
+
+3. **API Endpoints** (14 endpoints):
+   - [x] `GET /api/calendar/integrations` - List integrations
+   - [x] `GET /api/calendar/stats` - Sync statistics
+   - [x] `GET /api/calendar/google/auth` - Google OAuth URL
+   - [x] `GET /api/calendar/google/callback` - Google OAuth callback
+   - [x] `GET /api/calendar/outlook/auth` - Outlook OAuth URL
+   - [x] `GET /api/calendar/outlook/callback` - Outlook OAuth callback
+   - [x] `GET /api/calendar/integrations/<id>/calendars` - List calendars
+   - [x] `PUT /api/calendar/integrations/<id>/calendar` - Set calendar
+   - [x] `PUT /api/calendar/integrations/<id>/settings` - Update settings
+   - [x] `POST /api/calendar/integrations/<id>/disconnect` - Disconnect
+   - [x] `GET /api/calendar/free-busy` - Get busy times
+   - [x] `POST /api/calendar/check-availability` - Check slot availability
+
+4. **Settings UI** (`templates/settings.html`):
+   - [x] Calendar Integration section with Google/Outlook cards
+   - [x] Connect/disconnect buttons
+   - [x] Sync settings toggles (enable/disable, free/busy checking)
+   - [x] Connection status and last sync display
+
+5. **Booking System Integration** (`app.py`):
+   - [x] Auto-sync new bookings to staff's connected calendar
+   - [x] Delete calendar events when bookings are cancelled
+
+### Files Created/Modified
+- `database.py` - Added CalendarIntegration, CalendarEvent models + migrations
+- `services/calendar_sync_service.py` (NEW) - ~700 lines
+- `app.py` - Added 14 calendar API endpoints + booking integration
+- `templates/settings.html` - Added Calendar Integration section
+- `tests/test_calendar_sync_service.py` (NEW) - 30 tests
+
+### Environment Variables
+```
+# Google Calendar (OAuth 2.0)
+GOOGLE_CALENDAR_CLIENT_ID=your-client-id
+GOOGLE_CALENDAR_CLIENT_SECRET=your-client-secret
+GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:5001/api/calendar/google/callback
+
+# Outlook Calendar (Microsoft Graph API)
+OUTLOOK_CALENDAR_CLIENT_ID=your-client-id
+OUTLOOK_CALENDAR_CLIENT_SECRET=your-client-secret
+OUTLOOK_CALENDAR_REDIRECT_URI=http://localhost:5001/api/calendar/outlook/callback
+```
+
+### Test Status
+- 30/30 calendar sync service tests passing
 
 ---
 

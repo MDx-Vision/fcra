@@ -709,8 +709,87 @@
                 </div>
             </div>
 
+            <!-- Calendar Integration Section -->
+            <div class="content-card" id="calendar-section">
+                <h2 class="section-title">📅 Calendar Integration</h2>
+                <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">Connect your Google or Outlook calendar to sync bookings and check availability.</p>
+
+                <div id="calendar-integrations-container">
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <!-- Google Calendar -->
+                        <div id="google-calendar-card" style="flex: 1; min-width: 280px; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                                <div style="width: 40px; height: 40px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: #1a1a2e;">Google Calendar</div>
+                                    <div id="google-status" style="font-size: 12px; color: #64748b;">Not connected</div>
+                                </div>
+                            </div>
+                            <div id="google-connected-info" style="display: none; margin-bottom: 15px; padding: 10px; background: #f0fdf4; border-radius: 8px;">
+                                <div style="font-size: 13px; color: #166534;"><strong>Calendar:</strong> <span id="google-calendar-name">-</span></div>
+                                <div style="font-size: 12px; color: #15803d; margin-top: 4px;">Last synced: <span id="google-last-sync">Never</span></div>
+                            </div>
+                            <div id="google-settings" style="display: none; margin-bottom: 15px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; cursor: pointer;">
+                                    <input type="checkbox" id="google-sync-enabled" checked> Sync bookings to calendar
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; cursor: pointer; margin-top: 8px;">
+                                    <input type="checkbox" id="google-free-busy" checked> Use for availability checking
+                                </label>
+                            </div>
+                            <div id="google-actions">
+                                <button type="button" id="google-connect-btn" class="btn btn-secondary" style="width: 100%;" onclick="connectGoogle()">
+                                    Connect Google Calendar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Outlook Calendar -->
+                        <div id="outlook-calendar-card" style="flex: 1; min-width: 280px; padding: 20px; border: 2px solid #e2e8f0; border-radius: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                                <div style="width: 40px; height: 40px; background: #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0;">
+                                    <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#0078D4" d="M24 7.387v10.478c0 .23-.08.424-.238.576-.158.152-.353.228-.584.228h-8.547v-6.959l1.6 1.229c.102.086.217.128.346.128.14 0 .26-.05.359-.147l.855-.834a.456.456 0 00.146-.343.462.462 0 00-.146-.344l-4.272-3.543V2.33c0-.23.076-.424.228-.584.153-.158.35-.238.583-.238h8.547c.23 0 .424.076.576.228a.8.8 0 01.228.583v5.068h.319zm-10.178 5.096l-1.4-1.094V6.72h8.547v4.669l-3.873 3.231-3.274-2.137z"/><path fill="#0078D4" d="M0 7.39v9.087c0 .75.254 1.39.762 1.92.508.53 1.122.795 1.842.795h8.067V5.622H2.604c-.72 0-1.334.264-1.842.793-.508.53-.762 1.17-.762 1.92v.054h.001-.001z"/><path fill="#fff" d="M7.57 9.612c-.523-.358-1.128-.537-1.816-.537-.916 0-1.67.304-2.26.912-.59.608-.886 1.404-.886 2.388 0 .984.296 1.78.886 2.388.59.608 1.344.912 2.26.912.688 0 1.293-.18 1.816-.538v.402h1.518V9.21H7.57v.402zm-.538 4.009c-.339.353-.776.53-1.313.53-.536 0-.974-.177-1.313-.53-.339-.354-.508-.82-.508-1.399 0-.58.17-1.045.508-1.399.339-.353.777-.53 1.313-.53.537 0 .974.177 1.313.53.34.354.509.82.509 1.399 0 .58-.17 1.045-.509 1.399z"/></svg>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 600; color: #1a1a2e;">Outlook Calendar</div>
+                                    <div id="outlook-status" style="font-size: 12px; color: #64748b;">Not connected</div>
+                                </div>
+                            </div>
+                            <div id="outlook-connected-info" style="display: none; margin-bottom: 15px; padding: 10px; background: #eff6ff; border-radius: 8px;">
+                                <div style="font-size: 13px; color: #1e40af;"><strong>Calendar:</strong> <span id="outlook-calendar-name">-</span></div>
+                                <div style="font-size: 12px; color: #1d4ed8; margin-top: 4px;">Last synced: <span id="outlook-last-sync">Never</span></div>
+                            </div>
+                            <div id="outlook-settings" style="display: none; margin-bottom: 15px;">
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; cursor: pointer;">
+                                    <input type="checkbox" id="outlook-sync-enabled" checked> Sync bookings to calendar
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; cursor: pointer; margin-top: 8px;">
+                                    <input type="checkbox" id="outlook-free-busy" checked> Use for availability checking
+                                </label>
+                            </div>
+                            <div id="outlook-actions">
+                                <button type="button" id="outlook-connect-btn" class="btn btn-secondary" style="width: 100%;" onclick="connectOutlook()">
+                                    Connect Outlook Calendar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                        <h4 style="font-size: 14px; font-weight: 600; color: #1a1a2e; margin-bottom: 8px;">How it works</h4>
+                        <ul style="font-size: 13px; color: #64748b; margin: 0; padding-left: 20px;">
+                            <li>When clients book appointments, they'll automatically appear in your connected calendar</li>
+                            <li>Your calendar busy times will be used to show only available slots to clients</li>
+                            <li>Cancelled bookings will be removed from your calendar automatically</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             <div style="height: 80px;"></div>
-            
+
             <div class="save-bar">
                 <button type="button" class="btn btn-secondary" onclick="window.location.reload()">Cancel</button>
                 <button type="submit" class="btn btn-primary">💾 Save Settings</button>
@@ -975,7 +1054,179 @@
         // Load 2FA status on page load
         document.addEventListener('DOMContentLoaded', function() {
             load2FAStatus();
+            loadCalendarIntegrations();
+            checkCalendarCallbackParams();
         });
+
+        // =====================================================================
+        // Calendar Integration JavaScript
+        // =====================================================================
+
+        let calendarIntegrations = {};
+
+        async function loadCalendarIntegrations() {
+            try {
+                const response = await fetch('/api/calendar/integrations');
+                const data = await response.json();
+
+                if (data.success) {
+                    data.integrations.forEach(integration => {
+                        calendarIntegrations[integration.provider] = integration;
+                        updateCalendarUI(integration);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load calendar integrations:', error);
+            }
+        }
+
+        function updateCalendarUI(integration) {
+            const provider = integration.provider;
+            const statusEl = document.getElementById(`${provider}-status`);
+            const connectedInfoEl = document.getElementById(`${provider}-connected-info`);
+            const settingsEl = document.getElementById(`${provider}-settings`);
+            const actionsEl = document.getElementById(`${provider}-actions`);
+            const calendarNameEl = document.getElementById(`${provider}-calendar-name`);
+            const lastSyncEl = document.getElementById(`${provider}-last-sync`);
+            const cardEl = document.getElementById(`${provider}-calendar-card`);
+
+            if (integration.is_active) {
+                statusEl.textContent = 'Connected';
+                statusEl.style.color = '#166534';
+                cardEl.style.borderColor = provider === 'google' ? '#22c55e' : '#3b82f6';
+
+                connectedInfoEl.style.display = 'block';
+                settingsEl.style.display = 'block';
+                calendarNameEl.textContent = integration.calendar_name || 'Primary Calendar';
+                lastSyncEl.textContent = integration.last_sync_at ? new Date(integration.last_sync_at).toLocaleString() : 'Never';
+
+                // Update settings checkboxes
+                document.getElementById(`${provider}-sync-enabled`).checked = integration.sync_enabled;
+                document.getElementById(`${provider}-free-busy`).checked = integration.check_free_busy;
+
+                // Update action buttons
+                actionsEl.innerHTML = `
+                    <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="disconnectCalendar('${provider}', ${integration.id})">
+                        Disconnect
+                    </button>
+                `;
+
+                // Add change listeners
+                document.getElementById(`${provider}-sync-enabled`).onchange = () => updateCalendarSettings(integration.id, provider);
+                document.getElementById(`${provider}-free-busy`).onchange = () => updateCalendarSettings(integration.id, provider);
+            } else {
+                statusEl.textContent = 'Not connected';
+                statusEl.style.color = '#64748b';
+                cardEl.style.borderColor = '#e2e8f0';
+                connectedInfoEl.style.display = 'none';
+                settingsEl.style.display = 'none';
+
+                actionsEl.innerHTML = `
+                    <button type="button" class="btn btn-secondary" style="width: 100%;" onclick="connect${provider.charAt(0).toUpperCase() + provider.slice(1)}()">
+                        Connect ${provider.charAt(0).toUpperCase() + provider.slice(1)} Calendar
+                    </button>
+                `;
+            }
+        }
+
+        async function connectGoogle() {
+            try {
+                const response = await fetch('/api/calendar/google/auth');
+                const data = await response.json();
+
+                if (data.success && data.auth_url) {
+                    window.location.href = data.auth_url;
+                } else {
+                    showToast(data.error || 'Failed to get authorization URL', true);
+                }
+            } catch (error) {
+                console.error('Failed to connect Google Calendar:', error);
+                showToast('Failed to connect Google Calendar', true);
+            }
+        }
+
+        async function connectOutlook() {
+            try {
+                const response = await fetch('/api/calendar/outlook/auth');
+                const data = await response.json();
+
+                if (data.success && data.auth_url) {
+                    window.location.href = data.auth_url;
+                } else {
+                    showToast(data.error || 'Failed to get authorization URL', true);
+                }
+            } catch (error) {
+                console.error('Failed to connect Outlook Calendar:', error);
+                showToast('Failed to connect Outlook Calendar', true);
+            }
+        }
+
+        async function disconnectCalendar(provider, integrationId) {
+            if (!confirm(`Are you sure you want to disconnect your ${provider.charAt(0).toUpperCase() + provider.slice(1)} calendar?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/calendar/integrations/${integrationId}/disconnect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Calendar disconnected');
+                    loadCalendarIntegrations();
+                } else {
+                    showToast(data.error || 'Failed to disconnect', true);
+                }
+            } catch (error) {
+                console.error('Failed to disconnect calendar:', error);
+                showToast('Failed to disconnect calendar', true);
+            }
+        }
+
+        async function updateCalendarSettings(integrationId, provider) {
+            const syncEnabled = document.getElementById(`${provider}-sync-enabled`).checked;
+            const freeBusy = document.getElementById(`${provider}-free-busy`).checked;
+
+            try {
+                const response = await fetch(`/api/calendar/integrations/${integrationId}/settings`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sync_enabled: syncEnabled,
+                        check_free_busy: freeBusy
+                    })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('Calendar settings updated');
+                } else {
+                    showToast(data.error || 'Failed to update settings', true);
+                }
+            } catch (error) {
+                console.error('Failed to update calendar settings:', error);
+                showToast('Failed to update settings', true);
+            }
+        }
+
+        function checkCalendarCallbackParams() {
+            const params = new URLSearchParams(window.location.search);
+            const calendarConnected = params.get('calendar_connected');
+            const calendarError = params.get('calendar_error');
+
+            if (calendarConnected) {
+                showToast(`${calendarConnected.charAt(0).toUpperCase() + calendarConnected.slice(1)} Calendar connected successfully!`);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            if (calendarError) {
+                showToast(`Calendar connection error: ${calendarError}`, true);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
     </script>
 </body>
 </html>

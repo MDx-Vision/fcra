@@ -36998,6 +36998,290 @@ def api_delete_booking_slot(slot_id):
         db.close()
 
 
+# ==================== Calendar Sync API (P33) ====================
+
+@app.route('/api/calendar/integrations', methods=['GET'])
+@require_staff()
+def api_get_calendar_integrations():
+    """Get all calendar integrations for current staff"""
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get('staff_id')
+    service = get_calendar_service()
+    integrations = service.get_integrations(staff_id)
+
+    return jsonify({
+        'success': True,
+        'integrations': [
+            {
+                'id': i.id,
+                'provider': i.provider,
+                'calendar_id': i.calendar_id,
+                'calendar_name': i.calendar_name,
+                'sync_enabled': i.sync_enabled,
+                'sync_direction': i.sync_direction,
+                'check_free_busy': i.check_free_busy,
+                'is_active': i.is_active,
+                'connected_at': i.connected_at.isoformat() if i.connected_at else None,
+                'last_sync_at': i.last_sync_at.isoformat() if i.last_sync_at else None,
+                'last_sync_status': i.last_sync_status,
+            }
+            for i in integrations
+        ]
+    })
+
+
+@app.route('/api/calendar/stats', methods=['GET'])
+@require_staff()
+def api_get_calendar_stats():
+    """Get calendar sync statistics"""
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get('staff_id')
+    service = get_calendar_service()
+    stats = service.get_sync_stats(staff_id)
+
+    return jsonify({'success': True, 'stats': stats})
+
+
+@app.route('/api/calendar/google/auth', methods=['GET'])
+@require_staff()
+def api_google_calendar_auth():
+    """Get Google Calendar OAuth URL"""
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get('staff_id')
+    service = get_calendar_service()
+
+    try:
+        auth_url = service.get_google_auth_url(staff_id)
+        return jsonify({'success': True, 'auth_url': auth_url})
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+
+@app.route('/api/calendar/google/callback', methods=['GET'])
+def api_google_calendar_callback():
+    """Handle Google Calendar OAuth callback"""
+    from services.calendar_sync_service import get_calendar_service
+
+    code = request.args.get('code')
+    state = request.args.get('state')  # Contains staff_id
+    error = request.args.get('error')
+
+    if error:
+        return redirect(f'/dashboard/settings?calendar_error={error}')
+
+    if not code or not state:
+        return redirect('/dashboard/settings?calendar_error=missing_params')
+
+    try:
+        staff_id = int(state)
+        service = get_calendar_service()
+        service.exchange_google_code(code, staff_id)
+        return redirect('/dashboard/settings?calendar_connected=google')
+    except Exception as e:
+        logger.error(f"Google Calendar callback error: {e}")
+        return redirect(f'/dashboard/settings?calendar_error={str(e)[:100]}')
+
+
+@app.route('/api/calendar/outlook/auth', methods=['GET'])
+@require_staff()
+def api_outlook_calendar_auth():
+    """Get Outlook Calendar OAuth URL"""
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get('staff_id')
+    service = get_calendar_service()
+
+    try:
+        auth_url = service.get_outlook_auth_url(staff_id)
+        return jsonify({'success': True, 'auth_url': auth_url})
+    except ValueError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+
+@app.route('/api/calendar/outlook/callback', methods=['GET'])
+def api_outlook_calendar_callback():
+    """Handle Outlook Calendar OAuth callback"""
+    from services.calendar_sync_service import get_calendar_service
+
+    code = request.args.get('code')
+    state = request.args.get('state')  # Contains staff_id
+    error = request.args.get('error')
+
+    if error:
+        return redirect(f'/dashboard/settings?calendar_error={error}')
+
+    if not code or not state:
+        return redirect('/dashboard/settings?calendar_error=missing_params')
+
+    try:
+        staff_id = int(state)
+        service = get_calendar_service()
+        service.exchange_outlook_code(code, staff_id)
+        return redirect('/dashboard/settings?calendar_connected=outlook')
+    except Exception as e:
+        logger.error(f"Outlook Calendar callback error: {e}")
+        return redirect(f'/dashboard/settings?calendar_error={str(e)[:100]}')
+
+
+@app.route('/api/calendar/integrations/<int:integration_id>/calendars', methods=['GET'])
+@require_staff()
+def api_list_calendars(integration_id):
+    """List available calendars for an integration"""
+    from services.calendar_sync_service import get_calendar_service
+    from database import CalendarIntegration
+
+    staff_id = session.get('staff_id')
+    db = get_db()
+
+    try:
+        integration = db.query(CalendarIntegration).filter_by(
+            id=integration_id,
+            staff_id=staff_id
+        ).first()
+
+        if not integration:
+            return jsonify({'success': False, 'error': 'Integration not found'}), 404
+
+        service = get_calendar_service()
+        calendars = service.list_calendars(integration)
+
+        return jsonify({'success': True, 'calendars': calendars})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/calendar/integrations/<int:integration_id>/calendar', methods=['PUT'])
+@require_staff()
+def api_set_calendar(integration_id):
+    """Set which calendar to use for sync"""
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get('staff_id')
+    data = request.json
+    calendar_id = data.get('calendar_id')
+    calendar_name = data.get('calendar_name')
+
+    if not calendar_id:
+        return jsonify({'success': False, 'error': 'calendar_id required'}), 400
+
+    service = get_calendar_service()
+    success = service.set_calendar(integration_id, staff_id, calendar_id, calendar_name)
+
+    if success:
+        return jsonify({'success': True, 'message': 'Calendar updated'})
+    return jsonify({'success': False, 'error': 'Integration not found'}), 404
+
+
+@app.route('/api/calendar/integrations/<int:integration_id>/settings', methods=['PUT'])
+@require_staff()
+def api_update_calendar_settings(integration_id):
+    """Update calendar sync settings"""
+    from database import CalendarIntegration
+
+    staff_id = session.get('staff_id')
+    data = request.json
+    db = get_db()
+
+    try:
+        integration = db.query(CalendarIntegration).filter_by(
+            id=integration_id,
+            staff_id=staff_id
+        ).first()
+
+        if not integration:
+            return jsonify({'success': False, 'error': 'Integration not found'}), 404
+
+        if 'sync_enabled' in data:
+            integration.sync_enabled = data['sync_enabled']
+        if 'sync_direction' in data:
+            integration.sync_direction = data['sync_direction']
+        if 'check_free_busy' in data:
+            integration.check_free_busy = data['check_free_busy']
+
+        db.commit()
+        return jsonify({'success': True, 'message': 'Settings updated'})
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route('/api/calendar/integrations/<int:integration_id>/disconnect', methods=['POST'])
+@require_staff()
+def api_disconnect_calendar(integration_id):
+    """Disconnect a calendar integration"""
+    from services.calendar_sync_service import get_calendar_service
+
+    staff_id = session.get('staff_id')
+    service = get_calendar_service()
+    success = service.disconnect(integration_id, staff_id)
+
+    if success:
+        return jsonify({'success': True, 'message': 'Calendar disconnected'})
+    return jsonify({'success': False, 'error': 'Integration not found'}), 404
+
+
+@app.route('/api/calendar/free-busy', methods=['GET'])
+@require_staff()
+def api_get_free_busy():
+    """Get free/busy times for a date range"""
+    from services.calendar_sync_service import get_calendar_service
+    from datetime import datetime
+
+    staff_id = session.get('staff_id')
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    if not start or not end:
+        return jsonify({'success': False, 'error': 'start and end required'}), 400
+
+    try:
+        start_time = datetime.fromisoformat(start.replace('Z', '+00:00'))
+        end_time = datetime.fromisoformat(end.replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({'success': False, 'error': 'Invalid date format'}), 400
+
+    service = get_calendar_service()
+    busy_times = service.get_free_busy(staff_id, start_time, end_time)
+
+    return jsonify({'success': True, 'busy_times': busy_times})
+
+
+@app.route('/api/calendar/check-availability', methods=['POST'])
+@require_staff()
+def api_check_availability():
+    """Check if a specific time slot is available"""
+    from services.calendar_sync_service import get_calendar_service
+    from datetime import datetime
+
+    staff_id = session.get('staff_id')
+    data = request.json
+    start = data.get('start')
+    end = data.get('end')
+
+    if not start or not end:
+        return jsonify({'success': False, 'error': 'start and end required'}), 400
+
+    try:
+        start_time = datetime.fromisoformat(start.replace('Z', '+00:00'))
+        end_time = datetime.fromisoformat(end.replace('Z', '+00:00'))
+    except ValueError:
+        return jsonify({'success': False, 'error': 'Invalid date format'}), 400
+
+    service = get_calendar_service()
+    is_available = service.is_time_available(staff_id, start_time, end_time)
+
+    return jsonify({'success': True, 'available': is_available})
+
+
 @app.route('/api/bookings', methods=['GET'])
 @require_staff()
 def api_get_bookings():
@@ -37073,6 +37357,13 @@ def api_update_booking_status(booking_id):
             booking.cancelled_at = datetime.utcnow()
             # Free up the slot
             booking.slot.is_booked = False
+            # Delete from calendar
+            try:
+                from services.calendar_sync_service import get_calendar_service
+                calendar_service = get_calendar_service()
+                calendar_service.delete_calendar_event(booking.id)
+            except Exception as e:
+                logger.warning(f"Calendar event deletion failed: {e}")
 
         booking.updated_at = datetime.utcnow()
         db.commit()
@@ -37183,6 +37474,14 @@ def api_portal_create_booking():
 
         db.commit()
         db.refresh(booking)
+
+        # Sync to staff's calendar if connected
+        try:
+            from services.calendar_sync_service import get_calendar_service
+            calendar_service = get_calendar_service()
+            calendar_service.sync_booking_to_calendar(booking)
+        except Exception as e:
+            logger.warning(f"Calendar sync failed for booking {booking.id}: {e}")
 
         # Get client info for confirmation email
         client = db.query(Client).filter(Client.id == client_id).first()
@@ -37295,6 +37594,14 @@ def api_portal_cancel_booking(booking_id):
         booking.status = 'cancelled'
         booking.cancelled_at = datetime.utcnow()
         booking.slot.is_booked = False
+
+        # Delete from calendar
+        try:
+            from services.calendar_sync_service import get_calendar_service
+            calendar_service = get_calendar_service()
+            calendar_service.delete_calendar_event(booking.id)
+        except Exception as e:
+            logger.warning(f"Calendar event deletion failed: {e}")
 
         db.commit()
 
