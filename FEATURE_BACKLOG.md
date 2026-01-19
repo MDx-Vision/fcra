@@ -1788,19 +1788,154 @@ Automated ringless voicemail drops for client outreach and communication.
 
 ---
 
-## Future Features (Not Yet Prioritized)
+## ~~Priority 29: AI Chat Support~~ ✅ COMPLETE
 
-- [x] ~~E-Sign Integration~~ - Already implemented (CROA Signing Service with signature capture)
-- [x] ~~AI Dispute Writer~~ - Implemented 2026-01-03
-- [x] ~~ROI Calculator~~ - Implemented 2026-01-03
-- [x] ~~Payment Plans~~ - Implemented 2026-01-03
-- [x] ~~Bureau Response Tracking~~ - Implemented 2026-01-03
-- [x] ~~Auto-Pull Credit Reports~~ - Implemented 2026-01-03
-- [x] ~~Letter Template Builder~~ - Implemented 2026-01-03
-- [x] ~~Mobile App (PWA)~~ - Implemented 2026-01-03
-- [x] ~~Voicemail Drops~~ - Implemented 2026-01-03
+**Completed: 2026-01-18**
 
-### Pending Infrastructure
+AI-powered chat support for client portal.
+- [x] Chat widget in portal
+- [x] AI context awareness (client data, case status)
+- [x] Conversation history
+- [x] Staff dashboard for chat monitoring
+
+---
+
+## ~~Priority 30: AI Chat Support (Staff Dashboard)~~ ✅ COMPLETE
+
+**Completed: 2026-01-18**
+
+Staff-side chat management and AI training.
+
+---
+
+## ~~Priority 31: Credit Score Simulator~~ ✅ COMPLETE
+
+**Completed: 2026-01-19**
+
+What-if score projections for client portal.
+- [x] ScoreScenario database model
+- [x] Score simulation service with item-level impact
+- [x] Save/load scenarios
+- [x] Goal recommendations
+- [x] Interactive portal UI
+
+---
+
+## Priority 32: Unified Inbox
+
+**Status**: Not Started | **Effort**: Medium (2-3 weeks)
+
+Single view for all client communications (email, SMS, portal messages).
+- [ ] UnifiedInboxService
+- [ ] Channel filtering (All, Email, SMS, Portal, Calls)
+- [ ] Search and conversation threading
+- [ ] Quick reply from inbox
+
+See `CRM_ENHANCEMENT_CHECKLIST.md` for detailed implementation plan.
+
+---
+
+## Priority 33: Calendar Sync (Google/Outlook)
+
+**Status**: Not Started | **Effort**: Medium (2 weeks)
+
+External calendar integration for booking slots.
+- [ ] Google Calendar OAuth
+- [ ] Outlook Calendar OAuth
+- [ ] Bidirectional sync
+- [ ] Free/busy checking
+
+---
+
+## Priority 34: Call Logging
+
+**Status**: Not Started | **Effort**: Low (1 week)
+
+Manual call tracking with notes and outcomes.
+- [ ] CallLog model
+- [ ] Log call from client page
+- [ ] Call history and stats
+
+---
+
+## Priority 35: Task Assignment
+
+**Status**: Not Started | **Effort**: Medium (1-2 weeks)
+
+Assign tasks to staff with due dates and reminders.
+- [ ] StaffTask model
+- [ ] Task assignment UI
+- [ ] Due date notifications
+
+---
+
+## Priority 36: Scheduled Reports
+
+**Status**: Not Started | **Effort**: Low (1 week)
+
+Auto-email reports on schedule.
+- [ ] ScheduledReport model
+- [ ] Report scheduler service
+- [ ] Settings page configuration
+
+---
+
+## Priority 37: SMS Templates Library
+
+**Status**: Not Started | **Effort**: Low (3 days)
+
+Pre-built SMS templates like email templates.
+- [ ] SMSTemplate model
+- [ ] Template management UI
+- [ ] Variable substitution
+
+---
+
+## Priority 38: Client Tags
+
+**Status**: Not Started | **Effort**: Low (1 week)
+
+Flexible tagging for client segmentation.
+- [ ] ClientTag model
+- [ ] Tag management UI
+- [ ] Filter by tags
+
+---
+
+## Priority 39: Email Open/Click Tracking
+
+**Status**: Not Started | **Effort**: Medium (1-2 weeks)
+
+Track email engagement.
+- [ ] Tracking pixel
+- [ ] Click tracking
+- [ ] Stats dashboard
+
+---
+
+## CRM Enhancement Roadmap
+
+See `CRM_ENHANCEMENT_CHECKLIST.md` for detailed implementation plans and failproof testing strategy.
+
+**Phase 1 (High Value)**: P32 Unified Inbox
+**Phase 2 (Medium Value)**: P33 Calendar Sync, P34 Call Logging
+**Phase 3 (Quick Wins)**: P35-P36
+**Phase 4 (Nice to Have)**: P37-P39
+
+---
+
+## Completed Features Summary
+
+| Priority | Feature | Completed |
+|----------|---------|-----------|
+| P1-P14 | Core Platform Features | 2025-12-31 to 2026-01-03 |
+| P15-P28 | Advanced Features | 2026-01-03 |
+| P29-P30 | AI Chat Support | 2026-01-18 |
+| P31 | Credit Score Simulator | 2026-01-19 |
+
+---
+
+## Pending Infrastructure
 
 - [ ] **Send Certified Mail** - Awaiting SFTP credentials
 - [ ] **Twilio A2P 10DLC** - Campaign pending carrier approval
