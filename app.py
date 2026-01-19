@@ -14100,6 +14100,102 @@ def api_client_portal(client_id):
         db.close()
 
 
+@app.route("/api/clients/<int:client_id>/send-portal-invite", methods=["POST"])
+@require_staff()
+def api_send_portal_invite(client_id):
+    """
+    Send portal invite to client - sets temp password, updates stage to onboarding,
+    and emails login instructions.
+    """
+    import secrets
+    import string
+    from werkzeug.security import generate_password_hash
+    from services.email_service import send_email
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        if not client.email:
+            return jsonify({"success": False, "error": "Client has no email address"}), 400
+
+        # Generate secure temp password (12 chars: letters + digits + special)
+        alphabet = string.ascii_letters + string.digits + "!@#$%"
+        temp_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+
+        # Set password hash
+        client.portal_password_hash = generate_password_hash(temp_password)
+
+        # Update stage to onboarding (so they see CROA documents)
+        client.client_stage = 'onboarding'
+
+        # Generate portal token as backup access method
+        if not client.portal_token:
+            client.portal_token = secrets.token_urlsafe(32)
+
+        db.commit()
+
+        # Build login URL
+        base_url = request.host_url.rstrip('/')
+        login_url = f"{base_url}/portal/login"
+        magic_link = f"{base_url}/portal/{client.portal_token}"
+
+        # Send email with login instructions
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #22c55e;">Welcome to Your Client Portal</h2>
+            <p>Hi {client.first_name or 'there'},</p>
+            <p>Your client portal account is ready! You can now log in to complete your onboarding and sign the required documents.</p>
+
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Your Login Credentials</h3>
+                <p><strong>Email:</strong> {client.email}</p>
+                <p><strong>Temporary Password:</strong> {temp_password}</p>
+                <p style="color: #6b7280; font-size: 14px;">Please change your password after logging in.</p>
+            </div>
+
+            <p>
+                <a href="{login_url}" style="display: inline-block; background: #22c55e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                    Log In to Portal
+                </a>
+            </p>
+
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                Or use this magic link (no password needed):<br>
+                <a href="{magic_link}">{magic_link}</a>
+            </p>
+
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+            <p style="color: #9ca3af; font-size: 12px;">
+                This is an automated message. If you did not request this, please contact us.
+            </p>
+        </div>
+        """
+
+        email_result = send_email(
+            to_email=client.email,
+            subject="Your Client Portal is Ready - Login Instructions",
+            html_content=html_content
+        )
+
+        return jsonify({
+            "success": True,
+            "message": f"Portal invite sent to {client.email}",
+            "client_stage": client.client_stage,
+            "temp_password": temp_password,  # Return to staff so they can share if needed
+            "login_url": login_url,
+            "magic_link": magic_link
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route("/api/clients/<int:client_id>/followup", methods=["POST"])
 @require_staff()
 def api_client_followup(client_id):

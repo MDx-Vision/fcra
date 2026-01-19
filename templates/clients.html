@@ -833,6 +833,9 @@
                                 <button class="row-action whatsapp-action" onclick="openWhatsAppRequest({{ case.id }}, '{{ case.client_name }}', {{ 'true' if case.whatsapp_verified else 'false' }})" title="Request Document via WhatsApp" style="background: {% if case.whatsapp_verified %}#25D366{% else %}#e5e7eb{% endif %}; color: {% if case.whatsapp_verified %}white{% else %}#9ca3af{% endif %};">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                                 </button>
+                                <button class="row-action" onclick="sendPortalInvite({{ case.id }}, '{{ case.client_name }}', '{{ case.email }}')" title="Send Portal Invite" style="background: #8b5cf6; color: white;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 8l9 6 9-6"/></svg>
+                                </button>
                                 <button class="row-action danger" onclick="deleteClient({{ case.id }}, '{{ case.client_name }}')" title="Delete">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
@@ -1620,8 +1623,130 @@
             if (e.key === 'Escape') {
                 closeWorkflowSelector();
                 closeWhatsAppModal();
+                closePortalInviteModal();
             }
         });
+
+        // Send Portal Invite
+        async function sendPortalInvite(clientId, clientName, clientEmail) {
+            if (!clientEmail) {
+                showToast('Client has no email address', 'error');
+                return;
+            }
+
+            if (!confirm(`Send portal invite to ${clientName} (${clientEmail})?\n\nThis will:\n- Set a temporary password\n- Move client to onboarding stage\n- Email login instructions`)) {
+                return;
+            }
+
+            try {
+                showToast('Sending portal invite...', 'info');
+                const res = await fetch(`/api/clients/${clientId}/send-portal-invite`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Show success modal with credentials
+                    showPortalInviteSuccess(clientName, clientEmail, data.temp_password, data.login_url, data.magic_link);
+                } else {
+                    showToast(data.error || 'Failed to send portal invite', 'error');
+                }
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        }
+
+        function showPortalInviteSuccess(clientName, email, tempPassword, loginUrl, magicLink) {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('portalInviteModal');
+            if (!modal) {
+                const overlay = document.createElement('div');
+                overlay.id = 'portalInviteOverlay';
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;';
+                overlay.onclick = closePortalInviteModal;
+                document.body.appendChild(overlay);
+
+                modal = document.createElement('div');
+                modal.id = 'portalInviteModal';
+                modal.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 24px; width: 90%; max-width: 500px; z-index: 1001; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);';
+                document.body.appendChild(modal);
+            }
+
+            document.getElementById('portalInviteOverlay').style.display = 'block';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #22c55e; display: flex; align-items: center; justify-content: center;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a2e; margin: 0;">Portal Invite Sent!</h3>
+                            <p style="font-size: 13px; color: #6b7280; margin: 0;">Email sent to ${email}</p>
+                        </div>
+                    </div>
+                    <button onclick="closePortalInviteModal()" style="background: none; border: none; font-size: 24px; color: #6b7280; cursor: pointer;">&times;</button>
+                </div>
+
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <p style="font-size: 13px; color: #166534; margin: 0 0 8px 0;"><strong>Client:</strong> ${clientName}</p>
+                    <p style="font-size: 13px; color: #166534; margin: 0 0 8px 0;"><strong>Stage:</strong> Onboarding (ready to sign CROA documents)</p>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">Temporary Password</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" value="${tempPassword}" readonly style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-family: monospace; font-size: 14px;">
+                        <button onclick="copyToClipboard('${tempPassword}')" style="padding: 10px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;">Copy</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">Login URL</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" value="${loginUrl}" readonly style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px;">
+                        <button onclick="copyToClipboard('${loginUrl}')" style="padding: 10px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;">Copy</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">Magic Link (No password needed)</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" value="${magicLink}" readonly style="flex: 1; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12px;">
+                        <button onclick="copyToClipboard('${magicLink}')" style="padding: 10px 16px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;">Copy</button>
+                    </div>
+                </div>
+
+                <div style="background: #fefce8; border: 1px solid #fde047; border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <p style="font-size: 12px; color: #854d0e; margin: 0;"><strong>Note:</strong> The client has received an email with these login instructions. They can now access the portal to complete onboarding and sign CROA documents.</p>
+                </div>
+
+                <button onclick="closePortalInviteModal(); location.reload();" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #319795 0%, #84cc16 100%); color: #1a1a2e; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">Done</button>
+            `;
+        }
+
+        function closePortalInviteModal() {
+            const modal = document.getElementById('portalInviteModal');
+            const overlay = document.getElementById('portalInviteOverlay');
+            if (modal) modal.style.display = 'none';
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Copied to clipboard!', 'success');
+            }).catch(() => {
+                // Fallback for older browsers
+                const input = document.createElement('input');
+                input.value = text;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast('Copied to clipboard!', 'success');
+            });
+        }
 
         // WhatsApp Document Request Functions
         let currentWhatsAppClientId = null;
