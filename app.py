@@ -40551,6 +40551,312 @@ def dashboard_voicemail():
         service.db.close()
 
 
+# ===========================================================================
+# UNIFIED INBOX API (P32)
+# ===========================================================================
+
+@app.route("/dashboard/unified-inbox")
+@require_staff()
+def dashboard_unified_inbox():
+    """Unified Inbox dashboard page"""
+    from database import Client, Staff
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    db = get_db()
+
+    try:
+        # Get current staff
+        staff_id = session.get('staff_id')
+
+        # Get dashboard stats
+        stats = service.get_dashboard_stats(staff_id=staff_id)
+
+        # Get unread counts
+        unread = service.get_unread_counts(staff_id=staff_id)
+
+        # Get clients for filter dropdown
+        client_query = db.query(Client).filter(
+            Client.dispute_status.notin_(['lead', 'cancelled'])
+        ).order_by(Client.name)
+
+        if staff_id:
+            client_query = client_query.filter(Client.assigned_to == staff_id)
+
+        clients = client_query.limit(100).all()
+
+        return render_template(
+            "unified_inbox.html",
+            active_page='unified-inbox',
+            stats=stats,
+            unread=unread,
+            clients=clients
+        )
+    finally:
+        db.close()
+
+
+@app.route("/api/inbox", methods=["GET"])
+@require_staff()
+def api_inbox_list():
+    """Get inbox messages with filters"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        staff_id = session.get('staff_id')
+
+        # Parse filters
+        channels = request.args.getlist('channel') or None
+        is_read = request.args.get('is_read')
+        if is_read is not None:
+            is_read = is_read.lower() == 'true'
+        search = request.args.get('search')
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+
+        result = service.get_staff_inbox(
+            staff_id=staff_id,
+            channels=channels,
+            is_read=is_read,
+            search_query=search,
+            limit=limit,
+            offset=offset
+        )
+
+        return jsonify({
+            'success': True,
+            **result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/client/<int:client_id>", methods=["GET"])
+@require_staff()
+def api_inbox_client(client_id):
+    """Get inbox messages for a specific client"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        channels = request.args.getlist('channel') or None
+        direction = request.args.get('direction')
+        is_read = request.args.get('is_read')
+        if is_read is not None:
+            is_read = is_read.lower() == 'true'
+        search = request.args.get('search')
+        limit = int(request.args.get('limit', 50))
+        offset = int(request.args.get('offset', 0))
+
+        result = service.get_client_inbox(
+            client_id=client_id,
+            channels=channels,
+            direction=direction,
+            is_read=is_read,
+            search_query=search,
+            limit=limit,
+            offset=offset
+        )
+
+        return jsonify({
+            'success': True,
+            **result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/client/<int:client_id>/thread", methods=["GET"])
+@require_staff()
+def api_inbox_client_thread(client_id):
+    """Get conversation thread for a client"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        channels = request.args.getlist('channel') or None
+        limit = int(request.args.get('limit', 100))
+
+        result = service.get_conversation_thread(
+            client_id=client_id,
+            include_channels=channels,
+            limit=limit
+        )
+
+        return jsonify({
+            'success': True,
+            **result
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/search", methods=["GET"])
+@require_staff()
+def api_inbox_search():
+    """Search messages across all channels"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        query = request.args.get('q', '')
+        client_id = request.args.get('client_id', type=int)
+        channels = request.args.getlist('channel') or None
+        limit = int(request.args.get('limit', 50))
+
+        messages = service.search_messages(
+            query=query,
+            client_id=client_id,
+            channels=channels,
+            limit=limit
+        )
+
+        return jsonify({
+            'success': True,
+            'messages': messages,
+            'total': len(messages),
+            'query': query
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/unread", methods=["GET"])
+@require_staff()
+def api_inbox_unread():
+    """Get unread message counts by channel"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        staff_id = session.get('staff_id')
+        client_id = request.args.get('client_id', type=int)
+
+        counts = service.get_unread_counts(
+            client_id=client_id,
+            staff_id=staff_id if not client_id else None
+        )
+
+        return jsonify({
+            'success': True,
+            'counts': counts
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/stats", methods=["GET"])
+@require_staff()
+def api_inbox_stats():
+    """Get inbox dashboard statistics"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        staff_id = session.get('staff_id')
+        days = int(request.args.get('days', 7))
+
+        stats = service.get_dashboard_stats(
+            staff_id=staff_id,
+            days=days
+        )
+
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/<int:message_id>/read", methods=["PUT"])
+@require_staff()
+def api_inbox_mark_read(message_id):
+    """Mark a message as read"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        staff_id = session.get('staff_id')
+        channel = request.json.get('channel', 'portal')
+
+        success = service.mark_read(
+            channel=channel,
+            message_id=message_id,
+            read_by_staff_id=staff_id
+        )
+
+        return jsonify({
+            'success': success
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/client/<int:client_id>/read-all", methods=["PUT"])
+@require_staff()
+def api_inbox_mark_all_read(client_id):
+    """Mark all messages from a client as read"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        staff_id = session.get('staff_id')
+        channel = request.json.get('channel') if request.json else None
+
+        count = service.mark_client_messages_read(
+            client_id=client_id,
+            channel=channel,
+            read_by_staff_id=staff_id
+        )
+
+        return jsonify({
+            'success': True,
+            'marked_read': count
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route("/api/inbox/reply", methods=["POST"])
+@require_staff()
+def api_inbox_reply():
+    """Send a reply to a client through specified channel"""
+    from services.unified_inbox_service import get_unified_inbox_service
+
+    service = get_unified_inbox_service()
+    try:
+        staff_id = session.get('staff_id')
+        data = request.json
+
+        client_id = data.get('client_id')
+        channel = data.get('channel', 'portal')
+        content = data.get('content', '')
+        subject = data.get('subject')
+
+        if not client_id:
+            return jsonify({'success': False, 'error': 'client_id is required'}), 400
+        if not content:
+            return jsonify({'success': False, 'error': 'content is required'}), 400
+
+        result = service.send_reply(
+            client_id=client_id,
+            channel=channel,
+            content=content,
+            staff_id=staff_id,
+            subject=subject
+        )
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# END UNIFIED INBOX API
+# ===========================================================================
+
+
 @app.errorhandler(404)
 def handle_404_error(error):
     """Handle 404 errors and return JSON"""
