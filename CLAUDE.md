@@ -35,66 +35,74 @@ See `MANUAL_ACTION_ITEMS.md` for detailed instructions:
 
 ### Feature Backlog
 See `FEATURE_BACKLOG.md` for upcoming work:
-- **Priority 1**: ~~Client Communication Automation~~ ✅ COMPLETE
-- **Priority 2**: ~~Gmail Integration~~ ✅ COMPLETE
-- **Priority 3**: ~~Q&A Booking + Live Messaging~~ ✅ COMPLETE
-- **Priority 4**: ~~Simple Report Upload Flow~~ ✅ COMPLETE
-- **Priority 5**: ~~Deadline Approaching Scheduler~~ ✅ COMPLETE
-- **Priority 6**: ~~Lead Scoring~~ ✅ COMPLETE
-- **Priority 7**: ~~Email Templates Library~~ ✅ COMPLETE
-- **Priority 8**: ~~Drip Campaigns~~ ✅ COMPLETE
-- **Priority 9**: ~~Light/Dark Mode Toggle~~ ✅ COMPLETE
-- **Priority 10**: ~~White Label Partner Portal~~ ✅ COMPLETE
-- **Priority 11**: ~~CROA Document Signing Workflow~~ ✅ COMPLETE
-- **Priority 12**: ~~Two-Factor Authentication (2FA)~~ ✅ COMPLETE
-- **Priority 13**: ~~Revenue Dashboard~~ ✅ COMPLETE
-- **Priority 14**: ~~Stripe Subscriptions~~ ✅ COMPLETE
+- **Priority 1-14**: ✅ ALL COMPLETE (see below)
+- **Priority 29**: ~~AI Chat Support~~ ✅ COMPLETE
+- **Priority 30**: ~~AI Chat Staff Dashboard~~ ✅ COMPLETE
+- **Priority 31**: ~~Credit Score Simulator~~ ✅ COMPLETE
+- **Priority 32**: ~~Unified Inbox~~ ✅ COMPLETE
+- **Priority 33**: ~~Calendar Sync (Google/Outlook)~~ ✅ COMPLETE
+- **Priority 34**: Call Logging (next)
+- **Priority 35-39**: Task Assignment, Scheduled Reports, SMS Templates, Client Tags, Email Tracking
 
-### Current Work (2026-01-19) - Session: "CRM Enhancement Planning"
+### Current Work (2026-01-19) - Session: "CRM Feature Implementation"
 
-**Task**: TNG CRM Comparison + Enhancement Planning
+**Task**: P32 Unified Inbox + Send Portal Invite + P33 Calendar Sync
 
-**Status**: ✅ COMPLETE
+**Status**: ✅ ALL COMPLETE
 
-**What Was Done**:
+---
 
-1. **TNG CRM Analysis**
-   - Read and analyzed TNG CRM Master Checklist (~3,800 lines, 24 sections)
-   - Compared against FCRA platform capabilities
-   - Created comprehensive comparison document
+### Completed Today (2026-01-19):
 
-2. **Documentation Created**
-   - `CRM_COMPARISON_FCRA_VS_TNG.md` - Full feature comparison matrix
-   - `CRM_ENHANCEMENT_CHECKLIST.md` - Master tracking for CRM enhancements
+#### 1. P32 Unified Inbox ✅
+- `UnifiedInboxService` (~800 lines) - aggregates 5 channels
+- 11 API endpoints for message management
+- Dashboard UI template
+- 30 unit tests passing
 
-3. **Feature Backlog Updated**
-   - Added P29-P39 priorities based on TNG analysis
-   - P29: AI Chat Support ✅ (already complete)
-   - P30: AI Chat Staff Dashboard ✅ (already complete)
-   - P31: Credit Score Simulator ✅ (already complete)
-   - P32: Unified Inbox (planned)
-   - P33: Calendar Sync (planned)
-   - P34-P39: Additional CRM enhancements (planned)
+#### 2. Send Portal Invite Feature ✅
+- `POST /api/clients/<id>/send-portal-invite` endpoint
+- Generates secure temp password, updates client to onboarding stage
+- Sends email with login credentials + magic link
+- Purple envelope button added to clients.html
+- Success modal shows credentials for staff to share
 
-4. **Failproof Plan Documented**
-   - Pre-build safety checks
-   - Test baseline requirements
-   - Rollback strategy
-   - Implementation phases
+#### 3. P33 Calendar Sync (Google/Outlook) ✅
+- `CalendarIntegration` + `CalendarEvent` database models
+- `CalendarSyncService` (~700 lines) with OAuth flows
+- 14 API endpoints for calendar management
+- Settings UI with Google/Outlook connection cards
+- Booking system integration (auto-sync on create/cancel)
+- 30 unit tests passing
 
 **Files Created**:
-- `CRM_COMPARISON_FCRA_VS_TNG.md` - NEW
-- `CRM_ENHANCEMENT_CHECKLIST.md` - NEW
+- `services/unified_inbox_service.py` - Unified message aggregation
+- `templates/unified_inbox.html` - Dashboard UI
+- `tests/test_unified_inbox_service.py` - 30 tests
+- `services/calendar_sync_service.py` - Calendar sync (~700 lines)
+- `tests/test_calendar_sync_service.py` - 30 tests
 
 **Files Modified**:
-- `FEATURE_BACKLOG.md` - Added P29-P39 priorities
-- `CLAUDE.md` - Updated with current work
+- `database.py` - Added CalendarIntegration, CalendarEvent models
+- `app.py` - Added 25+ API endpoints (unified inbox + calendar + portal invite)
+- `templates/clients.html` - Added Send Portal Invite button + JS
+- `templates/settings.html` - Added Calendar Integration section
+- `FEATURE_BACKLOG.md` - Updated P32, P33 as complete
 
-**Key Findings**:
-- TNG CRM is enterprise-grade, 48-week build (2,000+ checklist items)
-- FCRA platform is specialized - domain expertise is the differentiator
-- Recommended enhancements: Unified Inbox, Calendar Sync, Call Logging
-- NOT recommended: Trying to match TNG feature-for-feature
+**Commits**:
+- `7fccc98` - feat: Add Send Portal Invite admin feature
+- `1e3b6e2` - feat: P33 Calendar Sync - Google & Outlook calendar integration
+
+**Next Up**: P34 Call Logging
+
+---
+
+### Test Credentials
+
+| Portal | URL | Email | Password |
+|--------|-----|-------|----------|
+| **Staff/Admin** | /staff/login | `test@example.com` | `testpass123` |
+| **Client Portal** | /portal/login | `testclient@example.com` | `test123` |
 
 ---
 
