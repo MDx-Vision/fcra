@@ -48,7 +48,7 @@
 
 ---
 
-## Database Models (97 total)
+## Database Models (100 total)
 
 ### Core Models
 
@@ -106,10 +106,18 @@
 | `FranchiseOrganization` | Franchise locations |
 | `APIKey` | API access credentials |
 
+### CRM Models
+
+| Model | Purpose |
+|-------|---------|
+| `CallLog` | Call logging with outcomes and follow-ups |
+| `StaffTask` | Task assignment to staff members |
+| `StaffTaskComment` | Comments/notes on tasks |
+
 ### Full Model List
 
 <details>
-<summary>All 97 models (click to expand)</summary>
+<summary>All 100 models (click to expand)</summary>
 
 ```
 Staff, Client, ClientTag, ClientTagAssignment, UserQuickLink,
@@ -137,14 +145,15 @@ AuditLog, PerformanceMetric, CacheEntry, KnowledgeContent,
 Metro2Code, SOP, ChexSystemsDispute, SpecialtyBureauDispute,
 FrivolousDefense, FrivolousDefenseEvidence, MortgagePaymentLedger,
 SuspenseAccountFinding, ViolationPattern, PatternInstance,
-AutomationMetrics, LetterBatch, TradelineStatus
+AutomationMetrics, LetterBatch, TradelineStatus, CallLog,
+StaffTask, StaffTaskComment
 ```
 
 </details>
 
 ---
 
-## Services (56 total)
+## Services (58 total)
 
 ### Core Services
 
@@ -166,6 +175,13 @@ AutomationMetrics, LetterBatch, TradelineStatus
 | `sms_service` | Send SMS (Twilio) |
 | `sms_automation` | Triggered SMS flows |
 | `sms_templates` | SMS template text |
+
+### CRM Services
+
+| Service | Purpose |
+|---------|---------|
+| `call_log_service` | Call logging with follow-ups |
+| `task_service` | Staff task assignment & tracking |
 
 ### Document Services
 
@@ -289,6 +305,28 @@ whitelabel_service, workflow_triggers_service
 |--------|----------|---------|
 | GET | `/get-started` | Lead capture page |
 | POST | `/api/leads/capture` | Submit lead form |
+
+### CRM - Call Logging
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET/POST | `/api/call-logs` | List/create calls |
+| GET/PUT/DELETE | `/api/call-logs/<id>` | CRUD operations |
+| POST | `/api/call-logs/<id>/complete-follow-up` | Mark follow-up done |
+| GET | `/api/call-logs/pending-follow-ups` | Pending follow-ups |
+| GET | `/api/call-logs/statistics` | Call statistics |
+
+### CRM - Task Assignment
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET/POST | `/api/staff-tasks` | List/create tasks |
+| GET/PUT/DELETE | `/api/staff-tasks/<id>` | CRUD operations |
+| POST | `/api/staff-tasks/<id>/complete` | Mark task complete |
+| POST | `/api/staff-tasks/<id>/assign` | Assign to staff |
+| GET | `/api/staff-tasks/my-tasks` | My assigned tasks |
+| GET | `/api/staff-tasks/team-workload` | Team workload stats |
+| GET | `/api/staff-tasks/statistics` | Task statistics |
 
 ---
 

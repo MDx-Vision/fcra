@@ -504,6 +504,15 @@
                 <label for="address_zip">ZIP Code</label>
                 <input type="text" id="address_zip" name="address_zip" maxlength="10" value="{{ current_user.address_zip or '' }}" required data-testid="input-zip">
             </div>
+
+            <!-- Address Verification Section -->
+            <div id="address-verification-section" style="margin-top: 16px; margin-bottom: 20px;">
+                <button type="button" id="verify-address-btn" class="btn-primary" style="background: #6366f1; margin-bottom: 12px;" onclick="verifyAddress()" data-testid="verify-address-btn">
+                    📍 Verify My Address
+                </button>
+                <div id="address-verification-result" style="display: none;" data-testid="address-verification-result"></div>
+            </div>
+
             <button type="submit" class="btn-primary" data-testid="save-personal_info">Save & Continue</button>
         </form>
     </div>
@@ -757,6 +766,148 @@ let currentModal = null;
 let selectedPaymentMethod = null;
 let selectedAffirmTerm = 12;
 const PAYMENT_AMOUNT_CENTS = 29800; // $298.00
+
+// Address Verification with USPS
+async function verifyAddress() {
+    const btn = document.getElementById('verify-address-btn');
+    const resultDiv = document.getElementById('address-verification-result');
+
+    // Get address values from form
+    const street = document.getElementById('address_street').value.trim();
+    const city = document.getElementById('address_city').value.trim();
+    const state = document.getElementById('address_state').value.trim();
+    const zipCode = document.getElementById('address_zip').value.trim();
+
+    if (!street || !city || !state) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px;">
+                <strong style="color: #92400e;">⚠️ Missing Information</strong>
+                <p style="color: #a16207; margin: 8px 0 0 0; font-size: 14px;">
+                    Please fill in street address, city, and state before verifying.
+                </p>
+            </div>`;
+        return;
+    }
+
+    // Show loading state
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Verifying...';
+    resultDiv.style.display = 'none';
+
+    try {
+        const response = await fetch('/portal/api/validate-address', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                street: street,
+                city: city,
+                state: state,
+                zip_code: zipCode
+            })
+        });
+
+        const data = await response.json();
+        resultDiv.style.display = 'block';
+
+        if (!data.success) {
+            resultDiv.innerHTML = `
+                <div style="background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 16px;">
+                    <strong style="color: #991b1b;">❌ Verification Failed</strong>
+                    <p style="color: #b91c1c; margin: 8px 0 0 0; font-size: 14px;">
+                        ${data.error || 'Could not verify address. Please check and try again.'}
+                    </p>
+                </div>`;
+            return;
+        }
+
+        if (!data.is_valid) {
+            resultDiv.innerHTML = `
+                <div style="background: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 16px;">
+                    <strong style="color: #991b1b;">❌ Address Not Deliverable</strong>
+                    <p style="color: #b91c1c; margin: 8px 0 0 0; font-size: 14px;">
+                        ${data.error_message || 'USPS could not confirm this address is deliverable. Please verify your address is correct.'}
+                    </p>
+                    <p style="color: #b91c1c; margin: 8px 0 0 0; font-size: 13px;">
+                        <strong>Tip:</strong> Make sure you include apartment/unit number if applicable.
+                    </p>
+                </div>`;
+            return;
+        }
+
+        // Address is valid
+        const validated = data.validated_address;
+
+        if (data.was_corrected && data.corrections.length > 0) {
+            // Address was corrected - show corrections and let user accept
+            let correctionsHtml = data.corrections.map(c =>
+                `<li><strong>${c.field}:</strong> "${c.original}" → "${c.corrected}"</li>`
+            ).join('');
+
+            resultDiv.innerHTML = `
+                <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px;">
+                    <strong style="color: #92400e;">📝 Address Corrections Suggested</strong>
+                    <p style="color: #a16207; margin: 8px 0; font-size: 14px;">
+                        USPS suggests the following corrections:
+                    </p>
+                    <ul style="color: #a16207; font-size: 13px; margin: 8px 0; padding-left: 20px;">
+                        ${correctionsHtml}
+                    </ul>
+                    <p style="color: #374151; margin: 12px 0 8px 0; font-size: 14px;">
+                        <strong>Corrected Address:</strong><br>
+                        ${validated.street}<br>
+                        ${validated.city}, ${validated.state} ${validated.full_zip}
+                    </p>
+                    <button type="button" onclick="acceptCorrectedAddress('${validated.street}', '${validated.city}', '${validated.state}', '${validated.full_zip}')"
+                            style="background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 8px; font-weight: 600;">
+                        ✓ Accept Corrected Address
+                    </button>
+                </div>`;
+        } else {
+            // Address is valid and no corrections needed
+            resultDiv.innerHTML = `
+                <div style="background: #dcfce7; border: 1px solid #22c55e; border-radius: 8px; padding: 16px;">
+                    <strong style="color: #166534;">✅ Address Verified!</strong>
+                    <p style="color: #15803d; margin: 8px 0 0 0; font-size: 14px;">
+                        Your address has been verified as deliverable by USPS.
+                    </p>
+                    <p style="color: #374151; margin: 12px 0 0 0; font-size: 14px;">
+                        <strong>Verified Address:</strong><br>
+                        ${validated.street}<br>
+                        ${validated.city}, ${validated.state} ${validated.full_zip}
+                    </p>
+                </div>`;
+        }
+
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px;">
+                <strong style="color: #92400e;">⚠️ Verification Unavailable</strong>
+                <p style="color: #a16207; margin: 8px 0 0 0; font-size: 14px;">
+                    Address verification is temporarily unavailable. You can still proceed - just make sure your address is correct!
+                </p>
+            </div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '📍 Verify My Address';
+    }
+}
+
+function acceptCorrectedAddress(street, city, state, zip) {
+    document.getElementById('address_street').value = street;
+    document.getElementById('address_city').value = city;
+    document.getElementById('address_state').value = state;
+    document.getElementById('address_zip').value = zip;
+
+    // Update result div to show acceptance
+    document.getElementById('address-verification-result').innerHTML = `
+        <div style="background: #dcfce7; border: 1px solid #22c55e; border-radius: 8px; padding: 16px;">
+            <strong style="color: #166534;">✅ Corrected Address Applied!</strong>
+            <p style="color: #15803d; margin: 8px 0 0 0; font-size: 14px;">
+                Your address has been updated. Click "Save & Continue" to proceed.
+            </p>
+        </div>`;
+}
 
 function openStep(stepKey) {
     const card = document.querySelector(`[data-step="${stepKey}"]`);

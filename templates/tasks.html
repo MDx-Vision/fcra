@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management - Brightpath Ascend FCRA Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% include 'includes/dashboard_sidebar_styles.html' %}
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .header-subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-card .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+        .stat-card .stat-label {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .stat-card.pending { border-left: 4px solid #f59e0b; }
+        .stat-card.in-progress { border-left: 4px solid #3b82f6; }
+        .stat-card.completed { border-left: 4px solid #22c55e; }
+        .stat-card.overdue { border-left: 4px solid #ef4444; }
+        .stat-card.my-tasks { border-left: 4px solid #8b5cf6; }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            background: #e2e8f0;
+        }
+        .tab.active {
+            background: #22c55e;
+            color: white;
+        }
+
+        .filters {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .filters input, .filters select {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .filters input:focus, .filters select:focus {
+            outline: none;
+            border-color: #22c55e;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #22c55e;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #16a34a;
+        }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .tasks-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .tasks-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            background: #f8fafc;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tasks-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #1a1a2e;
+        }
+        .tasks-table tr:hover {
+            background: #f8fafc;
+            cursor: pointer;
+        }
+
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .priority-badge.urgent {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .priority-badge.high {
+            background: #ffedd5;
+            color: #ea580c;
+        }
+        .priority-badge.medium {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .priority-badge.low {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-badge.pending { background: #fef3c7; color: #d97706; }
+        .status-badge.in_progress { background: #dbeafe; color: #2563eb; }
+        .status-badge.completed { background: #dcfce7; color: #16a34a; }
+        .status-badge.cancelled { background: #f1f5f9; color: #64748b; }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .overdue-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #fee2e2;
+            color: #dc2626;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .due-soon-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #fef3c7;
+            color: #d97706;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .task-title {
+            font-weight: 500;
+            color: #1a1a2e;
+        }
+        .task-description {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 4px;
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .assignee {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .assignee-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #22c55e;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .assignee-name {
+            font-size: 13px;
+        }
+
+        .client-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .client-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 600px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+        }
+        .modal-body {
+            padding: 24px;
+        }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #22c55e;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .comments-section h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 16px;
+        }
+        .comment {
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .comment-author {
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .comment-date {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .comment-content {
+            font-size: 14px;
+            color: #475569;
+        }
+        .add-comment {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .add-comment input {
+            flex: 1;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 20px;
+        }
+        .pagination button {
+            padding: 8px 16px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #f1f5f9;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination span {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+        }
+
+        .workload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px;
+        }
+        .workload-card {
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .workload-card .name {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .workload-card .stats {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .workload-card .stats span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .filters {
+                flex-direction: column;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/dashboard_sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1 data-testid="page-title">Task Management</h1>
+                <p class="header-subtitle">Manage team tasks and assignments</p>
+            </div>
+            <button class="btn btn-primary" onclick="openCreateModal()" data-testid="create-task-btn">
+                + New Task
+            </button>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="stats-grid" data-testid="stats-grid">
+            <div class="stat-card my-tasks" data-testid="stat-my-tasks">
+                <div class="stat-value" id="statMyTasks">0</div>
+                <div class="stat-label">My Tasks</div>
+            </div>
+            <div class="stat-card pending" data-testid="stat-pending">
+                <div class="stat-value" id="statPending">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card in-progress" data-testid="stat-in-progress">
+                <div class="stat-value" id="statInProgress">0</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card overdue" data-testid="stat-overdue">
+                <div class="stat-value" id="statOverdue">0</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+            <div class="stat-card completed" data-testid="stat-completed">
+                <div class="stat-value" id="statCompleted">0</div>
+                <div class="stat-label">Completed (30d)</div>
+            </div>
+        </div>
+
+        <!-- Tasks Table Card -->
+        <div class="card" data-testid="tasks-card">
+            <div class="card-header">
+                <h2>Tasks</h2>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-secondary btn-sm" onclick="loadOverdueTasks()">
+                        View Overdue
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="loadDueTodayTasks()">
+                        Due Today
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs" data-testid="task-tabs">
+                <button class="tab active" onclick="setTab('all')" data-tab="all">All Tasks</button>
+                <button class="tab" onclick="setTab('my')" data-tab="my">My Tasks</button>
+                <button class="tab" onclick="setTab('team')" data-tab="team">Team Workload</button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters" id="filtersSection" data-testid="filters-section">
+                <input type="text" id="searchInput" placeholder="Search tasks..." style="min-width: 200px;" data-testid="search-input">
+                <select id="statusFilter" data-testid="status-filter">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <select id="priorityFilter" data-testid="priority-filter">
+                    <option value="">All Priorities</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+                <select id="categoryFilter" data-testid="category-filter">
+                    <option value="">All Categories</option>
+                    <option value="general">General</option>
+                    <option value="follow_up">Follow-up</option>
+                    <option value="document">Document</option>
+                    <option value="call">Call</option>
+                    <option value="review">Review</option>
+                    <option value="dispute">Dispute</option>
+                    <option value="payment">Payment</option>
+                    <option value="onboarding">Onboarding</option>
+                    <option value="other">Other</option>
+                </select>
+                <select id="assigneeFilter" data-testid="assignee-filter">
+                    <option value="">All Assignees</option>
+                </select>
+            </div>
+
+            <!-- Tasks Table -->
+            <div id="tasksTableContainer">
+                <table class="tasks-table" data-testid="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assignee</th>
+                            <th>Client</th>
+                            <th>Due Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tasksTableBody" data-testid="tasks-table-body">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Team Workload View -->
+            <div id="teamWorkloadContainer" style="display: none;">
+                <div class="workload-grid" id="workloadGrid" data-testid="workload-grid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="paginationContainer" data-testid="pagination">
+                <button onclick="prevPage()" id="prevBtn">Previous</button>
+                <span id="pageInfo">Page 1</span>
+                <button onclick="nextPage()" id="nextBtn">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Task Modal -->
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create Task</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+
+                    <div class="form-group">
+                        <label for="taskTitle">Title *</label>
+                        <input type="text" id="taskTitle" required placeholder="Enter task title" data-testid="task-title-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskDescription">Description</label>
+                        <textarea id="taskDescription" placeholder="Enter task description" data-testid="task-description-input"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskCategory">Category</label>
+                            <select id="taskCategory" data-testid="task-category-select">
+                                <option value="general">General</option>
+                                <option value="follow_up">Follow-up</option>
+                                <option value="document">Document</option>
+                                <option value="call">Call</option>
+                                <option value="review">Review</option>
+                                <option value="dispute">Dispute</option>
+                                <option value="payment">Payment</option>
+                                <option value="onboarding">Onboarding</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskPriority">Priority</label>
+                            <select id="taskPriority" data-testid="task-priority-select">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskAssignee">Assign To</label>
+                            <select id="taskAssignee" data-testid="task-assignee-select">
+                                <option value="">Unassigned</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskClient">Related Client</label>
+                            <select id="taskClient" data-testid="task-client-select">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskDueDate">Due Date</label>
+                            <input type="datetime-local" id="taskDueDate" data-testid="task-due-date-input">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="taskRecurring" data-testid="task-recurring-checkbox">
+                                <label for="taskRecurring" style="margin: 0;">Recurring Task</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="recurrenceGroup" style="display: none;">
+                        <label for="taskRecurrence">Recurrence Pattern</label>
+                        <select id="taskRecurrence" data-testid="task-recurrence-select">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Biweekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskTags">Tags (comma-separated)</label>
+                        <input type="text" id="taskTags" placeholder="e.g., urgent, client-review" data-testid="task-tags-input">
+                    </div>
+                </form>
+
+                <!-- Comments Section (only shown when editing) -->
+                <div class="comments-section" id="commentsSection" style="display: none;">
+                    <h4>Comments</h4>
+                    <div id="commentsList"></div>
+                    <div class="add-comment">
+                        <input type="text" id="newComment" placeholder="Add a comment..." data-testid="new-comment-input">
+                        <button class="btn btn-primary btn-sm" onclick="addComment()" data-testid="add-comment-btn">Add</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTask()" data-testid="save-task-btn">Save Task</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Task Modal -->
+    <div class="modal-overlay" id="viewTaskModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="viewModalTitle">Task Details</h3>
+                <button class="modal-close" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="viewTaskContent">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeViewModal()">Close</button>
+                <button class="btn btn-primary" onclick="editFromView()" id="editFromViewBtn">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let currentTab = 'all';
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentTaskId = null;
+        let staffList = [];
+        let clientList = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStaffList();
+            loadClientList();
+            loadStatistics();
+            loadTasks();
+
+            // Filter change listeners
+            document.getElementById('searchInput').addEventListener('input', debounce(loadTasks, 300));
+            document.getElementById('statusFilter').addEventListener('change', loadTasks);
+            document.getElementById('priorityFilter').addEventListener('change', loadTasks);
+            document.getElementById('categoryFilter').addEventListener('change', loadTasks);
+            document.getElementById('assigneeFilter').addEventListener('change', loadTasks);
+
+            // Recurring checkbox toggle
+            document.getElementById('taskRecurring').addEventListener('change', (e) => {
+                document.getElementById('recurrenceGroup').style.display = e.target.checked ? 'block' : 'none';
+            });
+        });
+
+        // Debounce helper
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        // Tab switching
+        function setTab(tab) {
+            currentTab = tab;
+            currentPage = 1;
+
+            // Update tab UI
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+
+            // Show/hide sections
+            const tasksTable = document.getElementById('tasksTableContainer');
+            const teamWorkload = document.getElementById('teamWorkloadContainer');
+            const filters = document.getElementById('filtersSection');
+            const pagination = document.getElementById('paginationContainer');
+
+            if (tab === 'team') {
+                tasksTable.style.display = 'none';
+                teamWorkload.style.display = 'block';
+                filters.style.display = 'none';
+                pagination.style.display = 'none';
+                loadTeamWorkload();
+            } else {
+                tasksTable.style.display = 'block';
+                teamWorkload.style.display = 'none';
+                filters.style.display = 'flex';
+                pagination.style.display = 'flex';
+                loadTasks();
+            }
+        }
+
+        // Load staff list for dropdowns
+        async function loadStaffList() {
+            try {
+                const res = await fetch('/api/staff');
+                const data = await res.json();
+                if (data.success) {
+                    staffList = data.staff || [];
+                    populateStaffDropdowns();
+                }
+            } catch (e) {
+                console.error('Failed to load staff:', e);
+            }
+        }
+
+        function populateStaffDropdowns() {
+            const filterSelect = document.getElementById('assigneeFilter');
+            const formSelect = document.getElementById('taskAssignee');
+
+            staffList.forEach(staff => {
+                const opt1 = document.createElement('option');
+                opt1.value = staff.id;
+                opt1.textContent = staff.name || staff.email;
+                filterSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = staff.id;
+                opt2.textContent = staff.name || staff.email;
+                formSelect.appendChild(opt2);
+            });
+        }
+
+        // Load client list for dropdown
+        async function loadClientList() {
+            try {
+                const res = await fetch('/api/clients');
+                const data = await res.json();
+                if (data.success) {
+                    clientList = data.clients || [];
+                    populateClientDropdown();
+                }
+            } catch (e) {
+                console.error('Failed to load clients:', e);
+            }
+        }
+
+        function populateClientDropdown() {
+            const select = document.getElementById('taskClient');
+            clientList.slice(0, 100).forEach(client => {
+                const opt = document.createElement('option');
+                opt.value = client.id;
+                opt.textContent = `${client.first_name || ''} ${client.last_name || ''}`.trim() || client.email;
+                select.appendChild(opt);
+            });
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const res = await fetch('/api/staff-tasks/statistics');
+                const data = await res.json();
+                if (data.success) {
+                    const stats = data.statistics;
+                    document.getElementById('statPending').textContent = stats.by_status?.pending || 0;
+                    document.getElementById('statInProgress').textContent = stats.by_status?.in_progress || 0;
+                    document.getElementById('statCompleted').textContent = stats.completed_last_30_days || 0;
+                    document.getElementById('statOverdue').textContent = stats.overdue_count || 0;
+                }
+
+                // Load my tasks count
+                const myRes = await fetch('/api/staff-tasks/my-tasks');
+                const myData = await myRes.json();
+                if (myData.success) {
+                    document.getElementById('statMyTasks').textContent = myData.total || 0;
+                }
+            } catch (e) {
+                console.error('Failed to load statistics:', e);
+            }
+        }
+
+        // Load tasks
+        async function loadTasks() {
+            const search = document.getElementById('searchInput').value;
+            const status = document.getElementById('statusFilter').value;
+            const priority = document.getElementById('priorityFilter').value;
+            const category = document.getElementById('categoryFilter').value;
+            const assignee = document.getElementById('assigneeFilter').value;
+
+            let url = currentTab === 'my'
+                ? `/api/staff-tasks/my-tasks?include_completed=true`
+                : `/api/staff-tasks?page=${currentPage}&per_page=20`;
+
+            if (currentTab !== 'my') {
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (status) url += `&status=${status}`;
+                if (priority) url += `&priority=${priority}`;
+                if (category) url += `&category=${category}`;
+                if (assignee) url += `&assigned_to_id=${assignee}`;
+            }
+
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.success) {
+                    renderTasks(data.tasks || []);
+                    if (data.total_pages !== undefined) {
+                        totalPages = data.total_pages;
+                        updatePagination();
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load tasks:', e);
+            }
+        }
+
+        // Render tasks table
+        function renderTasks(tasks) {
+            const tbody = document.getElementById('tasksTableBody');
+
+            if (tasks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                    <path d="M9 12l2 2 4-4"/>
+                                </svg>
+                                <h3>No tasks found</h3>
+                                <p>Create a new task to get started</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = tasks.map(task => {
+                const isOverdue = task.is_overdue;
+                const isDueSoon = task.due_date && !isOverdue &&
+                    new Date(task.due_date) < new Date(Date.now() + 24*60*60*1000);
+
+                return `
+                    <tr onclick="viewTask(${task.id})" data-testid="task-row-${task.id}">
+                        <td>
+                            <div class="task-title">${escapeHtml(task.title)}</div>
+                            ${task.description ? `<div class="task-description">${escapeHtml(task.description)}</div>` : ''}
+                            ${task.is_recurring ? '<span class="category-badge">Recurring</span>' : ''}
+                        </td>
+                        <td>
+                            <span class="priority-badge ${task.priority}">${task.priority}</span>
+                        </td>
+                        <td>
+                            <span class="status-badge ${task.status}">${formatStatus(task.status)}</span>
+                        </td>
+                        <td>
+                            ${task.assigned_to_name ? `
+                                <div class="assignee">
+                                    <div class="assignee-avatar">${getInitials(task.assigned_to_name)}</div>
+                                    <span class="assignee-name">${escapeHtml(task.assigned_to_name)}</span>
+                                </div>
+                            ` : '<span style="color: #94a3b8;">Unassigned</span>'}
+                        </td>
+                        <td>
+                            ${task.client_name ? `
+                                <a href="/dashboard/clients?id=${task.client_id}" class="client-link" onclick="event.stopPropagation()">
+                                    ${escapeHtml(task.client_name)}
+                                </a>
+                            ` : '-'}
+                        </td>
+                        <td>
+                            ${task.due_date ? `
+                                <div>
+                                    ${formatDate(task.due_date)}
+                                    ${isOverdue ? '<span class="overdue-badge">Overdue</span>' : ''}
+                                    ${isDueSoon ? '<span class="due-soon-badge">Due Soon</span>' : ''}
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td>
+                            <div class="actions-cell" onclick="event.stopPropagation()">
+                                ${task.status !== 'completed' ? `
+                                    <button class="btn btn-sm btn-primary" onclick="completeTask(${task.id})">Complete</button>
+                                ` : `
+                                    <button class="btn btn-sm btn-secondary" onclick="reopenTask(${task.id})">Reopen</button>
+                                `}
+                                <button class="btn btn-sm btn-secondary" onclick="editTask(${task.id})">Edit</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Load team workload
+        async function loadTeamWorkload() {
+            try {
+                const res = await fetch('/api/staff-tasks/team-workload');
+                const data = await res.json();
+                if (data.success) {
+                    renderTeamWorkload(data.workload || []);
+                }
+            } catch (e) {
+                console.error('Failed to load team workload:', e);
+            }
+        }
+
+        function renderTeamWorkload(workload) {
+            const grid = document.getElementById('workloadGrid');
+
+            if (workload.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><h3>No team data</h3></div>';
+                return;
+            }
+
+            grid.innerHTML = workload.map(member => `
+                <div class="workload-card">
+                    <div class="name">${escapeHtml(member.staff_name || 'Unknown')}</div>
+                    <div class="stats">
+                        <span title="Pending tasks">Pending: ${member.pending || 0}</span>
+                        <span title="In Progress">In Progress: ${member.in_progress || 0}</span>
+                        <span title="Overdue" style="color: #dc2626;">Overdue: ${member.overdue || 0}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load overdue tasks
+        async function loadOverdueTasks() {
+            currentTab = 'all';
+            document.getElementById('statusFilter').value = '';
+            try {
+                const res = await fetch('/api/staff-tasks/overdue');
+                const data = await res.json();
+                if (data.success) {
+                    renderTasks(data.tasks || []);
+                    document.getElementById('paginationContainer').style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Failed to load overdue tasks:', e);
+            }
+        }
+
+        // Load tasks due today
+        async function loadDueTodayTasks() {
+            currentTab = 'all';
+            try {
+                const res = await fetch('/api/staff-tasks/due-today');
+                const data = await res.json();
+                if (data.success) {
+                    renderTasks(data.tasks || []);
+                    document.getElementById('paginationContainer').style.display = 'none';
+                }
+            } catch (e) {
+                console.error('Failed to load tasks due today:', e);
+            }
+        }
+
+        // Modal functions
+        function openCreateModal() {
+            currentTaskId = null;
+            document.getElementById('modalTitle').textContent = 'Create Task';
+            document.getElementById('taskForm').reset();
+            document.getElementById('recurrenceGroup').style.display = 'none';
+            document.getElementById('commentsSection').style.display = 'none';
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('taskModal').classList.remove('active');
+        }
+
+        async function editTask(id) {
+            try {
+                const res = await fetch(`/api/staff-tasks/${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    const task = data.task;
+                    currentTaskId = id;
+
+                    document.getElementById('modalTitle').textContent = 'Edit Task';
+                    document.getElementById('taskId').value = id;
+                    document.getElementById('taskTitle').value = task.title || '';
+                    document.getElementById('taskDescription').value = task.description || '';
+                    document.getElementById('taskCategory').value = task.category || 'general';
+                    document.getElementById('taskPriority').value = task.priority || 'medium';
+                    document.getElementById('taskAssignee').value = task.assigned_to_id || '';
+                    document.getElementById('taskClient').value = task.client_id || '';
+                    document.getElementById('taskRecurring').checked = task.is_recurring || false;
+                    document.getElementById('taskRecurrence').value = task.recurrence_pattern || 'weekly';
+                    document.getElementById('taskTags').value = (task.tags || []).join(', ');
+
+                    if (task.due_date) {
+                        const date = new Date(task.due_date);
+                        document.getElementById('taskDueDate').value = date.toISOString().slice(0, 16);
+                    } else {
+                        document.getElementById('taskDueDate').value = '';
+                    }
+
+                    document.getElementById('recurrenceGroup').style.display = task.is_recurring ? 'block' : 'none';
+                    document.getElementById('commentsSection').style.display = 'block';
+
+                    loadComments(id);
+                    document.getElementById('taskModal').classList.add('active');
+                }
+            } catch (e) {
+                console.error('Failed to load task:', e);
+            }
+        }
+
+        async function saveTask() {
+            const id = currentTaskId;
+            const title = document.getElementById('taskTitle').value;
+            if (!title) {
+                alert('Title is required');
+                return;
+            }
+
+            const tags = document.getElementById('taskTags').value
+                .split(',')
+                .map(t => t.trim())
+                .filter(t => t);
+
+            const payload = {
+                title,
+                description: document.getElementById('taskDescription').value,
+                category: document.getElementById('taskCategory').value,
+                priority: document.getElementById('taskPriority').value,
+                assigned_to_id: document.getElementById('taskAssignee').value || null,
+                client_id: document.getElementById('taskClient').value || null,
+                due_date: document.getElementById('taskDueDate').value || null,
+                is_recurring: document.getElementById('taskRecurring').checked,
+                recurrence_pattern: document.getElementById('taskRecurrence').value,
+                tags
+            };
+
+            try {
+                const url = id ? `/api/staff-tasks/${id}` : '/api/staff-tasks';
+                const method = id ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    closeModal();
+                    loadTasks();
+                    loadStatistics();
+                } else {
+                    alert(data.error || 'Failed to save task');
+                }
+            } catch (e) {
+                console.error('Failed to save task:', e);
+                alert('Failed to save task');
+            }
+        }
+
+        async function completeTask(id) {
+            try {
+                const res = await fetch(`/api/staff-tasks/${id}/complete`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    loadTasks();
+                    loadStatistics();
+                }
+            } catch (e) {
+                console.error('Failed to complete task:', e);
+            }
+        }
+
+        async function reopenTask(id) {
+            try {
+                const res = await fetch(`/api/staff-tasks/${id}/reopen`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    loadTasks();
+                    loadStatistics();
+                }
+            } catch (e) {
+                console.error('Failed to reopen task:', e);
+            }
+        }
+
+        // View task modal
+        async function viewTask(id) {
+            try {
+                const res = await fetch(`/api/staff-tasks/${id}`);
+                const data = await res.json();
+                if (data.success) {
+                    const task = data.task;
+                    currentTaskId = id;
+
+                    document.getElementById('viewModalTitle').textContent = task.title;
+                    document.getElementById('viewTaskContent').innerHTML = `
+                        <div style="margin-bottom: 20px;">
+                            <span class="priority-badge ${task.priority}">${task.priority}</span>
+                            <span class="status-badge ${task.status}" style="margin-left: 8px;">${formatStatus(task.status)}</span>
+                            ${task.category ? `<span class="category-badge" style="margin-left: 8px;">${task.category}</span>` : ''}
+                        </div>
+
+                        ${task.description ? `
+                            <div style="margin-bottom: 16px;">
+                                <strong>Description</strong>
+                                <p style="color: #64748b; margin-top: 4px;">${escapeHtml(task.description)}</p>
+                            </div>
+                        ` : ''}
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <strong>Assigned To</strong>
+                                <p style="color: #64748b; margin-top: 4px;">${task.assigned_to_name || 'Unassigned'}</p>
+                            </div>
+                            <div>
+                                <strong>Created By</strong>
+                                <p style="color: #64748b; margin-top: 4px;">${task.created_by_name || 'Unknown'}</p>
+                            </div>
+                            <div>
+                                <strong>Due Date</strong>
+                                <p style="color: #64748b; margin-top: 4px;">${task.due_date ? formatDate(task.due_date) : 'No due date'}</p>
+                            </div>
+                            <div>
+                                <strong>Client</strong>
+                                <p style="color: #64748b; margin-top: 4px;">${task.client_name || 'None'}</p>
+                            </div>
+                        </div>
+
+                        ${task.tags && task.tags.length > 0 ? `
+                            <div style="margin-bottom: 16px;">
+                                <strong>Tags</strong>
+                                <div style="margin-top: 8px;">
+                                    ${task.tags.map(t => `<span class="category-badge" style="margin-right: 4px;">${escapeHtml(t)}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <div style="font-size: 12px; color: #94a3b8;">
+                            Created: ${formatDateTime(task.created_at)}
+                            ${task.completed_at ? ` | Completed: ${formatDateTime(task.completed_at)}` : ''}
+                        </div>
+                    `;
+
+                    document.getElementById('viewTaskModal').classList.add('active');
+                }
+            } catch (e) {
+                console.error('Failed to load task:', e);
+            }
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewTaskModal').classList.remove('active');
+        }
+
+        function editFromView() {
+            closeViewModal();
+            editTask(currentTaskId);
+        }
+
+        // Comments
+        async function loadComments(taskId) {
+            try {
+                const res = await fetch(`/api/staff-tasks/${taskId}/comments`);
+                const data = await res.json();
+                if (data.success) {
+                    renderComments(data.comments || []);
+                }
+            } catch (e) {
+                console.error('Failed to load comments:', e);
+            }
+        }
+
+        function renderComments(comments) {
+            const list = document.getElementById('commentsList');
+            if (comments.length === 0) {
+                list.innerHTML = '<p style="color: #94a3b8; font-size: 14px;">No comments yet</p>';
+                return;
+            }
+
+            list.innerHTML = comments.map(c => `
+                <div class="comment">
+                    <div class="comment-header">
+                        <span class="comment-author">${escapeHtml(c.staff_name || 'Unknown')}</span>
+                        <span class="comment-date">${formatDateTime(c.created_at)}</span>
+                    </div>
+                    <div class="comment-content">${escapeHtml(c.content)}</div>
+                </div>
+            `).join('');
+        }
+
+        async function addComment() {
+            const content = document.getElementById('newComment').value;
+            if (!content || !currentTaskId) return;
+
+            try {
+                const res = await fetch(`/api/staff-tasks/${currentTaskId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('newComment').value = '';
+                    loadComments(currentTaskId);
+                }
+            } catch (e) {
+                console.error('Failed to add comment:', e);
+            }
+        }
+
+        // Pagination
+        function updatePagination() {
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadTasks();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadTasks();
+            }
+        }
+
+        // Helpers
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+        }
+
+        function formatStatus(status) {
+            return (status || '').replace('_', ' ');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+    </script>
+</body>
+</html>

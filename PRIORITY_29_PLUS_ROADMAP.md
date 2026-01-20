@@ -3,6 +3,25 @@
 > Future features and enhancements for Brightpath Ascend FCRA Platform
 >
 > Created: 2026-01-09
+> Updated: 2026-01-19
+
+---
+
+## IMPORTANT: Actual Implemented Features
+
+The features below are **proposals**. The actual implemented P29-P35 features are:
+
+| Priority | Implemented Feature | Status |
+|----------|---------------------|--------|
+| P29 | AI Chat Support | ✅ Complete |
+| P30 | AI Chat Staff Dashboard | ✅ Complete |
+| P31 | Credit Score Simulator | ✅ Complete |
+| P32 | Unified Inbox | ✅ Complete |
+| P33 | Calendar Sync (Google/Outlook) | ✅ Complete |
+| P34 | Call Logging | ✅ Complete |
+| P35 | Task Assignment | ✅ Complete |
+
+See `FEATURE_BACKLOG.md` and `CRM_ENHANCEMENT_CHECKLIST.md` for details.
 
 ---
 
@@ -440,9 +459,10 @@ Add popular alternative payment methods to increase conversion rates and accommo
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | 2026-01-19 | Added note: Actual P29-P35 implemented features differ from proposals |
 | 1.1 | 2026-01-18 | Added P41: PayPal, Venmo, Zelle |
 | 1.0 | 2026-01-09 | Initial roadmap with P29-P40 |
 
 ---
 
-*Last Updated: 2026-01-18*
+*Last Updated: 2026-01-19*

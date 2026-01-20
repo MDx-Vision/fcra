@@ -64,16 +64,16 @@
 - `CLIENT_PORTAL_SOP.md` - Client journey guide
 
 ### Key Code Files
-- `app.py` - Main Flask application (~26k lines)
-- `database.py` - SQLAlchemy models
-- `services/` - 86 service modules
+- `app.py` - Main Flask application (~42k lines)
+- `database.py` - SQLAlchemy models (100 models)
+- `services/` - 88 service modules
 - `routes/` - Route blueprints (portal, partner)
-- `templates/` - Jinja2 templates
+- `templates/` - Jinja2 templates (78 dashboard + 6 portal)
 
 ### Test Files
-- `tests/` - 96 unit test files
-- `cypress/e2e/` - 46 exhaustive E2E tests
-- `tests/integration/` - Integration tests
+- `tests/` - 98 unit test files (5,791 tests)
+- `cypress/e2e/` - 51 exhaustive E2E tests (88 specs)
+- `tests/integration/` - 2 integration test files
 
 ## Visual/Browser Findings
 - Dashboard sidebar uses accordion navigation

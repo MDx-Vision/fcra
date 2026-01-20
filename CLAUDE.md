@@ -3,12 +3,12 @@
 ## Current Status (2026-01-19)
 
 ### Test Status: 100% PASSING ✅
-- **Unit tests**: 5,725 passing (96 test files, ~35s runtime)
+- **Unit tests**: 5,791 passing (98 test files, ~35s runtime)
 - **Cypress E2E tests**: 88/88 passing (100%)
 - **Exhaustive tests**: 51 test files (46 dashboard + 5 portal)
 - **Integration tests**: 2 test files (tests/integration/)
 - **Full QA suite**: All tests pass
-- **Service coverage**: 86/86 services have dedicated test files (100%)
+- **Service coverage**: 88/88 services have dedicated test files (100%)
 - **Skipped tests**: 9 (intentional - environment-specific)
 
 ### Feature Phases
@@ -41,18 +41,136 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 31**: ~~Credit Score Simulator~~ ✅ COMPLETE
 - **Priority 32**: ~~Unified Inbox~~ ✅ COMPLETE
 - **Priority 33**: ~~Calendar Sync (Google/Outlook)~~ ✅ COMPLETE
-- **Priority 34**: Call Logging (next)
-- **Priority 35-39**: Task Assignment, Scheduled Reports, SMS Templates, Client Tags, Email Tracking
+- **Priority 34**: ~~Call Logging~~ ✅ COMPLETE
+- **Priority 35**: ~~Task Assignment~~ ✅ COMPLETE
+- **Priority 36-39**: Scheduled Reports, SMS Templates, Client Tags, Email Tracking
 
-### Current Work (2026-01-19) - Session: "CRM Feature Implementation"
+### Current Work (2026-01-19) - Session: "Address Validation + Call Logging + Task Assignment"
 
-**Task**: P32 Unified Inbox + Send Portal Invite + P33 Calendar Sync
+**Task**: USPS Address Validation + P34 Call Logging + P35 Task Assignment
 
-**Status**: ✅ ALL COMPLETE
+**Status**: Address Validation ✅ | Call Logging ✅ | Task Assignment ✅
 
 ---
 
 ### Completed Today (2026-01-19):
+
+#### 1. USPS Address Validation ✅
+- Integrated new USPS OAuth2 API (old Web Tools API shutting down Jan 25, 2026)
+- Registered for USPS Developer Portal with Brightpath credentials
+- Consumer Key: `rgAdfxqZRgogGP93LTV25vguQ2PGqrTvJK1gthUtCpjKAb8B`
+- Submitted quota increase request (Service Request #84961821) for 500-1000/hour
+
+**Features**:
+- `AddressValidationService` with OAuth2 token caching
+- Single address validation with ZIP+4 lookup
+- Bulk validation for all clients
+- Offline standardization (abbreviations, proper case)
+- Client portal address verification UI
+- 51 client addresses standardized offline
+
+**API Endpoints Added**:
+- `POST /api/address/validate` - Validate any address
+- `POST /api/clients/<id>/validate-address` - Validate client address
+- `POST /api/clients/bulk-validate-addresses` - Bulk validate all
+- `POST /api/clients/bulk-apply-address-corrections` - Apply corrections
+- `POST /api/clients/standardize-addresses-offline` - Offline fixes
+
+**Files Created/Modified**:
+- `services/address_validation_service.py` - USPS OAuth2 integration (~400 lines)
+- `app.py` - Added 5 address validation endpoints
+- `routes/portal.py` - Added portal address verification endpoints
+- `templates/portal/onboarding.html` - Added "Verify My Address" UI
+- `import_real_clients.py` - Added optional USPS validation during import
+
+#### 2. P34 Call Logging ✅
+- `CallLog` database model with full call tracking
+- `CallLogService` (~500 lines) with CRUD, statistics, follow-ups
+- 11 API endpoints for call management
+- Dashboard UI at `/dashboard/call-logs`
+- 31 unit tests passing
+
+**Features**:
+- Log inbound/outbound calls
+- Link calls to clients
+- Track call outcomes (resolved, follow_up_needed, etc.)
+- Follow-up reminders with due dates
+- Staff activity statistics
+- Duration tracking and formatting
+
+**API Endpoints Added**:
+- `GET/POST /api/call-logs` - List/create calls
+- `GET/PUT/DELETE /api/call-logs/<id>` - CRUD
+- `POST /api/call-logs/<id>/complete-follow-up` - Mark done
+- `GET /api/call-logs/pending-follow-ups` - Pending list
+- `GET /api/call-logs/statistics` - Stats
+- `GET /api/call-logs/staff/<id>/activity` - Staff activity
+- `GET /api/clients/<id>/call-history` - Client history
+- `GET /api/call-logs/options` - Dropdown options
+
+**Files Created**:
+- `services/call_log_service.py` - Call log service (~500 lines)
+- `templates/call_logs.html` - Dashboard UI
+- `tests/test_call_log_service.py` - 31 tests
+
+**Files Modified**:
+- `database.py` - Added CallLog model + migrations
+- `app.py` - Added 11 call logging endpoints + dashboard route
+- `templates/includes/dashboard_sidebar.html` - Added Call Logs link
+
+#### 3. P35 Task Assignment ✅
+- `StaffTask` and `StaffTaskComment` database models
+- `TaskService` (~670 lines) with CRUD, recurrence, comments, statistics
+- 18 API endpoints for task management
+- Dashboard UI at `/dashboard/tasks`
+- 35 unit tests passing
+
+**Features**:
+- Create/assign tasks to staff members
+- Link tasks to clients
+- 9 task categories (general, follow_up, document, call, review, dispute, payment, onboarding, other)
+- 4 priority levels (low, medium, high, urgent)
+- 4 statuses (pending, in_progress, completed, cancelled)
+- Recurring tasks (daily, weekly, biweekly, monthly)
+- Due dates and reminders
+- Comments/notes on tasks
+- Team workload view
+- Overdue and due-today views
+- Statistics and reporting
+
+**API Endpoints Added**:
+- `GET/POST /api/staff-tasks` - List/create tasks
+- `GET/PUT/DELETE /api/staff-tasks/<id>` - CRUD
+- `POST /api/staff-tasks/<id>/complete` - Mark complete
+- `POST /api/staff-tasks/<id>/reopen` - Reopen task
+- `POST /api/staff-tasks/<id>/assign` - Assign to staff
+- `GET /api/staff-tasks/my-tasks` - My assigned tasks
+- `GET /api/staff-tasks/team-workload` - Team workload stats
+- `GET/POST /api/staff-tasks/<id>/comments` - Task comments
+- `GET /api/staff-tasks/statistics` - Statistics
+- `GET /api/staff-tasks/overdue` - Overdue tasks
+- `GET /api/staff-tasks/due-today` - Due today
+- `POST /api/staff-tasks/recurring/process` - Process recurring
+- `GET /api/clients/<id>/staff-tasks` - Client's tasks
+- `GET /api/staff-tasks/options` - Dropdown options
+
+**Files Created**:
+- `services/task_service.py` - Task service (~670 lines)
+- `templates/tasks.html` - Dashboard UI
+- `tests/test_task_service.py` - 35 tests
+
+**Files Modified**:
+- `database.py` - Added StaffTask, StaffTaskComment models + migrations
+- `app.py` - Added 18 task management endpoints + dashboard route
+- `templates/includes/dashboard_sidebar.html` - Added Tasks link
+
+---
+
+### Previous Work (2026-01-19) - Session: "CRM Feature Implementation"
+
+**Task**: P32 Unified Inbox + Send Portal Invite + P33 Calendar Sync
+
+**Status**: ✅ ALL COMPLETE
 
 #### 1. P32 Unified Inbox ✅
 - `UnifiedInboxService` (~800 lines) - aggregates 5 channels
@@ -74,26 +192,6 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - Settings UI with Google/Outlook connection cards
 - Booking system integration (auto-sync on create/cancel)
 - 30 unit tests passing
-
-**Files Created**:
-- `services/unified_inbox_service.py` - Unified message aggregation
-- `templates/unified_inbox.html` - Dashboard UI
-- `tests/test_unified_inbox_service.py` - 30 tests
-- `services/calendar_sync_service.py` - Calendar sync (~700 lines)
-- `tests/test_calendar_sync_service.py` - 30 tests
-
-**Files Modified**:
-- `database.py` - Added CalendarIntegration, CalendarEvent models
-- `app.py` - Added 25+ API endpoints (unified inbox + calendar + portal invite)
-- `templates/clients.html` - Added Send Portal Invite button + JS
-- `templates/settings.html` - Added Calendar Integration section
-- `FEATURE_BACKLOG.md` - Updated P32, P33 as complete
-
-**Commits**:
-- `7fccc98` - feat: Add Send Portal Invite admin feature
-- `1e3b6e2` - feat: P33 Calendar Sync - Google & Outlook calendar integration
-
-**Next Up**: P34 Call Logging
 
 ---
 

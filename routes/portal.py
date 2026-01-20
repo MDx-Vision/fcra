@@ -710,6 +710,117 @@ def submit_referral():
     return redirect(url_for('portal.profile'))
 
 
+@portal.route('/api/validate-address', methods=['POST'])
+@portal_login_required
+@require_onboarding_access
+def api_portal_validate_address():
+    """
+    Validate client's address using USPS API.
+    Client can verify their address during onboarding.
+    """
+    from database import get_db, Client
+    from services.address_validation_service import validate_client_address
+
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=get_client_id()).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        data = request.json or {}
+
+        # Use provided address or fall back to client's current address
+        street = data.get("street", client.address_street or "")
+        city = data.get("city", client.address_city or "")
+        state = data.get("state", client.address_state or "")
+        zip_code = data.get("zip_code", client.address_zip or "")
+        street2 = data.get("street2", "")
+
+        if not street or not city or not state:
+            return jsonify({
+                "success": False,
+                "error": "Street, city, and state are required"
+            }), 400
+
+        is_valid, result = validate_client_address(
+            street=street,
+            city=city,
+            state=state,
+            zip_code=zip_code,
+            street2=street2
+        )
+
+        return jsonify({
+            "success": True,
+            **result
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@portal.route('/api/confirm-address', methods=['POST'])
+@portal_login_required
+@require_onboarding_access
+def api_portal_confirm_address():
+    """
+    Confirm and save validated address.
+    Called after client reviews and approves the validated address.
+    """
+    from database import get_db, Client
+
+    current_user = get_current_user()
+    if not current_user:
+        return jsonify({"success": False, "error": "Not authenticated"}), 401
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=get_client_id()).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        data = request.json or {}
+
+        # Update client address with validated/confirmed address
+        client.address_street = data.get("street", client.address_street)
+        client.address_city = data.get("city", client.address_city)
+        client.address_state = data.get("state", client.address_state)
+        client.address_zip = data.get("zip_code", client.address_zip)
+
+        # Mark address as verified (if columns exist)
+        try:
+            client.address_verified = True
+            client.address_verified_at = datetime.now()
+        except Exception:
+            pass  # Columns may not exist yet
+        client.updated_at = datetime.now()
+
+        db.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Address confirmed and saved",
+            "address": {
+                "street": client.address_street,
+                "city": client.address_city,
+                "state": client.address_state,
+                "zip_code": client.address_zip
+            }
+        })
+
+    except Exception as e:
+        db.rollback()
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
 @portal.route('/subscription')
 @portal_login_required
 @require_full_access

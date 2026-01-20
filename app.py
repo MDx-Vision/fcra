@@ -13722,7 +13722,7 @@ def api_update_client_status(client_id):
 
 @app.route("/api/clients/create", methods=["POST"])
 @validate_request_data(
-    required_fields=["email"],
+    required_fields=[],  # Email now optional for import
     field_rules={
         "email": "email",
         "phone": "phone",
@@ -13762,9 +13762,21 @@ def api_create_client():
             "website",
             "is_affiliate",
             "groups",
+            "ssn_last_four",
+            "ssn_encrypted",
         ]:
-            if field in data:
+            if field in data and data[field]:
                 setattr(client, field, data[field])
+
+        # Handle date_of_birth separately (needs parsing)
+        if data.get("date_of_birth"):
+            try:
+                if isinstance(data["date_of_birth"], str):
+                    client.date_of_birth = datetime.strptime(data["date_of_birth"], "%Y-%m-%d").date()
+                else:
+                    client.date_of_birth = data["date_of_birth"]
+            except:
+                pass  # Skip invalid date
 
         if data.get("follow_up_date"):
             client.follow_up_date = datetime.strptime(
@@ -13828,11 +13840,78 @@ def api_delete_client(client_id):
             },
         )
 
-        # Delete all related records in proper order (child tables first)
-        # E-signature records
-        from database import ClientDocumentSignature
+        # Import all models needed for comprehensive deletion
+        from database import (
+            ClientDocumentSignature, SettlementEstimate, OnboardingProgress, CaseEvent,
+            SecondaryBureauFreeze, Commission, TimelineEvent, WhatsAppMessage,
+            NotarizationOrder, FreezeLetterBatch, CertifiedMailOrder, AttorneyReferral,
+            LimitedPOA, Metro2DisputeLog, ESignatureRequest, CROAProgress, ScoreScenario,
+            CFPBComplaint, EscalationRecommendation, IntegrationEvent, CertifiedMailingRecord,
+            NotarizeTransaction, CreditPullRequest, CreditPullLog, ClientSubscription,
+            BackgroundTask, ClientLifetimeValue, WorkflowExecution, InterOrgTransfer,
+            ChexSystemsDispute, SpecialtyBureauDispute, FrivolousDefense, MortgagePaymentLedger,
+            SuspenseAccountFinding, PatternInstance, AutomationMetrics, TradelineStatus,
+            Booking, ClientMessage, ChatConversation, ChatMessage, SignatureSession, SignedDocument,
+            SignatureAuditLog, CROAComplianceTracker, Invoice, InvoiceItem, InvoicePayment,
+            BatchJobItem, StaffActivity, ClientSuccessMetric, PushSubscription, ROICalculation,
+            PaymentPlan, PaymentPlanInstallment, PaymentPlanPayment, BureauDisputeTracking,
+            GeneratedLetter, VoicemailDrop, BulkCampaignRecipient, ClientTestimonial,
+            ClientBadge, CRAResponse, CRAResponseOCR, DisputeItem, CaseTriage, CaseOutcome,
+            OutcomePrediction, Document, AnalysisQueue, DripEnrollment, Violation, Damages, Standing, CaseScore
+        )
 
+        # === PHASE 1: Delete tables that reference other tables (deepest children first) ===
+
+        # Payment plan sub-tables (reference PaymentPlan)
+        plan_ids = [p.id for p in db.query(PaymentPlan).filter_by(client_id=client_id).all()]
+        if plan_ids:
+            db.query(PaymentPlanInstallment).filter(PaymentPlanInstallment.plan_id.in_(plan_ids)).delete(synchronize_session=False)
+            db.query(PaymentPlanPayment).filter(PaymentPlanPayment.plan_id.in_(plan_ids)).delete(synchronize_session=False)
+
+        # Invoice sub-tables (reference Invoice)
+        invoice_ids = [i.id for i in db.query(Invoice).filter_by(client_id=client_id).all()]
+        if invoice_ids:
+            db.query(InvoiceItem).filter(InvoiceItem.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
+            db.query(InvoicePayment).filter(InvoicePayment.invoice_id.in_(invoice_ids)).delete(synchronize_session=False)
+
+        # Get case IDs for cascade deletion
+        case_ids = [c.id for c in db.query(Case).filter_by(client_id=client_id).all()]
+
+        # Get analysis IDs for cascade deletion
+        analysis_ids = [a.id for a in db.query(Analysis).filter_by(client_id=client_id).all()]
+
+        # === PHASE 2: Delete case-related tables ===
+        if case_ids:
+            db.query(CaseEvent).filter(CaseEvent.case_id.in_(case_ids)).delete(synchronize_session=False)
+            db.query(Settlement).filter(Settlement.case_id.in_(case_ids)).delete(synchronize_session=False)
+            db.query(Document).filter(Document.case_id.in_(case_ids)).delete(synchronize_session=False)
+            db.query(AnalysisQueue).filter(AnalysisQueue.case_id.in_(case_ids)).delete(synchronize_session=False)
+
+        # === PHASE 3: Delete analysis-related tables ===
+        if analysis_ids:
+            db.query(Violation).filter(Violation.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
+            db.query(Damages).filter(Damages.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
+            db.query(Standing).filter(Standing.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
+            db.query(CaseScore).filter(CaseScore.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
+            db.query(DisputeItem).filter(DisputeItem.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
+            db.query(CRAResponse).filter(CRAResponse.analysis_id.in_(analysis_ids)).delete(synchronize_session=False)
+
+        # CRAResponseOCR uses client_id not analysis_id
+        db.query(CRAResponseOCR).filter_by(client_id=client_id).delete()
+
+        # === PHASE 4: Delete all tables with direct client_id foreign key ===
+
+        # E-signatures and documents
         db.query(ClientDocumentSignature).filter_by(client_id=client_id).delete()
+        db.query(OnboardingProgress).filter_by(client_id=client_id).delete()
+        db.query(SignatureSession).filter_by(client_id=client_id).delete()
+        db.query(SignedDocument).filter_by(client_id=client_id).delete()
+        db.query(SignatureAuditLog).filter_by(client_id=client_id).delete()
+        db.query(ESignatureRequest).filter_by(client_id=client_id).delete()
+
+        # CROA compliance
+        db.query(CROAProgress).filter_by(client_id=client_id).delete()
+        db.query(CROAComplianceTracker).filter_by(client_id=client_id).delete()
 
         # Tags
         db.query(ClientTagAssignment).filter_by(client_id=client_id).delete()
@@ -13841,23 +13920,111 @@ def api_delete_client(client_id):
         db.query(ClientUpload).filter_by(client_id=client_id).delete()
         db.query(ClientDocument).filter_by(client_id=client_id).delete()
 
-        # Credit monitoring
+        # Credit monitoring and scores
         db.query(CreditMonitoringCredential).filter_by(client_id=client_id).delete()
         db.query(CreditScoreSnapshot).filter_by(client_id=client_id).delete()
         db.query(CreditScoreProjection).filter_by(client_id=client_id).delete()
+        db.query(ScoreScenario).filter_by(client_id=client_id).delete()
+        db.query(CreditPullRequest).filter_by(client_id=client_id).delete()
+        db.query(CreditPullLog).filter_by(client_id=client_id).delete()
 
-        # Communications
+        # Communications - SMS, Email, WhatsApp
         db.query(SMSLog).filter_by(client_id=client_id).delete()
         db.query(EmailLog).filter_by(client_id=client_id).delete()
+        db.query(WhatsAppMessage).filter_by(client_id=client_id).delete()
         db.query(Notification).filter_by(client_id=client_id).delete()
+        db.query(ClientMessage).filter_by(client_id=client_id).delete()
+        # Delete chat messages before conversations (FK constraint)
+        conversation_ids = [c.id for c in db.query(ChatConversation).filter_by(client_id=client_id).all()]
+        if conversation_ids:
+            db.query(ChatMessage).filter(ChatMessage.conversation_id.in_(conversation_ids)).delete(synchronize_session=False)
+        db.query(ChatConversation).filter_by(client_id=client_id).delete()
+        db.query(VoicemailDrop).filter_by(client_id=client_id).delete()
+        db.query(BulkCampaignRecipient).filter_by(client_id=client_id).delete()
+        db.query(PushSubscription).filter_by(client_id=client_id).delete()
+
+        # Drip campaigns
+        db.query(DripEnrollment).filter_by(client_id=client_id).delete()
 
         # Cases and related
         db.query(CaseDeadline).filter_by(client_id=client_id).delete()
-        db.query(Settlement).filter_by(client_id=client_id).delete()
+        db.query(SettlementEstimate).filter_by(client_id=client_id).delete()
+        db.query(CaseTriage).filter_by(client_id=client_id).delete()
+        db.query(CaseOutcome).filter_by(client_id=client_id).delete()
+        db.query(OutcomePrediction).filter_by(client_id=client_id).delete()
         db.query(Case).filter_by(client_id=client_id).delete()
 
-        # Credit reports and analysis
+        # Secondary bureaus and freezes
+        db.query(SecondaryBureauFreeze).filter_by(client_id=client_id).delete()
+        db.query(FreezeLetterBatch).filter_by(client_id=client_id).delete()
+
+        # Legal and compliance
+        db.query(AttorneyReferral).filter_by(client_id=client_id).delete()
+        db.query(LimitedPOA).filter_by(client_id=client_id).delete()
+        db.query(CFPBComplaint).filter_by(client_id=client_id).delete()
+        db.query(EscalationRecommendation).filter_by(client_id=client_id).delete()
+        db.query(FrivolousDefense).filter_by(client_id=client_id).delete()
+
+        # Specialty disputes
+        db.query(ChexSystemsDispute).filter_by(client_id=client_id).delete()
+        db.query(SpecialtyBureauDispute).filter_by(client_id=client_id).delete()
+        db.query(Metro2DisputeLog).filter_by(client_id=client_id).delete()
+        db.query(BureauDisputeTracking).filter_by(client_id=client_id).delete()
+
+        # Certified mail and notarization
+        db.query(CertifiedMailOrder).filter_by(client_id=client_id).delete()
+        db.query(CertifiedMailingRecord).filter_by(client_id=client_id).delete()
+        db.query(NotarizationOrder).filter_by(client_id=client_id).delete()
+        db.query(NotarizeTransaction).filter_by(client_id=client_id).delete()
+
+        # Financial - invoices, subscriptions, payments
+        db.query(Invoice).filter_by(client_id=client_id).delete()
+        db.query(ClientSubscription).filter_by(client_id=client_id).delete()
+        db.query(PaymentPlan).filter_by(client_id=client_id).delete()
+        db.query(Commission).filter_by(client_id=client_id).delete()
+
+        # Mortgage and suspense
+        db.query(MortgagePaymentLedger).filter_by(client_id=client_id).delete()
+        db.query(SuspenseAccountFinding).filter_by(client_id=client_id).delete()
+
+        # Patterns and analytics
+        db.query(PatternInstance).filter_by(client_id=client_id).delete()
+        db.query(AutomationMetrics).filter_by(client_id=client_id).delete()
+        db.query(TradelineStatus).filter_by(client_id=client_id).delete()
+        db.query(ClientLifetimeValue).filter_by(client_id=client_id).delete()
+        db.query(ClientSuccessMetric).filter_by(client_id=client_id).delete()
+        db.query(ROICalculation).filter_by(client_id=client_id).delete()
+
+        # Generated letters
+        db.query(GeneratedLetter).filter_by(client_id=client_id).delete()
+
+        # Integrations and workflows
+        db.query(IntegrationEvent).filter_by(client_id=client_id).delete()
+        db.query(WorkflowExecution).filter_by(client_id=client_id).delete()
+        db.query(BackgroundTask).filter_by(client_id=client_id).delete()
+        db.query(BatchJobItem).filter_by(client_id=client_id).delete()
+
+        # Bookings and scheduling
+        db.query(Booking).filter_by(client_id=client_id).delete()
+
+        # Staff activity
+        db.query(StaffActivity).filter_by(client_id=client_id).delete()
+
+        # Multi-tenant
+        db.query(InterOrgTransfer).filter_by(client_id=client_id).delete()
+
+        # Client extras
+        db.query(ClientTestimonial).filter_by(client_id=client_id).delete()
+        db.query(ClientBadge).filter_by(client_id=client_id).delete()
+
+        # Timeline
+        db.query(TimelineEvent).filter_by(client_id=client_id).delete()
+
+        # Credit reports and analysis (after all dependent tables)
         db.query(DisputeLetter).filter_by(client_id=client_id).delete()
+        db.query(CRAResponse).filter_by(client_id=client_id).delete()
+        db.query(CRAResponseOCR).filter_by(client_id=client_id).delete()
+        db.query(DisputeItem).filter_by(client_id=client_id).delete()
         db.query(Analysis).filter_by(client_id=client_id).delete()
         db.query(CreditReport).filter_by(client_id=client_id).delete()
 
@@ -13887,6 +14054,388 @@ def api_delete_client(client_id):
 
         traceback.print_exc()
         log_error(e, {"action": "client_delete", "client_id": client_id})
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+# ============================================================================
+# ADDRESS VALIDATION (USPS API)
+# ============================================================================
+
+
+@app.route("/api/address/validate", methods=["POST"])
+@require_staff()
+def api_validate_address():
+    """
+    Validate and standardize an address using USPS API.
+    Returns validated address with any corrections made.
+    """
+    from services.address_validation_service import validate_client_address
+
+    data = request.json or {}
+    street = data.get("street", "")
+    street2 = data.get("street2", "")
+    city = data.get("city", "")
+    state = data.get("state", "")
+    zip_code = data.get("zip_code", "")
+
+    if not street or not city or not state:
+        return jsonify({
+            "success": False,
+            "error": "Street, city, and state are required"
+        }), 400
+
+    is_valid, result = validate_client_address(
+        street=street,
+        city=city,
+        state=state,
+        zip_code=zip_code,
+        street2=street2
+    )
+
+    return jsonify({
+        "success": True,
+        **result
+    })
+
+
+@app.route("/api/clients/<int:client_id>/validate-address", methods=["POST"])
+@require_staff()
+def api_validate_client_address(client_id):
+    """
+    Validate a client's current address and optionally update it.
+    """
+    from services.address_validation_service import validate_client_address
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter_by(id=client_id).first()
+        if not client:
+            return jsonify({"success": False, "error": "Client not found"}), 404
+
+        data = request.json or {}
+        update_address = data.get("update_address", False)
+
+        # Use client's current address
+        is_valid, result = validate_client_address(
+            street=client.address_street or "",
+            city=client.address_city or "",
+            state=client.address_state or "",
+            zip_code=client.address_zip or "",
+            street2=""
+        )
+
+        # Update client address if requested and valid
+        if update_address and is_valid:
+            validated = result["validated_address"]
+            client.address_street = validated["street"]
+            client.address_city = validated["city"]
+            client.address_state = validated["state"]
+            client.address_zip = validated["full_zip"]
+            client.updated_at = datetime.now()
+            db.commit()
+            result["address_updated"] = True
+        else:
+            result["address_updated"] = False
+
+        return jsonify({
+            "success": True,
+            "client_id": client_id,
+            "client_name": client.name,
+            **result
+        })
+
+    except Exception as e:
+        db.rollback()
+        log_error(e, {"action": "validate_client_address", "client_id": client_id})
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/bulk-validate-addresses", methods=["POST"])
+@require_staff()
+def api_bulk_validate_addresses():
+    """
+    Validate addresses for multiple clients.
+    Returns list of clients with invalid/correctable addresses.
+    """
+    from services.address_validation_service import validate_client_address
+
+    db = get_db()
+    try:
+        data = request.json or {}
+        client_ids = data.get("client_ids", [])
+
+        # If no IDs specified, check all clients with addresses
+        if not client_ids:
+            clients = db.query(Client).filter(
+                Client.address_street.isnot(None),
+                Client.address_street != ""
+            ).all()
+        else:
+            clients = db.query(Client).filter(Client.id.in_(client_ids)).all()
+
+        results = {
+            "valid": [],
+            "invalid": [],
+            "correctable": [],
+            "no_address": []
+        }
+
+        for client in clients:
+            if not client.address_street:
+                results["no_address"].append({
+                    "client_id": client.id,
+                    "name": client.name
+                })
+                continue
+
+            is_valid, result = validate_client_address(
+                street=client.address_street or "",
+                city=client.address_city or "",
+                state=client.address_state or "",
+                zip_code=client.address_zip or "",
+                street2=""
+            )
+
+            client_info = {
+                "client_id": client.id,
+                "name": client.name,
+                "original_address": result["original_address"],
+                "validated_address": result["validated_address"],
+                "corrections": result["corrections"],
+                "error_message": result["error_message"]
+            }
+
+            if not is_valid:
+                results["invalid"].append(client_info)
+            elif result["was_corrected"]:
+                results["correctable"].append(client_info)
+            else:
+                results["valid"].append(client_info)
+
+        return jsonify({
+            "success": True,
+            "total_checked": len(clients),
+            "summary": {
+                "valid": len(results["valid"]),
+                "invalid": len(results["invalid"]),
+                "correctable": len(results["correctable"]),
+                "no_address": len(results["no_address"])
+            },
+            "results": results
+        })
+
+    except Exception as e:
+        log_error(e, {"action": "bulk_validate_addresses"})
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/bulk-apply-address-corrections", methods=["POST"])
+@require_staff()
+def api_bulk_apply_address_corrections():
+    """Apply USPS-validated address corrections to clients"""
+    db = get_db()
+    try:
+        data = request.json
+        corrections = data.get("corrections", [])
+
+        if not corrections:
+            return jsonify({"success": False, "error": "No corrections provided"}), 400
+
+        applied = 0
+        failed = 0
+        results = []
+
+        for correction in corrections:
+            client_id = correction.get("client_id")
+            validated = correction.get("validated_address", {})
+
+            if not client_id or not validated:
+                failed += 1
+                results.append({"client_id": client_id, "status": "skipped", "reason": "Missing data"})
+                continue
+
+            client = db.query(Client).filter_by(id=client_id).first()
+            if not client:
+                failed += 1
+                results.append({"client_id": client_id, "status": "skipped", "reason": "Client not found"})
+                continue
+
+            # Store original for logging
+            original = {
+                "street": client.address_street,
+                "city": client.address_city,
+                "state": client.address_state,
+                "zip": client.address_zip
+            }
+
+            # Apply corrections
+            client.address_street = validated.get("street", client.address_street)
+            client.address_city = validated.get("city", client.address_city)
+            client.address_state = validated.get("state", client.address_state)
+
+            # Build full ZIP with +4 if available
+            zip5 = validated.get("zip5", "")
+            zip4 = validated.get("zip4", "")
+            if zip5:
+                client.address_zip = f"{zip5}-{zip4}" if zip4 else zip5
+
+            # Mark as verified
+            try:
+                client.address_verified = True
+                client.address_verified_at = datetime.now()
+            except Exception:
+                pass  # Column might not exist
+
+            client.updated_at = datetime.now()
+            applied += 1
+
+            results.append({
+                "client_id": client_id,
+                "name": f"{client.first_name} {client.last_name}",
+                "status": "applied",
+                "original": original,
+                "corrected": {
+                    "street": client.address_street,
+                    "city": client.address_city,
+                    "state": client.address_state,
+                    "zip": client.address_zip
+                }
+            })
+
+        db.commit()
+
+        return jsonify({
+            "success": True,
+            "applied": applied,
+            "failed": failed,
+            "total": len(corrections),
+            "results": results
+        })
+
+    except Exception as e:
+        db.rollback()
+        log_error(e, {"action": "bulk_apply_address_corrections"})
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/standardize-addresses-offline", methods=["POST"])
+@require_staff()
+def api_standardize_addresses_offline():
+    """
+    Apply basic address standardization without USPS API.
+    Fixes: proper casing, state uppercase, common abbreviations.
+    Use when USPS rate limit is hit.
+    """
+    db = get_db()
+    try:
+        # Common street abbreviations (USPS standard)
+        ABBREVIATIONS = {
+            'street': 'ST', 'str': 'ST', 'st.': 'ST',
+            'avenue': 'AVE', 'ave.': 'AVE', 'av': 'AVE',
+            'boulevard': 'BLVD', 'blvd.': 'BLVD',
+            'drive': 'DR', 'dr.': 'DR',
+            'lane': 'LN', 'ln.': 'LN',
+            'road': 'RD', 'rd.': 'RD',
+            'court': 'CT', 'ct.': 'CT',
+            'circle': 'CIR', 'cir.': 'CIR',
+            'place': 'PL', 'pl.': 'PL',
+            'terrace': 'TER', 'ter.': 'TER',
+            'highway': 'HWY', 'hwy.': 'HWY',
+            'parkway': 'PKWY', 'pkwy.': 'PKWY',
+            'north': 'N', 'south': 'S', 'east': 'E', 'west': 'W',
+            'northeast': 'NE', 'northwest': 'NW',
+            'southeast': 'SE', 'southwest': 'SW',
+            'apartment': 'APT', 'apt.': 'APT',
+            'suite': 'STE', 'ste.': 'STE',
+            'unit': 'UNIT', 'floor': 'FL'
+        }
+
+        def standardize_street(street):
+            if not street:
+                return street
+            # Title case the street
+            words = street.split()
+            result = []
+            for i, word in enumerate(words):
+                word_lower = word.lower().rstrip('.,')
+                if word_lower in ABBREVIATIONS:
+                    result.append(ABBREVIATIONS[word_lower])
+                elif word.isdigit() or (len(word) > 1 and word[:-2].isdigit() and word[-2:].lower() in ['st', 'nd', 'rd', 'th']):
+                    # Keep numbers and ordinals as-is
+                    result.append(word.upper() if word[-2:].isalpha() else word)
+                else:
+                    result.append(word.title())
+            return ' '.join(result)
+
+        # Get all clients with addresses
+        clients = db.query(Client).filter(
+            Client.address_street.isnot(None),
+            Client.address_street != ""
+        ).all()
+
+        standardized = 0
+        results = []
+
+        for client in clients:
+            original = {
+                "street": client.address_street,
+                "city": client.address_city,
+                "state": client.address_state,
+                "zip": client.address_zip
+            }
+
+            changes = []
+
+            # Standardize street
+            new_street = standardize_street(client.address_street)
+            if new_street != client.address_street:
+                client.address_street = new_street
+                changes.append(f"street: '{original['street']}' → '{new_street}'")
+
+            # Title case city
+            if client.address_city:
+                new_city = client.address_city.title()
+                if new_city != client.address_city:
+                    client.address_city = new_city
+                    changes.append(f"city: '{original['city']}' → '{new_city}'")
+
+            # Uppercase state
+            if client.address_state:
+                new_state = client.address_state.upper()
+                if new_state != client.address_state:
+                    client.address_state = new_state
+                    changes.append(f"state: '{original['state']}' → '{new_state}'")
+
+            if changes:
+                client.updated_at = datetime.now()
+                standardized += 1
+                results.append({
+                    "client_id": client.id,
+                    "name": f"{client.first_name} {client.last_name}",
+                    "changes": changes
+                })
+
+        db.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Standardized {standardized} addresses",
+            "standardized": standardized,
+            "total_checked": len(clients),
+            "results": results
+        })
+
+    except Exception as e:
+        db.rollback()
+        log_error(e, {"action": "standardize_addresses_offline"})
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         db.close()
@@ -41257,6 +41806,670 @@ def api_inbox_reply():
 
 
 # END UNIFIED INBOX API
+# ===========================================================================
+
+
+# ===========================================================================
+# CALL LOGGING API (P34)
+# ===========================================================================
+
+@app.route("/api/call-logs", methods=["GET"])
+@require_staff()
+def api_get_call_logs():
+    """Get call logs with filtering"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+
+        # Parse query parameters
+        client_id = request.args.get('client_id', type=int)
+        staff_id = request.args.get('staff_id', type=int)
+        direction = request.args.get('direction')
+        status = request.args.get('status')
+        outcome = request.args.get('outcome')
+        follow_up = request.args.get('follow_up_required')
+        follow_up_required = follow_up.lower() == 'true' if follow_up else None
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+        search = request.args.get('search')
+        limit = request.args.get('limit', 50, type=int)
+        offset = request.args.get('offset', 0, type=int)
+
+        # Parse dates
+        from datetime import date as date_type
+        date_from_parsed = date_type.fromisoformat(date_from) if date_from else None
+        date_to_parsed = date_type.fromisoformat(date_to) if date_to else None
+
+        result = service.get_call_logs(
+            client_id=client_id,
+            staff_id=staff_id,
+            direction=direction,
+            status=status,
+            outcome=outcome,
+            follow_up_required=follow_up_required,
+            date_from=date_from_parsed,
+            date_to=date_to_parsed,
+            search=search,
+            limit=limit,
+            offset=offset
+        )
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs", methods=["POST"])
+@require_staff()
+def api_create_call_log():
+    """Create a new call log"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+        data = request.json
+
+        # Get staff ID from session
+        staff_id = data.get('staff_id') or session.get('staff_id')
+        if not staff_id:
+            return jsonify({"success": False, "error": "Staff ID required"}), 400
+
+        # Parse datetime
+        call_started_at = datetime.fromisoformat(data.get('call_started_at')) if data.get('call_started_at') else datetime.now()
+        call_ended_at = datetime.fromisoformat(data.get('call_ended_at')) if data.get('call_ended_at') else None
+
+        # Parse follow-up date
+        from datetime import date as date_type
+        follow_up_date = date_type.fromisoformat(data.get('follow_up_date')) if data.get('follow_up_date') else None
+
+        result = service.create_call_log(
+            staff_id=staff_id,
+            direction=data.get('direction', 'outbound'),
+            call_started_at=call_started_at,
+            client_id=data.get('client_id'),
+            phone_number=data.get('phone_number'),
+            call_ended_at=call_ended_at,
+            duration_seconds=data.get('duration_seconds'),
+            status=data.get('status', 'completed'),
+            outcome=data.get('outcome'),
+            subject=data.get('subject'),
+            notes=data.get('notes'),
+            follow_up_required=data.get('follow_up_required', False),
+            follow_up_date=follow_up_date,
+            follow_up_notes=data.get('follow_up_notes'),
+            recording_url=data.get('recording_url'),
+            recording_duration=data.get('recording_duration')
+        )
+
+        if result.get('success'):
+            return jsonify(result)
+        return jsonify(result), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/<int:call_log_id>", methods=["GET"])
+@require_staff()
+def api_get_call_log(call_log_id):
+    """Get a single call log"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+        call_log = service.get_call_log(call_log_id)
+
+        if not call_log:
+            return jsonify({"success": False, "error": "Call log not found"}), 404
+
+        return jsonify({"success": True, "call_log": call_log})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/<int:call_log_id>", methods=["PUT"])
+@require_staff()
+def api_update_call_log(call_log_id):
+    """Update a call log"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+        data = request.json
+
+        # Parse datetime fields if present
+        if data.get('call_ended_at'):
+            data['call_ended_at'] = datetime.fromisoformat(data['call_ended_at'])
+
+        # Parse follow-up date if present
+        if data.get('follow_up_date'):
+            from datetime import date as date_type
+            data['follow_up_date'] = date_type.fromisoformat(data['follow_up_date'])
+
+        result = service.update_call_log(call_log_id, **data)
+
+        if result.get('success'):
+            return jsonify(result)
+        return jsonify(result), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/<int:call_log_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_call_log(call_log_id):
+    """Delete a call log"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+        result = service.delete_call_log(call_log_id)
+
+        if result.get('success'):
+            return jsonify(result)
+        return jsonify(result), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/<int:call_log_id>/complete-follow-up", methods=["POST"])
+@require_staff()
+def api_complete_call_follow_up(call_log_id):
+    """Mark a call follow-up as complete"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+        result = service.mark_follow_up_complete(call_log_id)
+
+        if result.get('success'):
+            return jsonify(result)
+        return jsonify(result), 404
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/pending-follow-ups", methods=["GET"])
+@require_staff()
+def api_get_pending_follow_ups():
+    """Get all pending follow-ups"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+
+        staff_id = request.args.get('staff_id', type=int)
+        include_overdue = request.args.get('include_overdue', 'true').lower() == 'true'
+
+        follow_ups = service.get_pending_follow_ups(
+            staff_id=staff_id,
+            include_overdue=include_overdue
+        )
+
+        return jsonify({
+            "success": True,
+            "follow_ups": follow_ups,
+            "total": len(follow_ups)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/statistics", methods=["GET"])
+@require_staff()
+def api_get_call_statistics():
+    """Get call statistics"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+
+        from datetime import date as date_type
+        date_from_parsed = date_type.fromisoformat(date_from) if date_from else None
+        date_to_parsed = date_type.fromisoformat(date_to) if date_to else None
+
+        stats = service.get_call_statistics(
+            date_from=date_from_parsed,
+            date_to=date_to_parsed
+        )
+
+        return jsonify({"success": True, **stats})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/staff/<int:staff_id>/activity", methods=["GET"])
+@require_staff()
+def api_get_staff_call_activity(staff_id):
+    """Get call activity for a specific staff member"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+
+        date_from = request.args.get('date_from')
+        date_to = request.args.get('date_to')
+
+        from datetime import date as date_type
+        date_from_parsed = date_type.fromisoformat(date_from) if date_from else None
+        date_to_parsed = date_type.fromisoformat(date_to) if date_to else None
+
+        activity = service.get_staff_call_activity(
+            staff_id=staff_id,
+            date_from=date_from_parsed,
+            date_to=date_to_parsed
+        )
+
+        return jsonify({"success": True, **activity})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/clients/<int:client_id>/call-history", methods=["GET"])
+@require_staff()
+def api_get_client_call_history(client_id):
+    """Get call history for a specific client"""
+    from services.call_log_service import get_call_log_service
+    db = get_db()
+    try:
+        service = get_call_log_service(db)
+        limit = request.args.get('limit', 20, type=int)
+
+        call_logs = service.get_client_call_history(client_id, limit=limit)
+
+        return jsonify({
+            "success": True,
+            "call_logs": call_logs,
+            "total": len(call_logs)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        db.close()
+
+
+@app.route("/api/call-logs/options", methods=["GET"])
+@require_staff()
+def api_get_call_log_options():
+    """Get available options for call log dropdowns"""
+    from services.call_log_service import CallLogService
+
+    return jsonify({
+        "success": True,
+        "directions": CallLogService.DIRECTIONS,
+        "statuses": CallLogService.STATUSES,
+        "outcomes": CallLogService.OUTCOMES
+    })
+
+
+@app.route("/dashboard/call-logs")
+@require_staff()
+def dashboard_call_logs():
+    """Call logs dashboard page"""
+    return render_template("call_logs.html")
+
+
+# END CALL LOGGING API
+# ===========================================================================
+
+
+# ===========================================================================
+# STAFF TASK ASSIGNMENT API
+# ===========================================================================
+from services.task_service import TaskService
+
+
+@app.route("/api/staff-tasks", methods=["GET"])
+@require_staff()
+def api_get_staff_tasks():
+    """Get paginated list of staff tasks with filtering"""
+    try:
+        # Get filter parameters
+        status = request.args.get("status")
+        priority = request.args.get("priority")
+        category = request.args.get("category")
+        assigned_to_id = request.args.get("assigned_to_id", type=int)
+        client_id = request.args.get("client_id", type=int)
+        created_by_id = request.args.get("created_by_id", type=int)
+        search = request.args.get("search")
+        overdue_only = request.args.get("overdue_only", "false").lower() == "true"
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 20, type=int)
+
+        result = TaskService.get_tasks(
+            status=status,
+            priority=priority,
+            category=category,
+            assigned_to_id=assigned_to_id,
+            client_id=client_id,
+            created_by_id=created_by_id,
+            search=search,
+            overdue_only=overdue_only,
+            page=page,
+            per_page=per_page
+        )
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks", methods=["POST"])
+@require_staff()
+def api_create_staff_task():
+    """Create a new staff task"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        # Validate required fields
+        if not data.get("title"):
+            return jsonify({"success": False, "error": "Title is required"}), 400
+
+        # Get current staff ID
+        staff = get_current_staff()
+        if not staff:
+            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+        task = TaskService.create_task(
+            title=data.get("title"),
+            description=data.get("description"),
+            category=data.get("category", "general"),
+            priority=data.get("priority", "medium"),
+            assigned_to_id=data.get("assigned_to_id"),
+            client_id=data.get("client_id"),
+            created_by_id=staff.id,
+            due_date=data.get("due_date"),
+            is_recurring=data.get("is_recurring", False),
+            recurrence_pattern=data.get("recurrence_pattern"),
+            tags=data.get("tags")
+        )
+
+        return jsonify({"success": True, "task": task})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>", methods=["GET"])
+@require_staff()
+def api_get_staff_task(task_id):
+    """Get a single staff task by ID"""
+    try:
+        task = TaskService.get_task(task_id)
+        if not task:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+
+        return jsonify({"success": True, "task": task})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>", methods=["PUT"])
+@require_staff()
+def api_update_staff_task(task_id):
+    """Update a staff task"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        task = TaskService.update_task(task_id, data)
+        if not task:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+
+        return jsonify({"success": True, "task": task})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>", methods=["DELETE"])
+@require_staff()
+def api_delete_staff_task(task_id):
+    """Delete a staff task"""
+    try:
+        success = TaskService.delete_task(task_id)
+        if not success:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+
+        return jsonify({"success": True, "message": "Task deleted successfully"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>/complete", methods=["POST"])
+@require_staff()
+def api_complete_staff_task(task_id):
+    """Mark a staff task as completed"""
+    try:
+        staff = get_current_staff()
+        if not staff:
+            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+        task = TaskService.complete_task(task_id, staff.id)
+        if not task:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+
+        return jsonify({"success": True, "task": task})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>/reopen", methods=["POST"])
+@require_staff()
+def api_reopen_staff_task(task_id):
+    """Reopen a completed/cancelled staff task"""
+    try:
+        task = TaskService.reopen_task(task_id)
+        if not task:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+
+        return jsonify({"success": True, "task": task})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>/assign", methods=["POST"])
+@require_staff()
+def api_assign_staff_task(task_id):
+    """Assign a staff task to a staff member"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        assigned_to_id = data.get("assigned_to_id")
+        if not assigned_to_id:
+            return jsonify({"success": False, "error": "assigned_to_id is required"}), 400
+
+        task = TaskService.assign_task(task_id, assigned_to_id)
+        if not task:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+
+        return jsonify({"success": True, "task": task})
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/my-tasks", methods=["GET"])
+@require_staff()
+def api_get_my_staff_tasks():
+    """Get current user's assigned staff tasks"""
+    try:
+        staff = get_current_staff()
+        if not staff:
+            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+        include_completed = request.args.get("include_completed", "false").lower() == "true"
+
+        result = TaskService.get_my_tasks(staff.id, include_completed=include_completed)
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/team-workload", methods=["GET"])
+@require_staff()
+def api_get_staff_team_workload():
+    """Get team workload statistics"""
+    try:
+        result = TaskService.get_team_workload()
+
+        return jsonify({"success": True, "workload": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>/comments", methods=["GET"])
+@require_staff()
+def api_get_staff_task_comments(task_id):
+    """Get comments for a staff task"""
+    try:
+        comments = TaskService.get_task_comments(task_id)
+
+        return jsonify({"success": True, "comments": comments})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/<int:task_id>/comments", methods=["POST"])
+@require_staff()
+def api_add_staff_task_comment(task_id):
+    """Add a comment to a staff task"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"success": False, "error": "No data provided"}), 400
+
+        content = data.get("content")
+        if not content:
+            return jsonify({"success": False, "error": "Comment content is required"}), 400
+
+        staff = get_current_staff()
+        if not staff:
+            return jsonify({"success": False, "error": "Staff authentication required"}), 401
+
+        comment = TaskService.add_comment(task_id, staff.id, content)
+        if not comment:
+            return jsonify({"success": False, "error": "Task not found"}), 404
+
+        return jsonify({"success": True, "comment": comment})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/statistics", methods=["GET"])
+@require_staff()
+def api_get_staff_task_statistics():
+    """Get staff task statistics"""
+    try:
+        staff_id = request.args.get("staff_id", type=int)
+        days = request.args.get("days", 30, type=int)
+
+        stats = TaskService.get_task_statistics(staff_id=staff_id, days=days)
+
+        return jsonify({"success": True, "statistics": stats})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/overdue", methods=["GET"])
+@require_staff()
+def api_get_overdue_staff_tasks():
+    """Get all overdue staff tasks"""
+    try:
+        tasks = TaskService.get_overdue_tasks()
+
+        return jsonify({"success": True, "tasks": tasks})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/due-today", methods=["GET"])
+@require_staff()
+def api_get_staff_tasks_due_today():
+    """Get all staff tasks due today"""
+    try:
+        tasks = TaskService.get_tasks_due_today()
+
+        return jsonify({"success": True, "tasks": tasks})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/recurring/process", methods=["POST"])
+@require_staff()
+def api_process_recurring_staff_tasks():
+    """Process recurring staff tasks and create new instances"""
+    try:
+        result = TaskService.process_recurring_tasks()
+
+        return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/clients/<int:client_id>/staff-tasks", methods=["GET"])
+@require_staff()
+def api_get_client_staff_tasks(client_id):
+    """Get all staff tasks for a specific client"""
+    try:
+        tasks = TaskService.get_client_tasks(client_id)
+
+        return jsonify({"success": True, "tasks": tasks})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/staff-tasks/options", methods=["GET"])
+@require_staff()
+def api_get_staff_task_options():
+    """Get dropdown options for staff task forms"""
+    return jsonify({
+        "success": True,
+        "categories": TaskService.CATEGORIES,
+        "priorities": TaskService.PRIORITIES,
+        "statuses": TaskService.STATUSES,
+        "recurrence_patterns": TaskService.RECURRENCE_PATTERNS
+    })
+
+
+@app.route("/dashboard/tasks")
+@require_staff()
+def dashboard_staff_tasks():
+    """Staff task management dashboard page"""
+    return render_template("tasks.html")
+
+
+# END STAFF TASK ASSIGNMENT API
 # ===========================================================================
 
 

@@ -137,8 +137,11 @@ class Client(Base):
     address_city = Column(String(100))
     address_state = Column(String(50))
     address_zip = Column(String(20))
-    
+    address_verified = Column(Boolean, default=False)  # USPS verified
+    address_verified_at = Column(DateTime)
+
     # Identity for disputes (NOTE: Encrypt in production)
+    ssn_encrypted = Column(Text, nullable=True)  # Full SSN, encrypted
     ssn_last_four = Column(String(4))
     date_of_birth = Column(Date)
     
@@ -241,7 +244,7 @@ class Client(Base):
     free_analysis_token = Column(String(64), unique=True, index=True)  # Token for /analysis/<token> page
     analysis_payment_id = Column(String(100))  # Stripe PaymentIntent ID for $199 analysis
     analysis_paid_at = Column(DateTime)  # When they paid for full analysis
-    analysis_credit_applied = Column(Boolean, default=False)  # True when $199 credited to Round 1
+    analysis_credit_applied = Column(Float, default=0)  # 1.0 when $199 credited to Round 1, 0 otherwise
 
     # Round Payment Tracking
     round_1_amount_due = Column(Integer)  # Amount due for Round 1 in cents (49700 - 19900 = 29800)
@@ -4454,6 +4457,115 @@ class CalendarEvent(Base):
     booking = relationship("Booking", backref="calendar_event")
 
 
+class CallLog(Base):
+    """Log of phone calls with clients"""
+    __tablename__ = 'call_logs'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Participants
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+
+    # Call details
+    direction = Column(String(20), nullable=False)  # 'inbound', 'outbound'
+    phone_number = Column(String(20), nullable=True)  # External phone number
+
+    # Timing
+    call_started_at = Column(DateTime, nullable=False, index=True)
+    call_ended_at = Column(DateTime, nullable=True)
+    duration_seconds = Column(Integer, default=0)  # Duration in seconds
+
+    # Status and outcome
+    status = Column(String(30), default='completed')  # completed, missed, voicemail, no_answer, busy
+    outcome = Column(String(50), nullable=True)  # scheduled_appointment, left_message, follow_up_needed, resolved, etc.
+
+    # Notes and content
+    subject = Column(String(255), nullable=True)  # Brief subject/reason for call
+    notes = Column(Text, nullable=True)  # Detailed call notes
+
+    # Follow-up tracking
+    follow_up_required = Column(Boolean, default=False)
+    follow_up_date = Column(Date, nullable=True)
+    follow_up_notes = Column(Text, nullable=True)
+
+    # Call recording (if applicable)
+    recording_url = Column(String(500), nullable=True)
+    recording_duration = Column(Integer, nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    client = relationship("Client", backref="call_logs")
+    staff = relationship("Staff", backref="call_logs")
+
+
+class StaffTask(Base):
+    """Tasks assigned to staff members"""
+    __tablename__ = 'staff_tasks'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Assignment
+    assigned_to_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+    assigned_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True, index=True)
+    client_id = Column(Integer, ForeignKey('clients.id'), nullable=True, index=True)
+
+    # Task details
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(50), default='general')  # general, follow_up, document, call, review, other
+
+    # Priority and status
+    priority = Column(String(20), default='medium')  # low, medium, high, urgent
+    status = Column(String(20), default='pending')  # pending, in_progress, completed, cancelled
+
+    # Due date tracking
+    due_date = Column(Date, nullable=True, index=True)
+    due_time = Column(Time, nullable=True)
+    reminder_at = Column(DateTime, nullable=True)
+
+    # Completion tracking
+    completed_at = Column(DateTime, nullable=True)
+    completed_by_id = Column(Integer, ForeignKey('staff.id'), nullable=True)
+    completion_notes = Column(Text, nullable=True)
+
+    # Recurrence (for repeating tasks)
+    is_recurring = Column(Boolean, default=False)
+    recurrence_pattern = Column(String(50), nullable=True)  # daily, weekly, monthly
+    recurrence_end_date = Column(Date, nullable=True)
+    parent_task_id = Column(Integer, ForeignKey('staff_tasks.id'), nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    assigned_to = relationship("Staff", foreign_keys=[assigned_to_id], backref="assigned_staff_tasks")
+    assigned_by = relationship("Staff", foreign_keys=[assigned_by_id], backref="created_staff_tasks")
+    completed_by = relationship("Staff", foreign_keys=[completed_by_id])
+    client = relationship("Client", backref="staff_tasks")
+    parent_task = relationship("StaffTask", remote_side=[id], backref="subtasks")
+
+
+class StaffTaskComment(Base):
+    """Comments on staff tasks"""
+    __tablename__ = 'staff_task_comments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey('staff_tasks.id'), nullable=False, index=True)
+    staff_id = Column(Integer, ForeignKey('staff.id'), nullable=False, index=True)
+
+    comment = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    task = relationship("StaffTask", backref="comments")
+    staff = relationship("Staff", backref="staff_task_comments")
+
+
 class ClientMessage(Base):
     """Messages between clients and staff for live support"""
     __tablename__ = 'client_messages'
@@ -6484,6 +6596,7 @@ def init_db():
         ("clients", "address_state", "VARCHAR(50)"),
         ("clients", "address_zip", "VARCHAR(20)"),
         ("clients", "date_of_birth", "DATE"),
+        ("clients", "ssn_encrypted", "TEXT"),
         ("clients", "ssn_last_four", "VARCHAR(4)"),
         ("clients", "credit_monitoring_service", "VARCHAR(100)"),
         ("clients", "credit_monitoring_username", "VARCHAR(255)"),
@@ -7899,6 +8012,51 @@ def init_db():
         ("calendar_events", "sync_status", "VARCHAR(20) DEFAULT 'synced'"),
         ("calendar_events", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ("calendar_events", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Call Logs
+        ("call_logs", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("call_logs", "staff_id", "INTEGER REFERENCES staff(id) NOT NULL"),
+        ("call_logs", "direction", "VARCHAR(20) NOT NULL"),
+        ("call_logs", "phone_number", "VARCHAR(20)"),
+        ("call_logs", "call_started_at", "TIMESTAMP NOT NULL"),
+        ("call_logs", "call_ended_at", "TIMESTAMP"),
+        ("call_logs", "duration_seconds", "INTEGER DEFAULT 0"),
+        ("call_logs", "status", "VARCHAR(30) DEFAULT 'completed'"),
+        ("call_logs", "outcome", "VARCHAR(50)"),
+        ("call_logs", "subject", "VARCHAR(255)"),
+        ("call_logs", "notes", "TEXT"),
+        ("call_logs", "follow_up_required", "BOOLEAN DEFAULT FALSE"),
+        ("call_logs", "follow_up_date", "DATE"),
+        ("call_logs", "follow_up_notes", "TEXT"),
+        ("call_logs", "recording_url", "VARCHAR(500)"),
+        ("call_logs", "recording_duration", "INTEGER"),
+        ("call_logs", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("call_logs", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Tasks
+        ("tasks", "assigned_to_id", "INTEGER REFERENCES staff(id) NOT NULL"),
+        ("tasks", "assigned_by_id", "INTEGER REFERENCES staff(id)"),
+        ("tasks", "client_id", "INTEGER REFERENCES clients(id)"),
+        ("tasks", "title", "VARCHAR(255) NOT NULL"),
+        ("tasks", "description", "TEXT"),
+        ("tasks", "category", "VARCHAR(50) DEFAULT 'general'"),
+        ("tasks", "priority", "VARCHAR(20) DEFAULT 'medium'"),
+        ("tasks", "status", "VARCHAR(20) DEFAULT 'pending'"),
+        ("tasks", "due_date", "DATE"),
+        ("tasks", "due_time", "TIME"),
+        ("tasks", "reminder_at", "TIMESTAMP"),
+        ("tasks", "completed_at", "TIMESTAMP"),
+        ("tasks", "completed_by_id", "INTEGER REFERENCES staff(id)"),
+        ("tasks", "completion_notes", "TEXT"),
+        ("tasks", "is_recurring", "BOOLEAN DEFAULT FALSE"),
+        ("tasks", "recurrence_pattern", "VARCHAR(50)"),
+        ("tasks", "recurrence_end_date", "DATE"),
+        ("tasks", "parent_task_id", "INTEGER REFERENCES tasks(id)"),
+        ("tasks", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        ("tasks", "updated_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
+        # Task Comments
+        ("task_comments", "task_id", "INTEGER REFERENCES tasks(id) NOT NULL"),
+        ("task_comments", "staff_id", "INTEGER REFERENCES staff(id) NOT NULL"),
+        ("task_comments", "comment", "TEXT NOT NULL"),
+        ("task_comments", "created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
     ]
 
     conn = engine.connect()
@@ -7910,11 +8068,25 @@ def init_db():
                 conn.commit()
             except Exception as e:
                 pass
+
+        # Fix column type mismatches
+        type_fixes = [
+            ("clients", "analysis_credit_applied", "BOOLEAN", "USING analysis_credit_applied::boolean"),
+        ]
+        for table, column, new_type, using_clause in type_fixes:
+            try:
+                sql = text(f"ALTER TABLE {table} ALTER COLUMN {column} TYPE {new_type} {using_clause}")
+                conn.execute(sql)
+                conn.commit()
+                print(f"✅ Fixed column type: {table}.{column} -> {new_type}")
+            except Exception as e:
+                pass  # Column may already be correct type
+
     except Exception as e:
         print(f"Migration warning: {e}")
     finally:
         conn.close()
-    
+
     create_performance_indices()
 
 def create_performance_indices():

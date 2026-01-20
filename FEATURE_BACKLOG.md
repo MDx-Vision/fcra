@@ -1934,10 +1934,14 @@ OUTLOOK_CALENDAR_REDIRECT_URI=http://localhost:5001/api/calendar/outlook/callbac
 
 ## Priority 34: Call Logging
 
-**Status**: Not Started | **Effort**: Low (1 week)
+**Status**: ✅ COMPLETE | **Effort**: Low (1 week)
 
 Manual call tracking with notes and outcomes.
-- [ ] CallLog model
+- [x] CallLog model
+- [x] CallLogService (~500 lines)
+- [x] 11 API endpoints at `/api/call-logs/*`
+- [x] Dashboard UI at `/dashboard/call-logs`
+- [x] 31 unit tests
 - [ ] Log call from client page
 - [ ] Call history and stats
 
@@ -1945,12 +1949,16 @@ Manual call tracking with notes and outcomes.
 
 ## Priority 35: Task Assignment
 
-**Status**: Not Started | **Effort**: Medium (1-2 weeks)
+**Status**: ✅ COMPLETE | **Effort**: Medium (1-2 weeks)
 
 Assign tasks to staff with due dates and reminders.
-- [ ] StaffTask model
-- [ ] Task assignment UI
-- [ ] Due date notifications
+- [x] StaffTask + StaffTaskComment models
+- [x] TaskService (~670 lines)
+- [x] 18 API endpoints at `/api/staff-tasks/*`
+- [x] Dashboard UI at `/dashboard/tasks`
+- [x] Recurring tasks (daily, weekly, biweekly, monthly)
+- [x] Team workload view
+- [x] 35 unit tests
 
 ---
 

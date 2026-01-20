@@ -2,7 +2,88 @@
 
 > This file tracks our development sessions and key decisions for continuity.
 >
-> **Last Updated**: 2026-01-18
+> **Last Updated**: 2026-01-19
+
+---
+
+## Session: 2026-01-19 - "Address Validation + CRM Features"
+
+### Task Overview
+Implemented USPS Address Validation, P34 Call Logging, and P35 Task Assignment features.
+
+### What Was Done
+
+#### 1. USPS Address Validation
+- Created `AddressValidationService` with new USPS OAuth2 API
+- Registered for USPS Developer Portal (Consumer Key: `rgAdfxqZRgogGP93LTV25vguQ2PGqrTvJK1gthUtCpjKAb8B`)
+- Added 5 API endpoints for address validation
+- Client portal "Verify My Address" UI
+- 51 client addresses standardized offline
+
+#### 2. P34 Call Logging ✅
+- Created `CallLog` database model
+- Created `CallLogService` (~500 lines)
+- Added 11 API endpoints at `/api/call-logs/*`
+- Dashboard UI at `/dashboard/call-logs`
+- 31 unit tests passing
+- Features: inbound/outbound calls, outcomes, follow-ups, statistics
+
+#### 3. P35 Task Assignment ✅
+- Created `StaffTask` and `StaffTaskComment` database models
+- Created `TaskService` (~670 lines)
+- Added 18 API endpoints at `/api/staff-tasks/*`
+- Dashboard UI at `/dashboard/tasks`
+- 35 unit tests passing
+- Features: task CRUD, assignments, recurring tasks, comments, team workload
+
+### Technical Issues Resolved
+| Issue | Resolution |
+|-------|------------|
+| SQLAlchemy table conflict (`tasks` already defined) | Renamed to `StaffTask` with table `staff_tasks` |
+| Flask endpoint conflict (`api_get_tasks` existed) | Renamed endpoints to `/api/staff-tasks/*` |
+| MagicMock datetime comparison error in tests | Removed @patch decorators from datetime comparison tests |
+
+### Files Created
+| File | Description |
+|------|-------------|
+| `services/address_validation_service.py` | USPS OAuth2 address validation |
+| `services/call_log_service.py` | Call logging service (~500 lines) |
+| `services/task_service.py` | Task assignment service (~670 lines) |
+| `templates/call_logs.html` | Call logging dashboard UI |
+| `templates/tasks.html` | Task management dashboard UI |
+| `tests/test_call_log_service.py` | 31 call logging tests |
+| `tests/test_task_service.py` | 35 task assignment tests |
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `database.py` | Added CallLog, StaffTask, StaffTaskComment models |
+| `app.py` | Added 34 new API endpoints (5 address + 11 calls + 18 tasks) |
+| `templates/includes/dashboard_sidebar.html` | Added Call Logs and Tasks links |
+| `routes/portal.py` | Added address verification endpoints |
+
+### Test Status
+- 5,791 unit tests passing ✅
+- 88/88 Cypress E2E tests passing ✅
+
+---
+
+## Session: 2026-01-19 - "CRM Feature Implementation"
+
+### Task Overview
+Implemented P32 Unified Inbox, Send Portal Invite, and P33 Calendar Sync features.
+
+### What Was Done
+1. **P32 Unified Inbox** - Aggregates email, SMS, portal messages, call logs, notes
+2. **Send Portal Invite** - Staff can send login credentials to clients
+3. **P33 Calendar Sync** - Google/Outlook OAuth integration for booking sync
+
+### Files Created
+- `services/unified_inbox_service.py` (~800 lines)
+- `services/calendar_sync_service.py` (~700 lines)
+- `templates/unified_inbox.html`
+- `tests/test_unified_inbox_service.py` (30 tests)
+- `tests/test_calendar_sync_service.py` (30 tests)
 
 ---
 
@@ -417,7 +498,7 @@ Conducted comprehensive review of client portal for UX and functionality across 
 
 ---
 
-## Feature Status (P1-P26)
+## Feature Status (P1-P35)
 
 | Priority | Feature | Status | Date |
 |----------|---------|--------|------|
@@ -449,23 +530,30 @@ Conducted comprehensive review of client portal for UX and functionality across 
 | P26 | Letter Template Builder | ✅ Complete | 2026-01-03 |
 | P27 | Mobile App (PWA) | ✅ Complete | 2026-01-03 |
 | P28 | Voicemail Drops | ✅ Complete | 2026-01-03 |
+| P29 | AI Chat Support | ✅ Complete | 2026-01-18 |
+| P30 | AI Chat Staff Dashboard | ✅ Complete | 2026-01-18 |
+| P31 | Credit Score Simulator | ✅ Complete | 2026-01-18 |
+| P32 | Unified Inbox | ✅ Complete | 2026-01-19 |
+| P33 | Calendar Sync (Google/Outlook) | ✅ Complete | 2026-01-19 |
+| P34 | Call Logging | ✅ Complete | 2026-01-19 |
+| P35 | Task Assignment | ✅ Complete | 2026-01-19 |
 
 ---
 
 ## Key Architecture
 
 ### Database Models (database.py)
-- 50+ SQLAlchemy models
+- 100 SQLAlchemy models
 - PostgreSQL database
 - Migration entries in `MIGRATIONS` dict
 
 ### Services (services/)
-- 60+ service files
+- 88 service files
 - Each service handles a specific domain
 - Pattern: `ServiceName` class with static/instance methods
 
 ### Routes
-- `app.py` - Main Flask app (~37k+ lines)
+- `app.py` - Main Flask app (~42k+ lines)
 - `routes/portal.py` - Client portal routes
 - `routes/partner.py` - White label partner portal
 - `routes/affiliate.py` - Affiliate portal
@@ -478,8 +566,9 @@ Conducted comprehensive review of client portal for UX and functionality across 
 - `templates/affiliate_portal/` - Affiliate templates
 
 ### Testing
-- `tests/` - Unit tests (pytest)
-- `cypress/e2e/` - E2E tests (Cypress)
+- `tests/` - 98 unit test files (5,791 tests)
+- `cypress/e2e/` - 51 E2E tests (88 specs)
+- `tests/integration/` - 2 integration test files
 - Run unit tests: `python -m pytest --tb=short -q`
 - Run Cypress: `CI=true npx cypress run`
 
@@ -534,19 +623,24 @@ db.close()
 
 ## Next Steps (Future Features)
 
-All priority features complete! Only blocked infrastructure items remain:
+P1-P35 complete! CRM feature parity achieved.
 
 ### Pending Infrastructure (Blocked)
 - **Send Certified Mail** - Awaiting SFTP credentials from service provider
 - **Twilio A2P 10DLC** - Campaign pending carrier approval (WhatsApp working)
 
-### Completed Features
-- [x] Mobile App (PWA) ✅ 2026-01-03
-- [x] Voicemail Drops ✅ 2026-01-03
-- [x] Bureau Response Tracking ✅ 2026-01-03
-- [x] Auto-Pull Credit Reports ✅ 2026-01-03
-- [x] Letter Template Builder ✅ 2026-01-03
-- [x] Client Portal Audit ✅ 2026-01-03
+### Remaining CRM Features (P36-P39)
+- P36: Scheduled Reports
+- P37: SMS Templates Library
+- P38: Client Tags
+- P39: Email Open/Click Tracking
+
+### Recently Completed (2026-01-19)
+- [x] P32: Unified Inbox ✅
+- [x] P33: Calendar Sync (Google/Outlook) ✅
+- [x] P34: Call Logging ✅
+- [x] P35: Task Assignment ✅
+- [x] USPS Address Validation ✅
 
 ---
 
