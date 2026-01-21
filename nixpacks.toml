@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python311", "gcc", "libffi", "zlib", "pango", "cairo", "gdk-pixbuf", "libxml2", "libxslt", "fontconfig", "freetype", "harfbuzz"]
+
+[phases.install]
+cmds = ["pip install --upgrade pip", "pip install -r requirements.txt"]
+
+[start]
+cmd = "gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
