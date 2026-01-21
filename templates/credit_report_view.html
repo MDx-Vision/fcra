@@ -142,7 +142,38 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        
+
+        .personal-info-section {
+            margin-bottom: 32px;
+        }
+
+        .personal-info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .personal-info-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .personal-info-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .personal-info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
         .summary-section {
             margin-bottom: 32px;
         }
@@ -582,7 +613,30 @@
                 </div>
             </div>
         </section>
-        
+
+        <!-- Personal Information Section -->
+        <section class="personal-info-section">
+            <h2 class="section-title">Personal Information</h2>
+            <div class="personal-info-grid">
+                <div class="personal-info-card">
+                    <div class="personal-info-label">Full Name</div>
+                    <div class="personal-info-value">{{ personal_info.name or 'Not Available' }}</div>
+                </div>
+                <div class="personal-info-card">
+                    <div class="personal-info-label">Address</div>
+                    <div class="personal-info-value">{{ personal_info.address or 'Not Available' }}</div>
+                </div>
+                <div class="personal-info-card">
+                    <div class="personal-info-label">Date of Birth</div>
+                    <div class="personal-info-value">{{ personal_info.dob or 'Not Available' }}</div>
+                </div>
+                <div class="personal-info-card">
+                    <div class="personal-info-label">SSN Last 4</div>
+                    <div class="personal-info-value">{{ personal_info.ssn_last4 or 'Not Available' }}</div>
+                </div>
+            </div>
+        </section>
+
         <section class="summary-section">
             <h2 class="section-title">Report Summary</h2>
             <div class="summary-grid">

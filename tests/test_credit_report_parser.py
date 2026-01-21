@@ -600,6 +600,107 @@ class TestExtractPersonalInfo:
         info = parser._extract_personal_info()
         assert info["name"] == "John Doe"
 
+    def test_extract_personal_info_myfreescorenow_format(self):
+        """Test personal info extraction from MyFreeScoreNow format.
+
+        CRITICAL: This tests the fix where we must iterate through ALL h2.headline
+        elements to find 'Personal Information', not just use soup.find() which
+        returns the first one (Credit Scores).
+        """
+        html = """
+        <html>
+        <body>
+            <!-- Credit Scores headline comes FIRST -->
+            <h2 class="headline">Credit Scores</h2>
+            <div class="attribute-collection">
+                <div class="attribute-row">
+                    <p class="text-gray-900">TransUnion</p>
+                    <div class="display-attribute"><p class="fw-semi">720</p></div>
+                </div>
+            </div>
+
+            <!-- Personal Information headline comes SECOND -->
+            <h2 class="headline">Personal Information</h2>
+            <div class="attribute-collection">
+                <div class="attribute-row">
+                    <p class="text-gray-900">Name</p>
+                    <div class="display-attribute"><p class="fw-semi">JENNIFER A NIEVES</p></div>
+                </div>
+                <div class="attribute-row">
+                    <p class="text-gray-900">Date of Birth</p>
+                    <div class="display-attribute"><p class="fw-semi">07/15/1976</p></div>
+                </div>
+                <div class="attribute-row">
+                    <p class="text-gray-900">Current Address</p>
+                    <div class="display-attribute"><p class="fw-semi">111 LOCUST AVE, MAYWOOD, NJ 07607</p></div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        parser = CreditReportParser(html, service_name="myfreescorenow")
+        info = parser._extract_personal_info()
+
+        # Should find Personal Information, NOT return None because Credit Scores was first
+        assert info["name"] is not None, "Name should be extracted from Personal Information section"
+        assert "JENNIFER" in info["name"].upper() or "Jennifer" in info["name"]
+        assert info["dob"] == "07/15/1976"
+        assert info["address"] is not None
+
+    def test_extract_personal_info_myfreescorenow_no_personal_headline(self):
+        """Test graceful handling when only Credit Scores headline exists."""
+        html = """
+        <html>
+        <body>
+            <h2 class="headline">Credit Scores</h2>
+            <div class="attribute-collection">
+                <div class="attribute-row">
+                    <p class="text-gray-900">TransUnion</p>
+                    <div class="display-attribute"><p class="fw-semi">720</p></div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        parser = CreditReportParser(html)
+        info = parser._extract_personal_info()
+
+        # Should return None for all fields, not crash
+        assert info["name"] is None
+        assert info["dob"] is None
+        assert info["address"] is None
+
+    def test_extract_personal_info_myfreescorenow_multiple_headlines(self):
+        """Test extraction with multiple h2.headline elements (real-world scenario)."""
+        html = """
+        <html>
+        <body>
+            <h2 class="headline">Credit Scores</h2>
+            <div class="score-section"><!-- scores here --></div>
+
+            <h2 class="headline">Summary</h2>
+            <div class="summary-section"><!-- summary here --></div>
+
+            <h2 class="headline">Personal Information</h2>
+            <div class="attribute-collection">
+                <div class="attribute-row">
+                    <p class="text-gray-900">Name</p>
+                    <div class="display-attribute"><p class="fw-semi">Test User</p></div>
+                </div>
+            </div>
+
+            <h2 class="headline">Account History</h2>
+            <div class="accounts-section"><!-- accounts here --></div>
+        </body>
+        </html>
+        """
+        parser = CreditReportParser(html)
+        info = parser._extract_personal_info()
+
+        # Should correctly find the 3rd headline (Personal Information)
+        assert info["name"] is not None
+        assert "Test" in info["name"]
+
 
 # =============================================================================
 # Test Class: _extract_accounts() Method

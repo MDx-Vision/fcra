@@ -273,18 +273,60 @@ class CreditReportParser:
             "dob": None,
         }
 
-        personal_section = self.soup.find("div", id="PersonalInformation")
-        if personal_section:
-            name_row = personal_section.find("td", string=re.compile(r"name", re.I))
-            if name_row:
-                parent_row = name_row.find_parent("tr")
-                if parent_row:
-                    cells = parent_row.find_all("td", class_=re.compile(r"info"))
-                    for cell in cells:
-                        name_text = cell.get_text(strip=True)
-                        if name_text and name_text != "-":
-                            info["name"] = name_text
-                            break
+        # Try MyFreeScoreNow format first (attribute-row based)
+        # Must iterate through all h2.headline elements to find Personal Information
+        personal_headline = None
+        for h2 in self.soup.find_all("h2", class_="headline"):
+            if "Personal Information" in h2.get_text():
+                personal_headline = h2
+                break
+
+        if personal_headline:
+            # Find the attribute-collection that follows
+            attr_collection = personal_headline.find_next("div", class_="attribute-collection")
+            if attr_collection:
+                for attr_row in attr_collection.find_all("div", class_="attribute-row"):
+                    label_p = attr_row.find("p", class_="text-gray-900")
+                    if not label_p:
+                        label_p = attr_row.find("p", class_="mb-1")
+                    if not label_p:
+                        continue
+
+                    label = label_p.get_text(strip=True).lower()
+                    value_div = attr_row.find("div", class_="display-attribute")
+                    if not value_div:
+                        continue
+
+                    value_p = value_div.find("p", class_="fw-semi")
+                    if not value_p:
+                        value_p = value_div.find("p")
+                    if not value_p:
+                        continue
+
+                    value = value_p.get_text(strip=True)
+
+                    if "name" in label and not info["name"]:
+                        info["name"] = value.title() if value else None
+                    elif "birth" in label or "dob" in label:
+                        info["dob"] = value
+                    elif "address" in label:
+                        # Address may contain <br> tags
+                        info["address"] = value_p.get_text(separator=", ", strip=True).title() if value_p else None
+
+        # Fallback to legacy format (div id="PersonalInformation")
+        if not info["name"]:
+            personal_section = self.soup.find("div", id="PersonalInformation")
+            if personal_section:
+                name_row = personal_section.find("td", string=re.compile(r"name", re.I))
+                if name_row:
+                    parent_row = name_row.find_parent("tr")
+                    if parent_row:
+                        cells = parent_row.find_all("td", class_=re.compile(r"info"))
+                        for cell in cells:
+                            name_text = cell.get_text(strip=True)
+                            if name_text and name_text != "-":
+                                info["name"] = name_text
+                                break
 
         return info
 
