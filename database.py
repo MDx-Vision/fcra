@@ -9,37 +9,48 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
+# Detect if using SQLite or PostgreSQL
+IS_SQLITE = DATABASE_URL.startswith('sqlite')
+
 # CI mode: skip SSL (GitHub Actions uses local PostgreSQL)
 # Production: require SSL for Replit/Neon Postgres
-if os.getenv('CI') != 'true':
+if not IS_SQLITE and os.getenv('CI') != 'true':
     if 'sslmode' not in DATABASE_URL:
         DATABASE_URL = DATABASE_URL + "?sslmode=require"
 
 # Create engine with connection pooling + resilience for large text writes
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-    pool_recycle=1800,  # Recycle every 30 min instead of 1 hour
-    connect_args={
-        # Note: connect_timeout removed - not supported by all PostgreSQL providers
-        # Timeouts are handled via statement_timeout in the event listener below
-        "keepalives": 1,
-        "keepalives_idle": 10,  # Start keepalives after 10s idle
-        "keepalives_interval": 5,  # Send keepalive every 5s
-        "keepalives_count": 10,  # Need 10 failed keepalives to fail
-    }
-)
+if IS_SQLITE:
+    # SQLite-specific configuration (no keepalives, simpler pooling)
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
+else:
+    # PostgreSQL-specific configuration
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+        pool_recycle=1800,  # Recycle every 30 min instead of 1 hour
+        connect_args={
+            # Note: connect_timeout removed - not supported by all PostgreSQL providers
+            # Timeouts are handled via statement_timeout in the event listener below
+            "keepalives": 1,
+            "keepalives_idle": 10,  # Start keepalives after 10s idle
+            "keepalives_interval": 5,  # Send keepalive every 5s
+            "keepalives_count": 10,  # Need 10 failed keepalives to fail
+        }
+    )
 
-# Set aggressive timeouts on each connection
-@event.listens_for(engine, "connect")
-def set_timeouts(dbapi_conn, connection_record):
-    cursor = dbapi_conn.cursor()
-    cursor.execute("SET statement_timeout = 180000")  # 180 seconds
-    cursor.execute("SET idle_in_transaction_session_timeout = 180000")
-    cursor.execute("SET lock_timeout = 180000")
-    cursor.close()
+    # Set aggressive timeouts on each connection (PostgreSQL only)
+    @event.listens_for(engine, "connect")
+    def set_timeouts(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("SET statement_timeout = 180000")  # 180 seconds
+        cursor.execute("SET idle_in_transaction_session_timeout = 180000")
+        cursor.execute("SET lock_timeout = 180000")
+        cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base: Any = declarative_base()

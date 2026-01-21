@@ -1,9 +1,4 @@
-2026-01-01 18:02:50 | INFO     | app                  | Starting FCRA Litigation Platform...
-✅ Anthropic API client initialized
-2026-01-01 18:02:53 | INFO     | app                  | Sentry not configured (set SENTRY_DSN to enable)
-2026-01-01 18:02:53 | INFO     | app                  | Request logging middleware initialized
-2026-01-01 18:02:53 | INFO     | app                  | Flask app initialized
-2026-01-01 18:02:53 | INFO     | app                  | Rate limiting initialized
-2026-01-01 18:02:53 | INFO     | app                  | Security headers initialized
-✅ Portal blueprint registered
-2026-01-01 18:02:53 | INFO     | app                  | Swagger API documentation initialized at /api/docs/
+Traceback (most recent call last):
+  File "/Users/rafaelrodriguez/fcra/app.py", line 8, in <module>
+    from sqlalchemy.exc import OperationalError
+ModuleNotFoundError: No module named 'sqlalchemy'

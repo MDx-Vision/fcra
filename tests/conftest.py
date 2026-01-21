@@ -12,6 +12,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Set TESTING environment variable for encryption key auto-generation
 os.environ['TESTING'] = 'true'
 
+# Force SQLite for tests to avoid psycopg2 compatibility issues with Python 3.14
+# The psycopg2 driver has issues with BOOLEAN type (OID 16) in newer Python versions
+if 'DATABASE_URL' not in os.environ or 'postgresql' in os.environ.get('DATABASE_URL', ''):
+    os.environ['DATABASE_URL'] = 'sqlite:///test_db.sqlite'
+
 # Base URL for browser tests
 BASE_URL = "http://localhost:5001"
 

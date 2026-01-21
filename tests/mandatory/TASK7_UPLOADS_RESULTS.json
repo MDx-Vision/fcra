@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-05T14:40:14.496818",
+  "timestamp": "2026-01-20T23:24:15.963859",
   "upload_inputs_found": 0,
   "uploads_tested": 0,
   "uploads_accepted": 0,
@@ -8,10 +8,10 @@
   "issues": [],
   "log": [
     "\n=== Testing uploads on: /dashboard/import ===",
-    "  ERROR: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/import\nCall log:\n  - navig",
+    "  Found 0 file inputs",
     "\n=== Testing uploads on: /dashboard/documents ===",
-    "  ERROR: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/documents\nCall log:\n  - na",
+    "  Found 0 file inputs",
     "\n=== Testing uploads on: /dashboard/credit-import ===",
-    "  ERROR: Page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5001/dashboard/credit-import\nCall log:\n  "
+    "  Found 0 file inputs"
   ]
 }

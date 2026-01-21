@@ -1,27 +1,109 @@
 {
-  "timestamp": "2026-01-05T14:40:14.495271",
-  "buttons_found": 0,
-  "buttons_tested": 0,
+  "timestamp": "2026-01-20T23:24:15.962214",
+  "buttons_found": 19,
+  "buttons_tested": 19,
   "status_counts": {
-    "working": 0,
+    "working": 9,
     "not_built": 0,
-    "broken": 0,
+    "broken": 1,
     "disabled": 0,
-    "hidden": 0,
+    "hidden": 9,
     "dangerous_safe": 0
   },
   "pages": [
     {
       "url": "/",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 1,
+      "buttons_tested": 1,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\ude80 ANALYZE",
+          "id": "",
+          "class": "",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/signup",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 7,
+      "buttons_tested": 7,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "Continue to Credit Access",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "nextStep(2)",
+          "status": "BROKEN",
+          "notes": "Shows error message"
+        },
+        {
+          "index": 1,
+          "text": "Back",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "prevStep(1)",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 2,
+          "text": "Continue to Plan Selection",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "nextStep(3)",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 3,
+          "text": "Back",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "prevStep(2)",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Continue to Agreement",
+          "id": "",
+          "class": "btn btn-primary",
+          "type": "button",
+          "onclick": "nextStep(4)",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 5,
+          "text": "Back",
+          "id": "",
+          "class": "btn btn-secondary",
+          "type": "button",
+          "onclick": "prevStep(3)",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 6,
+          "text": "Proceed to Payment",
+          "id": "submitBtn",
+          "class": "btn btn-primary",
+          "type": "submit",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/staff/login",
@@ -31,9 +113,60 @@
     },
     {
       "url": "/portal/login",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 5,
+      "buttons_tested": 5,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword()",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword()"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        },
+        {
+          "index": 2,
+          "text": "Send Reset Link",
+          "id": "forgotBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 3,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "toggleNewPassword()",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        },
+        {
+          "index": 4,
+          "text": "Reset Password",
+          "id": "resetBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "HIDDEN",
+          "notes": "Button not visible on page (likely in modal)"
+        }
+      ]
     },
     {
       "url": "/dashboard",
@@ -259,15 +392,57 @@
     },
     {
       "url": "/dashboard/credit-import",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/performance",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     },
     {
       "url": "/dashboard/suspense",
@@ -295,10 +470,37 @@
     },
     {
       "url": "/dashboard/settings/sms",
-      "buttons_found": 0,
-      "buttons_tested": 0,
-      "buttons": []
+      "buttons_found": 2,
+      "buttons_tested": 2,
+      "buttons": [
+        {
+          "index": 0,
+          "text": "\ud83d\udc41",
+          "id": "",
+          "class": "toggle-btn",
+          "type": "button",
+          "onclick": "togglePassword('password')",
+          "status": "WORKING",
+          "notes": "Has onclick: togglePassword('password')"
+        },
+        {
+          "index": 1,
+          "text": "Sign In",
+          "id": "loginBtn",
+          "class": "login-btn",
+          "type": "submit",
+          "onclick": "",
+          "status": "WORKING",
+          "notes": "Submit button (form submission)"
+        }
+      ]
     }
   ],
-  "issues": []
+  "issues": [
+    {
+      "page": "/signup",
+      "button": "Continue to Credit Access",
+      "error": "Shows error on click"
+    }
+  ]
 }

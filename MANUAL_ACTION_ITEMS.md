@@ -3,7 +3,7 @@
 > This document lists all tasks that require human action to complete.
 > Code implementation is done - these items are blocked on external dependencies.
 >
-> **Last Updated**: 2026-01-05
+> **Last Updated**: 2026-01-20
 
 ---
 
@@ -11,11 +11,41 @@
 
 | Category | Code Status | Human Action Required |
 |----------|-------------|----------------------|
-| Test Coverage | ✅ 100% (96 test files, 86 services) | None |
-| Features (P1-P28) | ✅ 100% Complete | None |
+| Test Coverage | ✅ 100% (98 test files, 88 services) | None |
+| Features (P1-P35) | ✅ 100% Complete | None |
+| Credit Import | ✅ Code Complete | ⏳ Some accounts need password reset |
 | Send Certified Mail | ✅ Code Complete | ⏳ SFTP Credentials |
 | SMS (Twilio) | ✅ Code Complete | ⏳ A2P 10DLC Approval |
 | WhatsApp | ✅ Code Complete | ⏳ Template Approval |
+
+---
+
+## Priority 0: Credit Monitoring Password Resets
+
+**Status**: ⏳ User Action Required
+**Blocking**: Credit report auto-import for specific clients
+
+### Clients Requiring Password Reset
+
+| Client | Service | Issue | Action Required |
+|--------|---------|-------|-----------------|
+| Sharif Profit (ID: 515) | MyFreeScoreNow.com | "Password Change Required" | Reset password on MyFreeScoreNow.com, then update in `/dashboard/credit-import` |
+
+### How to Fix
+
+1. Go to https://member.myfreescorenow.com/login
+2. Log in with current credentials: `Gotprofit@gmail.com` / `$Mp104624`
+3. Complete the password reset process
+4. Update the new password in your system at `/dashboard/credit-import` → Edit credential
+5. Try import again
+
+### Successfully Imported (2026-01-20)
+
+| Client | Service | Scores |
+|--------|---------|--------|
+| Jennifer Nieves (ID: 519) | MyFreeScoreNow.com | TU: 380, EX: 810, EQ: 535 |
+
+---
 
 ---
 

@@ -34465,6 +34465,7 @@ def api_view_credit_import_report(credential_id):
             service_name=cred.service_name,
             report_date=report_date,
             scores=parsed_data.get("scores", {}),
+            personal_info=parsed_data.get("personal_info", {}),
             accounts=parsed_data.get("accounts", []),
             inquiries=parsed_data.get("inquiries", []),
             collections=parsed_data.get("collections", []),
@@ -34473,25 +34474,6 @@ def api_view_credit_import_report(credential_id):
             summary=parsed_data.get("summary", {}),
             analytics=parsed_data.get("analytics", {}),
         )
-    finally:
-        db.close()
-
-
-@app.route("/api/credit-import/report/<int:credential_id>/raw")
-@require_staff(roles=["admin", "paralegal", "attorney"])
-def api_view_credit_import_report_raw(credential_id):
-    """View raw downloaded credit report HTML"""
-    db = get_db()
-    try:
-        cred = db.query(CreditMonitoringCredential).filter_by(id=credential_id).first()
-        if not cred or not cred.last_report_path:
-            return jsonify({"success": False, "error": "No report found"}), 404
-
-        report_path = cred.last_report_path
-        if os.path.exists(report_path):
-            return send_file(report_path, mimetype="text/html")
-        else:
-            return jsonify({"success": False, "error": "Report file not found"}), 404
     finally:
         db.close()
 

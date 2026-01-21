@@ -1,8 +1,7 @@
 {
-  "timestamp": "2026-01-05T14:40:17.043806",
-  "checks_passed": 6,
+  "timestamp": "2026-01-20T23:24:16.642598",
+  "checks_passed": 7,
   "issues_found": [
-    "Duplicate emails found: [('newclient@test.com', 17), ('thefiltah@gmail.com', 2)]",
-    "Clients with null first_name: 18"
+    "Duplicate emails found: [('seanes22@gmail.com', 2), ('thefiltah@gmail.com', 2)]"
   ]
 }

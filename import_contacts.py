@@ -96,6 +96,7 @@ def import_contacts(csv_path):
                         address_zip=(row.get('postal_code') or '').strip() or None,
                         ssn_last_four=parse_ssn_last_four(row.get('social_security')),
                         date_of_birth=parse_date(row.get('dob')),
+                        follow_up_date=parse_date(row.get('follow_up')),
                         credit_monitoring_service=(row.get('cr_provider') or '').strip() or None,
                         credit_monitoring_username=(row.get('cr_username') or '').strip() or None,
                         credit_monitoring_password_encrypted=(row.get('cr_password') or '').strip() or None,

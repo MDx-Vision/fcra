@@ -15,7 +15,7 @@ anthropic>=0.18.0
 # PDF Generation & Parsing
 fpdf2
 reportlab
-weasyprint
+# weasyprint  # Disabled for Railway - requires system deps, using reportlab instead
 pdfplumber
 pypdf
 
