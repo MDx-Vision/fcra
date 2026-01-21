@@ -731,28 +731,51 @@
                     
                     {% if account.payment_history %}
                     <div class="payment-history-section">
-                        <div class="payment-history-title">Payment History ({{ account.payment_history|length }} months)</div>
-                        <div class="payment-timeline">
-                            {% for entry in account.payment_history[:24] %}
-                            <div class="payment-month" data-tu="{{ entry.transunion or '' }}" data-ex="{{ entry.experian or '' }}" data-eq="{{ entry.equifax or '' }}">
-                                <div class="month-label">{{ entry.month[:3] }} {{ entry.year[-2:] if entry.year else '' }}</div>
-                                <div class="payment-status 
-                                    {% if entry.experian == 'OK' or entry.transunion == 'OK' or entry.equifax == 'OK' %}payment-ok
-                                    {% elif entry.experian == '30' or entry.transunion == '30' or entry.equifax == '30' %}payment-30
-                                    {% elif entry.experian == '60' or entry.transunion == '60' or entry.equifax == '60' %}payment-60
-                                    {% elif entry.experian == '90' or entry.transunion == '90' or entry.equifax == '90' %}payment-90
-                                    {% elif 'CO' in (entry.experian or '') or 'CO' in (entry.transunion or '') %}payment-co
-                                    {% else %}payment-na{% endif %}"
-                                    data-tu="{{ entry.transunion or '' }}" data-ex="{{ entry.experian or '' }}" data-eq="{{ entry.equifax or '' }}">
-                                    {% if entry.experian == 'OK' or entry.transunion == 'OK' or entry.equifax == 'OK' %}OK
-                                    {% elif entry.experian == '30' or entry.transunion == '30' or entry.equifax == '30' %}30
-                                    {% elif entry.experian == '60' or entry.transunion == '60' or entry.equifax == '60' %}60
-                                    {% elif entry.experian == '90' or entry.transunion == '90' or entry.equifax == '90' %}90
-                                    {% elif 'CO' in (entry.experian or '') or 'CO' in (entry.transunion or '') %}CO
-                                    {% else %}-{% endif %}
+                        <div class="payment-history-title">Payment History ({{ account.payment_history|length }} months) <span class="bureau-filter-label" style="font-size: 11px; color: #6b7280; margin-left: 10px;">Showing: All Bureaus</span></div>
+
+                        <!-- TransUnion Row -->
+                        <div class="bureau-payment-row" data-bureau="tu">
+                            <div class="bureau-row-label" style="color: #3b82f6; font-weight: 600; font-size: 12px; margin-bottom: 6px;">TransUnion</div>
+                            <div class="payment-timeline">
+                                {% for entry in account.payment_history[:24] %}
+                                <div class="payment-month">
+                                    <div class="month-label">{{ entry.month[:3] }}</div>
+                                    <div class="payment-status {% if entry.transunion == 'OK' %}payment-ok{% elif entry.transunion == '30' %}payment-30{% elif entry.transunion == '60' %}payment-60{% elif entry.transunion == '90' %}payment-90{% elif entry.transunion == '120' %}payment-co{% elif 'CO' in (entry.transunion or '') %}payment-co{% else %}payment-na{% endif %}">
+                                        {{ entry.transunion or '-' }}
+                                    </div>
                                 </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
+                        </div>
+
+                        <!-- Experian Row -->
+                        <div class="bureau-payment-row" data-bureau="ex" style="margin-top: 12px;">
+                            <div class="bureau-row-label" style="color: #ef4444; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Experian</div>
+                            <div class="payment-timeline">
+                                {% for entry in account.payment_history[:24] %}
+                                <div class="payment-month">
+                                    <div class="month-label">{{ entry.month[:3] }}</div>
+                                    <div class="payment-status {% if entry.experian == 'OK' %}payment-ok{% elif entry.experian == '30' %}payment-30{% elif entry.experian == '60' %}payment-60{% elif entry.experian == '90' %}payment-90{% elif entry.experian == '120' %}payment-co{% elif 'CO' in (entry.experian or '') %}payment-co{% else %}payment-na{% endif %}">
+                                        {{ entry.experian or '-' }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Equifax Row -->
+                        <div class="bureau-payment-row" data-bureau="eq" style="margin-top: 12px;">
+                            <div class="bureau-row-label" style="color: #f59e0b; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Equifax</div>
+                            <div class="payment-timeline">
+                                {% for entry in account.payment_history[:24] %}
+                                <div class="payment-month">
+                                    <div class="month-label">{{ entry.month[:3] }}</div>
+                                    <div class="payment-status {% if entry.equifax == 'OK' %}payment-ok{% elif entry.equifax == '30' %}payment-30{% elif entry.equifax == '60' %}payment-60{% elif entry.equifax == '90' %}payment-90{% elif entry.equifax == '120' %}payment-co{% elif 'CO' in (entry.equifax or '') %}payment-co{% else %}payment-na{% endif %}">
+                                        {{ entry.equifax or '-' }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                         <div class="late-summary">
                             <div class="late-item">
@@ -892,47 +915,69 @@
                 if (!details.classList.contains('show')) {
                     details.classList.add('show');
                 }
+
                 const allDots = card.querySelectorAll('.bureau-dot');
-                allDots.forEach(d => d.style.outline = 'none');
-                dot.style.outline = '2px solid white';
-                
-                // Update payment history to show selected bureau
-                const paymentStatuses = card.querySelectorAll('.payment-status');
-                paymentStatuses.forEach(ps => {
-                    const val = ps.dataset[bureau] || '';
-                    // Update text
-                    ps.textContent = val || '-';
-                    // Update class
-                    ps.className = 'payment-status';
-                    if (val === 'OK') ps.classList.add('payment-ok');
-                    else if (val === '30') ps.classList.add('payment-30');
-                    else if (val === '60') ps.classList.add('payment-60');
-                    else if (val === '90') ps.classList.add('payment-90');
-                    else if (val.includes('CO')) ps.classList.add('payment-co');
-                    else ps.classList.add('payment-na');
-                });
-                
-                // Update account detail fields (Balance, Credit Limit, Date Opened)
-                const bureauValues = card.querySelectorAll('.bureau-value');
-                bureauValues.forEach(bv => {
-                    const val = bv.dataset[bureau] || '';
-                    bv.textContent = val || 'N/A';
-                });
-                
+                const bureauRows = card.querySelectorAll('.bureau-payment-row');
+                const filterLabel = card.querySelector('.bureau-filter-label');
+                const bureauNames = {'tu': 'TransUnion', 'ex': 'Experian', 'eq': 'Equifax'};
+
+                // Check if this bureau is already selected (toggle off to show all)
+                const isAlreadySelected = dot.style.outline === '2px solid white';
+
+                if (isAlreadySelected) {
+                    // Reset to show ALL bureaus
+                    allDots.forEach(d => d.style.outline = 'none');
+                    bureauRows.forEach(row => row.style.display = 'block');
+                    if (filterLabel) filterLabel.textContent = 'Showing: All Bureaus';
+
+                    // Reset account detail fields to show combined/first value
+                    const bureauValues = card.querySelectorAll('.bureau-value');
+                    bureauValues.forEach(bv => {
+                        const tu = bv.dataset.tu || '';
+                        const ex = bv.dataset.ex || '';
+                        const eq = bv.dataset.eq || '';
+                        bv.textContent = tu || ex || eq || 'N/A';
+                    });
+                } else {
+                    // Show ONLY selected bureau
+                    allDots.forEach(d => d.style.outline = 'none');
+                    dot.style.outline = '2px solid white';
+
+                    // Hide other bureau rows, show selected one
+                    bureauRows.forEach(row => {
+                        if (row.dataset.bureau === bureau) {
+                            row.style.display = 'block';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    });
+
+                    if (filterLabel) filterLabel.textContent = 'Showing: ' + bureauNames[bureau] + ' only';
+
+                    // Update account detail fields (Balance, Credit Limit, Date Opened)
+                    const bureauValues = card.querySelectorAll('.bureau-value');
+                    bureauValues.forEach(bv => {
+                        const val = bv.dataset[bureau] || '';
+                        bv.textContent = val || 'N/A';
+                    });
+                }
+
                 // Highlight discrepancy values for selected bureau
                 const discSpans = card.querySelectorAll('.discrepancy-details span[style*="color"]');
                 discSpans.forEach(span => {
                     span.style.fontWeight = 'normal';
                     span.style.textDecoration = 'none';
                 });
-                const bureauColors = {'tu': '#3b82f6', 'ex': '#ef4444', 'eq': '#10b981'};
-                discSpans.forEach(span => {
-                    if (span.style.color === bureauColors[bureau] || 
-                        span.textContent.toLowerCase().startsWith(bureau.toUpperCase().substring(0,2))) {
-                        span.style.fontWeight = 'bold';
-                        span.style.textDecoration = 'underline';
-                    }
-                });
+                if (!isAlreadySelected) {
+                    const bureauColors = {'tu': '#3b82f6', 'ex': '#ef4444', 'eq': '#10b981'};
+                    discSpans.forEach(span => {
+                        if (span.style.color === bureauColors[bureau] ||
+                            span.textContent.toLowerCase().startsWith(bureau.toUpperCase().substring(0,2))) {
+                            span.style.fontWeight = 'bold';
+                            span.style.textDecoration = 'underline';
+                        }
+                    });
+                }
             }
 
             // Filter state (dispute functions removed) for flagged accounts
