@@ -615,80 +615,129 @@ class CreditImportAutomation:
 
             elif flow == "myfreescorenow":
                 logger.info(
-                    "MyFreeScoreNow: Looking for credit report link on dashboard..."
+                    "MyFreeScoreNow: Looking for 3B Report link on dashboard..."
                 )
 
                 # Wait for dashboard to load after login
                 await asyncio.sleep(5)
 
-                # Try multiple link patterns to find credit report
-                report_link_selectors = [
-                    'a:has-text("Credit Report")',
-                    'a:has-text("View Report")',
-                    'a:has-text("My Credit Report")',
-                    'a:has-text("3 Bureau Report")',
-                    'a:has-text("View Credit")',
-                    'a:has-text("Credit Score")',
-                    'a[href*="credit-report"]:visible',
-                    'a[href*="creditreport"]:visible',
-                    'a[href*="/report"]:visible',
-                    'a[href*="/reports"]:visible',
-                    'a[href*="/credit"]:visible',
-                    'button:has-text("Credit Report")',
+                # Click on 3B Report section - try multiple approaches
+                # The dashboard shows "3B Report & Scores" section with clickable elements
+                report_selectors = [
+                    # Click on the 3B Report section header or link
+                    'a:has-text("3B Report")',
+                    'a:has-text("3B Report & Scores")',
+                    ':has-text("3B Report & Scores") >> a',
+                    'a:has-text("View Last Update")',
+                    # Try clicking on bureau logos/links in the 3B section
+                    'a[href*="credit-report/3b"]',
+                    'a[href*="3b-report"]',
+                    'a[href*="/3b"]',
+                    # Try the Reports menu
+                    'a:has-text("Reports")',
+                    '[data-testid*="reports"]',
+                    # Fallback button clicks
+                    'button:has-text("3B Report")',
                     'button:has-text("View Report")',
-                    ".credit-report-link",
-                    '[data-testid*="credit-report"]',
-                    '[data-testid*="view-report"]',
                 ]
 
-                report_link_found = False
-                for selector in report_link_selectors:
+                report_found = False
+                for selector in report_selectors:
                     try:
                         link = await self.page.query_selector(selector)
                         if link:
-                            logger.info(
-                                f"Found credit report link with selector: {selector}"
-                            )
+                            logger.info(f"Found 3B report element: {selector}")
                             await link.click()
-                            await self.page.wait_for_load_state(
-                                "networkidle", timeout=30000
-                            )
-                            report_link_found = True
-                            break
+                            await asyncio.sleep(3)
+                            await self.page.wait_for_load_state("networkidle", timeout=30000)
+
+                            # Check if we're on the 3B report page now
+                            current_url = self.page.url.lower()
+                            page_title = await self.page.title()
+                            if "3b" in current_url or "3b" in page_title.lower() or "bureau" in page_title.lower():
+                                logger.info(f"Successfully navigated to 3B Report page: {page_title}")
+                                report_found = True
+                                break
                     except Exception as e:
-                        logger.debug(f"Link selector {selector} failed: {e}")
+                        logger.debug(f"Selector {selector} failed: {e}")
                         continue
 
-                if not report_link_found:
-                    logger.warning(
-                        "Could not find credit report link, trying common URL patterns..."
-                    )
-                    # Fallback: Try common URL patterns
-                    fallback_urls = [
-                        "https://member.myfreescorenow.com/dashboard",
-                        "https://member.myfreescorenow.com/reports",
-                        "https://member.myfreescorenow.com/credit",
-                        "https://member.myfreescorenow.com/my-credit",
+                # If clicking didn't work, try direct URL navigation
+                if not report_found:
+                    logger.warning("Could not find 3B report link, trying direct URL...")
+                    direct_urls = [
+                        "https://member.myfreescorenow.com/member/credit-report/3b",
+                        "https://member.myfreescorenow.com/credit-report/3b",
+                        "https://member.myfreescorenow.com/3b-report",
+                        "https://member.myfreescorenow.com/reports/3b",
                     ]
-                    for url in fallback_urls:
+                    for url in direct_urls:
                         try:
-                            await self.page.goto(
-                                url, wait_until="networkidle", timeout=30000
-                            )
-                            # Check if page has scores
-                            page_text = await self.page.evaluate(
-                                "document.body.innerText"
-                            )
-                            if "credit" in page_text.lower() or any(
-                                str(i) in page_text for i in range(300, 850)
-                            ):
-                                logger.info(f"Found credit data at: {url}")
+                            logger.info(f"Trying direct navigation to: {url}")
+                            await self.page.goto(url, wait_until="networkidle", timeout=30000)
+                            page_title = await self.page.title()
+                            if "not found" not in page_title.lower():
+                                logger.info(f"Found report page at: {url}")
                                 break
                         except:
                             continue
 
                 logger.info("Waiting for credit report page to load...")
                 await asyncio.sleep(5)
+
+                # MyFreeScoreNow uses Vue.js with client-side rendering
+                # We MUST wait for Vue to render content inside #smartcredit-app
+                logger.info("Waiting for Vue.js to render content...")
+
+                # Wait for Vue.js app to populate with actual content
+                vue_content_selectors = [
+                    ".account-container",  # Account cards
+                    ".bureau-score",  # Score display
+                    ".report-header",  # Report header section
+                    '[data-test-account-name]',  # Account names
+                    ".credit-score-container",  # Score containers
+                    ".account-section",  # Account sections
+                ]
+
+                vue_rendered = False
+                max_vue_attempts = 20  # Wait up to 60 seconds for Vue to render
+                for attempt in range(max_vue_attempts):
+                    try:
+                        # Check if Vue has rendered content inside #smartcredit-app
+                        has_content = await self.page.evaluate(
+                            """() => {
+                            const app = document.querySelector('#smartcredit-app');
+                            if (!app) return false;
+
+                            // Check if Vue has rendered actual content (not just the shell)
+                            const innerContent = app.innerHTML.trim();
+                            if (innerContent.length < 100) return false;  // Empty or minimal
+
+                            // Look for Vue-rendered elements
+                            const hasAccounts = app.querySelectorAll('.account-container').length > 0;
+                            const hasScores = app.querySelectorAll('[class*="score"]').length > 0;
+                            const hasReportData = app.querySelectorAll('[data-test-account-name]').length > 0;
+
+                            return hasAccounts || hasScores || hasReportData || innerContent.length > 500;
+                        }"""
+                        )
+
+                        if has_content:
+                            logger.info(f"Vue.js content detected after {attempt + 1} attempts")
+                            vue_rendered = True
+                            break
+                        else:
+                            logger.info(f"Vue attempt {attempt + 1}: Waiting for content to render...")
+                    except Exception as e:
+                        logger.warning(f"Vue check attempt {attempt + 1} failed: {e}")
+
+                    await asyncio.sleep(3)
+
+                if not vue_rendered:
+                    logger.warning("Vue.js may not have fully rendered - proceeding anyway...")
+
+                # Additional wait for any lazy-loaded content
+                await asyncio.sleep(3)
 
                 # MyFreeScoreNow uses modern React/Vue, different selectors than Angular
                 score_selectors = [
@@ -824,9 +873,106 @@ class CreditImportAutomation:
                 await asyncio.sleep(1)
             except Exception as e:
                 logger.warning(f"Scroll failed: {e}")
+
+            # Expand all "View all details" sections to capture full account data
+            # IMPORTANT: Must click each button sequentially with waits so Vue.js can render each modal
+            logger.info("Expanding all account details (clicking each sequentially with Playwright)...")
+            try:
+                # Get all view-more-link elements using Playwright locator
+                view_more_links = await self.page.locator(".view-more-link").all()
+                view_details_count = len(view_more_links)
+                logger.info(f"Found {view_details_count} 'View all details' links to click")
+
+                # Click each one sequentially using Playwright's native click() method
+                expanded_count = 0
+                for i, link in enumerate(view_more_links):
+                    try:
+                        # Scroll the link into view and click it
+                        await link.scroll_into_view_if_needed()
+                        await asyncio.sleep(0.2)
+                        await link.click()
+                        expanded_count += 1
+
+                        # Wait for Vue.js to render the modal content
+                        await asyncio.sleep(0.8)
+
+                        # Check if payment history appeared in this modal
+                        # MyFreeScoreNow modals might load content dynamically
+                        for wait_attempt in range(3):
+                            modal_count = await self.page.evaluate(
+                                """() => {
+                                const modals = document.querySelectorAll('.account-modal .payment-history');
+                                return modals.length;
+                            }"""
+                            )
+                            if modal_count >= i + 1:
+                                break
+                            await asyncio.sleep(0.5)
+
+                        if (i + 1) % 10 == 0:
+                            logger.info(f"Expanded {i + 1}/{view_details_count} account details...")
+                    except Exception as e:
+                        logger.debug(f"Failed to click link {i}: {e}")
+                        continue
+
+                if expanded_count > 0:
+                    logger.info(f"Clicked {expanded_count}/{view_details_count} 'View all details' links")
+                    # Final wait for all content to settle
+                    await asyncio.sleep(3)
+
+                    # Verify payment history sections were loaded
+                    payment_history_count = await self.page.evaluate(
+                        """() => {
+                        return document.querySelectorAll('.account-modal .payment-history').length;
+                    }"""
+                    )
+                    logger.info(f"Found {payment_history_count} payment history sections in modals after expansion")
+            except Exception as e:
+                logger.warning(f"Failed to expand account details: {e}")
+
             logger.info(f"Captured {len(captured_data['responses'])} XHR responses")
             for resp in captured_data["responses"]:
                 logger.info(f"  - {resp['url'][:80]}")
+
+            # Final verification: Check that we have rendered content before capturing
+            logger.info("Verifying page content before capture...")
+            try:
+                content_check = await self.page.evaluate(
+                    """() => {
+                    const result = {
+                        hasSmartCreditApp: false,
+                        appContentLength: 0,
+                        accountCount: 0,
+                        scoreElementCount: 0,
+                        pageTitle: document.title,
+                        bodyLength: document.body.innerHTML.length
+                    };
+
+                    const app = document.querySelector('#smartcredit-app');
+                    if (app) {
+                        result.hasSmartCreditApp = true;
+                        result.appContentLength = app.innerHTML.length;
+                        result.accountCount = app.querySelectorAll('.account-container, [data-test-account-name]').length;
+                        result.scoreElementCount = app.querySelectorAll('[class*="score"], .bureau-score').length;
+                    }
+
+                    return result;
+                }"""
+                )
+                logger.info(f"Content verification: {content_check}")
+
+                # If #smartcredit-app exists but has minimal content, wait more
+                if content_check.get('hasSmartCreditApp') and content_check.get('appContentLength', 0) < 1000:
+                    logger.warning("Vue app exists but content is minimal - waiting longer...")
+                    await asyncio.sleep(10)  # Extra wait for slow rendering
+
+            except Exception as e:
+                logger.warning(f"Content verification failed: {e}")
+
+            # Take a debug screenshot
+            debug_screenshot = REPORTS_DIR / f"debug_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
+            await self.page.screenshot(path=str(debug_screenshot), full_page=True)
+            logger.info(f"Saved debug screenshot to {debug_screenshot}")
 
             html_content = await self.page.content()
 
@@ -1273,6 +1419,125 @@ class CreditImportAutomation:
 
         except Exception as e:
             logger.warning(f"Account extraction failed: {e}")
+
+        # If no accounts found, try MyFreeScoreNow 3B Report structure
+        if not accounts:
+            try:
+                mfsn_accounts = await self.page.evaluate(
+                    """() => {
+                    const accounts = [];
+
+                    // MyFreeScoreNow 3B Report uses .account-container divs
+                    const containers = document.querySelectorAll('.account-container');
+
+                    containers.forEach((container) => {
+                        const account = {
+                            creditor: null,
+                            account_number: null,
+                            account_type: null,
+                            status: null,
+                            balance: null,
+                            credit_limit: null,
+                            is_negative: container.classList.contains('negative-account'),
+                            bureaus: {
+                                transunion: { present: true },
+                                experian: { present: true },
+                                equifax: { present: true }
+                            }
+                        };
+
+                        // Get creditor name from data-test-account-name or strong tag
+                        const nameEl = container.querySelector('[data-test-account-name]')
+                                    || container.querySelector('.account-heading strong');
+                        if (nameEl) {
+                            account.creditor = nameEl.textContent.trim();
+                        }
+
+                        // Get account number from the heading paragraph (after creditor name)
+                        const headingP = container.querySelector('.account-heading p[data-uw-ignore-translate]');
+                        if (headingP) {
+                            const text = headingP.textContent.trim();
+                            // Account number is typically after the creditor name
+                            const parts = text.split(/\\s+/);
+                            if (parts.length > 1) {
+                                // Last part is often the masked account number
+                                const lastPart = parts[parts.length - 1];
+                                if (/\\d/.test(lastPart) || lastPart.includes('*')) {
+                                    account.account_number = lastPart;
+                                }
+                            }
+                        }
+
+                        // Get status from data-test-account-status
+                        const statusEl = container.querySelector('[data-test-account-status]');
+                        if (statusEl) {
+                            account.status = statusEl.textContent.trim();
+                        }
+
+                        // Get balance from .balance row
+                        const balanceRow = container.querySelector('.attribute-row.balance .display-attribute p');
+                        if (balanceRow) {
+                            const balText = balanceRow.textContent.trim();
+                            // Extract dollar amount
+                            const match = balText.match(/\\$[\\d,]+/);
+                            if (match) {
+                                account.balance = match[0];
+                            }
+                            // Check for credit limit or original amount
+                            const limitMatch = balText.match(/\\$[\\d,]+\\s+Limit/i);
+                            const origMatch = balText.match(/Orig\\.\\s*\\$[\\d,]+/i);
+                            if (limitMatch) {
+                                account.credit_limit = limitMatch[0].replace(' Limit', '');
+                            } else if (origMatch) {
+                                account.original_amount = origMatch[0].replace(/Orig\\.?\\s*/i, '');
+                            }
+                        }
+
+                        // Get payment amount from .payment row
+                        const paymentRow = container.querySelector('.attribute-row.payment .display-attribute p');
+                        if (paymentRow) {
+                            const payText = paymentRow.textContent.trim();
+                            const match = payText.match(/\\$[\\d,]+/);
+                            if (match) {
+                                account.payment = match[0];
+                            }
+                        }
+
+                        // Get late payment info
+                        const late30 = container.querySelector('[data-test-30-late]');
+                        const late60 = container.querySelector('[data-test-60-late]');
+                        const late90 = container.querySelector('[data-test-90-late]');
+
+                        if (late30 || late60 || late90) {
+                            account.late_payments = {
+                                days_30: late30 ? parseInt(late30.textContent) : 0,
+                                days_60: late60 ? parseInt(late60.textContent) : 0,
+                                days_90: late90 ? parseInt(late90.textContent) : 0
+                            };
+                        }
+
+                        // Get utilization if present
+                        const utilEl = container.querySelector('[data-test-account-utilization] .circle-chart__percent');
+                        if (utilEl) {
+                            account.utilization = utilEl.textContent.trim();
+                        }
+
+                        // Only add if we got a creditor name
+                        if (account.creditor) {
+                            accounts.push(account);
+                        }
+                    });
+
+                    return accounts;
+                }"""
+                )
+
+                if mfsn_accounts:
+                    logger.info(f"Extracted {len(mfsn_accounts)} accounts from MyFreeScoreNow DOM")
+                    accounts.extend(mfsn_accounts)
+
+            except Exception as e:
+                logger.warning(f"MyFreeScoreNow account extraction failed: {e}")
 
         return accounts
 

@@ -217,6 +217,51 @@ class CreditReportParser:
                 if 300 <= score <= 850:
                     scores["equifax"] = score
 
+        # Method 4: MyFreeScoreNow 3B Report format - bureau-score divs with h1 scores
+        if not any(scores.values()):
+            bureau_divs = self.soup.find_all("div", class_=re.compile(r"bureau-score"))
+            for div in bureau_divs:
+                # Check which bureau this is based on class or text
+                div_class = " ".join(div.get("class", []))
+                h6_tag = div.find("h6")
+                h1_tag = div.find("h1")
+
+                if h1_tag:
+                    try:
+                        score = int(re.sub(r"\D", "", h1_tag.get_text(strip=True)))
+                        if 300 <= score <= 850:
+                            bureau_text = h6_tag.get_text(strip=True).lower() if h6_tag else div_class.lower()
+                            if "transunion" in bureau_text or "border-transunion" in div_class:
+                                scores["transunion"] = score
+                            elif "experian" in bureau_text or "border-experian" in div_class:
+                                scores["experian"] = score
+                            elif "equifax" in bureau_text or "border-equifax" in div_class:
+                                scores["equifax"] = score
+                    except (ValueError, AttributeError):
+                        pass
+
+        # Method 5: MyFreeScoreNow report-header scores div
+        if not any(scores.values()):
+            report_header = self.soup.find("div", class_="report-header")
+            if report_header:
+                score_divs = report_header.find_all("div", class_="flex-basis")
+                for div in score_divs:
+                    h6_tag = div.find("h6")
+                    h1_tag = div.find("h1")
+                    if h6_tag and h1_tag:
+                        bureau_text = h6_tag.get_text(strip=True).lower()
+                        try:
+                            score = int(re.sub(r"\D", "", h1_tag.get_text(strip=True)))
+                            if 300 <= score <= 850:
+                                if "transunion" in bureau_text:
+                                    scores["transunion"] = score
+                                elif "experian" in bureau_text:
+                                    scores["experian"] = score
+                                elif "equifax" in bureau_text:
+                                    scores["equifax"] = score
+                        except (ValueError, AttributeError):
+                            pass
+
         return scores
 
     def _extract_personal_info(self) -> Dict:
@@ -559,7 +604,556 @@ class CreditReportParser:
 
             accounts.append(account)
 
+        # If no accounts found with MyScoreIQ method, try MyFreeScoreNow 3B Report format
+        if not accounts:
+            accounts = self._extract_accounts_myfreescorenow()
+
         return accounts
+
+    def _extract_accounts_myfreescorenow(self) -> List[Dict]:
+        """Extract accounts from MyFreeScoreNow 3B Report HTML structure."""
+        accounts = []
+
+        # MyFreeScoreNow 3B Report uses .account-container divs
+        containers = self.soup.find_all("div", class_=re.compile(r"account-container"))
+
+        if not containers:
+            logger.debug("No MyFreeScoreNow account containers found")
+            return accounts
+
+        logger.info(f"Found {len(containers)} MyFreeScoreNow account containers")
+
+        # Track current account type from section headers
+        current_account_type = None
+
+        for container in containers:
+            # Check for account type section header before this container
+            prev_sibling = container.find_previous_sibling("div", class_="accounttype-heading")
+            if prev_sibling:
+                h3 = prev_sibling.find("h3")
+                if h3:
+                    current_account_type = h3.get_text(strip=True).replace(" Accounts", "")
+
+            account: Dict[str, Any] = {
+                "creditor": None,
+                "original_creditor": None,
+                "account_number": None,
+                "account_type": current_account_type,
+                "account_type_detail": None,
+                "status": None,
+                "account_status": None,
+                "payment_status": None,
+                "account_rating": None,
+                "account_description": None,
+                "dispute_status": None,
+                "creditor_type": None,
+                "creditor_remarks": None,
+                "balance": None,
+                "balance_owed": None,
+                "credit_limit": None,
+                "high_balance": None,
+                "monthly_payment": None,
+                "last_payment": None,
+                "last_payment_date": None,
+                "past_due_amount": None,
+                "date_opened": None,
+                "date_reported": None,
+                "date_last_activity": None,
+                "last_verified": None,
+                "closed_date": None,
+                "times_30_late": None,
+                "times_60_late": None,
+                "times_90_late": None,
+                "utilization": None,
+                "is_negative": "negative-account" in container.get("class", []),
+                "payment_history": [],
+                "bureaus": {
+                    "transunion": {"present": True},
+                    "experian": {"present": True},
+                    "equifax": {"present": True},
+                },
+            }
+
+            # Get creditor name from data-test-account-name or strong tag
+            name_el = container.find(attrs={"data-test-account-name": True})
+            if not name_el:
+                name_el = container.find("strong", class_="fs-16")
+            if name_el:
+                account["creditor"] = name_el.get_text(strip=True)
+
+            # Get account number from the heading paragraph (after the strong creditor name tag)
+            heading_p = container.find("p", attrs={"data-uw-ignore-translate": True})
+            if heading_p:
+                # The account number is the text AFTER the strong tag (creditor name)
+                strong_tag = heading_p.find("strong")
+                if strong_tag:
+                    # Get all text after the strong tag
+                    remaining_text = ""
+                    for sibling in strong_tag.next_siblings:
+                        if hasattr(sibling, 'get_text'):
+                            remaining_text += sibling.get_text(strip=True)
+                        else:
+                            remaining_text += str(sibling).strip()
+                    remaining_text = remaining_text.strip()
+                    if remaining_text and (re.search(r"\d", remaining_text) or "*" in remaining_text):
+                        account["account_number"] = remaining_text
+
+            # Get status from data-test-account-status
+            status_el = container.find(attrs={"data-test-account-status": True})
+            if status_el:
+                status_text = status_el.get_text(strip=True)
+                account["status"] = status_text
+                account["account_status"] = status_text
+
+            # Get closed date or last payment date from heading
+            heading_div = container.find("div", class_="account-heading")
+            if heading_div:
+                text_end = heading_div.find("div", class_="text-end")
+                if text_end:
+                    label_p = text_end.find("p", class_="mb-0")
+                    value_p = text_end.find("p", class_="fw-bold")
+                    if label_p and value_p:
+                        label = label_p.get_text(strip=True).lower()
+                        value = value_p.get_text(strip=True)
+                        if "closed" in label:
+                            account["closed_date"] = value
+                        elif "last payment" in label:
+                            account["last_payment_date"] = value
+
+            # Get credit utilization from SVG chart
+            util_el = container.find("text", class_="circle-chart__percent")
+            if util_el:
+                util_text = util_el.get_text(strip=True)
+                account["utilization"] = util_text
+
+            # Get balance from .balance row
+            balance_row = container.find("div", class_=re.compile(r"attribute-row.*balance"))
+            if balance_row:
+                display_attr = balance_row.find("div", class_="display-attribute")
+                if display_attr:
+                    p_tag = display_attr.find("p")
+                    if p_tag:
+                        bal_text = p_tag.get_text(strip=True)
+                        # Extract first dollar amount as balance
+                        bal_match = re.search(r"\$[\d,]+", bal_text)
+                        if bal_match:
+                            account["balance"] = bal_match.group(0)
+                            account["balance_owed"] = bal_match.group(0)
+                        # Check for credit limit
+                        limit_match = re.search(r"\$([\d,]+)\s+Limit", bal_text)
+                        if limit_match:
+                            account["credit_limit"] = f"${limit_match.group(1)}"
+                        # Check for original amount (high balance for mortgages)
+                        orig_match = re.search(r"Orig\.?\s*\$([\d,]+)", bal_text)
+                        if orig_match:
+                            account["high_balance"] = f"${orig_match.group(1)}"
+
+            # Get payment amount and date from .payment row
+            payment_row = container.find("div", class_=re.compile(r"attribute-row.*payment"))
+            if payment_row:
+                display_attr = payment_row.find("div", class_="display-attribute")
+                if display_attr:
+                    p_tag = display_attr.find("p")
+                    if p_tag:
+                        pay_text = p_tag.get_text(strip=True)
+                        pay_match = re.search(r"\$[\d,]+", pay_text)
+                        if pay_match:
+                            account["monthly_payment"] = pay_match.group(0)
+                            account["last_payment"] = pay_match.group(0)
+                        # Get date last posted
+                        date_match = re.search(r"Date Last Posted\s*(\d{1,2}/\d{1,2}/\d{4})", pay_text)
+                        if date_match:
+                            account["date_reported"] = date_match.group(1)
+
+            # Get late payment info
+            late_30 = container.find(attrs={"data-test-30-late": True})
+            late_60 = container.find(attrs={"data-test-60-late": True})
+            late_90 = container.find(attrs={"data-test-90-late": True})
+
+            if late_30:
+                try:
+                    account["times_30_late"] = int(late_30.get_text(strip=True))
+                except ValueError:
+                    pass
+            if late_60:
+                try:
+                    account["times_60_late"] = int(late_60.get_text(strip=True))
+                except ValueError:
+                    pass
+            if late_90:
+                try:
+                    account["times_90_late"] = int(late_90.get_text(strip=True))
+                except ValueError:
+                    pass
+
+            # Extract expanded details if available (from "View all details" modal)
+            # MyFreeScoreNow uses .account-modal-body for the expanded details
+            modal = container.find("div", class_="account-modal")
+            if modal:
+                modal_body = modal.find("div", class_="account-modal-body")
+                if modal_body:
+                    # Parse the attributes table (grid layout with bureau columns)
+                    self._parse_myfreescorenow_modal_details(modal_body, account)
+
+                    # Extract 2-year payment history from the modal
+                    history_section = modal_body.find("div", class_="payment-history")
+                    if history_section:
+                        account["payment_history"] = self._extract_myfreescorenow_payment_history(history_section)
+                    else:
+                        # Try parent modal
+                        history_section = modal.find("div", class_="payment-history")
+                        if history_section:
+                            account["payment_history"] = self._extract_myfreescorenow_payment_history(history_section)
+
+            # Also try to find payment history directly in container if not found in modal
+            if not account.get("payment_history"):
+                history_section = container.find("div", class_=re.compile(r"payment-history"))
+                if history_section:
+                    account["payment_history"] = self._extract_myfreescorenow_payment_history(history_section)
+
+            # Only add if we got a creditor name
+            if account["creditor"]:
+                accounts.append(account)
+
+        logger.info(f"Extracted {len(accounts)} accounts from MyFreeScoreNow format")
+        return accounts
+
+    def _parse_myfreescorenow_modal_details(self, modal_body, account: Dict) -> None:
+        """Parse expanded account details from MyFreeScoreNow modal 'View all details' section.
+
+        The HTML structure uses a grid with bureau columns:
+        <div class="attributes-table">
+          <div class="d-grid grid-cols-4">
+            <div class="attribute-label"></div>
+            <div class="bg-transunion">TransUnion</div>
+            <div class="bg-experian">Experian</div>
+            <div class="bg-equifax">Equifax</div>
+            <div class="attribute-label">Account #</div>
+            <div>867348*******</div>
+            <div>867348*******</div>
+            <div>867348*******</div>
+            ...
+          </div>
+        </div>
+        """
+        # Find the attributes table grid
+        grid = modal_body.find("div", class_="d-grid")
+        if not grid:
+            return
+
+        # Get all direct children divs
+        cells = grid.find_all("div", recursive=False)
+        if len(cells) < 4:
+            return
+
+        # Process in groups of 4 (label, TU value, EX value, EQ value)
+        current_row = 0
+        for i in range(0, len(cells) - 3, 4):
+            label_div = cells[i]
+            tu_div = cells[i + 1]
+            ex_div = cells[i + 2]
+            eq_div = cells[i + 3]
+
+            # Skip header row
+            label_class = label_div.get("class", [])
+            if "bg-transunion" in " ".join(label_class) or not label_div.get_text(strip=True):
+                continue
+
+            label = label_div.get_text(strip=True).lower()
+            tu_val = tu_div.get_text(strip=True)
+            ex_val = ex_div.get_text(strip=True)
+            eq_val = eq_div.get_text(strip=True)
+
+            # Get first non-empty, non-dash value
+            value = tu_val if tu_val and tu_val != "--" else (
+                ex_val if ex_val and ex_val != "--" else (
+                    eq_val if eq_val and eq_val != "--" else None
+                )
+            )
+
+            if not value:
+                continue
+
+            # Map labels to account fields
+            if "account #" in label or "account number" in label:
+                if not account.get("account_number"):
+                    account["account_number"] = value
+                # Store per-bureau values
+                account["bureaus"]["transunion"]["account_number"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["account_number"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["account_number"] = eq_val if eq_val != "--" else None
+            elif "high balance" in label or "high credit" in label:
+                account["high_balance"] = value
+                account["bureaus"]["transunion"]["high_balance"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["high_balance"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["high_balance"] = eq_val if eq_val != "--" else None
+            elif "last verified" in label:
+                account["last_verified"] = value
+                account["bureaus"]["transunion"]["last_verified"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["last_verified"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["last_verified"] = eq_val if eq_val != "--" else None
+            elif "date of last activity" in label or "last activity" in label:
+                account["date_last_activity"] = value
+                account["bureaus"]["transunion"]["date_last_activity"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["date_last_activity"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["date_last_activity"] = eq_val if eq_val != "--" else None
+            elif "date reported" in label:
+                account["date_reported"] = value
+                account["bureaus"]["transunion"]["date_reported"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["date_reported"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["date_reported"] = eq_val if eq_val != "--" else None
+            elif "date opened" in label:
+                account["date_opened"] = value
+                account["bureaus"]["transunion"]["date_opened"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["date_opened"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["date_opened"] = eq_val if eq_val != "--" else None
+            elif "balance owed" in label:
+                account["balance_owed"] = value
+                account["bureaus"]["transunion"]["balance_owed"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["balance_owed"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["balance_owed"] = eq_val if eq_val != "--" else None
+            elif "closed date" in label:
+                account["closed_date"] = value
+            elif "account rating" in label:
+                account["account_rating"] = value
+            elif "account description" in label:
+                account["account_description"] = value
+            elif "dispute status" in label:
+                account["dispute_status"] = value
+                account["bureaus"]["transunion"]["dispute_status"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["dispute_status"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["dispute_status"] = eq_val if eq_val != "--" else None
+            elif "creditor type" in label:
+                account["creditor_type"] = value
+            elif "account status" in label:
+                account["account_status"] = value
+                account["bureaus"]["transunion"]["account_status"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["account_status"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["account_status"] = eq_val if eq_val != "--" else None
+            elif "payment status" in label:
+                account["payment_status"] = value
+                account["bureaus"]["transunion"]["payment_status"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["payment_status"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["payment_status"] = eq_val if eq_val != "--" else None
+            elif "creditor remarks" in label:
+                account["creditor_remarks"] = value
+            elif "original creditor" in label:
+                account["original_creditor"] = value
+            elif "payment amount" in label or "last payment" in label:
+                if "amount" in label:
+                    account["monthly_payment"] = value
+                else:
+                    account["last_payment_date"] = value
+            elif "term length" in label:
+                account["term_length"] = value
+            elif "past due" in label:
+                account["past_due_amount"] = value
+            elif "account type" in label:
+                account["account_type_detail"] = value
+                account["bureaus"]["transunion"]["account_type"] = tu_val if tu_val != "--" else None
+                account["bureaus"]["experian"]["account_type"] = ex_val if ex_val != "--" else None
+                account["bureaus"]["equifax"]["account_type"] = eq_val if eq_val != "--" else None
+            elif "payment frequency" in label:
+                account["payment_frequency"] = value
+            elif "credit limit" in label:
+                account["credit_limit"] = value
+
+    def _parse_myfreescorenow_account_details(self, details_section, account: Dict) -> None:
+        """Parse expanded account details from MyFreeScoreNow 'View all details' section."""
+        # Look for attribute rows with labels and values
+        rows = details_section.find_all("div", class_="attribute-row")
+        for row in rows:
+            label_el = row.find("p", class_="text-gray-900")
+            if not label_el:
+                continue
+            label = label_el.get_text(strip=True).lower()
+
+            display_attr = row.find("div", class_="display-attribute")
+            if not display_attr:
+                continue
+            value_el = display_attr.find("p")
+            if not value_el:
+                continue
+            value = value_el.get_text(strip=True)
+
+            # Map labels to account fields
+            if "account" in label and "#" in label:
+                account["account_number"] = value
+            elif "high balance" in label or "high credit" in label:
+                account["high_balance"] = value
+            elif "last verified" in label:
+                account["last_verified"] = value
+            elif "last activity" in label or "date of last activity" in label:
+                account["date_last_activity"] = value
+            elif "date reported" in label:
+                account["date_reported"] = value
+            elif "date opened" in label or "opened" in label:
+                account["date_opened"] = value
+            elif "balance owed" in label or "balance" in label:
+                if not account["balance"]:
+                    account["balance_owed"] = value
+            elif "closed date" in label:
+                account["closed_date"] = value
+            elif "account rating" in label or "rating" in label:
+                account["account_rating"] = value
+            elif "account description" in label or "description" in label:
+                account["account_description"] = value
+            elif "dispute status" in label:
+                account["dispute_status"] = value
+            elif "creditor type" in label:
+                account["creditor_type"] = value
+            elif "account status" in label:
+                account["account_status"] = value
+            elif "payment status" in label:
+                account["payment_status"] = value
+            elif "creditor remarks" in label or "remarks" in label:
+                account["creditor_remarks"] = value
+            elif "original creditor" in label:
+                account["original_creditor"] = value
+            elif "last payment" in label:
+                account["last_payment"] = value
+            elif "past due" in label:
+                account["past_due_amount"] = value
+            elif "account type" in label or "type" in label:
+                account["account_type_detail"] = value
+
+    def _extract_myfreescorenow_payment_history(self, history_section) -> List[Dict]:
+        """Extract 2-year payment history from MyFreeScoreNow format.
+
+        The HTML structure is:
+        <div class="payment-history">
+          <p class="text-transunion"> TransUnion </p>
+          <div class="d-flex ...">
+            <div class="status-C"><p class="month-badge">OK</p><p class="month-label">Dec</p></div>
+            <div class="status-4"><p class="month-badge">120</p><p class="month-label">'24</p></div>
+            ...
+          </div>
+        </div>
+
+        Output format (expected by template):
+        [
+            {"month": "Dec", "year": "24", "transunion": "OK", "experian": "OK", "equifax": "30"},
+            ...
+        ]
+        """
+        # Map status codes to display text
+        status_display_map = {
+            "C": "OK",
+            "1": "30",
+            "2": "60",
+            "3": "90",
+            "4": "120",
+            "5": "150",
+            "6": "-",
+            "7": "DF",  # Deferred
+            "8": "RP",  # Repossession
+            "9": "CO",  # Charge-off
+            "U": "-",
+            "X": "-",
+        }
+
+        # Find the parent container that holds all bureau payment histories
+        parent_container = history_section
+        parent = history_section.find_parent("div", class_="payment-history")
+        if parent and parent.parent:
+            parent_container = parent.parent
+
+        # Find all payment history divs (one per bureau)
+        all_history_divs = parent_container.find_all("div", class_="d-flex", recursive=True)
+
+        # Collect data per bureau
+        bureau_data = {
+            "transunion": [],
+            "experian": [],
+            "equifax": []
+        }
+
+        # Process each bureau's section
+        for hist_div in parent_container.find_all("div", class_="payment-history", recursive=False):
+            # Determine bureau from heading
+            bureau_heading = hist_div.find("p", class_=re.compile(r"text-transunion|text-experian|text-equifax|payment-history-heading"))
+            bureau_name = None
+            if bureau_heading:
+                heading_text = bureau_heading.get_text(strip=True).lower()
+                if "transunion" in heading_text:
+                    bureau_name = "transunion"
+                elif "experian" in heading_text:
+                    bureau_name = "experian"
+                elif "equifax" in heading_text:
+                    bureau_name = "equifax"
+
+            if not bureau_name:
+                continue
+
+            # Find status divs within this bureau section
+            flex_container = hist_div.find("div", class_=re.compile(r"d-flex.*gap|d-flex.*flex-wrap"))
+            if not flex_container:
+                flex_container = hist_div
+
+            status_divs = flex_container.find_all("div", class_=re.compile(r"status-[A-Z0-9]"))
+
+            for status_div in status_divs:
+                # Extract status code from class name
+                classes = status_div.get("class", [])
+                status_code = None
+                for cls in classes:
+                    if cls.startswith("status-"):
+                        status_code = cls.replace("status-", "")
+                        break
+
+                # Get month badge text (OK, 120, etc.)
+                badge = status_div.find("p", class_="month-badge")
+                badge_text = badge.get_text(strip=True) if badge else ""
+
+                # Get month label (Dec, '24, etc.)
+                label = status_div.find("p", class_="month-label")
+                month_text = label.get_text(strip=True) if label else ""
+
+                # Determine if this is a year marker or month
+                is_year = month_text.startswith("'")
+                year = None
+                month = month_text
+                if is_year:
+                    year = month_text.replace("'", "")  # Just "24", "25"
+                    month = "Jan"  # Year markers are typically January
+
+                # Map status to display value
+                display_status = badge_text if badge_text in ["OK", "30", "60", "90", "120", "CO"] else status_display_map.get(status_code, "-")
+
+                bureau_data[bureau_name].append({
+                    "month": month,
+                    "year": year,
+                    "status": display_status
+                })
+
+        # Combine into unified format (one entry per month with all bureaus)
+        # Use the longest bureau list as the base
+        max_len = max(len(bureau_data["transunion"]), len(bureau_data["experian"]), len(bureau_data["equifax"]))
+
+        history = []
+        current_year = None
+
+        for i in range(max_len):
+            tu_entry = bureau_data["transunion"][i] if i < len(bureau_data["transunion"]) else {}
+            ex_entry = bureau_data["experian"][i] if i < len(bureau_data["experian"]) else {}
+            eq_entry = bureau_data["equifax"][i] if i < len(bureau_data["equifax"]) else {}
+
+            # Get month and year from any available entry
+            month = tu_entry.get("month") or ex_entry.get("month") or eq_entry.get("month") or ""
+            year = tu_entry.get("year") or ex_entry.get("year") or eq_entry.get("year")
+
+            if year:
+                current_year = year
+
+            history.append({
+                "month": month[:3] if month else "",  # Truncate to 3 chars
+                "year": current_year or "",
+                "transunion": tu_entry.get("status", "-"),
+                "experian": ex_entry.get("status", "-"),
+                "equifax": eq_entry.get("status", "-"),
+            })
+
+        return history
 
     def _extract_payment_history_for_account(self, parent_element) -> List[Dict]:
         """Extract 2-year payment history grid for an account."""
