@@ -288,6 +288,45 @@
                 <div id="nextSteps" class="alert alert-warning mb-3"></div>
                 <div id="documentsContainer"></div>
             </div>
+
+            <!-- Envelope Packets Section (Phase 2 only) -->
+            <div id="packetsSection" class="d-none">
+                <div class="content-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-envelope-paper me-2"></i>Envelope-Ready Packets</h5>
+                        <div id="sendCertifiedStatus">
+                            <!-- Status loaded dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-3">
+                        <h6 class="mb-1"><i class="bi bi-info-circle me-2"></i>Ready for Certified Mail</h6>
+                        <p class="mb-0 small">Each bureau gets a separate envelope with cover sheet + dispute letter. Click "Create Packets" to generate mailing-ready packages, then "Queue to SendCertifiedMail" to submit automatically.</p>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <button id="createPacketsBtn" class="btn btn-knockout w-100" onclick="createEnvelopePackets()">
+                                <i class="bi bi-folder-plus me-2"></i>Create Packets
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="queuePacketsBtn" class="btn btn-primary w-100" onclick="queueToSendCertified()" disabled>
+                                <i class="bi bi-send me-2"></i>Queue to SendCertifiedMail
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <button id="downloadPacketsBtn" class="btn btn-outline-secondary w-100" onclick="downloadAllCoverSheets()" disabled>
+                                <i class="bi bi-download me-2"></i>Download Cover Sheets
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="packetsContainer"></div>
+
+                    <div id="queueResults" class="d-none mt-3"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -597,6 +636,28 @@
             `;
         }
 
+        // Store generated documents for packet creation
+        generatedDocuments = data;
+
+        // Show packets section for Phase 2 (Full Dispute)
+        if (data.phase === 2) {
+            document.getElementById('packetsSection').classList.remove('d-none');
+            document.getElementById('packetsContainer').innerHTML = `
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-envelope-paper" style="font-size: 2rem;"></i>
+                    <p class="mt-2 mb-0">Click "Create Packets" to generate envelope-ready packages</p>
+                </div>
+            `;
+            // Reset buttons
+            document.getElementById('queuePacketsBtn').disabled = true;
+            document.getElementById('downloadPacketsBtn').disabled = true;
+            currentPackets = null;
+            // Check SendCertified status
+            checkSendCertifiedStatus();
+        } else {
+            document.getElementById('packetsSection').classList.add('d-none');
+        }
+
         document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -620,6 +681,267 @@
             allText += doc.textContent + '\n\n' + '='.repeat(60) + '\n\n';
         });
         navigator.clipboard.writeText(allText).then(() => alert('All documents copied!'));
+    }
+
+    // =========================================================================
+    // ENVELOPE PACKETS & SENDCERTIFIEDMAIL INTEGRATION
+    // =========================================================================
+
+    let generatedDocuments = null;
+    let currentPackets = null;
+
+    async function checkSendCertifiedStatus() {
+        try {
+            const response = await fetch('/api/5day-knockout/sendcertified-status');
+            const data = await response.json();
+
+            const statusContainer = document.getElementById('sendCertifiedStatus');
+            if (data.success && data.status.configured) {
+                const connected = data.status.connected;
+                statusContainer.innerHTML = `
+                    <span class="badge ${connected ? 'bg-success' : 'bg-warning'}">
+                        <i class="bi bi-${connected ? 'check-circle' : 'exclamation-circle'} me-1"></i>
+                        SendCertified: ${connected ? 'Connected' : 'Not Connected'}
+                    </span>
+                `;
+                return connected;
+            } else {
+                statusContainer.innerHTML = `
+                    <span class="badge bg-secondary">
+                        <i class="bi bi-x-circle me-1"></i>
+                        SendCertified: Not Configured
+                    </span>
+                    <a href="/dashboard/settings" class="btn btn-sm btn-link">Configure</a>
+                `;
+                return false;
+            }
+        } catch (e) {
+            console.error('Failed to check SendCertified status:', e);
+            return false;
+        }
+    }
+
+    async function createEnvelopePackets() {
+        if (!generatedDocuments || !generatedDocuments.documents) {
+            alert('No documents generated. Please generate Phase 2 documents first.');
+            return;
+        }
+
+        const clientId = document.getElementById('selectedClientId').value;
+        const policeNum = document.getElementById('policeCaseNumber').value;
+        const ftcNum = document.getElementById('ftcReferenceNumber').value;
+
+        const btn = document.getElementById('createPacketsBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+
+        try {
+            const response = await fetch('/api/5day-knockout/create-packets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: parseInt(clientId),
+                    documents: generatedDocuments.documents,
+                    police_case_number: policeNum,
+                    ftc_reference_number: ftcNum || null,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                alert('Error creating packets: ' + data.error);
+                return;
+            }
+
+            currentPackets = data.packets;
+            displayPackets(data);
+
+            // Enable queue button
+            document.getElementById('queuePacketsBtn').disabled = false;
+            document.getElementById('downloadPacketsBtn').disabled = false;
+
+            // Check SendCertified status
+            checkSendCertifiedStatus();
+
+        } catch (e) {
+            alert('Failed to create packets: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-folder-plus me-2"></i>Create Packets';
+        }
+    }
+
+    function displayPackets(data) {
+        const container = document.getElementById('packetsContainer');
+        container.innerHTML = `
+            <div class="alert alert-success mb-3">
+                <i class="bi bi-check-circle me-2"></i>
+                <strong>${data.total_packets} packets created</strong> for ${data.client_name}
+                <span class="float-end">Estimated cost: $${data.estimated_cost.toFixed(2)}</span>
+            </div>
+            <div class="row">
+                ${Object.entries(data.packets).map(([bureau, packet]) => `
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-envelope me-2"></i>${bureau} Fraud Dept
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-2">
+                                    <i class="bi bi-geo-alt me-1"></i>${packet.fraud_address}
+                                </p>
+                                <hr class="my-2">
+                                <p class="small fw-semibold mb-1">Documents Included:</p>
+                                <ul class="small mb-0 ps-3">
+                                    ${packet.documents_included.map(doc => `<li>${doc}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <span class="badge bg-info" id="packetStatus_${bureau}">Ready</span>
+                                <button class="btn btn-sm btn-outline-primary float-end"
+                                        onclick="downloadCoverSheet('${bureau}')">
+                                    <i class="bi bi-download"></i> Cover Sheet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    async function queueToSendCertified() {
+        if (!currentPackets) {
+            alert('Please create packets first.');
+            return;
+        }
+
+        const isConfigured = await checkSendCertifiedStatus();
+        if (!isConfigured) {
+            if (!confirm('SendCertified is not configured or connected. Continue anyway?')) {
+                return;
+            }
+        }
+
+        const btn = document.getElementById('queuePacketsBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Queueing...';
+
+        try {
+            const clientId = document.getElementById('selectedClientId').value;
+
+            const response = await fetch('/api/5day-knockout/queue-packets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: parseInt(clientId),
+                    packets: currentPackets,
+                }),
+            });
+
+            const data = await response.json();
+
+            displayQueueResults(data);
+
+            // Update packet statuses
+            if (data.results) {
+                for (const [bureau, result] of Object.entries(data.results)) {
+                    const statusBadge = document.getElementById(`packetStatus_${bureau}`);
+                    if (statusBadge) {
+                        if (result.success) {
+                            statusBadge.className = 'badge bg-success';
+                            statusBadge.textContent = 'Queued ✓';
+                        } else {
+                            statusBadge.className = 'badge bg-danger';
+                            statusBadge.textContent = 'Failed';
+                        }
+                    }
+                }
+            }
+
+        } catch (e) {
+            alert('Failed to queue packets: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send me-2"></i>Queue to SendCertifiedMail';
+        }
+    }
+
+    function displayQueueResults(data) {
+        const container = document.getElementById('queueResults');
+        container.classList.remove('d-none');
+
+        if (data.success) {
+            container.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="bi bi-check-circle me-2"></i>Successfully Queued!</h6>
+                    <p class="mb-1"><strong>${data.queued_count}/${data.total_count}</strong> packets queued to SendCertifiedMail</p>
+                    <p class="mb-0 small">Total cost: $${data.total_cost.toFixed(2)}</p>
+                </div>
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>Bureau</th><th>Status</th><th>Tracking #</th><th>Cost</th></tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(data.results).map(([bureau, result]) => `
+                            <tr class="${result.success ? '' : 'table-danger'}">
+                                <td><strong>${bureau}</strong></td>
+                                <td>${result.success ? '<span class="text-success">✓ Queued</span>' : `<span class="text-danger">✗ ${result.error || 'Failed'}</span>`}</td>
+                                <td>${result.tracking_number || '-'}</td>
+                                <td>${result.cost ? '$' + result.cost.toFixed(2) : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="alert alert-danger">
+                    <h6><i class="bi bi-x-circle me-2"></i>Queue Failed</h6>
+                    <p class="mb-0">${data.error || 'Unknown error occurred'}</p>
+                </div>
+            `;
+        }
+    }
+
+    function downloadCoverSheet(bureau) {
+        if (!currentPackets || !currentPackets[bureau]) {
+            alert('Packet not found for ' + bureau);
+            return;
+        }
+
+        const packet = currentPackets[bureau];
+        if (!packet.cover_sheet_pdf_base64) {
+            alert('Cover sheet PDF not available');
+            return;
+        }
+
+        // Convert base64 to blob and download
+        const byteCharacters = atob(packet.cover_sheet_pdf_base64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `5DKO_CoverSheet_${bureau}_${new Date().toISOString().slice(0,10)}.pdf`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    function downloadAllCoverSheets() {
+        if (!currentPackets) {
+            alert('Please create packets first.');
+            return;
+        }
+
+        for (const bureau of Object.keys(currentPackets)) {
+            setTimeout(() => downloadCoverSheet(bureau), 500 * Object.keys(currentPackets).indexOf(bureau));
+        }
     }
     </script>
 </body>

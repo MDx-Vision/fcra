@@ -1176,3 +1176,237 @@ class FCRAPDFGenerator:
         # Build PDF
         doc.build(story)
         return output_path
+
+    def generate_envelope_cover_sheet(
+        self,
+        bureau: str,
+        bureau_address: str,
+        client_name: str,
+        client_address: str,
+        documents: list,
+        police_case_number: str = None,
+        ftc_reference_number: str = None,
+    ) -> bytes:
+        """
+        Generate a cover sheet PDF for 5-Day Knock-Out envelope packets.
+
+        Args:
+            bureau: Bureau name (Experian, Equifax, TransUnion)
+            bureau_address: Bureau fraud department address
+            client_name: Client's full name
+            client_address: Client's mailing address
+            documents: List of document names included in the packet
+            police_case_number: Police report case number
+            ftc_reference_number: FTC complaint reference number
+
+        Returns:
+            PDF bytes
+        """
+        from io import BytesIO
+        from datetime import datetime
+
+        html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {{
+      size: letter;
+      margin: 0.75in;
+    }}
+    body {{
+      font-family: Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #1a1a2e;
+    }}
+    .header {{
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      color: white;
+      padding: 20px;
+      margin: -0.75in -0.75in 20px -0.75in;
+      text-align: center;
+    }}
+    .header h1 {{
+      margin: 0;
+      font-size: 18pt;
+    }}
+    .header .subtitle {{
+      font-size: 11pt;
+      opacity: 0.9;
+      margin-top: 5px;
+    }}
+    .warning-box {{
+      background-color: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+    }}
+    .warning-box h3 {{
+      color: #b45309;
+      margin: 0 0 10px 0;
+      font-size: 12pt;
+    }}
+    .section {{
+      margin: 25px 0;
+    }}
+    .section h2 {{
+      color: #1e3a5f;
+      font-size: 14pt;
+      border-bottom: 2px solid #0d9488;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+    }}
+    .address-box {{
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+    }}
+    .address-label {{
+      font-size: 10pt;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }}
+    .address-content {{
+      font-size: 12pt;
+      font-weight: bold;
+    }}
+    .checklist {{
+      list-style: none;
+      padding: 0;
+    }}
+    .checklist li {{
+      padding: 10px 15px;
+      margin: 8px 0;
+      background-color: #f8fafc;
+      border-left: 4px solid #0d9488;
+      border-radius: 0 4px 4px 0;
+    }}
+    .checklist li::before {{
+      content: "☐ ";
+      font-size: 14pt;
+      color: #0d9488;
+    }}
+    .case-info {{
+      display: flex;
+      gap: 20px;
+      margin: 15px 0;
+    }}
+    .case-info-item {{
+      flex: 1;
+      background-color: #eff6ff;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }}
+    .case-info-label {{
+      font-size: 10pt;
+      color: #1e40af;
+      text-transform: uppercase;
+    }}
+    .case-info-value {{
+      font-size: 14pt;
+      font-weight: bold;
+      color: #1e3a5f;
+      margin-top: 5px;
+    }}
+    .footer {{
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 9pt;
+      color: #64748b;
+      text-align: center;
+    }}
+    .legal-notice {{
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 20px 0;
+      font-size: 10pt;
+    }}
+    .legal-notice strong {{
+      color: #dc2626;
+    }}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚠️ FCRA §605B IDENTITY THEFT DISPUTE</h1>
+  <div class="subtitle">FRAUD DEPARTMENT - CERTIFIED MAIL REQUIRED</div>
+</div>
+
+<div class="warning-box">
+  <h3>⚡ IMPORTANT: 4 BUSINESS DAY DEADLINE</h3>
+  <p>Under FCRA §605B(a), credit bureaus MUST block disputed information within <strong>4 BUSINESS DAYS</strong> of receiving this packet (not 30 days). Failure to comply subjects the bureau to statutory damages of $100-$1,000 per violation.</p>
+</div>
+
+<div class="section">
+  <h2>📮 SEND TO FRAUD DEPARTMENT</h2>
+  <div class="address-box">
+    <div class="address-label">Bureau Fraud Address</div>
+    <div class="address-content">
+      {bureau} Fraud Department<br>
+      {bureau_address.replace(', ', '<br>')}
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>👤 FROM (CONSUMER)</h2>
+  <div class="address-box">
+    <div class="address-label">Consumer Address</div>
+    <div class="address-content">
+      {client_name}<br>
+      {client_address.replace(', ', '<br>') if client_address else 'Address on file'}
+    </div>
+  </div>
+</div>
+
+<div class="case-info">
+  <div class="case-info-item">
+    <div class="case-info-label">Police Case #</div>
+    <div class="case-info-value">{police_case_number or 'Attached'}</div>
+  </div>
+  <div class="case-info-item">
+    <div class="case-info-label">FTC Reference #</div>
+    <div class="case-info-value">{ftc_reference_number or 'Attached'}</div>
+  </div>
+  <div class="case-info-item">
+    <div class="case-info-label">Date Mailed</div>
+    <div class="case-info-value">{datetime.now().strftime('%m/%d/%Y')}</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>📋 DOCUMENT CHECKLIST - Verify Before Sealing</h2>
+  <ul class="checklist">
+    {''.join([f'<li>{doc}</li>' for doc in documents])}
+  </ul>
+</div>
+
+<div class="legal-notice">
+  <strong>LEGAL NOTICE:</strong> This packet contains an identity theft dispute pursuant to FCRA §605B.
+  The consumer has filed a police report (case #{police_case_number or 'attached'}) and FTC Identity Theft Report
+  (reference #{ftc_reference_number or 'attached'}). Per 15 U.S.C. §1681c-2(a), you are required to block this
+  information within 4 business days of receipt.
+</div>
+
+<div class="footer">
+  <p>Generated by Brightpath Ascend Group | {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+  <p>This cover sheet should be placed on TOP of all documents in the envelope.</p>
+</div>
+
+</body>
+</html>"""
+
+        # Convert HTML to PDF bytes using WeasyPrint
+        pdf_buffer = BytesIO()
+        HTML(string=html_content).write_pdf(pdf_buffer)
+        return pdf_buffer.getvalue()

@@ -46,9 +46,9 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 35**: ~~Task Assignment~~ ✅ COMPLETE
 - **Priority 36-39**: Scheduled Reports, SMS Templates, Client Tags, Email Tracking
 
-### Current Work (2026-01-22) - Session: "5-Day Knock-Out Integration"
+### Current Work (2026-01-22) - Session: "5-Day Knock-Out Envelope Packets"
 
-**Task**: Integrate Prompt 17 (5-Day Knock-Out) into the FCRA platform with full UI
+**Task**: Add envelope-ready packets for 5DKO with SendCertifiedMail integration
 
 **Status**: ✅ COMPLETE
 
@@ -56,17 +56,53 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 
 ### Completed Today (2026-01-22):
 
-#### 1. 5-Day Knock-Out Dashboard ✅
+#### 1. Envelope Packet Generation for SendCertifiedMail ✅ NEW
+
+**What**: Automated envelope-ready packets for 5DKO Phase 2 documents
+
+**Features**:
+- Cover sheet PDF generation per bureau with:
+  - Bureau fraud department address
+  - Document checklist
+  - Police case # and FTC reference #
+  - 4 business day deadline reminder
+- Integration with SendCertifiedMail API
+- One-click "Queue to SendCertifiedMail" button
+
+**Files Created/Modified**:
+- `services/pdf_service.py` - Added `generate_envelope_cover_sheet()` method
+- `services/ai_dispute_writer_service.py` - Added:
+  - `create_5day_knockout_packets()` - Creates packets per bureau
+  - `queue_packets_to_sendcertified()` - Queues to SendCertified API
+  - `_text_to_pdf()` - Converts letter text to PDF
+- `app.py` - Added 3 new API endpoints:
+  - `POST /api/5day-knockout/create-packets` - Create envelope packets
+  - `POST /api/5day-knockout/queue-packets` - Queue to SendCertifiedMail
+  - `GET /api/5day-knockout/sendcertified-status` - Check integration status
+- `templates/5day_knockout.html` - Added envelope packets UI section
+
+**Workflow**:
+1. Generate Phase 2 documents (existing)
+2. Click "Create Packets" → Generates cover sheets + organizes per bureau
+3. Click "Queue to SendCertifiedMail" → Submits to mailing API
+4. Download individual cover sheets as PDFs
+
+---
+
+#### 2. 5-Day Knock-Out Dashboard ✅
 
 **What**: Full UI for §605B identity theft disputes (4 business day block requirement)
 
 **Files Created/Modified**:
 - `templates/5day_knockout.html` - 3-step wizard UI (Select Client → Select Accounts → Generate)
-- `app.py` - Added 4 API endpoints (~lines 39768-40020):
+- `app.py` - Added 7 API endpoints:
   - `GET /dashboard/5day-knockout` - Dashboard page
   - `GET /api/5day-knockout/strategies` - Available strategies
   - `POST /api/5day-knockout/generate` - Generate documents via AI
   - `GET /api/5day-knockout/client/<id>/items` - Get accounts from credit report
+  - `POST /api/5day-knockout/create-packets` - Create envelope packets
+  - `POST /api/5day-knockout/queue-packets` - Queue to SendCertifiedMail
+  - `GET /api/5day-knockout/sendcertified-status` - Check integration status
 - `templates/includes/dashboard_sidebar.html` - Added sidebar link
 
 #### 2. Credit Report Account Extraction ✅

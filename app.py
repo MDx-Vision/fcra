@@ -40041,6 +40041,137 @@ def api_5day_knockout_client_items(client_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route("/api/5day-knockout/create-packets", methods=["POST"])
+@require_staff()
+def api_5day_knockout_create_packets():
+    """Create envelope-ready packets for SendCertifiedMail from 5DKO documents"""
+    try:
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+        data = request.get_json() or {}
+
+        client_id = data.get('client_id')
+        documents = data.get('documents', {})
+        police_case_number = data.get('police_case_number')
+        ftc_reference_number = data.get('ftc_reference_number')
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+
+        if not documents:
+            return jsonify({"success": False, "error": "documents required"}), 400
+
+        if not police_case_number:
+            return jsonify({"success": False, "error": "police_case_number required"}), 400
+
+        with get_db() as db:
+            service = AIDisputeWriterService(db)
+            result = service.create_5day_knockout_packets(
+                client_id=client_id,
+                documents=documents,
+                police_case_number=police_case_number,
+                ftc_reference_number=ftc_reference_number,
+            )
+
+            if 'error' in result:
+                return jsonify({"success": False, "error": result['error']}), 400
+
+            # Convert packet PDF bytes to base64 for JSON response
+            import base64
+            packets_serialized = {}
+            for bureau, packet in result.get('packets', {}).items():
+                packet_copy = dict(packet)
+                if 'cover_sheet_pdf' in packet_copy:
+                    packet_copy['cover_sheet_pdf_base64'] = base64.b64encode(
+                        packet_copy['cover_sheet_pdf']
+                    ).decode('utf-8')
+                    del packet_copy['cover_sheet_pdf']
+                packets_serialized[bureau] = packet_copy
+
+            return jsonify({
+                "success": True,
+                "client_id": result['client_id'],
+                "client_name": result['client_name'],
+                "packets": packets_serialized,
+                "total_packets": result['total_packets'],
+                "estimated_cost": result['estimated_cost'],
+                "created_at": result['created_at'],
+            })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/5day-knockout/queue-packets", methods=["POST"])
+@require_staff()
+def api_5day_knockout_queue_packets():
+    """Queue 5-Day Knock-Out packets to SendCertifiedMail"""
+    try:
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+        from services.sendcertified_service import get_sendcertified_status
+        import base64
+
+        data = request.get_json() or {}
+
+        client_id = data.get('client_id')
+        packets = data.get('packets', {})
+
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+
+        if not packets:
+            return jsonify({"success": False, "error": "packets required"}), 400
+
+        # Check if SendCertified is configured
+        sendcertified_status = get_sendcertified_status()
+        if not sendcertified_status.get('configured'):
+            return jsonify({
+                "success": False,
+                "error": "SendCertified is not configured. Go to Settings > Integrations to set up API credentials."
+            }), 400
+
+        # Convert base64 PDFs back to bytes
+        packets_with_bytes = {}
+        for bureau, packet in packets.items():
+            packet_copy = dict(packet)
+            if 'cover_sheet_pdf_base64' in packet_copy:
+                packet_copy['cover_sheet_pdf'] = base64.b64decode(
+                    packet_copy['cover_sheet_pdf_base64']
+                )
+                del packet_copy['cover_sheet_pdf_base64']
+            packets_with_bytes[bureau] = packet_copy
+
+        with get_db() as db:
+            service = AIDisputeWriterService(db)
+            result = service.queue_packets_to_sendcertified(
+                client_id=client_id,
+                packets=packets_with_bytes,
+            )
+
+            return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/5day-knockout/sendcertified-status", methods=["GET"])
+@require_staff()
+def api_5day_knockout_sendcertified_status():
+    """Check SendCertified integration status for 5DKO"""
+    try:
+        from services.sendcertified_service import get_sendcertified_status, get_mailing_statistics
+        status = get_sendcertified_status()
+        stats = get_mailing_statistics()
+        return jsonify({
+            "success": True,
+            "status": status,
+            "statistics": stats,
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 # =============================================================================
 # ROI CALCULATOR ENDPOINTS
 # =============================================================================

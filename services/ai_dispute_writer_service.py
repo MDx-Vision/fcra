@@ -1142,3 +1142,289 @@ Format each document with clear headers:
         if strategy_key in self.SPECIAL_STRATEGIES:
             return {'key': strategy_key, **self.SPECIAL_STRATEGIES[strategy_key]}
         return None
+
+    # =========================================================================
+    # ENVELOPE PACKET GENERATION FOR SENDCERTIFIEDMAIL
+    # =========================================================================
+
+    def create_5day_knockout_packets(
+        self,
+        client_id: int,
+        documents: Dict[str, str],
+        police_case_number: str,
+        ftc_reference_number: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create envelope-ready packets for 5-Day Knock-Out mailings.
+
+        Each bureau gets its own packet with:
+        - Cover sheet with fraud address and checklist
+        - 605B dispute letter
+        - Supporting documents (FTC affidavit, police report copy, ID)
+
+        Args:
+            client_id: Client ID
+            documents: Dict of document name -> content (from generate_5day_knockout)
+            police_case_number: Police case number
+            ftc_reference_number: FTC reference number (optional)
+
+        Returns:
+            Dict with packets per bureau, ready for SendCertifiedMail
+        """
+        from services.pdf_service import FCRAPDFGenerator
+        from io import BytesIO
+        from pypdf import PdfReader, PdfWriter
+
+        client = self.db.query(Client).filter(Client.id == client_id).first()
+        if not client:
+            return {'error': 'Client not found'}
+
+        pdf_gen = FCRAPDFGenerator()
+        packets = {}
+
+        # Build client address string
+        client_address = self._format_client_address(client)
+
+        # Documents that go in ALL bureau packets (supporting docs)
+        common_doc_names = [
+            'FTC Identity Theft Report',
+            'Police Report Copy',
+            'Identity Declaration',
+            'Certified mail tracking sheet',
+        ]
+
+        for bureau in self.BUREAUS:
+            bureau_address = self.BUREAU_FRAUD_ADDRESSES.get(bureau)
+            if not bureau_address:
+                continue
+
+            # Find the 605B letter for this bureau
+            bureau_letter_key = None
+            for key in documents.keys():
+                if bureau.lower() in key.lower() and '605b' in key.lower():
+                    bureau_letter_key = key
+                    break
+
+            if not bureau_letter_key:
+                # Try alternate naming
+                for key in documents.keys():
+                    if bureau.lower() in key.lower():
+                        bureau_letter_key = key
+                        break
+
+            # Build document list for this packet
+            packet_docs = []
+            if bureau_letter_key:
+                packet_docs.append(f'§605B Dispute Letter - {bureau}')
+
+            # Add common supporting documents
+            for doc_name in common_doc_names:
+                for key in documents.keys():
+                    if doc_name.lower() in key.lower():
+                        packet_docs.append(doc_name)
+                        break
+
+            # Always add required attachments
+            packet_docs.extend([
+                'Copy of Government-Issued ID',
+                'Proof of Address (Utility Bill)',
+            ])
+
+            # Generate cover sheet
+            cover_sheet_pdf = pdf_gen.generate_envelope_cover_sheet(
+                bureau=bureau,
+                bureau_address=bureau_address,
+                client_name=client.name,
+                client_address=client_address,
+                documents=packet_docs,
+                police_case_number=police_case_number,
+                ftc_reference_number=ftc_reference_number,
+            )
+
+            # Create packet info
+            packets[bureau] = {
+                'bureau': bureau,
+                'fraud_address': bureau_address,
+                'formatted_address': {
+                    'recipient': f'{bureau} Fraud Department',
+                    'street': bureau_address.split(',')[0].strip(),
+                    'city': bureau_address.split(',')[1].strip() if ',' in bureau_address else '',
+                    'state': bureau_address.split(',')[2].strip().split()[0] if bureau_address.count(',') >= 2 else '',
+                    'zip': bureau_address.split()[-1] if bureau_address else '',
+                },
+                'cover_sheet_pdf': cover_sheet_pdf,
+                'letter_content': documents.get(bureau_letter_key, ''),
+                'documents_included': packet_docs,
+                'police_case_number': police_case_number,
+                'ftc_reference_number': ftc_reference_number,
+                'client_name': client.name,
+                'client_address': client_address,
+                'mail_class': 'certified_return_receipt',  # Required for legal disputes
+            }
+
+        return {
+            'success': True,
+            'client_id': client_id,
+            'client_name': client.name,
+            'packets': packets,
+            'total_packets': len(packets),
+            'estimated_cost': len(packets) * 8.50,  # ~$8.50 per certified letter
+            'created_at': datetime.utcnow().isoformat(),
+        }
+
+    def _format_client_address(self, client: Client) -> str:
+        """Format client address as a single string"""
+        parts = []
+        if client.address_street:
+            parts.append(client.address_street)
+        if client.address_city and client.address_state:
+            city_state_zip = f"{client.address_city}, {client.address_state}"
+            if client.address_zip:
+                city_state_zip += f" {client.address_zip}"
+            parts.append(city_state_zip)
+        return ', '.join(parts) if parts else ''
+
+    def queue_packets_to_sendcertified(
+        self,
+        client_id: int,
+        packets: Dict[str, Dict],
+    ) -> Dict[str, Any]:
+        """
+        Queue 5-Day Knock-Out packets to SendCertifiedMail.
+
+        Args:
+            client_id: Client ID
+            packets: Dict of bureau -> packet info (from create_5day_knockout_packets)
+
+        Returns:
+            Dict with queue results per bureau
+        """
+        from services.sendcertified_service import get_sendcertified_service
+        from services.pdf_service import FCRAPDFGenerator
+
+        sendcertified = get_sendcertified_service()
+
+        if not sendcertified.is_configured():
+            return {
+                'success': False,
+                'error': 'SendCertified is not configured. Please set up API credentials.',
+            }
+
+        results = {}
+        queued_count = 0
+        total_cost = 0
+
+        for bureau, packet in packets.items():
+            try:
+                # Convert letter content to PDF
+                letter_pdf = self._text_to_pdf(
+                    packet['letter_content'],
+                    title=f"FCRA §605B Identity Theft Dispute - {bureau}",
+                    client_name=packet['client_name'],
+                )
+
+                # Combine cover sheet + letter into single PDF
+                from pypdf import PdfReader, PdfWriter
+                from io import BytesIO
+
+                writer = PdfWriter()
+
+                # Add cover sheet first
+                cover_sheet_stream = BytesIO(packet['cover_sheet_pdf'])
+                cover_reader = PdfReader(cover_sheet_stream)
+                for page in cover_reader.pages:
+                    writer.add_page(page)
+
+                # Add letter
+                letter_stream = BytesIO(letter_pdf)
+                letter_reader = PdfReader(letter_stream)
+                for page in letter_reader.pages:
+                    writer.add_page(page)
+
+                # Get combined PDF bytes
+                combined_pdf = BytesIO()
+                writer.write(combined_pdf)
+                combined_pdf.seek(0)
+                document_bytes = combined_pdf.read()
+
+                # Queue to SendCertified
+                result = sendcertified.create_mailing(
+                    recipient=packet['formatted_address']['recipient'],
+                    address=packet['formatted_address'],
+                    document_content=document_bytes,
+                    mail_class=packet['mail_class'],
+                    client_id=client_id,
+                    letter_type='5day_knockout_605b',
+                    bureau=bureau,
+                )
+
+                results[bureau] = result
+                if result.get('success'):
+                    queued_count += 1
+                    total_cost += result.get('cost', 0)
+
+            except Exception as e:
+                results[bureau] = {
+                    'success': False,
+                    'error': str(e),
+                }
+
+        return {
+            'success': queued_count > 0,
+            'client_id': client_id,
+            'results': results,
+            'queued_count': queued_count,
+            'total_count': len(packets),
+            'total_cost': total_cost,
+            'queued_at': datetime.utcnow().isoformat(),
+        }
+
+    def _text_to_pdf(self, text: str, title: str = '', client_name: str = '') -> bytes:
+        """Convert text content to PDF bytes using WeasyPrint"""
+        from weasyprint import HTML
+        from io import BytesIO
+        from datetime import datetime
+
+        # Escape HTML special characters
+        def escape_html(s):
+            return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+        # Convert text to HTML with basic formatting
+        escaped_text = escape_html(text)
+        html_lines = []
+        for line in escaped_text.split('\n'):
+            if line.strip():
+                html_lines.append(f'<p>{line}</p>')
+            else:
+                html_lines.append('<br/>')
+        html_body = '\n'.join(html_lines)
+
+        html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {{ size: letter; margin: 1in; }}
+    body {{ font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; }}
+    h1 {{ font-size: 14pt; text-align: center; margin-bottom: 20px; }}
+    p {{ margin: 10px 0; text-align: justify; }}
+    .header {{ text-align: right; margin-bottom: 30px; font-size: 11pt; }}
+    .footer {{ margin-top: 40px; font-size: 10pt; color: #666; }}
+  </style>
+</head>
+<body>
+  <div class="header">
+    {escape_html(client_name)}<br/>
+    {datetime.now().strftime('%B %d, %Y')}
+  </div>
+  {f'<h1>{escape_html(title)}</h1>' if title else ''}
+  {html_body}
+  <div class="footer">
+    Generated by Brightpath Ascend Group
+  </div>
+</body>
+</html>"""
+
+        pdf_buffer = BytesIO()
+        HTML(string=html_content).write_pdf(pdf_buffer)
+        return pdf_buffer.getvalue()

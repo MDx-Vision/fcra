@@ -336,8 +336,13 @@ whitelabel_service, workflow_triggers_service
 | GET | `/api/5day-knockout/strategies` | Available dispute strategies |
 | POST | `/api/5day-knockout/generate` | Generate §605B documents via AI |
 | GET | `/api/5day-knockout/client/<id>/items` | Get accounts from credit report |
+| POST | `/api/5day-knockout/create-packets` | Create envelope-ready packets |
+| POST | `/api/5day-knockout/queue-packets` | Queue packets to SendCertifiedMail |
+| GET | `/api/5day-knockout/sendcertified-status` | Check SendCertified integration |
 
 **Note**: Uses Prompt 17 for AI generation. Requires Anthropic API credits.
+
+**Envelope Packets**: After Phase 2 generation, creates mailing-ready packets with cover sheets containing bureau fraud addresses, document checklists, and 4-day deadline reminders. Integrates with SendCertifiedMail for automated certified mail.
 
 ---
 
