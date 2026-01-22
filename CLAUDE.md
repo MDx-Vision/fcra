@@ -46,9 +46,9 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 35**: ~~Task Assignment~~ ✅ COMPLETE
 - **Priority 36-39**: Scheduled Reports, SMS Templates, Client Tags, Email Tracking
 
-### Current Work (2026-01-22) - Session: "5-Day Knock-Out Envelope Packets"
+### Current Work (2026-01-22) - Session: "5DKO Online + Mail Methods"
 
-**Task**: Add envelope-ready packets for 5DKO with SendCertifiedMail integration
+**Task**: Add two submission methods (Online + Mail) to 5-Day Knock-Out based on updated Notion docs
 
 **Status**: ✅ COMPLETE
 
@@ -56,7 +56,49 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 
 ### Completed Today (2026-01-22):
 
-#### 1. Envelope Packet Generation for SendCertifiedMail ✅ NEW
+#### 1. 5-Day Knock-Out v2 - Online + Mail Methods ✅ NEW
+
+**What**: Updated 5DKO system to support TWO submission methods based on Legacy Strong Notion documentation
+
+**Key Changes from Notion Review**:
+- **Pre-req**: Must freeze 3rd party bureaus FIRST (LexisNexis, Teletrack, Innovis)
+- **Online method**: Submit via bureau portals (fastest - often 24hrs to 30 days)
+- **Mail method**: Certified mail to FRAUD addresses (strongest paper trail)
+- **FTC**: Need SEPARATE complaint per account per bureau
+- **Notarization**: Can use notarylive.com ($25 online)
+- **Call Follow-Up**: Detailed phone scripts with navigation steps
+
+**Files Modified**:
+- `templates/5day_knockout.html`:
+  - Added "Submission Method" selector (Online/Mail)
+  - Added Online Submission section with bureau upload URLs
+  - Updated info box to show both methods
+- `knowledge/FCRA_PROMPT_17_v6_5DAY_KNOCKOUT_ONLINE_MAIL.md` (renamed from v5):
+  - Added third-party freeze phone numbers
+  - Added online notarization instructions
+  - Added detailed online submission steps
+  - Updated phone scripts with full navigation
+  - Added separate FTC/affidavit per account per bureau instructions
+- `prompt_loader.py` - Updated to reference v6 prompt file
+
+**Bureau Online Upload URLs**:
+- Experian: experian.com/upload
+- Equifax: equifax.com/personal/disputes
+- TransUnion: transunion.com/dispute
+
+**Third-Party Freeze Numbers** (call BEFORE disputing):
+- LexisNexis: 1-888-497-0011
+- Teletrack: 1-877-309-5226
+- Innovis: 1-866-712-4546
+
+**Call Follow-Up Numbers** (5 business days after):
+- Experian: 1-855-414-6048 (~20 min)
+- Equifax: 800-525-6285 (~15 min)
+- TransUnion: 800-916-8800 (~30 min)
+
+---
+
+#### 2. Envelope Packet Generation for SendCertifiedMail ✅
 
 **What**: Automated envelope-ready packets for 5DKO Phase 2 documents
 

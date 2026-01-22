@@ -123,20 +123,29 @@
             <h5><i class="bi bi-info-circle me-2"></i>How 5-Day Knock-Out Works</h5>
             <p class="mb-2">This is an <strong>identity theft-based</strong> dispute strategy using FCRA §605B to force bureaus to block negative items within 4 business days.</p>
             <div class="row mt-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <strong>Phase 1 - Preparation:</strong>
                     <ul class="mb-0 small">
-                        <li>Police report prep sheet</li>
-                        <li>FTC complaint prep sheet</li>
-                        <li>Notarized affidavit template</li>
+                        <li>Freeze 3rd party bureaus FIRST</li>
+                        <li>Police report (online or in-person)</li>
+                        <li>FTC complaint at identitytheft.gov</li>
+                        <li>Notarized affidavit (notarylive.com)</li>
                     </ul>
                 </div>
-                <div class="col-md-6">
-                    <strong>Phase 2 - Full Dispute:</strong>
+                <div class="col-md-4">
+                    <strong>Online Method (Fastest):</strong>
                     <ul class="mb-0 small">
-                        <li>605B letters to bureau FRAUD departments</li>
-                        <li>Furnisher dispute letters</li>
-                        <li>Third-party agency freezes</li>
+                        <li>Upload to bureau online portals</li>
+                        <li>Often removes in 24hrs-30 days</li>
+                        <li>Repeat per account per bureau</li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <strong>Mail Method (Strongest):</strong>
+                    <ul class="mb-0 small">
+                        <li>Certified mail to FRAUD addresses</li>
+                        <li>Paper trail for legal action</li>
+                        <li>4 business day deadline</li>
                     </ul>
                 </div>
             </div>
@@ -228,6 +237,14 @@
                                 <option value="2">Phase 2 - Full Dispute</option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Submission Method</label>
+                            <select id="submissionMethod" class="form-select">
+                                <option value="online">Online Submission (Fastest)</option>
+                                <option value="mail">Certified Mail (Strongest)</option>
+                            </select>
+                            <small class="text-muted" id="methodHint">Submit disputes via bureau online portals - often removes in 24hrs to 30 days</small>
+                        </div>
                         <div id="phase2Fields" class="d-none">
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Police Case # <span class="text-danger">*</span></label>
@@ -289,7 +306,72 @@
                 <div id="documentsContainer"></div>
             </div>
 
-            <!-- Envelope Packets Section (Phase 2 only) -->
+            <!-- Online Submission Section (Phase 2 with online method) -->
+            <div id="onlineSection" class="d-none">
+                <div class="content-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-cloud-upload me-2"></i>Online Dispute Submission</h5>
+                        <span class="badge bg-success">Fastest Method</span>
+                    </div>
+
+                    <div class="alert alert-success mb-3">
+                        <h6 class="mb-1"><i class="bi bi-lightning me-2"></i>Submit Disputes Online - Often Removes in 24hrs to 30 Days</h6>
+                        <p class="mb-0 small">Upload your dispute package directly to each bureau's online portal. This is the <strong>FASTEST</strong> method - many accounts are removed within days!</p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <strong>Experian</strong>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Upload URL:</strong></p>
+                                    <a href="https://www.experian.com/upload" target="_blank" class="btn btn-outline-primary btn-sm w-100 mb-2">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>experian.com/upload
+                                    </a>
+                                    <p class="small text-muted mb-0">Or login at usa.experian.com</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <strong>Equifax</strong>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Upload URL:</strong></p>
+                                    <a href="https://www.equifax.com/personal/disputes" target="_blank" class="btn btn-outline-danger btn-sm w-100 mb-2">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>equifax.com/personal/disputes
+                                    </a>
+                                    <p class="small text-muted mb-0">Or login at my.equifax.com</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <strong>TransUnion</strong>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Upload URL:</strong></p>
+                                    <a href="https://www.transunion.com/dispute" target="_blank" class="btn btn-outline-info btn-sm w-100 mb-2">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i>transunion.com/dispute
+                                    </a>
+                                    <p class="small text-muted mb-0">Or login at service.transunion.com</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mb-0">
+                        <h6 class="mb-1"><i class="bi bi-exclamation-triangle me-2"></i>Important: Repeat for EACH Account + EACH Bureau</h6>
+                        <p class="mb-0 small">Example: If JMPCB shows on Experian, Equifax, and TransUnion = <strong>3 separate online disputes</strong> for that one account!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Envelope Packets Section (Phase 2 with mail method) -->
             <div id="packetsSection" class="d-none">
                 <div class="content-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -355,6 +437,17 @@
         document.getElementById('phase').addEventListener('change', function() {
             document.getElementById('phase2Fields').classList.toggle('d-none', this.value !== '2');
             updateGenerateButton();
+        });
+
+        // Submission method selector
+        document.getElementById('submissionMethod').addEventListener('change', function() {
+            const method = this.value;
+            const hint = document.getElementById('methodHint');
+            if (method === 'online') {
+                hint.textContent = 'Submit disputes via bureau online portals - often removes in 24hrs to 30 days';
+            } else {
+                hint.textContent = 'Send certified mail packages to FRAUD departments - strongest legal paper trail';
+            }
         });
 
         document.getElementById('policeCaseNumber').addEventListener('input', updateGenerateButton);
@@ -557,6 +650,7 @@
         const phase = parseInt(document.getElementById('phase').value);
         const policeNum = document.getElementById('policeCaseNumber').value;
         const ftcNum = document.getElementById('ftcReferenceNumber').value;
+        const submissionMethod = document.getElementById('submissionMethod').value;
 
         const disputedItems = [];
 
@@ -591,6 +685,7 @@
                     police_case_number: policeNum || null,
                     ftc_reference_number: ftcNum || null,
                     disputed_items: disputedItems,
+                    submission_method: submissionMethod,
                 }),
             });
 
@@ -639,22 +734,34 @@
         // Store generated documents for packet creation
         generatedDocuments = data;
 
-        // Show packets section for Phase 2 (Full Dispute)
+        // Get selected submission method
+        const submissionMethod = document.getElementById('submissionMethod').value;
+
+        // Show appropriate section for Phase 2 (Full Dispute)
         if (data.phase === 2) {
-            document.getElementById('packetsSection').classList.remove('d-none');
-            document.getElementById('packetsContainer').innerHTML = `
-                <div class="text-center text-muted py-3">
-                    <i class="bi bi-envelope-paper" style="font-size: 2rem;"></i>
-                    <p class="mt-2 mb-0">Click "Create Packets" to generate envelope-ready packages</p>
-                </div>
-            `;
-            // Reset buttons
-            document.getElementById('queuePacketsBtn').disabled = true;
-            document.getElementById('downloadPacketsBtn').disabled = true;
-            currentPackets = null;
-            // Check SendCertified status
-            checkSendCertifiedStatus();
+            if (submissionMethod === 'online') {
+                // Show online submission section
+                document.getElementById('onlineSection').classList.remove('d-none');
+                document.getElementById('packetsSection').classList.add('d-none');
+            } else {
+                // Show mail/packets section
+                document.getElementById('onlineSection').classList.add('d-none');
+                document.getElementById('packetsSection').classList.remove('d-none');
+                document.getElementById('packetsContainer').innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-envelope-paper" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">Click "Create Packets" to generate envelope-ready packages</p>
+                    </div>
+                `;
+                // Reset buttons
+                document.getElementById('queuePacketsBtn').disabled = true;
+                document.getElementById('downloadPacketsBtn').disabled = true;
+                currentPackets = null;
+                // Check SendCertified status
+                checkSendCertifiedStatus();
+            }
         } else {
+            document.getElementById('onlineSection').classList.add('d-none');
             document.getElementById('packetsSection').classList.add('d-none');
         }
 

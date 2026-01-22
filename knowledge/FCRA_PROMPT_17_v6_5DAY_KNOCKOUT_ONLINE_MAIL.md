@@ -1,9 +1,11 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# FCRA PROMPT 17 v5.0 - 5-DAY KNOCKOUT (COMPLETE SYSTEM)
+# FCRA PROMPT 17 v6.0 - 5-DAY KNOCKOUT (ONLINE + MAIL METHODS)
 # ═══════════════════════════════════════════════════════════════════════════════
 # PHASE 1: Credit report → Police report prep + account extraction
 # PHASE 2: Police case # → Generate ALL remaining documents
-# INCLUDES: Reinsertion Law + BBB Dispute Strategy (from Notion)
+# METHODS: Online submission (fastest) OR Certified mail (strongest)
+# INCLUDES: Third-party freeze numbers, notarylive.com, call scripts
+# UPDATED: 2026-01-22 from Legacy Strong Notion documentation
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ## TRIGGER PHRASES
@@ -63,25 +65,37 @@ ACCOUNT #[X]:
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 0: FREEZE THIRD-PARTY DATA AGENCIES (Do First!)
+# STEP 0: FREEZE THIRD-PARTY DATA AGENCIES (Do FIRST Before Disputing!)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ## WHY: Bureaus verify with these agencies. Freeze = faster removal.
+## ⚠️ CRITICAL: Complete these freezes BEFORE submitting any disputes!
 
-## FREEZE THESE NOW:
+## FREEZE THESE NOW (3 Agencies):
 
 ### 1. LexisNexis
-🔗 https://consumer.risk.lexisnexis.com/freeze
-📞 Unfreeze later: 1-800-456-1244
+📞 **CALL: 1-888-497-0011**
+🔗 Online: https://consumer.risk.lexisnexis.com/freeze
+📝 Say: "I'd like to place a security freeze on my file"
+⏱️ Takes: 5-10 minutes
 
 ### 2. Teletrack
-🔗 https://consumers.teletrack.com/freeze
+📞 **MESSAGE: 1-877-309-5226** (automated system)
+🔗 Online: https://consumers.teletrack.com/freeze
+📝 Follow prompts for security freeze
 ⚠️ Save your PIN (comes by mail)
+⏱️ Takes: 5 minutes
 
 ### 3. Innovis
-🔗 https://www.innovis.com/personal/securityFreeze
-📞 Unfreeze later: 1-800-540-2505
+📞 **CALL: 1-866-712-4546**
+🔗 Online: https://www.innovis.com/personal/securityFreeze
+📝 Say: "I'd like to place a security freeze"
 ⚠️ Save your PIN (comes by mail)
+⏱️ Takes: 5-10 minutes
+
+---
+
+## TOTAL TIME: ~20-30 minutes to freeze all 3
 
 ---
 
@@ -425,6 +439,19 @@ These accounts do not belong to me. I did not authorize anyone to open these acc
 # MUST BE NOTARIZED
 # ═══════════════════════════════════════════════════════════════════════════════
 
+## ⚠️⚠️⚠️ CRITICAL: SEPARATE AFFIDAVIT FOR EACH ACCOUNT + EACH BUREAU ⚠️⚠️⚠️
+
+### Example:
+If JMPCB shows on Experian, Equifax, and TransUnion:
+→ Need **3 SEPARATE AFFIDAVITS** (one for each bureau)
+
+If Target shows on Experian and TransUnion:
+→ Need **2 SEPARATE AFFIDAVITS**
+
+**TOTAL AFFIDAVITS NEEDED = # of accounts × # of bureaus each reports to**
+
+---
+
 ## ⚠️ REPEAT FOR: Each account + Each bureau it reports to
 
 ### Your Accounts Need:
@@ -491,11 +518,18 @@ These accounts do not belong to me. I did not authorize anyone to open these acc
 
 ## 🖊️ NOTARIZE OPTIONS:
 
-| Option | Time | Cost |
-|--------|------|------|
-| **NotaryLive.com** | 30 min | ~$30 |
-| **Your Bank** | Walk-in | FREE |
-| **UPS Store** | Walk-in | $5-15 |
+| Option | Time | Cost | Notes |
+|--------|------|------|-------|
+| **notarylive.com** | 15-30 min | ~$25 | ONLINE - Fastest! |
+| **Your Bank** | Walk-in | FREE | Call ahead |
+| **UPS Store** | Walk-in | $5-15 | No appointment needed |
+
+### Online Notarization (Recommended):
+1. Go to **notarylive.com**
+2. Upload your completed affidavit
+3. Video call with notary (~15 min)
+4. Download notarized PDF immediately
+5. Cost: ~$25
 ```
 
 ---
@@ -633,59 +667,124 @@ Sincerely,
 
 ---
 
-### FILE 9: Online_Portal_Disputes_[CLIENT].md
+### FILE 9: Online_Submission_Instructions_[CLIENT].md
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
-# ONLINE PORTAL DISPUTE TEMPLATES
+# ONLINE DISPUTE SUBMISSION (NEW - FASTEST METHOD!)
 # ═══════════════════════════════════════════════════════════════════════════════
-# OPTIONAL: Fast method (20-30% success) - Can remove in 24hrs to 30 days
+# RECOMMENDED: Often removes in 24hrs to 30 days
+# ⚠️ REPEAT for EACH account + EACH bureau it reports to
 # ═══════════════════════════════════════════════════════════════════════════════
 
-## EXPERIAN - https://usa.experian.com
+## STEP 1: SIGN UP FOR ONLINE ACCOUNTS (One-time)
 
-1. Login → Help Center → Start New Dispute
-2. Select account: **[CREDITOR NAME]**
-3. Reason: **Other Reason**
-4. Identity theft? **No**
-5. **PASTE IN COMMENT BOX:**
+### Experian
+🔗 **https://www.experian.com/upload**
+📝 Create account if you don't have one
+📝 Verify identity
 
-```
-According to Cushman v Transunion 1997, Experian is supposed to ensure MAXIMUM POSSIBLE ACCURACY. This account violates these laws; 15 USC 1681i, 15 USC 1681s-2, 15 USC 1681i(5), 15 USC 1681e(b). DELETE ACCOUNT
-```
+### Equifax
+🔗 **https://www.equifax.com/personal/disputes**
+📝 Create myEquifax account
+📝 Verify identity
 
-6. Submit → Screenshot confirmation
+### TransUnion
+🔗 **https://www.transunion.com/dispute**
+📝 Create account or use existing
+📝 Verify identity
 
 ---
 
-## TRANSUNION - https://service.transunion.com
+## STEP 2: GATHER YOUR DOCUMENTS (for upload)
+
+For EACH dispute submission, upload:
+☐ FTC Report PDF
+☐ Police Report (or case number)
+☐ Notarized Affidavit
+☐ Copy of Driver's License
+☐ Copy of Social Security Card
+☐ Proof of Address (utility bill/bank statement)
+☐ Dispute Letter (specific to that bureau)
+
+---
+
+## STEP 3: SUBMIT DISPUTES ONLINE
+
+### EXPERIAN
+
+**Upload URL:** https://www.experian.com/upload
+**OR** Login at: https://usa.experian.com
+
+1. Login → Help Center → Start New Dispute
+2. Select account: **[CREDITOR NAME]**
+3. Select: **Identity theft** OR **Fraudulent account**
+4. Upload supporting documents
+5. In comment box - PASTE:
+
+```
+I am a victim of identity theft. This account was opened fraudulently without my knowledge or consent. I have attached my FTC Identity Theft Report, Police Report (Case #[CASE NUMBER]), and Notarized Affidavit. Please block this account pursuant to FCRA Section 605B within 4 business days.
+```
+
+6. Submit → Screenshot confirmation
+7. Save confirmation number: _______________
+
+---
+
+### EQUIFAX
+
+**Upload URL:** https://www.equifax.com/personal/disputes
+**OR** Login at: https://my.equifax.com
+
+1. Login → Credit Report → Find account
+2. Click: **Dispute this account**
+3. Select: **This is not my account** or **Identity theft/fraud**
+4. Upload supporting documents
+5. In comment box - PASTE:
+
+```
+I am a victim of identity theft. This account was opened fraudulently without my knowledge or consent. I have attached my FTC Identity Theft Report, Police Report (Case #[CASE NUMBER]), and Notarized Affidavit. Please block this account pursuant to FCRA Section 605B within 4 business days.
+```
+
+6. Submit → Screenshot confirmation
+7. Save confirmation number: _______________
+
+---
+
+### TRANSUNION
+
+**Upload URL:** https://www.transunion.com/dispute
+**OR** Login at: https://service.transunion.com
 
 1. Login → Start new dispute
 2. Select account: **[CREDITOR NAME]**
 3. Disputed in past 120 days? **No**
-4. Reason: **It is inaccurate**
+4. Reason: **Identity theft / fraudulent account**
 5. Click: **Other, provide details**
-6. **PASTE:**
+6. Upload supporting documents
+7. In comment box - PASTE:
 
 ```
-According to Cushman v Transunion 1997, Transunion is supposed to ensure MAXIMUM POSSIBLE ACCURACY. This account violates these laws; 15 USC 1681i, 15 USC 1681s-2, 15 USC 1681i(5), 15 USC 1681e(b). DELETE ACCOUNT
+I am a victim of identity theft. This account was opened fraudulently without my knowledge or consent. I have attached my FTC Identity Theft Report, Police Report (Case #[CASE NUMBER]), and Notarized Affidavit. Please block this account pursuant to FCRA Section 605B within 4 business days.
 ```
 
-7. Submit → Screenshot confirmation
+8. Submit → Screenshot confirmation
+9. Save confirmation number: _______________
 
 ---
 
-## EQUIFAX - https://my.equifax.com
+## ⚠️ IMPORTANT REMINDERS:
 
-1. Login → Credit report → Find account
-2. Dispute this account
-3. **PASTE:**
+1. **REPEAT for EACH account + EACH bureau**
+   - Example: JMPCB on EX/EQ/TU = 3 online submissions
+   - Example: Target on EX/TU = 2 online submissions
 
-```
-According to Cushman v Transunion 1997, Equifax is supposed to ensure MAXIMUM POSSIBLE ACCURACY. This account violates these laws; 15 USC 1681i, 15 USC 1681s-2, 15 USC 1681i(5), 15 USC 1681e(b). DELETE ACCOUNT
-```
+2. **Screenshot EVERYTHING**
+   - Confirmation pages
+   - Confirmation numbers
+   - Dates submitted
 
-4. Submit → Screenshot confirmation
+3. **Wait 5 business days, then CALL** (see Phone Scripts)
 ```
 
 ---
@@ -760,71 +859,112 @@ Keep ALL tracking numbers!
 
 ```markdown
 # ═══════════════════════════════════════════════════════════════════════════════
-# PHONE FOLLOW-UP SCRIPTS
+# PHONE FOLLOW-UP SCRIPTS (CALL 5 BUSINESS DAYS AFTER SUBMISSION)
 # ═══════════════════════════════════════════════════════════════════════════════
-# Call 5-6 business days AFTER bureau receives package
+# Call the bureau directly and report the accounts as fraudulent
 # ═══════════════════════════════════════════════════════════════════════════════
 
-## YOUR INFO (Have Ready):
-- Account: **[CREDITOR NAME]**
-- Account #: **[ACCOUNT NUMBER]**
+## YOUR INFO (Have Ready BEFORE Calling):
+- Account Name: **[CREDITOR NAME]**
+- Account #: **[ACCOUNT NUMBER]** (as shown on report)
 - Police Case #: **[CASE NUMBER]**
-- Your SSN/DOB/Address
+- Your SSN, DOB, Full Address
+- Your documents nearby for reference
 
 ---
 
-## TRANSUNION
-📞 **800-916-8800** | ⏱️ 30 min | 📅 Wait 6 days
+## EXPERIAN (~20 minutes)
+📞 **1-855-414-6048** or **877-870-5640**
+📅 Wait 5 business days after submission
 
-**Navigation:**
-1. Say "Dispute"
-2. Do NOT press #1
-3. Wait for agent (press # if asked for text)
+### Step 1: Collect Info
+Have all account info and documents ready before calling.
 
-**Script:**
-> "I was recently a victim of identity theft. I have a fraudulent account
-> I would like removed. I sent documents including a police report,
-> notarized affidavit, and FTC report. The account is [CREDITOR],
-> number [ACCOUNT #]. I do not recognize this. This is fraudulent."
+### Step 2: Navigate Phone Menu
+1. Enter your **Social Security Number**
+2. Enter your **ZIP Code**
+3. Say: **"Fraud"**
+4. Say: **"Start a Dispute"**
+5. Say: **"Identity Theft"** (or press #3)
+6. Confirm you have been a victim of identity theft
 
-**Key Phrases (BE FIRM):**
-- "I do not recognize this"
-- "I need this removed"
-- "This is fraudulent"
+### Step 3: Connect With Fraud Department
+1. Request to speak to **"Fraud Department"** (you may need to say this TWICE)
+2. You're talking to the right person if they identify as **"Special Services"**
+3. ⚠️ **DO NOT ADD FRAUD ALERT** (if they offer, say "No thank you")
 
-⚠️ Do NOT add fraud alert. Try multiple times if needed.
+### Step 4: Remove Account
+1. Verify your information (name, address, birth date, SSN)
+2. Say this EXACT script:
+
+> "I was recently a victim of identity theft. I have a fraudulent account on my credit report that I would like removed. I did not approve of this. I recently sent in multiple documents explaining this. I went to the police station and got a police report, I got an affidavit signed and stamped by a notary, I also submitted an FTC report and attached all these documents to my envelope."
+
+3. When asked what account: Be VERY CLEAR
+   - "The account is **[CREDITOR NAME]**"
+   - "Account number **[ACCOUNT NUMBER]**"
+   - "It was opened on **[DATE]**"
+
+4. BE FIRM - Key Phrases:
+   - "I do not recognize this"
+   - "I need this removed"
+   - "This is fraudulent"
+   - "I have documentation proving identity theft"
+
+5. If asked about police report: "Yes, the case number is **[CASE NUMBER]**"
+
+6. ⚠️ Make sure they do NOT place a security/fraud alert
+
+7. Get confirmation the account will be removed
 
 ---
 
-## EXPERIAN
-📞 **855-414-6048** or **877-870-5640** | ⏱️ 20 min | 📅 Wait 5 days
+## EQUIFAX (~15 minutes)
+📞 **800-525-6285**
+📅 Wait 5 business days after submission
 
-**Navigation:**
-1. Enter SSN → ZIP
-2. Say "Fraud" → "Start a Dispute" → "Identity Theft" (#3)
-3. Request "Fraud Department" (say twice if needed)
-4. Right person = identifies as "Special Services"
+### Step 1: Collect Info
+Have all account info and documents ready.
 
-**Script:** Same as above
+### Step 2: Navigate
+1. Speak to agent directly (no complex phone tree)
 
-⚠️ Do NOT add fraud alert.
+### Step 3: Remove Account
+1. Verify your information (name, address, birth date, SSN)
+2. Use the SAME script as Experian above
+3. BE FIRM with the same key phrases
+4. Get confirmation the account will be removed
 
 ---
 
-## EQUIFAX
-📞 **800-525-6285** | ⏱️ 15 min | 📅 Wait 5 days
+## TRANSUNION (~30 minutes - longest wait)
+📞 **800-916-8800**
+📅 Wait 6 business days after submission
 
-**Navigation:** Speak to agent directly
+### Step 1: Collect Info
+Have all account info and documents ready.
 
-**Script:** Same as above
+### Step 2: Navigate Phone Menu
+1. Press **1** for English
+2. Say: **"Dispute"**
+3. Say: **"Yes"** to confirm
+4. ⚠️ Do **NOT** press #1 to follow up
+5. ⚠️ Do **NOT** press #1 to continue over text
+6. Wait to speak to agent (hit # multiple times if asked for text confirmation)
+
+### Step 3: Remove Account
+1. Verify your information (name, address, birth date, SSN)
+2. Use the SAME script as Experian above
+3. BE FIRM with the same key phrases
+4. Get confirmation the account will be removed
 
 ---
 
 ## IF THEY DON'T CONFIRM REMOVAL:
 1. Politely hang up
-2. Call back and try again
-3. Ask for supervisor
+2. Call back immediately and try again
+3. Ask to speak to a **supervisor**
 4. Try multiple times on different days
+5. Keep detailed notes of each call (date, time, rep name)
 ```
 
 ---
@@ -1236,38 +1376,75 @@ Your Phase 2 documents are ready!
 ---
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# SUMMARY: 2-PHASE SYSTEM (v5.0 COMPLETE)
+# SUMMARY: 2-PHASE SYSTEM (v6.0 - ONLINE + MAIL METHODS)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+## PRE-REQUISITE: FREEZE THIRD-PARTY BUREAUS FIRST!
+- LexisNexis: 1-888-497-0011
+- Teletrack: 1-877-309-5226
+- Innovis: 1-866-712-4546
+
+---
 
 ## PHASE 1 (Credit Report Only)
 **Input:** Credit report
 **Output:** 3 files
-1. Third_Party_Freeze_Instructions.md
-2. Police_Report_Instructions_[CLIENT].md
+1. Third_Party_Freeze_Instructions.md (with phone numbers!)
+2. Police_Report_Instructions_[CLIENT].md (online + in-person options)
 3. Account_Summary_[CLIENT].md
 
-**Client Action:** File police report → Return with case #
+**Client Action:**
+1. Freeze third-party bureaus (20-30 min)
+2. File police report (online or in-person)
+3. Return with case #
 
 ---
 
 ## PHASE 2 (Police Info Added)
-**Input:** Case # + Department + Date
+**Input:** Case # + Department + Date + Submission Method (online/mail)
 **Output:** 12 files
+
+### Documents for BOTH Methods:
 4. FTC_Report_Instructions_[CLIENT].md
-5. FTC_Affidavit_[CLIENT].md
+5. FTC_Affidavit_[CLIENT].md (with notarylive.com option!)
 6. Bureau_Letter_TransUnion_[CLIENT].md
 7. Bureau_Letter_Experian_[CLIENT].md
 8. Bureau_Letter_Equifax_[CLIENT].md
-9. Online_Portal_Disputes_[CLIENT].md
+
+### For ONLINE Method (Fastest - 24hrs to 30 days):
+9. Online_Submission_Instructions_[CLIENT].md (NEW!)
+   - Experian: experian.com/upload
+   - Equifax: equifax.com/personal/disputes
+   - TransUnion: transunion.com/dispute
+
+### For MAIL Method (Strongest paper trail):
 10. Envelope_Checklist_[CLIENT].md
-11. Phone_Scripts_[CLIENT].md
+
+### For BOTH Methods:
+11. Phone_Scripts_[CLIENT].md (detailed navigation!)
 12. Master_Tracking_[CLIENT].md
-13. CFPB_Complaint_[CLIENT].md (if needed)
-14. Reinsertion_Law_Dispute_[CLIENT].md (NEW - if item returns)
-15. BBB_Dispute_Strategy_[CLIENT].md (NEW - for collections)
+13. CFPB_Complaint_[CLIENT].md (if needed after 7 days)
+14. Reinsertion_Law_Dispute_[CLIENT].md (if item returns)
+15. BBB_Dispute_Strategy_[CLIENT].md (for collections)
+
+---
+
+## ⚠️ KEY REMINDERS:
+1. **FREEZE third-party bureaus BEFORE disputing**
+2. **SEPARATE FTC complaint for EACH account + EACH bureau**
+3. **SEPARATE affidavit for EACH account + EACH bureau**
+4. **Wait 5 business days, then CALL each bureau**
+5. **Online method often faster but mail has stronger paper trail**
+
+---
+
+## CALL FOLLOW-UP (5 business days after submission):
+- Experian: 1-855-414-6048 (~20 min)
+- Equifax: 800-525-6285 (~15 min)
+- TransUnion: 800-916-8800 (~30 min)
 
 ---
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# END OF PROMPT 17 v5.0 - 5-DAY KNOCKOUT COMPLETE
+# END OF PROMPT 17 v6.0 - 5-DAY KNOCKOUT WITH ONLINE + MAIL METHODS
 # ═══════════════════════════════════════════════════════════════════════════════

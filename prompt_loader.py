@@ -35,7 +35,7 @@ class PromptLoader:
         'inquiry': 'FCRA_PROMPT_15A_INQUIRY_PERMISSIBLE_PURPOSE.md',
         'inquirytheft': 'FCRA_PROMPT_15B_INQUIRY_IDENTITY_THEFT.md',
         'portalfix': 'FCRA_PROMPT_16_PORTAL_QUICK_FIX.md',
-        '5dayknockout': 'FCRA_PROMPT_17_v5_5DAY_KNOCKOUT_COMPLETE.md',
+        '5dayknockout': 'FCRA_PROMPT_17_v6_5DAY_KNOCKOUT_ONLINE_MAIL.md',
 
         # Reference docs
         'framework': 'FCRA_Litigation_Framework_Complete_v2_0__3_.md',
