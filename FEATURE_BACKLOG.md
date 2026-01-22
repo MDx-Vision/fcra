@@ -2006,6 +2006,68 @@ Track email engagement.
 
 ---
 
+## ~~Priority 40: 5-Day Knock-Out (§605B Identity Theft)~~ ✅ COMPLETE
+
+**Completed: 2026-01-22**
+
+### What Was Implemented
+
+Full integration of Prompt 17 (5-Day Knock-Out) for §605B identity theft disputes.
+
+1. **Dashboard UI** (`templates/5day_knockout.html`):
+   - [x] 3-step wizard: Select Client → Select Accounts → Generate
+   - [x] Client search with autocomplete
+   - [x] Account checkboxes from imported credit reports
+   - [x] Phase selection (Phase 1: Prep, Phase 2: Full Dispute)
+   - [x] Police case # input for Phase 2
+
+2. **API Endpoints** (`app.py` ~lines 39768-40020):
+   - [x] `GET /dashboard/5day-knockout` - Dashboard page
+   - [x] `GET /api/5day-knockout/strategies` - Available strategies
+   - [x] `POST /api/5day-knockout/generate` - AI document generation
+   - [x] `GET /api/5day-knockout/client/<id>/items` - Get accounts from credit report
+
+3. **Credit Report Integration**:
+   - [x] Pulls accounts from `Analysis.stage_1_analysis`
+   - [x] Pulls from `CreditReport.report_html`
+   - [x] Pulls from `CreditMonitoringCredential.last_report_path` (auto-imports)
+   - [x] Extracts both tradeline accounts AND inquiries
+   - [x] Fallback to `DisputeItem` table
+
+4. **Prompt Loader** (`prompt_loader.py`):
+   - [x] Added `'5dayknockout': 'FCRA_PROMPT_17_v5_5DAY_KNOCKOUT_COMPLETE.md'`
+   - [x] Added `get_5day_knockout_prompt()` convenience method
+   - [x] Added inquiry and portal fix prompts (14, 15A, 15B, 16)
+
+5. **AI Dispute Writer** (`services/ai_dispute_writer_service.py`):
+   - [x] Added `SPECIAL_STRATEGIES` dict
+   - [x] Added `BUREAU_FRAUD_ADDRESSES` for §605B letters
+   - [x] Added `generate_5day_knockout()` method
+
+6. **Prompt 17 Updates** (`knowledge/FCRA_PROMPT_17_v5_5DAY_KNOCKOUT_COMPLETE.md`):
+   - [x] Added identitytheft.gov (FTC) as required first step
+   - [x] Updated NJ police URLs (Newark PD, njsp.njoag.gov)
+   - [x] Added Miami-Dade, LAPD, Houston PD links
+   - [x] Fixed outdated NYC URL
+
+### Legal Basis
+FCRA §605B requires bureaus to block fraudulent accounts within **4 business days** (not 30 days like regular disputes).
+
+### Bureau Fraud Department Addresses
+- Experian Fraud: P.O. Box 9554, Allen, TX 75013
+- Equifax Fraud: P.O. Box 105069, Atlanta, GA 30348
+- TransUnion Fraud: P.O. Box 2000, Chester, PA 19016
+
+### Files Created/Modified
+- `templates/5day_knockout.html` - NEW (~500 lines)
+- `templates/includes/dashboard_sidebar.html` - Added nav link
+- `app.py` - Added 4 API endpoints
+- `prompt_loader.py` - Added 5 new prompts
+- `services/ai_dispute_writer_service.py` - Added 5DKO strategy
+- `knowledge/FCRA_PROMPT_17_v5_5DAY_KNOCKOUT_COMPLETE.md` - Updated URLs
+
+---
+
 ## CRM Enhancement Roadmap
 
 See `CRM_ENHANCEMENT_CHECKLIST.md` for detailed implementation plans and failproof testing strategy.
@@ -2025,6 +2087,8 @@ See `CRM_ENHANCEMENT_CHECKLIST.md` for detailed implementation plans and failpro
 | P15-P28 | Advanced Features | 2026-01-03 |
 | P29-P30 | AI Chat Support | 2026-01-18 |
 | P31 | Credit Score Simulator | 2026-01-19 |
+| P32-P35 | CRM Features (Inbox, Calendar, Calls, Tasks) | 2026-01-19 |
+| **P40** | **5-Day Knock-Out (§605B)** | **2026-01-22** |
 
 ---
 

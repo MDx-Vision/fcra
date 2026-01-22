@@ -328,6 +328,17 @@ whitelabel_service, workflow_triggers_service
 | GET | `/api/staff-tasks/team-workload` | Team workload stats |
 | GET | `/api/staff-tasks/statistics` | Task statistics |
 
+### 5-Day Knock-Out (§605B Identity Theft)
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/dashboard/5day-knockout` | 5DKO dashboard UI |
+| GET | `/api/5day-knockout/strategies` | Available dispute strategies |
+| POST | `/api/5day-knockout/generate` | Generate §605B documents via AI |
+| GET | `/api/5day-knockout/client/<id>/items` | Get accounts from credit report |
+
+**Note**: Uses Prompt 17 for AI generation. Requires Anthropic API credits.
+
 ---
 
 ## Client Portal Routes
@@ -399,6 +410,38 @@ Actions queued (email, SMS, task)
 TaskQueueService executes actions
     ↓
 Execution logged
+```
+
+### 4. 5-Day Knock-Out Flow (§605B Identity Theft)
+
+```
+PHASE 1: Preparation
+    Client credit report imported
+        ↓
+    Staff selects client in 5DKO dashboard
+        ↓
+    Accounts loaded from credit report (tradelines + inquiries)
+        ↓
+    Generate Phase 1 docs:
+        - FTC Affidavit template
+        - Police Report Instructions (with local PD links)
+        - Third-party freeze checklist
+        ↓
+    Client files police report + FTC report (identitytheft.gov)
+
+PHASE 2: Full Dispute (requires police case #)
+    Staff enters police case number
+        ↓
+    Generate Phase 2 docs:
+        - Bureau letters citing FCRA §605B
+        - Identity theft declaration
+        ↓
+    Letters sent to FRAUD DEPARTMENTS (not regular addresses):
+        - Experian: P.O. Box 9554, Allen, TX 75013
+        - Equifax: P.O. Box 105069, Atlanta, GA 30348
+        - TransUnion: P.O. Box 2000, Chester, PA 19016
+        ↓
+    Bureaus must block within 4 BUSINESS DAYS (not 30 days)
 ```
 
 ---

@@ -39762,6 +39762,286 @@ def dashboard_ai_dispute_writer():
 
 
 # =============================================================================
+# 5-DAY KNOCK-OUT (IDENTITY THEFT) ENDPOINTS
+# =============================================================================
+
+@app.route("/dashboard/5day-knockout", methods=["GET"])
+@require_staff()
+def dashboard_5day_knockout():
+    """5-Day Knock-Out dashboard page"""
+    return render_template("5day_knockout.html")
+
+
+@app.route("/api/5day-knockout/strategies", methods=["GET"])
+@require_staff()
+def api_5day_knockout_strategies():
+    """Get available special dispute strategies"""
+    try:
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+        with get_db() as db:
+            service = AIDisputeWriterService(db)
+            strategies = service.get_special_strategies_info()
+            return jsonify({
+                "success": True,
+                "strategies": strategies,
+                "bureau_fraud_addresses": service.BUREAU_FRAUD_ADDRESSES,
+            })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/5day-knockout/generate", methods=["POST"])
+@require_staff()
+def api_5day_knockout_generate():
+    """Generate 5-Day Knock-Out documents for a client"""
+    try:
+        from services.ai_dispute_writer_service import AIDisputeWriterService
+        data = request.get_json() or {}
+
+        client_id = data.get('client_id')
+        if not client_id:
+            return jsonify({"success": False, "error": "client_id required"}), 400
+
+        phase = data.get('phase', 1)
+        police_case_number = data.get('police_case_number')
+        ftc_reference_number = data.get('ftc_reference_number')
+        disputed_items = data.get('disputed_items')
+
+        # Phase 2 requires police case number
+        if phase == 2 and not police_case_number:
+            return jsonify({
+                "success": False,
+                "error": "police_case_number required for Phase 2"
+            }), 400
+
+        with get_db() as db:
+            service = AIDisputeWriterService(db)
+            result = service.generate_5day_knockout(
+                client_id=client_id,
+                police_case_number=police_case_number,
+                ftc_reference_number=ftc_reference_number,
+                disputed_items=disputed_items,
+                phase=phase,
+            )
+
+            if 'error' in result:
+                return jsonify({"success": False, "error": result['error']}), 400
+
+            return jsonify({"success": True, **result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/5day-knockout/client/<int:client_id>/items", methods=["GET"])
+@require_staff()
+def api_5day_knockout_client_items(client_id):
+    """Get disputed items for a client (for 5-Day Knockout) - pulls from imported credit report"""
+    try:
+        with get_db() as db:
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                return jsonify({"success": False, "error": "Client not found"}), 404
+
+            items = []
+
+            # First try to get accounts from the latest Analysis (already parsed)
+            analysis = db.query(Analysis).filter(
+                Analysis.client_id == client_id
+            ).order_by(Analysis.created_at.desc()).first()
+
+            if analysis and analysis.stage_1_analysis:
+                try:
+                    import json
+                    import ast
+                    # stage_1_analysis may be JSON string or Python dict string
+                    analysis_data = analysis.stage_1_analysis
+                    if isinstance(analysis_data, str):
+                        try:
+                            parsed = json.loads(analysis_data)
+                        except json.JSONDecodeError:
+                            parsed = ast.literal_eval(analysis_data)
+                    else:
+                        parsed = analysis_data
+
+                    # Extract accounts from the analysis
+                    accounts = parsed.get("accounts", [])
+                    for idx, acct in enumerate(accounts):
+                        # Determine bureau from account data
+                        bureaus = []
+                        if acct.get("equifax") or acct.get("efx_status"):
+                            bureaus.append("Equifax")
+                        if acct.get("experian") or acct.get("exp_status"):
+                            bureaus.append("Experian")
+                        if acct.get("transunion") or acct.get("tu_status"):
+                            bureaus.append("TransUnion")
+
+                        # If no bureau info, assume all 3
+                        if not bureaus:
+                            bureaus = ["Equifax", "Experian", "TransUnion"]
+
+                        items.append({
+                            "id": f"analysis_{idx}",
+                            "creditor": acct.get("creditor") or acct.get("creditor_name") or "Unknown",
+                            "account_number": acct.get("account_number") or acct.get("account_num") or "N/A",
+                            "bureau": ", ".join(bureaus),
+                            "type": acct.get("account_type") or acct.get("type") or "Unknown",
+                            "status": acct.get("status") or acct.get("account_status") or "Unknown",
+                            "balance": acct.get("balance") or acct.get("balance_owed"),
+                            "source": "analysis"
+                        })
+                except Exception as e:
+                    print(f"Error parsing analysis data: {e}")
+
+            # If no accounts from Analysis, try parsing CreditReport HTML directly
+            if not items:
+                credit_report = db.query(CreditReport).filter(
+                    CreditReport.client_id == client_id
+                ).order_by(CreditReport.created_at.desc()).first()
+
+                if credit_report and credit_report.report_html:
+                    try:
+                        from services.credit_report_parser import CreditReportParser
+                        parser = CreditReportParser(credit_report.report_html)
+                        parsed_data = parser.parse()
+                        accounts = parsed_data.get("accounts", [])
+
+                        for idx, acct in enumerate(accounts):
+                            bureaus = []
+                            if acct.get("equifax") or acct.get("efx_status"):
+                                bureaus.append("Equifax")
+                            if acct.get("experian") or acct.get("exp_status"):
+                                bureaus.append("Experian")
+                            if acct.get("transunion") or acct.get("tu_status"):
+                                bureaus.append("TransUnion")
+                            if not bureaus:
+                                bureaus = ["Equifax", "Experian", "TransUnion"]
+
+                            items.append({
+                                "id": f"report_{idx}",
+                                "creditor": acct.get("creditor") or acct.get("creditor_name") or "Unknown",
+                                "account_number": acct.get("account_number") or "N/A",
+                                "bureau": ", ".join(bureaus),
+                                "type": acct.get("account_type") or "Unknown",
+                                "status": acct.get("status") or acct.get("account_status") or "Unknown",
+                                "balance": acct.get("balance") or acct.get("balance_owed"),
+                                "source": "credit_report"
+                            })
+                    except Exception as e:
+                        print(f"Error parsing credit report HTML: {e}")
+
+            # Try parsing from CreditMonitoringCredential's last_report_path (saved HTML file)
+            if not items:
+                credential = db.query(CreditMonitoringCredential).filter(
+                    CreditMonitoringCredential.client_id == client_id,
+                    CreditMonitoringCredential.last_report_path.isnot(None)
+                ).order_by(CreditMonitoringCredential.last_import_at.desc()).first()
+
+                if credential and credential.last_report_path:
+                    try:
+                        import os
+                        report_path = credential.last_report_path
+                        # Handle relative paths
+                        if not os.path.isabs(report_path):
+                            report_path = os.path.join(os.path.dirname(__file__), report_path)
+
+                        if os.path.exists(report_path):
+                            with open(report_path, 'r', encoding='utf-8') as f:
+                                html_content = f.read()
+
+                            from services.credit_report_parser import CreditReportParser
+                            parser = CreditReportParser(html_content)
+                            parsed_data = parser.parse()
+                            accounts = parsed_data.get("accounts", [])
+
+                            print(f"Parsed {len(accounts)} accounts from credential report: {report_path}")
+
+                            for idx, acct in enumerate(accounts):
+                                bureaus = []
+                                if acct.get("equifax") or acct.get("efx_status"):
+                                    bureaus.append("Equifax")
+                                if acct.get("experian") or acct.get("exp_status"):
+                                    bureaus.append("Experian")
+                                if acct.get("transunion") or acct.get("tu_status"):
+                                    bureaus.append("TransUnion")
+                                if not bureaus:
+                                    bureaus = ["Equifax", "Experian", "TransUnion"]
+
+                                items.append({
+                                    "id": f"cred_{idx}",
+                                    "creditor": acct.get("creditor") or acct.get("creditor_name") or "Unknown",
+                                    "account_number": acct.get("account_number") or "N/A",
+                                    "bureau": ", ".join(bureaus),
+                                    "type": acct.get("account_type") or "Unknown",
+                                    "status": acct.get("status") or acct.get("account_status") or "Unknown",
+                                    "balance": acct.get("balance") or acct.get("balance_owed"),
+                                    "source": "credential_import"
+                                })
+
+                            # Also extract inquiries
+                            inquiries = parsed_data.get("inquiries", [])
+                            for idx, inq in enumerate(inquiries):
+                                items.append({
+                                    "id": f"inq_{idx}",
+                                    "creditor": inq.get("creditor") or "Unknown",
+                                    "account_number": inq.get("date") or "N/A",
+                                    "bureau": inq.get("bureau") or "Unknown",
+                                    "type": "Inquiry",
+                                    "status": inq.get("type") or "Hard Inquiry",
+                                    "balance": None,
+                                    "source": "inquiry"
+                                })
+                    except Exception as e:
+                        import traceback
+                        print(f"Error parsing credential report HTML: {e}")
+                        traceback.print_exc()
+
+            # Fallback to DisputeItem table if still no items
+            if not items:
+                dispute_items = db.query(DisputeItem).filter(
+                    DisputeItem.client_id == client_id
+                ).all()
+
+                items = [
+                    {
+                        "id": item.id,
+                        "creditor": item.creditor_name,
+                        "account_number": item.account_id,
+                        "bureau": item.bureau,
+                        "type": item.item_type,
+                        "status": item.status,
+                        "balance": getattr(item, 'balance', None),
+                        "source": "dispute_item"
+                    }
+                    for item in dispute_items
+                ]
+
+            # Check if client has any credit report source
+            has_report = bool(
+                analysis or
+                db.query(CreditReport).filter(CreditReport.client_id == client_id).first() or
+                db.query(CreditMonitoringCredential).filter(
+                    CreditMonitoringCredential.client_id == client_id,
+                    CreditMonitoringCredential.last_report_path.isnot(None)
+                ).first()
+            )
+
+            return jsonify({
+                "success": True,
+                "client": {
+                    "id": client.id,
+                    "name": client.name,
+                    "email": client.email,
+                },
+                "items": items,
+                "has_credit_report": has_report,
+            })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =============================================================================
 # ROI CALCULATOR ENDPOINTS
 # =============================================================================
 

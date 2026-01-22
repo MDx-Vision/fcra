@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context
 
-## Current Status (2026-01-21)
+## Current Status (2026-01-22)
 
 ### Test Status: 100% PASSING ✅
 - **Unit tests**: 5,936 passing (98 test files) *(+3 new regression tests)*
@@ -20,6 +20,7 @@
 - Phase 6: Business Intelligence ✅
 - Phase 7: Credit Monitoring Auto-Import ✅
 - Phase 8: BAG CRM Feature Parity ✅
+- **Phase 9: 5-Day Knock-Out (§605B) ✅ NEW**
 
 ### Manual Action Required (External Dependencies)
 See `MANUAL_ACTION_ITEMS.md` for detailed instructions:
@@ -45,7 +46,108 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 - **Priority 35**: ~~Task Assignment~~ ✅ COMPLETE
 - **Priority 36-39**: Scheduled Reports, SMS Templates, Client Tags, Email Tracking
 
-### Current Work (2026-01-21) - Session: "Credit Import Parser Tests"
+### Current Work (2026-01-22) - Session: "5-Day Knock-Out Integration"
+
+**Task**: Integrate Prompt 17 (5-Day Knock-Out) into the FCRA platform with full UI
+
+**Status**: ✅ COMPLETE
+
+---
+
+### Completed Today (2026-01-22):
+
+#### 1. 5-Day Knock-Out Dashboard ✅
+
+**What**: Full UI for §605B identity theft disputes (4 business day block requirement)
+
+**Files Created/Modified**:
+- `templates/5day_knockout.html` - 3-step wizard UI (Select Client → Select Accounts → Generate)
+- `app.py` - Added 4 API endpoints (~lines 39768-40020):
+  - `GET /dashboard/5day-knockout` - Dashboard page
+  - `GET /api/5day-knockout/strategies` - Available strategies
+  - `POST /api/5day-knockout/generate` - Generate documents via AI
+  - `GET /api/5day-knockout/client/<id>/items` - Get accounts from credit report
+- `templates/includes/dashboard_sidebar.html` - Added sidebar link
+
+#### 2. Credit Report Account Extraction ✅
+
+**Problem**: Step 2 showed "No items found" because it only checked DisputeItem table, not imported credit reports.
+
+**Solution**: Updated `/api/5day-knockout/client/<id>/items` to check multiple sources:
+1. `Analysis.stage_1_analysis` - Parsed analysis data
+2. `CreditReport.report_html` - Stored credit report HTML
+3. `CreditMonitoringCredential.last_report_path` - **Auto-imported HTML files**
+4. `DisputeItem` table - Fallback
+
+**Result**: Carlos Del Carmen shows **20 items** (16 tradelines + 4 inquiries)
+
+#### 3. Inquiry Support Added ✅
+
+**Problem**: Only tradeline accounts showed, not inquiries.
+
+**Fix**: Added inquiry extraction to the API - now pulls from `parsed_data.get("inquiries", [])`.
+
+#### 4. Prompt 17 Police Reporting URLs Updated ✅
+
+**Problem**: Generated documents had outdated police reporting URLs.
+
+**Fix**: Updated `knowledge/FCRA_PROMPT_17_v5_5DAY_KNOCKOUT_COMPLETE.md`:
+- Added **identitytheft.gov** (FTC) as required first step
+- Fixed NJ: Newark PD + njsp.njoag.gov
+- Added Miami-Dade, LAPD, Houston PD links
+- Fixed NYC URL
+
+#### 5. Prompt Loader Integration ✅
+
+**Files Modified** (`prompt_loader.py`):
+```python
+PROMPT_FILES = {
+    # ... existing prompts ...
+    'idtheft': 'FCRA_PROMPT_14_IDENTITY_THEFT_SEPARATE_FILES.md',
+    'inquiry': 'FCRA_PROMPT_15A_INQUIRY_PERMISSIBLE_PURPOSE.md',
+    'inquirytheft': 'FCRA_PROMPT_15B_INQUIRY_IDENTITY_THEFT.md',
+    'portalfix': 'FCRA_PROMPT_16_PORTAL_QUICK_FIX.md',
+    '5dayknockout': 'FCRA_PROMPT_17_v5_5DAY_KNOCKOUT_COMPLETE.md',
+}
+```
+
+Added convenience methods:
+- `get_5day_knockout_prompt()`
+- `get_identity_theft_prompt()`
+- `get_inquiry_dispute_prompt(identity_theft=False)`
+- `get_portal_quick_fix_prompt()`
+
+#### 6. AI Dispute Writer Service ✅
+
+**Files Modified** (`services/ai_dispute_writer_service.py`):
+- Added `SPECIAL_STRATEGIES` dict with 5dayknockout, idtheft, inquiry, etc.
+- Added `BUREAU_FRAUD_ADDRESSES` for §605B letters:
+  - Experian Fraud: P.O. Box 9554, Allen, TX 75013
+  - Equifax Fraud: P.O. Box 105069, Atlanta, GA 30348
+  - TransUnion Fraud: P.O. Box 2000, Chester, PA 19016
+- Added `generate_5day_knockout()` method for 2-phase document generation
+
+---
+
+### 5-Day Knock-Out Workflow
+
+**Prerequisites**: Client has imported credit report + will file police report
+
+**Phase 1 (Preparation)**:
+- FTC Affidavit template
+- Police Report Instructions (with correct URLs)
+- Third-party freeze checklist
+
+**Phase 2 (Full Dispute)** - Requires police case #:
+- Bureau letters citing FCRA §605B
+- Identity theft declaration
+- Sent to Fraud Departments (different addresses)
+
+**Legal Basis**: FCRA §605B requires bureaus to block fraudulent accounts within **4 business days** (not 30 days).
+
+---
+
+### Previous Work (2026-01-21) - Session: "Credit Import Parser Tests"
 
 **Task**: Add regression tests to protect credit report parser fixes
 
@@ -53,7 +155,7 @@ See `FEATURE_BACKLOG.md` for upcoming work:
 
 ---
 
-### Completed Today (2026-01-21):
+### Completed (2026-01-21):
 
 #### 1. Personal Info Extraction Fix for MyFreeScoreNow ✅
 

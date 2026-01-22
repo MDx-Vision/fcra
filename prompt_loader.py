@@ -30,6 +30,13 @@ class PromptLoader:
         'internalanalysis': 'FCRA_PROMPT_12_INTERNAL_ANALYSIS.md',
         'lawyerpackage': 'FCRA_PROMPT_13_LAWYER_READY_PACKAGE.md',
 
+        # Identity theft & inquiries
+        'idtheft': 'FCRA_PROMPT_14_IDENTITY_THEFT_SEPARATE_FILES.md',
+        'inquiry': 'FCRA_PROMPT_15A_INQUIRY_PERMISSIBLE_PURPOSE.md',
+        'inquirytheft': 'FCRA_PROMPT_15B_INQUIRY_IDENTITY_THEFT.md',
+        'portalfix': 'FCRA_PROMPT_16_PORTAL_QUICK_FIX.md',
+        '5dayknockout': 'FCRA_PROMPT_17_v5_5DAY_KNOCKOUT_COMPLETE.md',
+
         # Reference docs
         'framework': 'FCRA_Litigation_Framework_Complete_v2_0__3_.md',
         'workflow': 'FCRA_WORKFLOW_CHEAT_SHEET.md',
@@ -187,6 +194,22 @@ class PromptLoader:
         """Get the 36K word litigation framework with 210+ cases"""
         return self.load_prompt('framework')
 
+    def get_5day_knockout_prompt(self):
+        """Get the 5-Day Knock-Out identity theft dispute prompt (§605B)"""
+        return self.load_prompt('5dayknockout')
+
+    def get_identity_theft_prompt(self):
+        """Get the identity theft dispute prompt (Prompt 14)"""
+        return self.load_prompt('idtheft')
+
+    def get_inquiry_dispute_prompt(self, identity_theft=False):
+        """Get inquiry dispute prompt - permissible purpose (15A) or identity theft (15B)"""
+        return self.load_prompt('inquirytheft' if identity_theft else 'inquiry')
+
+    def get_portal_quick_fix_prompt(self):
+        """Get the portal quick fix prompt for fast PII/inquiry disputes"""
+        return self.load_prompt('portalfix')
+
     def get_violation_checklist(self):
         """Get the violation spotter checklist"""
         return self.load_prompt('checklist')
@@ -217,6 +240,7 @@ if __name__ == '__main__':
         'Core Workflows': ['full', 'r1', 'r2', 'r3', 'r4'],
         'Quick Actions': ['quick', 'secondary', 'secdispute', 'pii', 'validation'],
         'Reports': ['clientreport', 'internalanalysis', 'lawyerpackage'],
+        'Identity Theft & Inquiries': ['idtheft', 'inquiry', 'inquirytheft', 'portalfix', '5dayknockout'],
         'Reference': ['framework', 'workflow', 'checklist', 'quickref', 'intake']
     }
 
