@@ -255,6 +255,15 @@
         gap: 16px;
     }
 
+    .upload-options {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+    .upload-options .upload-zone {
+        flex: 1;
+        padding: 24px 16px;
+    }
     .upload-zone {
         border: 2px dashed #e2e8f0;
         border-radius: 12px;
@@ -267,9 +276,26 @@
         border-color: #319795;
         background: #f0fdfa;
     }
+    .upload-zone.camera-zone:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
     .upload-zone.has-file {
         border-color: #22c55e;
         background: #f0fdf4;
+    }
+    .upload-preview {
+        margin-top: 12px;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+        text-align: center;
+    }
+    .upload-preview img {
+        max-width: 200px;
+        max-height: 150px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
     }
     .upload-icon {
         font-size: 48px;
@@ -526,24 +552,40 @@
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <form id="form-id_documents" onsubmit="submitStep(event, 'id_documents')">
-            <p style="color: #64748b; margin-bottom: 20px;">Please upload clear photos of your driver's license or state ID.</p>
+            <p style="color: #64748b; margin-bottom: 20px;">Please upload or take photos of your driver's license or state ID.</p>
             <div class="form-group">
                 <label>Front of ID</label>
-                <div class="upload-zone" id="upload-id-front" onclick="document.getElementById('id_front').click()">
-                    <div class="upload-icon">📄</div>
-                    <div class="upload-text">Click to upload front of ID</div>
-                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                <div class="upload-options">
+                    <div class="upload-zone" id="upload-id-front" onclick="document.getElementById('id_front').click()">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">Upload Photo</div>
+                        <div class="upload-hint">JPG, PNG or PDF</div>
+                    </div>
+                    <div class="upload-zone camera-zone" onclick="openCamera('id_front', 'upload-id-front')">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">Take Photo</div>
+                        <div class="upload-hint">Use your camera</div>
+                    </div>
                 </div>
                 <input type="file" id="id_front" name="id_front" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-id-front')" data-testid="input-id-front">
+                <div id="preview-id-front" class="upload-preview" style="display: none;"></div>
             </div>
             <div class="form-group">
                 <label>Back of ID (Optional)</label>
-                <div class="upload-zone" id="upload-id-back" onclick="document.getElementById('id_back').click()">
-                    <div class="upload-icon">📄</div>
-                    <div class="upload-text">Click to upload back of ID</div>
-                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                <div class="upload-options">
+                    <div class="upload-zone" id="upload-id-back" onclick="document.getElementById('id_back').click()">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">Upload Photo</div>
+                        <div class="upload-hint">JPG, PNG or PDF</div>
+                    </div>
+                    <div class="upload-zone camera-zone" onclick="openCamera('id_back', 'upload-id-back')">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">Take Photo</div>
+                        <div class="upload-hint">Use your camera</div>
+                    </div>
                 </div>
                 <input type="file" id="id_back" name="id_back" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-id-back')" data-testid="input-id-back">
+                <div id="preview-id-back" class="upload-preview" style="display: none;"></div>
             </div>
             <button type="submit" class="btn-primary" data-testid="save-id_documents">Upload & Continue</button>
         </form>
@@ -558,13 +600,21 @@
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <form id="form-ssn_card" onsubmit="submitStep(event, 'ssn_card')">
-            <p style="color: #64748b; margin-bottom: 20px;">Upload a photo of your Social Security card for identity verification.</p>
+            <p style="color: #64748b; margin-bottom: 20px;">Upload or take a photo of your Social Security card for identity verification.</p>
             <div class="form-group">
                 <label>Social Security Card</label>
-                <div class="upload-zone" id="upload-ssn" onclick="document.getElementById('ssn_card_file').click()">
-                    <div class="upload-icon">📄</div>
-                    <div class="upload-text">Click to upload SSN card</div>
-                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                <div class="upload-options">
+                    <div class="upload-zone" id="upload-ssn" onclick="document.getElementById('ssn_card_file').click()">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">Upload Photo</div>
+                        <div class="upload-hint">JPG, PNG or PDF</div>
+                    </div>
+                    <div class="upload-zone camera-zone" onclick="openCamera('ssn_card_file', 'upload-ssn')">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">Take Photo</div>
+                        <div class="upload-hint">Use your camera</div>
+                    </div>
+                </div>
                 </div>
                 <input type="file" id="ssn_card_file" name="ssn_card" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-ssn')" data-testid="input-ssn-card">
             </div>
@@ -581,15 +631,23 @@
             <button class="modal-close" onclick="closeModal()">&times;</button>
         </div>
         <form id="form-proof_of_address" onsubmit="submitStep(event, 'proof_of_address')">
-            <p style="color: #64748b; margin-bottom: 20px;">Upload a recent utility bill, bank statement, or other document showing your current address.</p>
+            <p style="color: #64748b; margin-bottom: 20px;">Upload or take a photo of a recent utility bill, bank statement, or other document showing your current address.</p>
             <div class="form-group">
                 <label>Proof of Address Document</label>
-                <div class="upload-zone" id="upload-poa" onclick="document.getElementById('poa_file').click()">
-                    <div class="upload-icon">📄</div>
-                    <div class="upload-text">Click to upload document</div>
-                    <div class="upload-hint">JPG, PNG or PDF up to 10MB</div>
+                <div class="upload-options">
+                    <div class="upload-zone" id="upload-poa" onclick="document.getElementById('poa_file').click()">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">Upload Photo</div>
+                        <div class="upload-hint">JPG, PNG or PDF</div>
+                    </div>
+                    <div class="upload-zone camera-zone" onclick="openCamera('poa_file', 'upload-poa')">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">Take Photo</div>
+                        <div class="upload-hint">Use your camera</div>
+                    </div>
                 </div>
                 <input type="file" id="poa_file" name="proof_of_address" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(this, 'upload-poa')" data-testid="input-poa">
+                <div id="preview-poa" class="upload-preview" style="display: none;"></div>
             </div>
             <button type="submit" class="btn-primary" data-testid="save-proof_of_address">Upload & Continue</button>
         </form>
@@ -761,9 +819,42 @@
     </div>
 </div>
 
+<!-- Camera Capture Modal -->
+<div class="step-modal" id="modal-camera" style="z-index: 1001;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2 class="modal-title">Take Photo</h2>
+            <button class="modal-close" onclick="closeCamera()">&times;</button>
+        </div>
+        <div style="text-align: center;">
+            <video id="camera-preview" autoplay playsinline style="width: 100%; max-height: 300px; border-radius: 8px; background: #000; display: none;"></video>
+            <canvas id="camera-canvas" style="display: none;"></canvas>
+            <div id="camera-loading" style="padding: 60px; color: #64748b;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📷</div>
+                <p>Accessing camera...</p>
+            </div>
+            <img id="camera-captured" style="width: 100%; max-height: 300px; border-radius: 8px; display: none;">
+        </div>
+        <div style="margin-top: 20px; display: flex; gap: 12px; justify-content: center;">
+            <button type="button" id="btn-capture" class="btn-primary" onclick="capturePhoto()" style="display: none;">
+                📸 Capture
+            </button>
+            <button type="button" id="btn-retake" class="btn-secondary" onclick="retakePhoto()" style="display: none;">
+                🔄 Retake
+            </button>
+            <button type="button" id="btn-use-photo" class="btn-primary" onclick="usePhoto()" style="display: none;">
+                ✓ Use This Photo
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentModal = null;
 let selectedPaymentMethod = null;
+let cameraStream = null;
+let cameraTargetInput = null;
+let cameraTargetZone = null;
 let selectedAffirmTerm = 12;
 const PAYMENT_AMOUNT_CENTS = 29800; // $298.00
 
@@ -942,9 +1033,197 @@ document.addEventListener('keydown', (e) => {
 function handleFileSelect(input, zoneId) {
     const zone = document.getElementById(zoneId);
     if (input.files.length > 0) {
+        const file = input.files[0];
         zone.classList.add('has-file');
-        zone.querySelector('.upload-text').textContent = input.files[0].name;
+        zone.querySelector('.upload-text').textContent = file.name;
         zone.querySelector('.upload-icon').textContent = '✅';
+
+        // Show image preview if it's an image
+        if (file.type.startsWith('image/')) {
+            const previewId = zoneId.replace('upload-', 'preview-');
+            const preview = document.getElementById(previewId);
+            if (preview) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+}
+
+// Camera capture functions
+function openCamera(inputId, zoneId) {
+    // Check if mobile device
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        // On mobile, use native camera via file input with capture attribute
+        const tempInput = document.createElement('input');
+        tempInput.type = 'file';
+        tempInput.accept = 'image/*';
+        tempInput.capture = 'environment'; // Use back camera
+        tempInput.onchange = function() {
+            if (this.files.length > 0) {
+                const targetInput = document.getElementById(inputId);
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(this.files[0]);
+                targetInput.files = dataTransfer.files;
+                handleFileSelect(targetInput, zoneId);
+            }
+        };
+        tempInput.click();
+        return;
+    }
+
+    // Desktop: try getUserMedia
+    cameraTargetInput = document.getElementById(inputId);
+    cameraTargetZone = zoneId;
+
+    const modal = document.getElementById('modal-camera');
+    const video = document.getElementById('camera-preview');
+    const loading = document.getElementById('camera-loading');
+    const captured = document.getElementById('camera-captured');
+    const btnCapture = document.getElementById('btn-capture');
+    const btnRetake = document.getElementById('btn-retake');
+    const btnUse = document.getElementById('btn-use-photo');
+
+    // Reset state
+    video.style.display = 'none';
+    captured.style.display = 'none';
+    loading.style.display = 'block';
+    btnCapture.style.display = 'none';
+    btnRetake.style.display = 'none';
+    btnUse.style.display = 'none';
+    loading.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📷</div>
+        <p>Accessing camera...</p>
+    `;
+
+    modal.classList.add('active');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            cameraStream = stream;
+            video.srcObject = stream;
+            video.style.display = 'block';
+            loading.style.display = 'none';
+            btnCapture.style.display = 'inline-block';
+        })
+        .catch(err => {
+            console.error('Camera error:', err);
+            loading.innerHTML = `
+                <div>
+                    <div style="font-size: 48px; margin-bottom: 16px;">📷</div>
+                    <p style="font-weight: bold; color: #374151;">Camera Access Needed</p>
+                    <p style="font-size: 14px; color: #64748b; margin: 12px 0;">
+                        Allow camera in browser settings, then click Try Again
+                    </p>
+                    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                        <button onclick="retryCamera()" class="btn-secondary" style="padding: 12px 24px;">
+                            🔄 Try Again
+                        </button>
+                        <button onclick="closeCamera(); document.getElementById(cameraTargetInput.id).click();" class="btn-primary" style="padding: 12px 24px;">
+                            📄 Upload Photo
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function capturePhoto() {
+    const video = document.getElementById('camera-preview');
+    const canvas = document.getElementById('camera-canvas');
+    const captured = document.getElementById('camera-captured');
+    const btnCapture = document.getElementById('btn-capture');
+    const btnRetake = document.getElementById('btn-retake');
+    const btnUse = document.getElementById('btn-use-photo');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    captured.src = canvas.toDataURL('image/jpeg', 0.9);
+    captured.style.display = 'block';
+    video.style.display = 'none';
+
+    btnCapture.style.display = 'none';
+    btnRetake.style.display = 'inline-block';
+    btnUse.style.display = 'inline-block';
+}
+
+function retakePhoto() {
+    const video = document.getElementById('camera-preview');
+    const captured = document.getElementById('camera-captured');
+    const btnCapture = document.getElementById('btn-capture');
+    const btnRetake = document.getElementById('btn-retake');
+    const btnUse = document.getElementById('btn-use-photo');
+
+    captured.style.display = 'none';
+    video.style.display = 'block';
+    btnCapture.style.display = 'inline-block';
+    btnRetake.style.display = 'none';
+    btnUse.style.display = 'none';
+}
+
+function usePhoto() {
+    const canvas = document.getElementById('camera-canvas');
+
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], 'camera_photo.jpg', { type: 'image/jpeg' });
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(file);
+        cameraTargetInput.files = dataTransfer.files;
+
+        // Update the zone to show success
+        handleFileSelect(cameraTargetInput, cameraTargetZone);
+        closeCamera();
+    }, 'image/jpeg', 0.9);
+}
+
+function closeCamera() {
+    const modal = document.getElementById('modal-camera');
+    modal.classList.remove('active');
+
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+}
+
+async function retryCamera() {
+    const video = document.getElementById('camera-preview');
+    const loading = document.getElementById('camera-loading');
+    const btnCapture = document.getElementById('btn-capture');
+
+    loading.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">📷</div>
+        <p>Accessing camera...</p>
+    `;
+
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = cameraStream;
+        video.style.display = 'block';
+        loading.style.display = 'none';
+        btnCapture.style.display = 'inline-block';
+    } catch (err) {
+        console.error('Camera retry error:', err);
+        loading.innerHTML = `
+            <div style="color: #ef4444;">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                <p>Still can't access camera</p>
+                <p style="font-size: 12px; color: #94a3b8; margin-top: 8px;">
+                    Check browser settings: chrome://settings/content/camera
+                </p>
+                <button onclick="closeCamera(); document.getElementById(cameraTargetInput.id).click();" class="btn-secondary" style="margin-top: 16px;">
+                    📄 Upload Photo Instead
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -1103,6 +1382,33 @@ async function submitStep(event, stepKey) {
     const formData = new FormData(form);
 
     try {
+        // For personal_info, save the client data first
+        if (stepKey === 'personal_info') {
+            const personalData = {
+                first_name: formData.get('first_name'),
+                last_name: formData.get('last_name'),
+                date_of_birth: formData.get('date_of_birth'),
+                ssn_last_four: formData.get('ssn_last_four'),
+                phone: formData.get('phone'),
+                address_street: formData.get('address_street'),
+                address_city: formData.get('address_city'),
+                address_state: formData.get('address_state'),
+                address_zip: formData.get('address_zip')
+            };
+
+            const saveResponse = await fetch('/portal/api/onboarding/save-personal-info', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(personalData)
+            });
+
+            const saveData = await saveResponse.json();
+            if (!saveData.success) {
+                alert(saveData.error || 'Failed to save personal info.');
+                return;
+            }
+        }
+
         // For file uploads, use the documents upload endpoint
         if (['id_documents', 'ssn_card', 'proof_of_address'].includes(stepKey)) {
             // Upload files first

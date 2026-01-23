@@ -1161,6 +1161,58 @@ def api_onboarding_sync():
         db.close()
 
 
+@portal.route('/api/onboarding/save-personal-info', methods=['POST'])
+@portal_login_required
+def api_onboarding_save_personal_info():
+    """Save personal info from onboarding form"""
+    from flask import jsonify
+    from database import get_db, Client
+    from datetime import datetime
+
+    db = get_db()
+    try:
+        client = db.query(Client).filter(Client.id == get_client_id()).first()
+        if not client:
+            return jsonify({'success': False, 'error': 'Client not found'}), 404
+
+        data = request.json or {}
+
+        # Update client fields
+        if data.get('first_name'):
+            client.first_name = data['first_name']
+        if data.get('last_name'):
+            client.last_name = data['last_name']
+        if data.get('date_of_birth'):
+            try:
+                client.date_of_birth = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
+            except:
+                pass
+        if data.get('ssn_last_four'):
+            client.ssn_last_four = data['ssn_last_four']
+        if data.get('phone'):
+            client.phone = data['phone']
+
+        # Address fields
+        if data.get('address_street'):
+            client.address_street = data['address_street']
+        if data.get('address_city'):
+            client.address_city = data['address_city']
+        if data.get('address_state'):
+            client.address_state = data['address_state']
+        if data.get('address_zip'):
+            client.address_zip = data['address_zip']
+
+        client.updated_at = datetime.now()
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Personal info saved'})
+    except Exception as e:
+        db.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        db.close()
+
+
 @portal.route('/api/onboarding/complete-step', methods=['POST'])
 @portal_login_required
 def api_onboarding_complete_step():
