@@ -798,9 +798,9 @@ def _set_whitelabel_cache(key, value):
 
 
 def _get_default_whitelabel_branding():
-    """Return default Brightpath Ascend branding"""
+    """Return default Brightpath Ascend Group branding"""
     return {
-        "organization_name": "Brightpath Ascend",
+        "organization_name": "Brightpath Ascend Group",
         "subdomain": None,
         "custom_domain": None,
         "logo_url": "/static/images/logo.png",
@@ -813,12 +813,12 @@ def _get_default_whitelabel_branding():
         "font_family": "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         "font_family_key": "inter",
         "custom_css": None,
-        "email_from_name": "Brightpath Ascend",
+        "email_from_name": "Brightpath Ascend Group",
         "email_from_address": None,
         "company_address": None,
         "company_phone": None,
         "company_email": None,
-        "footer_text": "© 2024 Brightpath Ascend. All rights reserved.",
+        "footer_text": "© 2024 Brightpath Ascend Group. All rights reserved.",
         "terms_url": None,
         "privacy_url": None,
         "is_active": True,
@@ -865,7 +865,7 @@ def detect_tenant():
                 "accent_color": "#84cc16",
                 "logo_url": "/static/images/logo.png",
                 "favicon_url": None,
-                "company_name": "Brightpath Ascend",
+                "company_name": "Brightpath Ascend Group",
                 "company_address": None,
                 "company_phone": None,
                 "company_email": None,
@@ -894,7 +894,7 @@ def inject_tenant_branding():
                 "secondary_color": "#1a1a2e",
                 "accent_color": "#84cc16",
                 "logo_url": "/static/images/logo.png",
-                "company_name": "Brightpath Ascend",
+                "company_name": "Brightpath Ascend Group",
             },
         ),
     }
@@ -7011,67 +7011,72 @@ def api_intake():
 @app.route("/dashboard/clients")
 @require_staff(roles=["admin", "paralegal", "attorney"])
 def dashboard_clients():
-    """Client list page with Phase 8 BAG CRM features"""
+    """Client list page with Phase 8 BAG CRM features - shows ALL clients"""
     db = get_db()
     try:
         status_filter = request.args.get("status", "all")
 
-        query = db.query(Analysis).order_by(Analysis.created_at.desc())
+        # Query all clients directly (not just those with analyses)
+        query = db.query(Client).order_by(Client.created_at.desc())
 
-        if status_filter == "stage1_complete":
-            query = query.filter(Analysis.stage == 1, Analysis.approved_at == None)
-        elif status_filter == "stage2_complete":
-            query = query.filter(Analysis.stage == 2)
+        if status_filter == "active":
+            query = query.filter(Client.client_stage == "active")
+        elif status_filter == "lead":
+            query = query.filter(Client.client_stage == "lead")
+        elif status_filter == "onboarding":
+            query = query.filter(Client.client_stage == "onboarding")
 
-        analyses = query.all()
+        clients = query.all()
 
         cases = []
-        for analysis in analyses:
-            damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
-            score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
-            client = db.query(Client).filter_by(id=analysis.client_id).first()
+        for client in clients:
+            # Get analysis if exists
+            analysis = db.query(Analysis).filter_by(client_id=client.id).first()
+            damages = None
+            score = None
+            violations_count = 0
 
-            if analysis.stage == 1 and not analysis.approved_at:
-                status = "stage1_complete"
-            elif analysis.stage == 2:
-                status = "stage2_complete"
-            else:
-                status = "intake"
+            if analysis:
+                damages = db.query(Damages).filter_by(analysis_id=analysis.id).first()
+                score = db.query(CaseScore).filter_by(analysis_id=analysis.id).first()
+                violations_count = db.query(Violation).filter_by(analysis_id=analysis.id).count()
+
+            # Build client name
+            client_name = client.name or f"{client.first_name or ''} {client.last_name or ''}".strip() or "Unknown"
 
             cases.append(
                 {
-                    "id": analysis.id,
-                    "analysis_id": analysis.id,
-                    "client_id": client.id if client else None,
-                    "client_name": analysis.client_name,
-                    "client_email": client.email if client else None,
-                    "avatar_filename": client.avatar_filename if client else None,
-                    "status": client.status if client else status,
-                    "status_label": get_status_label(status),
+                    "id": client.id,
+                    "analysis_id": analysis.id if analysis else None,
+                    "client_id": client.id,
+                    "client_name": client_name,
+                    "email": client.email,
+                    "client_email": client.email,
+                    "avatar_filename": client.avatar_filename,
+                    "status": client.status or "pending",
+                    "status_label": get_status_label(client.client_stage or "lead"),
                     "score": score.total_score if score else None,
                     "exposure": damages.total_exposure if damages else None,
-                    "violations": db.query(Violation)
-                    .filter_by(analysis_id=analysis.id)
-                    .count(),
-                    "created_at": analysis.created_at.strftime("%Y-%m-%d %H:%M"),
+                    "violations": violations_count,
+                    "created_at": client.created_at.strftime("%Y-%m-%d %H:%M") if client.created_at else "N/A",
                     # Phase 8 BAG CRM fields
-                    "client_type": client.client_type if client else "L",
+                    "client_type": client.client_type or "L",
                     "follow_up_date": (
                         client.follow_up_date.isoformat()
-                        if client and client.follow_up_date
+                        if client.follow_up_date
                         else None
                     ),
-                    "mark_1": client.mark_1 if client else False,
-                    "mark_2": client.mark_2 if client else False,
-                    "starred": client.starred if client else False,
-                    "portal_posted": client.portal_posted if client else False,
+                    "mark_1": client.mark_1 or False,
+                    "mark_2": client.mark_2 or False,
+                    "starred": client.starred or False,
+                    "portal_posted": client.portal_posted or False,
                     # Workflow and contact fields
-                    "current_dispute_step": (
-                        client.current_dispute_step if client else "intake"
-                    ),
-                    "phone": client.phone if client else None,
+                    "current_dispute_step": client.current_dispute_step or "intake",
+                    "phone": client.phone,
                     # Lead scoring
-                    "lead_score": client.lead_score if client else None,
+                    "lead_score": client.lead_score,
+                    # WhatsApp
+                    "whatsapp_verified": client.whatsapp_verified or False,
                 }
             )
 

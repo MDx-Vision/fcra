@@ -127,7 +127,7 @@
         </div>
     </div>
     {% else %}
-    <p>&copy; {{ now().year if now is defined else '2024' }} Brightpath Ascend. All rights reserved.</p>
+    <p>&copy; {{ now().year if now is defined else '2024' }} Brightpath Ascend Group. All rights reserved.</p>
     {% endif %}
 </footer>
 {% endmacro %}
@@ -138,7 +138,7 @@
 <img src="{{ tenant_branding.logo_url }}" alt="{{ tenant_branding.company_name or 'Logo' }}" style="height: {{ height }}; object-fit: contain;">
 {% else %}
 <span class="default-logo" style="font-size: 20px; font-weight: 700; color: white;">
-    <span style="color: {{ tenant_branding.accent_color if tenant_branding else '#84cc16' }};">Brightpath</span>&nbsp;Ascend
+    <span style="color: {{ tenant_branding.accent_color if tenant_branding else '#84cc16' }};">Brightpath</span>&nbsp;Ascend Group
 </span>
 {% endif %}
 {% endmacro %}

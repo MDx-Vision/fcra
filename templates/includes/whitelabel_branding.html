@@ -103,7 +103,7 @@
 <script>
     window.whitelabelConfig = {
         id: {{ whitelabel_config.id if whitelabel_config.id else 'null' }},
-        name: "{{ whitelabel_branding.organization_name|default('Brightpath Ascend', true)|e }}",
+        name: "{{ whitelabel_branding.organization_name|default('Brightpath Ascend Group', true)|e }}",
         subdomain: "{{ whitelabel_branding.subdomain|default('', true)|e }}",
         customDomain: "{{ whitelabel_branding.custom_domain|default('', true)|e }}",
         logoUrl: "{{ whitelabel_branding.logo_url|default('', true)|e }}",
@@ -127,7 +127,7 @@
         {% if whitelabel_branding.footer_text %}
         <p style="margin-bottom: 8px;">{{ whitelabel_branding.footer_text }}</p>
         {% else %}
-        <p style="margin-bottom: 8px;">&copy; {{ now().year if now is defined else '2024' }} {{ whitelabel_branding.organization_name|default('Brightpath Ascend', true) }}. All rights reserved.</p>
+        <p style="margin-bottom: 8px;">&copy; {{ now().year if now is defined else '2024' }} {{ whitelabel_branding.organization_name|default('Brightpath Ascend Group', true) }}. All rights reserved.</p>
         {% endif %}
         
         {% if whitelabel_branding.company_address %}
@@ -153,7 +153,7 @@
         </div>
     </div>
     {% else %}
-    <p>&copy; 2024 Brightpath Ascend. All rights reserved.</p>
+    <p>&copy; 2024 Brightpath Ascend Group. All rights reserved.</p>
     {% endif %}
 </footer>
 {% endmacro %}
@@ -165,7 +165,7 @@
     {% if whitelabel_branding and whitelabel_branding.logo_url %}
     <img src="{{ whitelabel_branding.logo_url }}" alt="{{ whitelabel_branding.organization_name|default('Logo', true) }}" style="height: {{ logo_height }}; margin-right: 12px;" onerror="this.style.display='none'">
     {% else %}
-    <img src="/static/images/logo.png" alt="Brightpath Ascend" style="height: {{ logo_height }}; margin-right: 12px;" onerror="this.style.display='none'">
+    <img src="/static/images/logo.png" alt="Brightpath Ascend Group" style="height: {{ logo_height }}; margin-right: 12px;" onerror="this.style.display='none'">
     {% endif %}
     
     {% if whitelabel_branding and whitelabel_branding.organization_name %}
@@ -176,7 +176,7 @@
     <span style="color: white; font-weight: 700; font-size: 20px;">{{ whitelabel_branding.organization_name }}</span>
     {% endif %}
     {% else %}
-    <span style="color: white; font-weight: 700; font-size: 20px;">Brightpath <span style="color: #84cc16;">Ascend</span></span>
+    <span style="color: white; font-weight: 700; font-size: 20px;">Brightpath Ascend <span style="color: #84cc16;">Group</span></span>
     {% endif %}
 </div>
 {% endmacro %}
