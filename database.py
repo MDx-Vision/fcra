@@ -8191,7 +8191,7 @@ def create_performance_indices():
         ("idx_clients_phone", "clients", "phone"),
         ("idx_dispute_items_status", "dispute_items", "status"),
         ("idx_audit_logs_timestamp", "audit_logs", "timestamp"),
-        ("idx_cases_attorney_id", "cases", "attorney_id"),
+        ("idx_case_outcomes_attorney_id", "case_outcomes", "attorney_id"),
         ("idx_cases_status", "cases", "status"),
         ("idx_analyses_client_id", "analyses", "client_id"),
         ("idx_credit_reports_client_id", "credit_reports", "client_id"),
