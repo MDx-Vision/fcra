@@ -13,6 +13,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
+# Activity logging for human-readable debugging
+from services.activity_logger import log_activity, log_credit_import, log_credit_import_failed
+
 REPORTS_DIR = Path("uploads/credit_reports")
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -197,6 +200,8 @@ class CreditImportAutomation:
 
         if service_name not in SERVICE_CONFIGS:
             result["error"] = f"Unsupported service: {service_name}"
+            log_activity("Credit Import", f"Unsupported service: {service_name}",
+                        client_id=client_id, status="error")
             return result
 
         config = SERVICE_CONFIGS[service_name]
@@ -205,19 +210,35 @@ class CreditImportAutomation:
         )  # Set flow for extraction
 
         try:
+            log_activity("Credit Import Started", f"{client_name} | {service_name}",
+                        client_id=client_id, status="info")
+
+            log_activity("Initialize Browser", "Launching Playwright browser...",
+                        client_id=client_id, status="info")
             if not await self._init_browser():
                 result["error"] = "Failed to initialize browser"
+                log_activity("Browser Init Failed", "Could not launch browser",
+                            client_id=client_id, status="error")
                 return result
 
+            log_activity("Browser Ready", "Navigating to login page...",
+                        client_id=client_id, status="success")
             logger.info(f"Starting import for {client_name} from {service_name}")
 
+            log_activity("Login Attempt", f"Logging into {service_name}...",
+                        client_id=client_id, status="info")
             login_success = await self._login(config, username, password, ssn_last4)
             if not login_success:
                 result["error"] = "Login failed - check credentials"
+                log_credit_import_failed(client_id, service_name, "Login failed - invalid credentials")
                 return result
 
+            log_activity("Login Success", f"Authenticated to {service_name}",
+                        client_id=client_id, status="success")
             await asyncio.sleep(3)
 
+            log_activity("Download Report", "Navigating to credit report...",
+                        client_id=client_id, status="info")
             report_data = await self._download_report(config, client_id, client_name)
             if report_data:
                 result["success"] = True
@@ -225,12 +246,17 @@ class CreditImportAutomation:
                 result["html_content"] = report_data.get("html")
                 result["scores"] = report_data.get("scores")
                 logger.info(f"Successfully imported report for {client_name}")
+
+                # Log success with scores
+                log_credit_import(client_id, service_name, result["scores"])
             else:
                 result["error"] = "Failed to download credit report"
+                log_credit_import_failed(client_id, service_name, "Failed to download report")
 
         except Exception as e:
             logger.error(f"Import failed for {client_name}: {e}")
             result["error"] = str(e)
+            log_credit_import_failed(client_id, service_name, str(e))
 
         finally:
             await self._close_browser()

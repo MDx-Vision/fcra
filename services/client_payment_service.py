@@ -19,6 +19,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 
 from database import SessionLocal, Client
+from services.activity_logger import log_activity, log_payment_success, log_payment_failed
 
 logger = logging.getLogger(__name__)
 
@@ -286,9 +287,13 @@ class ClientPaymentService:
         Confirm a round payment was successful.
         Updates client and enables letter sending.
         """
+        log_activity("Confirm Payment", f"Round {round_number} payment confirmation",
+                    client_id=client_id, status="info")
         try:
             client = self.db.query(Client).filter(Client.id == client_id).first()
             if not client:
+                log_activity("Payment Confirm Failed", "Client not found",
+                            client_id=client_id, status="error")
                 return {'success': False, 'error': 'Client not found'}
 
             # Determine amount paid
@@ -299,8 +304,11 @@ class ClientPaymentService:
 
             if self.stripe:
                 # Verify payment with Stripe
+                log_activity("Verify with Stripe", f"Checking payment intent {payment_intent_id[:20]}...",
+                            client_id=client_id, status="info")
                 intent = self.stripe.PaymentIntent.retrieve(payment_intent_id)
                 if intent.status != 'succeeded':
+                    log_payment_failed(client_id, amount/100, f"Stripe status: {intent.status}")
                     return {
                         'success': False,
                         'error': f'Payment not successful: {intent.status}'
@@ -321,6 +329,9 @@ class ClientPaymentService:
 
             self.db.commit()
 
+            # Log successful payment
+            log_payment_success(client_id, amount/100, f"Round {round_number} - Stripe")
+
             return {
                 'success': True,
                 'round_number': round_number,
@@ -333,6 +344,7 @@ class ClientPaymentService:
         except Exception as e:
             logger.error(f"Error confirming round payment: {str(e)}")
             self.db.rollback()
+            log_payment_failed(client_id, 0, str(e))
             return {'success': False, 'error': str(e)}
 
     def charge_for_round(

@@ -20,6 +20,7 @@ from database import (
     DisputeLetter, CreditScoreSnapshot
 )
 from services.prompt_loader import PromptLoader
+from services.activity_logger import log_activity, log_dispute_generated
 
 
 class AIDisputeWriterService:
@@ -297,9 +298,18 @@ Phone: {client.phone or 'N/A'}
         Returns:
             Dict with generated letters by bureau
         """
+        import time
+        start_time = time.time()
+
+        log_activity("Generate Dispute Letters", f"Starting Round {round_number} for client {client_id}",
+                    client_id=client_id, status="info")
+
         # Gather context
+        log_activity("Load Client Data", f"Fetching client context...", client_id=client_id, status="info")
         context = self.get_client_context(client_id)
         if 'error' in context:
+            log_activity("Load Client Data", f"Failed to load client",
+                        client_id=client_id, status="error", error=context['error'])
             return context
 
         client = context['client']
@@ -307,8 +317,14 @@ Phone: {client.phone or 'N/A'}
         dispute_items = context['dispute_items']
         cra_responses = context['cra_responses']
 
+        log_activity("Client Data Loaded",
+                    f"{client.name} | {len(violations)} violations | {len(dispute_items)} items",
+                    client_id=client_id, status="success")
+
         # Validate round
         if round_number not in self.ROUND_STRATEGIES:
+            log_activity("Invalid Round", f"Round {round_number} is not valid",
+                        client_id=client_id, status="error")
             return {'error': f'Invalid round number: {round_number}. Must be 1-4.'}
 
         round_info = self.ROUND_STRATEGIES[round_number]
@@ -330,7 +346,12 @@ Phone: {client.phone or 'N/A'}
         if not target_bureaus:
             target_bureaus = self.BUREAUS  # Default to all if no items
 
+        log_activity("Target Bureaus", f"Generating for: {', '.join(target_bureaus)}",
+                    client_id=client_id, status="info")
+
         # Build the prompt
+        log_activity("Build AI Prompt", f"Preparing Round {round_number} prompt ({round_info['name']})",
+                    client_id=client_id, status="info")
         prompt = self._build_generation_prompt(
             client=client,
             violations=violations,
@@ -344,10 +365,19 @@ Phone: {client.phone or 'N/A'}
         )
 
         # Call AI to generate letters
+        log_activity("Call Claude AI", f"Sending to AI ({len(prompt)} chars)...",
+                    client_id=client_id, status="info")
         try:
             letters = self._call_ai_generate(prompt, round_info['prompt_key'])
+            duration_ms = (time.time() - start_time) * 1000
+            log_activity("AI Response Received", f"Generated {len(letters)} letters in {duration_ms:.0f}ms",
+                        client_id=client_id, status="success")
         except Exception as e:
+            log_activity("AI Generation Failed", str(e), client_id=client_id, status="error", error=str(e))
             return {'error': f'AI generation failed: {str(e)}'}
+
+        # Log the successful completion
+        log_dispute_generated(client_id, round_number, len(letters))
 
         return {
             'success': True,
