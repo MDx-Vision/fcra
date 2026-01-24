@@ -142,12 +142,12 @@ class TestPDFGenerator:
 
     def test_pdf_generator_import(self):
         """Test that PDF generator can be imported."""
-        from pdf_generator import LetterPDFGenerator
+        from services.pdf_generator import LetterPDFGenerator
         assert LetterPDFGenerator is not None
 
     def test_section_pdf_generator_import(self):
         """Test that section PDF generator can be imported."""
-        from pdf_generator import SectionPDFGenerator
+        from services.pdf_generator import SectionPDFGenerator
         assert SectionPDFGenerator is not None
 
 

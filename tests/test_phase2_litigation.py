@@ -104,7 +104,7 @@ class TestDamagesModel:
 
     def test_damages_calculation_logic(self):
         """Test damages calculation helper functions."""
-        from litigation_tools import calculate_damages
+        from services.litigation_tools import calculate_damages
 
         violations = [
             {'fcra_section': '§611', 'is_willful': True},
@@ -154,7 +154,7 @@ class TestCaseScoreModel:
 
     def test_case_scoring_algorithm(self):
         """Test case scoring calculation."""
-        from litigation_tools import calculate_case_score
+        from services.litigation_tools import calculate_case_score
 
         # Create mock standing and violations as dicts (what the function expects)
         standing = {
@@ -191,22 +191,22 @@ class TestLitigationTools:
 
     def test_calculate_damages_import(self):
         """Test that calculate_damages can be imported."""
-        from litigation_tools import calculate_damages
+        from services.litigation_tools import calculate_damages
         assert calculate_damages is not None
 
     def test_calculate_case_score_import(self):
         """Test that calculate_case_score can be imported."""
-        from litigation_tools import calculate_case_score
+        from services.litigation_tools import calculate_case_score
         assert calculate_case_score is not None
 
     def test_assess_willfulness_import(self):
         """Test that assess_willfulness can be imported."""
-        from litigation_tools import assess_willfulness
+        from services.litigation_tools import assess_willfulness
         assert assess_willfulness is not None
 
     def test_statutory_damages_cap(self):
         """Test that statutory damages respect FCRA cap."""
-        from litigation_tools import calculate_damages
+        from services.litigation_tools import calculate_damages
 
         # Many violations should still cap at per-violation limits
         violations = [{'fcra_section': '§611', 'is_willful': True}] * 10

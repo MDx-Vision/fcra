@@ -72,7 +72,7 @@ class TestLetterUploadWorkflow:
 
     def test_pdf_generation_for_mail(self, sample_analysis, sample_client):
         """Test that PDFs can be generated for mailing."""
-        from pdf_generator import LetterPDFGenerator
+        from services.pdf_generator import LetterPDFGenerator
 
         generator = LetterPDFGenerator()
         # Generator should be instantiable
