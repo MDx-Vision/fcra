@@ -161,6 +161,13 @@ def send_email(
         import uuid
         message_id = f"gmail-{uuid.uuid4().hex[:16]}"
 
+        # Log successful email
+        try:
+            from services.activity_logger import log_email_sent
+            log_email_sent(to_email, subject)
+        except:
+            pass
+
         return {
             "success": True,
             "message_id": message_id,
@@ -169,18 +176,34 @@ def send_email(
         }
 
     except smtplib.SMTPAuthenticationError as e:
+        # Log failed email
+        try:
+            from services.activity_logger import log_email_failed
+            log_email_failed(to_email, f"Auth failed: {str(e)}")
+        except:
+            pass
         return {
             "success": False,
             "message_id": None,
             "error": f"Gmail authentication failed. Check GMAIL_USER and GMAIL_APP_PASSWORD: {str(e)}",
         }
     except smtplib.SMTPException as e:
+        try:
+            from services.activity_logger import log_email_failed
+            log_email_failed(to_email, f"SMTP error: {str(e)}")
+        except:
+            pass
         return {
             "success": False,
             "message_id": None,
             "error": f"SMTP error: {str(e)}",
         }
     except Exception as e:
+        try:
+            from services.activity_logger import log_email_failed
+            log_email_failed(to_email, str(e))
+        except:
+            pass
         return {"success": False, "message_id": None, "error": str(e)}
 
 

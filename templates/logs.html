@@ -1,0 +1,196 @@
+{% extends "includes/dashboard_base.html" %}
+
+{% block title %}Activity Logs{% endblock %}
+
+{% block content %}
+<div class="main-content" data-testid="logs-page">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Activity Logs</h1>
+            <p class="text-gray-600">See exactly what's happening in real-time</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="refreshLogs()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                <i class="fas fa-sync-alt mr-2"></i>Refresh
+            </button>
+            <button onclick="toggleAutoRefresh()" id="autoRefreshBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                <i class="fas fa-play mr-2"></i>Auto-Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <div class="flex gap-4 flex-wrap">
+            <div>
+                <label class="text-sm text-gray-600">Filter by Status</label>
+                <select id="statusFilter" onchange="refreshLogs()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="">All</option>
+                    <option value="success">Success</option>
+                    <option value="error">Errors</option>
+                    <option value="warning">Warnings</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-sm text-gray-600">Search</label>
+                <input type="text" id="searchFilter" onkeyup="debounceRefresh()" placeholder="Search logs..."
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            </div>
+            <div>
+                <label class="text-sm text-gray-600">Log Type</label>
+                <select id="logType" onchange="refreshLogs()" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                    <option value="activity">Activity Log</option>
+                    <option value="errors">Error Log</option>
+                    <option value="app">App Log</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-4 gap-4 mb-6" id="statsCards">
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-2xl font-bold text-green-600" id="successCount">0</div>
+            <div class="text-sm text-gray-600">Successful</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-2xl font-bold text-red-600" id="errorCount">0</div>
+            <div class="text-sm text-gray-600">Errors</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-2xl font-bold text-yellow-600" id="warningCount">0</div>
+            <div class="text-sm text-gray-600">Warnings</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <div class="text-2xl font-bold text-blue-600" id="totalCount">0</div>
+            <div class="text-sm text-gray-600">Total</div>
+        </div>
+    </div>
+
+    <!-- Log Entries -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="p-4 border-b">
+            <h2 class="font-semibold">Recent Activity</h2>
+        </div>
+        <div id="logEntries" class="divide-y max-h-[600px] overflow-y-auto font-mono text-sm">
+            <div class="p-4 text-gray-500">Loading logs...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+let autoRefreshInterval = null;
+let debounceTimer = null;
+
+function refreshLogs() {
+    const status = document.getElementById('statusFilter').value;
+    const search = document.getElementById('searchFilter').value;
+    const logType = document.getElementById('logType').value;
+
+    fetch(`/api/logs?status=${status}&search=${encodeURIComponent(search)}&type=${logType}`)
+        .then(r => r.json())
+        .then(data => {
+            renderLogs(data.logs);
+            updateStats(data.stats);
+        })
+        .catch(err => {
+            document.getElementById('logEntries').innerHTML =
+                '<div class="p-4 text-red-500">Error loading logs: ' + err + '</div>';
+        });
+}
+
+function renderLogs(logs) {
+    const container = document.getElementById('logEntries');
+
+    if (!logs || logs.length === 0) {
+        container.innerHTML = '<div class="p-4 text-gray-500">No logs found</div>';
+        return;
+    }
+
+    container.innerHTML = logs.map(log => {
+        if (log.raw) {
+            // Raw log line from file
+            const isError = log.raw.includes('ERROR') || log.raw.includes('✗');
+            const isWarning = log.raw.includes('WARNING') || log.raw.includes('⚠');
+            const bgClass = isError ? 'bg-red-50' : (isWarning ? 'bg-yellow-50' : '');
+            return `<div class="p-3 ${bgClass} hover:bg-gray-50">${escapeHtml(log.raw)}</div>`;
+        }
+
+        // Structured activity log
+        const statusColors = {
+            success: 'text-green-600 bg-green-50',
+            error: 'text-red-600 bg-red-50',
+            warning: 'text-yellow-600 bg-yellow-50',
+            info: 'text-blue-600 bg-blue-50'
+        };
+        const statusIcons = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+
+        const color = statusColors[log.status] || '';
+        const icon = statusIcons[log.status] || 'fa-circle';
+
+        return `
+            <div class="p-3 ${color} hover:bg-gray-50 flex items-start gap-3">
+                <i class="fas ${icon} mt-1"></i>
+                <div class="flex-1">
+                    <div class="flex justify-between">
+                        <span class="font-semibold">${escapeHtml(log.action)}</span>
+                        <span class="text-gray-500 text-xs">${log.time}</span>
+                    </div>
+                    ${log.details ? `<div class="text-gray-600">${escapeHtml(log.details)}</div>` : ''}
+                    ${log.error ? `<div class="text-red-600 text-sm mt-1">Error: ${escapeHtml(log.error)}</div>` : ''}
+                    <div class="text-xs text-gray-400 mt-1">
+                        ${log.user ? `User: ${escapeHtml(log.user)}` : ''}
+                        ${log.client_id ? ` | Client: ${log.client_id}` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateStats(stats) {
+    if (!stats) return;
+    document.getElementById('successCount').textContent = stats.success || 0;
+    document.getElementById('errorCount').textContent = stats.error || 0;
+    document.getElementById('warningCount').textContent = stats.warning || 0;
+    document.getElementById('totalCount').textContent = stats.total || 0;
+}
+
+function toggleAutoRefresh() {
+    const btn = document.getElementById('autoRefreshBtn');
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        btn.innerHTML = '<i class="fas fa-play mr-2"></i>Auto-Refresh';
+        btn.classList.remove('bg-green-600');
+        btn.classList.add('bg-gray-600');
+    } else {
+        autoRefreshInterval = setInterval(refreshLogs, 3000);
+        btn.innerHTML = '<i class="fas fa-pause mr-2"></i>Stop';
+        btn.classList.remove('bg-gray-600');
+        btn.classList.add('bg-green-600');
+    }
+}
+
+function debounceRefresh() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(refreshLogs, 300);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initial load
+refreshLogs();
+</script>
+{% endblock %}

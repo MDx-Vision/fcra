@@ -33308,6 +33308,73 @@ def api_audit_cleanup():
 
 
 # ============================================================
+# ACTIVITY LOGS ROUTES (Paul's Logging System)
+# ============================================================
+# "You should be able to skim through yourself without any technical training"
+
+
+@app.route("/dashboard/logs")
+@require_staff(roles=["admin"])
+def dashboard_logs():
+    """Activity log viewer - see what's happening in real-time"""
+    return render_template("logs.html")
+
+
+@app.route("/api/logs", methods=["GET"])
+@require_staff(roles=["admin"])
+def api_get_logs():
+    """Get activity logs for the dashboard viewer"""
+    from services.activity_logger import (
+        get_recent_activities,
+        get_activities_from_file,
+        read_error_log,
+        read_app_log,
+        RECENT_ACTIVITIES
+    )
+
+    status_filter = request.args.get("status")
+    search = request.args.get("search")
+    log_type = request.args.get("type", "activity")
+    limit = request.args.get("limit", 200, type=int)
+
+    logs = []
+    stats = {"success": 0, "error": 0, "warning": 0, "total": 0}
+
+    try:
+        if log_type == "activity":
+            # Get from memory first, then file
+            logs = get_recent_activities(limit=limit, status_filter=status_filter)
+            if not logs:
+                logs = get_activities_from_file(limit=limit, search=search)
+
+            # Calculate stats from memory
+            for a in RECENT_ACTIVITIES[:500]:
+                stats["total"] += 1
+                if a.get("status") == "success":
+                    stats["success"] += 1
+                elif a.get("status") == "error":
+                    stats["error"] += 1
+                elif a.get("status") == "warning":
+                    stats["warning"] += 1
+
+        elif log_type == "errors":
+            error_lines = read_error_log(limit=limit)
+            logs = [{"raw": line} for line in error_lines if not search or search.lower() in line.lower()]
+            stats["error"] = len(logs)
+            stats["total"] = len(logs)
+
+        elif log_type == "app":
+            app_lines = read_app_log(limit=limit)
+            logs = [{"raw": line} for line in app_lines if not search or search.lower() in line.lower()]
+            stats["total"] = len(logs)
+
+        return jsonify({"logs": logs, "stats": stats})
+
+    except Exception as e:
+        return jsonify({"logs": [{"raw": f"Error: {e}"}], "stats": stats})
+
+
+# ============================================================
 # PERFORMANCE MONITORING ROUTES
 # ============================================================
 
