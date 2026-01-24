@@ -9,6 +9,10 @@ import os
 import tempfile
 from datetime import datetime
 
+# Skip all tests in this module if weasyprint is not installed
+# WeasyPrint has complex system dependencies that may not be available in CI
+pytest.importorskip("weasyprint", reason="weasyprint not installed")
+
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
